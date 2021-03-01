@@ -54,10 +54,6 @@ public final class FragmentReplicaMeta implements Serializable {
      */
     private long databaseId;
 
-    public FragmentReplicaMeta(String key, long startTime, int replicaIndex, long endTime, long databaseId) {
-        //TODO:
-    }
-
     FragmentReplicaMeta endFragmentReplicaMeta(long endTime) {
         return new FragmentReplicaMeta(this.key, this.startTime, this.replicaIndex, endTime, this.databaseId);
     }
