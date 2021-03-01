@@ -8,7 +8,7 @@ IginX is still at a premature phase, but you are highly encourage to try it and 
 
 ## Technological Posts
 
-We constantly maintain technological posts on time series management under this link.
+We constantly maintain technological posts on time series management under [this link](https://github.com/thulab/IginX/wiki).
 
 If you are interested in time series data management by large, you are highly welcomed to join our IginX workshop every Friday afternoon at 2pm by Tencent online meeting. Please contact the IginX-maintainers for information about the Tencent online meeting. 
 
