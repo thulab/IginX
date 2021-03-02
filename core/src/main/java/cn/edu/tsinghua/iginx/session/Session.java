@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.exceptions.StatementExecutionException;
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
@@ -34,6 +34,8 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.utils.DataType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -44,7 +46,9 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -136,7 +140,7 @@ public class Session {
 	}
 
 	public void createDatabase(String databaseName) throws SessionException,
-			StatementExecutionException {
+			ExecutionException {
 		CreateDatabaseReq req = new CreateDatabaseReq(sessionId, databaseName);
 
 		try {
@@ -146,7 +150,7 @@ public class Session {
 		}
 	}
 
-	public void dropDatabase(String databaseName) throws SessionException, StatementExecutionException {
+	public void dropDatabase(String databaseName) throws SessionException, ExecutionException {
 		DropDatabaseReq req = new DropDatabaseReq(sessionId, databaseName);
 
 		try {
@@ -156,13 +160,13 @@ public class Session {
 		}
 	}
 
-	public void addColumn(String path) throws StatementExecutionException, SessionException {
+	public void addColumn(String path) throws ExecutionException, SessionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
 		addColumns(paths);
 	}
 
-	public void addColumns(List<String> paths) throws SessionException, StatementExecutionException {
+	public void addColumns(List<String> paths) throws SessionException, ExecutionException {
 		AddColumnsReq req = new AddColumnsReq(sessionId, paths);
 
 		try {
@@ -172,8 +176,9 @@ public class Session {
 		}
 	}
 
-	public void addColumns(List<String> paths, Map<String, Object> attributes) throws SessionException, StatementExecutionException {
+	public void addColumns(List<String> paths, List<Map<String, Object>> attributes) throws SessionException, ExecutionException {
 		AddColumnsReq req = new AddColumnsReq(sessionId, paths);
+		req.setAttributes(objectMapListToByteBufferMapList(attributes));
 
 		try {
 			RpcUtils.verifySuccess(client.addColumns(req));
@@ -183,14 +188,14 @@ public class Session {
 	}
 
 	public void deleteColumn(String path) throws SessionException,
-			StatementExecutionException {
+			ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
 		deleteColumns(paths);
 	}
 
 	public void deleteColumns(List<String> paths) throws SessionException,
-			StatementExecutionException {
+			ExecutionException {
 		DeleteColumnsReq req = new DeleteColumnsReq(sessionId, paths);
 
 		try {
@@ -200,14 +205,16 @@ public class Session {
 		}
 	}
 
-	public void insertRecords(List<String> paths, List<Long> timestamps, List<List<Long>> values) throws SessionException, StatementExecutionException {
+	public void insertRecords(List<String> paths, List<Long> timestamps, List<List<Object>> values,
+	    List<DataType> dataTypeList, List<Map<String, Object>> attributes) throws SessionException, ExecutionException {
 		InsertRecordsReq req = new InsertRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(timestamps);
-		for (List<Long> value : values) {
-			req.addToValues(SessionUtils.getByteBuffer(value));
+		for (int i = 0; i < values.size(); i++) {
+			req.addToValues(ByteUtils.getByteBuffer(values.get(i), dataTypeList.get(i)));
 		}
+		req.setAttributes(objectMapListToByteBufferMapList(attributes));
 
 		try {
 			RpcUtils.verifySuccess(client.insertRecords(req));
@@ -243,5 +250,17 @@ public class Session {
 			throw new SessionException(e);
 		}
 		return resp.queryDataSet;
+	}
+
+	private List<Map<String, ByteBuffer>> objectMapListToByteBufferMapList(List<Map<String, Object>> attributes) {
+		List<Map<String, ByteBuffer>> buffers = new ArrayList<>();
+		for (Map<String, Object> attributesForOnePath : attributes) {
+			Map<String, ByteBuffer> bufferForOnePath = new HashMap<>();
+			for (Map.Entry<String, Object> entry : attributesForOnePath.entrySet()) {
+				bufferForOnePath.put(entry.getKey(), ByteUtils.getByteBuffer(entry.getValue(), DataType.TEXT));
+			}
+			buffers.add(bufferForOnePath);
+		}
+		return buffers;
 	}
 }
