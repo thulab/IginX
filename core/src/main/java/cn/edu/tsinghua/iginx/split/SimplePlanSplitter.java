@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.metadata.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.MetaManager;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,8 +45,12 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 				createFragment(entry.getKey(), plan.getStartTime(), plan.getEndTime());
 			}
 			for (FragmentMeta fragment : fragments) {
-				List<FragmentReplicaMeta> replicas =
-						chooseFragmentReplicas(fragment, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+				List<FragmentReplicaMeta> replicas = new ArrayList<>();
+				if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.INSERT_RECORDS) {
+					replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+				} else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.QUERY_DATA) {
+					replicas = chooseFragmentReplicas(fragment, true, 0);
+				}
 				for (FragmentReplicaMeta replica : replicas) {
 					infoList.add(new SplitInfo(entry.getValue(), replica));
 				}
@@ -55,12 +60,17 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 	}
 
 	@Override
-	public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, int replicaNum) {
+public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery, int replicaNum) {
 		// random
 		List<FragmentReplicaMeta> replicas = new ArrayList<>();
 		Random random = new Random();
-		for (int i = 0; i < replicaNum; i++) {
+		if (isQuery) {
 			replicas.add(fragment.getReplicaMetas().get(random.nextInt(fragment.getReplicaMetasNum())));
+		} else {
+			replicas.add(fragment.getReplicaMetas().get(0));
+			for (int i = 0; i < replicaNum; i++) {
+				replicas.add(fragment.getReplicaMetas().get(random.nextInt(fragment.getReplicaMetasNum() - 1) + 1));
+			}
 		}
 		return replicas;
 	}
