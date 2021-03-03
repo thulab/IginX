@@ -19,10 +19,16 @@
 package cn.edu.tsinghua.iginx.exceptions;
 
 public enum StatusCode {
-	SUCCESS_STATUS(200),
+	WRONG_PASSWORD(100),
+	INVALID_SESSION(101),
 
-	SESSION_ERROR(300),
-	STATEMENT_EXECUTION_ERROR(301);
+	SUCCESS_STATUS(200),
+	PARTIAL_SUCCESS(204),
+
+	REDIRECT(300),
+
+	SESSION_ERROR(400),
+	STATEMENT_EXECUTION_ERROR(401);
 
 	private int statusCode;
 

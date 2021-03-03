@@ -16,7 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework.processor;
+package cn.edu.tsinghua.iginx.combine;
 
-public interface PreQueryExecuteProcessor {
+import cn.edu.tsinghua.iginx.thrift.Status;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public abstract class CombineResult {
+
+    private Status status;
+
 }

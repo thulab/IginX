@@ -20,15 +20,25 @@ package cn.edu.tsinghua.iginx.conf;
 
 public class Config {
 
-    private String ip = "127.0.0.1";
+    private String ip = "0.0.0.0";
 
     private int port = 6324;
+
+    private String username = "root";
+
+    private String password = "root";
 
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
     private String databaseList = "";
 
     private int level = 2;
+
+    private int maxAsyncRetryTimes = 2;
+
+    private int syncExecuteThreadPool = 60;
+
+    private int asyncExecuteThreadPool = 20;
 
     public String getIp() {
         return ip;
@@ -44,6 +54,22 @@ public class Config {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getZookeeperConnectionString() {
@@ -68,5 +94,29 @@ public class Config {
 
     public void setLevel(int level) {
         this.level = level;
+    }
+
+    public int getMaxAsyncRetryTimes() {
+        return maxAsyncRetryTimes;
+    }
+
+    public void setMaxAsyncRetryTimes(int maxAsyncRetryTimes) {
+        this.maxAsyncRetryTimes = maxAsyncRetryTimes;
+    }
+
+    public int getSyncExecuteThreadPool() {
+        return syncExecuteThreadPool;
+    }
+
+    public void setSyncExecuteThreadPool(int syncExecuteThreadPool) {
+        this.syncExecuteThreadPool = syncExecuteThreadPool;
+    }
+
+    public int getAsyncExecuteThreadPool() {
+        return asyncExecuteThreadPool;
+    }
+
+    public void setAsyncExecuteThreadPool(int asyncExecuteThreadPool) {
+        this.asyncExecuteThreadPool = asyncExecuteThreadPool;
     }
 }

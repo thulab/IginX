@@ -16,20 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework.db;
+package cn.edu.tsinghua.iginx.core.context;
 
-import java.util.Locale;
+import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-public enum DBType {
-    IoTDB; // 目前只资瓷 iotdb
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class DropDatabaseContext extends RequestContext {
 
-    public static DBType fromString(String s) {
-        switch (s.toLowerCase(Locale.ROOT)) {
-            case "iotdb":
-                return IoTDB;
-            default:
-                return null;
-        }
+    private DropDatabaseReq req;
+
+    public DropDatabaseContext(DropDatabaseReq req) {
+        super(req.sessionId, ContextType.DropDatabase);
+        this.req = req;
     }
-
 }

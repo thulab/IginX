@@ -1,7 +1,28 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.utils;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
+
+import static cn.edu.tsinghua.iginx.utils.DataType.deserialize;
 
 public class ByteUtils {
 
@@ -79,6 +100,38 @@ public class ByteUtils {
 		return buffer;
 	}
 
+	public static boolean getBoolean(ByteBuffer buffer) {
+		return buffer.get() == 1;
+	}
+
+	public static int getInteger(ByteBuffer buffer) {
+		return buffer.getInt();
+	}
+
+	public static long getLong(ByteBuffer buffer) {
+		return buffer.getLong();
+	}
+
+	public static float getFloat(ByteBuffer buffer) {
+		return buffer.getFloat();
+	}
+
+	public static double getDouble(ByteBuffer buffer) {
+		return buffer.getDouble();
+	}
+
+	public static String getString(ByteBuffer buffer) {
+		int length = getInteger(buffer);
+		if (length < 0) {
+			return null;
+		} else if (length == 0) {
+			return "";
+		}
+		byte[] bytes = new byte[length];
+		buffer.get(bytes, 0, length);
+		return new String(bytes, 0, length);
+	}
+
 	public static byte booleanToByte(boolean x) {
 		if (x) {
 			return 1;
@@ -86,4 +139,35 @@ public class ByteUtils {
 			return 0;
 		}
 	}
+
+	public static Object[] getValuesByDataType(List<ByteBuffer> values, List<Map<String, String>> attributes) {
+		Object[] tempValues = new Object[values.size()];
+		for (int i = 0; i < attributes.size(); i++) {
+			switch (deserialize(Short.parseShort(attributes.get(i).get("DataType")))) {
+				case BOOLEAN:
+					tempValues[i] = getBoolean(values.get(i));
+					break;
+				case INT32:
+					tempValues[i] = getInteger(values.get(i));
+					break;
+				case INT64:
+					tempValues[i] = getLong(values.get(i));
+					break;
+				case FLOAT:
+					tempValues[i] = getFloat(values.get(i));
+					break;
+				case DOUBLE:
+					tempValues[i] = getDouble(values.get(i));
+					break;
+				case TEXT:
+					tempValues[i] = getString(values.get(i));
+					break;
+				default:
+					// TODO
+					break;
+			}
+		}
+		return tempValues;
+	}
+
 }

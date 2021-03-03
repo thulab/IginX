@@ -74,6 +74,11 @@
       <version>1.18.18</version>
       <scope>provided</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.iotdb</groupId>
+      <artifactId>iotdb-session</artifactId>
+      <version>0.11.2</version>
+    </dependency>
   </dependencies>
 
 </project>

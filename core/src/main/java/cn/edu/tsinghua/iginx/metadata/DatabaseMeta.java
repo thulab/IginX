@@ -18,12 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.framework.db.DBType;
-import java.util.ArrayList;
+import cn.edu.tsinghua.iginx.core.db.DBType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 

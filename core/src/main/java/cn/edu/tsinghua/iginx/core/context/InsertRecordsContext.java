@@ -16,12 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.core.context;
 
-public class QueryParser {
+import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-	public QueryContext parseQuery(String statement) {
-		// TODO
-		return null;
-	}
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class InsertRecordsContext extends RequestContext {
+
+    private InsertRecordsReq req;
+
+    public InsertRecordsContext(InsertRecordsReq req) {
+        super(req.sessionId, ContextType.InsertRecords);
+        this.req = req;
+    }
+
+    public InsertRecordsReq getReq() {
+        return req;
+    }
 }

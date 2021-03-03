@@ -16,27 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.cluster;
+package cn.edu.tsinghua.iginx.utils;
 
-public class IginxManager {
+public class Bitmap {
 
-	// TODO
+    private int size;
 
-	public void addWorker(IginxWorker worker) {
-		// TODO
-	}
+    private byte[] bitmap;
 
-	public IginxWorker getWorker() {
-		// TODO
-		return null;
-	}
+    public Bitmap(int size) {
 
-	public void removeWorker(IginxWorker worker) {
-		// TODO
-	}
+    }
 
-	public boolean checkWorker(IginxWorker worker) {
-		// TODO
-		return true;
-	}
+    public void mark(int i) {
+
+    }
+
+    public byte[] getBytes() {
+        return bitmap;
+    }
+
 }

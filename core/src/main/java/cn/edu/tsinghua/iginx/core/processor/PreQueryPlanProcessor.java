@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework.processor;
+package cn.edu.tsinghua.iginx.core.processor;
 
-public interface PreQueryResultCombineProcessor {
+import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.thrift.Status;
+
+public interface PreQueryPlanProcessor {
+
+    Status queryPlanPreProcessor(RequestContext requestContext);
+
 }

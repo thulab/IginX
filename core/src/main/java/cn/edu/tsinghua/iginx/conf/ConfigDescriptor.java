@@ -42,14 +42,18 @@ public class ConfigDescriptor {
             Properties properties = new Properties();
             properties.load(in);
 
-            //TODO: 加载各种配置信息
             config.setIp(properties.getProperty("ip", "127.0.0.1"));
             config.setPort(Integer.parseInt(properties.getProperty("port", "6324")));
+            config.setUsername(properties.getProperty("username", "root"));
+            config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
                     "127.0.0.1:2181"));
             config.setDatabaseList(properties.getProperty("databaseList",
                     "127.0.0.1:8888:iotdb,127.0.0.1:8889:iotdb"));
             config.setLevel(Integer.parseInt(properties.getProperty("level", "2")));
+            config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
+            config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
+            config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

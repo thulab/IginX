@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.query.result;
 
-public class QueryContext {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+
+public class InsertRecordsPlanExecuteResult extends SyncPlanExecuteResult {
+
+    public InsertRecordsPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
 }
