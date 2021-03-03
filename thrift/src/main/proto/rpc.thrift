@@ -44,7 +44,7 @@ struct DropDatabaseReq {
 struct AddColumnsReq {
   1: required i64 sessionId
   2: required list<string> paths
-  3: optional list<map<string, binary>> attributes
+  3: optional list<map<string, string>> attributes
 }
 
 struct DeleteColumnsReq {
@@ -57,7 +57,7 @@ struct InsertRecordsReq {
   2: required list<string> paths
   3: required list<i64> timestamps
   4: required list<binary> values
-  5: optional list<map<string, binary>> attributes
+  5: optional list<map<string, string>> attributes
 }
 
 struct DeleteDataInColumnsReq {

@@ -24,7 +24,7 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
   public @org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> paths; // required
   public @org.apache.thrift.annotation.Nullable java.util.List<java.lang.Long> timestamps; // required
   public @org.apache.thrift.annotation.Nullable java.util.List<java.nio.ByteBuffer> values; // required
-  public @org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> attributes; // optional
+  public @org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.lang.String>> attributes; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -120,7 +120,7 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
                 new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-                new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING                , true)))));
+                new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)))));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(InsertRecordsReq.class, metaDataMap);
   }
@@ -161,9 +161,9 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
       this.values = __this__values;
     }
     if (other.isSetAttributes()) {
-      java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> __this__attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>(other.attributes.size());
-      for (java.util.Map<java.lang.String,java.nio.ByteBuffer> other_element : other.attributes) {
-        java.util.Map<java.lang.String,java.nio.ByteBuffer> __this__attributes_copy = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(other_element);
+      java.util.List<java.util.Map<java.lang.String,java.lang.String>> __this__attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>(other.attributes.size());
+      for (java.util.Map<java.lang.String,java.lang.String> other_element : other.attributes) {
+        java.util.Map<java.lang.String,java.lang.String> __this__attributes_copy = new java.util.HashMap<java.lang.String,java.lang.String>(other_element);
         __this__attributes.add(__this__attributes_copy);
       }
       this.attributes = __this__attributes;
@@ -335,23 +335,23 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.util.Iterator<java.util.Map<java.lang.String,java.nio.ByteBuffer>> getAttributesIterator() {
+  public java.util.Iterator<java.util.Map<java.lang.String,java.lang.String>> getAttributesIterator() {
     return (this.attributes == null) ? null : this.attributes.iterator();
   }
 
-  public void addToAttributes(java.util.Map<java.lang.String,java.nio.ByteBuffer> elem) {
+  public void addToAttributes(java.util.Map<java.lang.String,java.lang.String> elem) {
     if (this.attributes == null) {
-      this.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>();
+      this.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>();
     }
     this.attributes.add(elem);
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> getAttributes() {
+  public java.util.List<java.util.Map<java.lang.String,java.lang.String>> getAttributes() {
     return this.attributes;
   }
 
-  public InsertRecordsReq setAttributes(@org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> attributes) {
+  public InsertRecordsReq setAttributes(@org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.lang.String>> attributes) {
     this.attributes = attributes;
     return this;
   }
@@ -409,7 +409,7 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
       if (value == null) {
         unsetAttributes();
       } else {
-        setAttributes((java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>>)value);
+        setAttributes((java.util.List<java.util.Map<java.lang.String,java.lang.String>>)value);
       }
       break;
 
@@ -784,19 +784,19 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list87 = iprot.readListBegin();
-                struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>(_list87.size);
-                @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.nio.ByteBuffer> _elem88;
+                struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>(_list87.size);
+                @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.lang.String> _elem88;
                 for (int _i89 = 0; _i89 < _list87.size; ++_i89)
                 {
                   {
                     org.apache.thrift.protocol.TMap _map90 = iprot.readMapBegin();
-                    _elem88 = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(2*_map90.size);
+                    _elem88 = new java.util.HashMap<java.lang.String,java.lang.String>(2*_map90.size);
                     @org.apache.thrift.annotation.Nullable java.lang.String _key91;
-                    @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer _val92;
+                    @org.apache.thrift.annotation.Nullable java.lang.String _val92;
                     for (int _i93 = 0; _i93 < _map90.size; ++_i93)
                     {
                       _key91 = iprot.readString();
-                      _val92 = iprot.readBinary();
+                      _val92 = iprot.readString();
                       _elem88.put(_key91, _val92);
                     }
                     iprot.readMapEnd();
@@ -872,14 +872,14 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
           oprot.writeFieldBegin(ATTRIBUTES_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.MAP, struct.attributes.size()));
-            for (java.util.Map<java.lang.String,java.nio.ByteBuffer> _iter97 : struct.attributes)
+            for (java.util.Map<java.lang.String,java.lang.String> _iter97 : struct.attributes)
             {
               {
                 oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, _iter97.size()));
-                for (java.util.Map.Entry<java.lang.String, java.nio.ByteBuffer> _iter98 : _iter97.entrySet())
+                for (java.util.Map.Entry<java.lang.String, java.lang.String> _iter98 : _iter97.entrySet())
                 {
                   oprot.writeString(_iter98.getKey());
-                  oprot.writeBinary(_iter98.getValue());
+                  oprot.writeString(_iter98.getValue());
                 }
                 oprot.writeMapEnd();
               }
@@ -936,14 +936,14 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
       if (struct.isSetAttributes()) {
         {
           oprot.writeI32(struct.attributes.size());
-          for (java.util.Map<java.lang.String,java.nio.ByteBuffer> _iter102 : struct.attributes)
+          for (java.util.Map<java.lang.String,java.lang.String> _iter102 : struct.attributes)
           {
             {
               oprot.writeI32(_iter102.size());
-              for (java.util.Map.Entry<java.lang.String, java.nio.ByteBuffer> _iter103 : _iter102.entrySet())
+              for (java.util.Map.Entry<java.lang.String, java.lang.String> _iter103 : _iter102.entrySet())
               {
                 oprot.writeString(_iter103.getKey());
-                oprot.writeBinary(_iter103.getValue());
+                oprot.writeString(_iter103.getValue());
               }
             }
           }
@@ -993,19 +993,19 @@ public class InsertRecordsReq implements org.apache.thrift.TBase<InsertRecordsRe
       if (incoming.get(0)) {
         {
           org.apache.thrift.protocol.TList _list113 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.MAP, iprot.readI32());
-          struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>(_list113.size);
-          @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.nio.ByteBuffer> _elem114;
+          struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>(_list113.size);
+          @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.lang.String> _elem114;
           for (int _i115 = 0; _i115 < _list113.size; ++_i115)
           {
             {
               org.apache.thrift.protocol.TMap _map116 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-              _elem114 = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(2*_map116.size);
+              _elem114 = new java.util.HashMap<java.lang.String,java.lang.String>(2*_map116.size);
               @org.apache.thrift.annotation.Nullable java.lang.String _key117;
-              @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer _val118;
+              @org.apache.thrift.annotation.Nullable java.lang.String _val118;
               for (int _i119 = 0; _i119 < _map116.size; ++_i119)
               {
                 _key117 = iprot.readString();
-                _val118 = iprot.readBinary();
+                _val118 = iprot.readString();
                 _elem114.put(_key117, _val118);
               }
             }

@@ -20,7 +20,7 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
 
   public long sessionId; // required
   public @org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> paths; // required
-  public @org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> attributes; // optional
+  public @org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.lang.String>> attributes; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -104,7 +104,7 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
                 new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-                new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING                , true)))));
+                new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)))));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AddColumnsReq.class, metaDataMap);
   }
@@ -133,9 +133,9 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
       this.paths = __this__paths;
     }
     if (other.isSetAttributes()) {
-      java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> __this__attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>(other.attributes.size());
-      for (java.util.Map<java.lang.String,java.nio.ByteBuffer> other_element : other.attributes) {
-        java.util.Map<java.lang.String,java.nio.ByteBuffer> __this__attributes_copy = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(other_element);
+      java.util.List<java.util.Map<java.lang.String,java.lang.String>> __this__attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>(other.attributes.size());
+      for (java.util.Map<java.lang.String,java.lang.String> other_element : other.attributes) {
+        java.util.Map<java.lang.String,java.lang.String> __this__attributes_copy = new java.util.HashMap<java.lang.String,java.lang.String>(other_element);
         __this__attributes.add(__this__attributes_copy);
       }
       this.attributes = __this__attributes;
@@ -223,23 +223,23 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.util.Iterator<java.util.Map<java.lang.String,java.nio.ByteBuffer>> getAttributesIterator() {
+  public java.util.Iterator<java.util.Map<java.lang.String,java.lang.String>> getAttributesIterator() {
     return (this.attributes == null) ? null : this.attributes.iterator();
   }
 
-  public void addToAttributes(java.util.Map<java.lang.String,java.nio.ByteBuffer> elem) {
+  public void addToAttributes(java.util.Map<java.lang.String,java.lang.String> elem) {
     if (this.attributes == null) {
-      this.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>();
+      this.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>();
     }
     this.attributes.add(elem);
   }
 
   @org.apache.thrift.annotation.Nullable
-  public java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> getAttributes() {
+  public java.util.List<java.util.Map<java.lang.String,java.lang.String>> getAttributes() {
     return this.attributes;
   }
 
-  public AddColumnsReq setAttributes(@org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>> attributes) {
+  public AddColumnsReq setAttributes(@org.apache.thrift.annotation.Nullable java.util.List<java.util.Map<java.lang.String,java.lang.String>> attributes) {
     this.attributes = attributes;
     return this;
   }
@@ -281,7 +281,7 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
       if (value == null) {
         unsetAttributes();
       } else {
-        setAttributes((java.util.List<java.util.Map<java.lang.String,java.nio.ByteBuffer>>)value);
+        setAttributes((java.util.List<java.util.Map<java.lang.String,java.lang.String>>)value);
       }
       break;
 
@@ -542,19 +542,19 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
                 org.apache.thrift.protocol.TList _list47 = iprot.readListBegin();
-                struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>(_list47.size);
-                @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.nio.ByteBuffer> _elem48;
+                struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>(_list47.size);
+                @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.lang.String> _elem48;
                 for (int _i49 = 0; _i49 < _list47.size; ++_i49)
                 {
                   {
                     org.apache.thrift.protocol.TMap _map50 = iprot.readMapBegin();
-                    _elem48 = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(2*_map50.size);
+                    _elem48 = new java.util.HashMap<java.lang.String,java.lang.String>(2*_map50.size);
                     @org.apache.thrift.annotation.Nullable java.lang.String _key51;
-                    @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer _val52;
+                    @org.apache.thrift.annotation.Nullable java.lang.String _val52;
                     for (int _i53 = 0; _i53 < _map50.size; ++_i53)
                     {
                       _key51 = iprot.readString();
-                      _val52 = iprot.readBinary();
+                      _val52 = iprot.readString();
                       _elem48.put(_key51, _val52);
                     }
                     iprot.readMapEnd();
@@ -606,14 +606,14 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
           oprot.writeFieldBegin(ATTRIBUTES_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.MAP, struct.attributes.size()));
-            for (java.util.Map<java.lang.String,java.nio.ByteBuffer> _iter55 : struct.attributes)
+            for (java.util.Map<java.lang.String,java.lang.String> _iter55 : struct.attributes)
             {
               {
                 oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, _iter55.size()));
-                for (java.util.Map.Entry<java.lang.String, java.nio.ByteBuffer> _iter56 : _iter55.entrySet())
+                for (java.util.Map.Entry<java.lang.String, java.lang.String> _iter56 : _iter55.entrySet())
                 {
                   oprot.writeString(_iter56.getKey());
-                  oprot.writeBinary(_iter56.getValue());
+                  oprot.writeString(_iter56.getValue());
                 }
                 oprot.writeMapEnd();
               }
@@ -656,14 +656,14 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
       if (struct.isSetAttributes()) {
         {
           oprot.writeI32(struct.attributes.size());
-          for (java.util.Map<java.lang.String,java.nio.ByteBuffer> _iter58 : struct.attributes)
+          for (java.util.Map<java.lang.String,java.lang.String> _iter58 : struct.attributes)
           {
             {
               oprot.writeI32(_iter58.size());
-              for (java.util.Map.Entry<java.lang.String, java.nio.ByteBuffer> _iter59 : _iter58.entrySet())
+              for (java.util.Map.Entry<java.lang.String, java.lang.String> _iter59 : _iter58.entrySet())
               {
                 oprot.writeString(_iter59.getKey());
-                oprot.writeBinary(_iter59.getValue());
+                oprot.writeString(_iter59.getValue());
               }
             }
           }
@@ -691,19 +691,19 @@ public class AddColumnsReq implements org.apache.thrift.TBase<AddColumnsReq, Add
       if (incoming.get(0)) {
         {
           org.apache.thrift.protocol.TList _list63 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.MAP, iprot.readI32());
-          struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.nio.ByteBuffer>>(_list63.size);
-          @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.nio.ByteBuffer> _elem64;
+          struct.attributes = new java.util.ArrayList<java.util.Map<java.lang.String,java.lang.String>>(_list63.size);
+          @org.apache.thrift.annotation.Nullable java.util.Map<java.lang.String,java.lang.String> _elem64;
           for (int _i65 = 0; _i65 < _list63.size; ++_i65)
           {
             {
               org.apache.thrift.protocol.TMap _map66 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-              _elem64 = new java.util.HashMap<java.lang.String,java.nio.ByteBuffer>(2*_map66.size);
+              _elem64 = new java.util.HashMap<java.lang.String,java.lang.String>(2*_map66.size);
               @org.apache.thrift.annotation.Nullable java.lang.String _key67;
-              @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer _val68;
+              @org.apache.thrift.annotation.Nullable java.lang.String _val68;
               for (int _i69 = 0; _i69 < _map66.size; ++_i69)
               {
                 _key67 = iprot.readString();
-                _val68 = iprot.readBinary();
+                _val68 = iprot.readString();
                 _elem64.put(_key67, _val68);
               }
             }
