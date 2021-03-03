@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -387,6 +388,13 @@ public class MetaManager implements IMetaManager, IService {
             }
         }
         return false;
+    }
+
+    @Override
+    public DatabaseMeta chooseDatabaseForNewFragment() {
+        List<DatabaseMeta> databaseMetaList = getDatabaseList().stream().
+            sorted(Comparator.comparing(DatabaseMeta::getFragmentReplicaMetaNum)).collect(Collectors.toList());
+        return databaseMetaList.get(0);
     }
 
     @Override

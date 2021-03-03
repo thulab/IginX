@@ -87,4 +87,8 @@ public final class DatabaseMeta implements Serializable {
         //TODO:
         return null;
     }
+
+    public int getFragmentReplicaMetaNum() {
+        return fragmentReplicaMetaList.size();
+    }
 }

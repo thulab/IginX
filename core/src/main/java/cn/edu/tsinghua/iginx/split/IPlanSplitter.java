@@ -35,8 +35,9 @@ public interface IPlanSplitter {
 
 	/**
 	 * 从给定的分片中选择副本
-	 * @param fragment 待拆分的 DataPlan
+	 * @param fragment 被选择的分片
+	 * @param replicaNum 待选择的副本数量
 	 * @return 选出的分片副本
 	 */
-	FragmentReplicaMeta chooseFragmentReplica(FragmentMeta fragment);
+	List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, int replicaNum);
 }

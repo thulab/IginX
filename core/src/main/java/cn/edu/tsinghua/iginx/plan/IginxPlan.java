@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
+
 import java.util.List;
 
 public abstract class IginxPlan {
@@ -59,6 +61,10 @@ public abstract class IginxPlan {
 		return isSync;
 	}
 
+	public long getDatabaseId() {
+		return databaseId;
+	}
+
 	public void setQuery(boolean isQuery) {
 		this.isQuery = isQuery;
 	}
@@ -73,10 +79,6 @@ public abstract class IginxPlan {
 
 	public void setSync(boolean isSync) {
 		this.isSync = isSync;
-	}
-
-	public long getDatabaseId() {
-		return databaseId;
 	}
 
 	public void setDatabaseId(long databaseId) {

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.split;
+package cn.edu.tsinghua.iginx.utils;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 

@@ -54,6 +54,7 @@ public class ConfigDescriptor {
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
+            config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

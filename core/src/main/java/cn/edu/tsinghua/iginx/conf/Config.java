@@ -40,6 +40,8 @@ public class Config {
 
     private int asyncExecuteThreadPool = 20;
 
+    private int replicaNum = 1;
+
     public String getIp() {
         return ip;
     }
@@ -118,5 +120,13 @@ public class Config {
 
     public void setAsyncExecuteThreadPool(int asyncExecuteThreadPool) {
         this.asyncExecuteThreadPool = asyncExecuteThreadPool;
+    }
+
+    public int getReplicaNum() {
+        return replicaNum;
+    }
+
+    public void setReplicaNum(int replicaNum) {
+        this.replicaNum = replicaNum;
     }
 }

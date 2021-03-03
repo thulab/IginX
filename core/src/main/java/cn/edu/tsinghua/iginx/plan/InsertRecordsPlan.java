@@ -93,7 +93,7 @@ public class InsertRecordsPlan extends DataPlan {
 				indexes.add(i);
 			}
 		}
-		return new Pair<>(tempTimestamps.stream().mapToLong(i -> i).toArray(), indexes);
+		return new Pair<>(tempTimestamps.stream().mapToLong(Long::longValue).toArray(), indexes);
 	}
 
 	public Object[] getValues() {

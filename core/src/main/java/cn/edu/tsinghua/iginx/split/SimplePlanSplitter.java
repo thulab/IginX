@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.MetaManager;
@@ -28,26 +29,39 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import static cn.edu.tsinghua.iginx.fragment.FragmentProcessor.createFragment;
+
 public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSplitter {
 
 	@Override
 	public List<SplitInfo> getSplitResults(DataPlan plan) {
 		List<SplitInfo> infoList = new ArrayList<>();
 
-		for (Map.Entry<String, List<Integer>> entry : plan.getIndexesOfPaths().entrySet()) {
+		for (Map.Entry<String, List<Integer>> entry : plan.generateIndexesOfPaths().entrySet()) {
 			List<FragmentMeta> fragments =
 					MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(entry.getKey(), plan.getStartTime(), plan.getEndTime());
+			if (fragments.isEmpty()) {
+				createFragment(entry.getKey(), plan.getStartTime(), plan.getEndTime());
+			}
 			for (FragmentMeta fragment : fragments) {
-				FragmentReplicaMeta replica = chooseFragmentReplica(fragment);
-				infoList.add(new SplitInfo(entry.getValue(), replica));
+				List<FragmentReplicaMeta> replicas =
+						chooseFragmentReplicas(fragment, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+				for (FragmentReplicaMeta replica : replicas) {
+					infoList.add(new SplitInfo(entry.getValue(), replica));
+				}
 			}
 		}
 		return infoList;
 	}
 
 	@Override
-	public FragmentReplicaMeta chooseFragmentReplica(FragmentMeta fragment) {
+	public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, int replicaNum) {
 		// random
-		return fragment.getReplicaMetas().get(new Random().nextInt(fragment.getReplicaMetasNum()));
+		List<FragmentReplicaMeta> replicas = new ArrayList<>();
+		Random random = new Random();
+		for (int i = 0; i < replicaNum; i++) {
+			replicas.add(fragment.getReplicaMetas().get(random.nextInt(fragment.getReplicaMetasNum())));
+		}
+		return replicas;
 	}
 }

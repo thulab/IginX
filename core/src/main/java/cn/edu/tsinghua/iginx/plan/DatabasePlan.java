@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class DatabasePlan extends IginxPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(CreateDatabasePlan.class);
+	private static final Logger logger = LoggerFactory.getLogger(DatabasePlan.class);
 
 	private String databaseName;
 

@@ -60,6 +60,14 @@ public final class FragmentMeta implements Serializable {
         this.replicaMetas = replicaMetas;
     }
 
+    public FragmentMeta(String key, long startTime, long endTime, long databaseId) {
+        this.key = key;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.replicaMetas = new HashMap<>();
+        this.replicaMetas.put(0, new FragmentReplicaMeta(key, startTime, 0, endTime, databaseId));
+    }
+
     public String getKey() {
         return key;
     }

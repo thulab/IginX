@@ -74,4 +74,9 @@ public interface IMetaManager {
      */
     boolean createFragment(FragmentMeta fragmentMeta);
 
+    /**
+     * 为新创建的分片选择数据库实例
+     */
+    DatabaseMeta chooseDatabaseForNewFragment();
+
 }

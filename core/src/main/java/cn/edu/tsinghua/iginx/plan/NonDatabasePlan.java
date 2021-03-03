@@ -26,7 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.split.SplitUtils.getKeyFromPath;
+import static cn.edu.tsinghua.iginx.utils.SplitUtils.getKeyFromPath;
 
 public abstract class NonDatabasePlan extends IginxPlan {
 
@@ -34,16 +34,13 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	private List<String> paths;
 
-	private Map<String, List<Integer>> indexesOfPaths;
-
 	public NonDatabasePlan(IginxPlanType iginxPlanType, boolean isQuery, List<String> paths) {
 		super(iginxPlanType, isQuery);
 		this.paths = paths;
-		generateIndexesOfPaths();
 	}
 
-	public void generateIndexesOfPaths() {
-		indexesOfPaths = new HashMap<>();
+	public Map<String, List<Integer>> generateIndexesOfPaths() {
+		Map<String, List<Integer>> indexesOfPaths = new HashMap<>();
 
 		for (int i = 0; i < getPathsNum(); i++) {
 			String key = getKeyFromPath(getPath(i));
@@ -55,6 +52,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 				indexesOfPaths.get(key).add(i);
 			}
 		}
+		return indexesOfPaths;
 	}
 
 	public List<String> getPaths() {
@@ -93,13 +91,5 @@ public abstract class NonDatabasePlan extends IginxPlan {
 			}
 		}
 		return tempPaths;
-	}
-
-	public Map<String, List<Integer>> getIndexesOfPaths() {
-		return indexesOfPaths;
-	}
-
-	public void setIndexesOfPaths(Map<String, List<Integer>> indexesOfPaths) {
-		this.indexesOfPaths = indexesOfPaths;
 	}
 }
