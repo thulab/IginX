@@ -16,7 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework.processor;
+package cn.edu.tsinghua.iginx.core.context;
 
-public interface PostQueryResultCombineProcessor {
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class DeleteDataInColumnsContext extends RequestContext {
+
+    private DeleteDataInColumnsReq req;
+
+    public DeleteDataInColumnsContext(DeleteDataInColumnsReq req) {
+        super(req.sessionId, ContextType.DeleteDataInColumns);
+        this.req = req;
+    }
 }

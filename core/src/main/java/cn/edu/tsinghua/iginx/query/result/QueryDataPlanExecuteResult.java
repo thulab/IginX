@@ -16,10 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework;
+package cn.edu.tsinghua.iginx.query.result;
 
-public interface IginXService {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
+import lombok.Getter;
+import lombok.Setter;
 
-    void shutdown() throws Exception;
+import java.util.List;
 
+@Getter
+@Setter
+public class QueryDataPlanExecuteResult extends SyncPlanExecuteResult {
+
+    private List<TimeSeriesDataSet> timeSeriesDataSets;
+
+    public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, List<TimeSeriesDataSet> timeSeriesDataSets) {
+        super(statusCode, plan);
+        this.timeSeriesDataSets = timeSeriesDataSets;
+    }
 }

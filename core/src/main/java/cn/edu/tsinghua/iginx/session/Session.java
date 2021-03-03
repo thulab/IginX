@@ -19,21 +19,9 @@
 package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.conf.Constants;
-import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.DataType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;

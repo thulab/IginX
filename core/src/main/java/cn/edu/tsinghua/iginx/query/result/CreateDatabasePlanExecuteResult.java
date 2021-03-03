@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework.processor;
+package cn.edu.tsinghua.iginx.query.result;
 
-public interface PostQueryPlanProcessor {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+
+public class CreateDatabasePlanExecuteResult extends SyncPlanExecuteResult {
+
+    public CreateDatabasePlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
 }

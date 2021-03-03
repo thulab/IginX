@@ -20,8 +20,8 @@ package cn.edu.tsinghua.iginx.split;
 
 import cn.edu.tsinghua.iginx.metadata.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.plan.DataPlan;
 import cn.edu.tsinghua.iginx.metadata.MetaManager;
+import cn.edu.tsinghua.iginx.plan.DataPlan;
 
 import java.util.ArrayList;
 import java.util.List;

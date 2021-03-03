@@ -16,7 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.framework;
+package cn.edu.tsinghua.iginx.query.aysnc.queue;
 
-public class MainService {
+import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
+
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
+
+public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
+
+    private final Queue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
+
+    @Override
+    public boolean addAsyncTask(AsyncTask asyncTask) {
+        return asyncTasks.add(asyncTask);
+    }
+
+    @Override
+    public AsyncTask getAsyncTask() {
+        return asyncTasks.remove();
+    }
 }

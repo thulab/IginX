@@ -18,67 +18,99 @@
  */
 package cn.edu.tsinghua.iginx.cluster;
 
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.core.Core;
+import cn.edu.tsinghua.iginx.core.context.*;
+import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
 
-	private IMetaManager metaManager;
+	private static final IginxWorker instance = new IginxWorker();
+
+	private final Set<Long> sessions = Collections.synchronizedSet(new HashSet<>());
+
+	private final Core core = Core.getInstance();
 
 	@Override
 	public OpenSessionResp openSession(OpenSessionReq req) {
-		return null;
+		if (!req.username.equals(ConfigDescriptor.getInstance().getConfig().getUsername()) ||
+				!req.password.equals(ConfigDescriptor.getInstance().getConfig().getPassword())) {
+			return new OpenSessionResp(RpcUtils.WRONG_PASSWORD);
+		}
+		long id = SnowFlakeUtils.getInstance().nextId();
+		sessions.add(id);
+		OpenSessionResp resp = new OpenSessionResp(RpcUtils.SUCCESS);
+		resp.setSessionId(id);
+		return resp;
 	}
 
 	@Override
 	public Status closeSession(CloseSessionReq req) {
-		return null;
+		if (!sessions.contains(req.getSessionId())) {
+			return RpcUtils.INVALID_SESSION;
+		}
+		sessions.remove(req.sessionId);
+		return RpcUtils.SUCCESS;
 	}
 
 	@Override
 	public Status createDatabase(CreateDatabaseReq req) {
-		return null;
+		CreateDatabaseContext context = new CreateDatabaseContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override
 	public Status dropDatabase(DropDatabaseReq req) {
-		return null;
+		DropDatabaseContext context = new DropDatabaseContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override
 	public Status addColumns(AddColumnsReq req) {
-		return null;
+		AddColumnsContext context = new AddColumnsContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override
 	public Status deleteColumns(DeleteColumnsReq req) {
-		return null;
+		DeleteColumnsContext context = new DeleteColumnsContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override
 	public Status insertRecords(InsertRecordsReq req) {
-		return null;
+		InsertRecordsContext context = new InsertRecordsContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override
 	public Status deleteDataInColumns(DeleteDataInColumnsReq req) {
-		return null;
+		DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override
 	public QueryDataResp queryData(QueryDataReq req) {
-		return null;
+		QueryDataContext context = new QueryDataContext(req);
+		core.processRequest(context);
+		return ((QueryDataCombineResult) context.getCombineResult()).generateResp();
 	}
+
+	public static IginxWorker getInstance() {
+		return instance;
+	}
+
 }

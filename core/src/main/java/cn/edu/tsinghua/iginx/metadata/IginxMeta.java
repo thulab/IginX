@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import java.util.ArrayList;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.slf4j.Logger;
