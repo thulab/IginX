@@ -164,9 +164,9 @@ public class Session {
 		}
 	}
 
-	public void addColumns(List<String> paths, List<Map<String, Object>> attributes) throws SessionException, ExecutionException {
+	public void addColumns(List<String> paths, List<Map<String, String>> attributes) throws SessionException, ExecutionException {
 		AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-		req.setAttributes(objectMapListToByteBufferMapList(attributes));
+		req.setAttributes(attributes);
 
 		try {
 			RpcUtils.verifySuccess(client.addColumns(req));
@@ -194,7 +194,7 @@ public class Session {
 	}
 
 	public void insertRecords(List<String> paths, List<Long> timestamps, List<List<Object>> values,
-	    List<DataType> dataTypeList, List<Map<String, Object>> attributes) throws SessionException, ExecutionException {
+	    List<DataType> dataTypeList, List<Map<String, String>> attributes) throws SessionException, ExecutionException {
 		InsertRecordsReq req = new InsertRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
@@ -202,7 +202,7 @@ public class Session {
 		for (int i = 0; i < values.size(); i++) {
 			req.addToValues(ByteUtils.getByteBuffer(values.get(i), dataTypeList.get(i)));
 		}
-		req.setAttributes(objectMapListToByteBufferMapList(attributes));
+		req.setAttributes(attributes);
 
 		try {
 			RpcUtils.verifySuccess(client.insertRecords(req));
@@ -238,17 +238,5 @@ public class Session {
 			throw new SessionException(e);
 		}
 		return resp.queryDataSet;
-	}
-
-	private List<Map<String, ByteBuffer>> objectMapListToByteBufferMapList(List<Map<String, Object>> attributes) {
-		List<Map<String, ByteBuffer>> buffers = new ArrayList<>();
-		for (Map<String, Object> attributesForOnePath : attributes) {
-			Map<String, ByteBuffer> bufferForOnePath = new HashMap<>();
-			for (Map.Entry<String, Object> entry : attributesForOnePath.entrySet()) {
-				bufferForOnePath.put(entry.getKey(), ByteUtils.getByteBuffer(entry.getValue(), DataType.TEXT));
-			}
-			buffers.add(bufferForOnePath);
-		}
-		return buffers;
 	}
 }

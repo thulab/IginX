@@ -105,7 +105,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
 
     protected abstract CreateDatabasePlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan);
 
-    protected abstract DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan dropDatabasePlan);
+    protected abstract DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan);
 
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));

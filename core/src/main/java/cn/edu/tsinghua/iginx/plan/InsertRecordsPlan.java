@@ -34,10 +34,10 @@ public class InsertRecordsPlan extends DataPlan {
 
 	private Object[] values;
 
-	private List<Map<String, Object>> attributes;
+	private List<Map<String, String>> attributes;
 
 	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] values,
-	    List<Map<String, Object>> attributes) {
+	    List<Map<String, String>> attributes) {
 		super(IginxPlanType.INSERT_RECORDS, false, paths, timestamps[0], timestamps[timestamps.length - 1]);
 		this.timestamps = timestamps;
 		this.values = values;
@@ -45,7 +45,7 @@ public class InsertRecordsPlan extends DataPlan {
 	}
 
 	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] values,
-	    List<Map<String, Object>> attributes, long databaseId) {
+	    List<Map<String, String>> attributes, long databaseId) {
 		this(paths, timestamps, values, attributes);
 		this.setDatabaseId(databaseId);
 	}
@@ -143,11 +143,11 @@ public class InsertRecordsPlan extends DataPlan {
 		return tempValues;
 	}
 
-	public List<Map<String, Object>> getAttributes() {
+	public List<Map<String, String>> getAttributes() {
 		return attributes;
 	}
 
-	public Map<String, Object> getAttribute(int index) {
+	public Map<String, String> getAttribute(int index) {
 		if (attributes.isEmpty()) {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
@@ -159,12 +159,12 @@ public class InsertRecordsPlan extends DataPlan {
 		return attributes.get(index);
 	}
 
-	public List<Map<String, Object>> getAttributesByIndexes(List<Integer> indexes) {
+	public List<Map<String, String>> getAttributesByIndexes(List<Integer> indexes) {
 		if (attributes.isEmpty()) {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		List<Map<String, Object>> tempAttributes = new ArrayList<>();
+		List<Map<String, String>> tempAttributes = new ArrayList<>();
 		for (Integer index : indexes) {
 			if (getAttribute(index) != null) {
 				tempAttributes.add(getAttribute(index));

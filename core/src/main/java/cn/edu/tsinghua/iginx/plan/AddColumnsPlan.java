@@ -28,18 +28,18 @@ public class AddColumnsPlan extends ColumnPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(AddColumnsPlan.class);
 
-	private List<Map<String, Object>> attributes;
+	private List<Map<String, String>> attributes;
 
-	public AddColumnsPlan(List<String> paths, List<Map<String, Object>> attributes) {
+	public AddColumnsPlan(List<String> paths, List<Map<String, String>> attributes) {
 		super(IginxPlanType.ADD_COLUMNS, false, paths);
 		this.attributes = attributes;
 	}
 
-	public List<Map<String, Object>> getAttributes() {
+	public List<Map<String, String>> getAttributes() {
 		return attributes;
 	}
 
-	public void setAttributes(List<Map<String, Object>> attributes) {
+	public void setAttributes(List<Map<String, String>> attributes) {
 		this.attributes = attributes;
 	}
 }

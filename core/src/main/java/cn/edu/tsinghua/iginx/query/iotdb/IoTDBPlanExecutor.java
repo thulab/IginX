@@ -25,10 +25,14 @@ import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
 import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
 import cn.edu.tsinghua.iginx.query.iotdb.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.query.result.*;
+import org.apache.iotdb.rpc.IoTDBConnectionException;
+import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.session.pool.SessionPool;
+import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
+import org.apache.iotdb.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.iotdb.tsfile.read.common.Field;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.write.record.Tablet;
@@ -134,26 +138,62 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     @Override
     protected AddColumnsPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
         SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
-        return null;
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            try {
+                if (!sessionPool.checkTimeseriesExists(plan.getPath(i))) {
+                    TSDataType dataType = TSDataType.deserialize((byte) Short.parseShort(plan.getAttributes().get(i).getOrDefault("DataType", "5")));
+                    TSEncoding encoding = TSEncoding.deserialize((byte) Short.parseShort(plan.getAttributes().get(i).getOrDefault("Encoding", "9")));
+                    CompressionType compressionType = CompressionType.deserialize((byte) Short.parseShort(plan.getAttributes().get(i).getOrDefault("CompressionType", "0")));
+                    sessionPool.createTimeseries(plan.getPath(i), dataType, encoding, compressionType);
+                }
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                logger.error(e.getMessage());
+            }
+        }
+        return new AddColumnsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
     protected DeleteColumnsPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
-        return null;
+        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        try {
+            sessionPool.deleteTimeseries(plan.getPaths());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DeleteColumnsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
     protected DeleteDataInColumnsPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
-        return null;
+        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        try {
+            sessionPool.deleteData(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DeleteDataInColumnsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
     protected CreateDatabasePlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
-        return null;
+        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        try {
+            sessionPool.setStorageGroup(plan.getDatabaseName());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new CreateDatabasePlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
-    protected DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan dropDatabasePlan) {
-        return null;
+    protected DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
+        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        try {
+            sessionPool.deleteStorageGroup(plan.getDatabaseName());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DropDatabasePlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 }
