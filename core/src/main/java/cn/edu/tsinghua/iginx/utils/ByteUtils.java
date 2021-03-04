@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.utils;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -174,6 +175,15 @@ public class ByteUtils {
 			}
 		}
 		return tempValues;
+	}
+
+	public static List<ByteBuffer> getByteBufferByDataType(List<List<Object>> values, List<Map<String, String>> attributes) {
+		List<ByteBuffer> byteBufferList = new ArrayList<>();
+		for (int i = 0; i < attributes.size(); i++) {
+			DataType dataType = deserialize(Short.parseShort(attributes.get(i).get("DataType")));
+			byteBufferList.add(getByteBuffer(values.get(i), dataType));
+		}
+		return byteBufferList;
 	}
 
 	public static int getByteBufferSize(List<Object> values, DataType dataType) {

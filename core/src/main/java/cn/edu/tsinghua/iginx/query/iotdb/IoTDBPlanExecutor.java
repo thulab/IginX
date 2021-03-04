@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
 import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
 import cn.edu.tsinghua.iginx.query.iotdb.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.query.result.*;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
@@ -77,15 +78,55 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected InsertRecordsPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
+        // TODO Tablet
+
         SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
 
-        try {
-            Tablet tablets = new Tablet(null, null);
-            sessionPool.insertTablet(tablets);
-        } catch (Exception e) {
-            logger.error("insert records error: ", e);
+        List<String> deviceIds = new ArrayList<>();
+        List<List<String>> measurementsList = new ArrayList<>();
+        List<List<TSDataType>> typesList = new ArrayList<>();
+        List<List<Object>> values = new ArrayList<>();
+
+        Map<String, List<String>> measurementsMap= new HashMap<>();
+        Map<String, List<TSDataType>> typesMap = new HashMap<>();
+
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
+            String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
+            TSDataType dataType = TSDataType.deserialize(Short.parseShort(plan.getAttributes().get(i).get("DataType")));
+
+            if (!deviceIds.contains(deviceId)) {
+                deviceIds.add(deviceId);
+            }
+            measurementsMap.computeIfAbsent(deviceId, k -> new ArrayList<>());
+            measurementsMap.get(deviceId).add(measurement);
+
+            typesMap.computeIfAbsent(deviceId, k -> new ArrayList<>());
+            typesMap.get(deviceId).add(dataType);
         }
-        return null;
+
+        for (String deviceId : deviceIds) {
+            measurementsList.add(measurementsMap.get(deviceId));
+            typesList.add(typesMap.get(deviceId));
+        }
+
+        for (Object value : plan.getValues()) {
+            values.add(Arrays.asList((Object[]) value));
+        }
+
+        try {
+            sessionPool.insertRecords(
+                deviceIds,
+                Arrays.asList(ArrayUtils.toObject(plan.getTimestamps())),
+                measurementsList,
+                typesList,
+                values
+            );
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+
+        return new InsertRecordsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws Exception {

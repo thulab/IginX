@@ -73,7 +73,7 @@ public class Session {
 		this.isClosed = true;
 	}
 
-	private synchronized void openSession() throws SessionException {
+	public synchronized void openSession() throws SessionException {
 		openSession(Constants.DEFAULT_TIMEOUT_MS);
 	}
 
@@ -194,14 +194,12 @@ public class Session {
 	}
 
 	public void insertRecords(List<String> paths, List<Long> timestamps, List<List<Object>> values,
-	    List<DataType> dataTypeList, List<Map<String, String>> attributes) throws SessionException, ExecutionException {
+	    List<Map<String, String>> attributes) throws SessionException, ExecutionException {
 		InsertRecordsReq req = new InsertRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(timestamps);
-		for (int i = 0; i < values.size(); i++) {
-			req.addToValues(ByteUtils.getByteBuffer(values.get(i), dataTypeList.get(i)));
-		}
+		req.setValues(ByteUtils.getByteBufferByDataType(values, attributes));
 		req.setAttributes(attributes);
 
 		try {
