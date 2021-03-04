@@ -26,20 +26,14 @@ import java.util.List;
 
 public class QueryDataCombineResult extends DataCombineResult {
 
-    private final QueryDataSet queryDataSet;
+    private final QueryDataResp resp;
 
-    private final List<String> paths;
-
-    public QueryDataCombineResult(Status status, QueryDataSet queryDataSet, List<String> paths) {
+    public QueryDataCombineResult(Status status, QueryDataResp resp) {
         super(status);
-        this.queryDataSet = queryDataSet;
-        this.paths = paths;
+        this.resp = resp;
     }
 
-    public QueryDataResp generateResp() {
-        QueryDataResp resp = new QueryDataResp(getStatus());
-        resp.setPaths(paths);
-        resp.setQueryDataSet(queryDataSet);
+    public QueryDataResp getResp() {
         return resp;
     }
 

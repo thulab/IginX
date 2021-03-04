@@ -76,6 +76,7 @@ struct QueryDataReq {
 
 struct QueryDataResp {
   1: required Status status
+  2: optional list<i32> types
   3: optional list<string> paths
   4: optional QueryDataSet queryDataSet
 }

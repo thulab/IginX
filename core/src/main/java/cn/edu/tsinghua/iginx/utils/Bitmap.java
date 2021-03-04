@@ -20,20 +20,25 @@ package cn.edu.tsinghua.iginx.utils;
 
 public class Bitmap {
 
-    private int size;
+    private final int size;
 
-    private byte[] bitmap;
+    private final byte[] bitmap;
 
     public Bitmap(int size) {
-
+        this.size = size;
+        this.bitmap = new byte[(int)Math.ceil(this.size * 1.0 / 8)];
     }
 
     public void mark(int i) {
-
+        if (i < 0 || i >= size)
+            throw new IllegalArgumentException("unexpected index");
+        int index = this.size / 8;
+        int indexWithinByte = this.size % 8;
+        bitmap[index] &= (1 << indexWithinByte);
     }
 
     public byte[] getBytes() {
-        return bitmap;
+        return this.bitmap;
     }
 
 }
