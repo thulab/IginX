@@ -21,10 +21,17 @@ package cn.edu.tsinghua.iginx.combine;
 import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.utils.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,17 +39,20 @@ import java.util.stream.Collectors;
 
 public class QueryDataSetCombiner {
 
+    private static final Logger logger = LoggerFactory.getLogger(QueryDataSetCombiner.class);
+
     private static final QueryDataSetCombiner instance = new QueryDataSetCombiner();
 
     private QueryDataSetCombiner() {}
 
-    public QueryDataSet combine(QueryDataReq queryDataReq, List<QueryDataPlanExecuteResult> executeResults) {
+    public QueryDataResp combine(QueryDataReq queryDataReq, List<QueryDataPlanExecuteResult> executeResults, Status status) {
         Map<String, List<TimeSeriesDataSet>>  tsSliceMap = executeResults.stream().filter(
                 e -> e.getStatusCode() == QueryDataPlanExecuteResult.SUCCESS)
                 .map(QueryDataPlanExecuteResult::getTimeSeriesDataSets)
                 .flatMap(List<TimeSeriesDataSet>::stream)
                 .collect(Collectors.groupingBy(TimeSeriesDataSet::getName));
         List<String> paths = new ArrayList<>();
+        List<DataType> types = new ArrayList<>();
         List<Pair<TimeSeriesDataSet, Integer>> tsList = new ArrayList<>();
         for (String path: tsSliceMap.keySet()) {
             TimeSeriesDataSet ts = mergeSlices(tsSliceMap.get(path));
@@ -50,11 +60,13 @@ public class QueryDataSetCombiner {
                 continue;
             paths.add(path);
             tsList.add(new Pair<>(ts, 0));
+            types.add(ts.getType());
         }
         QueryDataSet dataSet = new QueryDataSet();
         List<Long> timeLine = new ArrayList<>();
-        boolean noMoreTs = false;
-        while (!noMoreTs) {
+        List<ByteBuffer> valueList = new ArrayList<>();
+        List<ByteBuffer> bitmapList = new ArrayList<>();
+        while (true) {
             long time = -1;
             // 找出最小时间
             for (int i = 0; i < paths.size(); i++) {
@@ -65,19 +77,74 @@ public class QueryDataSetCombiner {
                     time = tsPair.k.getTime(tsPair.v);
             }
             if (time == -1) {
-                noMoreTs = true;
+                break;
             }
             timeLine.add(time);
+            List<Pair<Object, DataType>> data = new ArrayList<>();
+            int totalSize = 0;
             Bitmap bitmap = new Bitmap(paths.size());
             for (int i = 0; i < paths.size(); i++) {
                 Pair<TimeSeriesDataSet, Integer> tsPair = tsList.get(i);
                 if (tsPair.v != tsPair.k.length() && time == tsPair.k.getTime(tsPair.v)) {
                     bitmap.mark(i);
-
+                    data.add(new Pair<>(tsPair.k.getValue(tsPair.v), tsPair.k.getType()));
+                    switch (tsPair.k.getType()) {
+                        case FLOAT:
+                        case INT32:
+                            totalSize += 4;
+                            break;
+                        case DOUBLE:
+                        case INT64:
+                            totalSize += 8;
+                            break;
+                        case BOOLEAN:
+                            totalSize += 1;
+                            break;
+                        default:
+                            logger.error("unsupported datatype: " + tsPair.k.getType());
+                    }
+                    tsPair.v++;
                 }
             }
+            ByteBuffer buffer = ByteBuffer.allocate(totalSize);
+            for (Pair<Object, DataType> datum: data) {
+                switch (datum.v) {
+                    case INT32:
+                        buffer.putInt((int)datum.k);
+                        break;
+                    case INT64:
+                        buffer.putLong((long)datum.k);
+                        break;
+                    case FLOAT:
+                        buffer.putFloat((float) datum.k);
+                        break;
+                    case DOUBLE:
+                        buffer.putDouble((double) datum.k);
+                        break;
+                    case BOOLEAN:
+                        buffer.put(ByteUtils.booleanToByte((boolean) datum.k));
+                        break;
+                    default:
+                        logger.error("unsupported data type: " + datum.v);
+                }
+            }
+            valueList.add(buffer);
+            byte[] bitmapValue = bitmap.getBytes();
+            ByteBuffer bitmapBuffer = ByteBuffer.allocate(bitmapValue.length);
+            bitmapBuffer.put(bitmapBuffer);
+            bitmapList.add(bitmapBuffer);
         }
-        return null;
+        dataSet.setBitmapList(bitmapList);
+        dataSet.setValueList(valueList);
+        ByteBuffer timeLineBuffer = ByteBuffer.allocate(timeLine.size() * 8);
+        for (long time: timeLine)
+            timeLineBuffer.putLong(time);
+        dataSet.setTime(timeLineBuffer);
+        QueryDataResp resp = new QueryDataResp(status);
+        resp.setQueryDataSet(dataSet);
+        resp.setPaths(paths);
+        resp.setTypes(types.stream().map(DataType::enumToInt).collect(Collectors.toList()));
+        return resp;
     }
 
     private TimeSeriesDataSet mergeSlices(List<TimeSeriesDataSet> slices) {

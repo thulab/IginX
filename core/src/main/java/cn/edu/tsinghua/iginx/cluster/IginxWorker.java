@@ -106,7 +106,7 @@ public class IginxWorker implements IService.Iface {
 	public QueryDataResp queryData(QueryDataReq req) {
 		QueryDataContext context = new QueryDataContext(req);
 		core.processRequest(context);
-		return ((QueryDataCombineResult) context.getCombineResult()).generateResp();
+		return ((QueryDataCombineResult) context.getCombineResult()).getResp();
 	}
 
 	public static IginxWorker getInstance() {

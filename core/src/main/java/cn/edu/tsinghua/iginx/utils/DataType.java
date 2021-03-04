@@ -97,6 +97,10 @@ public enum DataType {
 		}
 	}
 
+	public int enumToInt() {
+		return enumToByte();
+	}
+
 	public byte enumToByte() {
 		switch (this) {
 			case BOOLEAN:
