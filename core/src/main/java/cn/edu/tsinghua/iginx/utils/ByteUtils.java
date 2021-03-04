@@ -27,7 +27,7 @@ import static cn.edu.tsinghua.iginx.utils.DataType.deserialize;
 public class ByteUtils {
 
 	public static ByteBuffer getByteBuffer(List<Object> values, DataType dataType) {
-		ByteBuffer buffer = ByteBuffer.allocate(values.size());
+		ByteBuffer buffer = ByteBuffer.allocate(getByteBufferSize(values, dataType));
 
 		switch (dataType) {
 			case BOOLEAN:
@@ -57,8 +57,8 @@ public class ByteUtils {
 				break;
 			case TEXT:
 				for (Object value : values) {
-					buffer.putInt(((String) value).length());
-					buffer.put(((String) value).getBytes());
+					buffer.putInt(((byte[]) value).length);
+					buffer.put((byte[]) value);
 				}
 				break;
 			default:
@@ -70,27 +70,33 @@ public class ByteUtils {
 	}
 
 	public static ByteBuffer getByteBuffer(Object value, DataType dataType) {
-		ByteBuffer buffer = ByteBuffer.allocate(1);
+		ByteBuffer buffer;
 
 		switch (dataType) {
 			case BOOLEAN:
+				buffer = ByteBuffer.allocate(1);
 				buffer.put(ByteUtils.booleanToByte((boolean) value));
 				break;
 			case INT32:
+				buffer = ByteBuffer.allocate(4);
 				buffer.putInt((int) value);
 				break;
 			case INT64:
+				buffer = ByteBuffer.allocate(8);
 				buffer.putLong((long) value);
 				break;
 			case FLOAT:
+				buffer = ByteBuffer.allocate(4);
 				buffer.putFloat((float) value);
 				break;
 			case DOUBLE:
+				buffer = ByteBuffer.allocate(8);
 				buffer.putDouble((double) value);
 				break;
 			case TEXT:
-				buffer.putInt(((String) value).length());
-				buffer.put(((String) value).getBytes());
+				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
+				buffer.putInt(((byte[]) value).length);
+				buffer.put((byte[]) value);
 				break;
 			default:
 				throw new UnsupportedOperationException(dataType.toString());
@@ -143,7 +149,8 @@ public class ByteUtils {
 	public static Object[] getValuesByDataType(List<ByteBuffer> values, List<Map<String, String>> attributes) {
 		Object[] tempValues = new Object[values.size()];
 		for (int i = 0; i < attributes.size(); i++) {
-			switch (deserialize(Short.parseShort(attributes.get(i).get("DataType")))) {
+			DataType dataType = deserialize(Short.parseShort(attributes.get(i).get("DataType")));
+			switch (dataType) {
 				case BOOLEAN:
 					tempValues[i] = getBoolean(values.get(i));
 					break;
@@ -163,11 +170,37 @@ public class ByteUtils {
 					tempValues[i] = getString(values.get(i));
 					break;
 				default:
-					// TODO
-					break;
+					throw new UnsupportedOperationException(dataType.toString());
 			}
 		}
 		return tempValues;
+	}
+
+
+	public static int getByteBufferSize(List<Object> values, DataType dataType) {
+		int size = 0;
+		switch (dataType) {
+			case BOOLEAN:
+				size = values.size();
+				break;
+			case INT32:
+			case FLOAT:
+				size = values.size() * 4;
+				break;
+			case INT64:
+			case DOUBLE:
+				size = values.size() * 8;
+				break;
+			case TEXT:
+				size += values.size() * 4;
+				for (Object value : values) {
+					size += ((byte[]) value).length;
+				}
+				break;
+			default:
+				throw new UnsupportedOperationException(dataType.toString());
+		}
+		return size;
 	}
 
 }
