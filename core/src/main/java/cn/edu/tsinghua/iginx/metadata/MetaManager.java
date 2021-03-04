@@ -402,10 +402,15 @@ public class MetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public DatabaseMeta chooseDatabaseForNewFragment() {
+    public List<Long> chooseDatabaseIdsForNewFragment() {
+        List<Long> databaseIds = new ArrayList<>();
         List<DatabaseMeta> databaseMetaList = getDatabaseList().stream().
             sorted(Comparator.comparing(DatabaseMeta::getFragmentReplicaMetaNum)).collect(Collectors.toList());
-        return databaseMetaList.get(0);
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), databaseMetaList.size());
+        for (int i = 0; i < replicaNum; i++) {
+            databaseIds.add(databaseMetaList.get(i).getId());
+        }
+        return databaseIds;
     }
 
     @Override

@@ -176,7 +176,6 @@ public class ByteUtils {
 		return tempValues;
 	}
 
-
 	public static int getByteBufferSize(List<Object> values, DataType dataType) {
 		int size = 0;
 		switch (dataType) {
@@ -202,5 +201,4 @@ public class ByteUtils {
 		}
 		return size;
 	}
-
 }

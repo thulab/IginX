@@ -38,6 +38,7 @@ package cn.edu.tsinghua.iginx.metadata;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class FragmentMeta implements Serializable {
@@ -60,12 +61,14 @@ public final class FragmentMeta implements Serializable {
         this.replicaMetas = replicaMetas;
     }
 
-    public FragmentMeta(String key, long startTime, long endTime, long databaseId) {
+    public FragmentMeta(String key, long startTime, long endTime, List<Long> databaseIds) {
         this.key = key;
         this.startTime = startTime;
         this.endTime = endTime;
         this.replicaMetas = new HashMap<>();
-        this.replicaMetas.put(0, new FragmentReplicaMeta(key, startTime, 0, endTime, databaseId));
+        for (int i = 0; i < databaseIds.size(); i++) {
+            this.replicaMetas.put(i, new FragmentReplicaMeta(key, startTime, i, endTime, databaseIds.get(i)));
+        }
     }
 
     public String getKey() {

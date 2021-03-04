@@ -76,7 +76,8 @@ public interface IMetaManager {
 
     /**
      * 为新创建的分片选择数据库实例
+     * @return 选出的数据库实例 Id 列表
      */
-    DatabaseMeta chooseDatabaseForNewFragment();
+    List<Long> chooseDatabaseIdsForNewFragment();
 
 }
