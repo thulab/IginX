@@ -53,23 +53,4 @@ public final class IginxMeta implements Serializable {
      * iginx 其他控制参数
      */
     private Map<String, String> extraParams;
-
-    public IginxMeta(long id, String ip, int port, Object o) {
-        //TODO:
-    }
-
-    public long getId() {
-        //TODO:
-        return -1;
-    }
-
-    public String getIp() {
-        //TODO:
-        return null;
-    }
-
-    public String getPort() {
-        //TODO:
-        return null;
-    }
 }

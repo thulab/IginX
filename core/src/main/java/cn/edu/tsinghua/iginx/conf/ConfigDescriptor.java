@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.conf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,18 +39,20 @@ public class ConfigDescriptor {
     }
 
     private void loadProps() {
+        File file = new File(Constants.CONFIG_FILE);
+        logger.info(file.getAbsolutePath());
         try (InputStream in = new FileInputStream(Constants.CONFIG_FILE)) {
             Properties properties = new Properties();
             properties.load(in);
 
-            config.setIp(properties.getProperty("ip", "127.0.0.1"));
+            config.setIp(properties.getProperty("ip", "0.0.0.0"));
             config.setPort(Integer.parseInt(properties.getProperty("port", "6324")));
             config.setUsername(properties.getProperty("username", "root"));
             config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
                     "127.0.0.1:2181"));
             config.setDatabaseList(properties.getProperty("databaseList",
-                    "127.0.0.1:8888:iotdb,127.0.0.1:8889:iotdb"));
+                    "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5"));
             config.setLevel(Integer.parseInt(properties.getProperty("level", "2")));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));

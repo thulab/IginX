@@ -57,19 +57,4 @@ public final class FragmentReplicaMeta implements Serializable {
     FragmentReplicaMeta endFragmentReplicaMeta(long endTime) {
         return new FragmentReplicaMeta(this.key, this.startTime, this.replicaIndex, endTime, this.databaseId);
     }
-
-    public long getDatabaseId() {
-        //TODO:
-        return -1;
-    }
-
-    public long getStartTime() {
-        //TODO:
-        return -1;
-    }
-
-    public long getEndTime() {
-        //TODO:
-        return -1;
-    }
 }

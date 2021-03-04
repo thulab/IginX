@@ -35,7 +35,7 @@ public class Iginx {
 
     private void startServer() throws TTransportException {
         TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
-        TServerSocket serverTransport = new TServerSocket(new InetSocketAddress(ConfigDescriptor.getInstance().getConfig().getIp(),
+        TServerSocket serverTransport = new TServerSocket(new InetSocketAddress("0.0.0.0",
                 ConfigDescriptor.getInstance().getConfig().getPort()));
         TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport)
                 .maxWorkerThreads(65535)

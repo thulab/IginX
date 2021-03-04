@@ -88,7 +88,7 @@ public class MetaManager implements IMetaManager, IService {
 
     private void registerIginxMeta() throws Exception {
         String nodeName = this.zookeeperClient.create()
-                .creatingParentContainersIfNeeded()
+                .creatingParentsIfNeeded()
                 .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                 .forPath(Constants.IGINX_NODE, "".getBytes(StandardCharsets.UTF_8));
         long id = Long.parseLong(nodeName.substring(Constants.IGINX_NODE.length()));
@@ -117,6 +117,14 @@ public class MetaManager implements IMetaManager, IService {
                     break;
                 case NODE_REMOVED:
                     data = event.getData().getData();
+                    String path = event.getData().getPath();
+                    logger.info("node " + path + " is removed");
+                    if (path.equals(Constants.IGINX_NODE_PREFIX)) {
+                        // 根节点被删除
+                        logger.info("all iginx leave from cluster");
+                        iginxMetaMap.clear();
+                        break;
+                    }
                     iginxMeta = SerializeUtils.deserialize(data, IginxMeta.class);
                     if (iginxMeta != null) {
                         logger.info("iginx leave from cluster: id = " + iginxMeta.getId() + " ,ip = " + iginxMeta.getIp() + " , port = " + iginxMeta.getPort());
@@ -238,8 +246,11 @@ public class MetaManager implements IMetaManager, IService {
     }
 
     private void resolveDatabaseMetaFromConf() {
+        logger.info("resolve database meta from config");
         String[] databaseMetaStrings = ConfigDescriptor.getInstance().getConfig()
                 .getDatabaseList().split(",");
+        logger.info("database connection string: " + ConfigDescriptor.getInstance().getConfig().getDatabaseList());
+        logger.info("database count: " + databaseMetaStrings.length);
         for (int i = 0; i < databaseMetaStrings.length; i++) {
             String[] databaseMetaParts = databaseMetaStrings[i].split(":");
             String ip = databaseMetaParts[0];

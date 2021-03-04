@@ -63,9 +63,6 @@ public final class DatabaseMeta implements Serializable {
      */
     private transient List<FragmentReplicaMeta> fragmentReplicaMetaList;
 
-    public DatabaseMeta(long id, String ip, int port, Map<String, String> extraParams, DBType dbType, Object o) {
-    }
-
     public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
         this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
     }
@@ -76,16 +73,6 @@ public final class DatabaseMeta implements Serializable {
 
     public DatabaseMeta basicInfo() {
         return new DatabaseMeta(id, ip, port, extraParams, dbType, null);
-    }
-
-    public long getId() {
-        //TODO:
-        return -1;
-    }
-
-    public ArrayList getFragmentReplicaMetaList(){
-        //TODO:
-        return null;
     }
 
     public int getFragmentReplicaMetaNum() {

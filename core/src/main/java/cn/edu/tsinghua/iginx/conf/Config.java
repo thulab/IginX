@@ -30,7 +30,7 @@ public class Config {
 
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
-    private String databaseList = "";
+    private String databaseList = "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5";
 
     private int level = 2;
 
