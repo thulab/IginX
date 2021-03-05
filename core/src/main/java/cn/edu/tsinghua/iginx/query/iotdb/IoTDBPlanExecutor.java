@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.query.iotdb.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.query.result.*;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
+import org.apache.iotdb.rpc.RpcUtils;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
@@ -222,9 +223,24 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getDatabaseId());
-
-        return null;
+        DatabaseMeta databaseMeta = databaseMetas.get(plan.getDatabaseId());
+        Map<String, String> extraParams = databaseMeta.getExtraParams();
+        String username = extraParams.getOrDefault("username", "root");
+        String password = extraParams.getOrDefault("password", "root");
+        Session session = new Session(databaseMeta.getIp(), databaseMeta.getPort(), username, password);
+        try {
+            session.open();
+            return syncExecuteQueryDataPlan(plan, session);
+        } catch (Exception e) {
+            logger.error("query data error: ", e);
+        } finally {
+            try {
+                session.close();
+            } catch (Exception e) {
+                logger.error("got error:", e);
+            }
+        }
+        return new QueryDataPlanExecuteResult(PlanExecuteResult.FAILURE, plan, null);
     }
 
     @Override
