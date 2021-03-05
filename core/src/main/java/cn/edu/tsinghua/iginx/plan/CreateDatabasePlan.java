@@ -26,6 +26,7 @@ public class CreateDatabasePlan extends DatabasePlan {
 	private static final Logger logger = LoggerFactory.getLogger(CreateDatabasePlan.class);
 
 	public CreateDatabasePlan(String databaseName) {
-		super(IginxPlanType.CREATE_DATABASE, false, databaseName);
+		super(false, databaseName);
+		this.setIginxPlanType(IginxPlanType.CREATE_DATABASE);
 	}
 }

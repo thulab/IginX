@@ -38,7 +38,8 @@ public class InsertRecordsPlan extends DataPlan {
 
 	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] values,
 	    List<Map<String, String>> attributes) {
-		super(IginxPlanType.INSERT_RECORDS, false, paths, timestamps[0], timestamps[timestamps.length - 1]);
+		super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
+		this.setIginxPlanType(IginxPlanType.INSERT_RECORDS);
 		this.timestamps = timestamps;
 		this.values = values;
 		this.attributes = attributes;

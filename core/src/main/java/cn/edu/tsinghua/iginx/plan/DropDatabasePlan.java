@@ -26,6 +26,7 @@ public class DropDatabasePlan extends DatabasePlan {
 	private static final Logger logger = LoggerFactory.getLogger(DropDatabasePlan.class);
 
 	public DropDatabasePlan(String databaseName) {
-		super(IginxPlanType.DROP_DATABASE, false, databaseName);
+		super(false, databaseName);
+		this.setIginxPlanType(IginxPlanType.DROP_DATABASE);
 	}
 }

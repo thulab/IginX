@@ -26,6 +26,9 @@ public class SplitInfo {
 
 	private List<Integer> pathsIndexes;
 
+	// TODO startTime endTime 不一定与 replica 的 startTime endTime 相同
+	// TODO 而且不一定是连续的（？）
+
 	private FragmentReplicaMeta replica;
 
 	public SplitInfo(List<Integer> pathsIndexes, FragmentReplicaMeta replica) {

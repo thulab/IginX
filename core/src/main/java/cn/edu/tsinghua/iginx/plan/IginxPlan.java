@@ -28,16 +28,18 @@ public abstract class IginxPlan {
 
 	private boolean isQuery;
 
+	// TODO NonDatabasePlan = true DatabasePlan = false
 	private boolean canBeSplit;
 
+	// TODO
 	private List<IginxPlan> splitPlans;
 
 	private boolean isSync;
 
 	private long databaseId;
 
-	public IginxPlan(IginxPlanType iginxPlanType, boolean isQuery) {
-		this.iginxPlanType = iginxPlanType;
+	public IginxPlan(boolean isQuery) {
+		this.iginxPlanType = IginxPlanType.IGINX;
 		this.isQuery = isQuery;
 	}
 
@@ -65,6 +67,10 @@ public abstract class IginxPlan {
 		return databaseId;
 	}
 
+	public void setIginxPlanType(IginxPlanType iginxPlanType) {
+		this.iginxPlanType = iginxPlanType;
+	}
+
 	public void setQuery(boolean isQuery) {
 		this.isQuery = isQuery;
 	}
@@ -86,7 +92,7 @@ public abstract class IginxPlan {
 	}
 
 	public enum IginxPlanType {
-		CREATE_DATABASE, DROP_DATABASE, ADD_COLUMNS, DELETE_COLUMNS, INSERT_RECORDS,
-		DELETE_DATA_IN_COLUMNS, QUERY_DATA;
+		IGINX, DATABASE, CREATE_DATABASE, DROP_DATABASE, NON_DATABASE, COLUMN, ADD_COLUMNS,
+		DELETE_COLUMNS, DATA, INSERT_RECORDS, DELETE_DATA_IN_COLUMNS, QUERY_DATA;
 	}
 }

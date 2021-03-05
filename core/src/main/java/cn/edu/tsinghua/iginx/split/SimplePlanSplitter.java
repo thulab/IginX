@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.MetaManager;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,24 +36,41 @@ import static cn.edu.tsinghua.iginx.fragment.FragmentProcessor.createFragment;
 public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSplitter {
 
 	@Override
-	public List<SplitInfo> getSplitResults(DataPlan plan) {
+	public List<SplitInfo> getSplitResults(NonDatabasePlan plan) {
 		List<SplitInfo> infoList = new ArrayList<>();
+		List<FragmentMeta> fragments;
 
 		for (Map.Entry<String, List<Integer>> entry : plan.generateIndexesOfPaths().entrySet()) {
-			List<FragmentMeta> fragments =
-					MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(entry.getKey(), plan.getStartTime(), plan.getEndTime());
-			if (fragments.isEmpty()) {
-				createFragment(entry.getKey(), 0, 0);
-			}
-			for (FragmentMeta fragment : fragments) {
-				List<FragmentReplicaMeta> replicas = new ArrayList<>();
-				if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.INSERT_RECORDS) {
-					replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
-				} else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.QUERY_DATA) {
-					replicas = chooseFragmentReplicas(fragment, true, 0);
+			if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.ADD_COLUMNS) {
+				fragments = MetaManager.getInstance().getFragmentListByKey(entry.getKey());
+				if (fragments.isEmpty()) {
+					createFragment(entry.getKey(), 0L, 0L);
 				}
-				for (FragmentReplicaMeta replica : replicas) {
-					infoList.add(new SplitInfo(entry.getValue(), replica));
+				fragments = MetaManager.getInstance().getFragmentListByKey(entry.getKey());
+				for (FragmentMeta fragment : fragments) {
+					List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+					for (FragmentReplicaMeta replica : replicas) {
+						infoList.add(new SplitInfo(entry.getValue(), replica));
+					}
+				}
+			} else {
+				fragments = MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(
+						entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
+				if (fragments.isEmpty()) {
+					createFragment(entry.getKey(), 0L, 0L);
+				}
+				fragments = MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(
+						entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
+				for (FragmentMeta fragment : fragments) {
+					List<FragmentReplicaMeta> replicas = new ArrayList<>();
+					if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.INSERT_RECORDS) {
+						replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+					} else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.QUERY_DATA) {
+						replicas = chooseFragmentReplicas(fragment, true, 0);
+					}
+					for (FragmentReplicaMeta replica : replicas) {
+						infoList.add(new SplitInfo(entry.getValue(), replica));
+					}
 				}
 			}
 		}
