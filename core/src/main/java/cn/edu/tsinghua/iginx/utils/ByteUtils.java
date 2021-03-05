@@ -139,6 +139,60 @@ public class ByteUtils {
 		return new String(bytes, 0, length);
 	}
 
+	public static boolean[] getBooleanArray(ByteBuffer buffer) {
+		boolean[] arr = new boolean[buffer.array().length];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = buffer.get() == 1;
+		}
+		return arr;
+	}
+
+	public static int[] getIntegerArray(ByteBuffer buffer) {
+		int[] arr = new int[buffer.array().length / 4];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = buffer.getInt();
+		}
+		return arr;
+	}
+
+	public static long[] getLongArray(ByteBuffer buffer) {
+		long[] arr = new long[buffer.array().length / 8];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = buffer.getLong();
+		}
+		return arr;
+	}
+
+	public static float[] getFloatArray(ByteBuffer buffer) {
+		float[] arr = new float[buffer.array().length / 4];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = buffer.getFloat();
+		}
+		return arr;
+	}
+
+	public static double[] getDoubleArray(ByteBuffer buffer) {
+		double[] arr = new double[buffer.array().length / 8];
+		for (int i = 0; i < arr.length; i++) {
+			arr[i] = buffer.getInt();
+		}
+		return arr;
+	}
+
+	// TODO
+//	public static String[] getStringArray(ByteBuffer buffer) {
+//
+//		int length = getInteger(buffer);
+//		if (length < 0) {
+//			return null;
+//		} else if (length == 0) {
+//			return "";
+//		}
+//		byte[] bytes = new byte[length];
+//		buffer.get(bytes, 0, length);
+//		return new String(bytes, 0, length);
+//	}
+
 	public static byte booleanToByte(boolean x) {
 		if (x) {
 			return 1;
@@ -153,21 +207,22 @@ public class ByteUtils {
 			DataType dataType = deserialize(Short.parseShort(attributes.get(i).get("DataType")));
 			switch (dataType) {
 				case BOOLEAN:
-					tempValues[i] = getBoolean(values.get(i));
+					tempValues[i] = getBooleanArray(values.get(i));
 					break;
 				case INT32:
-					tempValues[i] = getInteger(values.get(i));
+					tempValues[i] = getIntegerArray(values.get(i));
 					break;
 				case INT64:
-					tempValues[i] = getLong(values.get(i));
+					tempValues[i] = getLongArray(values.get(i));
 					break;
 				case FLOAT:
-					tempValues[i] = getFloat(values.get(i));
+					tempValues[i] = getFloatArray(values.get(i));
 					break;
 				case DOUBLE:
-					tempValues[i] = getDouble(values.get(i));
+					tempValues[i] = getDoubleArray(values.get(i));
 					break;
 				case TEXT:
+					// TODO
 					tempValues[i] = getString(values.get(i));
 					break;
 				default:

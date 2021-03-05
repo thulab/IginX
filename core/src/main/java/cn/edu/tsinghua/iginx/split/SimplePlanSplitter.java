@@ -44,9 +44,8 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 			if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.ADD_COLUMNS) {
 				fragments = MetaManager.getInstance().getFragmentListByKey(entry.getKey());
 				if (fragments.isEmpty()) {
-					createFragment(entry.getKey(), 0L, 0L);
+					fragments.add(createFragment(entry.getKey(), 0L, 0L));
 				}
-				fragments = MetaManager.getInstance().getFragmentListByKey(entry.getKey());
 				for (FragmentMeta fragment : fragments) {
 					List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
 					for (FragmentReplicaMeta replica : replicas) {
@@ -57,10 +56,8 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 				fragments = MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(
 						entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
 				if (fragments.isEmpty()) {
-					createFragment(entry.getKey(), 0L, 0L);
+					fragments.add(createFragment(entry.getKey(), 0L, 0L));
 				}
-				fragments = MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(
-						entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
 				for (FragmentMeta fragment : fragments) {
 					List<FragmentReplicaMeta> replicas = new ArrayList<>();
 					if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.INSERT_RECORDS) {
