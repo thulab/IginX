@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.utils.Pair;
+import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@ToString
 public class InsertRecordsPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsertRecordsPlan.class);
@@ -110,6 +112,7 @@ public class InsertRecordsPlan extends DataPlan {
 			logger.error("The given row index {} is out of bounds.", rowIndex);
 			return null;
 		}
+		logger.info("type: " + values[rowIndex].getClass());
 		Object[] colValues = (Object[]) values[rowIndex];
 		if (colValues.length == 0) {
 			logger.error("There are no col values in the row {}.", rowIndex);

@@ -139,42 +139,42 @@ public class ByteUtils {
 		return new String(bytes, 0, length);
 	}
 
-	public static boolean[] getBooleanArray(ByteBuffer buffer) {
-		boolean[] arr = new boolean[buffer.array().length];
+	public static Boolean[] getBooleanArray(ByteBuffer buffer) {
+		Boolean[] arr = new Boolean[buffer.array().length];
 		for (int i = 0; i < arr.length; i++) {
 			arr[i] = buffer.get() == 1;
 		}
 		return arr;
 	}
 
-	public static int[] getIntegerArray(ByteBuffer buffer) {
-		int[] arr = new int[buffer.array().length / 4];
+	public static Integer[] getIntegerArray(ByteBuffer buffer) {
+		Integer[] arr = new Integer[buffer.array().length / 4];
 		for (int i = 0; i < arr.length; i++) {
 			arr[i] = buffer.getInt();
 		}
 		return arr;
 	}
 
-	public static long[] getLongArray(ByteBuffer buffer) {
-		long[] arr = new long[buffer.array().length / 8];
+	public static Long[] getLongArray(ByteBuffer buffer) {
+		Long[] arr = new Long[buffer.array().length / 8];
 		for (int i = 0; i < arr.length; i++) {
 			arr[i] = buffer.getLong();
 		}
 		return arr;
 	}
 
-	public static float[] getFloatArray(ByteBuffer buffer) {
-		float[] arr = new float[buffer.array().length / 4];
+	public static Float[] getFloatArray(ByteBuffer buffer) {
+		Float[] arr = new Float[buffer.array().length / 4];
 		for (int i = 0; i < arr.length; i++) {
 			arr[i] = buffer.getFloat();
 		}
 		return arr;
 	}
 
-	public static double[] getDoubleArray(ByteBuffer buffer) {
-		double[] arr = new double[buffer.array().length / 8];
+	public static Double[] getDoubleArray(ByteBuffer buffer) {
+		Double[] arr = new Double[buffer.array().length / 8];
 		for (int i = 0; i < arr.length; i++) {
-			arr[i] = buffer.getInt();
+			arr[i] = buffer.getDouble();
 		}
 		return arr;
 	}
