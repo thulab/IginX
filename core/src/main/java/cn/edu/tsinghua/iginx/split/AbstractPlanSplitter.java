@@ -60,9 +60,10 @@ public abstract class AbstractPlanSplitter {
 		List<QueryDataPlan> plans = new ArrayList<>();
 
 		for (SplitInfo info : infoList) {
-			plans.add(new QueryDataPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
+			QueryDataPlan subPlan = new QueryDataPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
 					Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-					Math.min(plan.getEndTime(), info.getReplica().getEndTime()), info.getReplica().getDatabaseId()));
+					Math.min(plan.getEndTime(), info.getReplica().getEndTime()), info.getReplica().getDatabaseId());
+			plans.add(subPlan);
 		}
 
 		return plans;
@@ -78,8 +79,10 @@ public abstract class AbstractPlanSplitter {
 		List<AddColumnsPlan> plans = new ArrayList<>();
 
 		for (SplitInfo info : infoList) {
-			plans.add(new AddColumnsPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
-					plan.getAttributesByIndexes(info.getPathsIndexes())));
+			AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
+					plan.getAttributesByIndexes(info.getPathsIndexes()));
+			subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+			plans.add(subPlan);
 		}
 
 		return plans;

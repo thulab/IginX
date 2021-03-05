@@ -35,5 +35,6 @@ public class QueryDataPlan extends DataPlan {
 	public QueryDataPlan(List<String> paths, long startTime, long endTime, long databaseId) {
 		this(paths, startTime, endTime);
 		this.setDatabaseId(databaseId);
+		this.setSync(true);
 	}
 }
