@@ -32,8 +32,6 @@ public class IoTDBSessionExample {
 		addColumns();
 		insertRecords();
 		queryData();
-		deleteDataInColumns();
-		queryData();
 		deleteColumns();
 
 		session.dropDatabase(DATABASE_NAME);

@@ -72,7 +72,7 @@ public final class DatabaseMeta implements Serializable {
     }
 
     public DatabaseMeta basicInfo() {
-        return new DatabaseMeta(id, ip, port, extraParams, dbType, null);
+        return new DatabaseMeta(id, ip, port, extraParams, dbType, new ArrayList<>());
     }
 
     public int getFragmentReplicaMetaNum() {

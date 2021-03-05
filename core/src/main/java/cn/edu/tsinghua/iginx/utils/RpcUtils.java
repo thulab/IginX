@@ -39,7 +39,6 @@ public class RpcUtils {
 	public static Status FAILURE = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
 
 	public static void verifySuccess(Status status) throws ExecutionException {
-		logger.info("获取的状态码：" + status.code);
 		if (status.code != StatusCode.SUCCESS_STATUS.getStatusCode()) {
 			throw new ExecutionException(status);
 		}
