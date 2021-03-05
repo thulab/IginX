@@ -82,7 +82,7 @@ public class Session {
 			return;
 		}
 
-		transport = new TFastFramedTransport(new TSocket(host, port, timeoutInMs));
+		transport = new TSocket(host, port, timeoutInMs);
 		if (!transport.isOpen()) {
 			try {
 				transport.open();

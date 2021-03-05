@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.thrift.IService;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
+import org.apache.thrift.server.TSimpleServer;
 import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
@@ -35,24 +36,12 @@ public class Iginx {
 
     private void startServer() throws TTransportException {
         TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
-        TServerSocket serverTransport = new TServerSocket(new InetSocketAddress("0.0.0.0",
-                ConfigDescriptor.getInstance().getConfig().getPort()));
-        TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport)
-                .maxWorkerThreads(65535)
-                .minWorkerThreads(Runtime.getRuntime().availableProcessors())
-                .stopTimeoutVal(10);
-        args.executorService(createThriftRpcClientThreadPool(args));
+        TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());
+        TServer.Args args = new TServer.Args(serverTransport);
         args.processor(processor);
         args.protocolFactory(new TBinaryProtocol.Factory());
-        args.transportFactory(new TTransportFactory());
-        TServer server = new TThreadPoolServer(args);
+        TServer server = new TSimpleServer(args);
         server.serve();
-    }
-
-    private static ExecutorService createThriftRpcClientThreadPool(TThreadPoolServer.Args args) {
-        SynchronousQueue<Runnable> executorQueue = new SynchronousQueue<>();
-        return new ThreadPoolExecutor(args.minWorkerThreads, args.maxWorkerThreads, args.stopTimeoutVal,
-                args.stopTimeoutUnit, executorQueue);
     }
 
 

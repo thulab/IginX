@@ -24,7 +24,7 @@ public class IoTDBSessionExample {
 	public static void main(String[] args) throws SessionException, ExecutionException {
 		ConfigDescriptor.getInstance().getConfig().setLevel(3);
 
-		session = new Session("127.0.0.1", 6666, "root", "root");
+		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
 		session.createDatabase(DATABASE_NAME);

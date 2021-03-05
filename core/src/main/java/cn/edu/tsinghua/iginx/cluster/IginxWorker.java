@@ -25,12 +25,16 @@ import cn.edu.tsinghua.iginx.core.context.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
+
+	private static final Logger logger = LoggerFactory.getLogger(IginxWorker.class);
 
 	private static final IginxWorker instance = new IginxWorker();
 
@@ -40,6 +44,7 @@ public class IginxWorker implements IService.Iface {
 
 	@Override
 	public OpenSessionResp openSession(OpenSessionReq req) {
+		logger.info("received open session request");
 		if (!req.username.equals(ConfigDescriptor.getInstance().getConfig().getUsername()) ||
 				!req.password.equals(ConfigDescriptor.getInstance().getConfig().getPassword())) {
 			return new OpenSessionResp(RpcUtils.WRONG_PASSWORD);
