@@ -80,4 +80,10 @@ public interface IMetaManager {
      */
     List<Long> chooseDatabaseIdsForNewFragment();
 
+    /**
+     * 为 DatabasePlan 选择数据库实例
+     * @return 选出的数据库实例 Id
+     */
+    long chooseDatabaseIdForDatabasePlan();
+
 }
