@@ -42,4 +42,11 @@ public class MetaManagerTest {
         assertEquals(6324, iginxMeta.getPort());
     }
 
+    @Test
+    public void testCreateFragment() {
+        List<Long> databaseIds = metaManager.chooseDatabaseIdsForNewFragment();
+        FragmentMeta fragmentMeta = new FragmentMeta("root.ln", 0, 0, databaseIds);
+        metaManager.createFragment(fragmentMeta);
+    }
+
 }

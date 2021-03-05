@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.db.DBType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SerializeUtils;
+import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -97,6 +98,7 @@ public class MetaManager implements IMetaManager, IService {
         this.zookeeperClient.setData()
                 .forPath(nodeName, SerializeUtils.serialize(iginxMeta));
         this.iginxMetaMap.put(id, iginxMeta);
+        SnowFlakeUtils.init(id);
     }
 
     private void registerIginxListener() throws Exception {

@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.core;
 
+import cn.edu.tsinghua.iginx.combine.CombineExecutor;
 import cn.edu.tsinghua.iginx.combine.CombineResult;
 import cn.edu.tsinghua.iginx.combine.ICombineExecutor;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
@@ -63,6 +64,7 @@ public class Core {
         metaManager = MetaManager.getInstance();
         registerPlanGenerator(new SimplePlanGenerator());
         registerQueryExecutor(new IoTDBPlanExecutor(metaManager.getDatabaseList()));
+        registerCombineExecutor(new CombineExecutor());
     }
 
     public void registerPreQueryPlanProcessor(PreQueryPlanProcessor preQueryPlanProcessor) {

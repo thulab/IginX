@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.query.aysnc.queue.AsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.MemoryAsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
 import cn.edu.tsinghua.iginx.query.result.*;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +94,41 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         return null;
     }
 
+    protected Future<CreateDatabasePlanExecuteResult> executeCreateDatabasePlan(CreateDatabasePlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteCreateDatabasePlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<AddColumnsPlanExecuteResult> executeAddColumnPlan(AddColumnsPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteAddColumnsPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<DeleteColumnsPlanExecuteResult> executeDeleteColumnsPlan(DeleteColumnsPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteDeleteColumnsPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<DeleteDataInColumnsPlanExecuteResult> executeDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteDeleteDataInColumnsPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<DropDatabasePlanExecuteResult> executeDropDatabasePlan(DropDatabasePlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteDropDatabasePlan(plan));
+        }
+        return null;
+    }
+
     protected abstract InsertRecordsPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan);
 
     protected abstract QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
@@ -120,6 +156,21 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                 break;
             case QueryData:
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(QueryDataPlan.class::cast).map(this::executeQueryDataPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                break;
+            case CreateDatabase:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(CreateDatabasePlan.class::cast).map(this::executeCreateDatabasePlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                break;
+            case DeleteColumns:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DeleteColumnsPlan.class::cast).map(this::executeDeleteColumnsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                break;
+            case DeleteDataInColumns:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DeleteDataInColumnsPlan.class::cast).map(this::executeDeleteDataInColumnsPlan).map(wrap(Future::get)).collect(Collectors.toList()))
+                break;
+            case AddColumns:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(AddColumnsPlan.class::cast).map(this::executeAddColumnPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                break;
+            case DropDatabase:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DropDatabasePlan.class::cast).map(this::executeDropDatabasePlan).map(wrap(Future::get)).collect(Collectors.toList()));
                 break;
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
