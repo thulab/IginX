@@ -20,18 +20,18 @@ package cn.edu.tsinghua.iginx.split;
 
 import cn.edu.tsinghua.iginx.metadata.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.plan.DataPlan;
+import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 
 import java.util.List;
 
 public interface IPlanSplitter {
 
 	/**
-	 * 拆分 DataPlan
-	 * @param plan 待拆分的 DataPlan
+	 * 拆分 NonDatabasePlan
+	 * @param plan 待拆分的 NonDatabasePlan
 	 * @return 拆分方式
 	 */
-	List<SplitInfo> getSplitResults(DataPlan plan);
+	List<SplitInfo> getSplitResults(NonDatabasePlan plan);
 
 	/**
 	 * 从给定的分片中选择副本

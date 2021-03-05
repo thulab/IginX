@@ -31,8 +31,9 @@ public abstract class DataPlan extends NonDatabasePlan {
 
 	private long endTime;
 
-	public DataPlan(IginxPlanType iginxPlanType, boolean isQuery, List<String> paths, long startTime, long endTime) {
-		super(iginxPlanType, isQuery, paths);
+	public DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime) {
+		super(isQuery, paths);
+		this.setIginxPlanType(IginxPlanType.DATA);
 		this.startTime = startTime;
 		this.endTime = endTime;
 	}

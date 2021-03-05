@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
+import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -62,6 +63,23 @@ public abstract class AbstractPlanSplitter {
 			plans.add(new QueryDataPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
 					Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
 					Math.min(plan.getEndTime(), info.getReplica().getEndTime()), info.getReplica().getDatabaseId()));
+		}
+
+		return plans;
+	}
+
+	/**
+	 * 将 AddColumnsPlan 拆分为若干子计划
+	 * @param plan 待拆分的 AddColumnsPlan
+	 * @param infoList 拆分方式
+	 * @return 拆分结果
+	 */
+	public List<AddColumnsPlan> splitAddColumnsPlan(AddColumnsPlan plan, List<SplitInfo> infoList) {
+		List<AddColumnsPlan> plans = new ArrayList<>();
+
+		for (SplitInfo info : infoList) {
+			plans.add(new AddColumnsPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
+					plan.getAttributesByIndexes(info.getPathsIndexes())));
 		}
 
 		return plans;

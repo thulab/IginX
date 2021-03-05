@@ -28,7 +28,8 @@ public class QueryDataPlan extends DataPlan {
 	private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
-		super(IginxPlanType.QUERY_DATA, true, paths, startTime, endTime);
+		super(true, paths, startTime, endTime);
+		this.setIginxPlanType(IginxPlanType.QUERY_DATA);
 	}
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime, long databaseId) {

@@ -28,6 +28,7 @@ public class DeleteColumnsPlan extends ColumnPlan {
 	private static final Logger logger = LoggerFactory.getLogger(DeleteColumnsPlan.class);
 
 	public DeleteColumnsPlan(List<String> paths) {
-		super(IginxPlanType.DELETE_COLUMNS, false, paths);
+		super(false, paths);
+		this.setIginxPlanType(IginxPlanType.DELETE_COLUMNS);
 	}
 }

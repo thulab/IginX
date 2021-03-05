@@ -57,6 +57,7 @@ struct InsertRecordsReq {
   2: required list<string> paths
   3: required list<i64> timestamps
   4: required list<binary> values
+  // TODO 考虑将 DataType 作为 required 参数
   5: optional list<map<string, string>> attributes
 }
 

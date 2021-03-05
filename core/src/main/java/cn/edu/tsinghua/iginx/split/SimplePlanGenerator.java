@@ -18,12 +18,15 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
+import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import org.slf4j.Logger;
@@ -62,6 +65,14 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitResults(queryDataPlan);
                 return planSplitter.splitQueryDataPlan(queryDataPlan, splitInfoList);
+            case AddColumns:
+                AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
+                AddColumnsPlan addColumnsPlan = new AddColumnsPlan(
+                    addColumnsReq.getPaths(),
+                    addColumnsReq.getAttributes()
+                );
+                splitInfoList = planSplitter.getSplitResults(addColumnsPlan);
+                return planSplitter.splitAddColumnsPlan(addColumnsPlan, splitInfoList);
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
         }
