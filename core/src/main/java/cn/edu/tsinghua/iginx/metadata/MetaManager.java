@@ -424,6 +424,13 @@ public class MetaManager implements IMetaManager, IService {
     }
 
     @Override
+    public long chooseDatabaseIdForDatabasePlan() {
+        List<DatabaseMeta> databaseMetaList = getDatabaseList().stream().
+            sorted(Comparator.comparing(DatabaseMeta::getFragmentReplicaMetaNum)).collect(Collectors.toList());
+        return databaseMetaList.get(0).getId();
+    }
+
+    @Override
     public void shutdown() throws Exception {
         this.iginxCache.close();
         this.zookeeperClient.close();

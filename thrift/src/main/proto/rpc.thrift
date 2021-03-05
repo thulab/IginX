@@ -8,6 +8,7 @@ struct Status {
 
 struct QueryDataSet {
   // ByteBuffer for time column
+  // TODO list<i64>
   1: required binary time
   // ByteBuffer for each column values
   2: required list<binary> valueList

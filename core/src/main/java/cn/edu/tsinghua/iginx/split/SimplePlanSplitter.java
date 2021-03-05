@@ -52,6 +52,14 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 						infoList.add(new SplitInfo(entry.getValue(), replica));
 					}
 				}
+			} else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.DELETE_COLUMNS) {
+				fragments = MetaManager.getInstance().getFragmentListByKey(entry.getKey());
+				for (FragmentMeta fragment : fragments) {
+					List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+					for (FragmentReplicaMeta replica : replicas) {
+						infoList.add(new SplitInfo(entry.getValue(), replica));
+					}
+				}
 			} else {
 				fragments = MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(
 						entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
@@ -71,6 +79,7 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 				}
 			}
 		}
+
 		return infoList;
 	}
 

@@ -20,16 +20,23 @@ package cn.edu.tsinghua.iginx.split;
 
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.metadata.MetaManager;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
+import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import org.slf4j.Logger;
@@ -50,6 +57,28 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<? extends IginxPlan> generateSubPlans(RequestContext requestContext) {
         List<SplitInfo> splitInfoList;
         switch (requestContext.getType()) {
+            case CreateDatabase:
+                CreateDatabaseReq createDatabaseReq = ((CreateDatabaseContext) requestContext).getReq();
+                CreateDatabasePlan createDatabasePlan = new CreateDatabasePlan(createDatabaseReq.getDatabaseName());
+                createDatabasePlan.setDatabaseId(MetaManager.getInstance().chooseDatabaseIdForDatabasePlan());
+                return Collections.singletonList(createDatabasePlan);
+            case DropDatabase:
+                DropDatabaseReq dropDatabaseReq = ((DropDatabaseContext) requestContext).getReq();
+                DropDatabasePlan dropDatabasePlan = new DropDatabasePlan(dropDatabaseReq.getDatabaseName());
+                dropDatabasePlan.setDatabaseId(MetaManager.getInstance().chooseDatabaseIdForDatabasePlan());
+                return Collections.singletonList(dropDatabasePlan);
+            case AddColumns:
+                AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
+                AddColumnsPlan addColumnsPlan = new AddColumnsPlan(
+                    addColumnsReq.getPaths(),
+                    addColumnsReq.getAttributes()
+                );
+                splitInfoList = planSplitter.getSplitResults(addColumnsPlan);
+                return planSplitter.splitAddColumnsPlan(addColumnsPlan, splitInfoList);
+            case DeleteColumns:
+                DeleteColumnsReq deleteColumnsReq = ((DeleteColumnsContext) requestContext).getReq();
+                DeleteColumnsPlan deleteColumnsPlan = new DeleteColumnsPlan(deleteColumnsReq.getPaths());
+                return Collections.singletonList(deleteColumnsPlan);
             case InsertRecords:
                 InsertRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
                 InsertRecordsPlan insertRecordsPlan = new InsertRecordsPlan(
@@ -60,6 +89,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitResults(insertRecordsPlan);
                 return planSplitter.splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
+            case DeleteDataInColumns:
+                // TODO
+                break;
             case QueryData:
                 QueryDataReq queryDataReq = ((QueryDataContext) requestContext).getReq();
                 QueryDataPlan queryDataPlan = new QueryDataPlan(
@@ -69,20 +101,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitResults(queryDataPlan);
                 return planSplitter.splitQueryDataPlan(queryDataPlan, splitInfoList);
-            case AddColumns:
-                AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
-                AddColumnsPlan addColumnsPlan = new AddColumnsPlan(
-                    addColumnsReq.getPaths(),
-                    addColumnsReq.getAttributes()
-                );
-                splitInfoList = planSplitter.getSplitResults(addColumnsPlan);
-                return planSplitter.splitAddColumnsPlan(addColumnsPlan, splitInfoList);
-            case CreateDatabase:
-                CreateDatabaseReq createDatabaseReq = ((CreateDatabaseContext) requestContext).getReq();
-                CreateDatabasePlan createDatabasePlan = new CreateDatabasePlan(
-                        createDatabaseReq.getDatabaseName()
-                );
-                return Collections.singletonList(createDatabasePlan);
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
         }
