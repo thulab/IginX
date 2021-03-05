@@ -18,14 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.core.context.*;
+import cn.edu.tsinghua.iginx.plan.*;
+import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -72,6 +67,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         createDatabaseReq.getDatabaseName()
                 );
                 return Collections.singletonList(createDatabasePlan);
+            case AddColumns:
+                AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
+                AddColumnsPlan addColumnsPlan = new AddColumnsPlan(
+                        addColumnsReq.paths,
+                        addColumnsReq.attributes
+                );
+                return Collections.singletonList(addColumnsPlan);
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
         }

@@ -171,19 +171,20 @@ public class MetaManager implements IMetaManager, IService {
     private void registerFragmentListener() throws Exception {
         this.fragmentCache = new TreeCache(this.zookeeperClient, Constants.FRAGMENT_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
+            logger.info("出现了创建分片事件！");
             FragmentMeta fragmentMeta;
-            String path;
-            String[] pathParts;
+            String path = "";
+            String[] pathParts = null;
             switch (event.getType()) {
                 case NODE_ADDED:
                     path = event.getData().getPath();
                     pathParts = path.split("/");
-                    if (path.length() == 2) { // 一个新的分片簇
-                        String key = pathParts[1];
+                    if (pathParts.length == 3) { // 一个新的分片簇
+                        String key = pathParts[2];
                         logger.info("create a new series of fragment: " + key);
                         fragmentMap.put(key, new Pair<>(new ArrayList<>(), new ReentrantReadWriteLock()));
-                    } else if (path.length() == 3) {
-                        String key = pathParts[1];
+                    } else if (pathParts.length == 4) {
+                        String key = pathParts[2];
                         fragmentMeta = SerializeUtils.deserialize(event.getData().getData(), FragmentMeta.class);
                         if (fragmentMeta != null) {
                             Pair<List<FragmentMeta>, ReadWriteLock> pair = this.fragmentMap.get(key);
@@ -200,7 +201,7 @@ public class MetaManager implements IMetaManager, IService {
                 case NODE_UPDATED:
                     path = event.getData().getPath();
                     pathParts = path.split("/");
-                    if (path.length() == 3) {
+                    if (pathParts.length == 4) {
                         String key = pathParts[1];
                         fragmentMeta = SerializeUtils.deserialize(event.getData().getData(), FragmentMeta.class);
                         if (fragmentMeta != null) {
@@ -226,6 +227,12 @@ public class MetaManager implements IMetaManager, IService {
                     break;
                 default:
                     break;
+            }
+            logger.info("涉及到的路径：" + path + ", 事件的类型：" + event.getType());
+            if (pathParts != null) {
+                for (String pathPart: pathParts) {
+                    logger.info("拆分的路径片段有：" + pathPart);
+                }
             }
         };
         this.fragmentCache.getListenable().addListener(listener);
@@ -292,10 +299,11 @@ public class MetaManager implements IMetaManager, IService {
     @Override
     public List<FragmentMeta> getFragmentListByKeyAndTimeInterval(String key, long startTime, long endTime) {
         List<FragmentMeta> resultList = new ArrayList<>();
-        Pair<List<FragmentMeta>, ReadWriteLock> pair = this.fragmentMap.getOrDefault(key, null);
+        Pair<List<FragmentMeta>, ReadWriteLock> pair = this.fragmentMap.get(key);
         if (pair == null) {
-            return null;
+            return resultList;
         }
+        logger.info(key + " 对应的分片有 " + pair.k.size() + "个");
         pair.v.readLock().lock();
         int index = searchFragment(pair.k, startTime);
         if (index != -1) {
@@ -315,7 +323,7 @@ public class MetaManager implements IMetaManager, IService {
     public List<FragmentMeta> getFragmentListByKey(String key) {
         Pair<List<FragmentMeta>, ReadWriteLock> pair = this.fragmentMap.getOrDefault(key, null);
         if (pair == null) {
-            return null;
+            return new ArrayList<>();
         }
         pair.v.readLock().lock();
         List<FragmentMeta> resultList = new ArrayList<>(pair.k);

@@ -42,7 +42,7 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 			List<FragmentMeta> fragments =
 					MetaManager.getInstance().getFragmentListByKeyAndTimeInterval(entry.getKey(), plan.getStartTime(), plan.getEndTime());
 			if (fragments.isEmpty()) {
-				createFragment(entry.getKey(), plan.getStartTime(), plan.getEndTime());
+				createFragment(entry.getKey(), 0, 0);
 			}
 			for (FragmentMeta fragment : fragments) {
 				List<FragmentReplicaMeta> replicas = new ArrayList<>();
@@ -60,17 +60,14 @@ public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSpl
 	}
 
 	@Override
-public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery, int replicaNum) {
+	public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery, int replicaNum) {
 		// random
 		List<FragmentReplicaMeta> replicas = new ArrayList<>();
 		Random random = new Random();
 		if (isQuery) {
 			replicas.add(fragment.getReplicaMetas().get(random.nextInt(fragment.getReplicaMetasNum())));
 		} else {
-			replicas.add(fragment.getReplicaMetas().get(0));
-			for (int i = 0; i < replicaNum; i++) {
-				replicas.add(fragment.getReplicaMetas().get(random.nextInt(fragment.getReplicaMetasNum() - 1) + 1));
-			}
+			replicas.addAll(fragment.getReplicaMetas().values());
 		}
 		return replicas;
 	}

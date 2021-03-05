@@ -79,7 +79,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     @Override
     protected InsertRecordsPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
         // TODO Tablet
-
+        logger.info("执行插入计划！");
         SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
 
         List<String> deviceIds = new ArrayList<>();

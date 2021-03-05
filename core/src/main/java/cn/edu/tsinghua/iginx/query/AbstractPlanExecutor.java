@@ -150,6 +150,8 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
     @Override
     public List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext) {
         List<PlanExecuteResult> planExecuteResults = requestContext.getIginxPlans().stream().filter(e -> !e.isSync()).map(this::executeAsyncTask).collect(Collectors.toList());
+        logger.info("执行计划：" + requestContext.getType() + ", 共有：" + requestContext.getIginxPlans().size() + " 个子计划");
+        logger.info("其中有 " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " 个同步子计划");
         switch (requestContext.getType()) {
             case InsertRecords:
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(InsertRecordsPlan.class::cast).map(this::executeInsertRecordsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
@@ -164,7 +166,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DeleteColumnsPlan.class::cast).map(this::executeDeleteColumnsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
                 break;
             case DeleteDataInColumns:
-                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DeleteDataInColumnsPlan.class::cast).map(this::executeDeleteDataInColumnsPlan).map(wrap(Future::get)).collect(Collectors.toList()))
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DeleteDataInColumnsPlan.class::cast).map(this::executeDeleteDataInColumnsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
                 break;
             case AddColumns:
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(AddColumnsPlan.class::cast).map(this::executeAddColumnPlan).map(wrap(Future::get)).collect(Collectors.toList()));

@@ -21,8 +21,12 @@ package cn.edu.tsinghua.iginx.utils;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.thrift.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RpcUtils {
+
+	private static final Logger logger = LoggerFactory.getLogger(RpcUtils.class);
 
 	public static Status WRONG_PASSWORD = new Status(StatusCode.WRONG_PASSWORD.getStatusCode());
 
@@ -35,6 +39,7 @@ public class RpcUtils {
 	public static Status FAILURE = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
 
 	public static void verifySuccess(Status status) throws ExecutionException {
+		logger.info("获取的状态码：" + status.code);
 		if (status.code != StatusCode.SUCCESS_STATUS.getStatusCode()) {
 			throw new ExecutionException(status);
 		}
