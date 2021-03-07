@@ -1,6 +1,6 @@
 # IginX
 
-Emerged and evolved from a previously deployed project [IKR](https://github.com/thulab/iotdb-kairosdb), IginX is a database clustering system for multi-dimensional scaling of standalone time series databases through generalized sharding.
+Emerged and evolved from a previously deployed middleware [IKR](https://github.com/thulab/iotdb-kairosdb), IginX is a database clustering system for multi-dimensional scaling of standalone time series databases through generalized sharding.
 
 By encapsulating shard orchestration logic, IginX allows application code and time series data queries to remain agnostic to the distribution of data onto multiple shards. With IginX you can even split and merge shards in multiple dimensions as your needs grow, with an atomic cutover step that takes only a few seconds.
 
