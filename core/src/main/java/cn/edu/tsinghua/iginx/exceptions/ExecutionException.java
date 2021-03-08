@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.exceptions;
 
-
 import cn.edu.tsinghua.iginx.thrift.Status;
 
 public class ExecutionException extends IginxException {
