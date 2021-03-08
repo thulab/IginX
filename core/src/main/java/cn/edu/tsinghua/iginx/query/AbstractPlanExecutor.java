@@ -26,7 +26,6 @@ import cn.edu.tsinghua.iginx.query.aysnc.queue.AsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.MemoryAsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
 import cn.edu.tsinghua.iginx.query.result.*;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

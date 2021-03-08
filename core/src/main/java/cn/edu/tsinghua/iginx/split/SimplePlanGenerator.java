@@ -18,27 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
-import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.*;
 import cn.edu.tsinghua.iginx.metadata.MetaManager;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
-import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.plan.*;
+import cn.edu.tsinghua.iginx.thrift.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
-
 import java.util.List;
 
 public abstract class IginxPlan {

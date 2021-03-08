@@ -36,13 +36,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -56,19 +51,22 @@ public class MetaManager implements IMetaManager, IService {
     private final CuratorFramework zookeeperClient;
 
     // 数据库实例集群的元信息
-    private final ConcurrentMap<Long, DatabaseMeta> databaseMetaMap = new ConcurrentHashMap<>();
+    private final Map<Long, DatabaseMeta> databaseMetaMap = new ConcurrentHashMap<>();
 
     // iginx 集群的元信息
-    private final ConcurrentMap<Long, IginxMeta> iginxMetaMap = new ConcurrentHashMap<>();
+    private final Map<Long, IginxMeta> iginxMetaMap = new ConcurrentHashMap<>();
 
     // iginx 集群的元信息树 Zookeeper Cache
     private TreeCache iginxCache;
 
     // 分片树
-    private final ConcurrentMap<String, Pair<List<FragmentMeta>, ReadWriteLock>> fragmentMap = new ConcurrentHashMap<>();
+    private final Map<String, Pair<List<FragmentMeta>, ReadWriteLock>> fragmentMap = new ConcurrentHashMap<>();
 
     // 分片树的 Zookeeper Cache
     private TreeCache fragmentCache;
+
+    // 数据库集群的元信息
+    private TreeCache databaseCache;
 
     private MetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
@@ -78,6 +76,8 @@ public class MetaManager implements IMetaManager, IService {
                 .build();
         zookeeperClient.start();
         try {
+            registerIginxListener();
+            resolveDatabaseMetaFromConf();
             registerIginxMeta();
             registerDatabaseMeta();
             registerIginxListener();
@@ -85,20 +85,6 @@ public class MetaManager implements IMetaManager, IService {
         } catch (Exception e) {
             logger.error("register meta error: ", e);
         }
-    }
-
-    private void registerIginxMeta() throws Exception {
-        String nodeName = this.zookeeperClient.create()
-                .creatingParentsIfNeeded()
-                .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
-                .forPath(Constants.IGINX_NODE, "".getBytes(StandardCharsets.UTF_8));
-        long id = Long.parseLong(nodeName.substring(Constants.IGINX_NODE.length()));
-        IginxMeta iginxMeta = new IginxMeta(id, ConfigDescriptor.getInstance().getConfig().getIp(),
-                ConfigDescriptor.getInstance().getConfig().getPort(), null);
-        this.zookeeperClient.setData()
-                .forPath(nodeName, SerializeUtils.serialize(iginxMeta));
-        this.iginxMetaMap.put(id, iginxMeta);
-        SnowFlakeUtils.init(id);
     }
 
     private void registerIginxListener() throws Exception {
@@ -143,6 +129,24 @@ public class MetaManager implements IMetaManager, IService {
         this.iginxCache.start();
     }
 
+    private void resolveIginxMetaFromZookeeper() throws Exception {
+
+    }
+
+    private void registerIginxMeta() throws Exception {
+        String nodeName = this.zookeeperClient.create()
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                .forPath(Constants.IGINX_NODE, "".getBytes(StandardCharsets.UTF_8));
+        long id = Long.parseLong(nodeName.substring(Constants.IGINX_NODE.length()));
+        IginxMeta iginxMeta = new IginxMeta(id, ConfigDescriptor.getInstance().getConfig().getIp(),
+                ConfigDescriptor.getInstance().getConfig().getPort(), null);
+        this.zookeeperClient.setData()
+                .forPath(nodeName, SerializeUtils.serialize(iginxMeta));
+        this.iginxMetaMap.put(id, iginxMeta);
+        SnowFlakeUtils.init(id);
+    }
+
     private void registerDatabaseMeta() throws Exception {
         InterProcessMutex lock = new InterProcessMutex(this.zookeeperClient, Constants.DATABASE_LOCK_NODE);
         lock.acquire();
@@ -166,6 +170,10 @@ public class MetaManager implements IMetaManager, IService {
         } finally {
             lock.release();
         }
+    }
+
+    private void registerDatabaseListener() throws Exception {
+
     }
 
     private void registerFragmentListener() throws Exception {
@@ -433,6 +441,7 @@ public class MetaManager implements IMetaManager, IService {
     @Override
     public void shutdown() throws Exception {
         this.iginxCache.close();
+        this.fragmentCache.close();
         this.zookeeperClient.close();
         synchronized (MetaManager.class) {
             MetaManager.INSTANCE = null;

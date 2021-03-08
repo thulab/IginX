@@ -19,10 +19,7 @@
 package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.Status;
-
-import java.util.List;
 
 public class QueryDataCombineResult extends DataCombineResult {
 
