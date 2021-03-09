@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.iotdb;
+package cn.edu.tsinghua.iginx.iotdb;
 
 import cn.edu.tsinghua.iginx.core.db.DBType;
 import cn.edu.tsinghua.iginx.metadata.DatabaseMeta;
@@ -58,8 +58,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.query.iotdb.tools.DataTypeTransformer.fromIoTDB;
-import static cn.edu.tsinghua.iginx.query.iotdb.tools.DataTypeTransformer.toIoTDB;
+import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
+import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
 
 public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 

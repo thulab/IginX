@@ -42,6 +42,8 @@ public class Config {
 
     private int replicaNum = 1;
 
+    private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
+
     public String getIp() {
         return ip;
     }
@@ -128,5 +130,13 @@ public class Config {
 
     public void setReplicaNum(int replicaNum) {
         this.replicaNum = replicaNum;
+    }
+
+    public String getDatabaseClassName() {
+        return databaseClassName;
+    }
+
+    public void setDatabaseClassName(String databaseClassName) {
+        this.databaseClassName = databaseClassName;
     }
 }

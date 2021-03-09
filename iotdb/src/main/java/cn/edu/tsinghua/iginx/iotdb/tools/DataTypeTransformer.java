@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.iotdb.tools;
+package cn.edu.tsinghua.iginx.iotdb.tools;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;

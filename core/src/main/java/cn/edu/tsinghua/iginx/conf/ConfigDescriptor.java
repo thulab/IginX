@@ -58,6 +58,7 @@ public class ConfigDescriptor {
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
+            config.setDatabaseClassName(properties.getProperty("databaseClassName", "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
