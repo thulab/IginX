@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.db.DBType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SerializeUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;

@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.query.iotdb.tools;
 
-import cn.edu.tsinghua.iginx.utils.DataType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 
 public class DataTypeTransformer {
@@ -32,18 +32,34 @@ public class DataTypeTransformer {
             case DOUBLE:
                 return DataType.DOUBLE;
             case INT32:
-                return DataType.INT32;
+                return DataType.INTEGER;
             case INT64:
-                return DataType.INT64;
+                return DataType.LONG;
             case TEXT:
-                return DataType.TEXT;
+                return DataType.STRING;
             default:
                 break;
         }
         return null;
     }
 
-
-
-
+    public static TSDataType toIoTDB(DataType dataType) {
+        switch (dataType) {
+            case BOOLEAN:
+                return TSDataType.BOOLEAN;
+            case FLOAT:
+                return TSDataType.FLOAT;
+            case DOUBLE:
+                return TSDataType.DOUBLE;
+            case INTEGER:
+                return TSDataType.INT32;
+            case LONG:
+                return TSDataType.INT64;
+            case STRING:
+                return TSDataType.TEXT;
+            default:
+                break;
+        }
+        return null;
+    }
 }

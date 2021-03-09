@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
@@ -44,9 +45,13 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBufferByDataType;
 
 public class Session {
 
@@ -174,7 +179,7 @@ public class Session {
 
 	public void addColumns(List<String> paths, List<Map<String, String>> attributes) throws SessionException, ExecutionException {
 		AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-		req.setAttributes(attributes);
+		req.setAttributesList(attributes);
 
 		try {
 			RpcUtils.verifySuccess(client.addColumns(req));
@@ -190,8 +195,7 @@ public class Session {
 		deleteColumns(paths);
 	}
 
-	public void deleteColumns(List<String> paths) throws SessionException,
-			ExecutionException {
+	public void deleteColumns(List<String> paths) throws SessionException, ExecutionException {
 		DeleteColumnsReq req = new DeleteColumnsReq(sessionId, paths);
 
 		try {
@@ -201,14 +205,15 @@ public class Session {
 		}
 	}
 
-	public void insertRecords(List<String> paths, List<Long> timestamps, List<List<Object>> values,
-	    List<Map<String, String>> attributes) throws SessionException, ExecutionException {
+	public void insertRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
 		InsertRecordsReq req = new InsertRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
-		req.setTimestamps(timestamps);
-		req.setValues(ByteUtils.getByteBufferByDataType(values, attributes));
-		req.setAttributes(attributes);
+		req.setTimestamps(getByteArrayFromLongArray(timestamps));
+		req.setValuesList(getByteBufferByDataType(valuesList, dataTypeList));
+		req.setDataTypeList(dataTypeList);
+		req.setAttributesList(attributesList);
 
 		try {
 			RpcUtils.verifySuccess(client.insertRecords(req));

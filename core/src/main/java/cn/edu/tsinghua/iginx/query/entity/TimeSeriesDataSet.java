@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.query.entity;
 
-import cn.edu.tsinghua.iginx.utils.DataType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import lombok.Data;
 
 import java.util.LinkedList;

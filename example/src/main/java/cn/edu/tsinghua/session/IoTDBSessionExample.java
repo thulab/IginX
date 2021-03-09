@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 
 import java.util.ArrayList;
@@ -69,15 +70,20 @@ public class IoTDBSessionExample {
 		paths.add(COLUMN_D2_S1);
 		paths.add(COLUMN_D3_S1);
 
-		List<Long> timestamps = new ArrayList<>();
-		List<List<Object>> values = new ArrayList<>();
+		long[] timestamps = new long[100];
+		Object[] valuesList = new Object[100];
 		for (long i = 0; i < 100; i++) {
-			timestamps.add(i);
-			List<Object> valuesForOneTimestamp = new ArrayList<>();
+			timestamps[(int) i] = i;
+			Object[] values = new Object[4];
 			for (long j = 0; j < 4; j++) {
-				valuesForOneTimestamp.add(i + j);
+				values[(int) j] = i + j;
 			}
-			values.add(valuesForOneTimestamp);
+			valuesList[(int) i] = values;
+		}
+
+		List<DataType> dataTypeList = new ArrayList<>();
+		for (int i = 0; i < 4; i++) {
+			dataTypeList.add(DataType.LONG);
 		}
 
 		List<Map<String, String>> attributes = new ArrayList<>();
@@ -87,7 +93,7 @@ public class IoTDBSessionExample {
 			attributes.add(attributesForOnePath);
 		}
 
-		session.insertRecords(paths, timestamps, values, attributes);
+		session.insertRecords(paths, timestamps, valuesList, dataTypeList, attributes);
 	}
 
 	private static void queryData() throws SessionException {

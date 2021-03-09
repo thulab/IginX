@@ -42,10 +42,11 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesListByDataType;
 
 public class SimplePlanGenerator implements IPlanGenerator {
 
@@ -69,10 +70,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 return Collections.singletonList(dropDatabasePlan);
             case AddColumns:
                 AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
-                AddColumnsPlan addColumnsPlan = new AddColumnsPlan(
-                    addColumnsReq.getPaths(),
-                    addColumnsReq.getAttributes()
-                );
+                AddColumnsPlan addColumnsPlan = new AddColumnsPlan(addColumnsReq.getPaths(), addColumnsReq.getAttributesList());
                 splitInfoList = planSplitter.getSplitResults(addColumnsPlan);
                 return planSplitter.splitAddColumnsPlan(addColumnsPlan, splitInfoList);
             case DeleteColumns:
@@ -83,9 +81,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 InsertRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
                 InsertRecordsPlan insertRecordsPlan = new InsertRecordsPlan(
                         insertRecordsReq.getPaths(),
-                        insertRecordsReq.getTimestamps().stream().mapToLong(Long::longValue).toArray(),
-                        getValuesByDataType(insertRecordsReq.getValues(), insertRecordsReq.getAttributes()),
-                        insertRecordsReq.getAttributes()
+                        ByteBuffer.wrap(insertRecordsReq.getTimestamps()).asLongBuffer().array(),
+                        getValuesListByDataType(insertRecordsReq.getValuesList(), insertRecordsReq.getDataTypeList()),
+                        insertRecordsReq.dataTypeList,
+                        insertRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitResults(insertRecordsPlan);
                 return planSplitter.splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);

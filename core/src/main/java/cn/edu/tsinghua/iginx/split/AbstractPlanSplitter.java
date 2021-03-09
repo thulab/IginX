@@ -79,8 +79,14 @@ public abstract class AbstractPlanSplitter {
 			Pair<long[], List<Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByRange(
 					info.getReplica().getStartTime(), info.getReplica().getEndTime());
 			Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getPathsIndexes());
-			InsertRecordsPlan subPlan = new InsertRecordsPlan(plan.getPathsByIndexes(info.getPathsIndexes()), timestampsAndIndexes.k, values,
-					plan.getAttributesByIndexes(info.getPathsIndexes()), info.getReplica().getDatabaseId());
+			InsertRecordsPlan subPlan = new InsertRecordsPlan(
+					plan.getPathsByIndexes(info.getPathsIndexes()),
+					timestampsAndIndexes.k,
+					values,
+					plan.getDataTypeListByIndexes(info.getPathsIndexes()),
+					plan.getAttributesByIndexes(info.getPathsIndexes()),
+					info.getReplica().getDatabaseId()
+			);
 			subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
 			plans.add(subPlan);
 		}

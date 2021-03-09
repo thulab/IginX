@@ -20,13 +20,12 @@ package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
-import cn.edu.tsinghua.iginx.utils.ByteUtils;
-import cn.edu.tsinghua.iginx.utils.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +35,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.booleanToByte;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBuffer;
 
 public class QueryDataSetCombiner {
 
@@ -90,11 +92,11 @@ public class QueryDataSetCombiner {
                     data.add(new Pair<>(tsPair.k.getValue(tsPair.v), tsPair.k.getType()));
                     switch (tsPair.k.getType()) {
                         case FLOAT:
-                        case INT32:
+                        case INTEGER:
                             totalSize += 4;
                             break;
                         case DOUBLE:
-                        case INT64:
+                        case LONG:
                             totalSize += 8;
                             break;
                         case BOOLEAN:
@@ -109,10 +111,10 @@ public class QueryDataSetCombiner {
             ByteBuffer buffer = ByteBuffer.allocate(totalSize);
             for (Pair<Object, DataType> datum: data) {
                 switch (datum.v) {
-                    case INT32:
+                    case INTEGER:
                         buffer.putInt((int)datum.k);
                         break;
-                    case INT64:
+                    case LONG:
                         buffer.putLong((long)datum.k);
                         break;
                     case FLOAT:
@@ -122,7 +124,7 @@ public class QueryDataSetCombiner {
                         buffer.putDouble((double) datum.k);
                         break;
                     case BOOLEAN:
-                        buffer.put(ByteUtils.booleanToByte((boolean) datum.k));
+                        buffer.put(booleanToByte((boolean) datum.k));
                         break;
                     default:
                         logger.error("unsupported data type: " + datum.v);
@@ -135,15 +137,12 @@ public class QueryDataSetCombiner {
             bitmapList.add(bitmapBuffer);
         }
         dataSet.setBitmapList(bitmapList);
-        dataSet.setValueList(valueList);
-        ByteBuffer timeLineBuffer = ByteBuffer.allocate(timeLine.size() * 8);
-        for (long time: timeLine)
-            timeLineBuffer.putLong(time);
-        dataSet.setTime(timeLineBuffer);
+        dataSet.setValuesList(valueList);
+        dataSet.setTimestamps(getByteBuffer(timeLine, DataType.LONG));
         QueryDataResp resp = new QueryDataResp(status);
         resp.setQueryDataSet(dataSet);
         resp.setPaths(paths);
-        resp.setTypes(types.stream().map(DataType::enumToInt).collect(Collectors.toList()));
+        resp.setDataTypeList(types);
         return resp;
     }
 

@@ -18,30 +18,137 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import cn.edu.tsinghua.iginx.thrift.DataType;
+
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-
-import static cn.edu.tsinghua.iginx.utils.DataType.deserialize;
 
 public class ByteUtils {
 
-	public static ByteBuffer getByteBuffer(List<Object> values, DataType dataType) {
-		ByteBuffer buffer = ByteBuffer.allocate(getByteBufferSize(values, dataType));
+	public static ByteBuffer getByteBuffer(Object value, DataType dataType) {
+		ByteBuffer buffer;
 
 		switch (dataType) {
 			case BOOLEAN:
+				buffer = ByteBuffer.allocate(1);
+				buffer.put(booleanToByte((boolean) value));
+				break;
+			case INTEGER:
+				buffer = ByteBuffer.allocate(4);
+				buffer.putInt((int) value);
+				break;
+			case LONG:
+				buffer = ByteBuffer.allocate(8);
+				buffer.putLong((long) value);
+				break;
+			case FLOAT:
+				buffer = ByteBuffer.allocate(4);
+				buffer.putFloat((float) value);
+				break;
+			case DOUBLE:
+				buffer = ByteBuffer.allocate(8);
+				buffer.putDouble((double) value);
+				break;
+			case STRING:
+				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
+				buffer.putInt(((byte[]) value).length);
+				buffer.put((byte[]) value);
+				break;
+			default:
+				throw new UnsupportedOperationException(dataType.toString());
+		}
+
+		buffer.flip();
+		return buffer;
+	}
+
+	public static boolean[] getBooleanArray(ByteBuffer buffer) {
+		boolean[] array = new boolean[buffer.array().length];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = buffer.get() == 1;
+		}
+		return array;
+	}
+
+	public static String[] getStringArray(ByteBuffer buffer) {
+		List<String> tempList = new ArrayList<>();
+		int cnt = 0;
+		while (cnt < buffer.array().length) {
+			int length = buffer.getInt();
+			byte[] bytes = new byte[length];
+			buffer.get(bytes, 0, length);
+			tempList.add(new String(bytes, 0, length));
+			cnt += length + 4;
+		}
+		return tempList.toArray(new String[0]);
+	}
+
+	public static byte booleanToByte(boolean x) {
+		if (x) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	public static Object[] getValuesListByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList) {
+		Object[] tempValues = new Object[valuesList.size()];
+		for (int i = 0; i < valuesList.size(); i++) {
+			switch (dataTypeList.get(i)) {
+				case BOOLEAN:
+					tempValues[i] = getBooleanArray(valuesList.get(i));
+					break;
+				case INTEGER:
+					tempValues[i] = valuesList.get(i).asIntBuffer().array();
+					break;
+				case LONG:
+					tempValues[i] = valuesList.get(i).asLongBuffer().array();
+					break;
+				case FLOAT:
+					tempValues[i] = valuesList.get(i).asFloatBuffer().array();
+					break;
+				case DOUBLE:
+					tempValues[i] = valuesList.get(i).asDoubleBuffer().array();
+					break;
+				case STRING:
+					tempValues[i] = getStringArray(valuesList.get(i));
+					break;
+				default:
+					throw new UnsupportedOperationException(dataTypeList.get(i).toString());
+			}
+		}
+		return tempValues;
+	}
+
+	public static byte[] getByteArrayFromLongArray(long[] array) {
+		ByteBuffer buffer = ByteBuffer.allocate(array.length * 8);
+		buffer.asLongBuffer().put(array);
+		return buffer.array();
+	}
+
+	public static List<ByteBuffer> getByteBufferByDataType(Object[] valuesList, List<DataType> dataTypeList) {
+		List<ByteBuffer> byteBufferList = new ArrayList<>();
+		for (int i = 0; i < valuesList.length; i++) {
+			byteBufferList.add(getByteBuffer((Object[]) valuesList[i], dataTypeList.get(i)));
+		}
+		return byteBufferList;
+	}
+
+	public static ByteBuffer getByteBuffer(Object[] values, DataType dataType) {
+		ByteBuffer buffer = ByteBuffer.allocate(getByteBufferSize(values, dataType));
+		switch (dataType) {
+			case BOOLEAN:
 				for (Object value : values) {
-					buffer.put(ByteUtils.booleanToByte((boolean) value));
+					buffer.put(booleanToByte((boolean) value));
 				}
 				break;
-			case INT32:
+			case INTEGER:
 				for (Object value : values) {
 					buffer.putInt((int) value);
 				}
 				break;
-			case INT64:
+			case LONG:
 				for (Object value : values) {
 					buffer.putLong((long) value);
 				}
@@ -56,7 +163,7 @@ public class ByteUtils {
 					buffer.putDouble((double) value);
 				}
 				break;
-			case TEXT:
+			case STRING:
 				for (Object value : values) {
 					buffer.putInt(((byte[]) value).length);
 					buffer.put((byte[]) value);
@@ -65,198 +172,26 @@ public class ByteUtils {
 			default:
 				throw new UnsupportedOperationException(dataType.toString());
 		}
-
 		buffer.flip();
 		return buffer;
 	}
 
-	public static ByteBuffer getByteBuffer(Object value, DataType dataType) {
-		ByteBuffer buffer;
-
-		switch (dataType) {
-			case BOOLEAN:
-				buffer = ByteBuffer.allocate(1);
-				buffer.put(ByteUtils.booleanToByte((boolean) value));
-				break;
-			case INT32:
-				buffer = ByteBuffer.allocate(4);
-				buffer.putInt((int) value);
-				break;
-			case INT64:
-				buffer = ByteBuffer.allocate(8);
-				buffer.putLong((long) value);
-				break;
-			case FLOAT:
-				buffer = ByteBuffer.allocate(4);
-				buffer.putFloat((float) value);
-				break;
-			case DOUBLE:
-				buffer = ByteBuffer.allocate(8);
-				buffer.putDouble((double) value);
-				break;
-			case TEXT:
-				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
-				buffer.putInt(((byte[]) value).length);
-				buffer.put((byte[]) value);
-				break;
-			default:
-				throw new UnsupportedOperationException(dataType.toString());
-		}
-
-		buffer.flip();
-		return buffer;
-	}
-
-	public static boolean getBoolean(ByteBuffer buffer) {
-		return buffer.get() == 1;
-	}
-
-	public static int getInteger(ByteBuffer buffer) {
-		return buffer.getInt();
-	}
-
-	public static long getLong(ByteBuffer buffer) {
-		return buffer.getLong();
-	}
-
-	public static float getFloat(ByteBuffer buffer) {
-		return buffer.getFloat();
-	}
-
-	public static double getDouble(ByteBuffer buffer) {
-		return buffer.getDouble();
-	}
-
-	public static String getString(ByteBuffer buffer) {
-		int length = getInteger(buffer);
-		if (length < 0) {
-			return null;
-		} else if (length == 0) {
-			return "";
-		}
-		byte[] bytes = new byte[length];
-		buffer.get(bytes, 0, length);
-		return new String(bytes, 0, length);
-	}
-
-	public static Boolean[] getBooleanArray(ByteBuffer buffer) {
-		Boolean[] arr = new Boolean[buffer.array().length];
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = buffer.get() == 1;
-		}
-		return arr;
-	}
-
-	public static Integer[] getIntegerArray(ByteBuffer buffer) {
-		Integer[] arr = new Integer[buffer.array().length / 4];
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = buffer.getInt();
-		}
-		return arr;
-	}
-
-	public static Long[] getLongArray(ByteBuffer buffer) {
-		Long[] arr = new Long[buffer.array().length / 8];
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = buffer.getLong();
-		}
-		return arr;
-	}
-
-	public static Float[] getFloatArray(ByteBuffer buffer) {
-		Float[] arr = new Float[buffer.array().length / 4];
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = buffer.getFloat();
-		}
-		return arr;
-	}
-
-	public static Double[] getDoubleArray(ByteBuffer buffer) {
-		Double[] arr = new Double[buffer.array().length / 8];
-		for (int i = 0; i < arr.length; i++) {
-			arr[i] = buffer.getDouble();
-		}
-		return arr;
-	}
-
-	// TODO
-//	public static String[] getStringArray(ByteBuffer buffer) {
-//
-//		int length = getInteger(buffer);
-//		if (length < 0) {
-//			return null;
-//		} else if (length == 0) {
-//			return "";
-//		}
-//		byte[] bytes = new byte[length];
-//		buffer.get(bytes, 0, length);
-//		return new String(bytes, 0, length);
-//	}
-
-	public static byte booleanToByte(boolean x) {
-		if (x) {
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-
-	public static Object[] getValuesByDataType(List<ByteBuffer> values, List<Map<String, String>> attributes) {
-		Object[] tempValues = new Object[values.size()];
-		for (int i = 0; i < attributes.size(); i++) {
-			DataType dataType = deserialize(Short.parseShort(attributes.get(i).get("DataType")));
-			switch (dataType) {
-				case BOOLEAN:
-					tempValues[i] = getBooleanArray(values.get(i));
-					break;
-				case INT32:
-					tempValues[i] = getIntegerArray(values.get(i));
-					break;
-				case INT64:
-					tempValues[i] = getLongArray(values.get(i));
-					break;
-				case FLOAT:
-					tempValues[i] = getFloatArray(values.get(i));
-					break;
-				case DOUBLE:
-					tempValues[i] = getDoubleArray(values.get(i));
-					break;
-				case TEXT:
-					// TODO
-					tempValues[i] = getString(values.get(i));
-					break;
-				default:
-					throw new UnsupportedOperationException(dataType.toString());
-			}
-		}
-		return tempValues;
-	}
-
-	public static List<ByteBuffer> getByteBufferByDataType(List<List<Object>> values, List<Map<String, String>> attributes) {
-		List<ByteBuffer> byteBufferList = new ArrayList<>();
-		for (int i = 0; i < attributes.size(); i++) {
-			DataType dataType = deserialize(Short.parseShort(attributes.get(i).get("DataType")));
-			byteBufferList.add(getByteBuffer(values.get(i), dataType));
-		}
-		return byteBufferList;
-	}
-
-	public static int getByteBufferSize(List<Object> values, DataType dataType) {
+	public static int getByteBufferSize(Object[] values, DataType dataType) {
 		int size = 0;
 		switch (dataType) {
 			case BOOLEAN:
-				size = values.size();
+				size = values.length;
 				break;
-			case INT32:
+			case INTEGER:
 			case FLOAT:
-				size = values.size() * 4;
+				size = values.length * 4;
 				break;
-			case INT64:
+			case LONG:
 			case DOUBLE:
-				size = values.size() * 8;
+				size = values.length * 8;
 				break;
-			case TEXT:
-				size += values.size() * 4;
+			case STRING:
+				size += values.length * 4;
 				for (Object value : values) {
 					size += ((byte[]) value).length;
 				}

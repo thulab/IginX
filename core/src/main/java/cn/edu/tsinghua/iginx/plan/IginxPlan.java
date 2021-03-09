@@ -18,19 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import java.util.List;
-
 public abstract class IginxPlan {
 
 	private IginxPlanType iginxPlanType;
 
 	private boolean isQuery;
 
-	// TODO NonDatabasePlan = true DatabasePlan = false
 	private boolean canBeSplit;
-
-	// TODO
-	private List<IginxPlan> splitPlans;
 
 	private boolean isSync;
 
@@ -53,10 +47,6 @@ public abstract class IginxPlan {
 		return canBeSplit;
 	}
 
-	public List<IginxPlan> getSplitPlans() {
-		return splitPlans;
-	}
-
 	public boolean isSync() {
 		return isSync;
 	}
@@ -75,10 +65,6 @@ public abstract class IginxPlan {
 
 	public void setCanBeSplit(boolean canBeSplit) {
 		this.canBeSplit = canBeSplit;
-	}
-
-	public void setSplitPlans(List<IginxPlan> splitPlans) {
-		this.splitPlans = splitPlans;
 	}
 
 	public void setSync(boolean isSync) {
