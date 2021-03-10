@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.session;
+package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;

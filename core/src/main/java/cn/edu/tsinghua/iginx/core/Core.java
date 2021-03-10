@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.core;
 import cn.edu.tsinghua.iginx.combine.CombineExecutor;
 import cn.edu.tsinghua.iginx.combine.CombineResult;
 import cn.edu.tsinghua.iginx.combine.ICombineExecutor;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
@@ -31,17 +32,22 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.MetaManager;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
 import cn.edu.tsinghua.iginx.query.IPlanExecutor;
-import cn.edu.tsinghua.iginx.query.iotdb.IoTDBPlanExecutor;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.split.IPlanGenerator;
 import cn.edu.tsinghua.iginx.split.SimplePlanGenerator;
 import cn.edu.tsinghua.iginx.thrift.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Core {
+public final class Core {
+
+    private static final Logger logger = LoggerFactory.getLogger(Core.class);
 
     private static final Core instance = new Core();
 
@@ -68,8 +74,17 @@ public class Core {
     private Core() {
         metaManager = MetaManager.getInstance();
         registerPlanGenerator(new SimplePlanGenerator());
-        registerQueryExecutor(new IoTDBPlanExecutor(metaManager.getDatabaseList()));
         registerCombineExecutor(new CombineExecutor());
+
+        try {
+            Class planExecutorClass = Core.class.getClassLoader().
+                    loadClass(ConfigDescriptor.getInstance().getConfig().getDatabaseClassName());
+            AbstractPlanExecutor planExecutor =
+                    ((Class<? extends AbstractPlanExecutor>) planExecutorClass).getConstructor(List.class).newInstance(metaManager.getDatabaseList());
+            registerQueryExecutor(planExecutor);
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            logger.error(e.getMessage());
+        }
     }
 
     public void registerPreQueryPlanProcessor(PreQueryPlanProcessor preQueryPlanProcessor) {

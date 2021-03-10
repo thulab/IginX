@@ -16,6 +16,7 @@
     <module>core</module>
     <module>thrift</module>
     <module>example</module>
+    <module>iotdb</module>
   </modules>
 
   <build>
