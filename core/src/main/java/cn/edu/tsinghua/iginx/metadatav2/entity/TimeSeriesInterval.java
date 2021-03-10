@@ -16,23 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.db;
+package cn.edu.tsinghua.iginx.metadatav2.entity;
 
-import java.util.Locale;
+public final class TimeSeriesInterval {
 
-public enum DBType {
-    IoTDB,
-    InfluxDB;
+    private final String beginTimeSeries;
 
-    public static DBType fromString(String s) {
-        switch (s.toLowerCase(Locale.ROOT)) {
-            case "iotdb":
-                return IoTDB;
-            case "influxdb":
-                return InfluxDB;
-            default:
-                return null;
-        }
+    private final String endTimeSeries;
+
+    public TimeSeriesInterval(String beginTimeSeries, String endTimeSeries) {
+        this.beginTimeSeries = beginTimeSeries;
+        this.endTimeSeries = endTimeSeries;
     }
 
+    public String getBeginTimeSeries() {
+        return beginTimeSeries;
+    }
+
+    public String getEndTimeSeries() {
+        return endTimeSeries;
+    }
 }

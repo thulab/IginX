@@ -77,10 +77,10 @@ public final class Core {
         registerCombineExecutor(new CombineExecutor());
 
         try {
-            Class planExecutorClass = Core.class.getClassLoader().
+            Class<?> planExecutorClass = Core.class.getClassLoader().
                     loadClass(ConfigDescriptor.getInstance().getConfig().getDatabaseClassName());
-            AbstractPlanExecutor planExecutor =
-                    ((Class<? extends AbstractPlanExecutor>) planExecutorClass).getConstructor(List.class).newInstance(metaManager.getDatabaseList());
+            IPlanExecutor planExecutor =
+                    ((Class<? extends IPlanExecutor>) planExecutorClass).getConstructor(List.class).newInstance(metaManager.getDatabaseList());
             registerQueryExecutor(planExecutor);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             logger.error(e.getMessage());

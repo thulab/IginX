@@ -16,29 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.conf;
+package cn.edu.tsinghua.iginx.metadatav2.entity;
 
-public class Constants {
+public final class FragmentReplicaMeta {
 
-	public static final String DEFAULT_USERNAME = "username";
+    /**
+     * 分片副本的序号，如果该值为 0，则意味其为主分片
+     */
+    private final int replicaIndex;
 
-	public static final String DEFAULT_PASSWORD = "password";
+    /**
+     * 当前分片副本所在的数据库
+     */
+    private final long databaseId;
 
-	public static final int DEFAULT_TIMEOUT_MS = 1000;
+    public FragmentReplicaMeta(int replicaIndex, long databaseId) {
+        this.replicaIndex = replicaIndex;
+        this.databaseId = databaseId;
+    }
 
-	public static final String CONFIG_FILE = "conf/config.properties";
+    public int getReplicaIndex() {
+        return replicaIndex;
+    }
 
-	public static final String IGINX_NODE = "/iginx/node";
-
-	public static final String STORAGE_ENGINE_LOCK_NODE = "/lock/storage";
-
-	public static final String FRAGMENT_LOCK_NODE = "/lock/fragment";
-
-	public static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
-
-	public static final String IGINX_NODE_PREFIX = "/iginx";
-
-	public static final String FRAGMENT_NODE_PREFIX = "/fragment";
-
+    public long getDatabaseId() {
+        return databaseId;
+    }
 }
-

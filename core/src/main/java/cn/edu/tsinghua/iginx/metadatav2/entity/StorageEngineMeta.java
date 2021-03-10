@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadatav2;
+package cn.edu.tsinghua.iginx.metadatav2.entity;
 
-import cn.edu.tsinghua.iginx.core.db.DBType;
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public final class StorageEngineMeta {
     /**
      * 数据库类型
      */
-    private DBType dbType;
+    private StorageEngine storageEngine;
 
     /**
      * 时序数据库存储的数据分片，不进行序列化。
@@ -67,12 +67,12 @@ public final class StorageEngineMeta {
     public StorageEngineMeta() {
     }
 
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, DBType dbType, List<FragmentReplicaMeta> fragmentReplicaMetaList) {
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, List<FragmentReplicaMeta> fragmentReplicaMetaList) {
         this.id = id;
         this.ip = ip;
         this.port = port;
         this.extraParams = extraParams;
-        this.dbType = dbType;
+        this.storageEngine = storageEngine;
         this.fragmentReplicaMetaList = fragmentReplicaMetaList;
     }
 
@@ -108,12 +108,12 @@ public final class StorageEngineMeta {
         this.extraParams = extraParams;
     }
 
-    public DBType getDbType() {
-        return dbType;
+    public StorageEngine getDbType() {
+        return storageEngine;
     }
 
-    public void setDbType(DBType dbType) {
-        this.dbType = dbType;
+    public void setDbType(StorageEngine storageEngine) {
+        this.storageEngine = storageEngine;
     }
 
     public List<FragmentReplicaMeta> getFragmentReplicaMetaList() {
@@ -125,7 +125,7 @@ public final class StorageEngineMeta {
     }
 
     public StorageEngineMeta basicInfo() {
-        return new StorageEngineMeta(id, ip, port, extraParams, dbType, new ArrayList<>());
+        return new StorageEngineMeta(id, ip, port, extraParams, storageEngine, new ArrayList<>());
     }
 
     public int getFragmentReplicaMetaNum() {

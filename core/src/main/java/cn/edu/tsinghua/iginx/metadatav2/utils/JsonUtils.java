@@ -16,29 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.conf;
+package cn.edu.tsinghua.iginx.metadatav2.utils;
 
-public class Constants {
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
-	public static final String DEFAULT_USERNAME = "username";
 
-	public static final String DEFAULT_PASSWORD = "password";
+import java.nio.charset.StandardCharsets;
 
-	public static final int DEFAULT_TIMEOUT_MS = 1000;
+public class JsonUtils {
 
-	public static final String CONFIG_FILE = "conf/config.properties";
+    private static final Gson gson = new GsonBuilder()
+            .create();
 
-	public static final String IGINX_NODE = "/iginx/node";
+    public static byte[] toJson(Object o) {
+        return gson.toJson(o).getBytes(StandardCharsets.UTF_8);
+    }
 
-	public static final String STORAGE_ENGINE_LOCK_NODE = "/lock/storage";
+    public static <T> T fromJson(byte[] data, Class<T> clazz) {
+        return gson.fromJson(new String(data), clazz);
+    }
 
-	public static final String FRAGMENT_LOCK_NODE = "/lock/fragment";
 
-	public static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
-
-	public static final String IGINX_NODE_PREFIX = "/iginx";
-
-	public static final String FRAGMENT_NODE_PREFIX = "/fragment";
 
 }
-

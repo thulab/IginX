@@ -34,45 +34,54 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadatav2;
+package cn.edu.tsinghua.iginx.metadatav2.entity;
 
-import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class FragmentMeta {
 
-    private final String key;
+    private final String beginPrefix;
+
+    private final String endPrefix;
 
     private final long startTime;
 
     private final long endTime;
 
     /**
-     * 所有的分片的信息，使用不可变列表
+     * 所有的分片的信息
      */
     private final Map<Integer, FragmentReplicaMeta> replicaMetas;
 
-    public FragmentMeta(String key, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
-        this.key = key;
+    public FragmentMeta(String beginPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+        this.beginPrefix = beginPrefix;
+        this.endPrefix = endPrefix;
         this.startTime = startTime;
         this.endTime = endTime;
         this.replicaMetas = replicaMetas;
     }
 
-    public FragmentMeta(String key, long startTime, long endTime, List<Long> databaseIds) {
-        this.key = key;
+    public FragmentMeta(String beginPrefix, String endPrefix, long startTime, long endTime, List<Long> databaseIds) {
+        this.beginPrefix = beginPrefix;
+        this.endPrefix = endPrefix;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.replicaMetas = new HashMap<>();
+        Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
         for (int i = 0; i < databaseIds.size(); i++) {
-            this.replicaMetas.put(i, new FragmentReplicaMeta(key, startTime, i, endTime, databaseIds.get(i)));
+            replicaMetas.put(i, new FragmentReplicaMeta(i, databaseIds.get(i)));
         }
+        this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
     }
 
-    public String getKey() {
-        return key;
+    public String getBeginPrefix() {
+        return beginPrefix;
+    }
+
+    public String getEndPrefix() {
+        return endPrefix;
     }
 
     public long getStartTime() {
@@ -85,16 +94,6 @@ public final class FragmentMeta {
 
     public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
         return new HashMap<>(replicaMetas);
-    }
-
-    FragmentMeta endFragment(long endTime) {
-        Map<Integer, FragmentReplicaMeta> newReplicaMetas = new HashMap<>();
-        for (Map.Entry<Integer, FragmentReplicaMeta> replicaMetaEntry: replicaMetas.entrySet()) {
-            int replicaId = replicaMetaEntry.getKey();
-            FragmentReplicaMeta fragmentReplicaMeta = replicaMetaEntry.getValue().endFragmentReplicaMeta(endTime);
-            newReplicaMetas.put(replicaId, fragmentReplicaMeta);
-        }
-        return new FragmentMeta(this.key, this.startTime, endTime, newReplicaMetas);
     }
 
     public int getReplicaMetasNum() {

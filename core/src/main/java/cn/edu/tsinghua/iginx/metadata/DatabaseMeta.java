@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.core.db.DBType;
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -56,7 +56,7 @@ public final class DatabaseMeta implements Serializable {
     /**
      * 数据库类型
      */
-    private DBType dbType;
+    private StorageEngine storageEngine;
 
     /**
      * 时序数据库存储的数据分片，不进行序列化。
@@ -72,7 +72,7 @@ public final class DatabaseMeta implements Serializable {
     }
 
     public DatabaseMeta basicInfo() {
-        return new DatabaseMeta(id, ip, port, extraParams, dbType, new ArrayList<>());
+        return new DatabaseMeta(id, ip, port, extraParams, storageEngine, new ArrayList<>());
     }
 
     public int getFragmentReplicaMetaNum() {
