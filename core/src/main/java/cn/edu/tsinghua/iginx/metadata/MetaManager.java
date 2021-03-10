@@ -21,8 +21,7 @@ package cn.edu.tsinghua.iginx.metadata;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.IService;
-import cn.edu.tsinghua.iginx.core.db.DBType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SerializeUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -153,10 +152,10 @@ public class MetaManager implements IMetaManager, IService {
     }
 
     private void registerDatabaseMeta() throws Exception {
-        InterProcessMutex lock = new InterProcessMutex(this.zookeeperClient, Constants.DATABASE_LOCK_NODE);
+        InterProcessMutex lock = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_ENGINE_LOCK_NODE);
         lock.acquire();
         try {
-            if (this.zookeeperClient.checkExists().forPath(Constants.DATABASE_NODE_PREFIX) == null) { // 节点不存在，从配置中加载，再写入 zookeeper
+            if (this.zookeeperClient.checkExists().forPath(Constants.STORAGE_ENGINE_NODE_PREFIX) == null) { // 节点不存在，从配置中加载，再写入 zookeeper
                 resolveDatabaseMetaFromConf();
                 // 将数据库元信息写入到 zookeeper
                 for (DatabaseMeta databaseMeta: databaseMetaMap.values()) {
@@ -164,7 +163,7 @@ public class MetaManager implements IMetaManager, IService {
                     this.zookeeperClient.create()
                             .creatingParentContainersIfNeeded()
                             .withMode(CreateMode.PERSISTENT)
-                            .forPath(Constants.DATABASE_NODE_PREFIX + "/" + id, SerializeUtils.serialize(databaseMeta));
+                            .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + id, SerializeUtils.serialize(databaseMeta));
                 }
             } else { // 从 zookeeper 中加载配置信息
                 resolveDatabaseMetaFromZooKeeper();
@@ -254,13 +253,13 @@ public class MetaManager implements IMetaManager, IService {
 
     private void resolveDatabaseMetaFromZooKeeper() throws Exception {
         List<String> children = this.zookeeperClient.getChildren()
-                .forPath(Constants.DATABASE_NODE_PREFIX);
+                .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX);
         for (String childName: children) {
             byte[] data = this.zookeeperClient.getData()
-                    .forPath(Constants.DATABASE_NODE_PREFIX + "/" + childName);
+                    .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
             DatabaseMeta databaseMeta = SerializeUtils.deserialize(data, DatabaseMeta.class);
             if (databaseMeta == null) {
-                logger.error("resolve data from node " + Constants.DATABASE_NODE_PREFIX + "/" + childName + " failed.");
+                logger.error("resolve data from node " + Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + childName + " failed.");
                 continue;
             }
             this.databaseMetaMap.put(databaseMeta.getId(), databaseMeta);
@@ -270,14 +269,14 @@ public class MetaManager implements IMetaManager, IService {
     private void resolveDatabaseMetaFromConf() {
         logger.info("resolve database meta from config");
         String[] databaseMetaStrings = ConfigDescriptor.getInstance().getConfig()
-                .getDatabaseList().split(",");
-        logger.info("database connection string: " + ConfigDescriptor.getInstance().getConfig().getDatabaseList());
+                .getStorageEngineList().split(",");
+        logger.info("database connection string: " + ConfigDescriptor.getInstance().getConfig().getStorageEngineList());
         logger.info("database count: " + databaseMetaStrings.length);
         for (int i = 0; i < databaseMetaStrings.length; i++) {
             String[] databaseMetaParts = databaseMetaStrings[i].split(":");
             String ip = databaseMetaParts[0];
             int port = Integer.parseInt(databaseMetaParts[1]);
-            DBType dbType = DBType.fromString(databaseMetaParts[2]);
+            StorageEngine storageEngine = StorageEngine.fromString(databaseMetaParts[2]);
             Map<String, String> extraParams = new HashMap<>();
             for (int j = 3; j < databaseMetaParts.length; j++) {
                 String[] KAndV = databaseMetaParts[j].split("=");
@@ -287,7 +286,7 @@ public class MetaManager implements IMetaManager, IService {
                 }
                 extraParams.put(KAndV[0], KAndV[1]);
             }
-            databaseMetaMap.put((long) i, new DatabaseMeta((long) i, ip, port, extraParams, dbType, new ArrayList<>()));
+            databaseMetaMap.put((long) i, new DatabaseMeta((long) i, ip, port, extraParams, storageEngine, new ArrayList<>()));
         }
     }
 

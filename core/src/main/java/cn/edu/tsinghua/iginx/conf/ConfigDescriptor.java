@@ -51,7 +51,7 @@ public class ConfigDescriptor {
             config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
                     "127.0.0.1:2181"));
-            config.setDatabaseList(properties.getProperty("databaseList",
+            config.setStorageEngineList(properties.getProperty("storageEngineList",
                     "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5"));
             config.setLevel(Integer.parseInt(properties.getProperty("level", "2")));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));

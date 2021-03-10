@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.iotdb;
 
-import cn.edu.tsinghua.iginx.core.db.DBType;
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.DatabaseMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
@@ -76,8 +76,8 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
         writeSessionPools = new HashMap<>();
         databaseMetas = new HashMap<>();
         for (DatabaseMeta databaseMeta: databaseMetaList) {
-            if (databaseMeta.getDbType() != DBType.IoTDB) {
-                logger.warn("unexpected database: " + databaseMeta.getDbType());
+            if (databaseMeta.getStorageEngine() != StorageEngine.IoTDB) {
+                logger.warn("unexpected database: " + databaseMeta.getStorageEngine());
                 continue;
             }
             Map<String, String> extraParams = databaseMeta.getExtraParams();
