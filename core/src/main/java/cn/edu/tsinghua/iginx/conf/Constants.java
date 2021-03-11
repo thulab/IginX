@@ -30,6 +30,8 @@ public class Constants {
 
 	public static final String IGINX_NODE = "/iginx/node";
 
+	public static final String STORAGE_ENGINE_NODE = "/storage/node";
+
 	public static final String STORAGE_ENGINE_LOCK_NODE = "/lock/storage";
 
 	public static final String FRAGMENT_LOCK_NODE = "/lock/fragment";

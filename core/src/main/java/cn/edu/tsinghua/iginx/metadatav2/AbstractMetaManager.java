@@ -250,12 +250,31 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public boolean addStorageEngine(StorageEngineMeta storageEngineMeta) {
+        InterProcessMutex lock = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_ENGINE_LOCK_NODE);
+        try {
+            lock.acquire();
+            long id = this.storageEngineMetaMap.values().stream().map(StorageEngineMeta::getId).max((a, b) -> a > b ? 1 : (a < b ? 1 : 0)).orElse(0L);
+            storageEngineMeta.setId(id);
+            this.zookeeperClient.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + id, JsonUtils.toJson(storageEngineMeta));
+        } catch (Exception e) {
+
+        } finally {
+            try {
+                lock.release();
+            } catch (Exception e ) {
+
+            }
+        }
+
         return false;
     }
 
     @Override
     public List<StorageEngineMeta> getStorageEngineList() {
-        return null;
+        return new ArrayList<>(this.storageEngineMetaMap.values());
     }
 
     @Override
