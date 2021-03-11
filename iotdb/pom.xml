@@ -12,6 +12,7 @@
   </parent>
 
   <artifactId>iotdb</artifactId>
+  <name>IginX IoTDB</name>
 
   <properties>
     <maven.compiler.source>8</maven.compiler.source>

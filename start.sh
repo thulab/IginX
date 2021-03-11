@@ -7,9 +7,13 @@ fi
 echo $IGINX_HOME
 
 CLASSPATH=""
-for f in ${IGINX_HOME}/lib/*.jar; do
+for f in ${IGINX_HOME}/core/lib/*.jar; do
   CLASSPATH=${CLASSPATH}":"$f
 done
+
+CLASSPATH=${CLASSPATH}":${IGINX_HOME}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar"
+
+echo $CLASSPATH
 
 if [ -n "$JAVA_HOME" ]; then
     for java in "$JAVA_HOME"/bin/amd64/java "$JAVA_HOME"/bin/java; do
