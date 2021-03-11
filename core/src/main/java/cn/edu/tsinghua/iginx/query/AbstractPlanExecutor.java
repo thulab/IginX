@@ -79,6 +79,24 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                         case INSERT_RECORDS:
                             planExecuteResult = syncExecuteInsertRecordsPlan((InsertRecordsPlan) plan);
                             break;
+                        case QUERY_DATA:
+                            planExecuteResult = syncExecuteQueryDataPlan((QueryDataPlan) plan);
+                            break;
+                        case ADD_COLUMNS:
+                            planExecuteResult = syncExecuteAddColumnsPlan((AddColumnsPlan) plan);
+                            break;
+                        case DELETE_COLUMNS:
+                            planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
+                            break;
+                        case DELETE_DATA_IN_COLUMNS:
+                            planExecuteResult = syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan);
+                            break;
+                        case CREATE_DATABASE:
+                            planExecuteResult = syncExecuteCreateDatabasePlan((CreateDatabasePlan) plan);
+                            break;
+                        case DROP_DATABASE:
+                            planExecuteResult = syncExecuteDropDatabasePlan((DropDatabasePlan) plan);
+                            break;
                         default:
                             logger.info("unimplemented method: " + plan.getIginxPlanType());
                     }
