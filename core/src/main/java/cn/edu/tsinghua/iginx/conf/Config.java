@@ -44,6 +44,8 @@ public class Config {
 
     private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
 
+    private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
+
     public String getIp() {
         return ip;
     }
@@ -138,5 +140,13 @@ public class Config {
 
     public void setDatabaseClassName(String databaseClassName) {
         this.databaseClassName = databaseClassName;
+    }
+
+    public String getPolicyClassName() {
+        return policyClassName;
+    }
+
+    public void setPolicyClassName(String policyClassName) {
+        this.policyClassName = policyClassName;
     }
 }

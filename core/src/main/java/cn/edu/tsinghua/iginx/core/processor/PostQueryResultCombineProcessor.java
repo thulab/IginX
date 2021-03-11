@@ -19,9 +19,10 @@
 package cn.edu.tsinghua.iginx.core.processor;
 
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
 public interface PostQueryResultCombineProcessor {
 
-    void queryResultCombinePostProcessor(RequestContext requestContext);
+    Status process(RequestContext requestContext);
 
 }

@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.MetaManager;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
+import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,7 @@ import java.util.Random;
 
 import static cn.edu.tsinghua.iginx.fragment.FragmentProcessor.createFragment;
 
-public class SimplePlanSplitter extends AbstractPlanSplitter implements IPlanSplitter {
+public class SimplePlanSplitter implements IPlanSplitter {
 
 	@Override
 	public List<SplitInfo> getSplitResults(NonDatabasePlan plan) {

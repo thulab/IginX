@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
@@ -33,16 +34,20 @@ import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
+import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,7 +57,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(SimplePlanGenerator.class);
 
-    private final SimplePlanSplitter planSplitter = new SimplePlanSplitter();
+    private final IPlanSplitter planSplitter = PolicyManager.getInstance()
+            .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIPlanSplitter();
 
     @Override
     public List<? extends IginxPlan> generateSubPlans(RequestContext requestContext) {
@@ -72,11 +78,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
                 AddColumnsPlan addColumnsPlan = new AddColumnsPlan(addColumnsReq.getPaths(), addColumnsReq.getAttributesList());
                 splitInfoList = planSplitter.getSplitResults(addColumnsPlan);
-                return planSplitter.splitAddColumnsPlan(addColumnsPlan, splitInfoList);
+                return splitAddColumnsPlan(addColumnsPlan, splitInfoList);
             case DeleteColumns:
                 DeleteColumnsReq deleteColumnsReq = ((DeleteColumnsContext) requestContext).getReq();
                 DeleteColumnsPlan deleteColumnsPlan = new DeleteColumnsPlan(deleteColumnsReq.getPaths());
-                return Collections.singletonList(deleteColumnsPlan);
+                splitInfoList = planSplitter.getSplitResults(deleteColumnsPlan);
+                return splitDeleteColumnsPlan(deleteColumnsPlan, splitInfoList);
             case InsertRecords:
                 InsertRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
                 InsertRecordsPlan insertRecordsPlan = new InsertRecordsPlan(
@@ -87,7 +94,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitResults(insertRecordsPlan);
-                return planSplitter.splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
+                return splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 // TODO
                 break;
@@ -99,10 +106,71 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         queryDataReq.getEndTime()
                 );
                 splitInfoList = planSplitter.getSplitResults(queryDataPlan);
-                return planSplitter.splitQueryDataPlan(queryDataPlan, splitInfoList);
+                return splitQueryDataPlan(queryDataPlan, splitInfoList);
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
         }
         return null;
     }
+
+    public List<AddColumnsPlan> splitAddColumnsPlan(AddColumnsPlan plan, List<SplitInfo> infoList) {
+        List<AddColumnsPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
+                    plan.getAttributesByIndexes(info.getPathsIndexes()));
+            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<DeleteColumnsPlan> splitDeleteColumnsPlan(DeleteColumnsPlan plan, List<SplitInfo> infoList) {
+        List<DeleteColumnsPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            DeleteColumnsPlan subPlan = new DeleteColumnsPlan(plan.getPathsByIndexes(info.getPathsIndexes()));
+            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<InsertRecordsPlan> splitInsertRecordsPlan(InsertRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertRecordsPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            Pair<long[], List<Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByRange(
+                    info.getReplica().getStartTime(), info.getReplica().getEndTime());
+            Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getPathsIndexes());
+            InsertRecordsPlan subPlan = new InsertRecordsPlan(
+                    plan.getPathsByIndexes(info.getPathsIndexes()),
+                    timestampsAndIndexes.k,
+                    values,
+                    plan.getDataTypeListByIndexes(info.getPathsIndexes()),
+                    plan.getAttributesByIndexes(info.getPathsIndexes()),
+                    info.getReplica().getDatabaseId()
+            );
+            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<QueryDataPlan> splitQueryDataPlan(QueryDataPlan plan, List<SplitInfo> infoList) {
+        List<QueryDataPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            QueryDataPlan subPlan = new QueryDataPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()), info.getReplica().getDatabaseId());
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
 }
