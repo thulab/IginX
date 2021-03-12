@@ -46,11 +46,11 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesListByDataType;
 
 public class SimplePlanGenerator implements IPlanGenerator {
@@ -88,7 +88,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 InsertRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
                 InsertRecordsPlan insertRecordsPlan = new InsertRecordsPlan(
                         insertRecordsReq.getPaths(),
-                        ByteBuffer.wrap(insertRecordsReq.getTimestamps()).asLongBuffer().array(),
+                        getLongArrayFromByteArray(insertRecordsReq.getTimestamps()),
                         getValuesListByDataType(insertRecordsReq.getValuesList(), insertRecordsReq.getDataTypeList()),
                         insertRecordsReq.dataTypeList,
                         insertRecordsReq.getAttributesList()
@@ -142,7 +142,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<InsertRecordsPlan> plans = new ArrayList<>();
 
         for (SplitInfo info : infoList) {
-            Pair<long[], List<Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByRange(
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByRange(
                     info.getReplica().getStartTime(), info.getReplica().getEndTime());
             Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getPathsIndexes());
             InsertRecordsPlan subPlan = new InsertRecordsPlan(

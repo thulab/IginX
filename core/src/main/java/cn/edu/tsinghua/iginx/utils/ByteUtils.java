@@ -63,27 +63,6 @@ public class ByteUtils {
 		return buffer;
 	}
 
-	public static boolean[] getBooleanArray(ByteBuffer buffer) {
-		boolean[] array = new boolean[buffer.array().length];
-		for (int i = 0; i < array.length; i++) {
-			array[i] = buffer.get() == 1;
-		}
-		return array;
-	}
-
-	public static String[] getStringArray(ByteBuffer buffer) {
-		List<String> tempList = new ArrayList<>();
-		int cnt = 0;
-		while (cnt < buffer.array().length) {
-			int length = buffer.getInt();
-			byte[] bytes = new byte[length];
-			buffer.get(bytes, 0, length);
-			tempList.add(new String(bytes, 0, length));
-			cnt += length + 4;
-		}
-		return tempList.toArray(new String[0]);
-	}
-
 	public static byte booleanToByte(boolean x) {
 		if (x) {
 			return 1;
@@ -97,22 +76,22 @@ public class ByteUtils {
 		for (int i = 0; i < valuesList.size(); i++) {
 			switch (dataTypeList.get(i)) {
 				case BOOLEAN:
-					tempValues[i] = getBooleanArray(valuesList.get(i));
+					tempValues[i] = getBooleanArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case INTEGER:
-					tempValues[i] = valuesList.get(i).asIntBuffer().array();
+					tempValues[i] = getIntArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case LONG:
-					tempValues[i] = valuesList.get(i).asLongBuffer().array();
+					tempValues[i] = getLongArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case FLOAT:
-					tempValues[i] = valuesList.get(i).asFloatBuffer().array();
+					tempValues[i] = getFloatArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case DOUBLE:
-					tempValues[i] = valuesList.get(i).asDoubleBuffer().array();
+					tempValues[i] = getDoubleArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case STRING:
-					tempValues[i] = getStringArray(valuesList.get(i));
+					tempValues[i] = getStringArrayFromByteBuffer(valuesList.get(i));
 					break;
 				default:
 					throw new UnsupportedOperationException(dataTypeList.get(i).toString());
@@ -125,6 +104,68 @@ public class ByteUtils {
 		ByteBuffer buffer = ByteBuffer.allocate(array.length * 8);
 		buffer.asLongBuffer().put(array);
 		return buffer.array();
+	}
+
+	public static long[] getLongArrayFromByteArray(byte[] byteArray) {
+		ByteBuffer buffer = ByteBuffer.wrap(byteArray);
+		long[] longArray = new long[byteArray.length / 8];
+		for (int i = 0; i < longArray.length; i++) {
+			longArray[i] = buffer.getLong();
+		}
+		return longArray;
+	}
+
+	public static boolean[] getBooleanArrayFromByteBuffer(ByteBuffer buffer) {
+		boolean[] array = new boolean[buffer.array().length];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = buffer.get() == 1;
+		}
+		return array;
+	}
+
+	public static int[] getIntArrayFromByteBuffer(ByteBuffer buffer) {
+		int[] array = new int[buffer.array().length / 4];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = buffer.getInt();
+		}
+		return array;
+	}
+
+	public static long[] getLongArrayFromByteBuffer(ByteBuffer buffer) {
+		long[] array = new long[buffer.array().length / 8];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = buffer.getLong();
+		}
+		return array;
+	}
+
+	public static float[] getFloatArrayFromByteBuffer(ByteBuffer buffer) {
+		float[] array = new float[buffer.array().length / 4];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = buffer.getFloat();
+		}
+		return array;
+	}
+
+	public static double[] getDoubleArrayFromByteBuffer(ByteBuffer buffer) {
+		double[] array = new double[buffer.array().length / 8];
+		for (int i = 0; i < array.length; i++) {
+			array[i] = buffer.getDouble();
+		}
+		return array;
+	}
+
+	public static String[] getStringArrayFromByteBuffer(ByteBuffer buffer) {
+		List<String> stringList = new ArrayList<>();
+		int cnt = 0;
+		while (cnt < buffer.array().length) {
+			int length = buffer.getInt();
+			byte[] bytes = new byte[length];
+			buffer.get(bytes, 0, length);
+			stringList.add(new String(bytes, 0, length));
+			cnt += length + 4;
+		}
+		return stringList.toArray(new String[0]);
 	}
 
 	public static List<ByteBuffer> getByteBufferByDataType(Object[] valuesList, List<DataType> dataTypeList) {

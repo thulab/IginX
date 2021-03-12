@@ -3,7 +3,6 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 
@@ -56,9 +55,9 @@ public class IoTDBSessionExample {
 		attributesForOnePath.put("Compression", "1");
 
 		List<Map<String, String>> attributes = new ArrayList<>();
-		attributes.add(attributesForOnePath);
-		attributes.add(attributesForOnePath);
-		attributes.add(attributesForOnePath);
+		for (int i = 0; i < 4; i++) {
+			attributes.add(attributesForOnePath);
+		}
 
 		session.addColumns(paths, attributes);
 	}
@@ -71,11 +70,14 @@ public class IoTDBSessionExample {
 		paths.add(COLUMN_D3_S1);
 
 		long[] timestamps = new long[100];
-		Object[] valuesList = new Object[100];
 		for (long i = 0; i < 100; i++) {
 			timestamps[(int) i] = i;
-			Object[] values = new Object[4];
-			for (long j = 0; j < 4; j++) {
+		}
+
+		Object[] valuesList = new Object[4];
+		for (long i = 0; i < 4; i++) {
+			Object[] values = new Object[100];
+			for (long j = 0; j < 100; j++) {
 				values[(int) j] = i + j;
 			}
 			valuesList[(int) i] = values;
@@ -86,14 +88,7 @@ public class IoTDBSessionExample {
 			dataTypeList.add(DataType.LONG);
 		}
 
-		List<Map<String, String>> attributes = new ArrayList<>();
-		for (int i = 0; i < 4; i++) {
-			Map<String, String> attributesForOnePath = new HashMap<>();
-			attributesForOnePath.put("DataType", "2");
-			attributes.add(attributesForOnePath);
-		}
-
-		session.insertRecords(paths, timestamps, valuesList, dataTypeList, attributes);
+		session.insertRecords(paths, timestamps, valuesList, dataTypeList, null);
 	}
 
 	private static void queryData() throws SessionException {

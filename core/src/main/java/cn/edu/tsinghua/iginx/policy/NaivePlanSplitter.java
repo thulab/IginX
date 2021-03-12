@@ -50,7 +50,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
             if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.ADD_COLUMNS) {
                 fragments = iMetaManager.getFragmentListByKey(entry.getKey());
                 if (fragments.isEmpty()) {
-                    fragments.add(createFragment(entry.getKey(), 0L, 0L));
+                    fragments.add(createFragment(entry.getKey(), 0L, Long.MAX_VALUE));
                 }
                 for (FragmentMeta fragment : fragments) {
                     List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
@@ -70,7 +70,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 fragments = iMetaManager.getFragmentListByKeyAndTimeInterval(
                         entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
                 if (fragments.isEmpty()) {
-                    fragments.add(createFragment(entry.getKey(), 0L, 0L));
+                    fragments.add(createFragment(entry.getKey(), 0L, Long.MAX_VALUE));
                 }
                 for (FragmentMeta fragment : fragments) {
                     List<FragmentReplicaMeta> replicas = new ArrayList<>();
@@ -100,8 +100,6 @@ public class NaivePlanSplitter implements IPlanSplitter {
         }
         return replicas;
     }
-
-
 
     public static FragmentMeta createFragment(String key, long startTime, long endTime) {
         List<Long> databaseIds = MetaManager.getInstance().chooseDatabaseIdsForNewFragment();
