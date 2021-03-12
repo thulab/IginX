@@ -58,17 +58,17 @@ public interface IMetaManager {
     /**
      获取某个时间序列区间的所有分片。
      */
-    Map<String, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
      获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片）。
      */
-    Map<String, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
      获取某个时间序列区间在某个时间区间的所有分片。
      */
-    Map<String, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
                                                                                        TimeInterval timeInterval);
 
     /**

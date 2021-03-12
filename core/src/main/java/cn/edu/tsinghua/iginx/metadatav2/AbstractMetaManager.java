@@ -45,6 +45,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class AbstractMetaManager implements IMetaManager, IService {
 
@@ -64,6 +67,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     private TreeCache fragmentCache;
 
+    protected final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
+
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
                 .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
@@ -81,6 +86,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             registerStorageEngineListener();
             resolveStorageEngineFromZooKeeper();
 
+            resolveFragmentFromZooKeeper(); // 方法内部在从 ZooKeeper 上拉取 Fragment 之前需要，在内部会注册 Listener
         } catch (Exception e) {
             logger.error("get error when init meta manager: ", e);
             System.exit(1);
@@ -140,7 +146,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 logger.error("resolve data from " + Constants.IGINX_NODE_PREFIX + "/" + childName + " error");
                 continue;
             }
-            this.iginxMetaMap.put(iginxMeta.getId(), iginxMeta);
+            this.iginxMetaMap.putIfAbsent(iginxMeta.getId(), iginxMeta);
         }
     }
 
@@ -154,7 +160,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 ConfigDescriptor.getInstance().getConfig().getPort(), null);
         this.zookeeperClient.setData()
                 .forPath(nodeName, JsonUtils.toJson(iginxMeta));
-        this.iginxMetaMap.put(id, iginxMeta);
         this.iginxId = id;
     }
 
@@ -164,11 +169,14 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         try {
             if (this.zookeeperClient.checkExists().forPath(Constants.STORAGE_ENGINE_NODE_PREFIX) == null) { // 节点不存在，说明还没有别的 iginx 节点写入过元信息
                 for (StorageEngineMeta storageEngineMeta: resolveStorageEngineFromConf()) {
-                    long id = storageEngineMeta.getId();
-                    this.zookeeperClient.create()
+                    String nodeName = this.zookeeperClient.create()
                             .creatingParentsIfNeeded()
-                            .withMode(CreateMode.PERSISTENT)
-                            .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + id, JsonUtils.toJson(storageEngineMeta));
+                            .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                            .forPath(Constants.STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
+                    long id = Long.parseLong(nodeName.substring(Constants.STORAGE_ENGINE_NODE.length()));
+                    storageEngineMeta.setId(id);
+                    this.zookeeperClient.setData()
+                            .forPath(nodeName, JsonUtils.toJson(storageEngineMeta));
                 }
             }
         } finally {
@@ -220,7 +228,18 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     private void resolveStorageEngineFromZooKeeper() throws Exception {
-
+        List<String> children = this.zookeeperClient.getChildren()
+                .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX);
+        for (String childName: children) {
+            byte[] data = this.zookeeperClient.getData()
+                    .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
+            StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+            if (storageEngineMeta == null) {
+                logger.error("resolve data from " + Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + childName + " error");
+                continue;
+            }
+            this.storageEngineMetaMap.putIfAbsent(storageEngineMeta.getId(), storageEngineMeta);
+        }
     }
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
@@ -245,6 +264,29 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, new ArrayList<>()));
         }
         return storageEngineMetaList;
+    }
+
+    private void resolveFragmentFromZooKeeper() throws Exception {
+        InterProcessMutex mutex = new InterProcessMutex(zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.zookeeperClient.checkExists().forPath(Constants.FRAGMENT_NODE_PREFIX) == null) {
+                // 当前还没有数据，创建父节点，然后不需要解析数据
+                this.zookeeperClient.create()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.FRAGMENT_NODE_PREFIX);
+            } else {
+        //        List<String> fragmentName =
+            }
+            registerFragmentListener();
+        }  finally {
+            mutex.release();
+        }
+    }
+
+
+    private void registerFragmentListener() throws Exception {
+
     }
 
 
@@ -293,17 +335,17 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public Map<String, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         return null;
     }
 
     @Override
-    public Map<String, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         return null;
     }
 
     @Override
-    public Map<String, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
         return null;
     }
 
