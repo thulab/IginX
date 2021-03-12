@@ -29,12 +29,25 @@ public class Bitmap {
         this.bitmap = new byte[(int)Math.ceil(this.size * 1.0 / 8)];
     }
 
+    public Bitmap(int size, byte[] bitmap) {
+        this.size = size;
+        this.bitmap = bitmap;
+    }
+
     public void mark(int i) {
         if (i < 0 || i >= size)
             throw new IllegalArgumentException("unexpected index");
         int index = this.size / 8;
         int indexWithinByte = this.size % 8;
         bitmap[index] &= (1 << indexWithinByte);
+    }
+
+    public boolean get(int i) {
+        if (i < 0 || i >= size)
+            throw new IllegalArgumentException("unexpected index");
+        int index = this.size / 8;
+        int indexWithinByte = this.size % 8;
+        return (bitmap[index] & (1 << indexWithinByte)) != 0;
     }
 
     public byte[] getBytes() {

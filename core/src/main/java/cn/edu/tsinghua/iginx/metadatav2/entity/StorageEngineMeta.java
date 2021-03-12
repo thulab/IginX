@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public final class StorageEngineMeta {
 
@@ -56,24 +57,34 @@ public final class StorageEngineMeta {
      */
     private transient List<FragmentReplicaMeta> fragmentReplicaMetaList;
 
+    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList;
+
     public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
         this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
     }
 
-    public void removeFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
-        this.fragmentReplicaMetaList.remove(fragmentReplicaMeta);
+    public void endLatestFragmentReplicaMetas(TimeSeriesInterval tsInterval, long endTime) {
+        fragmentReplicaMetaList.addAll(latestFragmentReplicaMetaList.stream().filter(e -> e.getTsInterval().equals(tsInterval)).map(
+                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getBeginTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
+                        e.getStorageEngineId())).collect(Collectors.toList()));
+        latestFragmentReplicaMetaList.removeIf(e -> e.getTsInterval().equals(tsInterval));
+    }
+
+    public void addLatestFragmentReplicaMetas(FragmentReplicaMeta fragmentReplicaMeta) {
+        latestFragmentReplicaMetaList.add(fragmentReplicaMeta);
     }
 
     public StorageEngineMeta() {
     }
 
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, List<FragmentReplicaMeta> fragmentReplicaMetaList) {
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
         this.id = id;
         this.ip = ip;
         this.port = port;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
-        this.fragmentReplicaMetaList = fragmentReplicaMetaList;
+        this.fragmentReplicaMetaList = new ArrayList<>();
+        this.latestFragmentReplicaMetaList = new ArrayList<>();
     }
 
     public long getId() {
@@ -117,18 +128,17 @@ public final class StorageEngineMeta {
     }
 
     public List<FragmentReplicaMeta> getFragmentReplicaMetaList() {
-        return fragmentReplicaMetaList;
-    }
-
-    public void setFragmentReplicaMetaList(List<FragmentReplicaMeta> fragmentReplicaMetaList) {
-        this.fragmentReplicaMetaList = fragmentReplicaMetaList;
+        List<FragmentReplicaMeta> replicaMetas = new ArrayList<>();
+        replicaMetas.addAll(fragmentReplicaMetaList);
+        replicaMetas.addAll(latestFragmentReplicaMetaList);
+        return replicaMetas;
     }
 
     public StorageEngineMeta basicInfo() {
-        return new StorageEngineMeta(id, ip, port, extraParams, storageEngine, new ArrayList<>());
+        return new StorageEngineMeta(id, ip, port, extraParams, storageEngine);
     }
 
     public int getFragmentReplicaMetaNum() {
-        return fragmentReplicaMetaList.size();
+        return fragmentReplicaMetaList.size() + latestFragmentReplicaMetaList.size();
     }
 }

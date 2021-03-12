@@ -49,7 +49,7 @@ public final class TimeInterval {
 
     @Override
     public String toString() {
-        return beginTime + "-" + endTime;
+        return "" + beginTime;
     }
 
     @Override
@@ -83,12 +83,6 @@ public final class TimeInterval {
 
     public boolean isContainedBy(TimeInterval timeInterval) {
         return (timeInterval.beginTime <= beginTime) && (timeInterval.endTime >= endTime);
-    }
-
-    public static TimeInterval fromString(String str) {
-        String[] parts = str.split("-");
-        assert parts.length == 2;
-        return new TimeInterval(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }
 
 }
