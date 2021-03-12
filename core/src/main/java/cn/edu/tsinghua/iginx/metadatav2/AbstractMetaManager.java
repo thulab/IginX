@@ -26,7 +26,6 @@ import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadatav2.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadatav2.utils.JsonUtils;
 import org.apache.curator.framework.CuratorFramework;
@@ -41,11 +40,11 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -276,7 +275,20 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         .withMode(CreateMode.PERSISTENT)
                         .forPath(Constants.FRAGMENT_NODE_PREFIX);
             } else {
-        //        List<String> fragmentName =
+                List<String> tsIntervalNames = this.zookeeperClient.getChildren().forPath(Constants.FRAGMENT_NODE_PREFIX);
+                Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap = new HashMap<>();
+                for (String tsIntervalName: tsIntervalNames) {
+                    TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                    List<FragmentMeta> fragmentMetaList = new ArrayList<>();
+                    List<String> timeIntervalNames = this.zookeeperClient.getChildren().forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
+                    for (String timeIntervalName: timeIntervalNames) {
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.zookeeperClient.getData()
+                                .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        fragmentMetaList.add(fragmentMeta);
+                    }
+                    fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
+                }
+                initFragment(fragmentListMap);
             }
             registerFragmentListener();
         }  finally {
@@ -284,11 +296,38 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         }
     }
 
-
     private void registerFragmentListener() throws Exception {
-
+        this.fragmentCache = new TreeCache(this.zookeeperClient, Constants.FRAGMENT_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            byte[] data;
+            FragmentMeta fragmentMeta;
+            switch (event.getType()) {
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    fragmentMeta = JsonUtils.fromJson(data, FragmentMeta.class);
+                    if (fragmentMeta != null) {
+                        updateFragment(fragmentMeta);
+                    } else {
+                        logger.error("resolve fragment from zookeeper error");
+                    }
+                    break;
+                case NODE_ADDED:
+                    String path = event.getData().getPath();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 4) {
+                        fragmentMeta = JsonUtils.fromJson(event.getData().getData(), FragmentMeta.class);
+                        if (fragmentMeta != null) {
+                            addFragment(fragmentMeta);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.fragmentCache.getListenable().addListener(listener);
+        this.fragmentCache.start();
     }
-
 
     @Override
     public boolean addStorageEngine(StorageEngineMeta storageEngineMeta) {
@@ -301,13 +340,14 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
                     .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + id, JsonUtils.toJson(storageEngineMeta));
+            return true;
         } catch (Exception e) {
-
+            logger.error("add storage engine error: ", e);
         } finally {
             try {
                 lock.release();
             } catch (Exception e ) {
-
+                logger.error("release mutex error: ", e);
             }
         }
 
@@ -335,37 +375,23 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
-        return null;
-    }
+    public boolean createFragments(List<FragmentMeta> fragments) {
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentList();
 
-    @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
-        return null;
-    }
 
-    @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
-        return null;
-    }
-
-    @Override
-    public List<FragmentMeta> getFragmentByTimeSeriesName(String tsName) {
-        return null;
-    }
-
-    @Override
-    public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) {
-        return null;
-    }
-
-    @Override
-    public List<FragmentMeta> getFragmentByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
-        return null;
-    }
-
-    @Override
-    public boolean createFragment(FragmentMeta fragment) {
+            return true;
+        } catch (Exception e) {
+            logger.error("create fragment error: ", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
         return false;
     }
 
@@ -375,4 +401,50 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         this.storageEngineCache.close();
         this.fragmentCache.close();
     }
+
+    protected abstract void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap);
+
+    protected abstract void addFragment(FragmentMeta fragmentMeta);
+
+    protected abstract void updateFragment(FragmentMeta fragmentMeta);
+
+    @Override
+    public boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments) {
+        if (hasFragment())
+            return false;
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (hasFragment()) {
+                return false;
+            }
+            initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getBeginTime()));
+            for (FragmentMeta fragmentMeta: initialFragments) {
+                String tsIntervalName = fragmentMeta.getTsInterval().toString();
+                String timeIntervalName = fragmentMeta.getTimeInterval().toString();
+                this.zookeeperClient.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName, JsonUtils.toJson(fragmentMeta));
+                for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
+                    storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            logger.error("create initial fragment error: ", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+        return false;
+    }
+
+    private void updateStorageEngineFragmentReplica() {
+
+    }
+
 }

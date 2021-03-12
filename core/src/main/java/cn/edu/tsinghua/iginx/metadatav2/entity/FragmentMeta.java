@@ -63,7 +63,7 @@ public final class FragmentMeta {
         this.tsInterval = new TimeSeriesInterval(beginPrefix, endPrefix);
         Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
         for (int i = 0; i < databaseIds.size(); i++) {
-            replicaMetas.put(i, new FragmentReplicaMeta(i, databaseIds.get(i)));
+            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, databaseIds.get(i)));
         }
         this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
     }
