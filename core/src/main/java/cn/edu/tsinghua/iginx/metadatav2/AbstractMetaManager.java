@@ -260,7 +260,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 }
                 extraParams.put(KAndV[0], KAndV[1]);
             }
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, new ArrayList<>()));
+            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine));
         }
         return storageEngineMetaList;
     }
@@ -307,6 +307,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     fragmentMeta = JsonUtils.fromJson(data, FragmentMeta.class);
                     if (fragmentMeta != null) {
                         updateFragment(fragmentMeta);
+                        for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
+                            long storageEngineId = replicaMeta.getStorageEngineId();
+                            StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
+                            storageEngineMeta.endLatestFragmentReplicaMetas(replicaMeta.getTsInterval(), replicaMeta.getTimeInterval().getEndTime());
+                        }
                     } else {
                         logger.error("resolve fragment from zookeeper error");
                     }
@@ -318,6 +323,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         fragmentMeta = JsonUtils.fromJson(event.getData().getData(), FragmentMeta.class);
                         if (fragmentMeta != null) {
                             addFragment(fragmentMeta);
+                            for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
+                                long storageEngineId = replicaMeta.getStorageEngineId();
+                                StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
+                                storageEngineMeta.addLatestFragmentReplicaMetas(replicaMeta);
+                            }
                         }
                     }
                     break;
@@ -380,8 +390,16 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         try {
             mutex.acquire();
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentList();
-
-
+            for (FragmentMeta originalFragmentMeta: latestFragments.values()) { // 终结老分片
+                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta();
+                this.zookeeperClient.setData()
+                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+            }
+            for (FragmentMeta fragmentMeta: fragments) {
+                this.zookeeperClient.create()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+            }
             return true;
         } catch (Exception e) {
             logger.error("create fragment error: ", e);
@@ -442,9 +460,4 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         }
         return false;
     }
-
-    private void updateStorageEngineFragmentReplica() {
-
-    }
-
 }
