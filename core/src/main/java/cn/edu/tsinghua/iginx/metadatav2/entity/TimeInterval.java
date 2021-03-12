@@ -18,11 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.metadatav2.entity;
 
+import java.util.Objects;
+
 public final class TimeInterval {
 
-    private final long beginTime;
+    private long beginTime;
 
-    private final long endTime;
+    private long endTime;
 
     public TimeInterval(long beginTime, long endTime) {
         this.beginTime = beginTime;
@@ -36,4 +38,38 @@ public final class TimeInterval {
     public long getEndTime() {
         return endTime;
     }
+
+    public void setBeginTime(long beginTime) {
+        this.beginTime = beginTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TimeInterval that = (TimeInterval) o;
+        return beginTime == that.beginTime && endTime == that.endTime;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(beginTime, endTime);
+    }
+
+    boolean isIntersect(TimeInterval timeInterval) {
+        return (timeInterval.beginTime > endTime) && (timeInterval.endTime > beginTime);
+    }
+
+    boolean isContain(TimeInterval timeInterval) {
+        return (beginTime <= timeInterval.beginTime) && (endTime >= timeInterval.endTime);
+    }
+
+    boolean isContainedBy(TimeInterval timeInterval) {
+        return (timeInterval.beginTime <= beginTime) && (timeInterval.endTime >= endTime);
+    }
+
 }
