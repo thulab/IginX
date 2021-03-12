@@ -49,6 +49,11 @@ public final class TimeSeriesInterval {
     }
 
     @Override
+    public String toString() {
+        return "" + beginTimeSeries + "-" + endTimeSeries;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -61,20 +66,34 @@ public final class TimeSeriesInterval {
         return Objects.hash(beginTimeSeries, endTimeSeries);
     }
 
-    boolean isIntersect(TimeSeriesInterval tsInterval) {
-        ;
+    public boolean isContain(String tsName) {
+        return (beginTimeSeries == null || (tsName != null && beginTimeSeries.compareTo(tsName) <= 0))
+                && (endTimeSeries == null || (tsName != null && endTimeSeries.compareTo(tsName) > 0));
+    }
+
+    public boolean isBefore(String tsName) {
+        return tsName == null ? (beginTimeSeries != null) : (beginTimeSeries != null && tsName.compareTo(beginTimeSeries) < 0);
+    }
+
+    public boolean isIntersect(TimeSeriesInterval tsInterval) {
         return (tsInterval.beginTimeSeries == null || endTimeSeries == null || tsInterval.beginTimeSeries.compareTo(endTimeSeries) < 0)
                 && (tsInterval.endTimeSeries == null || beginTimeSeries == null || tsInterval.endTimeSeries.compareTo(beginTimeSeries) > 0);
     }
 
-    boolean isContain(TimeSeriesInterval tsInterval) {
+    public boolean isContain(TimeSeriesInterval tsInterval) {
         return (beginTimeSeries == null || (tsInterval.beginTimeSeries != null && beginTimeSeries.compareTo(tsInterval.beginTimeSeries) <= 0))
                 && (endTimeSeries == null || (tsInterval.endTimeSeries != null && endTimeSeries.compareTo(tsInterval.endTimeSeries) >= 0));
     }
 
-    boolean isContainedBy(TimeSeriesInterval tsInterval) {
+    public boolean isContainedBy(TimeSeriesInterval tsInterval) {
         return (tsInterval.beginTimeSeries == null || (beginTimeSeries != null && tsInterval.beginTimeSeries.compareTo(beginTimeSeries) <= 0))
                 && (tsInterval.endTimeSeries == null || (endTimeSeries != null && tsInterval.endTimeSeries.compareTo(endTimeSeries) >= 0));
+    }
+
+    public static TimeSeriesInterval fromString(String str) {
+        String[] parts = str.split("-");
+        assert parts.length == 2;
+        return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
     }
 
 }

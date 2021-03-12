@@ -66,6 +66,11 @@ public interface IMetaManager {
     Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
+      获取全部最新的分片
+     */
+    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentList();
+
+    /**
      获取某个时间序列区间在某个时间区间的所有分片。
      */
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
@@ -74,7 +79,7 @@ public interface IMetaManager {
     /**
      获取某个时间序列的所有分片（按照分片时间戳排序）
      */
-    List<FragmentMeta> getFragmentByTimeSeriesName(String tsName);
+    List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
 
     /**
      获取某个时间序列的最新分片
@@ -85,11 +90,21 @@ public interface IMetaManager {
     /**
      获取某个时间序列在某个时间区间的所有分片（按照分片时间戳排序）
      */
-    List<FragmentMeta> getFragmentByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
+    List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
 
     /**
      创建时间分片
      */
-    boolean createFragment(FragmentMeta fragment);
+    boolean createFragments(List<FragmentMeta> fragments);
+
+    /**
+     是否已经创建过分片
+     */
+    boolean hasFragment();
+
+    /**
+     尝试创建初始分片
+     */
+    boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments);
 
 }

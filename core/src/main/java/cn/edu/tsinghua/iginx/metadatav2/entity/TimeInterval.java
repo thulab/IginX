@@ -48,6 +48,11 @@ public final class TimeInterval {
     }
 
     @Override
+    public String toString() {
+        return beginTime + "-" + endTime;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -60,16 +65,30 @@ public final class TimeInterval {
         return Objects.hash(beginTime, endTime);
     }
 
-    boolean isIntersect(TimeInterval timeInterval) {
-        return (timeInterval.beginTime > endTime) && (timeInterval.endTime > beginTime);
+    public boolean isIntersect(TimeInterval timeInterval) {
+        return (timeInterval.beginTime < endTime) && (timeInterval.endTime > beginTime);
     }
 
-    boolean isContain(TimeInterval timeInterval) {
+    public boolean isBefore(TimeInterval timeInterval) {
+        return endTime <= timeInterval.beginTime;
+    }
+
+    public boolean isAfter(TimeInterval timeInterval) {
+        return beginTime >= timeInterval.endTime;
+    }
+
+    public boolean isContain(TimeInterval timeInterval) {
         return (beginTime <= timeInterval.beginTime) && (endTime >= timeInterval.endTime);
     }
 
-    boolean isContainedBy(TimeInterval timeInterval) {
+    public boolean isContainedBy(TimeInterval timeInterval) {
         return (timeInterval.beginTime <= beginTime) && (timeInterval.endTime >= endTime);
+    }
+
+    public static TimeInterval fromString(String str) {
+        String[] parts = str.split("-");
+        assert parts.length == 2;
+        return new TimeInterval(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
     }
 
 }

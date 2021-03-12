@@ -20,6 +20,10 @@ package cn.edu.tsinghua.iginx.metadatav2.entity;
 
 public final class FragmentReplicaMeta {
 
+    private final TimeInterval timeInterval;
+
+    private final TimeSeriesInterval tsInterval;
+
     /**
      * 分片副本的序号，如果该值为 0，则意味其为主分片
      */
@@ -28,18 +32,28 @@ public final class FragmentReplicaMeta {
     /**
      * 当前分片副本所在的数据库
      */
-    private final long databaseId;
+    private final long storageEngineId;
 
-    public FragmentReplicaMeta(int replicaIndex, long databaseId) {
+    public FragmentReplicaMeta(TimeInterval timeInterval, TimeSeriesInterval tsInterval, int replicaIndex, long storageEngineId) {
+        this.timeInterval = timeInterval;
+        this.tsInterval = tsInterval;
         this.replicaIndex = replicaIndex;
-        this.databaseId = databaseId;
+        this.storageEngineId = storageEngineId;
     }
 
     public int getReplicaIndex() {
         return replicaIndex;
     }
 
-    public long getDatabaseId() {
-        return databaseId;
+    public long getStorageEngineId() {
+        return storageEngineId;
+    }
+
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
+    }
+
+    public TimeSeriesInterval getTsInterval() {
+        return tsInterval;
     }
 }

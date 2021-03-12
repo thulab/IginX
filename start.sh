@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+mvn clean package -Dmaven.test.skip=true
+
 if [[ -z "${IGINX_HOME}" ]]; then
   export IGINX_HOME="$(cd "`dirname "$0"`"; pwd)"
 fi

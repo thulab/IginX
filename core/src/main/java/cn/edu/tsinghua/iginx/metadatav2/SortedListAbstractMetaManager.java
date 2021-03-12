@@ -18,11 +18,202 @@
  */
 package cn.edu.tsinghua.iginx.metadatav2;
 
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private static final Logger logger = LoggerFactory.getLogger(SortedListAbstractMetaManager.class);
+
+    private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
+
+    private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists = new ArrayList<>();
+
+    private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap = new HashMap<>();
+
+    @Override
+    protected void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
+        fragmentLock.writeLock().lock();
+        sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream()
+                .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
+        fragmentListMap.forEach(fragmentMetaListMap::put);
+        fragmentLock.writeLock().unlock();
+    }
+
+    @Override
+    protected void addFragment(FragmentMeta fragmentMeta) {
+        fragmentLock.writeLock().lock();
+        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
+        fragmentMetaList.add(fragmentMeta);
+        fragmentLock.writeLock().unlock();
+    }
+
+    @Override
+    protected void updateFragment(FragmentMeta fragmentMeta) {
+        fragmentLock.writeLock().lock();
+        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
+        fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
+        fragmentLock.writeLock().unlock();
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
+        fragmentLock.readLock().lock();
+        searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> resultMap.put(e.k, e.v));
+        fragmentLock.readLock().unlock();
+        return resultMap;
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentList() {
+        Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
+        fragmentLock.readLock().lock();
+        sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
+                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+        fragmentLock.readLock().unlock();
+        return latestFragmentMap;
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
+        fragmentLock.readLock().lock();
+        searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
+                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+        fragmentLock.readLock().unlock();
+        return latestFragmentMap;
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
+        fragmentLock.readLock().lock();
+        searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> {
+            List<FragmentMeta> fragmentMetaList = searchFragmentList(e.v, timeInterval);
+            if (!fragmentMetaList.isEmpty()) {
+                resultMap.put(e.k, fragmentMetaList);
+            }
+        });
+        fragmentLock.readLock().unlock();
+        return resultMap;
+    }
+
+    @Override
+    public List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName) {
+        List<FragmentMeta> resultList;
+        fragmentLock.readLock().lock();
+        resultList = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
+            if (o1.getTsInterval().getBeginTimeSeries() == null && o2.getTsInterval().getBeginTimeSeries() == null)
+                return 0;
+            else if (o1.getTsInterval().getBeginTimeSeries() == null)
+                return -1;
+            else if (o2.getTsInterval().getBeginTimeSeries() == null)
+                return 1;
+            return o1.getTsInterval().getBeginTimeSeries().compareTo(o2.getTsInterval().getBeginTimeSeries());
+        }).collect(Collectors.toList());
+        fragmentLock.readLock().unlock();
+        return resultList;
+    }
+
+    @Override
+    public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) {
+        FragmentMeta result;
+        fragmentLock.readLock().lock();
+        result = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
+                .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
+        fragmentLock.readLock().unlock();
+        return result;
+    }
+
+
+    @Override
+    public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
+        List<FragmentMeta> resultList;
+        fragmentLock.readLock().lock();
+        resultList = searchFragmentList(searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
+            if (o1.getTsInterval().getBeginTimeSeries() == null && o2.getTsInterval().getBeginTimeSeries() == null)
+                return 0;
+            else if (o1.getTsInterval().getBeginTimeSeries() == null)
+                return -1;
+            else if (o2.getTsInterval().getBeginTimeSeries() == null)
+                return 1;
+            return o1.getTsInterval().getBeginTimeSeries().compareTo(o2.getTsInterval().getBeginTimeSeries());
+        }).collect(Collectors.toList()), timeInterval);
+        fragmentLock.readLock().unlock();
+        return resultList;
+    }
+
+    @Override
+    public boolean hasFragment() {
+        return !sortedFragmentMetaLists.isEmpty();
+    }
+
+    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
+        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        int left = 0, right = fragmentSeriesList.size();
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getBeginTimeSeries())) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        while (left < fragmentSeriesList.size() && fragmentSeriesList.get(left).k.isIntersect(tsInterval)) {
+            resultList.add(fragmentSeriesList.get(left));
+            left++;
+        }
+        return resultList;
+    }
+
+    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
+        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        int left = 0, right = fragmentSeriesList.size();
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (fragmentSeriesList.get(mid).k.isBefore(tsName)) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        while (left < fragmentSeriesList.size() && fragmentSeriesList.get(left).k.isContain(tsName)) {
+            resultList.add(fragmentSeriesList.get(left));
+            left++;
+        }
+        return resultList;
+    }
+
+    private List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList, TimeInterval timeInterval) {
+        List<FragmentMeta> resultList = new ArrayList<>();
+        int left = 0, right = fragmentMetaList.size();
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (fragmentMetaList.get(mid).getTimeInterval().isBefore(timeInterval)) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        while (left < fragmentMetaList.size() && fragmentMetaList.get(left).getTimeInterval().isIntersect(timeInterval)) {
+            resultList.add(fragmentMetaList.get(left));
+            left++;
+        }
+        return resultList;
+    }
 
 }
