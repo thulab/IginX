@@ -16,31 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.conf;
+package cn.edu.tsinghua.iginx.metadatav2;
 
-public class Constants {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-	public static final String DEFAULT_USERNAME = "username";
+public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
-	public static final String DEFAULT_PASSWORD = "password";
-
-	public static final int DEFAULT_TIMEOUT_MS = 1000;
-
-	public static final String CONFIG_FILE = "conf/config.properties";
-
-	public static final String IGINX_NODE = "/iginx/node";
-
-	public static final String STORAGE_ENGINE_NODE = "/storage/node";
-
-	public static final String STORAGE_ENGINE_LOCK_NODE = "/lock/storage";
-
-	public static final String FRAGMENT_LOCK_NODE = "/lock/fragment";
-
-	public static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
-
-	public static final String IGINX_NODE_PREFIX = "/iginx";
-
-	public static final String FRAGMENT_NODE_PREFIX = "/fragment";
+    private static final Logger logger = LoggerFactory.getLogger(SortedListAbstractMetaManager.class);
 
 }
-
