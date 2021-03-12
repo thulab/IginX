@@ -18,11 +18,14 @@
  */
 package cn.edu.tsinghua.iginx.metadatav2.entity;
 
+import java.util.Comparator;
+import java.util.Objects;
+
 public final class TimeSeriesInterval {
 
-    private final String beginTimeSeries;
+    private String beginTimeSeries;
 
-    private final String endTimeSeries;
+    private String endTimeSeries;
 
     public TimeSeriesInterval(String beginTimeSeries, String endTimeSeries) {
         this.beginTimeSeries = beginTimeSeries;
@@ -36,4 +39,42 @@ public final class TimeSeriesInterval {
     public String getEndTimeSeries() {
         return endTimeSeries;
     }
+
+    public void setBeginTimeSeries(String beginTimeSeries) {
+        this.beginTimeSeries = beginTimeSeries;
+    }
+
+    public void setEndTimeSeries(String endTimeSeries) {
+        this.endTimeSeries = endTimeSeries;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TimeSeriesInterval that = (TimeSeriesInterval) o;
+        return Objects.equals(beginTimeSeries, that.beginTimeSeries) && Objects.equals(endTimeSeries, that.endTimeSeries);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(beginTimeSeries, endTimeSeries);
+    }
+
+    boolean isIntersect(TimeSeriesInterval tsInterval) {
+        ;
+        return (tsInterval.beginTimeSeries == null || endTimeSeries == null || tsInterval.beginTimeSeries.compareTo(endTimeSeries) < 0)
+                && (tsInterval.endTimeSeries == null || beginTimeSeries == null || tsInterval.endTimeSeries.compareTo(beginTimeSeries) > 0);
+    }
+
+    boolean isContain(TimeSeriesInterval tsInterval) {
+        return (beginTimeSeries == null || (tsInterval.beginTimeSeries != null && beginTimeSeries.compareTo(tsInterval.beginTimeSeries) <= 0))
+                && (endTimeSeries == null || (tsInterval.endTimeSeries != null && endTimeSeries.compareTo(tsInterval.endTimeSeries) >= 0));
+    }
+
+    boolean isContainedBy(TimeSeriesInterval tsInterval) {
+        return (tsInterval.beginTimeSeries == null || (beginTimeSeries != null && tsInterval.beginTimeSeries.compareTo(beginTimeSeries) <= 0))
+                && (tsInterval.endTimeSeries == null || (endTimeSeries != null && tsInterval.endTimeSeries.compareTo(endTimeSeries) >= 0));
+    }
+
 }

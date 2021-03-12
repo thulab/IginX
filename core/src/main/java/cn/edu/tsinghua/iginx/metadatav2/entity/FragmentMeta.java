@@ -43,32 +43,24 @@ import java.util.Map;
 
 public final class FragmentMeta {
 
-    private final String beginPrefix;
+    private final TimeInterval timeInterval;
 
-    private final String endPrefix;
-
-    private final long startTime;
-
-    private final long endTime;
+    private final TimeSeriesInterval tsInterval;
 
     /**
      * 所有的分片的信息
      */
     private final Map<Integer, FragmentReplicaMeta> replicaMetas;
 
-    public FragmentMeta(String beginPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
-        this.beginPrefix = beginPrefix;
-        this.endPrefix = endPrefix;
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public FragmentMeta(String beginPrefix, String endPrefix, long beginTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+        this.timeInterval = new TimeInterval(beginTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(beginPrefix, endPrefix);
         this.replicaMetas = replicaMetas;
     }
 
-    public FragmentMeta(String beginPrefix, String endPrefix, long startTime, long endTime, List<Long> databaseIds) {
-        this.beginPrefix = beginPrefix;
-        this.endPrefix = endPrefix;
-        this.startTime = startTime;
-        this.endTime = endTime;
+    public FragmentMeta(String beginPrefix, String endPrefix, long beginTime, long endTime, List<Long> databaseIds) {
+        this.timeInterval = new TimeInterval(beginTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(beginPrefix, endPrefix);
         Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
         for (int i = 0; i < databaseIds.size(); i++) {
             replicaMetas.put(i, new FragmentReplicaMeta(i, databaseIds.get(i)));
@@ -76,20 +68,12 @@ public final class FragmentMeta {
         this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
     }
 
-    public String getBeginPrefix() {
-        return beginPrefix;
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
     }
 
-    public String getEndPrefix() {
-        return endPrefix;
-    }
-
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public long getEndTime() {
-        return endTime;
+    public TimeSeriesInterval getTsInterval() {
+        return tsInterval;
     }
 
     public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
