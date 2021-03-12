@@ -26,43 +26,6 @@ import java.util.List;
 
 public class ByteUtils {
 
-	public static ByteBuffer getByteBuffer(Object value, DataType dataType) {
-		ByteBuffer buffer;
-
-		switch (dataType) {
-			case BOOLEAN:
-				buffer = ByteBuffer.allocate(1);
-				buffer.put(booleanToByte((boolean) value));
-				break;
-			case INTEGER:
-				buffer = ByteBuffer.allocate(4);
-				buffer.putInt((int) value);
-				break;
-			case LONG:
-				buffer = ByteBuffer.allocate(8);
-				buffer.putLong((long) value);
-				break;
-			case FLOAT:
-				buffer = ByteBuffer.allocate(4);
-				buffer.putFloat((float) value);
-				break;
-			case DOUBLE:
-				buffer = ByteBuffer.allocate(8);
-				buffer.putDouble((double) value);
-				break;
-			case STRING:
-				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
-				buffer.putInt(((byte[]) value).length);
-				buffer.put((byte[]) value);
-				break;
-			default:
-				throw new UnsupportedOperationException(dataType.toString());
-		}
-
-		buffer.flip();
-		return buffer;
-	}
-
 	public static byte booleanToByte(boolean x) {
 		if (x) {
 			return 1;
@@ -213,6 +176,52 @@ public class ByteUtils {
 			default:
 				throw new UnsupportedOperationException(dataType.toString());
 		}
+		buffer.flip();
+		return buffer;
+	}
+
+	public static ByteBuffer getByteBufferFromTimestamps(List<Long> timestamps) {
+		ByteBuffer buffer = ByteBuffer.allocate(timestamps.size() * 8);
+		for (Long timestamp : timestamps) {
+			buffer.putLong(timestamp);
+		}
+		buffer.flip();
+		return buffer;
+	}
+
+	public static ByteBuffer getByteBuffer(Object value, DataType dataType) {
+		ByteBuffer buffer;
+
+		switch (dataType) {
+			case BOOLEAN:
+				buffer = ByteBuffer.allocate(1);
+				buffer.put(booleanToByte((boolean) value));
+				break;
+			case INTEGER:
+				buffer = ByteBuffer.allocate(4);
+				buffer.putInt((int) value);
+				break;
+			case LONG:
+				buffer = ByteBuffer.allocate(8);
+				buffer.putLong((long) value);
+				break;
+			case FLOAT:
+				buffer = ByteBuffer.allocate(4);
+				buffer.putFloat((float) value);
+				break;
+			case DOUBLE:
+				buffer = ByteBuffer.allocate(8);
+				buffer.putDouble((double) value);
+				break;
+			case STRING:
+				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
+				buffer.putInt(((byte[]) value).length);
+				buffer.put((byte[]) value);
+				break;
+			default:
+				throw new UnsupportedOperationException(dataType.toString());
+		}
+
 		buffer.flip();
 		return buffer;
 	}

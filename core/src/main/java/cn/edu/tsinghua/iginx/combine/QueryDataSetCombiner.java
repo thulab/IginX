@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.booleanToByte;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBuffer;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBufferFromTimestamps;
 
 public class QueryDataSetCombiner {
 
@@ -138,7 +138,7 @@ public class QueryDataSetCombiner {
         }
         dataSet.setBitmapList(bitmapList);
         dataSet.setValuesList(valueList);
-        dataSet.setTimestamps(getByteBuffer(timeLine, DataType.LONG));
+        dataSet.setTimestamps(getByteBufferFromTimestamps(timeLine));
         QueryDataResp resp = new QueryDataResp(status);
         resp.setQueryDataSet(dataSet);
         resp.setPaths(paths);
