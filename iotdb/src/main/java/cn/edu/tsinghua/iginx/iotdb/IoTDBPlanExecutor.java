@@ -171,8 +171,10 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                     continue;
                 switch (columnTypes.get(i)) {
                     case INT32:
-                    case INT64:
                         timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getIntV());
+                        break;
+                    case INT64:
+                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getLongV());
                         break;
                     case DOUBLE:
                         timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getDoubleV());

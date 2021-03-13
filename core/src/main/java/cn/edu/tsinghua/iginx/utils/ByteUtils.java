@@ -251,4 +251,34 @@ public class ByteUtils {
 		}
 		return size;
 	}
+
+	public static Object getValueByDataType(ByteBuffer buffer, DataType dataType) {
+		Object value;
+		switch (dataType) {
+			case BOOLEAN:
+				value = buffer.get() == 1;
+				break;
+			case INTEGER:
+				value = buffer.getInt();
+				break;
+			case LONG:
+				value = buffer.getLong();
+				break;
+			case FLOAT:
+				value = buffer.getFloat();
+				break;
+			case DOUBLE:
+				value = buffer.getDouble();
+				break;
+			case STRING:
+				int length = buffer.getInt();
+				byte[] bytes = new byte[length];
+				buffer.get(bytes, 0, length);
+				value = new String(bytes, 0, length);
+				break;
+			default:
+				throw new UnsupportedOperationException(dataType.toString());
+		}
+		return value;
+	}
 }

@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -101,8 +100,8 @@ public class IoTDBSessionExample {
 		long startTime = 5L;
 		long endTime = 55L;
 
-		QueryDataSet dataSet = session.queryData(paths, startTime, endTime);
-		// TODO
+		SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+		dataSet.print();
 	}
 
 	private static void deleteDataInColumns() throws SessionException {

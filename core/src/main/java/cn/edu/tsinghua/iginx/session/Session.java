@@ -34,7 +34,6 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -236,7 +235,7 @@ public class Session {
 		}
 	}
 
-	public QueryDataSet queryData(List<String> paths, long startTime, long endTime)
+	public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
 			throws SessionException {
 		QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
 
@@ -246,6 +245,6 @@ public class Session {
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
-		return resp.queryDataSet;
+		return new SessionQueryDataSet(resp);
 	}
 }
