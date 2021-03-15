@@ -32,13 +32,8 @@ import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.AsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.MemoryAsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
-import cn.edu.tsinghua.iginx.query.result.AddColumnsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.AsyncPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.CreateDatabasePlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DeleteColumnsPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DeleteDataInColumnsPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DropDatabasePlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.InsertRecordsPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SyncPlanExecuteResult;
@@ -113,7 +108,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
     }
 
 
-    protected Future<InsertRecordsPlanExecuteResult> executeInsertRecordsPlan(InsertRecordsPlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeInsertRecordsPlan(InsertRecordsPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertRecordsPlan(plan));
         }
@@ -127,54 +122,54 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         return null;
     }
 
-    protected Future<CreateDatabasePlanExecuteResult> executeCreateDatabasePlan(CreateDatabasePlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeCreateDatabasePlan(CreateDatabasePlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteCreateDatabasePlan(plan));
         }
         return null;
     }
 
-    protected Future<AddColumnsPlanExecuteResult> executeAddColumnPlan(AddColumnsPlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeAddColumnPlan(AddColumnsPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteAddColumnsPlan(plan));
         }
         return null;
     }
 
-    protected Future<DeleteColumnsPlanExecuteResult> executeDeleteColumnsPlan(DeleteColumnsPlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeDeleteColumnsPlan(DeleteColumnsPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteDeleteColumnsPlan(plan));
         }
         return null;
     }
 
-    protected Future<DeleteDataInColumnsPlanExecuteResult> executeDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteDeleteDataInColumnsPlan(plan));
         }
         return null;
     }
 
-    protected Future<DropDatabasePlanExecuteResult> executeDropDatabasePlan(DropDatabasePlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeDropDatabasePlan(DropDatabasePlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteDropDatabasePlan(plan));
         }
         return null;
     }
 
-    protected abstract InsertRecordsPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan);
 
     protected abstract QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
 
-    protected abstract AddColumnsPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan);
 
-    protected abstract DeleteColumnsPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan);
 
-    protected abstract DeleteDataInColumnsPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan);
 
-    protected abstract CreateDatabasePlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan);
 
-    protected abstract DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan);
 
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));
