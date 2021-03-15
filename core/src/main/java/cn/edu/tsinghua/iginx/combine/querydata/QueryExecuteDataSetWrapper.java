@@ -23,16 +23,25 @@ import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.entity.RowRecord;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 class QueryExecuteDataSetWrapper {
 
     private final QueryExecuteDataSet dataSet;
 
+    private final Map<String, Integer> columnPositionMap;
+
     private RowRecord rowRecord;
 
-    public QueryExecuteDataSetWrapper(QueryExecuteDataSet dataSet) {
+    public QueryExecuteDataSetWrapper(QueryExecuteDataSet dataSet) throws ExecutionException {
         this.dataSet = dataSet;
+        this.columnPositionMap = new HashMap<>();
+        List<String> columnNames = dataSet.getColumnNames();
+        for (int i = 0; i < columnNames.size(); i++) {
+            columnPositionMap.put(columnNames.get(i), i);
+        }
     }
 
     public List<String> getColumnNames() throws ExecutionException {
@@ -43,12 +52,11 @@ class QueryExecuteDataSetWrapper {
         return dataSet.getColumnTypes();
     }
 
-    public boolean next() throws ExecutionException {
+    public void next() throws ExecutionException {
         rowRecord = null;
         if (dataSet.hasNext()) {
             rowRecord = dataSet.next();
         }
-        return rowRecord != null;
     }
 
     public void close() throws ExecutionException {
@@ -56,11 +64,11 @@ class QueryExecuteDataSetWrapper {
     }
 
     public Object getValue(String columnName) {
-        return new Object();
+        return rowRecord.getFields().get(columnPositionMap.get(columnName));
     }
 
-    public long getTimestamp() throws ExecutionException {
-        return 0;
+    public long getTimestamp() {
+        return rowRecord.getTimestamp();
     }
 
     public boolean hasNext() throws ExecutionException {
