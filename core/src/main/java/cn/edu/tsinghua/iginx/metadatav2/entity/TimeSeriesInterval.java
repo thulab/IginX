@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadatav2.entity;
 
-import java.util.Comparator;
 import java.util.Objects;
 
 public final class TimeSeriesInterval {

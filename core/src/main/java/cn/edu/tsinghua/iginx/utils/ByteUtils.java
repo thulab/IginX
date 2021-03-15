@@ -139,6 +139,72 @@ public class ByteUtils {
 		return byteBufferList;
 	}
 
+	public static ByteBuffer getByteBuffer(Object[] values, List<DataType> dataTypes) {
+		ByteBuffer buffer = ByteBuffer.allocate(getByteBufferSize(values, dataTypes));
+		for (int i = 0; i < dataTypes.size(); i++) {
+			DataType dataType = dataTypes.get(i);
+			Object value = values[i];
+			if (value == null) {
+				continue;
+			}
+			switch (dataType) {
+				case BOOLEAN:
+					buffer.put(booleanToByte((boolean) value));
+					break;
+				case INTEGER:
+					buffer.putInt((int) value);
+					break;
+				case LONG:
+					buffer.putLong((long) value);
+					break;
+				case FLOAT:
+					buffer.putFloat((float) value);
+					break;
+				case DOUBLE:
+					buffer.putDouble((double) value);
+					break;
+				case STRING:
+					buffer.putInt(((byte[]) value).length);
+					buffer.put((byte[]) value);
+					break;
+				default:
+					throw new UnsupportedOperationException(dataType.toString());
+			}
+		}
+		buffer.flip();
+		return buffer;
+	}
+
+	public static int getByteBufferSize(Object[] values, List<DataType> dataTypes) {
+		int size = 0;
+		for (int i = 0; i < dataTypes.size(); i++) {
+			DataType dataType = dataTypes.get(i);
+			Object value = values[i];
+			if (value == null) {
+				continue;
+			}
+			switch (dataType) {
+				case BOOLEAN:
+					size += 1;
+					break;
+				case INTEGER:
+				case FLOAT:
+					size += 4;
+					break;
+				case LONG:
+				case DOUBLE:
+					size += 8;
+					break;
+				case STRING:
+					size += 4 + ((byte[]) value).length;
+					break;
+				default:
+					throw new UnsupportedOperationException(dataType.toString());
+			}
+		}
+		return size;
+	}
+
 	public static ByteBuffer getByteBuffer(Object[] values, DataType dataType) {
 		ByteBuffer buffer = ByteBuffer.allocate(getByteBufferSize(values, dataType));
 		switch (dataType) {

@@ -45,10 +45,15 @@ public class QueryDataSetCombiner {
 
     private static final QueryDataSetCombiner instance = new QueryDataSetCombiner();
 
-    private QueryDataSetCombiner() {}
+    private QueryDataSetCombiner() {
+    }
+
+    public static QueryDataSetCombiner getInstance() {
+        return instance;
+    }
 
     public QueryDataResp combine(QueryDataReq queryDataReq, List<QueryDataPlanExecuteResult> executeResults, Status status) {
-        Map<String, List<TimeSeriesDataSet>>  tsSliceMap = executeResults.stream().filter(
+        Map<String, List<TimeSeriesDataSet>> tsSliceMap = executeResults.stream().filter(
                 e -> e.getStatusCode() == QueryDataPlanExecuteResult.SUCCESS)
                 .map(QueryDataPlanExecuteResult::getTimeSeriesDataSets)
                 .flatMap(List<TimeSeriesDataSet>::stream)
@@ -56,7 +61,7 @@ public class QueryDataSetCombiner {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         List<Pair<TimeSeriesDataSet, Integer>> tsList = new ArrayList<>();
-        for (String path: tsSliceMap.keySet()) {
+        for (String path : tsSliceMap.keySet()) {
             TimeSeriesDataSet ts = mergeSlices(tsSliceMap.get(path));
             if (ts == null || ts.length() == 0)
                 continue;
@@ -68,7 +73,7 @@ public class QueryDataSetCombiner {
         List<Long> timeLine = new ArrayList<>();
         List<ByteBuffer> valueList = new ArrayList<>();
         List<ByteBuffer> bitmapList = new ArrayList<>();
-        while (true) {
+        while(true) {
             long time = -1;
             // 找出最小时间
             for (int i = 0; i < paths.size(); i++) {
@@ -109,13 +114,13 @@ public class QueryDataSetCombiner {
                 }
             }
             ByteBuffer buffer = ByteBuffer.allocate(totalSize);
-            for (Pair<Object, DataType> datum: data) {
+            for (Pair<Object, DataType> datum : data) {
                 switch (datum.v) {
                     case INTEGER:
-                        buffer.putInt((int)datum.k);
+                        buffer.putInt((int) datum.k);
                         break;
                     case LONG:
-                        buffer.putLong((long)datum.k);
+                        buffer.putLong((long) datum.k);
                         break;
                     case FLOAT:
                         buffer.putFloat((float) datum.k);
@@ -171,8 +176,5 @@ public class QueryDataSetCombiner {
         return ts;
     }
 
-    public static QueryDataSetCombiner getInstance() {
-        return instance;
-    }
 
 }
