@@ -59,7 +59,7 @@ public class TimeSeriesDataSet {
         return values.get(i);
     }
 
-    public long getBeginTime() {
+    public long getStartTime() {
         return timestamps.get(0);
     }
 

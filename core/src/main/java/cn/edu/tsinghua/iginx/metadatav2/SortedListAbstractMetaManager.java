@@ -26,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +36,8 @@ import java.util.stream.Collectors;
 public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private static final Logger logger = LoggerFactory.getLogger(SortedListAbstractMetaManager.class);
+
+    private static SortedListAbstractMetaManager INSTANCE = null;
 
     private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
 
@@ -117,13 +118,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         resultList = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getBeginTimeSeries() == null && o2.getTsInterval().getBeginTimeSeries() == null)
+            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
                 return 0;
-            else if (o1.getTsInterval().getBeginTimeSeries() == null)
+            else if (o1.getTsInterval().getStartTimeSeries() == null)
                 return -1;
-            else if (o2.getTsInterval().getBeginTimeSeries() == null)
+            else if (o2.getTsInterval().getStartTimeSeries() == null)
                 return 1;
-            return o1.getTsInterval().getBeginTimeSeries().compareTo(o2.getTsInterval().getBeginTimeSeries());
+            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
         }).collect(Collectors.toList());
         fragmentLock.readLock().unlock();
         return resultList;
@@ -145,13 +146,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         resultList = searchFragmentList(searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getBeginTimeSeries() == null && o2.getTsInterval().getBeginTimeSeries() == null)
+            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
                 return 0;
-            else if (o1.getTsInterval().getBeginTimeSeries() == null)
+            else if (o1.getTsInterval().getStartTimeSeries() == null)
                 return -1;
-            else if (o2.getTsInterval().getBeginTimeSeries() == null)
+            else if (o2.getTsInterval().getStartTimeSeries() == null)
                 return 1;
-            return o1.getTsInterval().getBeginTimeSeries().compareTo(o2.getTsInterval().getBeginTimeSeries());
+            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
         }).collect(Collectors.toList()), timeInterval);
         fragmentLock.readLock().unlock();
         return resultList;
@@ -167,7 +168,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         int left = 0, right = fragmentSeriesList.size();
         while (left <= right) {
             int mid = (left + right) / 2;
-            if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getBeginTimeSeries())) {
+            if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getStartTimeSeries())) {
                 left = mid + 1;
             } else {
                 right = mid;
@@ -216,4 +217,23 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         return resultList;
     }
 
+    public void shutdown() {
+        this.iginxCache.close();
+        this.storageEngineCache.close();
+        this.fragmentCache.close();
+        synchronized (SortedListAbstractMetaManager.class) {
+            SortedListAbstractMetaManager.INSTANCE = null;
+        }
+    }
+
+    public static SortedListAbstractMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (SortedListAbstractMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new SortedListAbstractMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
+    }
 }

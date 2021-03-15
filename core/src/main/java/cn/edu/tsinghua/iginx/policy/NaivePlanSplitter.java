@@ -19,10 +19,10 @@
 package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.metadata.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.MetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
@@ -48,7 +48,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
         for (Map.Entry<String, List<Integer>> entry : plan.generateIndexesOfPaths().entrySet()) {
             if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.ADD_COLUMNS) {
-                fragments = iMetaManager.getFragmentListByKey(entry.getKey());
+                fragments = iMetaManager.getFragmentListByTimeSeriesName(entry.getKey());
                 if (fragments.isEmpty()) {
                     fragments.add(createFragment(entry.getKey(), 0L, Long.MAX_VALUE));
                 }
@@ -59,7 +59,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                     }
                 }
             } else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.DELETE_COLUMNS) {
-                fragments = iMetaManager.getFragmentListByKey(entry.getKey());
+                fragments = iMetaManager.getFragmentListByTimeSeriesName(entry.getKey());
                 for (FragmentMeta fragment : fragments) {
                     List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
                     for (FragmentReplicaMeta replica : replicas) {
@@ -67,8 +67,8 @@ public class NaivePlanSplitter implements IPlanSplitter {
                     }
                 }
             } else {
-                fragments = iMetaManager.getFragmentListByKeyAndTimeInterval(
-                        entry.getKey(), ((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime());
+                fragments = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(
+                        entry.getKey(), new TimeInterval(((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime()));
                 if (fragments.isEmpty()) {
                     fragments.add(createFragment(entry.getKey(), 0L, Long.MAX_VALUE));
                 }
@@ -101,10 +101,12 @@ public class NaivePlanSplitter implements IPlanSplitter {
         return replicas;
     }
 
-    public static FragmentMeta createFragment(String key, long startTime, long endTime) {
-        List<Long> databaseIds = MetaManager.getInstance().chooseDatabaseIdsForNewFragment();
-        FragmentMeta fragment = new FragmentMeta(key, startTime, endTime, databaseIds);
-        MetaManager.getInstance().createFragment(fragment);
+    public FragmentMeta createFragment(String key, long startTime, long endTime) {
+        List<Long> storageEngineIdList = iMetaManager.chooseStorageEngineIdListForNewFragment();
+        FragmentMeta fragment = new FragmentMeta(key, key, startTime, endTime, storageEngineIdList);
+        List<FragmentMeta> fragments = new ArrayList<>();
+        fragments.add(fragment);
+        iMetaManager.createFragments(fragments);
         return fragment;
     }
 }

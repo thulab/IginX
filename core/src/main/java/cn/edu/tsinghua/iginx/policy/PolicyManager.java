@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.policy;
 
-import cn.edu.tsinghua.iginx.metadata.MetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +46,7 @@ public class PolicyManager {
                 try {
                     Class<? extends IPolicy> clazz = (Class<? extends IPolicy>) this.getClass().getClassLoader().loadClass(policyClassName);
                     policy = clazz.getConstructor().newInstance();
-                    policy.init(MetaManager.getInstance());
+                    policy.init(SortedListAbstractMetaManager.getInstance());
                     policies.put(policyClassName, policy);
                 } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
                     logger.error(e.getMessage());

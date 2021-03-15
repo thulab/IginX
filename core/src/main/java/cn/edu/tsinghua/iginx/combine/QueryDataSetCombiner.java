@@ -152,7 +152,7 @@ public class QueryDataSetCombiner {
         TimeSeriesDataSet ts = new TimeSeriesDataSet(slices.get(0).getName(), slices.get(0).getType());
         slices = slices.stream().filter(e -> e.length() == 0).collect(Collectors.toList());
         slices.sort((o1, o2) -> {
-            long diff = o1.getBeginTime() - o2.getBeginTime();
+            long diff = o1.getStartTime() - o2.getStartTime();
             if (diff < 0)
                 return -1;
             else if (diff > 0)

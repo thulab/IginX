@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.iotdb;
 
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
-import cn.edu.tsinghua.iginx.metadata.DatabaseMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -65,31 +65,31 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBPlanExecutor.class);
 
-    private final Map<Long, DatabaseMeta> databaseMetas;
+    private final Map<Long, StorageEngineMeta> storageEngineMetas;
 
     private Map<Long, SessionPool> readSessionPools;
 
     private Map<Long, SessionPool> writeSessionPools;
 
-    public IoTDBPlanExecutor(List<DatabaseMeta> databaseMetaList) {
+    public IoTDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
         readSessionPools = new HashMap<>();
         writeSessionPools = new HashMap<>();
-        databaseMetas = new HashMap<>();
-        for (DatabaseMeta databaseMeta: databaseMetaList) {
-            if (databaseMeta.getStorageEngine() != StorageEngine.IoTDB) {
-                logger.warn("unexpected database: " + databaseMeta.getStorageEngine());
+        storageEngineMetas = new HashMap<>();
+        for (StorageEngineMeta storageEngineMeta: storageEngineMetaList) {
+            if (storageEngineMeta.getDbType() != StorageEngine.IoTDB) {
+                logger.warn("unexpected database: " + storageEngineMeta.getDbType());
                 continue;
             }
-            Map<String, String> extraParams = databaseMeta.getExtraParams();
+            Map<String, String> extraParams = storageEngineMeta.getExtraParams();
             String username = extraParams.getOrDefault("username", "root");
             String password = extraParams.getOrDefault("password", "root");
             int readSessions = Integer.parseInt(extraParams.getOrDefault("readSessions", "2"));
             int writeSessions = Integer.parseInt(extraParams.getOrDefault("writeSessions", "5"));
-            SessionPool readSessionPool = new SessionPool(databaseMeta.getIp(), databaseMeta.getPort(), username, password, readSessions);
-            SessionPool writeSessionPool = new SessionPool(databaseMeta.getIp(), databaseMeta.getPort(), username, password, writeSessions);
-            readSessionPools.put(databaseMeta.getId(), readSessionPool);
-            writeSessionPools.put(databaseMeta.getId(), writeSessionPool);
-            databaseMetas.put(databaseMeta.getId(), databaseMeta);
+            SessionPool readSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, readSessions);
+            SessionPool writeSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, writeSessions);
+            readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
+            writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
+            storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
         }
         readSessionPools = Collections.unmodifiableMap(readSessionPools);
         writeSessionPools = Collections.unmodifiableMap(writeSessionPools);
@@ -98,7 +98,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     @Override
     protected InsertRecordsPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
         logger.info("执行插入计划！");
-        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<String>> measurementsMap= new HashMap<>();
@@ -197,11 +197,11 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
-        DatabaseMeta databaseMeta = databaseMetas.get(plan.getDatabaseId());
-        Map<String, String> extraParams = databaseMeta.getExtraParams();
+        StorageEngineMeta storageEngineMeta = storageEngineMetas.get(plan.getStorageEngineId());
+        Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String username = extraParams.getOrDefault("username", "root");
         String password = extraParams.getOrDefault("password", "root");
-        Session session = new Session(databaseMeta.getIp(), databaseMeta.getPort(), username, password);
+        Session session = new Session(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password);
         try {
             session.open();
             return syncExecuteQueryDataPlan(plan, session);
@@ -219,7 +219,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected AddColumnsPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
-        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         for (int i = 0; i < plan.getPathsNum(); i++) {
             try {
                 if (!sessionPool.checkTimeseriesExists(plan.getPath(i))) {
@@ -237,7 +237,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected DeleteColumnsPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
-        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteTimeseries(plan.getPaths());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -248,7 +248,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected DeleteDataInColumnsPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
-        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteData(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -259,7 +259,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected CreateDatabasePlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
-        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.setStorageGroup(plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -270,7 +270,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
-        SessionPool sessionPool = writeSessionPools.get(plan.getDatabaseId());
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteStorageGroup(plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {

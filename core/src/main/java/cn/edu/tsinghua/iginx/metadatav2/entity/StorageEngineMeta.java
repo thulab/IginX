@@ -65,7 +65,7 @@ public final class StorageEngineMeta {
 
     public void endLatestFragmentReplicaMetas(TimeSeriesInterval tsInterval, long endTime) {
         fragmentReplicaMetaList.addAll(latestFragmentReplicaMetaList.stream().filter(e -> e.getTsInterval().equals(tsInterval)).map(
-                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getBeginTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
+                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getStartTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
                         e.getStorageEngineId())).collect(Collectors.toList()));
         latestFragmentReplicaMetaList.removeIf(e -> e.getTsInterval().equals(tsInterval));
     }

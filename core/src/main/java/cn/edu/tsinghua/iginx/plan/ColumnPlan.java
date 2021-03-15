@@ -27,7 +27,7 @@ public abstract class ColumnPlan extends NonDatabasePlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(ColumnPlan.class);
 
-	public ColumnPlan(boolean isQuery, List<String> paths) {
+	protected ColumnPlan(boolean isQuery, List<String> paths) {
 		super(isQuery, paths);
 		this.setIginxPlanType(IginxPlanType.COLUMN);
 	}

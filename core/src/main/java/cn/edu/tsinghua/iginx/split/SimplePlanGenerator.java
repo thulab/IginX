@@ -26,7 +26,7 @@ import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.metadata.MetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -67,12 +67,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
             case CreateDatabase:
                 CreateDatabaseReq createDatabaseReq = ((CreateDatabaseContext) requestContext).getReq();
                 CreateDatabasePlan createDatabasePlan = new CreateDatabasePlan(createDatabaseReq.getDatabaseName());
-                createDatabasePlan.setDatabaseId(MetaManager.getInstance().chooseDatabaseIdForDatabasePlan());
+                createDatabasePlan.setStorageEngineId(SortedListAbstractMetaManager.getInstance().chooseStorageEngineIdForDatabasePlan());
                 return Collections.singletonList(createDatabasePlan);
             case DropDatabase:
                 DropDatabaseReq dropDatabaseReq = ((DropDatabaseContext) requestContext).getReq();
                 DropDatabasePlan dropDatabasePlan = new DropDatabasePlan(dropDatabaseReq.getDatabaseName());
-                dropDatabasePlan.setDatabaseId(MetaManager.getInstance().chooseDatabaseIdForDatabasePlan());
+                dropDatabasePlan.setStorageEngineId(SortedListAbstractMetaManager.getInstance().chooseStorageEngineIdForDatabasePlan());
                 return Collections.singletonList(dropDatabasePlan);
             case AddColumns:
                 AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
@@ -151,7 +151,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     values,
                     plan.getDataTypeListByIndexes(info.getPathsIndexes()),
                     plan.getAttributesByIndexes(info.getPathsIndexes()),
-                    info.getReplica().getDatabaseId()
+                    info.getReplica().getStorageEngineId()
             );
             subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
             plans.add(subPlan);
@@ -166,7 +166,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             QueryDataPlan subPlan = new QueryDataPlan(plan.getPathsByIndexes(info.getPathsIndexes()),
                     Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()), info.getReplica().getDatabaseId());
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()), info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
 

@@ -52,18 +52,18 @@ public final class FragmentMeta {
      */
     private final Map<Integer, FragmentReplicaMeta> replicaMetas;
 
-    public FragmentMeta(String beginPrefix, String endPrefix, long beginTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
-        this.timeInterval = new TimeInterval(beginTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(beginPrefix, endPrefix);
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         this.replicaMetas = replicaMetas;
     }
 
-    public FragmentMeta(String beginPrefix, String endPrefix, long beginTime, long endTime, List<Long> databaseIds) {
-        this.timeInterval = new TimeInterval(beginTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(beginPrefix, endPrefix);
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
-        for (int i = 0; i < databaseIds.size(); i++) {
-            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, databaseIds.get(i)));
+        for (int i = 0; i < storageEngineIdList.size(); i++) {
+            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
         }
         this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
     }
@@ -85,7 +85,7 @@ public final class FragmentMeta {
     }
 
     public FragmentMeta endFragmentMeta() {
-        return new FragmentMeta(tsInterval.getBeginTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getBeginTime(), Long.MAX_VALUE, replicaMetas);
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), Long.MAX_VALUE, replicaMetas);
     }
 
 }

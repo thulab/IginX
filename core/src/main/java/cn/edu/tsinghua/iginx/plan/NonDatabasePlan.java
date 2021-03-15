@@ -34,7 +34,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	private List<String> paths;
 
-	public NonDatabasePlan(boolean isQuery, List<String> paths) {
+	protected NonDatabasePlan(boolean isQuery, List<String> paths) {
 		super(isQuery);
 		this.setIginxPlanType(IginxPlanType.NON_DATABASE);
 		this.setCanBeSplit(true);

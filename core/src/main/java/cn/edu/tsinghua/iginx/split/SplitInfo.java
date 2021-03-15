@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
 
 import java.util.List;
 

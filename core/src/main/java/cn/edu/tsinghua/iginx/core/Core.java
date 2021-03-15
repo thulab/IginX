@@ -30,8 +30,8 @@ import cn.edu.tsinghua.iginx.core.processor.PostQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.MetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
@@ -79,14 +79,14 @@ public final class Core {
     private final ExecutorService postQueryProcessThreadPool;
 
     private Core() {
-        IMetaManager metaManager = MetaManager.getInstance();
+        IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
         registerPlanGenerator(new SimplePlanGenerator());
         registerCombineExecutor(new CombineExecutor());
         try {
             Class<?> planExecutorClass = Core.class.getClassLoader().
                     loadClass(ConfigDescriptor.getInstance().getConfig().getDatabaseClassName());
             IPlanExecutor planExecutor =
-                    ((Class<? extends IPlanExecutor>) planExecutorClass).getConstructor(List.class).newInstance(metaManager.getDatabaseList());
+                    ((Class<? extends IPlanExecutor>) planExecutorClass).getConstructor(List.class).newInstance(metaManager.getStorageEngineList());
             registerQueryExecutor(planExecutor);
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             logger.error(e.getMessage());

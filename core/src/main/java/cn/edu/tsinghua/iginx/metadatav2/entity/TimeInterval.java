@@ -22,25 +22,25 @@ import java.util.Objects;
 
 public final class TimeInterval {
 
-    private long beginTime;
+    private long startTime;
 
     private long endTime;
 
-    public TimeInterval(long beginTime, long endTime) {
-        this.beginTime = beginTime;
+    public TimeInterval(long startTime, long endTime) {
+        this.startTime = startTime;
         this.endTime = endTime;
     }
 
-    public long getBeginTime() {
-        return beginTime;
+    public long getStartTime() {
+        return startTime;
     }
 
     public long getEndTime() {
         return endTime;
     }
 
-    public void setBeginTime(long beginTime) {
-        this.beginTime = beginTime;
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
     }
 
     public void setEndTime(long endTime) {
@@ -49,7 +49,7 @@ public final class TimeInterval {
 
     @Override
     public String toString() {
-        return "" + beginTime;
+        return "" + startTime;
     }
 
     @Override
@@ -57,32 +57,32 @@ public final class TimeInterval {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TimeInterval that = (TimeInterval) o;
-        return beginTime == that.beginTime && endTime == that.endTime;
+        return startTime == that.startTime && endTime == that.endTime;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(beginTime, endTime);
+        return Objects.hash(startTime, endTime);
     }
 
     public boolean isIntersect(TimeInterval timeInterval) {
-        return (timeInterval.beginTime < endTime) && (timeInterval.endTime > beginTime);
+        return (timeInterval.startTime < endTime) && (timeInterval.endTime > startTime);
     }
 
     public boolean isBefore(TimeInterval timeInterval) {
-        return endTime <= timeInterval.beginTime;
+        return endTime <= timeInterval.startTime;
     }
 
     public boolean isAfter(TimeInterval timeInterval) {
-        return beginTime >= timeInterval.endTime;
+        return startTime >= timeInterval.endTime;
     }
 
     public boolean isContain(TimeInterval timeInterval) {
-        return (beginTime <= timeInterval.beginTime) && (endTime >= timeInterval.endTime);
+        return (startTime <= timeInterval.startTime) && (endTime >= timeInterval.endTime);
     }
 
     public boolean isContainedBy(TimeInterval timeInterval) {
-        return (timeInterval.beginTime <= beginTime) && (timeInterval.endTime >= endTime);
+        return (timeInterval.startTime <= startTime) && (timeInterval.endTime >= endTime);
     }
 
 }
