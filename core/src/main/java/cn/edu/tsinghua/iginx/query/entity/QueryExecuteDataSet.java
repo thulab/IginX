@@ -16,13 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.result;
+package cn.edu.tsinghua.iginx.query.entity;
 
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-public class AddColumnsPlanExecuteResult extends SyncPlanExecuteResult {
+import java.util.List;
 
-    public AddColumnsPlanExecuteResult(int statusCode, IginxPlan plan) {
-        super(statusCode, plan);
-    }
+public interface QueryExecuteDataSet {
+
+    List<String> getColumnNames() throws ExecutionException;
+
+    List<DataType> getColumnTypes() throws ExecutionException;
+
+    boolean hasNext() throws ExecutionException;
+
+    RowRecord next() throws ExecutionException;
+
+    void close() throws ExecutionException;
+
 }

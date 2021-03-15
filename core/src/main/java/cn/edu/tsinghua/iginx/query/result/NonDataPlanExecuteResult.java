@@ -20,9 +20,10 @@ package cn.edu.tsinghua.iginx.query.result;
 
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
-public class CreateDatabasePlanExecuteResult extends SyncPlanExecuteResult {
+public class NonDataPlanExecuteResult extends SyncPlanExecuteResult {
 
-    public CreateDatabasePlanExecuteResult(int statusCode, IginxPlan plan) {
+    public NonDataPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
     }
+
 }

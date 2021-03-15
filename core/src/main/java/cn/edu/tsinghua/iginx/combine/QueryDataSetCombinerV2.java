@@ -18,21 +18,31 @@
  */
 package cn.edu.tsinghua.iginx.combine;
 
+import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
+import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public abstract class CombineResult {
+import java.util.List;
 
-    private Status status;
+public class QueryDataSetCombinerV2 {
 
-    public CombineResult(Status status) {
-        this.status = status;
+    private static final Logger logger = LoggerFactory.getLogger(QueryDataSetCombinerV2.class);
+
+    private static final QueryDataSetCombinerV2 instance = new QueryDataSetCombinerV2();
+
+    private QueryDataSetCombinerV2() {}
+
+    public QueryDataReq combineResult(QueryDataReq queryDataReq, List<QueryDataPlanExecuteResult> executeResults, Status status) {
+        QueryExecuteDataSet queryDataSet = executeResults.get(0).getQueryExecuteDataSet();
+        return null;
     }
 
-    public Status getStatus() {
-        return status;
+    public static QueryDataSetCombinerV2 getInstance() {
+        return instance;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
 }
