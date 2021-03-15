@@ -135,6 +135,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     private void resolveIginxMetaFromZooKeeper() throws Exception {
+        if (this.zookeeperClient.checkExists().forPath(Constants.IGINX_NODE_PREFIX) == null) {
+            return;
+        }
         List<String> children = this.zookeeperClient.getChildren()
                 .forPath(Constants.IGINX_NODE_PREFIX);
         for (String childName: children) {
@@ -227,6 +230,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     private void resolveStorageEngineFromZooKeeper() throws Exception {
+        if (this.zookeeperClient.checkExists().forPath(Constants.STORAGE_ENGINE_NODE_PREFIX) == null) {
+            return;
+        }
         List<String> children = this.zookeeperClient.getChildren()
                 .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX);
         for (String childName: children) {
