@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.combine.querydata;
 
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -25,8 +26,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.edu.tsinghua.iginx.utils.CheckedFunction;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -38,24 +38,22 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class QueryDataSetCombinerV2 {
+public class QueryDataSetCombiner {
 
-    private static final Logger logger = LoggerFactory.getLogger(QueryDataSetCombinerV2.class);
+    private static final QueryDataSetCombiner instance = new QueryDataSetCombiner();
 
-    private static final QueryDataSetCombinerV2 instance = new QueryDataSetCombinerV2();
-
-    private QueryDataSetCombinerV2() {
+    private QueryDataSetCombiner() {
     }
 
-    public static QueryDataSetCombinerV2 getInstance() {
+    public static QueryDataSetCombiner getInstance() {
         return instance;
     }
 
-    public void combineResult(QueryDataResp resp, List<QueryDataPlanExecuteResult> planExecuteResults) throws Exception {
+    public void combineResult(QueryDataResp resp, List<QueryDataPlanExecuteResult> planExecuteResults) throws ExecutionException {
         Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSet() == null)
                 .filter(e -> e.getStatusCode() != StatusCode.SUCCESS_STATUS.getStatusCode())
                 .map(QueryDataPlanExecuteResult::getQueryExecuteDataSet)
-                .map(QueryExecuteDataSetWrapper::new)
+                .map(CheckedFunction.wrap(QueryExecuteDataSetWrapper::new))
                 .collect(Collectors.toSet());
 
         List<String> columnNameList = new ArrayList<>();
@@ -120,6 +118,7 @@ public class QueryDataSetCombinerV2 {
                     if (dataSetWrapper.hasNext()) {
                         dataSetWrapper.next();
                     } else { // 如果没有下一行，应该把当前数据集给移除掉
+                        dataSetWrapper.close();
                         deletedDataSetWrappers.add(dataSetWrapper);
                         it.remove();
                     }
