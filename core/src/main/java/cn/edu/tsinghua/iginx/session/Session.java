@@ -83,16 +83,12 @@ public class Session {
 		this.isClosed = true;
 	}
 
-	public synchronized void openSession() throws SessionException {
-		openSession(Constants.DEFAULT_TIMEOUT_MS);
-	}
-
-	private synchronized void openSession(int timeoutInMs) throws SessionException {
+	public synchronized void openSession() throws SessionException, TTransportException {
 		if (!isClosed)  {
 			return;
 		}
 
-		transport = new TSocket(host, port, timeoutInMs);
+		transport = new TSocket(host, port);
 		if (!transport.isOpen()) {
 			try {
 				transport.open();

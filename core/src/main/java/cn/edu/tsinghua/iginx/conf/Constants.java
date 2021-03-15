@@ -24,8 +24,6 @@ public class Constants {
 
 	public static final String DEFAULT_PASSWORD = "password";
 
-	public static final int DEFAULT_TIMEOUT_MS = 1000;
-
 	public static final String CONFIG_FILE = "conf/config.properties";
 
 	public static final String IGINX_NODE = "/iginx/node";

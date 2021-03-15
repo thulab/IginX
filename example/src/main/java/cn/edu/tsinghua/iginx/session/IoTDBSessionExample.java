@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,7 +21,7 @@ public class IoTDBSessionExample {
 	private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
 	private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
 
-	public static void main(String[] args) throws SessionException, ExecutionException {
+	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		ConfigDescriptor.getInstance().getConfig().setLevel(3);
 
 		session = new Session("127.0.0.1", 6324, "root", "root");
