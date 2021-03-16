@@ -169,7 +169,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
             return resultList;
         }
         int left = 0, right = fragmentSeriesList.size();
-        while (left <= right) {
+        while (left < right) {
             int mid = (left + right) / 2;
             if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getStartTimeSeries())) {
                 left = mid + 1;
@@ -190,7 +190,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
             return resultList;
         }
         int left = 0, right = fragmentSeriesList.size();
-        while (left <= right) {
+        while (left < right) {
             int mid = (left + right) / 2;
             if (fragmentSeriesList.get(mid).k.isBefore(tsName)) {
                 left = mid + 1;
@@ -211,7 +211,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
             return resultList;
         }
         int left = 0, right = fragmentMetaList.size();
-        while (left <= right) {
+        while (left < right) {
             int mid = (left + right) / 2;
             if (fragmentMetaList.get(mid).getTimeInterval().isBefore(timeInterval)) {
                 left = mid + 1;
