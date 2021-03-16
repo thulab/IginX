@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import lombok.ToString;
@@ -89,7 +91,7 @@ public class InsertRecordsPlan extends DataPlan {
 		return tempTimestamps.stream().mapToLong(i -> i).toArray();
 	}
 
-	public Pair<long[], Pair<Integer, Integer>> getTimestampsAndIndexesByRange(long startTime, long endTime) {
+	public Pair<long[], Pair<Integer, Integer>> getTimestampsAndIndexesByInterval(TimeInterval interval) {
 		if (timestamps.length == 0) {
 			logger.error("There are no timestamps in the InsertRecordsPlan.");
 			return null;
@@ -98,7 +100,7 @@ public class InsertRecordsPlan extends DataPlan {
 		int startIndex = timestamps.length;
 		int endIndex = 0;
 		for (int i = 0; i < timestamps.length; i++) {
-			if (timestamps[i] >= startTime && timestamps[i] <= endTime) {
+			if (timestamps[i] >= interval.getStartTime() && timestamps[i] <= interval.getEndTime()) {
 				tempTimestamps.add(timestamps[i]);
 				startIndex = Math.min(startIndex, i);
 				endIndex = Math.max(endIndex, i);
@@ -111,40 +113,40 @@ public class InsertRecordsPlan extends DataPlan {
 		return valuesList;
 	}
 
-	public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, List<Integer> colIndexes) {
+	public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
 		if (valuesList == null || valuesList.length == 0) {
 			logger.error("There are no values in the InsertRecordsPlan.");
 			return null;
 		}
-		Object[] tempValues = new Object[colIndexes.size()];
-		int i = 0;
-		for (Integer colIndex : colIndexes) {
+		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
+		int endIndex = getPaths().indexOf(interval.getEndTimeSeries());
+		Object[] tempValues = new Object[endIndex - startIndex + 1];
+		for (int i = startIndex; i <= endIndex; i++) {
 			Object[] tempColValues;
-			switch (getDataType(colIndex)) {
+			switch (getDataType(i)) {
 				case BOOLEAN:
-					tempColValues = ArrayUtils.toObject((boolean[]) valuesList[colIndex]);
+					tempColValues = ArrayUtils.toObject((boolean[]) valuesList[i]);
 					break;
 				case INTEGER:
-					tempColValues = ArrayUtils.toObject((int[]) valuesList[colIndex]);
+					tempColValues = ArrayUtils.toObject((int[]) valuesList[i]);
 					break;
 				case LONG:
-					tempColValues = ArrayUtils.toObject((long[]) valuesList[colIndex]);
+					tempColValues = ArrayUtils.toObject((long[]) valuesList[i]);
 					break;
 				case FLOAT:
-					tempColValues = ArrayUtils.toObject((float[]) valuesList[colIndex]);
+					tempColValues = ArrayUtils.toObject((float[]) valuesList[i]);
 					break;
 				case DOUBLE:
-					tempColValues = ArrayUtils.toObject((double[]) valuesList[colIndex]);
+					tempColValues = ArrayUtils.toObject((double[]) valuesList[i]);
 					break;
 				case STRING:
 					// TODO
-					tempColValues = (String[]) valuesList[colIndex];
+					tempColValues = (String[]) valuesList[i];
 					break;
 				default:
-					throw new UnsupportedOperationException(getDataType(colIndex).toString());
+					throw new UnsupportedOperationException(getDataType(i).toString());
 			}
-			tempValues[i] = Arrays.copyOfRange(tempColValues, rowIndexes.k, rowIndexes.v);
-			i++;
+			tempValues[i - startIndex] = Arrays.copyOfRange(tempColValues, rowIndexes.k, rowIndexes.v);
 		}
 		return tempValues;
 	}
@@ -165,18 +167,14 @@ public class InsertRecordsPlan extends DataPlan {
 		return dataTypeList.get(index);
 	}
 
-	public List<DataType> getDataTypeListByIndexes(List<Integer> indexes) {
+	public List<DataType> getDataTypeListByInterval(TimeSeriesInterval interval) {
 		if (dataTypeList == null || dataTypeList.isEmpty()) {
 			logger.error("There are no DataType in the InsertRecordsPlan.");
 			return null;
 		}
-		List<DataType> tempDataTypeList = new ArrayList<>();
-		for (Integer index : indexes) {
-			if (getDataType(index) != null) {
-				tempDataTypeList.add(getDataType(index));
-			}
-		}
-		return tempDataTypeList;
+		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		return dataTypeList.subList(startIndex, endIndex + 1);
 	}
 
 	public List<Map<String, String>> getAttributesList() {
@@ -195,17 +193,13 @@ public class InsertRecordsPlan extends DataPlan {
 		return attributesList.get(index);
 	}
 
-	public List<Map<String, String>> getAttributesByIndexes(List<Integer> indexes) {
+	public List<Map<String, String>> getAttributesByInterval(TimeSeriesInterval interval) {
 		if (attributesList == null || attributesList.isEmpty()) {
 			logger.info("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		List<Map<String, String>> tempAttributes = new ArrayList<>();
-		for (Integer index : indexes) {
-			if (getAttributes(index) != null) {
-				tempAttributes.add(getAttributes(index));
-			}
-		}
-		return tempAttributes;
+		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		return attributesList.subList(startIndex, endIndex + 1);
 	}
 }

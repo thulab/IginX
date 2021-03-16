@@ -153,7 +153,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
         return new InsertRecordsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
-    protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws Exception {
+    protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws IoTDBConnectionException, StatementExecutionException {
         SessionDataSet sessionDataSet = session.executeRawDataQuery(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
         List<String> columns = sessionDataSet.getColumnNames();
         List<TSDataType> columnTypes = sessionDataSet.getColumnTypes();
@@ -223,9 +223,9 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
         for (int i = 0; i < plan.getPathsNum(); i++) {
             try {
                 if (!sessionPool.checkTimeseriesExists(plan.getPath(i))) {
-                    TSDataType dataType = TSDataType.deserialize((byte) Short.parseShort(plan.getAttributes().get(i).getOrDefault("DataType", "5")));
-                    TSEncoding encoding = TSEncoding.deserialize((byte) Short.parseShort(plan.getAttributes().get(i).getOrDefault("Encoding", "9")));
-                    CompressionType compressionType = CompressionType.deserialize((byte) Short.parseShort(plan.getAttributes().get(i).getOrDefault("CompressionType", "0")));
+                    TSDataType dataType = TSDataType.deserialize((byte) Short.parseShort(plan.getAttributes(i).getOrDefault("DataType", "5")));
+                    TSEncoding encoding = TSEncoding.deserialize((byte) Short.parseShort(plan.getAttributes(i).getOrDefault("Encoding", "9")));
+                    CompressionType compressionType = CompressionType.deserialize((byte) Short.parseShort(plan.getAttributesList().get(i).getOrDefault("CompressionType", "0")));
                     sessionPool.createTimeseries(plan.getPath(i), dataType, encoding, compressionType);
                 }
             } catch (IoTDBConnectionException | StatementExecutionException e) {

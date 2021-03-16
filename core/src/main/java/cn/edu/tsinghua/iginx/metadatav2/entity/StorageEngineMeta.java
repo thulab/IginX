@@ -55,9 +55,9 @@ public final class StorageEngineMeta {
     /**
      * 时序数据库存储的数据分片，不进行序列化。
      */
-    private transient List<FragmentReplicaMeta> fragmentReplicaMetaList;
+    private transient List<FragmentReplicaMeta> fragmentReplicaMetaList = new ArrayList<>();
 
-    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList;
+    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList = new ArrayList<>();
 
     public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
         this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
@@ -83,8 +83,6 @@ public final class StorageEngineMeta {
         this.port = port;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
-        this.fragmentReplicaMetaList = new ArrayList<>();
-        this.latestFragmentReplicaMetaList = new ArrayList<>();
     }
 
     public long getId() {

@@ -58,23 +58,23 @@ public interface IMetaManager {
     /**
      * 获取某个时间序列区间的所有分片
      */
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
      * 获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片）
      */
-    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
      * 获取全部最新的分片
      */
-    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentList();
+    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
 
     /**
      * 获取某个时间序列区间在某个时间区间的所有分片。
      */
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
-                                                                                       TimeInterval timeInterval);
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
+                                                                                                  TimeInterval timeInterval);
 
     /**
      * 获取某个时间序列的所有分片（按照分片时间戳排序）
@@ -93,7 +93,7 @@ public interface IMetaManager {
     List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
 
     /**
-     * 创建时间分片
+     * 创建分片
      */
     boolean createFragments(List<FragmentMeta> fragments);
 
@@ -118,5 +118,7 @@ public interface IMetaManager {
      * @return 选出的存储引擎实例 Id
      */
     long chooseStorageEngineIdForDatabasePlan();
+
+    Map<TimeSeriesInterval, List<FragmentMeta>> generateFragmentMap(String startPath, long startTime);
 
 }

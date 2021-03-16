@@ -57,7 +57,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     @Override
     protected void addFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
+        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
     }
@@ -71,7 +71,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> resultMap.put(e.k, e.v));
@@ -80,7 +80,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentList() {
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap() {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
@@ -90,7 +90,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
@@ -100,7 +100,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> {
@@ -165,6 +165,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
         List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        if (fragmentSeriesList.isEmpty()) {
+            return resultList;
+        }
         int left = 0, right = fragmentSeriesList.size();
         while (left <= right) {
             int mid = (left + right) / 2;
@@ -183,6 +186,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
         List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        if (fragmentSeriesList.isEmpty()) {
+            return resultList;
+        }
         int left = 0, right = fragmentSeriesList.size();
         while (left <= right) {
             int mid = (left + right) / 2;
@@ -201,6 +207,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList, TimeInterval timeInterval) {
         List<FragmentMeta> resultList = new ArrayList<>();
+        if (fragmentMetaList.isEmpty()) {
+            return resultList;
+        }
         int left = 0, right = fragmentMetaList.size();
         while (left <= right) {
             int mid = (left + right) / 2;

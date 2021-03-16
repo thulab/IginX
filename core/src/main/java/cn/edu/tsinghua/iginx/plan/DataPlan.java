@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,30 +28,27 @@ public abstract class DataPlan extends NonDatabasePlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataPlan.class);
 
-	private long startTime;
-
-	private long endTime;
+	private TimeInterval timeInterval;
 
 	protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime) {
 		super(isQuery, paths);
 		this.setIginxPlanType(IginxPlanType.DATA);
-		this.startTime = startTime;
-		this.endTime = endTime;
+		this.timeInterval = new TimeInterval(startTime, endTime);
+	}
+
+	public TimeInterval getTimeInterval() {
+		return timeInterval;
+	}
+
+	public void setTimeInterval(TimeInterval timeInterval) {
+		this.timeInterval = timeInterval;
 	}
 
 	public long getStartTime() {
-		return startTime;
-	}
-
-	public void setStartTime(long startTime) {
-		this.startTime = startTime;
+		return timeInterval.getStartTime();
 	}
 
 	public long getEndTime() {
-		return endTime;
-	}
-
-	public void setEndTime(long endTime) {
-		this.endTime = endTime;
+		return timeInterval.getEndTime();
 	}
 }

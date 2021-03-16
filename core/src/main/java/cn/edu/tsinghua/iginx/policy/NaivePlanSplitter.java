@@ -18,11 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.policy;
 
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
 import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class NaivePlanSplitter implements IPlanSplitter {
 
@@ -44,43 +45,58 @@ public class NaivePlanSplitter implements IPlanSplitter {
     @Override
     public List<SplitInfo> getSplitResults(NonDatabasePlan plan) {
         List<SplitInfo> infoList = new ArrayList<>();
-        List<FragmentMeta> fragments;
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap;
 
-        for (Map.Entry<String, List<Integer>> entry : plan.generateIndexesOfPaths().entrySet()) {
-            if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.ADD_COLUMNS) {
-                fragments = iMetaManager.getFragmentListByTimeSeriesName(entry.getKey());
-                if (fragments.isEmpty()) {
-                    fragments.add(createFragment(entry.getKey(), 0L, Long.MAX_VALUE));
+        if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.ADD_COLUMNS) {
+            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
+            if (fragmentMap.isEmpty()) {
+                fragmentMap = iMetaManager.generateFragmentMap(plan.getStartPath(), 0L);
+                iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            }
+            for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
+                if (entry.getKey().getStartTimeSeries() == null) {
+                    continue;
                 }
-                for (FragmentMeta fragment : fragments) {
-                    List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+                for (FragmentMeta fragment : entry.getValue()) {
+                    List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
                     for (FragmentReplicaMeta replica : replicas) {
-                        infoList.add(new SplitInfo(entry.getValue(), replica));
+                        infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replica));
                     }
                 }
-            } else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.DELETE_COLUMNS) {
-                fragments = iMetaManager.getFragmentListByTimeSeriesName(entry.getKey());
-                for (FragmentMeta fragment : fragments) {
-                    List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+            }
+        } else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.DELETE_COLUMNS) {
+            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
+            for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
+                for (FragmentMeta fragment : entry.getValue()) {
+                    List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
                     for (FragmentReplicaMeta replica : replicas) {
-                        infoList.add(new SplitInfo(entry.getValue(), replica));
+                        infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
                     }
                 }
-            } else {
-                fragments = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(
-                        entry.getKey(), new TimeInterval(((DataPlan) plan).getStartTime(), ((DataPlan) plan).getEndTime()));
-                if (fragments.isEmpty()) {
-                    fragments.add(createFragment(entry.getKey(), 0L, Long.MAX_VALUE));
+            }
+        } else {
+            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+                    plan.getTsInterval(), ((DataPlan) plan).getTimeInterval());
+            if (fragmentMap.isEmpty()) {
+                fragmentMap = iMetaManager.generateFragmentMap(plan.getStartPath(), ((DataPlan) plan).getStartTime());
+                iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            }
+            for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
+                if (entry.getKey().getStartTimeSeries() == null) {
+                    continue;
                 }
-                for (FragmentMeta fragment : fragments) {
+                for (FragmentMeta fragment : entry.getValue()) {
+                    if (fragment.getTimeInterval().getStartTime() == 0 && ((DataPlan) plan).getStartTime() != 0) {
+                        continue;
+                    }
                     List<FragmentReplicaMeta> replicas = new ArrayList<>();
                     if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.INSERT_RECORDS) {
-                        replicas = chooseFragmentReplicas(fragment, false, ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+                        replicas = chooseFragmentReplicas(fragment, false);
                     } else if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.QUERY_DATA) {
-                        replicas = chooseFragmentReplicas(fragment, true, 0);
+                        replicas = chooseFragmentReplicas(fragment, true);
                     }
                     for (FragmentReplicaMeta replica : replicas) {
-                        infoList.add(new SplitInfo(entry.getValue(), replica));
+                        infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
                     }
                 }
             }
@@ -90,23 +106,13 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery, int replicaNum) {
+    public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery) {
         List<FragmentReplicaMeta> replicas = new ArrayList<>();
-        Random random = new Random();
         if (isQuery) {
-            replicas.add(fragment.getReplicaMetas().get(random.nextInt(fragment.getReplicaMetasNum())));
+            replicas.add(fragment.getReplicaMetas().get(new Random().nextInt(fragment.getReplicaMetasNum())));
         } else {
             replicas.addAll(fragment.getReplicaMetas().values());
         }
         return replicas;
-    }
-
-    public FragmentMeta createFragment(String key, long startTime, long endTime) {
-        List<Long> storageEngineIdList = iMetaManager.chooseStorageEngineIdListForNewFragment();
-        FragmentMeta fragment = new FragmentMeta(key, key, startTime, endTime, storageEngineIdList);
-        List<FragmentMeta> fragments = new ArrayList<>();
-        fragments.add(fragment);
-        iMetaManager.createFragments(fragments);
-        return fragment;
     }
 }

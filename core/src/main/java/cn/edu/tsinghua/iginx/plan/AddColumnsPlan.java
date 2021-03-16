@@ -18,10 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,45 +29,41 @@ public class AddColumnsPlan extends ColumnPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(AddColumnsPlan.class);
 
-	private List<Map<String, String>> attributes;
+	private List<Map<String, String>> attributesList;
 
-	public AddColumnsPlan(List<String> paths, List<Map<String, String>> attributes) {
+	public AddColumnsPlan(List<String> paths, List<Map<String, String>> attributesList) {
 		super(false, paths);
 		this.setIginxPlanType(IginxPlanType.ADD_COLUMNS);
-		this.attributes = attributes;
+		this.attributesList = attributesList;
 	}
 
-	public List<Map<String, String>> getAttributes() {
-		return attributes;
+	public List<Map<String, String>> getAttributesList() {
+		return attributesList;
 	}
 
-	public void setAttributes(List<Map<String, String>> attributes) {
-		this.attributes = attributes;
+	public void setAttributesList(List<Map<String, String>> attributesList) {
+		this.attributesList = attributesList;
 	}
 
-	public Map<String, String> getAttribute(int index) {
-		if (attributes.isEmpty()) {
+	public Map<String, String> getAttributes(int index) {
+		if (attributesList.isEmpty()) {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		if (index < 0 || index >= attributes.size()) {
+		if (index < 0 || index >= attributesList.size()) {
 			logger.error("The given index {} is out of bounds.", index);
 			return null;
 		}
-		return attributes.get(index);
+		return attributesList.get(index);
 	}
 
-	public List<Map<String, String>> getAttributesByIndexes(List<Integer> indexes) {
-		if (attributes.isEmpty()) {
+	public List<Map<String, String>> getAttributesByInterval(TimeSeriesInterval interval) {
+		if (attributesList.isEmpty()) {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		List<Map<String, String>> tempAttributes = new ArrayList<>();
-		for (Integer index : indexes) {
-			if (getAttribute(index) != null) {
-				tempAttributes.add(getAttribute(index));
-			}
-		}
-		return tempAttributes;
+		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		return attributesList.subList(startIndex, endIndex + 1);
 	}
 }
