@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.iotdb;
 
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
@@ -29,7 +30,6 @@ import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
@@ -41,8 +41,6 @@ import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.iotdb.tsfile.read.common.Field;
-import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
 import org.slf4j.Logger;
@@ -54,7 +52,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
 
 public class IoTDBPlanExecutor extends AbstractPlanExecutor {
@@ -151,44 +148,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws IoTDBConnectionException, StatementExecutionException {
         SessionDataSet sessionDataSet = session.executeRawDataQuery(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
-        List<String> columns = sessionDataSet.getColumnNames();
-        List<TSDataType> columnTypes = sessionDataSet.getColumnTypes();
-        List<TimeSeriesDataSet> timeSeriesDataSets = new ArrayList<>();
-        for (int i = 0; i < columns.size(); i++) {
-            timeSeriesDataSets.add(new TimeSeriesDataSet(columns.get(i), fromIoTDB(columnTypes.get(i))));
-        }
-        while (sessionDataSet.hasNext()) {
-            RowRecord record = sessionDataSet.next();
-            long timestamp = record.getTimestamp();
-            List<Field> fields = record.getFields();
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (field.isNull())
-                    continue;
-                switch (columnTypes.get(i)) {
-                    case INT32:
-                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getIntV());
-                        break;
-                    case INT64:
-                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getLongV());
-                        break;
-                    case DOUBLE:
-                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getDoubleV());
-                        break;
-                    case FLOAT:
-                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getFloatV());
-                        break;
-                    case BOOLEAN:
-                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getBoolV());
-                        break;
-                    case TEXT:
-                        timeSeriesDataSets.get(i).addDataPoint(timestamp, field.getBinaryV());
-                        break;
-                }
-            }
-        }
-        sessionDataSet.closeOperationHandle();
-        return new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan, timeSeriesDataSets);
+        return new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan, new IoTDBQueryExecuteDataSet(sessionDataSet));
     }
 
     @Override
