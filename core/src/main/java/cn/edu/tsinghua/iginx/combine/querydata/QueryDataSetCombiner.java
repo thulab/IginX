@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.CheckedFunction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -40,6 +42,8 @@ import java.util.stream.Collectors;
 
 public class QueryDataSetCombiner {
 
+    private static final Logger logger = LoggerFactory.getLogger(QueryDataSetCombiner.class);
+
     private static final QueryDataSetCombiner instance = new QueryDataSetCombiner();
 
     private QueryDataSetCombiner() {
@@ -50,8 +54,8 @@ public class QueryDataSetCombiner {
     }
 
     public void combineResult(QueryDataResp resp, List<QueryDataPlanExecuteResult> planExecuteResults) throws ExecutionException {
-        Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSet() == null)
-                .filter(e -> e.getStatusCode() != StatusCode.SUCCESS_STATUS.getStatusCode())
+        Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSet() != null)
+                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
                 .map(QueryDataPlanExecuteResult::getQueryExecuteDataSet)
                 .map(CheckedFunction.wrap(QueryExecuteDataSetWrapper::new))
                 .collect(Collectors.toSet());
@@ -80,6 +84,31 @@ public class QueryDataSetCombiner {
                 columnSourcesList.get(columnSourcesList.size() - 1).add(dataSetWrapper);
             }
         }
+        // 初始化各个数据源
+        // 在加载完一轮数据之后，把更新加载过数据的时间
+        {
+            Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
+            Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
+            while(it.hasNext()) {
+                QueryExecuteDataSetWrapper dataSetWrapper = it.next();
+                if (dataSetWrapper.hasNext()) {
+                    dataSetWrapper.next();
+                } else { // 如果没有下一行，应该把当前数据集给移除掉
+                    dataSetWrapper.close();
+                    deletedDataSetWrappers.add(dataSetWrapper);
+                    it.remove();
+                }
+            }
+            // 删除掉已经空的 data source
+            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
+                List<String> columnNames = dataSetWrapper.getColumnNames();
+                for (String columnName : columnNames) {
+                    int index = columnPositionMap.get(columnName);
+                    columnSourcesList.get(index).remove(dataSetWrapper);
+                }
+            }
+        }
+
         while(!dataSetWrappers.isEmpty()) {
             long timestamp = Long.MAX_VALUE;
             // 顺序访问所有的还有数据数据的 timestamp，获取当前的时间戳

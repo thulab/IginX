@@ -38,25 +38,22 @@ class QueryExecuteDataSetWrapper {
     public QueryExecuteDataSetWrapper(QueryExecuteDataSet dataSet) throws ExecutionException {
         this.dataSet = dataSet;
         this.columnPositionMap = new HashMap<>();
-        List<String> columnNames = dataSet.getColumnNames();
+        List<String> columnNames = dataSet.getColumnNames().subList(1, dataSet.getColumnNames().size());
         for (int i = 0; i < columnNames.size(); i++) {
             columnPositionMap.put(columnNames.get(i), i);
         }
     }
 
     public List<String> getColumnNames() throws ExecutionException {
-        return dataSet.getColumnNames();
+        return dataSet.getColumnNames().subList(1, dataSet.getColumnNames().size());
     }
 
     public List<DataType> getColumnTypes() throws ExecutionException {
-        return dataSet.getColumnTypes();
+        return dataSet.getColumnTypes().subList(1, dataSet.getColumnTypes().size());
     }
 
     public void next() throws ExecutionException {
-        rowRecord = null;
-        if (dataSet.hasNext()) {
-            rowRecord = dataSet.next();
-        }
+        rowRecord = dataSet.next();
     }
 
     public void close() throws ExecutionException {
