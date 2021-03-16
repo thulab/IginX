@@ -28,9 +28,9 @@ public abstract class IginxPlan {
 
 	private boolean isSync;
 
-	private long databaseId;
+	private long storageEngineId;
 
-	public IginxPlan(boolean isQuery) {
+	protected IginxPlan(boolean isQuery) {
 		this.iginxPlanType = IginxPlanType.IGINX;
 		this.isQuery = isQuery;
 	}
@@ -51,8 +51,8 @@ public abstract class IginxPlan {
 		return isSync;
 	}
 
-	public long getDatabaseId() {
-		return databaseId;
+	public long getStorageEngineId() {
+		return storageEngineId;
 	}
 
 	public void setIginxPlanType(IginxPlanType iginxPlanType) {
@@ -71,8 +71,8 @@ public abstract class IginxPlan {
 		this.isSync = isSync;
 	}
 
-	public void setDatabaseId(long databaseId) {
-		this.databaseId = databaseId;
+	public void setStorageEngineId(long storageEngineId) {
+		this.storageEngineId = storageEngineId;
 	}
 
 	public enum IginxPlanType {

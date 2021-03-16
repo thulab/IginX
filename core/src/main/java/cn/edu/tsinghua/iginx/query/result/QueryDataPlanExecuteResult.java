@@ -20,24 +20,14 @@ package cn.edu.tsinghua.iginx.query.result;
 
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @Setter
 public class QueryDataPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private List<TimeSeriesDataSet> timeSeriesDataSets;
-
     private QueryExecuteDataSet queryExecuteDataSet;
-
-    public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, List<TimeSeriesDataSet> timeSeriesDataSets) {
-        super(statusCode, plan);
-        this.timeSeriesDataSets = timeSeriesDataSets;
-    }
 
     public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, QueryExecuteDataSet queryExecuteDataSet) {
         super(statusCode, plan);

@@ -37,6 +37,8 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private static final Logger logger = LoggerFactory.getLogger(SortedListAbstractMetaManager.class);
 
+    private static SortedListAbstractMetaManager INSTANCE = null;
+
     private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
 
     private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists = new ArrayList<>();
@@ -55,7 +57,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     @Override
     protected void addFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
+        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
     }
@@ -69,7 +71,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> resultMap.put(e.k, e.v));
@@ -78,7 +80,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentList() {
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap() {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
@@ -88,7 +90,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentListByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
@@ -98,7 +100,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentListByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> {
@@ -116,13 +118,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         resultList = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getBeginTimeSeries() == null && o2.getTsInterval().getBeginTimeSeries() == null)
+            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
                 return 0;
-            else if (o1.getTsInterval().getBeginTimeSeries() == null)
+            else if (o1.getTsInterval().getStartTimeSeries() == null)
                 return -1;
-            else if (o2.getTsInterval().getBeginTimeSeries() == null)
+            else if (o2.getTsInterval().getStartTimeSeries() == null)
                 return 1;
-            return o1.getTsInterval().getBeginTimeSeries().compareTo(o2.getTsInterval().getBeginTimeSeries());
+            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
         }).collect(Collectors.toList());
         fragmentLock.readLock().unlock();
         return resultList;
@@ -144,13 +146,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         resultList = searchFragmentList(searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getBeginTimeSeries() == null && o2.getTsInterval().getBeginTimeSeries() == null)
+            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
                 return 0;
-            else if (o1.getTsInterval().getBeginTimeSeries() == null)
+            else if (o1.getTsInterval().getStartTimeSeries() == null)
                 return -1;
-            else if (o2.getTsInterval().getBeginTimeSeries() == null)
+            else if (o2.getTsInterval().getStartTimeSeries() == null)
                 return 1;
-            return o1.getTsInterval().getBeginTimeSeries().compareTo(o2.getTsInterval().getBeginTimeSeries());
+            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
         }).collect(Collectors.toList()), timeInterval);
         fragmentLock.readLock().unlock();
         return resultList;
@@ -163,10 +165,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
         List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        if (fragmentSeriesList.isEmpty()) {
+            return resultList;
+        }
         int left = 0, right = fragmentSeriesList.size();
         while (left <= right) {
             int mid = (left + right) / 2;
-            if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getBeginTimeSeries())) {
+            if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getStartTimeSeries())) {
                 left = mid + 1;
             } else {
                 right = mid;
@@ -181,6 +186,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
         List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        if (fragmentSeriesList.isEmpty()) {
+            return resultList;
+        }
         int left = 0, right = fragmentSeriesList.size();
         while (left <= right) {
             int mid = (left + right) / 2;
@@ -199,6 +207,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList, TimeInterval timeInterval) {
         List<FragmentMeta> resultList = new ArrayList<>();
+        if (fragmentMetaList.isEmpty()) {
+            return resultList;
+        }
         int left = 0, right = fragmentMetaList.size();
         while (left <= right) {
             int mid = (left + right) / 2;
@@ -215,4 +226,23 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         return resultList;
     }
 
+    public void shutdown() {
+        this.iginxCache.close();
+        this.storageEngineCache.close();
+        this.fragmentCache.close();
+        synchronized (SortedListAbstractMetaManager.class) {
+            SortedListAbstractMetaManager.INSTANCE = null;
+        }
+    }
+
+    public static SortedListAbstractMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (SortedListAbstractMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new SortedListAbstractMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
+    }
 }

@@ -18,15 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import static cn.edu.tsinghua.iginx.utils.SplitUtils.getKeyFromPath;
 
 public abstract class NonDatabasePlan extends IginxPlan {
 
@@ -34,27 +30,14 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	private List<String> paths;
 
-	public NonDatabasePlan(boolean isQuery, List<String> paths) {
+	private TimeSeriesInterval tsInterval;
+
+	protected NonDatabasePlan(boolean isQuery, List<String> paths) {
 		super(isQuery);
 		this.setIginxPlanType(IginxPlanType.NON_DATABASE);
 		this.setCanBeSplit(true);
 		this.paths = paths;
-	}
-
-	public Map<String, List<Integer>> generateIndexesOfPaths() {
-		Map<String, List<Integer>> indexesOfPaths = new HashMap<>();
-
-		for (int i = 0; i < getPathsNum(); i++) {
-			String key = getKeyFromPath(getPath(i));
-			if (!indexesOfPaths.containsKey(key)) {
-				List<Integer> indexes = new ArrayList<>();
-				indexes.add(i);
-				indexesOfPaths.put(key, indexes);
-			} else {
-				indexesOfPaths.get(key).add(i);
-			}
-		}
-		return indexesOfPaths;
+		this.tsInterval = new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1));
 	}
 
 	public List<String> getPaths() {
@@ -81,17 +64,29 @@ public abstract class NonDatabasePlan extends IginxPlan {
 		return paths.get(index);
 	}
 
-	public List<String> getPathsByIndexes(List<Integer> indexes) {
+	public List<String> getPathsByInterval(TimeSeriesInterval interval) {
 		if (paths.isEmpty()) {
 			logger.error("There are no paths in the InsertRecordsPlan.");
 			return null;
 		}
-		List<String> tempPaths = new ArrayList<>();
-		for (Integer index : indexes) {
-			if (getPath(index) != null) {
-				tempPaths.add(getPath(index));
-			}
-		}
-		return tempPaths;
+		int startIndex = paths.indexOf(interval.getStartTimeSeries());
+		int endIndex = interval.getEndTimeSeries() == null ? paths.size() - 1 : paths.indexOf(interval.getEndTimeSeries());
+		return paths.subList(startIndex, endIndex + 1);
+	}
+
+	public String getStartPath() {
+		return tsInterval.getStartTimeSeries();
+	}
+
+	public String getEndPath() {
+		return tsInterval.getEndTimeSeries();
+	}
+
+	public TimeSeriesInterval getTsInterval() {
+		return tsInterval;
+	}
+
+	public void setTsInterval(TimeSeriesInterval tsInterval) {
+		this.tsInterval = tsInterval;
 	}
 }

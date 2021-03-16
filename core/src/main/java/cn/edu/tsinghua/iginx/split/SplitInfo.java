@@ -18,30 +18,38 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
-
-import java.util.List;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 
 public class SplitInfo {
 
-	private List<Integer> pathsIndexes;
+	private TimeInterval timeInterval;
 
-	// TODO startTime endTime 不一定与 replica 的 startTime endTime 相同
-	// TODO 而且不一定是连续的（？）
+	private TimeSeriesInterval timeSeriesInterval;
 
 	private FragmentReplicaMeta replica;
 
-	public SplitInfo(List<Integer> pathsIndexes, FragmentReplicaMeta replica) {
-		this.pathsIndexes = pathsIndexes;
+	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica) {
+		this.timeInterval = timeInterval;
+		this.timeSeriesInterval = timeSeriesInterval;
 		this.replica = replica;
 	}
 
-	public List<Integer> getPathsIndexes() {
-		return pathsIndexes;
+	public TimeInterval getTimeInterval() {
+		return timeInterval;
 	}
 
-	public void setPathsIndexes(List<Integer> pathsIndexes) {
-		this.pathsIndexes = pathsIndexes;
+	public void setTimeInterval(TimeInterval timeInterval) {
+		this.timeInterval = timeInterval;
+	}
+
+	public TimeSeriesInterval getTimeSeriesInterval() {
+		return timeSeriesInterval;
+	}
+
+	public void setTimeSeriesInterval(TimeSeriesInterval timeSeriesInterval) {
+		this.timeSeriesInterval = timeSeriesInterval;
 	}
 
 	public FragmentReplicaMeta getReplica() {

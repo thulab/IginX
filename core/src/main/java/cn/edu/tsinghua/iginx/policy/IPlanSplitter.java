@@ -18,8 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.policy;
 
-import cn.edu.tsinghua.iginx.metadata.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 
@@ -38,8 +38,7 @@ public interface IPlanSplitter {
 	 * 从给定的分片中选择副本
 	 * @param fragment 被选择的分片
 	 * @param isQuery 是否为查询计划选取副本
-	 * @param replicaNum 待选择的副本数量
 	 * @return 选出的分片副本
 	 */
-	List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery, int replicaNum);
+	List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery);
 }

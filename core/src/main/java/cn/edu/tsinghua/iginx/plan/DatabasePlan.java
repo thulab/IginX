@@ -27,7 +27,7 @@ public abstract class DatabasePlan extends IginxPlan {
 
 	private String databaseName;
 
-	public DatabasePlan(boolean isQuery, String databaseName) {
+	protected DatabasePlan(boolean isQuery, String databaseName) {
 		super(isQuery);
 		this.setIginxPlanType(IginxPlanType.DATABASE);
 		this.setCanBeSplit(false);

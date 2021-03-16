@@ -25,7 +25,7 @@ import cn.edu.tsinghua.iginx.core.processor.PostQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
 
 public class NativePolicy implements IPolicy {
 

@@ -55,9 +55,9 @@ public final class StorageEngineMeta {
     /**
      * 时序数据库存储的数据分片，不进行序列化。
      */
-    private transient List<FragmentReplicaMeta> fragmentReplicaMetaList;
+    private transient List<FragmentReplicaMeta> fragmentReplicaMetaList = new ArrayList<>();
 
-    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList;
+    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList = new ArrayList<>();
 
     public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
         this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
@@ -65,7 +65,7 @@ public final class StorageEngineMeta {
 
     public void endLatestFragmentReplicaMetas(TimeSeriesInterval tsInterval, long endTime) {
         fragmentReplicaMetaList.addAll(latestFragmentReplicaMetaList.stream().filter(e -> e.getTsInterval().equals(tsInterval)).map(
-                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getBeginTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
+                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getStartTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
                         e.getStorageEngineId())).collect(Collectors.toList()));
         latestFragmentReplicaMetaList.removeIf(e -> e.getTsInterval().equals(tsInterval));
     }
@@ -83,8 +83,6 @@ public final class StorageEngineMeta {
         this.port = port;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
-        this.fragmentReplicaMetaList = new ArrayList<>();
-        this.latestFragmentReplicaMetaList = new ArrayList<>();
     }
 
     public long getId() {

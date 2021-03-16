@@ -56,4 +56,12 @@ public final class FragmentReplicaMeta {
     public TimeSeriesInterval getTsInterval() {
         return tsInterval;
     }
+
+    public long getStartTime() {
+        return timeInterval.getStartTime();
+    }
+
+    public long getEndTime() {
+        return timeInterval.getEndTime();
+    }
 }
