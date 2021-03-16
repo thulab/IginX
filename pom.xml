@@ -18,6 +18,7 @@
     <module>thrift</module>
     <module>example</module>
     <module>iotdb</module>
+      <module>client</module>
   </modules>
 
   <build>

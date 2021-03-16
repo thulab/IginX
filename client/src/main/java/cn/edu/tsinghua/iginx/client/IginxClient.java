@@ -16,13 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.result;
+package cn.edu.tsinghua.iginx.client;
 
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 
-public class AddColumnsPlanExecuteResult extends SyncPlanExecuteResult {
+public class IginxClient {
 
-    public AddColumnsPlanExecuteResult(int statusCode, IginxPlan plan) {
-        super(statusCode, plan);
+    public static void main(String[] args) {
+        CommandLineParser parser = new DefaultParser();
+        Options options = new Options();
+
+        options.addOption("h", "help", false, "帮助信息");
+        options.addOption("d", "dilatation", false, "标识需要扩容");
+        options.addOption("i", "ip", true, "命令发往的 IginX 节点的 ip");
+        options.addOption("p", "port", true, "命令发往的 IginX 节点的 port");
+
+
     }
+
 }

@@ -28,13 +28,9 @@ import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
+import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.entity.TimeSeriesDataSet;
-import cn.edu.tsinghua.iginx.query.result.AddColumnsPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.CreateDatabasePlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DeleteColumnsPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DeleteDataInColumnsPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DropDatabasePlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.InsertRecordsPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
@@ -96,7 +92,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    protected InsertRecordsPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
+    protected NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
         logger.info("执行插入计划！");
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
@@ -150,7 +146,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             logger.error(e.getMessage());
         }
 
-        return new InsertRecordsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+        return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws IoTDBConnectionException, StatementExecutionException {
@@ -214,11 +210,11 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 logger.error("got error:", e);
             }
         }
-        return new QueryDataPlanExecuteResult(PlanExecuteResult.FAILURE, plan, null);
+        return new QueryDataPlanExecuteResult(PlanExecuteResult.FAILURE, plan, (QueryExecuteDataSet) null);
     }
 
     @Override
-    protected AddColumnsPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
+    protected NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         for (int i = 0; i < plan.getPathsNum(); i++) {
             try {
@@ -232,50 +228,50 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 logger.error(e.getMessage());
             }
         }
-        return new AddColumnsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+        return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
-    protected DeleteColumnsPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
+    protected NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteTimeseries(plan.getPaths());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new DeleteColumnsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+        return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
-    protected DeleteDataInColumnsPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
+    protected NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteData(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new DeleteDataInColumnsPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+        return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
-    protected CreateDatabasePlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
+    protected NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.setStorageGroup(plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new CreateDatabasePlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+        return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 
     @Override
-    protected DropDatabasePlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
+    protected NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteStorageGroup(plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new DropDatabasePlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+        return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
     }
 }

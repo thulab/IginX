@@ -18,21 +18,27 @@
  */
 package cn.edu.tsinghua.iginx.combine;
 
+import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CombineExecutor implements ICombineExecutor {
 
-    private final QueryDataSetCombiner queryDataSetCombiner = QueryDataSetCombiner.getInstance();
+    private static final Logger logger = LoggerFactory.getLogger(CombineExecutor.class);
 
+    private final QueryDataSetCombiner queryDataSetCombiner = QueryDataSetCombiner.getInstance();
 
     @Override
     public CombineResult combineResult(RequestContext requestContext) {
@@ -47,8 +53,14 @@ public class CombineExecutor implements ICombineExecutor {
 
         switch (requestContext.getType()) {
             case QueryData:
-                QueryDataReq req = ((QueryDataContext) requestContext).getReq();
-                combineResult = new QueryDataCombineResult(status, queryDataSetCombiner.combine(req, planExecuteResults.stream().map(QueryDataPlanExecuteResult.class::cast).collect(Collectors.toList()), status));
+                QueryDataResp resp = new QueryDataResp();
+                resp.setStatus(status);
+                try {
+                    queryDataSetCombiner.combineResult(resp, planExecuteResults.stream().map(QueryDataPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                } catch (ExecutionException e) {
+                    logger.error("encounter error when combine query data results: ", e);
+                }
+                combineResult = new QueryDataCombineResult(status, resp);
                 break;
             default:
                 combineResult = new NonDataCombineResult(status);

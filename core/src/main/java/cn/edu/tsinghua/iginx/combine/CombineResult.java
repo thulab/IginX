@@ -19,13 +19,20 @@
 package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.thrift.Status;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 
-@Data
-@AllArgsConstructor
 public abstract class CombineResult {
 
     private Status status;
 
+    public CombineResult(Status status) {
+        this.status = status;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
+    }
 }

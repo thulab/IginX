@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.metadatav2.utils;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
-
 import java.nio.charset.StandardCharsets;
 
 public class JsonUtils {
