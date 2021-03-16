@@ -94,7 +94,7 @@ struct QueryDataResp {
 struct AddStorageEngineReq {
     1: required i64 sessionId
     2: required string ip
-    3: required string port
+    3: required i32 port
     4: required StorageEngineType type
     5: required map<string, string> extraParams
 }
@@ -118,6 +118,6 @@ service IService {
 
     QueryDataResp queryData(1:QueryDataReq req);
 
-    Status AddStorageEngine(1: AddStorageEngineReq req);
+    Status addStorageEngine(1: AddStorageEngineReq req);
 
 }

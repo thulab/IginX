@@ -18,7 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.client;
 
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.session.Session;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -26,7 +29,11 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
 /** args[]: -h 127.0.0.1 -p 6667 -u root -pw root */
 public class IginxClient {
@@ -132,7 +139,7 @@ public class IginxClient {
     }
 
     private static void serve() {
-        try {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             host = parseArg(HOST_ARGS, HOST_NAME, false, "127.0.0.1");
             port = parseArg(PORT_ARGS, PORT_NAME, false, "6324");
             username = parseArg(USERNAME_ARGS, USERNAME_NAME, false, "root");
@@ -141,6 +148,13 @@ public class IginxClient {
             session = new Session(host, port, username, password);
             session.openSession();
 
+            System.out.print(IGINX_CLI_PREFIX + "> ");
+            String command;
+            while (!(command = reader.readLine()).equals("quit")) {
+                processCommand(command);
+                System.out.print(IGINX_CLI_PREFIX + "> ");
+            }
+            System.out.println("Goodbye");
         } catch (RuntimeException e) {
             System.out.println(IGINX_CLI_PREFIX + "> Parse Parameter error.");
             System.out.println(IGINX_CLI_PREFIX + "> Use -help for more information");
@@ -148,5 +162,32 @@ public class IginxClient {
             System.out.println(IGINX_CLI_PREFIX + "> exit cli with error " + e.getMessage());
         }
     }
+
+    private static void processCommand(String command) {
+        String[] commandParts = command.split(" ");
+        if (commandParts.length < 3 || !commandParts[0].equals("add") || !commandParts[1].equals("storageEngine")) {
+            System.out.println("unsupported command");
+        }
+        String[] storageEngineParts = commandParts[2].split(":");
+        String ip = storageEngineParts[0];
+        int port = Integer.parseInt(storageEngineParts[1]);
+        StorageEngineType storageEngineType = StorageEngineType.IOTDB;
+        Map<String, String> extraParams = new HashMap<>();
+        for (int i = 3; i < storageEngineParts.length; i++) {
+            String[] KAndV = storageEngineParts[i].split("=");
+            if (KAndV.length != 2) {
+                System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
+                continue;
+            }
+            extraParams.put(KAndV[0], KAndV[1]);
+        }
+        try {
+            session.addStorageEngine(ip, port, storageEngineType, extraParams);
+            System.out.println("success");
+        } catch (Exception e) {
+            System.out.println("encounter error: " + e.getMessage());
+        }
+    }
+
 
 }

@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -34,6 +35,7 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -149,6 +151,16 @@ public class Session {
 
 		try {
 			RpcUtils.verifySuccess(client.dropDatabase(req));
+		} catch (TException e) {
+			throw new SessionException(e);
+		}
+	}
+
+	public void addStorageEngine(String ip, int port, StorageEngineType type, Map<String, String> extraParams) throws SessionException, ExecutionException {
+		AddStorageEngineReq req = new AddStorageEngineReq(sessionId, ip, port, type, extraParams);
+
+		try {
+			RpcUtils.verifySuccess(client.addStorageEngine(req));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}

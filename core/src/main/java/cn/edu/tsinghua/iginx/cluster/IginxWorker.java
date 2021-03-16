@@ -28,6 +28,10 @@ import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
@@ -61,6 +65,8 @@ public class IginxWorker implements IService.Iface {
 	private final Set<Long> sessions = Collections.synchronizedSet(new HashSet<>());
 
 	private final Core core = Core.getInstance();
+
+	private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
 
 	@Override
 	public OpenSessionResp openSession(OpenSessionReq req) {
@@ -135,9 +141,11 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public Status AddStorageEngine(AddStorageEngineReq req) {
+	public Status addStorageEngine(AddStorageEngineReq req) {
 		// 处理扩容
-		return null;
+		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), StorageEngine.IoTDB);
+		metaManager.addStorageEngine(meta);
+		return RpcUtils.SUCCESS;
 	}
 
 	public static IginxWorker getInstance() {

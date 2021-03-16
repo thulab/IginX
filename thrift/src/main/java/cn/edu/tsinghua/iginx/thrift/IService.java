@@ -30,7 +30,7 @@ public class IService {
 
     public QueryDataResp queryData(QueryDataReq req) throws org.apache.thrift.TException;
 
-    public Status AddStorageEngine(AddStorageEngineReq req) throws org.apache.thrift.TException;
+    public Status addStorageEngine(AddStorageEngineReq req) throws org.apache.thrift.TException;
 
   }
 
@@ -54,7 +54,7 @@ public class IService {
 
     public void queryData(QueryDataReq req, org.apache.thrift.async.AsyncMethodCallback<QueryDataResp> resultHandler) throws org.apache.thrift.TException;
 
-    public void AddStorageEngine(AddStorageEngineReq req, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler) throws org.apache.thrift.TException;
+    public void addStorageEngine(AddStorageEngineReq req, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler) throws org.apache.thrift.TException;
 
   }
 
@@ -285,27 +285,27 @@ public class IService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "queryData failed: unknown result");
     }
 
-    public Status AddStorageEngine(AddStorageEngineReq req) throws org.apache.thrift.TException
+    public Status addStorageEngine(AddStorageEngineReq req) throws org.apache.thrift.TException
     {
-      send_AddStorageEngine(req);
-      return recv_AddStorageEngine();
+      send_addStorageEngine(req);
+      return recv_addStorageEngine();
     }
 
-    public void send_AddStorageEngine(AddStorageEngineReq req) throws org.apache.thrift.TException
+    public void send_addStorageEngine(AddStorageEngineReq req) throws org.apache.thrift.TException
     {
-      AddStorageEngine_args args = new AddStorageEngine_args();
+      addStorageEngine_args args = new addStorageEngine_args();
       args.setReq(req);
-      sendBase("AddStorageEngine", args);
+      sendBase("addStorageEngine", args);
     }
 
-    public Status recv_AddStorageEngine() throws org.apache.thrift.TException
+    public Status recv_addStorageEngine() throws org.apache.thrift.TException
     {
-      AddStorageEngine_result result = new AddStorageEngine_result();
-      receiveBase(result, "AddStorageEngine");
+      addStorageEngine_result result = new addStorageEngine_result();
+      receiveBase(result, "addStorageEngine");
       if (result.isSetSuccess()) {
         return result.success;
       }
-      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "AddStorageEngine failed: unknown result");
+      throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "addStorageEngine failed: unknown result");
     }
 
   }
@@ -614,23 +614,23 @@ public class IService {
       }
     }
 
-    public void AddStorageEngine(AddStorageEngineReq req, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler) throws org.apache.thrift.TException {
+    public void addStorageEngine(AddStorageEngineReq req, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      AddStorageEngine_call method_call = new AddStorageEngine_call(req, resultHandler, this, ___protocolFactory, ___transport);
+      addStorageEngine_call method_call = new addStorageEngine_call(req, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
-    public static class AddStorageEngine_call extends org.apache.thrift.async.TAsyncMethodCall<Status> {
+    public static class addStorageEngine_call extends org.apache.thrift.async.TAsyncMethodCall<Status> {
       private AddStorageEngineReq req;
-      public AddStorageEngine_call(AddStorageEngineReq req, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public addStorageEngine_call(AddStorageEngineReq req, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.req = req;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("AddStorageEngine", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        AddStorageEngine_args args = new AddStorageEngine_args();
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("addStorageEngine", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        addStorageEngine_args args = new addStorageEngine_args();
         args.setReq(req);
         args.write(prot);
         prot.writeMessageEnd();
@@ -642,7 +642,7 @@ public class IService {
         }
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        return (new Client(prot)).recv_AddStorageEngine();
+        return (new Client(prot)).recv_addStorageEngine();
       }
     }
 
@@ -668,7 +668,7 @@ public class IService {
       processMap.put("insertRecords", new insertRecords());
       processMap.put("deleteDataInColumns", new deleteDataInColumns());
       processMap.put("queryData", new queryData());
-      processMap.put("AddStorageEngine", new AddStorageEngine());
+      processMap.put("addStorageEngine", new addStorageEngine());
       return processMap;
     }
 
@@ -897,13 +897,13 @@ public class IService {
       }
     }
 
-    public static class AddStorageEngine<I extends Iface> extends org.apache.thrift.ProcessFunction<I, AddStorageEngine_args> {
-      public AddStorageEngine() {
-        super("AddStorageEngine");
+    public static class addStorageEngine<I extends Iface> extends org.apache.thrift.ProcessFunction<I, addStorageEngine_args> {
+      public addStorageEngine() {
+        super("addStorageEngine");
       }
 
-      public AddStorageEngine_args getEmptyArgsInstance() {
-        return new AddStorageEngine_args();
+      public addStorageEngine_args getEmptyArgsInstance() {
+        return new addStorageEngine_args();
       }
 
       protected boolean isOneway() {
@@ -915,9 +915,9 @@ public class IService {
         return false;
       }
 
-      public AddStorageEngine_result getResult(I iface, AddStorageEngine_args args) throws org.apache.thrift.TException {
-        AddStorageEngine_result result = new AddStorageEngine_result();
-        result.success = iface.AddStorageEngine(args.req);
+      public addStorageEngine_result getResult(I iface, addStorageEngine_args args) throws org.apache.thrift.TException {
+        addStorageEngine_result result = new addStorageEngine_result();
+        result.success = iface.addStorageEngine(args.req);
         return result;
       }
     }
@@ -944,7 +944,7 @@ public class IService {
       processMap.put("insertRecords", new insertRecords());
       processMap.put("deleteDataInColumns", new deleteDataInColumns());
       processMap.put("queryData", new queryData());
-      processMap.put("AddStorageEngine", new AddStorageEngine());
+      processMap.put("addStorageEngine", new addStorageEngine());
       return processMap;
     }
 
@@ -1497,20 +1497,20 @@ public class IService {
       }
     }
 
-    public static class AddStorageEngine<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, AddStorageEngine_args, Status> {
-      public AddStorageEngine() {
-        super("AddStorageEngine");
+    public static class addStorageEngine<I extends AsyncIface> extends org.apache.thrift.AsyncProcessFunction<I, addStorageEngine_args, Status> {
+      public addStorageEngine() {
+        super("addStorageEngine");
       }
 
-      public AddStorageEngine_args getEmptyArgsInstance() {
-        return new AddStorageEngine_args();
+      public addStorageEngine_args getEmptyArgsInstance() {
+        return new addStorageEngine_args();
       }
 
       public org.apache.thrift.async.AsyncMethodCallback<Status> getResultHandler(final org.apache.thrift.server.AbstractNonblockingServer.AsyncFrameBuffer fb, final int seqid) {
         final org.apache.thrift.AsyncProcessFunction fcall = this;
         return new org.apache.thrift.async.AsyncMethodCallback<Status>() { 
           public void onComplete(Status o) {
-            AddStorageEngine_result result = new AddStorageEngine_result();
+            addStorageEngine_result result = new addStorageEngine_result();
             result.success = o;
             try {
               fcall.sendResponse(fb, result, org.apache.thrift.protocol.TMessageType.REPLY,seqid);
@@ -1525,7 +1525,7 @@ public class IService {
           public void onError(java.lang.Exception e) {
             byte msgType = org.apache.thrift.protocol.TMessageType.REPLY;
             org.apache.thrift.TSerializable msg;
-            AddStorageEngine_result result = new AddStorageEngine_result();
+            addStorageEngine_result result = new addStorageEngine_result();
             if (e instanceof org.apache.thrift.transport.TTransportException) {
               _LOGGER.error("TTransportException inside handler", e);
               fb.close();
@@ -1553,8 +1553,8 @@ public class IService {
         return false;
       }
 
-      public void start(I iface, AddStorageEngine_args args, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler) throws org.apache.thrift.TException {
-        iface.AddStorageEngine(args.req,resultHandler);
+      public void start(I iface, addStorageEngine_args args, org.apache.thrift.async.AsyncMethodCallback<Status> resultHandler) throws org.apache.thrift.TException {
+        iface.addStorageEngine(args.req,resultHandler);
       }
     }
 
@@ -8256,13 +8256,13 @@ public class IService {
     }
   }
 
-  public static class AddStorageEngine_args implements org.apache.thrift.TBase<AddStorageEngine_args, AddStorageEngine_args._Fields>, java.io.Serializable, Cloneable, Comparable<AddStorageEngine_args>   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("AddStorageEngine_args");
+  public static class addStorageEngine_args implements org.apache.thrift.TBase<addStorageEngine_args, addStorageEngine_args._Fields>, java.io.Serializable, Cloneable, Comparable<addStorageEngine_args>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("addStorageEngine_args");
 
     private static final org.apache.thrift.protocol.TField REQ_FIELD_DESC = new org.apache.thrift.protocol.TField("req", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
-    private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new AddStorageEngine_argsStandardSchemeFactory();
-    private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new AddStorageEngine_argsTupleSchemeFactory();
+    private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new addStorageEngine_argsStandardSchemeFactory();
+    private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new addStorageEngine_argsTupleSchemeFactory();
 
     public @org.apache.thrift.annotation.Nullable AddStorageEngineReq req; // required
 
@@ -8333,13 +8333,13 @@ public class IService {
       tmpMap.put(_Fields.REQ, new org.apache.thrift.meta_data.FieldMetaData("req", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AddStorageEngineReq.class)));
       metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AddStorageEngine_args.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(addStorageEngine_args.class, metaDataMap);
     }
 
-    public AddStorageEngine_args() {
+    public addStorageEngine_args() {
     }
 
-    public AddStorageEngine_args(
+    public addStorageEngine_args(
       AddStorageEngineReq req)
     {
       this();
@@ -8349,14 +8349,14 @@ public class IService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public AddStorageEngine_args(AddStorageEngine_args other) {
+    public addStorageEngine_args(addStorageEngine_args other) {
       if (other.isSetReq()) {
         this.req = new AddStorageEngineReq(other.req);
       }
     }
 
-    public AddStorageEngine_args deepCopy() {
-      return new AddStorageEngine_args(this);
+    public addStorageEngine_args deepCopy() {
+      return new addStorageEngine_args(this);
     }
 
     @Override
@@ -8369,7 +8369,7 @@ public class IService {
       return this.req;
     }
 
-    public AddStorageEngine_args setReq(@org.apache.thrift.annotation.Nullable AddStorageEngineReq req) {
+    public addStorageEngine_args setReq(@org.apache.thrift.annotation.Nullable AddStorageEngineReq req) {
       this.req = req;
       return this;
     }
@@ -8429,12 +8429,12 @@ public class IService {
     public boolean equals(java.lang.Object that) {
       if (that == null)
         return false;
-      if (that instanceof AddStorageEngine_args)
-        return this.equals((AddStorageEngine_args)that);
+      if (that instanceof addStorageEngine_args)
+        return this.equals((addStorageEngine_args)that);
       return false;
     }
 
-    public boolean equals(AddStorageEngine_args that) {
+    public boolean equals(addStorageEngine_args that) {
       if (that == null)
         return false;
       if (this == that)
@@ -8464,7 +8464,7 @@ public class IService {
     }
 
     @Override
-    public int compareTo(AddStorageEngine_args other) {
+    public int compareTo(addStorageEngine_args other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
@@ -8499,7 +8499,7 @@ public class IService {
 
     @Override
     public java.lang.String toString() {
-      java.lang.StringBuilder sb = new java.lang.StringBuilder("AddStorageEngine_args(");
+      java.lang.StringBuilder sb = new java.lang.StringBuilder("addStorageEngine_args(");
       boolean first = true;
 
       sb.append("req:");
@@ -8537,15 +8537,15 @@ public class IService {
       }
     }
 
-    private static class AddStorageEngine_argsStandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
-      public AddStorageEngine_argsStandardScheme getScheme() {
-        return new AddStorageEngine_argsStandardScheme();
+    private static class addStorageEngine_argsStandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      public addStorageEngine_argsStandardScheme getScheme() {
+        return new addStorageEngine_argsStandardScheme();
       }
     }
 
-    private static class AddStorageEngine_argsStandardScheme extends org.apache.thrift.scheme.StandardScheme<AddStorageEngine_args> {
+    private static class addStorageEngine_argsStandardScheme extends org.apache.thrift.scheme.StandardScheme<addStorageEngine_args> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, AddStorageEngine_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, addStorageEngine_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -8575,7 +8575,7 @@ public class IService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, AddStorageEngine_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, addStorageEngine_args struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -8590,16 +8590,16 @@ public class IService {
 
     }
 
-    private static class AddStorageEngine_argsTupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
-      public AddStorageEngine_argsTupleScheme getScheme() {
-        return new AddStorageEngine_argsTupleScheme();
+    private static class addStorageEngine_argsTupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      public addStorageEngine_argsTupleScheme getScheme() {
+        return new addStorageEngine_argsTupleScheme();
       }
     }
 
-    private static class AddStorageEngine_argsTupleScheme extends org.apache.thrift.scheme.TupleScheme<AddStorageEngine_args> {
+    private static class addStorageEngine_argsTupleScheme extends org.apache.thrift.scheme.TupleScheme<addStorageEngine_args> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, AddStorageEngine_args struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, addStorageEngine_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TTupleProtocol oprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
         java.util.BitSet optionals = new java.util.BitSet();
         if (struct.isSetReq()) {
@@ -8612,7 +8612,7 @@ public class IService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, AddStorageEngine_args struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, addStorageEngine_args struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
         java.util.BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {
@@ -8628,13 +8628,13 @@ public class IService {
     }
   }
 
-  public static class AddStorageEngine_result implements org.apache.thrift.TBase<AddStorageEngine_result, AddStorageEngine_result._Fields>, java.io.Serializable, Cloneable, Comparable<AddStorageEngine_result>   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("AddStorageEngine_result");
+  public static class addStorageEngine_result implements org.apache.thrift.TBase<addStorageEngine_result, addStorageEngine_result._Fields>, java.io.Serializable, Cloneable, Comparable<addStorageEngine_result>   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("addStorageEngine_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRUCT, (short)0);
 
-    private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new AddStorageEngine_resultStandardSchemeFactory();
-    private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new AddStorageEngine_resultTupleSchemeFactory();
+    private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new addStorageEngine_resultStandardSchemeFactory();
+    private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new addStorageEngine_resultTupleSchemeFactory();
 
     public @org.apache.thrift.annotation.Nullable Status success; // required
 
@@ -8705,13 +8705,13 @@ public class IService {
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Status.class)));
       metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AddStorageEngine_result.class, metaDataMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(addStorageEngine_result.class, metaDataMap);
     }
 
-    public AddStorageEngine_result() {
+    public addStorageEngine_result() {
     }
 
-    public AddStorageEngine_result(
+    public addStorageEngine_result(
       Status success)
     {
       this();
@@ -8721,14 +8721,14 @@ public class IService {
     /**
      * Performs a deep copy on <i>other</i>.
      */
-    public AddStorageEngine_result(AddStorageEngine_result other) {
+    public addStorageEngine_result(addStorageEngine_result other) {
       if (other.isSetSuccess()) {
         this.success = new Status(other.success);
       }
     }
 
-    public AddStorageEngine_result deepCopy() {
-      return new AddStorageEngine_result(this);
+    public addStorageEngine_result deepCopy() {
+      return new addStorageEngine_result(this);
     }
 
     @Override
@@ -8741,7 +8741,7 @@ public class IService {
       return this.success;
     }
 
-    public AddStorageEngine_result setSuccess(@org.apache.thrift.annotation.Nullable Status success) {
+    public addStorageEngine_result setSuccess(@org.apache.thrift.annotation.Nullable Status success) {
       this.success = success;
       return this;
     }
@@ -8801,12 +8801,12 @@ public class IService {
     public boolean equals(java.lang.Object that) {
       if (that == null)
         return false;
-      if (that instanceof AddStorageEngine_result)
-        return this.equals((AddStorageEngine_result)that);
+      if (that instanceof addStorageEngine_result)
+        return this.equals((addStorageEngine_result)that);
       return false;
     }
 
-    public boolean equals(AddStorageEngine_result that) {
+    public boolean equals(addStorageEngine_result that) {
       if (that == null)
         return false;
       if (this == that)
@@ -8836,7 +8836,7 @@ public class IService {
     }
 
     @Override
-    public int compareTo(AddStorageEngine_result other) {
+    public int compareTo(addStorageEngine_result other) {
       if (!getClass().equals(other.getClass())) {
         return getClass().getName().compareTo(other.getClass().getName());
       }
@@ -8871,7 +8871,7 @@ public class IService {
 
     @Override
     public java.lang.String toString() {
-      java.lang.StringBuilder sb = new java.lang.StringBuilder("AddStorageEngine_result(");
+      java.lang.StringBuilder sb = new java.lang.StringBuilder("addStorageEngine_result(");
       boolean first = true;
 
       sb.append("success:");
@@ -8909,15 +8909,15 @@ public class IService {
       }
     }
 
-    private static class AddStorageEngine_resultStandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
-      public AddStorageEngine_resultStandardScheme getScheme() {
-        return new AddStorageEngine_resultStandardScheme();
+    private static class addStorageEngine_resultStandardSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      public addStorageEngine_resultStandardScheme getScheme() {
+        return new addStorageEngine_resultStandardScheme();
       }
     }
 
-    private static class AddStorageEngine_resultStandardScheme extends org.apache.thrift.scheme.StandardScheme<AddStorageEngine_result> {
+    private static class addStorageEngine_resultStandardScheme extends org.apache.thrift.scheme.StandardScheme<addStorageEngine_result> {
 
-      public void read(org.apache.thrift.protocol.TProtocol iprot, AddStorageEngine_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol iprot, addStorageEngine_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TField schemeField;
         iprot.readStructBegin();
         while (true)
@@ -8947,7 +8947,7 @@ public class IService {
         struct.validate();
       }
 
-      public void write(org.apache.thrift.protocol.TProtocol oprot, AddStorageEngine_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol oprot, addStorageEngine_result struct) throws org.apache.thrift.TException {
         struct.validate();
 
         oprot.writeStructBegin(STRUCT_DESC);
@@ -8962,16 +8962,16 @@ public class IService {
 
     }
 
-    private static class AddStorageEngine_resultTupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
-      public AddStorageEngine_resultTupleScheme getScheme() {
-        return new AddStorageEngine_resultTupleScheme();
+    private static class addStorageEngine_resultTupleSchemeFactory implements org.apache.thrift.scheme.SchemeFactory {
+      public addStorageEngine_resultTupleScheme getScheme() {
+        return new addStorageEngine_resultTupleScheme();
       }
     }
 
-    private static class AddStorageEngine_resultTupleScheme extends org.apache.thrift.scheme.TupleScheme<AddStorageEngine_result> {
+    private static class addStorageEngine_resultTupleScheme extends org.apache.thrift.scheme.TupleScheme<addStorageEngine_result> {
 
       @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, AddStorageEngine_result struct) throws org.apache.thrift.TException {
+      public void write(org.apache.thrift.protocol.TProtocol prot, addStorageEngine_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TTupleProtocol oprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
         java.util.BitSet optionals = new java.util.BitSet();
         if (struct.isSetSuccess()) {
@@ -8984,7 +8984,7 @@ public class IService {
       }
 
       @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, AddStorageEngine_result struct) throws org.apache.thrift.TException {
+      public void read(org.apache.thrift.protocol.TProtocol prot, addStorageEngine_result struct) throws org.apache.thrift.TException {
         org.apache.thrift.protocol.TTupleProtocol iprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
         java.util.BitSet incoming = iprot.readBitSet(1);
         if (incoming.get(0)) {

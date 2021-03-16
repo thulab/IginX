@@ -121,4 +121,6 @@ public interface IMetaManager {
 
     Map<TimeSeriesInterval, List<FragmentMeta>> generateFragmentMap(String startPath, long startTime);
 
+    void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
+
 }

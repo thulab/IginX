@@ -13,7 +13,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
 
   private static final org.apache.thrift.protocol.TField SESSION_ID_FIELD_DESC = new org.apache.thrift.protocol.TField("sessionId", org.apache.thrift.protocol.TType.I64, (short)1);
   private static final org.apache.thrift.protocol.TField IP_FIELD_DESC = new org.apache.thrift.protocol.TField("ip", org.apache.thrift.protocol.TType.STRING, (short)2);
-  private static final org.apache.thrift.protocol.TField PORT_FIELD_DESC = new org.apache.thrift.protocol.TField("port", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField PORT_FIELD_DESC = new org.apache.thrift.protocol.TField("port", org.apache.thrift.protocol.TType.I32, (short)3);
   private static final org.apache.thrift.protocol.TField TYPE_FIELD_DESC = new org.apache.thrift.protocol.TField("type", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField EXTRA_PARAMS_FIELD_DESC = new org.apache.thrift.protocol.TField("extraParams", org.apache.thrift.protocol.TType.MAP, (short)5);
 
@@ -22,7 +22,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
 
   public long sessionId; // required
   public @org.apache.thrift.annotation.Nullable java.lang.String ip; // required
-  public @org.apache.thrift.annotation.Nullable java.lang.String port; // required
+  public int port; // required
   /**
    * 
    * @see StorageEngineType
@@ -108,6 +108,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
 
   // isset id assignments
   private static final int __SESSIONID_ISSET_ID = 0;
+  private static final int __PORT_ISSET_ID = 1;
   private byte __isset_bitfield = 0;
   public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -117,7 +118,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     tmpMap.put(_Fields.IP, new org.apache.thrift.meta_data.FieldMetaData("ip", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.PORT, new org.apache.thrift.meta_data.FieldMetaData("port", org.apache.thrift.TFieldRequirementType.REQUIRED, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.TYPE, new org.apache.thrift.meta_data.FieldMetaData("type", org.apache.thrift.TFieldRequirementType.REQUIRED, 
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, StorageEngineType.class)));
     tmpMap.put(_Fields.EXTRA_PARAMS, new org.apache.thrift.meta_data.FieldMetaData("extraParams", org.apache.thrift.TFieldRequirementType.REQUIRED, 
@@ -134,7 +135,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
   public AddStorageEngineReq(
     long sessionId,
     java.lang.String ip,
-    java.lang.String port,
+    int port,
     StorageEngineType type,
     java.util.Map<java.lang.String,java.lang.String> extraParams)
   {
@@ -143,6 +144,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     setSessionIdIsSet(true);
     this.ip = ip;
     this.port = port;
+    setPortIsSet(true);
     this.type = type;
     this.extraParams = extraParams;
   }
@@ -156,9 +158,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     if (other.isSetIp()) {
       this.ip = other.ip;
     }
-    if (other.isSetPort()) {
-      this.port = other.port;
-    }
+    this.port = other.port;
     if (other.isSetType()) {
       this.type = other.type;
     }
@@ -177,7 +177,8 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     setSessionIdIsSet(false);
     this.sessionId = 0;
     this.ip = null;
-    this.port = null;
+    setPortIsSet(false);
+    this.port = 0;
     this.type = null;
     this.extraParams = null;
   }
@@ -230,29 +231,27 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     }
   }
 
-  @org.apache.thrift.annotation.Nullable
-  public java.lang.String getPort() {
+  public int getPort() {
     return this.port;
   }
 
-  public AddStorageEngineReq setPort(@org.apache.thrift.annotation.Nullable java.lang.String port) {
+  public AddStorageEngineReq setPort(int port) {
     this.port = port;
+    setPortIsSet(true);
     return this;
   }
 
   public void unsetPort() {
-    this.port = null;
+    __isset_bitfield = org.apache.thrift.EncodingUtils.clearBit(__isset_bitfield, __PORT_ISSET_ID);
   }
 
   /** Returns true if field port is set (has been assigned a value) and false otherwise */
   public boolean isSetPort() {
-    return this.port != null;
+    return org.apache.thrift.EncodingUtils.testBit(__isset_bitfield, __PORT_ISSET_ID);
   }
 
   public void setPortIsSet(boolean value) {
-    if (!value) {
-      this.port = null;
-    }
+    __isset_bitfield = org.apache.thrift.EncodingUtils.setBit(__isset_bitfield, __PORT_ISSET_ID, value);
   }
 
   /**
@@ -346,7 +345,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
       if (value == null) {
         unsetPort();
       } else {
-        setPort((java.lang.String)value);
+        setPort((java.lang.Integer)value);
       }
       break;
 
@@ -445,12 +444,12 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
         return false;
     }
 
-    boolean this_present_port = true && this.isSetPort();
-    boolean that_present_port = true && that.isSetPort();
+    boolean this_present_port = true;
+    boolean that_present_port = true;
     if (this_present_port || that_present_port) {
       if (!(this_present_port && that_present_port))
         return false;
-      if (!this.port.equals(that.port))
+      if (this.port != that.port)
         return false;
     }
 
@@ -485,9 +484,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     if (isSetIp())
       hashCode = hashCode * 8191 + ip.hashCode();
 
-    hashCode = hashCode * 8191 + ((isSetPort()) ? 131071 : 524287);
-    if (isSetPort())
-      hashCode = hashCode * 8191 + port.hashCode();
+    hashCode = hashCode * 8191 + port;
 
     hashCode = hashCode * 8191 + ((isSetType()) ? 131071 : 524287);
     if (isSetType())
@@ -592,11 +589,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     first = false;
     if (!first) sb.append(", ");
     sb.append("port:");
-    if (this.port == null) {
-      sb.append("null");
-    } else {
-      sb.append(this.port);
-    }
+    sb.append(this.port);
     first = false;
     if (!first) sb.append(", ");
     sb.append("type:");
@@ -624,9 +617,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
     if (ip == null) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'ip' was not present! Struct: " + toString());
     }
-    if (port == null) {
-      throw new org.apache.thrift.protocol.TProtocolException("Required field 'port' was not present! Struct: " + toString());
-    }
+    // alas, we cannot check 'port' because it's a primitive and you chose the non-beans generator.
     if (type == null) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'type' was not present! Struct: " + toString());
     }
@@ -689,8 +680,8 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
             }
             break;
           case 3: // PORT
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.port = iprot.readString();
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.port = iprot.readI32();
               struct.setPortIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -735,6 +726,9 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
       if (!struct.isSetSessionId()) {
         throw new org.apache.thrift.protocol.TProtocolException("Required field 'sessionId' was not found in serialized data! Struct: " + toString());
       }
+      if (!struct.isSetPort()) {
+        throw new org.apache.thrift.protocol.TProtocolException("Required field 'port' was not found in serialized data! Struct: " + toString());
+      }
       struct.validate();
     }
 
@@ -750,11 +744,9 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
         oprot.writeString(struct.ip);
         oprot.writeFieldEnd();
       }
-      if (struct.port != null) {
-        oprot.writeFieldBegin(PORT_FIELD_DESC);
-        oprot.writeString(struct.port);
-        oprot.writeFieldEnd();
-      }
+      oprot.writeFieldBegin(PORT_FIELD_DESC);
+      oprot.writeI32(struct.port);
+      oprot.writeFieldEnd();
       if (struct.type != null) {
         oprot.writeFieldBegin(TYPE_FIELD_DESC);
         oprot.writeI32(struct.type.getValue());
@@ -792,7 +784,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
       org.apache.thrift.protocol.TTupleProtocol oprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
       oprot.writeI64(struct.sessionId);
       oprot.writeString(struct.ip);
-      oprot.writeString(struct.port);
+      oprot.writeI32(struct.port);
       oprot.writeI32(struct.type.getValue());
       {
         oprot.writeI32(struct.extraParams.size());
@@ -811,7 +803,7 @@ public class AddStorageEngineReq implements org.apache.thrift.TBase<AddStorageEn
       struct.setSessionIdIsSet(true);
       struct.ip = iprot.readString();
       struct.setIpIsSet(true);
-      struct.port = iprot.readString();
+      struct.port = iprot.readI32();
       struct.setPortIsSet(true);
       struct.type = cn.edu.tsinghua.iginx.thrift.StorageEngineType.findByValue(iprot.readI32());
       struct.setTypeIsSet(true);

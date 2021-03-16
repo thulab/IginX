@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -65,6 +66,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     protected TreeCache storageEngineCache;
 
     private final Map<Long, StorageEngineMeta> storageEngineMetaMap = new ConcurrentHashMap<>();
+
+    private final List<StorageEngineChangeHook> storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
 
     protected TreeCache fragmentCache;
 
@@ -193,13 +196,15 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         this.storageEngineCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_ENGINE_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
             byte[] data;
-            StorageEngineMeta storageEngineMeta;
+            StorageEngineMeta storageEngineMeta = null;
+            StorageEngineMeta originalStorageEngineMeta = null;
             switch (event.getType()) {
                 case NODE_UPDATED:
                     data = event.getData().getData();
                     storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
                     if (storageEngineMeta != null) {
                         logger.info("new storage engine comes to cluster: id = " + storageEngineMeta.getId() + " ,ip = " + storageEngineMeta.getIp() + " , port = " + storageEngineMeta.getPort());
+                        originalStorageEngineMeta = storageEngineMetaMap.get(storageEngineMeta.getId());
                         storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
                     } else {
                         logger.error("resolve storage engine from zookeeper error");
@@ -225,6 +230,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     break;
                 default:
                     break;
+            }
+            if (storageEngineMeta != null || originalStorageEngineMeta != null) {
+                for (StorageEngineChangeHook hook: storageEngineChangeHooks) {
+                    hook.onChanged(originalStorageEngineMeta, storageEngineMeta);
+                }
             }
         };
         this.storageEngineCache.getListenable().addListener(listener);
@@ -508,5 +518,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         fragmentMap.put(new TimeSeriesInterval(null, startPath), fragmentList);
 
         return fragmentMap;
+    }
+
+    @Override
+    public void registerStorageEngineChangeHook(StorageEngineChangeHook hook) {
+        if (hook != null) {
+            this.storageEngineChangeHooks.add(hook);
+        }
     }
 }
