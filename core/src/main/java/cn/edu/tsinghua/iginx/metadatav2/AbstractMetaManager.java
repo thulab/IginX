@@ -502,20 +502,17 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> generateFragmentMap(String startPath, long startTime) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
-        List<FragmentMeta> fragmentList = new ArrayList<>();
+        List<FragmentMeta> leftFragmentList = new ArrayList<>();
+        List<FragmentMeta> rightFragmentList = new ArrayList<>();
 
-        fragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
         if (startTime != 0) {
-            fragmentList.add(new FragmentMeta(startPath, null, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+            leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+            rightFragmentList.add(new FragmentMeta(null, startPath, 0, startTime, chooseStorageEngineIdListForNewFragment()));
         }
-        fragmentMap.put(new TimeSeriesInterval(startPath, null), fragmentList);
-
-        fragmentList.clear();
-        fragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        if (startTime != 0) {
-            fragmentList.add(new FragmentMeta(null, startPath, 0, startTime, chooseStorageEngineIdListForNewFragment()));
-        }
-        fragmentMap.put(new TimeSeriesInterval(null, startPath), fragmentList);
+        fragmentMap.put(new TimeSeriesInterval(startPath, null), leftFragmentList);
+        fragmentMap.put(new TimeSeriesInterval(null, startPath), rightFragmentList);
 
         return fragmentMap;
     }
