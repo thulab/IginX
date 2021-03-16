@@ -9,6 +9,10 @@ enum DataType {
     STRING,
 }
 
+enum StorageEngineType {
+    IOTDB,
+}
+
 struct Status {
     1: required i32 code
     2: optional string message
@@ -87,6 +91,14 @@ struct QueryDataResp {
     4: optional QueryDataSet queryDataSet
 }
 
+struct AddStorageEngineReq {
+    1: required i64 sessionId
+    2: required string ip
+    3: required string port
+    4: required StorageEngineType type
+    5: required map<string, string> extraParams
+}
+
 service IService {
     OpenSessionResp openSession(1:OpenSessionReq req);
 
@@ -105,4 +117,7 @@ service IService {
     Status deleteDataInColumns(1:DeleteDataInColumnsReq req);
 
     QueryDataResp queryData(1:QueryDataReq req);
+
+    Status AddStorageEngine(1: AddStorageEngineReq req);
+
 }

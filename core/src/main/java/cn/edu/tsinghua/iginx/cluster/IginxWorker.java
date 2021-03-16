@@ -29,6 +29,7 @@ import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
@@ -43,6 +44,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -130,6 +132,12 @@ public class IginxWorker implements IService.Iface {
 		QueryDataContext context = new QueryDataContext(req);
 		core.processRequest(context);
 		return ((QueryDataCombineResult) context.getCombineResult()).getResp();
+	}
+
+	@Override
+	public Status AddStorageEngine(AddStorageEngineReq req) {
+		// 处理扩容
+		return null;
 	}
 
 	public static IginxWorker getInstance() {
