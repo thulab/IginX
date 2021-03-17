@@ -78,16 +78,20 @@ public class SessionQueryDataSet {
 	}
 
 	public void print() {
+		System.out.println("start to print dataset:");
 		System.out.print("\t");
 		for (String path : paths) {
 			System.out.print(path + "\t");
 		}
+		System.out.println();
 
 		for (int i = 0; i < timestamps.length; i++) {
 			System.out.print(timestamps[i] + "\t");
 			for (int j = 0; j < paths.size(); j++) {
 				System.out.print(values.get(i).get(j) + "\t");
 			}
+			System.out.println();
 		}
+		System.out.println("print dataset finished.");
 	}
 }
