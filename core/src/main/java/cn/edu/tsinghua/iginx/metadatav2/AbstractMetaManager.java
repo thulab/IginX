@@ -65,7 +65,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected TreeCache storageEngineCache;
 
-    private final Map<Long, StorageEngineMeta> storageEngineMetaMap = new ConcurrentHashMap<>();
+    protected final Map<Long, StorageEngineMeta> storageEngineMetaMap = new ConcurrentHashMap<>();
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
 
@@ -325,12 +325,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     data = event.getData().getData();
                     fragmentMeta = JsonUtils.fromJson(data, FragmentMeta.class);
                     if (fragmentMeta != null) {
-                        updateFragment(fragmentMeta);
-                        for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
-                            long storageEngineId = replicaMeta.getStorageEngineId();
-                            StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
-                            storageEngineMeta.endLatestFragmentReplicaMetas(replicaMeta.getTsInterval(), replicaMeta.getTimeInterval().getEndTime());
+                        // 本机更新的分片，此前已经更新过了
+                        if (fragmentMeta.getUpdatedBy() == iginxId) {
+                            break;
                         }
+                        updateFragment(fragmentMeta);
+
                     } else {
                         logger.error("resolve fragment from zookeeper error");
                     }
@@ -341,6 +341,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     if (pathParts.length == 4) {
                         fragmentMeta = JsonUtils.fromJson(event.getData().getData(), FragmentMeta.class);
                         if (fragmentMeta != null) {
+                            // 本机创建的分片，此前已经更新过了
+                            if (fragmentMeta.getCreatedBy() == iginxId) {
+                                break;
+                            }
                             addFragment(fragmentMeta);
                             for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
                                 long storageEngineId = replicaMeta.getStorageEngineId();
@@ -411,10 +415,16 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta: latestFragments.values()) { // 终结老分片
                 FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta();
+                // 在更新分片时，先更新本地
+                fragmentMeta.setUpdatedBy(iginxId);
+                updateFragment(fragmentMeta);
                 this.zookeeperClient.setData()
                         .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
             }
             for (FragmentMeta fragmentMeta: fragments) {
+                // 针对本机创建的分片，直接将其加入到本地
+                fragmentMeta.setCreatedBy(iginxId);
+                addFragment(fragmentMeta);
                 this.zookeeperClient.create()
                         .withMode(CreateMode.PERSISTENT)
                         .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
@@ -459,13 +469,14 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             for (FragmentMeta fragmentMeta: initialFragments) {
                 String tsIntervalName = fragmentMeta.getTsInterval().toString();
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
+                // 针对本机创建的分片，直接将其加入到本地
+                fragmentMeta.setCreatedBy(iginxId);
+                addFragment(fragmentMeta);
                 this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
                         .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName, JsonUtils.toJson(fragmentMeta));
-                for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
-                    storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
-                }
+
             }
             return true;
         } catch (Exception e) {

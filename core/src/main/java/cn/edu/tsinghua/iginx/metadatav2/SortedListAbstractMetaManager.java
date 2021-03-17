@@ -19,6 +19,8 @@
 package cn.edu.tsinghua.iginx.metadatav2;
 
 import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -60,6 +62,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
+        for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
+            storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
+        }
     }
 
     @Override
@@ -68,6 +73,11 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
         fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
         fragmentLock.writeLock().unlock();
+        for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
+            long storageEngineId = replicaMeta.getStorageEngineId();
+            StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
+            storageEngineMeta.endLatestFragmentReplicaMetas(replicaMeta.getTsInterval(), replicaMeta.getTimeInterval().getEndTime());
+        }
     }
 
     @Override

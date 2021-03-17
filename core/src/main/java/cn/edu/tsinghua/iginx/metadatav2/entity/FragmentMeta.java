@@ -52,6 +52,10 @@ public final class FragmentMeta {
      */
     private final Map<Integer, FragmentReplicaMeta> replicaMetas;
 
+    private long createdBy;
+
+    private long updatedBy;
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
@@ -88,4 +92,19 @@ public final class FragmentMeta {
         return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), Long.MAX_VALUE, replicaMetas);
     }
 
+    public long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public long getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(long updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 }
