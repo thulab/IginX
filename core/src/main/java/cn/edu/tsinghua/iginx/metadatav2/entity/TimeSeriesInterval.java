@@ -18,9 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.metadatav2.entity;
 
+import java.sql.Time;
 import java.util.Objects;
 
-public final class TimeSeriesInterval {
+public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> {
 
     private String startTimeSeries;
 
@@ -95,4 +96,21 @@ public final class TimeSeriesInterval {
         return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
     }
 
+    @Override
+    public int compareTo(TimeSeriesInterval o) {
+        int value = compareTo(startTimeSeries, o.startTimeSeries);
+        if (value != 0)
+            return value;
+        return compareTo(endTimeSeries, o.endTimeSeries);
+    }
+
+    private static int compareTo(String s1, String s2) {
+        if (s1 == null && s2 == null)
+            return 0;
+        if (s1 == null)
+            return -1;
+        if (s2 == null)
+            return 1;
+        return s1.compareTo(s2);
+    }
 }

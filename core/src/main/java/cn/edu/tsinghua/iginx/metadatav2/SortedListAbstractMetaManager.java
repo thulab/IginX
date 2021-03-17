@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +61,12 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     @Override
     protected void addFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
+        // 更新 fragmentMetaListMap
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
+        if (fragmentMetaList.size() == 0) {
+            // 更新 sortedFragmentMetaLists
+            updateSortedFragmentsList(fragmentMeta.getTsInterval(), fragmentMetaList);
+        }
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
         for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
@@ -67,9 +74,31 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         }
     }
 
+    private void updateSortedFragmentsList(TimeSeriesInterval tsInterval, List<FragmentMeta> fragmentMetas) {
+        Pair<TimeSeriesInterval, List<FragmentMeta>> pair = new Pair<>(tsInterval, fragmentMetas);
+        if (sortedFragmentMetaLists.size() == 0) {
+            sortedFragmentMetaLists.add(pair);
+            return;
+        }
+        int left = 0, right = sortedFragmentMetaLists.size();
+        while (left <= right && left < sortedFragmentMetaLists.size()) {
+            int mid = (left + right) / 2;
+            TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
+            if (tsInterval.compareTo(midTsInterval) < 0) {
+                left = mid + 1;
+            } else if (tsInterval.compareTo(midTsInterval) > 0) {
+                right = mid - 1;
+            } else {
+                throw new RuntimeException("unexpected fragment");
+            }
+        }
+        sortedFragmentMetaLists.add(left, pair);
+    }
+
     @Override
     protected void updateFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
+        // 更新 fragmentMetaListMap
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
         fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
         fragmentLock.writeLock().unlock();
