@@ -148,7 +148,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws IoTDBConnectionException, StatementExecutionException {
         SessionDataSet sessionDataSet = session.executeRawDataQuery(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
-        return new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan, new IoTDBQueryExecuteDataSet(sessionDataSet));
+        return new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan, new IoTDBQueryExecuteDataSet(sessionDataSet, session));
     }
 
     @Override
@@ -163,14 +163,8 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             return syncExecuteQueryDataPlan(plan, session);
         } catch (Exception e) {
             logger.error("query data error: ", e);
-        } finally {
-            try {
-                session.close();
-            } catch (Exception e) {
-                logger.error("got error:", e);
-            }
         }
-        return new QueryDataPlanExecuteResult(PlanExecuteResult.FAILURE, plan, (QueryExecuteDataSet) null);
+        return new QueryDataPlanExecuteResult(PlanExecuteResult.FAILURE, plan, null);
     }
 
     @Override

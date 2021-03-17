@@ -7,6 +7,7 @@ import cn.edu.tsinghua.iginx.query.entity.RowRecord;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
+import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.tsfile.read.common.Field;
 
@@ -18,8 +19,11 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	private final SessionDataSet dataSet;
 
-	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet) {
+	private final Session session;
+
+	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session) {
 		this.dataSet = dataSet;
+		this.session = session;
 	}
 
 	@Override
@@ -60,6 +64,7 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 	public void close() throws ExecutionException {
 		try {
 			dataSet.closeOperationHandle();
+			session.close();
 		} catch (StatementExecutionException | IoTDBConnectionException e) {
 			throw new ExecutionException(e.getMessage());
 		}
