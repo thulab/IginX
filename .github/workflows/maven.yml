@@ -28,3 +28,12 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+  tests: # Job ID
+    name: Tests # Name of the job displayed on GitHub.
+    runs-on: ubuntu-latest # OS for the GitHub-hosted virtual machine
+    services: # Define Docker containers to use for this job.
+      backend-db: # Container ID for our database container
+        image: zookeeper:3.6.2 # Image to pull from Docker Hub
+        ports:
+        - 2181 :2181 # TCP port to expose on Docker container and host environment 
+        
