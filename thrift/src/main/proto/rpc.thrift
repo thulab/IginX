@@ -14,17 +14,13 @@ enum StorageEngineType {
 }
 
 enum AggregateType {
-    MAX_TIME,
-    MAX_VALUE,
-    MIN_TIME,
-    MIN_VALUE,
+    MAX,
+    MIN,
     SUM,
     COUNT,
     AVG,
-    FIRST_TIME,
-    FIRST_VALUE,
-    LAST_TIME,
-    LAST_VALUE,
+    FIRST,
+    LAST,
 }
 
 struct Status {
@@ -125,7 +121,8 @@ struct AggregateQueryResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
-    4: required binary valuesList
+    4: optional binary timestamps
+    5: optional binary valuesList
 }
 
 service IService {
