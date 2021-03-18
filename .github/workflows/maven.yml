@@ -5,9 +5,12 @@ name: Java CI with Maven
 
 on:
   push:
-    branches: [ metadata_v2 ]
+    branches:
+      - main
+      - metadata_v2
   pull_request:
-    branches: [ main ]
+    branches: 
+      - main
 
 jobs:
   builds:
