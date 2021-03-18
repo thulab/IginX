@@ -34,6 +34,8 @@ import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
@@ -146,6 +148,12 @@ public class IginxWorker implements IService.Iface {
 		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), StorageEngine.IoTDB);
 		metaManager.addStorageEngine(meta);
 		return RpcUtils.SUCCESS;
+	}
+
+	@Override
+	public AggregateQueryResp aggregateQuery(AggregateQueryReq req) throws TException {
+		// TODO
+		return null;
 	}
 
 	public static IginxWorker getInstance() {

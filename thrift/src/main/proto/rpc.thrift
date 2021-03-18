@@ -13,6 +13,20 @@ enum StorageEngineType {
     IOTDB,
 }
 
+enum AggregateType {
+    MAX_TIME,
+    MAX_VALUE,
+    MIN_TIME,
+    MIN_VALUE,
+    SUM,
+    COUNT,
+    AVG,
+    FIRST_TIME,
+    FIRST_VALUE,
+    LAST_TIME,
+    LAST_VALUE,
+}
+
 struct Status {
     1: required i32 code
     2: optional string message
@@ -99,6 +113,21 @@ struct AddStorageEngineReq {
     5: required map<string, string> extraParams
 }
 
+struct AggregateQueryReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required i64 startTime
+    4: required i64 endTime
+    5: required AggregateType aggregateType
+}
+
+struct AggregateQueryResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+    4: optional QueryDataSet queryDataSet
+}
+
 service IService {
     OpenSessionResp openSession(1:OpenSessionReq req);
 
@@ -119,5 +148,7 @@ service IService {
     QueryDataResp queryData(1:QueryDataReq req);
 
     Status addStorageEngine(1: AddStorageEngineReq req);
+
+    AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
 
 }
