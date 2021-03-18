@@ -25,6 +25,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.ADD_COLUMNS;
+
 public class AddColumnsPlan extends ColumnPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(AddColumnsPlan.class);
@@ -33,7 +35,7 @@ public class AddColumnsPlan extends ColumnPlan {
 
 	public AddColumnsPlan(List<String> paths, List<Map<String, String>> attributesList) {
 		super(false, paths);
-		this.setIginxPlanType(IginxPlanType.ADD_COLUMNS);
+		this.setIginxPlanType(ADD_COLUMNS);
 		this.attributesList = attributesList;
 	}
 

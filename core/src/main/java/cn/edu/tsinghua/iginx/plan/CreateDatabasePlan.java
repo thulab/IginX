@@ -21,12 +21,14 @@ package cn.edu.tsinghua.iginx.plan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.CREATE_DATABASE;
+
 public class CreateDatabasePlan extends DatabasePlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(CreateDatabasePlan.class);
 
 	public CreateDatabasePlan(String databaseName) {
 		super(false, databaseName);
-		this.setIginxPlanType(IginxPlanType.CREATE_DATABASE);
+		this.setIginxPlanType(CREATE_DATABASE);
 	}
 }

@@ -28,16 +28,12 @@ import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.FirstTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxValueQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.AsyncTaskQueue;
@@ -192,58 +188,30 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         return null;
     }
 
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeFirstTimeQueryPlan(FirstTimeQueryPlan plan) {
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeFirstQueryPlan(FirstQueryPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteFirstTimeQueryPlan(plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteFirstQueryPlan(plan));
         }
         return null;
     }
 
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeFirstValueQueryPlan(FirstValueQueryPlan plan) {
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeLastQueryPlan(LastQueryPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteFirstValueQueryPlan(plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteLastQueryPlan(plan));
         }
         return null;
     }
 
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeLastTimeQueryPlan(LastTimeQueryPlan plan) {
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMaxQueryPlan(MaxQueryPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteLastTimeQueryPlan(plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteMaxQueryPlan(plan));
         }
         return null;
     }
 
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeLastValueQueryPlan(LastValueQueryPlan plan) {
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMinQueryPlan(MinQueryPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteLastValueQueryPlan(plan));
-        }
-        return null;
-    }
-
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMaxTimeQueryPlan(MaxTimeQueryPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteMaxTimeQueryPlan(plan));
-        }
-        return null;
-    }
-
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMaxValueQueryPlan(MaxValueQueryPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteMaxValueQueryPlan(plan));
-        }
-        return null;
-    }
-
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMinTimeQueryPlan(MinTimeQueryPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteMinTimeQueryPlan(plan));
-        }
-        return null;
-    }
-
-    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMinValueQueryPlan(MinValueQueryPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteMinValueQueryPlan(plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteMinQueryPlan(plan));
         }
         return null;
     }
@@ -268,21 +236,13 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
 
     protected abstract StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan);
 
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstTimeQueryPlan(FirstTimeQueryPlan plan);
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan);
 
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan);
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan);
 
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteLastTimeQueryPlan(LastTimeQueryPlan plan);
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan);
 
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxTimeQueryPlan(MaxTimeQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxValueQueryPlan(MaxValueQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMinTimeQueryPlan(MinTimeQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMinValueQueryPlan(MinValueQueryPlan plan);
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan);
 
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));

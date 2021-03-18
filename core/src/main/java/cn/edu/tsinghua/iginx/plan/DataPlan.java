@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DATA;
+
 public abstract class DataPlan extends NonDatabasePlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataPlan.class);
@@ -32,7 +34,7 @@ public abstract class DataPlan extends NonDatabasePlan {
 
 	protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime) {
 		super(isQuery, paths);
-		this.setIginxPlanType(IginxPlanType.DATA);
+		this.setIginxPlanType(DATA);
 		this.timeInterval = new TimeInterval(startTime, endTime);
 	}
 

@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
+
 public abstract class IginxPlan {
 
 	private IginxPlanType iginxPlanType;
@@ -31,7 +33,7 @@ public abstract class IginxPlan {
 	private long storageEngineId;
 
 	protected IginxPlan(boolean isQuery) {
-		this.iginxPlanType = IginxPlanType.IGINX;
+		this.iginxPlanType = IGINX;
 		this.isQuery = isQuery;
 	}
 
@@ -78,7 +80,6 @@ public abstract class IginxPlan {
 	public enum IginxPlanType {
 		IGINX, DATABASE, CREATE_DATABASE, DROP_DATABASE, NON_DATABASE, COLUMN, ADD_COLUMNS,
 		DELETE_COLUMNS, DATA, INSERT_RECORDS, DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY,
-		MAX_TIME, MAX_VALUE, MIN_TIME, MIN_VALUE, SUM, COUNT, AVG, FIRST_TIME, FIRST_VALUE, LAST_TIME,
-		LAST_VALUE,
+		MAX, MIN, SUM, COUNT, AVG, FIRST, LAST,
 	}
 }

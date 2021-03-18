@@ -21,6 +21,8 @@ package cn.edu.tsinghua.iginx.plan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DATABASE;
+
 public abstract class DatabasePlan extends IginxPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(DatabasePlan.class);
@@ -29,7 +31,7 @@ public abstract class DatabasePlan extends IginxPlan {
 
 	protected DatabasePlan(boolean isQuery, String databaseName) {
 		super(isQuery);
-		this.setIginxPlanType(IginxPlanType.DATABASE);
+		this.setIginxPlanType(DATABASE);
 		this.setCanBeSplit(false);
 		this.databaseName = databaseName;
 	}

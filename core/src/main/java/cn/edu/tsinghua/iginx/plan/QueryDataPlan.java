@@ -23,13 +23,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
+
 public class QueryDataPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
 		super(true, paths, startTime, endTime);
-		this.setIginxPlanType(IginxPlanType.QUERY_DATA);
+		this.setIginxPlanType(QUERY_DATA);
 	}
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {

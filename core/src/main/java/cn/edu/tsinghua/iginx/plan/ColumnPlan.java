@@ -23,12 +23,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.COLUMN;
+
 public abstract class ColumnPlan extends NonDatabasePlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(ColumnPlan.class);
 
 	protected ColumnPlan(boolean isQuery, List<String> paths) {
 		super(isQuery, paths);
-		this.setIginxPlanType(IginxPlanType.COLUMN);
+		this.setIginxPlanType(COLUMN);
 	}
 }

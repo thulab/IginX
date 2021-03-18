@@ -23,12 +23,14 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DELETE_DATA_IN_COLUMNS;
+
 public class DeleteDataInColumnsPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(DeleteDataInColumnsPlan.class);
 
 	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
 		super(false, paths, startTime, endTime);
-		this.setIginxPlanType(IginxPlanType.DELETE_DATA_IN_COLUMNS);
+		this.setIginxPlanType(DELETE_DATA_IN_COLUMNS);
 	}
 }

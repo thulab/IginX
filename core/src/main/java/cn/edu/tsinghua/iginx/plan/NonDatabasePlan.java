@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.NON_DATABASE;
+
 public abstract class NonDatabasePlan extends IginxPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(NonDatabasePlan.class);
@@ -34,7 +36,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	protected NonDatabasePlan(boolean isQuery, List<String> paths) {
 		super(isQuery);
-		this.setIginxPlanType(IginxPlanType.NON_DATABASE);
+		this.setIginxPlanType(NON_DATABASE);
 		this.setCanBeSplit(true);
 		this.paths = paths;
 		this.tsInterval = new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1));

@@ -77,12 +77,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
             case AddColumns:
                 AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
                 AddColumnsPlan addColumnsPlan = new AddColumnsPlan(addColumnsReq.getPaths(), addColumnsReq.getAttributesList());
-                splitInfoList = planSplitter.getSplitResults(addColumnsPlan);
+                splitInfoList = planSplitter.getSplitAddColumnsPlanResults(addColumnsPlan);
                 return splitAddColumnsPlan(addColumnsPlan, splitInfoList);
             case DeleteColumns:
                 DeleteColumnsReq deleteColumnsReq = ((DeleteColumnsContext) requestContext).getReq();
                 DeleteColumnsPlan deleteColumnsPlan = new DeleteColumnsPlan(deleteColumnsReq.getPaths());
-                splitInfoList = planSplitter.getSplitResults(deleteColumnsPlan);
+                splitInfoList = planSplitter.getSplitDeleteColumnsPlanResults(deleteColumnsPlan);
                 return splitDeleteColumnsPlan(deleteColumnsPlan, splitInfoList);
             case InsertRecords:
                 InsertRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
@@ -93,7 +93,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertRecordsReq.dataTypeList,
                         insertRecordsReq.getAttributesList()
                 );
-                splitInfoList = planSplitter.getSplitResults(insertRecordsPlan);
+                splitInfoList = planSplitter.getSplitInsertRecordsPlanResults(insertRecordsPlan);
                 return splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 // TODO
@@ -105,7 +105,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         queryDataReq.getStartTime(),
                         queryDataReq.getEndTime()
                 );
-                splitInfoList = planSplitter.getSplitResults(queryDataPlan);
+                splitInfoList = planSplitter.getSplitQueryDataPlanResults(queryDataPlan);
                 return splitQueryDataPlan(queryDataPlan, splitInfoList);
             default:
                 logger.info("unimplemented method: " + requestContext.getType());

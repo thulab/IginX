@@ -29,15 +29,11 @@ import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.FirstTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxValueQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinTimeQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
@@ -271,42 +267,22 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstTimeQueryPlan(FirstTimeQueryPlan plan) {
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
         return null;
     }
 
     @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan) {
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
         return null;
     }
 
     @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteLastTimeQueryPlan(LastTimeQueryPlan plan) {
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan) {
         return null;
     }
 
     @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan) {
-        return null;
-    }
-
-    @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxTimeQueryPlan(MaxTimeQueryPlan plan) {
-        return null;
-    }
-
-    @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxValueQueryPlan(MaxValueQueryPlan plan) {
-        return null;
-    }
-
-    @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMinTimeQueryPlan(MinTimeQueryPlan plan) {
-        return null;
-    }
-
-    @Override
-    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMinValueQueryPlan(MinValueQueryPlan plan) {
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan) {
         return null;
     }
 }

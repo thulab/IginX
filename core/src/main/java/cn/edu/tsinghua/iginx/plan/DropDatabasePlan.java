@@ -21,12 +21,14 @@ package cn.edu.tsinghua.iginx.plan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DROP_DATABASE;
+
 public class DropDatabasePlan extends DatabasePlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(DropDatabasePlan.class);
 
 	public DropDatabasePlan(String databaseName) {
 		super(false, databaseName);
-		this.setIginxPlanType(IginxPlanType.DROP_DATABASE);
+		this.setIginxPlanType(DROP_DATABASE);
 	}
 }

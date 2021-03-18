@@ -32,6 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_RECORDS;
+
 @ToString
 public class InsertRecordsPlan extends DataPlan {
 
@@ -48,7 +50,7 @@ public class InsertRecordsPlan extends DataPlan {
 	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
 	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
 		super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
-		this.setIginxPlanType(IginxPlanType.INSERT_RECORDS);
+		this.setIginxPlanType(INSERT_RECORDS);
 		this.timestamps = timestamps;
 		this.valuesList = valuesList;
 		this.dataTypeList = dataTypeList;
