@@ -23,19 +23,30 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.List;
 
-public class StatisticsAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
+public abstract class AggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private List<Object> values;
+    private List<String> paths;
 
-    public StatisticsAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+    private List<DataType> dataTypes;
+
+    public AggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
     }
 
-    public List<Object> getValues() {
-        return values;
+    public List<String> getPaths() {
+        return paths;
     }
 
-    public void setValues(List<Object> values) {
-        this.values = values;
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
+    }
+
+    public List<DataType> getDataTypes() {
+        return dataTypes;
+    }
+
+    public void setDataTypes(List<DataType> dataTypes) {
+        this.dataTypes = dataTypes;
     }
 }
+

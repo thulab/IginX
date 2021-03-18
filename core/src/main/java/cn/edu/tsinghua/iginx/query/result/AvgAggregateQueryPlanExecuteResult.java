@@ -23,34 +23,14 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.List;
 
-public class AvgAggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
-
-    private List<String> paths;
-
-    private List<DataType> dataTypes;
+public class AvgAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
 
     private List<Object> sums;
 
-    private List<Object> counts;
+    private List<Long> counts;
 
     public AvgAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
-    }
-
-    public List<String> getPaths() {
-        return paths;
-    }
-
-    public void setPaths(List<String> paths) {
-        this.paths = paths;
-    }
-
-    public List<DataType> getDataTypes() {
-        return dataTypes;
-    }
-
-    public void setDataTypes(List<DataType> dataTypes) {
-        this.dataTypes = dataTypes;
     }
 
     public List<Object> getSums() {
@@ -61,11 +41,11 @@ public class AvgAggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
         this.sums = sums;
     }
 
-    public List<Object> getCounts() {
+    public List<Long> getCounts() {
         return counts;
     }
 
-    public void setCounts(List<Object> counts) {
+    public void setCounts(List<Long> counts) {
         this.counts = counts;
     }
 }
