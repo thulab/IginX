@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
 
 public class NativePolicy implements IPolicy {
 
@@ -74,5 +75,14 @@ public class NativePolicy implements IPolicy {
     @Override
     public void init(IMetaManager iMetaManager) {
         this.iPlanSplitter = new NaivePlanSplitter(iMetaManager);
+        StorageEngineChangeHook hook = getStorageEngineChangeHook();
+        if (hook != null) {
+            iMetaManager.registerStorageEngineChangeHook(hook);
+        }
+    }
+
+    @Override
+    public StorageEngineChangeHook getStorageEngineChangeHook() {
+        return null;
     }
 }

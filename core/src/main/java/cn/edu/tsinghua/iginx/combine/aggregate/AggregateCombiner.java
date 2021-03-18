@@ -16,18 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.combine.aggregate;
 
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
-
-import java.util.List;
-
-public interface IPlanExecutor {
-
-    List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext);
-
-    StorageEngineChangeHook getStorageEngineChangeHook();
-
+public class AggregateCombiner {
 }

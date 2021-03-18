@@ -22,20 +22,34 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
+import cn.edu.tsinghua.iginx.plan.FirstTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.LastTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.AsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.queue.MemoryAsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
 import cn.edu.tsinghua.iginx.query.result.AsyncPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SyncPlanExecuteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,6 +171,83 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         return null;
     }
 
+    protected Future<AvgAggregateQueryPlanExecuteResult> executeAvgQueryPlan(AvgQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteAvgQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<StatisticsAggregateQueryPlanExecuteResult> executeCountQueryPlan(CountQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteCountQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<StatisticsAggregateQueryPlanExecuteResult> executeSumQueryPlan(SumQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteSumQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeFirstTimeQueryPlan(FirstTimeQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteFirstTimeQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeFirstValueQueryPlan(FirstValueQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteFirstValueQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeLastTimeQueryPlan(LastTimeQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteLastTimeQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeLastValueQueryPlan(LastValueQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteLastValueQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMaxTimeQueryPlan(MaxTimeQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteMaxTimeQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMaxValueQueryPlan(MaxValueQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteMaxValueQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMinTimeQueryPlan(MinTimeQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteMinTimeQueryPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<SingleValueAggregateQueryPlanExecuteResult> executeMinValueQueryPlan(MinValueQueryPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteMinValueQueryPlan(plan));
+        }
+        return null;
+    }
+
     protected abstract NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan);
 
     protected abstract QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
@@ -170,6 +261,28 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
     protected abstract NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan);
 
     protected abstract NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan);
+
+    protected abstract AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan);
+
+    protected abstract StatisticsAggregateQueryPlanExecuteResult syncExecuteCountQueryPlan(CountQueryPlan plan);
+
+    protected abstract StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstTimeQueryPlan(FirstTimeQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteLastTimeQueryPlan(LastTimeQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxTimeQueryPlan(MaxTimeQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxValueQueryPlan(MaxValueQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMinTimeQueryPlan(MinTimeQueryPlan plan);
+
+    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMinValueQueryPlan(MinValueQueryPlan plan);
 
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));

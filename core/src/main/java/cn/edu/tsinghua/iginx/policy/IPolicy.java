@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
+import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
 
 public interface IPolicy {
 
@@ -46,5 +47,7 @@ public interface IPolicy {
     IPlanSplitter getIPlanSplitter();
 
     void init(IMetaManager iMetaManager);
+
+    StorageEngineChangeHook getStorageEngineChangeHook();
 
 }
