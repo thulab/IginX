@@ -162,7 +162,6 @@ public class QueryDataSetCombiner {
                 }
             }
         }
-
         resp.setPaths(columnNameList);
         resp.setDataTypeList(columnTypeList);
         resp.setQueryDataSet(new QueryDataSet(ByteUtils.getByteBuffer(timestamps.toArray(), DataType.LONG),

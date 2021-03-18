@@ -205,6 +205,15 @@ public class ByteUtils {
 		return size;
 	}
 
+	public static ByteBuffer getByteBuffer(Long[] values) {
+		ByteBuffer buffer = ByteBuffer.allocate(8 * values.length);
+		for (long value: values) {
+			buffer.putLong(value);
+		}
+		buffer.flip();
+		return buffer;
+	}
+
 	public static ByteBuffer getByteBuffer(Object[] values, DataType dataType) {
 		ByteBuffer buffer = ByteBuffer.allocate(getByteBufferSize(values, dataType));
 		switch (dataType) {

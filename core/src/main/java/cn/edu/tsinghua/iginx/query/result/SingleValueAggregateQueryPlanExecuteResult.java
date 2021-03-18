@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.query.result;
 
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.List;
 
