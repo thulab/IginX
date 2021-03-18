@@ -16,18 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.query.result;
 
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.List;
 
-public interface IPlanExecutor {
+public class StatisticsAggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
-    List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext);
+    private List<DataType> dataTypes;
 
-    StorageEngineChangeHook getStorageEngineChangeHook();
+    private List<Object> values;
 
+    public StatisticsAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
+
+    public List<DataType> getDataTypes() {
+        return dataTypes;
+    }
+
+    public void setDataTypes(List<DataType> dataTypes) {
+        this.dataTypes = dataTypes;
+    }
+
+    public List<Object> getValues() {
+        return values;
+    }
+
+    public void setValues(List<Object> values) {
+        this.values = values;
+    }
 }

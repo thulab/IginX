@@ -151,7 +151,7 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public AggregateQueryResp aggregateQuery(AggregateQueryReq req) throws TException {
+	public AggregateQueryResp aggregateQuery(AggregateQueryReq req) {
 		// TODO
 		return null;
 	}

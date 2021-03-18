@@ -20,19 +20,33 @@ package cn.edu.tsinghua.iginx.iotdb;
 
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryExecuteDataSet;
+import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
+import cn.edu.tsinghua.iginx.plan.FirstTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.LastTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinTimeQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
-import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
+import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
@@ -47,10 +61,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
 
@@ -60,32 +74,34 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     private final Map<Long, StorageEngineMeta> storageEngineMetas;
 
-    private Map<Long, SessionPool> readSessionPools;
+    private final Map<Long, SessionPool> readSessionPools;
 
-    private Map<Long, SessionPool> writeSessionPools;
+    private final Map<Long, SessionPool> writeSessionPools;
+
+    private void createSessionPool(StorageEngineMeta storageEngineMeta) {
+        if (storageEngineMeta.getDbType() != StorageEngine.IoTDB) {
+            logger.warn("unexpected database: " + storageEngineMeta.getDbType());
+            return;
+        }
+        Map<String, String> extraParams = storageEngineMeta.getExtraParams();
+        String username = extraParams.getOrDefault("username", "root");
+        String password = extraParams.getOrDefault("password", "root");
+        int readSessions = Integer.parseInt(extraParams.getOrDefault("readSessions", "2"));
+        int writeSessions = Integer.parseInt(extraParams.getOrDefault("writeSessions", "5"));
+        SessionPool readSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, readSessions);
+        SessionPool writeSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, writeSessions);
+        readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
+        writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
+        storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+    }
 
     public IoTDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
-        readSessionPools = new HashMap<>();
-        writeSessionPools = new HashMap<>();
-        storageEngineMetas = new HashMap<>();
+        readSessionPools = new ConcurrentHashMap<>();
+        writeSessionPools = new ConcurrentHashMap<>();
+        storageEngineMetas = new ConcurrentHashMap<>();
         for (StorageEngineMeta storageEngineMeta: storageEngineMetaList) {
-            if (storageEngineMeta.getDbType() != StorageEngine.IoTDB) {
-                logger.warn("unexpected database: " + storageEngineMeta.getDbType());
-                continue;
-            }
-            Map<String, String> extraParams = storageEngineMeta.getExtraParams();
-            String username = extraParams.getOrDefault("username", "root");
-            String password = extraParams.getOrDefault("password", "root");
-            int readSessions = Integer.parseInt(extraParams.getOrDefault("readSessions", "2"));
-            int writeSessions = Integer.parseInt(extraParams.getOrDefault("writeSessions", "5"));
-            SessionPool readSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, readSessions);
-            SessionPool writeSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, writeSessions);
-            readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
-            writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
-            storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+            createSessionPool(storageEngineMeta);
         }
-        readSessionPools = Collections.unmodifiableMap(readSessionPools);
-        writeSessionPools = Collections.unmodifiableMap(writeSessionPools);
     }
 
     @Override
@@ -227,5 +243,70 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             logger.error(e.getMessage());
         }
         return new NonDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan);
+    }
+
+    @Override
+    public StorageEngineChangeHook getStorageEngineChangeHook() {
+        return (before, after) -> {
+            if (before == null && after != null) {
+                createSessionPool(after);
+            }
+            // TODO: 考虑结点删除等情况
+        };
+    }
+
+    @Override
+    protected AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected StatisticsAggregateQueryPlanExecuteResult syncExecuteCountQueryPlan(CountQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstTimeQueryPlan(FirstTimeQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteLastTimeQueryPlan(LastTimeQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxTimeQueryPlan(MaxTimeQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxValueQueryPlan(MaxValueQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMinTimeQueryPlan(MinTimeQueryPlan plan) {
+        return null;
+    }
+
+    @Override
+    protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMinValueQueryPlan(MinValueQueryPlan plan) {
+        return null;
     }
 }

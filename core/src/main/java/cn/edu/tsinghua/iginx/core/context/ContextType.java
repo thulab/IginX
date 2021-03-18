@@ -27,6 +27,7 @@ public enum ContextType {
     DeleteDataInColumns,
     CreateDatabase,
     DropDatabase,
+    AggregateQuery,
     Unknown;
 
 }
