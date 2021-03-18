@@ -146,7 +146,7 @@ public class InsertRecordsPlan extends DataPlan {
 				default:
 					throw new UnsupportedOperationException(getDataType(i).toString());
 			}
-			tempValues[i - startIndex] = Arrays.copyOfRange(tempColValues, rowIndexes.k, rowIndexes.v);
+			tempValues[i - startIndex] = Arrays.copyOfRange(tempColValues, rowIndexes.k, rowIndexes.v + 1);
 		}
 		return tempValues;
 	}
