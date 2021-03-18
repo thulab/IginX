@@ -32,9 +32,9 @@ public class QueryDataPlan extends DataPlan {
 		this.setIginxPlanType(IginxPlanType.QUERY_DATA);
 	}
 
-	public QueryDataPlan(List<String> paths, long startTime, long endTime, long databaseId) {
+	public QueryDataPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
 		this(paths, startTime, endTime);
-		this.setStorageEngineId(databaseId);
+		this.setStorageEngineId(storageEngineId);
 		this.setSync(true);
 	}
 }

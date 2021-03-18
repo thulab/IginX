@@ -56,9 +56,9 @@ public class InsertRecordsPlan extends DataPlan {
 	}
 
 	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList, long databaseId) {
+	        List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
 		this(paths, timestamps, valuesList, dataTypeList, attributesList);
-		this.setStorageEngineId(databaseId);
+		this.setStorageEngineId(storageEngineId);
 	}
 
 	public long[] getTimestamps() {
