@@ -119,7 +119,7 @@ public class InsertRecordsPlan extends DataPlan {
 			return null;
 		}
 		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
-		int endIndex = getPaths().indexOf(interval.getEndTimeSeries());
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());;
 		Object[] tempValues = new Object[endIndex - startIndex + 1];
 		for (int i = startIndex; i <= endIndex; i++) {
 			Object[] tempColValues;
