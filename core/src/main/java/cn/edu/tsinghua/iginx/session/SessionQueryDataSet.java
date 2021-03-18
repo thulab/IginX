@@ -79,7 +79,7 @@ public class SessionQueryDataSet {
 
 	public void print() {
 		System.out.println("start to print dataset:");
-		System.out.print("\t");
+		System.out.print("Time\t");
 		for (String path : paths) {
 			System.out.print(path + "\t");
 		}
