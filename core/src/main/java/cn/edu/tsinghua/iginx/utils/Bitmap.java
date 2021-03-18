@@ -37,16 +37,16 @@ public class Bitmap {
     public void mark(int i) {
         if (i < 0 || i >= size)
             throw new IllegalArgumentException("unexpected index");
-        int index = this.size / 8;
-        int indexWithinByte = this.size % 8;
-        bitmap[index] &= (1 << indexWithinByte);
+        int index = i / 8;
+        int indexWithinByte = i % 8;
+        bitmap[index] |= (1 << indexWithinByte);
     }
 
     public boolean get(int i) {
         if (i < 0 || i >= size)
             throw new IllegalArgumentException("unexpected index");
-        int index = this.size / 8;
-        int indexWithinByte = this.size % 8;
+        int index = i / 8;
+        int indexWithinByte = i % 8;
         return (bitmap[index] & (1 << indexWithinByte)) != 0;
     }
 
