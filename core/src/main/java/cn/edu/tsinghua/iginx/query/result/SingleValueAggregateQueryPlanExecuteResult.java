@@ -25,6 +25,8 @@ import java.util.List;
 
 public class SingleValueAggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
+    private List<String> paths;
+
     private List<DataType> dataTypes;
 
     private List<Long> times;
@@ -33,6 +35,14 @@ public class SingleValueAggregateQueryPlanExecuteResult extends SyncPlanExecuteR
 
     public SingleValueAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
+    }
+
+    public List<String> getPaths() {
+        return paths;
+    }
+
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
     }
 
     public List<DataType> getDataTypes() {

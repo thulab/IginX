@@ -25,12 +25,22 @@ import java.util.List;
 
 public class StatisticsAggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
+    private List<String> paths;
+
     private List<DataType> dataTypes;
 
     private List<Object> values;
 
     public StatisticsAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
+    }
+
+    public List<String> getPaths() {
+        return paths;
+    }
+
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
     }
 
     public List<DataType> getDataTypes() {
