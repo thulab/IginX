@@ -52,11 +52,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
             if (fragmentMap.isEmpty()) {
                 fragmentMap = iMetaManager.generateFragmentMap(plan.getStartPath(), 0L);
                 iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+                fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
             }
             for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
-                if (entry.getKey().getStartTimeSeries() == null) {
-                    continue;
-                }
                 for (FragmentMeta fragment : entry.getValue()) {
                     List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
                     for (FragmentReplicaMeta replica : replicas) {
@@ -80,15 +78,11 @@ public class NaivePlanSplitter implements IPlanSplitter {
             if (fragmentMap.isEmpty()) {
                 fragmentMap = iMetaManager.generateFragmentMap(plan.getStartPath(), ((DataPlan) plan).getStartTime());
                 iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+                fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+                        plan.getTsInterval(), ((DataPlan) plan).getTimeInterval());
             }
             for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
-                if (entry.getKey().getStartTimeSeries() == null) {
-                    continue;
-                }
                 for (FragmentMeta fragment : entry.getValue()) {
-                    if (fragment.getTimeInterval().getStartTime() == 0 && ((DataPlan) plan).getStartTime() != 0) {
-                        continue;
-                    }
                     List<FragmentReplicaMeta> replicas = new ArrayList<>();
                     if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.INSERT_RECORDS) {
                         replicas = chooseFragmentReplicas(fragment, false);
