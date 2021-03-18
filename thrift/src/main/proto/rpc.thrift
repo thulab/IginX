@@ -125,7 +125,7 @@ struct AggregateQueryResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
-    4: optional QueryDataSet queryDataSet
+    4: required binary valuesList
 }
 
 service IService {

@@ -14,7 +14,7 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
   private static final org.apache.thrift.protocol.TField STATUS_FIELD_DESC = new org.apache.thrift.protocol.TField("status", org.apache.thrift.protocol.TType.STRUCT, (short)1);
   private static final org.apache.thrift.protocol.TField PATHS_FIELD_DESC = new org.apache.thrift.protocol.TField("paths", org.apache.thrift.protocol.TType.LIST, (short)2);
   private static final org.apache.thrift.protocol.TField DATA_TYPE_LIST_FIELD_DESC = new org.apache.thrift.protocol.TField("dataTypeList", org.apache.thrift.protocol.TType.LIST, (short)3);
-  private static final org.apache.thrift.protocol.TField QUERY_DATA_SET_FIELD_DESC = new org.apache.thrift.protocol.TField("queryDataSet", org.apache.thrift.protocol.TType.STRUCT, (short)4);
+  private static final org.apache.thrift.protocol.TField VALUES_LIST_FIELD_DESC = new org.apache.thrift.protocol.TField("valuesList", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private static final org.apache.thrift.scheme.SchemeFactory STANDARD_SCHEME_FACTORY = new AggregateQueryRespStandardSchemeFactory();
   private static final org.apache.thrift.scheme.SchemeFactory TUPLE_SCHEME_FACTORY = new AggregateQueryRespTupleSchemeFactory();
@@ -22,14 +22,14 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
   public @org.apache.thrift.annotation.Nullable Status status; // required
   public @org.apache.thrift.annotation.Nullable java.util.List<java.lang.String> paths; // optional
   public @org.apache.thrift.annotation.Nullable java.util.List<DataType> dataTypeList; // optional
-  public @org.apache.thrift.annotation.Nullable QueryDataSet queryDataSet; // optional
+  public @org.apache.thrift.annotation.Nullable java.nio.ByteBuffer valuesList; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     STATUS((short)1, "status"),
     PATHS((short)2, "paths"),
     DATA_TYPE_LIST((short)3, "dataTypeList"),
-    QUERY_DATA_SET((short)4, "queryDataSet");
+    VALUES_LIST((short)4, "valuesList");
 
     private static final java.util.Map<java.lang.String, _Fields> byName = new java.util.HashMap<java.lang.String, _Fields>();
 
@@ -51,8 +51,8 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
           return PATHS;
         case 3: // DATA_TYPE_LIST
           return DATA_TYPE_LIST;
-        case 4: // QUERY_DATA_SET
-          return QUERY_DATA_SET;
+        case 4: // VALUES_LIST
+          return VALUES_LIST;
         default:
           return null;
       }
@@ -94,7 +94,7 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
   }
 
   // isset id assignments
-  private static final _Fields optionals[] = {_Fields.PATHS,_Fields.DATA_TYPE_LIST,_Fields.QUERY_DATA_SET};
+  private static final _Fields optionals[] = {_Fields.PATHS,_Fields.DATA_TYPE_LIST};
   public static final java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     java.util.Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new java.util.EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -106,8 +106,8 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     tmpMap.put(_Fields.DATA_TYPE_LIST, new org.apache.thrift.meta_data.FieldMetaData("dataTypeList", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
             new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, DataType.class))));
-    tmpMap.put(_Fields.QUERY_DATA_SET, new org.apache.thrift.meta_data.FieldMetaData("queryDataSet", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, QueryDataSet.class)));
+    tmpMap.put(_Fields.VALUES_LIST, new org.apache.thrift.meta_data.FieldMetaData("valuesList", org.apache.thrift.TFieldRequirementType.REQUIRED, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING        , true)));
     metaDataMap = java.util.Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AggregateQueryResp.class, metaDataMap);
   }
@@ -116,10 +116,12 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
   }
 
   public AggregateQueryResp(
-    Status status)
+    Status status,
+    java.nio.ByteBuffer valuesList)
   {
     this();
     this.status = status;
+    this.valuesList = org.apache.thrift.TBaseHelper.copyBinary(valuesList);
   }
 
   /**
@@ -140,8 +142,8 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
       }
       this.dataTypeList = __this__dataTypeList;
     }
-    if (other.isSetQueryDataSet()) {
-      this.queryDataSet = new QueryDataSet(other.queryDataSet);
+    if (other.isSetValuesList()) {
+      this.valuesList = org.apache.thrift.TBaseHelper.copyBinary(other.valuesList);
     }
   }
 
@@ -154,7 +156,7 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     this.status = null;
     this.paths = null;
     this.dataTypeList = null;
-    this.queryDataSet = null;
+    this.valuesList = null;
   }
 
   @org.apache.thrift.annotation.Nullable
@@ -264,28 +266,37 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     }
   }
 
-  @org.apache.thrift.annotation.Nullable
-  public QueryDataSet getQueryDataSet() {
-    return this.queryDataSet;
+  public byte[] getValuesList() {
+    setValuesList(org.apache.thrift.TBaseHelper.rightSize(valuesList));
+    return valuesList == null ? null : valuesList.array();
   }
 
-  public AggregateQueryResp setQueryDataSet(@org.apache.thrift.annotation.Nullable QueryDataSet queryDataSet) {
-    this.queryDataSet = queryDataSet;
+  public java.nio.ByteBuffer bufferForValuesList() {
+    return org.apache.thrift.TBaseHelper.copyBinary(valuesList);
+  }
+
+  public AggregateQueryResp setValuesList(byte[] valuesList) {
+    this.valuesList = valuesList == null ? (java.nio.ByteBuffer)null   : java.nio.ByteBuffer.wrap(valuesList.clone());
     return this;
   }
 
-  public void unsetQueryDataSet() {
-    this.queryDataSet = null;
+  public AggregateQueryResp setValuesList(@org.apache.thrift.annotation.Nullable java.nio.ByteBuffer valuesList) {
+    this.valuesList = org.apache.thrift.TBaseHelper.copyBinary(valuesList);
+    return this;
   }
 
-  /** Returns true if field queryDataSet is set (has been assigned a value) and false otherwise */
-  public boolean isSetQueryDataSet() {
-    return this.queryDataSet != null;
+  public void unsetValuesList() {
+    this.valuesList = null;
   }
 
-  public void setQueryDataSetIsSet(boolean value) {
+  /** Returns true if field valuesList is set (has been assigned a value) and false otherwise */
+  public boolean isSetValuesList() {
+    return this.valuesList != null;
+  }
+
+  public void setValuesListIsSet(boolean value) {
     if (!value) {
-      this.queryDataSet = null;
+      this.valuesList = null;
     }
   }
 
@@ -315,11 +326,15 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
       }
       break;
 
-    case QUERY_DATA_SET:
+    case VALUES_LIST:
       if (value == null) {
-        unsetQueryDataSet();
+        unsetValuesList();
       } else {
-        setQueryDataSet((QueryDataSet)value);
+        if (value instanceof byte[]) {
+          setValuesList((byte[])value);
+        } else {
+          setValuesList((java.nio.ByteBuffer)value);
+        }
       }
       break;
 
@@ -338,8 +353,8 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     case DATA_TYPE_LIST:
       return getDataTypeList();
 
-    case QUERY_DATA_SET:
-      return getQueryDataSet();
+    case VALUES_LIST:
+      return getValuesList();
 
     }
     throw new java.lang.IllegalStateException();
@@ -358,8 +373,8 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
       return isSetPaths();
     case DATA_TYPE_LIST:
       return isSetDataTypeList();
-    case QUERY_DATA_SET:
-      return isSetQueryDataSet();
+    case VALUES_LIST:
+      return isSetValuesList();
     }
     throw new java.lang.IllegalStateException();
   }
@@ -406,12 +421,12 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
         return false;
     }
 
-    boolean this_present_queryDataSet = true && this.isSetQueryDataSet();
-    boolean that_present_queryDataSet = true && that.isSetQueryDataSet();
-    if (this_present_queryDataSet || that_present_queryDataSet) {
-      if (!(this_present_queryDataSet && that_present_queryDataSet))
+    boolean this_present_valuesList = true && this.isSetValuesList();
+    boolean that_present_valuesList = true && that.isSetValuesList();
+    if (this_present_valuesList || that_present_valuesList) {
+      if (!(this_present_valuesList && that_present_valuesList))
         return false;
-      if (!this.queryDataSet.equals(that.queryDataSet))
+      if (!this.valuesList.equals(that.valuesList))
         return false;
     }
 
@@ -434,9 +449,9 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     if (isSetDataTypeList())
       hashCode = hashCode * 8191 + dataTypeList.hashCode();
 
-    hashCode = hashCode * 8191 + ((isSetQueryDataSet()) ? 131071 : 524287);
-    if (isSetQueryDataSet())
-      hashCode = hashCode * 8191 + queryDataSet.hashCode();
+    hashCode = hashCode * 8191 + ((isSetValuesList()) ? 131071 : 524287);
+    if (isSetValuesList())
+      hashCode = hashCode * 8191 + valuesList.hashCode();
 
     return hashCode;
   }
@@ -479,12 +494,12 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
         return lastComparison;
       }
     }
-    lastComparison = java.lang.Boolean.valueOf(isSetQueryDataSet()).compareTo(other.isSetQueryDataSet());
+    lastComparison = java.lang.Boolean.valueOf(isSetValuesList()).compareTo(other.isSetValuesList());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetQueryDataSet()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.queryDataSet, other.queryDataSet);
+    if (isSetValuesList()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.valuesList, other.valuesList);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -537,16 +552,14 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
       }
       first = false;
     }
-    if (isSetQueryDataSet()) {
-      if (!first) sb.append(", ");
-      sb.append("queryDataSet:");
-      if (this.queryDataSet == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.queryDataSet);
-      }
-      first = false;
+    if (!first) sb.append(", ");
+    sb.append("valuesList:");
+    if (this.valuesList == null) {
+      sb.append("null");
+    } else {
+      org.apache.thrift.TBaseHelper.toString(this.valuesList, sb);
     }
+    first = false;
     sb.append(")");
     return sb.toString();
   }
@@ -556,12 +569,12 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     if (status == null) {
       throw new org.apache.thrift.protocol.TProtocolException("Required field 'status' was not present! Struct: " + toString());
     }
+    if (valuesList == null) {
+      throw new org.apache.thrift.protocol.TProtocolException("Required field 'valuesList' was not present! Struct: " + toString());
+    }
     // check for sub-struct validity
     if (status != null) {
       status.validate();
-    }
-    if (queryDataSet != null) {
-      queryDataSet.validate();
     }
   }
 
@@ -647,11 +660,10 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 4: // QUERY_DATA_SET
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-              struct.queryDataSet = new QueryDataSet();
-              struct.queryDataSet.read(iprot);
-              struct.setQueryDataSetIsSet(true);
+          case 4: // VALUES_LIST
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.valuesList = iprot.readBinary();
+              struct.setValuesListIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -704,12 +716,10 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
           oprot.writeFieldEnd();
         }
       }
-      if (struct.queryDataSet != null) {
-        if (struct.isSetQueryDataSet()) {
-          oprot.writeFieldBegin(QUERY_DATA_SET_FIELD_DESC);
-          struct.queryDataSet.write(oprot);
-          oprot.writeFieldEnd();
-        }
+      if (struct.valuesList != null) {
+        oprot.writeFieldBegin(VALUES_LIST_FIELD_DESC);
+        oprot.writeBinary(struct.valuesList);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -729,6 +739,7 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
     public void write(org.apache.thrift.protocol.TProtocol prot, AggregateQueryResp struct) throws org.apache.thrift.TException {
       org.apache.thrift.protocol.TTupleProtocol oprot = (org.apache.thrift.protocol.TTupleProtocol) prot;
       struct.status.write(oprot);
+      oprot.writeBinary(struct.valuesList);
       java.util.BitSet optionals = new java.util.BitSet();
       if (struct.isSetPaths()) {
         optionals.set(0);
@@ -736,10 +747,7 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
       if (struct.isSetDataTypeList()) {
         optionals.set(1);
       }
-      if (struct.isSetQueryDataSet()) {
-        optionals.set(2);
-      }
-      oprot.writeBitSet(optionals, 3);
+      oprot.writeBitSet(optionals, 2);
       if (struct.isSetPaths()) {
         {
           oprot.writeI32(struct.paths.size());
@@ -758,9 +766,6 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
           }
         }
       }
-      if (struct.isSetQueryDataSet()) {
-        struct.queryDataSet.write(oprot);
-      }
     }
 
     @Override
@@ -769,7 +774,9 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
       struct.status = new Status();
       struct.status.read(iprot);
       struct.setStatusIsSet(true);
-      java.util.BitSet incoming = iprot.readBitSet(3);
+      struct.valuesList = iprot.readBinary();
+      struct.setValuesListIsSet(true);
+      java.util.BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         {
           org.apache.thrift.protocol.TList _list160 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
@@ -798,11 +805,6 @@ public class AggregateQueryResp implements org.apache.thrift.TBase<AggregateQuer
           }
         }
         struct.setDataTypeListIsSet(true);
-      }
-      if (incoming.get(2)) {
-        struct.queryDataSet = new QueryDataSet();
-        struct.queryDataSet.read(iprot);
-        struct.setQueryDataSetIsSet(true);
       }
     }
   }
