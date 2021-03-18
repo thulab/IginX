@@ -48,9 +48,10 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 	@Override
 	public RowRecord next() throws ExecutionException {
 		try {
-			RowRecord rowRecord = new RowRecord(dataSet.next().getTimestamp());
+			org.apache.iotdb.tsfile.read.common.RowRecord iotdbRowRecord = dataSet.next();
+			RowRecord rowRecord = new RowRecord(iotdbRowRecord.getTimestamp());
 			List<Object> fields = new ArrayList<>();
-			for (Field field : dataSet.next().getFields()) {
+			for (Field field : iotdbRowRecord.getFields()) {
 				fields.add(field.getObjectValue(field.getDataType()));
 			}
 			rowRecord.setFields(fields);
