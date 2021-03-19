@@ -28,4 +28,11 @@ public class AggregateQueryContext extends RequestContext {
         super(req.sessionId, ContextType.AggregateQuery);
     }
 
+    public AggregateQueryReq getReq() {
+        return req;
+    }
+
+    public void setReq(AggregateQueryReq req) {
+        this.req = req;
+    }
 }

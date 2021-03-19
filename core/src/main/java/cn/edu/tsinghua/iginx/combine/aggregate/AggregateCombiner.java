@@ -184,7 +184,7 @@ public class AggregateCombiner {
         resp.valuesList = ByteUtils.getByteBuffer(values, dataTypes);
     }
 
-    private void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
         constructPathAndTypeList(resp, planExecuteResults);
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;

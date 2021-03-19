@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.IService;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
@@ -47,6 +48,7 @@ import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SyncPlanExecuteResult;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,9 +85,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                     switch (plan.getIginxPlanType()) {
                         case INSERT_RECORDS:
                             planExecuteResult = syncExecuteInsertRecordsPlan((InsertRecordsPlan) plan);
-                            break;
-                        case QUERY_DATA:
-                            planExecuteResult = syncExecuteQueryDataPlan((QueryDataPlan) plan);
                             break;
                         case ADD_COLUMNS:
                             planExecuteResult = syncExecuteAddColumnsPlan((AddColumnsPlan) plan);
@@ -275,6 +274,33 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
             case DropDatabase:
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(DropDatabasePlan.class::cast).map(this::executeDropDatabasePlan).map(wrap(Future::get)).collect(Collectors.toList()));
                 break;
+            case AggregateQuery:
+                AggregateType aggregateType = ((AggregateQueryContext) requestContext).getReq().aggregateType;
+                switch (aggregateType) {
+                    case AVG:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(AvgQueryPlan.class::cast).map(this::executeAvgQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    case SUM:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(SumQueryPlan.class::cast).map(this::executeSumQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    case COUNT:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(CountQueryPlan.class::cast).map(this::executeCountQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    case MAX:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(MaxQueryPlan.class::cast).map(this::executeMaxQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    case MIN:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(MinQueryPlan.class::cast).map(this::executeMinQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    case FIRST:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(FirstQueryPlan.class::cast).map(this::executeFirstQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    case LAST:
+                        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(LastQueryPlan.class::cast).map(this::executeLastQueryPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                        break;
+                    default:
+                        logger.error("unknown aggregate type: " + aggregateType);
+                }
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
                 break;

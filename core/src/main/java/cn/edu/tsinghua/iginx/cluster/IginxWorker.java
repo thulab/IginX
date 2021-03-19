@@ -18,10 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.cluster;
 
+import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
@@ -32,6 +34,7 @@ import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
 import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.query.result.AggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -153,7 +156,9 @@ public class IginxWorker implements IService.Iface {
 	@Override
 	public AggregateQueryResp aggregateQuery(AggregateQueryReq req) {
 		// TODO
-		return null;
+		AggregateQueryContext context = new AggregateQueryContext(req);
+		core.processRequest(context);
+		return ((AggregateCombineResult) context.getCombineResult()).getResp();
 	}
 
 	public static IginxWorker getInstance() {
