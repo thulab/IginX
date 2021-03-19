@@ -43,5 +43,7 @@ jobs:
         file: ./**/target/site/jacoco/jacoco.xml
         name: codecov
     - name: run zk
-      run: "${GITHUB_WORKSPACE}/.github/zk.sh"
+      run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
       shell: bash
