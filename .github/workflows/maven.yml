@@ -45,10 +45,5 @@ jobs:
     - name: wget
       uses: wei/wget@v1
       with:
-        args: https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
-    - name: run zk
-      run: |
-          cat "${GITHUB_WORKSPACE}/.github/zk.sh"
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      shell: bash
+        args: -O ${GITHUB_WORKSPACE}/.github/apache-zookeeper-3.6.2-bin.tar.gz https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
+        
