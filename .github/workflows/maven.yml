@@ -43,4 +43,4 @@ jobs:
         file: ./**/target/site/jacoco/jacoco.xml
         name: codecov
     - name: run zookeeper
-      run: .github/zk.sh
+      run: .github/workflows/zk.sh
