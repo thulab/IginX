@@ -11,5 +11,3 @@ sh -c "mv apache-zookeeper-3.6.2-bin zookeeper"
 sh -c "cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg"
 
 sh -c "zookeeper/bin/zkServer.sh start"
-
-sh -c "telnet 127.0.0.1:2181"
