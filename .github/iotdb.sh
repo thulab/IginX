@@ -6,7 +6,9 @@ sh -c "wget -nv https://apache.mirror.digionline.de/iotdb/0.11.2/apache-iotdb-0.
 
 sh -c "unzip apache-iotdb-0.11.2-bin.zip"
 
-wait
+wait $!
+
+sh -c "ls /"
 
 sh -c "mv apache-iotdb-0.11.2 iotdb"
 
