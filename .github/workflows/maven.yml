@@ -42,7 +42,11 @@ jobs:
       with:
         file: ./**/target/site/jacoco/jacoco.xml
         name: codecov
-    - name: wget
-      uses: wei/wget@v1
-      with:
-        args: -O ~/apache-zookeeper-3.6.2-bin.tar.gz https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
+    - name: run zk
+      run: |
+           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+           "${GITHUB_WORKSPACE}/.github/zk.sh"
+      
+      
+      
+      
