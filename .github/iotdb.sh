@@ -6,14 +6,12 @@ sh -c "wget -nv https://apache.mirror.digionline.de/iotdb/0.11.2/apache-iotdb-0.
 
 sh -c "unzip apache-iotdb-0.11.2-bin.zip"
 
-sh -c "sleep 20"
+sh -c "sleep 10"
 
 sh -c "ls ./"
 
-sh -c "mv apache-iotdb-0.11.2 iotdb"
-
 sh -c "echo ========================="
 
-sh -c "ls iotdb"
+sh -c "ls apache-iotdb-0.11.2"
 
-sh -c "nohup iotdb/sbin/start-server.sh &"
+sh -c "nohup apache-iotdb-0.11.2/sbin/start-server.sh &"
