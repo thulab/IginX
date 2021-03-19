@@ -19,7 +19,7 @@ jobs:
       max-parallel: 20
       matrix:
         java: [ 8, 11, 15 ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest macos-latest ]
     runs-on: ${{ matrix.os}}
 
     steps:
@@ -46,7 +46,10 @@ jobs:
       run: |
            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
            "${GITHUB_WORKSPACE}/.github/zk.sh"
-      
+    - name: run iotdb
+      run: |
+           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
       
       
       
