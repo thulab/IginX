@@ -61,7 +61,11 @@ class QueryExecuteDataSetWrapper {
     }
 
     public Object getValue(String columnName) {
-        return rowRecord.getFields().get(columnPositionMap.get(columnName));
+        if (columnPositionMap.get(columnName) != null) {
+            return rowRecord.getFields().get(columnPositionMap.get(columnName));
+        } else {
+            return null;
+        }
     }
 
     public long getTimestamp() {

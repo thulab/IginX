@@ -76,12 +76,14 @@ public class QueryDataSetCombiner {
                 String columnName = columnNameSubList.get(i);
                 DataType columnType = columnTypeSubList.get(i);
                 if (!columnPositionMap.containsKey(columnName)) {
-                    columnPositionMap.put(columnName, columnNameList.size());
+                    columnPositionMap.put(columnName, columnSourcesList.size());
                     columnNameList.add(columnName);
                     columnTypeList.add(columnType);
                     columnSourcesList.add(new ArrayList<>());
+                    columnSourcesList.get(columnSourcesList.size() - 1).add(dataSetWrapper);
+                } else {
+                    columnSourcesList.get(columnPositionMap.get(columnName)).add(dataSetWrapper);
                 }
-                columnSourcesList.get(columnSourcesList.size() - 1).add(dataSetWrapper);
             }
         }
         // 初始化各个数据源

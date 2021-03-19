@@ -35,3 +35,5 @@ hs_err_pid*
 
 # build generated
 **/target/
+
+core/src/test/
