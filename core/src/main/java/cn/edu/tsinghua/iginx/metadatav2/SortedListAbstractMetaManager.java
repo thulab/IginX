@@ -44,9 +44,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private static SortedListAbstractMetaManager INSTANCE = null;
 
-    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
+    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists = new ArrayList<>();
 
-    private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
+    private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap = new HashMap<>();
 
     @Override
     protected void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {

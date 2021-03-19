@@ -81,7 +81,7 @@ public class QueryDataSetCombiner {
                     columnTypeList.add(columnType);
                     columnSourcesList.add(new ArrayList<>());
                 }
-                columnSourcesList.get(columnSourcesList.size() - 1).add(dataSetWrapper);
+                columnSourcesList.get(columnPositionMap.get(columnName)).add(dataSetWrapper);
             }
         }
         // 初始化各个数据源
