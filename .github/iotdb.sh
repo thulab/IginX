@@ -12,6 +12,8 @@ sh -c "ls ./"
 
 sh -c "mv apache-iotdb-0.11.2 iotdb"
 
+sh -c "echo ========================="
+
 sh -c "ls iotdb"
 
 sh -c "nohup iotdb/sbin/start-server.sh &"
