@@ -23,6 +23,9 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -254,5 +257,18 @@ public class Session {
 			throw new SessionException(e);
 		}
 		return new SessionQueryDataSet(resp);
+	}
+
+	public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
+			throws SessionException {
+		AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
+
+		AggregateQueryResp resp;
+		try {
+			resp = client.aggregateQuery(req);
+		} catch (TException e) {
+			throw new SessionException(e);
+		}
+		return new SessionAggregateQueryDataSet(resp);
 	}
 }

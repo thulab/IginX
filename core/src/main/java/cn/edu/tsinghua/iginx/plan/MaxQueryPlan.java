@@ -11,12 +11,12 @@ public class MaxQueryPlan extends AggregateQueryPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(MaxQueryPlan.class);
 
-	protected MaxQueryPlan(List<String> paths, long startTime, long endTime) {
+	public MaxQueryPlan(List<String> paths, long startTime, long endTime) {
 		super(paths, startTime, endTime);
 		this.setIginxPlanType(MAX);
 	}
 
-	protected MaxQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+	public MaxQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
 		super(paths, startTime, endTime, storageEngineId);
 	}
 }

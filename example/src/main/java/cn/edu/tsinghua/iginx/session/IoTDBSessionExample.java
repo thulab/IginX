@@ -3,13 +3,18 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
 
 public class IoTDBSessionExample {
 
@@ -32,7 +37,8 @@ public class IoTDBSessionExample {
 		addColumns();
 		insertRecords();
 		queryData();
-		deleteColumns();
+//		deleteColumns();
+		aggregateQuery();
 
 		session.dropDatabase(DATABASE_NAME);
 
@@ -125,5 +131,34 @@ public class IoTDBSessionExample {
 		paths.add(COLUMN_D3_S1);
 
 		session.deleteColumns(paths);
+	}
+
+	private static void aggregateQuery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(COLUMN_D1_S1);
+		paths.add(COLUMN_D1_S2);
+		paths.add(COLUMN_D2_S1);
+		paths.add(COLUMN_D3_S1);
+
+		long startTime = 5L;
+		long endTime = 55L;
+
+		SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
+		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
+		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
+		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
+		dataSet.print();
 	}
 }

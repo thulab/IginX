@@ -155,7 +155,6 @@ public class IginxWorker implements IService.Iface {
 
 	@Override
 	public AggregateQueryResp aggregateQuery(AggregateQueryReq req) {
-		// TODO
 		AggregateQueryContext context = new AggregateQueryContext(req);
 		core.processRequest(context);
 		return ((AggregateCombineResult) context.getCombineResult()).getResp();

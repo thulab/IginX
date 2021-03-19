@@ -11,12 +11,12 @@ public class FirstQueryPlan extends AggregateQueryPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(FirstQueryPlan.class);
 
-	protected FirstQueryPlan(List<String> paths, long startTime, long endTime) {
+	public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
 		super(paths, startTime, endTime);
 		this.setIginxPlanType(FIRST);
 	}
 
-	protected FirstQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+	public FirstQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
 		super(paths, startTime, endTime, storageEngineId);
 	}
 }
