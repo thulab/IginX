@@ -45,12 +45,4 @@ jobs:
     - name: wget
       uses: wei/wget@v1
       with:
-        args: -O ${GITHUB_WORKSPACE}/.github/apache-zookeeper-3.6.2-bin.tar.gz https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
-    - name: run zk
-      run: |
-          tar -xzf ${GITHUB_WORKSPACE}/.github/apache-zookeeper-3.6.2-bin.tar.gz
-          mv apache-zookeeper-3.6.2 zookeeper
-          cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg 
-          zookeeper/bin/zkServer.sh start
-          telnet 127.0.0.1:2181
-      shell: bash
+        args: -O ~/apache-zookeeper-3.6.2-bin.tar.gz https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.2/apache-zookeeper-3.6.2-bin.tar.gz
