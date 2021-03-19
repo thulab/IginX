@@ -32,29 +32,92 @@ import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class NaivePlanSplitter implements IPlanSplitter {
 
     private final IMetaManager iMetaManager;
 
-    public NaivePlanSplitter(IMetaManager iMetaManager) {
+    private final NativePolicy policy;
+
+    private final Set<String> prefixSet = new HashSet<>();
+
+    private final List<String> prefixList = new LinkedList<>();
+
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+
+    private final int prefixMaxSize;
+
+    private final Random random = new Random();
+
+    public NaivePlanSplitter(NativePolicy policy, IMetaManager iMetaManager) {
+        this.policy = policy;
         this.iMetaManager = iMetaManager;
+        this.prefixMaxSize = 100;
+    }
+
+    private void updatePrefix(NonDatabasePlan plan) {
+        lock.readLock().lock();
+        if (prefixMaxSize <= prefixSet.size()) {
+            lock.readLock().unlock();
+            return;
+        }
+        lock.readLock().unlock();
+        lock.writeLock().lock();
+        if (prefixMaxSize <= prefixSet.size()) {
+            lock.writeLock().unlock();
+            return;
+        }
+        TimeSeriesInterval tsInterval = plan.getTsInterval();
+        if (tsInterval.getStartTimeSeries() != null && !prefixSet.contains(tsInterval.getStartTimeSeries())) {
+            prefixSet.add(tsInterval.getStartTimeSeries());
+            prefixList.add(tsInterval.getStartTimeSeries());
+        }
+        if (tsInterval.getEndTimeSeries() != null && !prefixSet.contains(tsInterval.getEndTimeSeries())) {
+            prefixSet.add(tsInterval.getEndTimeSeries());
+            prefixList.add(tsInterval.getEndTimeSeries());
+        }
+        lock.writeLock().unlock();
+    }
+
+    public List<String> samplePrefix(int count) {
+        lock.readLock().lock();
+        String[] prefixArray = new String[prefixList.size()];
+        prefixList.toArray(prefixArray);
+        lock.readLock().unlock();
+        for (int i = 0; i < prefixList.size(); i++) {
+            int next = random.nextInt(prefixList.size());
+            String value = prefixArray[next];
+            prefixArray[next] = prefixArray[i];
+            prefixArray[i] = value;
+        }
+        List<String> resultList = new ArrayList<>();
+        for (int i = 0; i < count && i < prefixArray.length; i++) {
+            resultList.add(prefixArray[i]);
+        }
+        return resultList;
     }
 
     public List<SplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         if (fragmentMap.isEmpty()) {
-            fragmentMap = iMetaManager.generateFragmentMap(plan.getStartPath(), 0L);
+            fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), 0L);
             iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         }
@@ -70,6 +133,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     public List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
@@ -84,14 +148,20 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     public List<SplitInfo> getSplitInsertRecordsPlanResults(InsertRecordsPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
-            fragmentMap = iMetaManager.generateFragmentMap(plan.getStartPath(), plan.getStartTime());
+            fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
             iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                     plan.getTsInterval(), plan.getTimeInterval());
+            policy.setNeedReAllocate(false);
+        } else if (policy.isNeedReAllocate()) {
+            List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getIginxList().size() - 1), plan.getEndTime() + 10); // TODO: 抽象为配置
+            iMetaManager.createFragments(fragments);
+            policy.setNeedReAllocate(false);
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
@@ -105,6 +175,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     public List<SplitInfo> getSplitQueryDataPlanResults(QueryDataPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -121,6 +192,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitMaxQueryPlanResults(MaxQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -137,6 +209,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitMinQueryPlanResults(MinQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -153,6 +226,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitSumQueryPlanResults(SumQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -169,6 +243,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitCountQueryPlanResults(CountQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -185,6 +260,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitAvgQueryPlanResults(AvgQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -201,6 +277,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitFirstQueryPlanResults(FirstQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
@@ -214,6 +291,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitLastQueryPlanResults(LastQueryPlan plan) {
+        updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());

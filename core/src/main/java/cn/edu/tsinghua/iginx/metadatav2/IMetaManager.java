@@ -119,7 +119,9 @@ public interface IMetaManager {
      */
     long chooseStorageEngineIdForDatabasePlan();
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> generateFragmentMap(String startPath, long startTime);
+    Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime);
+
+    List<FragmentMeta> generateFragments(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 

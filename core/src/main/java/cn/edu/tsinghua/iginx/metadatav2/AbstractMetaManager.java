@@ -44,8 +44,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -493,14 +497,18 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public List<Long> chooseStorageEngineIdListForNewFragment() {
-        List<Long> storageEngineIdList = new ArrayList<>();
-        List<StorageEngineMeta> storageEngineMetaList = getStorageEngineList().stream().
-                sorted(Comparator.comparing(StorageEngineMeta::getFragmentReplicaMetaNum)).collect(Collectors.toList());
-        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineMetaList.size());
-        for (int i = 0; i < replicaNum; i++) {
-            storageEngineIdList.add(storageEngineMetaList.get(i).getId());
+        List<Long> storageEngineIdList = getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+        if (storageEngineIdList.size() <= 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum()) {
+            return storageEngineIdList;
         }
-        return storageEngineIdList;
+        Random random = new Random();
+        for (int i = 0; i < storageEngineIdList.size(); i++) {
+            int next = random.nextInt(storageEngineIdList.size());
+            Long value = storageEngineIdList.get(next);
+            storageEngineIdList.set(next, storageEngineIdList.get(i));
+            storageEngineIdList.set(i, value);
+        }
+        return storageEngineIdList.subList(0, 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum());
     }
 
     @Override
@@ -511,7 +519,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> generateFragmentMap(String startPath, long startTime) {
+    public Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<FragmentMeta> leftFragmentList = new ArrayList<>();
         List<FragmentMeta> rightFragmentList = new ArrayList<>();
@@ -533,5 +541,20 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         if (hook != null) {
             this.storageEngineChangeHooks.add(hook);
         }
+    }
+
+    @Override
+    public List<FragmentMeta> generateFragments(List<String> prefixList, long startTime) {
+        List<FragmentMeta> resultList = new ArrayList<>();
+        prefixList = prefixList.stream().filter(Objects::nonNull).sorted(String::compareTo).collect(Collectors.toList());
+        String previousPrefix;
+        String prefix = null;
+        for (String s : prefixList) {
+            previousPrefix = prefix;
+            prefix = s;
+            resultList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+        }
+        resultList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+        return resultList;
     }
 }
