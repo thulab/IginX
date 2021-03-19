@@ -8,7 +8,7 @@ sh -c "unzip apache-iotdb-0.11.2-bin.zip"
 
 wait $!
 
-sh -c "ls /"
+sh -c "ls ./"
 
 sh -c "mv apache-iotdb-0.11.2 iotdb"
 
