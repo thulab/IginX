@@ -33,4 +33,11 @@ public class DeleteDataInColumnsPlan extends DataPlan {
 		super(false, paths, startTime, endTime);
 		this.setIginxPlanType(DELETE_DATA_IN_COLUMNS);
 	}
+
+	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+		this(paths, startTime, endTime);
+		this.setStorageEngineId(storageEngineId);
+		// TODO TBD
+		this.setSync(true);
+	}
 }

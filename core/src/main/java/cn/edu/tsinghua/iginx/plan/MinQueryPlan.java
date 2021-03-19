@@ -17,6 +17,7 @@ public class MinQueryPlan extends AggregateQueryPlan {
 	}
 
 	public MinQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		super(paths, startTime, endTime, storageEngineId);
+		this(paths, startTime, endTime);
+		this.setStorageEngineId(storageEngineId);
 	}
 }

@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
@@ -32,6 +33,7 @@ import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
@@ -47,6 +49,7 @@ import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -106,8 +109,14 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 splitInfoList = planSplitter.getSplitInsertRecordsPlanResults(insertRecordsPlan);
                 return splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
-                // TODO
-                break;
+                DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
+                DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
+                        deleteDataInColumnsReq.getPaths(),
+                        deleteDataInColumnsReq.getStartTime(),
+                        deleteDataInColumnsReq.getEndTime()
+                );
+                splitInfoList = planSplitter.getSplitDeleteDataInColumnsPlanResults(deleteDataInColumnsPlan);
+                return splitDeleteDataInColumnsPlan(deleteDataInColumnsPlan, splitInfoList);
             case QueryData:
                 QueryDataReq queryDataReq = ((QueryDataContext) requestContext).getReq();
                 QueryDataPlan queryDataPlan = new QueryDataPlan(
@@ -219,6 +228,22 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     info.getReplica().getStorageEngineId()
             );
             subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<DeleteDataInColumnsPlan> splitDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan, List<SplitInfo> infoList) {
+        List<DeleteDataInColumnsPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            DeleteDataInColumnsPlan subPlan = new DeleteDataInColumnsPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
             plans.add(subPlan);
         }
 

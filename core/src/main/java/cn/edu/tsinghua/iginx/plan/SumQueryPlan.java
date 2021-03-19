@@ -17,6 +17,7 @@ public class SumQueryPlan extends AggregateQueryPlan {
 	}
 
 	public SumQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		super(paths, startTime, endTime, storageEngineId);
+		this(paths, startTime, endTime);
+		this.setStorageEngineId(storageEngineId);
 	}
 }
