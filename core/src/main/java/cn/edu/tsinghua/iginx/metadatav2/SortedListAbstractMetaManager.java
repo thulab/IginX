@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -43,14 +44,14 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private static SortedListAbstractMetaManager INSTANCE = null;
 
-    private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
+    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
 
-    private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists = new ArrayList<>();
-
-    private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap = new HashMap<>();
+    private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
     @Override
     protected void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
+        sortedFragmentMetaLists = new ArrayList<>();
+        fragmentMetaListMap = new HashMap<>();
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream()
                 .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
