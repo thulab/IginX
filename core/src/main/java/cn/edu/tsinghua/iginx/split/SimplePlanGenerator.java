@@ -20,25 +20,36 @@ package cn.edu.tsinghua.iginx.split;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
+import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -67,11 +78,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
             case CreateDatabase:
                 CreateDatabaseReq createDatabaseReq = ((CreateDatabaseContext) requestContext).getReq();
                 CreateDatabasePlan createDatabasePlan = new CreateDatabasePlan(createDatabaseReq.getDatabaseName());
+                // TODO 所有 StorageEngine 都应执行 CreateDatabase 操作
                 createDatabasePlan.setStorageEngineId(SortedListAbstractMetaManager.getInstance().chooseStorageEngineIdForDatabasePlan());
                 return Collections.singletonList(createDatabasePlan);
             case DropDatabase:
                 DropDatabaseReq dropDatabaseReq = ((DropDatabaseContext) requestContext).getReq();
                 DropDatabasePlan dropDatabasePlan = new DropDatabasePlan(dropDatabaseReq.getDatabaseName());
+                // TODO 所有 StorageEngine 都应执行 DropDatabase 操作
                 dropDatabasePlan.setStorageEngineId(SortedListAbstractMetaManager.getInstance().chooseStorageEngineIdForDatabasePlan());
                 return Collections.singletonList(dropDatabasePlan);
             case AddColumns:
@@ -96,8 +109,14 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 splitInfoList = planSplitter.getSplitInsertRecordsPlanResults(insertRecordsPlan);
                 return splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
-                // TODO
-                break;
+                DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
+                DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
+                        deleteDataInColumnsReq.getPaths(),
+                        deleteDataInColumnsReq.getStartTime(),
+                        deleteDataInColumnsReq.getEndTime()
+                );
+                splitInfoList = planSplitter.getSplitDeleteDataInColumnsPlanResults(deleteDataInColumnsPlan);
+                return splitDeleteDataInColumnsPlan(deleteDataInColumnsPlan, splitInfoList);
             case QueryData:
                 QueryDataReq queryDataReq = ((QueryDataContext) requestContext).getReq();
                 QueryDataPlan queryDataPlan = new QueryDataPlan(
@@ -107,8 +126,65 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitQueryDataPlanResults(queryDataPlan);
                 return splitQueryDataPlan(queryDataPlan, splitInfoList);
+            case AggregateQuery:
+                AggregateQueryReq aggregateQueryReq = ((AggregateQueryContext) requestContext).getReq();
+                switch (aggregateQueryReq.getAggregateType()) {
+                    case MAX:
+                        MaxQueryPlan maxQueryPlan = new MaxQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitMaxQueryPlanResults(maxQueryPlan);
+                        return splitMaxQueryPlan(maxQueryPlan, splitInfoList);
+                    case MIN:
+                        MinQueryPlan minQueryPlan = new MinQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitMinQueryPlanResults(minQueryPlan);
+                        return splitMinQueryPlan(minQueryPlan, splitInfoList);
+                    case FIRST:
+                        FirstQueryPlan firstQueryPlan = new FirstQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitFirstQueryPlanResults(firstQueryPlan);
+                        return splitFirstQueryPlan(firstQueryPlan, splitInfoList);
+                    case LAST:
+                        LastQueryPlan lastQueryPlan = new LastQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitLastQueryPlanResults(lastQueryPlan);
+                        return splitLastQueryPlan(lastQueryPlan, splitInfoList);
+                    case AVG:
+                        break;
+                    case SUM:
+                        SumQueryPlan sumQueryPlan = new SumQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitSumQueryPlanResults(sumQueryPlan);
+                        return splitSumQueryPlan(sumQueryPlan, splitInfoList);
+                    case COUNT:
+                        CountQueryPlan countQueryPlan = new CountQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitCountQueryPlanResults(countQueryPlan);
+                        return splitCountQueryPlan(countQueryPlan, splitInfoList);
+                    default:
+                        throw new UnsupportedOperationException(aggregateQueryReq.getAggregateType().toString());
+                }
+                break;
             default:
-                logger.info("unimplemented method: " + requestContext.getType());
+                throw new UnsupportedOperationException(requestContext.getType().toString());
         }
         return null;
     }
@@ -158,11 +234,123 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<DeleteDataInColumnsPlan> splitDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan, List<SplitInfo> infoList) {
+        List<DeleteDataInColumnsPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            DeleteDataInColumnsPlan subPlan = new DeleteDataInColumnsPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
     public List<QueryDataPlan> splitQueryDataPlan(QueryDataPlan plan, List<SplitInfo> infoList) {
         List<QueryDataPlan> plans = new ArrayList<>();
 
         for (SplitInfo info : infoList) {
             QueryDataPlan subPlan = new QueryDataPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<MaxQueryPlan> splitMaxQueryPlan(MaxQueryPlan plan, List<SplitInfo> infoList) {
+        List<MaxQueryPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            MaxQueryPlan subPlan = new MaxQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<MinQueryPlan> splitMinQueryPlan(MinQueryPlan plan, List<SplitInfo> infoList) {
+        List<MinQueryPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            MinQueryPlan subPlan = new MinQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<FirstQueryPlan> splitFirstQueryPlan(FirstQueryPlan plan, List<SplitInfo> infoList) {
+        List<FirstQueryPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            FirstQueryPlan subPlan = new FirstQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<LastQueryPlan> splitLastQueryPlan(LastQueryPlan plan, List<SplitInfo> infoList) {
+        List<LastQueryPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            LastQueryPlan subPlan = new LastQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<CountQueryPlan> splitCountQueryPlan(CountQueryPlan plan, List<SplitInfo> infoList) {
+        List<CountQueryPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            CountQueryPlan subPlan = new CountQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+
+        return plans;
+    }
+
+    public List<SumQueryPlan> splitSumQueryPlan(SumQueryPlan plan, List<SplitInfo> infoList) {
+        List<SumQueryPlan> plans = new ArrayList<>();
+
+        for (SplitInfo info : infoList) {
+            SumQueryPlan subPlan = new SumQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
                     Math.min(plan.getEndTime(), info.getReplica().getEndTime()),

@@ -99,6 +99,8 @@ public class CombineExecutor implements ICombineExecutor {
                         aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
                                 .map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                 }
+                combineResult = new AggregateCombineResult(status, aggregateQueryResp);
+                break;
             default:
                 combineResult = new NonDataCombineResult(status);
         }

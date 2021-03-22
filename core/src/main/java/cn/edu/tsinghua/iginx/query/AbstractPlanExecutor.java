@@ -301,6 +301,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                     default:
                         logger.error("unknown aggregate type: " + aggregateType);
                 }
+                break;
             default:
                 logger.info("unimplemented method: " + requestContext.getType());
                 break;

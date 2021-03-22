@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -163,6 +164,23 @@ public class NaivePlanSplitter implements IPlanSplitter {
             iMetaManager.createFragments(fragments);
             policy.setNeedReAllocate(false);
         }
+        for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
+            for (FragmentMeta fragment : entry.getValue()) {
+                List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
+                for (FragmentReplicaMeta replica : replicas) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                }
+            }
+        }
+        return infoList;
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDeleteDataInColumnsPlanResults(DeleteDataInColumnsPlan plan) {
+        updatePrefix(plan);
+        List<SplitInfo> infoList = new ArrayList<>();
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+                plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);

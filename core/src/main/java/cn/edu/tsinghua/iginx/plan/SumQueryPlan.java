@@ -11,12 +11,13 @@ public class SumQueryPlan extends AggregateQueryPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(SumQueryPlan.class);
 
-	protected SumQueryPlan(List<String> paths, long startTime, long endTime) {
+	public SumQueryPlan(List<String> paths, long startTime, long endTime) {
 		super(paths, startTime, endTime);
 		this.setIginxPlanType(SUM);
 	}
 
-	protected SumQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		super(paths, startTime, endTime, storageEngineId);
+	public SumQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+		this(paths, startTime, endTime);
+		this.setStorageEngineId(storageEngineId);
 	}
 }
