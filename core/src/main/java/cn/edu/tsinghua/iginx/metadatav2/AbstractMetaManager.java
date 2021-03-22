@@ -201,9 +201,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             StorageEngineMeta storageEngineMeta = null;
             StorageEngineMeta originalStorageEngineMeta = null;
             switch (event.getType()) {
+                case NODE_ADDED:
                 case NODE_UPDATED:
                     data = event.getData().getData();
+                    logger.info("storage engine meta updated " + event.getData().getPath());
                     storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
+                    logger.info("storage engine: " + new String(data));
                     if (storageEngineMeta != null) {
                         logger.info("new storage engine comes to cluster: id = " + storageEngineMeta.getId() + " ,ip = " + storageEngineMeta.getIp() + " , port = " + storageEngineMeta.getPort());
                         originalStorageEngineMeta = storageEngineMetaMap.get(storageEngineMeta.getId());
@@ -373,6 +376,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                     .forPath(Constants.STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
+            logger.info("[addStorageEngine] new node name: " + nodeName);
             long id = Long.parseLong(nodeName.substring(Constants.STORAGE_ENGINE_NODE.length()));
             storageEngineMeta.setId(id);
             this.zookeeperClient.setData()

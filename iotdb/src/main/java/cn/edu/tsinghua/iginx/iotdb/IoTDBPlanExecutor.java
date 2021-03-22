@@ -265,6 +265,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             if (before == null && after != null) {
+                logger.info("a new iotdb engine added: " + after.getIp() + ":" + after.getPort());
                 createSessionPool(after);
             }
             // TODO: 考虑结点删除等情况
