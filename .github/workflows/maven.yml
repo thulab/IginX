@@ -36,12 +36,6 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
       run: mvn -B package --file pom.xml
-    - name: Coverage report
-      run: mvn -B verify -P coverage --no-transfer-progress
-    - uses: codecov/codecov-action@v1
-      with:
-        file: ./**/target/site/jacoco/jacoco.xml
-        name: codecov
     - name: run zk
       run: |
            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
@@ -50,4 +44,9 @@ jobs:
       run: |
            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
            "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-           
+    - name: Coverage report
+      run: mvn -B verify -P coverage --no-transfer-progress
+    - uses: codecov/codecov-action@v1
+      with:
+        file: ./**/target/site/jacoco/jacoco.xml
+        name: codecov
