@@ -369,12 +369,14 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         InterProcessMutex lock = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_ENGINE_LOCK_NODE);
         try {
             lock.acquire();
-            long id = this.storageEngineMetaMap.values().stream().map(StorageEngineMeta::getId).max((a, b) -> a > b ? 1 : (a < b ? 1 : 0)).orElse(0L);
-            storageEngineMeta.setId(id);
-            this.zookeeperClient.create()
+            String nodeName = this.zookeeperClient.create()
                     .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT)
-                    .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + id, JsonUtils.toJson(storageEngineMeta));
+                    .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                    .forPath(Constants.STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
+            long id = Long.parseLong(nodeName.substring(Constants.STORAGE_ENGINE_NODE.length()));
+            storageEngineMeta.setId(id);
+            this.zookeeperClient.setData()
+                    .forPath(nodeName, JsonUtils.toJson(storageEngineMeta));
             return true;
         } catch (Exception e) {
             logger.error("add storage engine error: ", e);

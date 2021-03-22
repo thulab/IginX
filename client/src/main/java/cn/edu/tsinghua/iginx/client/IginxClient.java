@@ -167,6 +167,7 @@ public class IginxClient {
         String[] commandParts = command.split(" ");
         if (commandParts.length < 3 || !commandParts[0].equals("add") || !commandParts[1].equals("storageEngine")) {
             System.out.println("unsupported command");
+            return;
         }
         String[] storageEngineParts = commandParts[2].split(":");
         String ip = storageEngineParts[0];
