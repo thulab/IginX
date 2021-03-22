@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadatav2.entity;
 
-import java.sql.Time;
 import java.util.Objects;
 
 public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> {

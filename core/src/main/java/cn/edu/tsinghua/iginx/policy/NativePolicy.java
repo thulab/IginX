@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadatav2.IMetaManager;
 import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
 
 public class NativePolicy implements IPolicy {
 
