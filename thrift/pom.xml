@@ -168,8 +168,6 @@
                                     <generator>java</generator>
                                     <thriftExecutable>${thrift.exec.absolute.path}</thriftExecutable>
                                     <thriftSourceRoot>src/main/proto</thriftSourceRoot>
-                                    <!-->指定代码生成到 src下 -->
-                                    <outputDirectory>${basedir}/src/main/java</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

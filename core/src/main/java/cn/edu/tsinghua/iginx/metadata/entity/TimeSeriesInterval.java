@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadatav2.entity;
+package cn.edu.tsinghua.iginx.metadata.entity;
 
 import java.util.Objects;
 

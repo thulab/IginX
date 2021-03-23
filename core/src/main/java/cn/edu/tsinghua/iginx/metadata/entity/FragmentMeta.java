@@ -34,71 +34,77 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.entity;
 
-import java.io.Serializable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public final class FragmentMeta implements Serializable {
+public final class FragmentMeta {
 
-    private final String key;
+    private final TimeInterval timeInterval;
 
-    private final long startTime;
-
-    private final long endTime;
+    private final TimeSeriesInterval tsInterval;
 
     /**
-     * 所有的分片的信息，使用不可变列表
+     * 所有的分片的信息
      */
     private final Map<Integer, FragmentReplicaMeta> replicaMetas;
 
-    public FragmentMeta(String key, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
-        this.key = key;
-        this.startTime = startTime;
-        this.endTime = endTime;
+    private long createdBy;
+
+    private long updatedBy;
+
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         this.replicaMetas = replicaMetas;
     }
 
-    public FragmentMeta(String key, long startTime, long endTime, List<Long> databaseIds) {
-        this.key = key;
-        this.startTime = startTime;
-        this.endTime = endTime;
-        this.replicaMetas = new HashMap<>();
-        for (int i = 0; i < databaseIds.size(); i++) {
-            this.replicaMetas.put(i, new FragmentReplicaMeta(key, startTime, i, endTime, databaseIds.get(i)));
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
+        for (int i = 0; i < storageEngineIdList.size(); i++) {
+            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
         }
+        this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
     }
 
-    public String getKey() {
-        return key;
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
     }
 
-    public long getStartTime() {
-        return startTime;
-    }
-
-    public long getEndTime() {
-        return endTime;
+    public TimeSeriesInterval getTsInterval() {
+        return tsInterval;
     }
 
     public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
         return new HashMap<>(replicaMetas);
     }
 
-    FragmentMeta endFragment(long endTime) {
-        Map<Integer, FragmentReplicaMeta> newReplicaMetas = new HashMap<>();
-        for (Map.Entry<Integer, FragmentReplicaMeta> replicaMetaEntry: replicaMetas.entrySet()) {
-            int replicaId = replicaMetaEntry.getKey();
-            FragmentReplicaMeta fragmentReplicaMeta = replicaMetaEntry.getValue().endFragmentReplicaMeta(endTime);
-            newReplicaMetas.put(replicaId, fragmentReplicaMeta);
-        }
-        return new FragmentMeta(this.key, this.startTime, endTime, newReplicaMetas);
-    }
-
     public int getReplicaMetasNum() {
         return replicaMetas.size();
     }
 
+    public FragmentMeta endFragmentMeta() {
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), Long.MAX_VALUE, replicaMetas);
+    }
+
+    public long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(long createdBy) {
+        this.createdBy = createdBy;
+    }
+
+    public long getUpdatedBy() {
+        return updatedBy;
+    }
+
+    public void setUpdatedBy(long updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 }

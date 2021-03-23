@@ -18,72 +18,111 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+
 import java.util.List;
+import java.util.Map;
 
 public interface IMetaManager {
 
     /**
-     * 获取当前所有的数据库实例的元信息
-     * @return 所有数据库实例的元信息（不包括每个数据库的分片列表）
+     * 新增存储引擎节点
      */
-    List<DatabaseMeta> getDatabaseList();
+    boolean addStorageEngine(StorageEngineMeta storageEngineMeta);
 
     /**
-     * 获取某个时序数据库的所有分片的元信息
-     * @param databaseId 时序数据库的 id
-     * @return 时序数据库的所有分片
+     * 获取所有的存储引擎实例的原信息（不包括每个存储引擎的分片列表）
      */
-    List<FragmentReplicaMeta> getFragmentListByDatabase(long databaseId);
+    List<StorageEngineMeta> getStorageEngineList();
+
+    /**
+     * 获取某个存储引擎的所有分片的元信息
+     */
+    List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long storageEngineId);
 
     /**
      * 获取所有活跃的 iginx 节点的元信息
-     * 创建新分片、判断是否需要转发请求时可能用到
-     * @return 活跃的 iginx 节点的元信息
      */
     List<IginxMeta> getIginxList();
 
     /**
-     * 获取某个 key 指定时间区间的所有主备分片
-     * @param key 分片 key
-     * @param startTime 开始时间（包含）
-     * @param endTime 结束时间（包含）
-     * @return 给定 key 指定时间区间的所有主备分片
+     * 获取当前 iginx 节点的 ID
      */
-    List<FragmentMeta> getFragmentListByKeyAndTimeInterval(String key, long startTime, long endTime);
+    long getIginxId();
 
     /**
-     * 获取某个 key 的所有主备分片
-     * @param key 分片 key
-     * @return 给定 key 所有主备分片
+     * 获取某个时间序列区间的所有分片
      */
-    List<FragmentMeta> getFragmentListByKey(String key);
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
-     * 获取某个 key 指定时间的主备分片
-     * @param key 分片 key
-     * @param time 给定时间（包含）
-     * @return 给定 key 给定时间主备分片
+     * 获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片）
      */
-    FragmentMeta getFragmentListByKeyAndTime(String key, long time);
+    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
-     * 针对某个前缀创造或追加一个分片
-     * 首次创建分片必须从时刻 0 开始
-     * 当追加分片时候，会自动将前一个分片的结束时间设置为当前分片的开始时间
-     * @param fragmentMeta 要创建的分片
+     * 获取全部最新的分片
      */
-    boolean createFragment(FragmentMeta fragmentMeta);
+    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
 
     /**
-     * 为新创建的分片选择数据库实例
-     * @return 选出的数据库实例 Id 列表
+     * 获取某个时间序列区间在某个时间区间的所有分片。
      */
-    List<Long> chooseDatabaseIdsForNewFragment();
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
+                                                                                                  TimeInterval timeInterval);
 
     /**
-     * 为 DatabasePlan 选择数据库实例
-     * @return 选出的数据库实例 Id
+     * 获取某个时间序列的所有分片（按照分片时间戳排序）
      */
-    long chooseDatabaseIdForDatabasePlan();
+    List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
+
+    /**
+     * 获取某个时间序列的最新分片
+     */
+    FragmentMeta getLatestFragmentByTimeSeriesName(String tsName);
+
+
+    /**
+     * 获取某个时间序列在某个时间区间的所有分片（按照分片时间戳排序）
+     */
+    List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
+
+    /**
+     * 创建分片
+     */
+    boolean createFragments(List<FragmentMeta> fragments);
+
+    /**
+     * 是否已经创建过分片
+     */
+    boolean hasFragment();
+
+    /**
+     * 尝试创建初始分片
+     */
+    boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments);
+
+    /**
+     * 为新创建的分片选择存储引擎实例
+     * @return 选出的存储引擎实例 Id 列表
+     */
+    List<Long> chooseStorageEngineIdListForNewFragment();
+
+    /**
+     * 为 DatabasePlan 选择存储引擎实例
+     * @return 选出的存储引擎实例 Id
+     */
+    long chooseStorageEngineIdForDatabasePlan();
+
+    Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime);
+
+    List<FragmentMeta> generateFragments(List<String> prefixList, long startTime);
+
+    void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 
 }

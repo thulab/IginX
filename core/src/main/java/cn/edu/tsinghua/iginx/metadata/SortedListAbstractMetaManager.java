@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadatav2;
+package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

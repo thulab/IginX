@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

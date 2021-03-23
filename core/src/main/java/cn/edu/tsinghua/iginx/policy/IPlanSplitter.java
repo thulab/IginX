@@ -18,8 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.policy;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;

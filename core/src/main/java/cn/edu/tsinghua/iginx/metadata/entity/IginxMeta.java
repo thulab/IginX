@@ -16,41 +16,52 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.Serializable;
 import java.util.Map;
 
-@Data
-@AllArgsConstructor
-public final class IginxMeta implements Serializable {
-
-    private static final Logger logger = LoggerFactory.getLogger(IginxMeta.class);
-
-    private static final long serialVersionUID = 3984654757395062391L;
+public final class IginxMeta {
 
     /**
      * iginx 的 id
      */
-    private long id;
+    private final long id;
 
     /**
      * iginx 所在 ip
      */
-    private String ip;
+    private final String ip;
 
     /**
      * iginx 对外暴露的端口
      */
-    private int port;
+    private final int port;
 
     /**
      * iginx 其他控制参数
      */
-    private Map<String, String> extraParams;
+    private final Map<String, String> extraParams;
+
+    public IginxMeta(long id, String ip, int port, Map<String, String> extraParams) {
+        this.id = id;
+        this.ip = ip;
+        this.port = port;
+        this.extraParams = extraParams;
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public Map<String, String> getExtraParams() {
+        return extraParams;
+    }
 }

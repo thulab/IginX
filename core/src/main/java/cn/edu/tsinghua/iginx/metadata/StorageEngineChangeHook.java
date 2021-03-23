@@ -1,6 +1,6 @@
-package cn.edu.tsinghua.iginx.metadatav2;
+package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 
 /**
  * Created on 16/03/2021.

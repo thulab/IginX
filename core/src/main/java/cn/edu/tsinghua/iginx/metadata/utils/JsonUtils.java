@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadatav2.utils;
+package cn.edu.tsinghua.iginx.metadata.utils;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

@@ -18,8 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import lombok.ToString;

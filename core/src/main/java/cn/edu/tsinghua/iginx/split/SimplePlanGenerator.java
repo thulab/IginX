@@ -28,7 +28,7 @@ import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;

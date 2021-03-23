@@ -20,8 +20,8 @@ package cn.edu.tsinghua.iginx.iotdb;
 
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.metadatav2.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;

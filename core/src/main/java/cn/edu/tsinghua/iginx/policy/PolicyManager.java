@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.policy;
 
-import cn.edu.tsinghua.iginx.metadatav2.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
