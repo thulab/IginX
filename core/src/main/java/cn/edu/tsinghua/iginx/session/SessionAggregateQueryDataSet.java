@@ -1,10 +1,8 @@
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
-import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -22,38 +20,7 @@ public class SessionAggregateQueryDataSet {
 		if (resp.timestamps != null) {
 			this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
 		}
-		parseValues(resp.dataTypeList, resp.valuesList);
-	}
-
-	private void parseValues(List<DataType> dataTypeList, ByteBuffer valuesList) {
-		values = new Object[paths.size()];
-		for (int i = 0; i < values.length; i++) {
-			switch (dataTypeList.get(i)) {
-				case BOOLEAN:
-					values[i] = valuesList.get() == 1;
-					break;
-				case INTEGER:
-					values[i] = valuesList.getInt();
-					break;
-				case LONG:
-					values[i] = valuesList.getLong();
-					break;
-				case FLOAT:
-					values[i] = valuesList.getFloat();
-					break;
-				case DOUBLE:
-					values[i] = valuesList.getDouble();
-					break;
-				case STRING:
-					int length = valuesList.getInt();
-					byte[] bytes = new byte[length];
-					valuesList.get(bytes, 0, length);
-					values[i] = new String(bytes, 0, length);
-					break;
-				default:
-					throw new UnsupportedDataTypeException(dataTypeList.get(i).toString());
-			}
-		}
+		values = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
 	}
 
 	public List<String> getPaths() {
