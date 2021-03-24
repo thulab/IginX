@@ -88,6 +88,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     private static final String SUM = "SELECT SUM(%s) FROM %s WHERE time >= %d and time <= %d";
 
+    // TODO 升级到0.11.3后删除
     private final Map<Long, StorageEngineMeta> storageEngineMetas;
 
     private final Map<Long, SessionPool> readSessionPools;

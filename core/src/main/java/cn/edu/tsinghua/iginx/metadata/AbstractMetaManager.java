@@ -271,7 +271,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         String[] storageEngineStrings = ConfigDescriptor.getInstance().getConfig()
                 .getStorageEngineList().split(",");
         for (int i = 0; i < storageEngineStrings.length; i++) {
-            String[] storageEngineParts = storageEngineStrings[i].split(":");
+            // TODO
+            String[] storageEngineParts = storageEngineStrings[i].split("#");
             String ip = storageEngineParts[0];
             int port = Integer.parseInt(storageEngineParts[1]);
             StorageEngine storageEngine = StorageEngine.fromString(storageEngineParts[2]);

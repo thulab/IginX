@@ -12,10 +12,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class IoTDBSessionExample {
+public class InfluxDBSessionExample {
 
 	private static Session session;
 
+	private static final String ORGANIZATION_NAME = "thss";
+	private static final String BUCKET_NAME = "iotdb";
 	private static final String DATABASE_NAME = "root.sg1";
 	private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
 	private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
@@ -28,19 +30,25 @@ public class IoTDBSessionExample {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
-		session.createDatabase(DATABASE_NAME);
 
-		addColumns();
-		insertRecords();
-		queryData();
-		aggregateQuery();
-		deleteDataInColumns();
-		queryData();
-		deleteColumns();
 
-		session.dropDatabase(DATABASE_NAME);
+//		session.createDatabase(DATABASE_NAME);
+//
+//		addColumns();
+//		insertRecords();
+//		queryData();
+//		aggregateQuery();
+//		deleteDataInColumns();
+//		queryData();
+//		deleteColumns();
+//
+//		session.dropDatabase(DATABASE_NAME);
 
 		session.closeSession();
+	}
+
+	private static void createDatabase() throws SessionException, ExecutionException {
+		session.createDatabase(ORGANIZATION_NAME + "$" + BUCKET_NAME);
 	}
 
 	private static void addColumns() throws SessionException, ExecutionException {

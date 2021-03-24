@@ -42,7 +42,8 @@ public class Config {
 
     private int replicaNum = 1;
 
-    private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
+    private String databaseClassName = "cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
+//    private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
 
