@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.ADD_COLUMNS;
 
@@ -64,8 +65,16 @@ public class AddColumnsPlan extends ColumnPlan {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
-		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		int startIndex = getPathsNum();
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;
+		for (int i = 0; i < getPathsNum(); i++) {
+			if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
+				startIndex = i;
+			}
+			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
+				endIndex = i;
+			}
+		}
 		return attributesList.subList(startIndex, endIndex + 1);
 	}
 }

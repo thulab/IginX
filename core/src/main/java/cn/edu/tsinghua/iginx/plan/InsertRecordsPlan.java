@@ -120,8 +120,16 @@ public class InsertRecordsPlan extends DataPlan {
 			logger.error("There are no values in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
-		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());;
+		int startIndex = getPathsNum();
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;
+		for (int i = 0; i < getPathsNum(); i++) {
+			if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
+				startIndex = i;
+			}
+			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
+				endIndex = i;
+			}
+		}
 		Object[] tempValues = new Object[endIndex - startIndex + 1];
 		for (int i = startIndex; i <= endIndex; i++) {
 			Object[] tempColValues;
@@ -174,8 +182,16 @@ public class InsertRecordsPlan extends DataPlan {
 			logger.error("There are no DataType in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
-		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		int startIndex = getPathsNum();
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;;
+		for (int i = 0; i < getPathsNum(); i++) {
+			if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
+				startIndex = i;
+			}
+			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
+				endIndex = i;
+			}
+		}
 		return dataTypeList.subList(startIndex, endIndex + 1);
 	}
 
@@ -200,8 +216,16 @@ public class InsertRecordsPlan extends DataPlan {
 			logger.info("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
-		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		int startIndex = getPathsNum();
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;
+		for (int i = 0; i < getPathsNum(); i++) {
+			if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
+				startIndex = i;
+			}
+			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
+				endIndex = i;
+			}
+		}
 		return attributesList.subList(startIndex, endIndex + 1);
 	}
 }
