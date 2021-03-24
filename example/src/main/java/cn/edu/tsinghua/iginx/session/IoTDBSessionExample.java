@@ -23,8 +23,6 @@ public class IoTDBSessionExample {
 	private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
-		ConfigDescriptor.getInstance().getConfig().setLevel(3);
-
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
