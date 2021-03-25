@@ -33,5 +33,6 @@ hs_err_pid*
 **/*.ipr
 **/*.iws
 
+**/lib/
 # build generated
 **/target/
