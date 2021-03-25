@@ -197,8 +197,8 @@ public class ByteUtils {
 					buffer.putDouble((double) value);
 					break;
 				case STRING:
-					buffer.putInt(((byte[]) value).length);
-					buffer.put((byte[]) value);
+					buffer.putInt(((String) value).getBytes().length);
+					buffer.put(((String) value).getBytes());
 					break;
 				default:
 					throw new UnsupportedOperationException(dataType.toString());
@@ -229,7 +229,7 @@ public class ByteUtils {
 					size += 8;
 					break;
 				case STRING:
-					size += 4 + ((byte[]) value).length;
+					size += 4 + ((String) value).getBytes().length;
 					break;
 				default:
 					throw new UnsupportedOperationException(dataType.toString());
@@ -277,8 +277,8 @@ public class ByteUtils {
 				break;
 			case STRING:
 				for (Object value : values) {
-					buffer.putInt(((byte[]) value).length);
-					buffer.put((byte[]) value);
+					buffer.putInt(((String) value).getBytes().length);
+					buffer.put(((String) value).getBytes());
 				}
 				break;
 			default:
@@ -322,9 +322,9 @@ public class ByteUtils {
 				buffer.putDouble((double) value);
 				break;
 			case STRING:
-				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
-				buffer.putInt(((byte[]) value).length);
-				buffer.put((byte[]) value);
+				buffer = ByteBuffer.allocate(4 + ((String) value).getBytes().length);
+				buffer.putInt(((String) value).getBytes().length);
+				buffer.put(((String) value).getBytes());
 				break;
 			default:
 				throw new UnsupportedOperationException(dataType.toString());
@@ -351,7 +351,7 @@ public class ByteUtils {
 			case STRING:
 				size += values.length * 4;
 				for (Object value : values) {
-					size += ((byte[]) value).length;
+					size += ((String) value).getBytes().length;
 				}
 				break;
 			default:
