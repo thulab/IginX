@@ -13,7 +13,7 @@ for f in ${IGINX_HOME}/core/lib/*.jar; do
   CLASSPATH=${CLASSPATH}":"$f
 done
 
-CLASSPATH=${CLASSPATH}":${IGINX_HOME}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar"
+CLASSPATH=${CLASSPATH}":${IGINX_HOME}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar"":${IGINX_HOME}/influxdb/target/influxdb-0.1.0-SNAPSHOT.jar"
 
 echo $CLASSPATH
 

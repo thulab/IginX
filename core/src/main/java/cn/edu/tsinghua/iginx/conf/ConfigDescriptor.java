@@ -53,13 +53,13 @@ public class ConfigDescriptor {
                     "127.0.0.1:2181"));
             config.setStorageEngineList(properties.getProperty("storageEngineList",
                     "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5"));
-            config.setLevel(Integer.parseInt(properties.getProperty("level", "2")));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
             config.setDatabaseClassName(properties.getProperty("databaseClassName", "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor"));
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
+            config.setToken(properties.getProperty("token", "token"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

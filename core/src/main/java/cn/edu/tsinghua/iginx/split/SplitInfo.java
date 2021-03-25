@@ -18,9 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 
 public class SplitInfo {
 

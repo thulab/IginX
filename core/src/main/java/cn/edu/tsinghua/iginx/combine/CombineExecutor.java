@@ -18,11 +18,18 @@
  */
 package cn.edu.tsinghua.iginx.combine;
 
+import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
 import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -35,6 +42,8 @@ import java.util.stream.Collectors;
 public class CombineExecutor implements ICombineExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(CombineExecutor.class);
+
+    private final AggregateCombiner aggregateCombiner = AggregateCombiner.getInstance();
 
     private final QueryDataSetCombiner queryDataSetCombiner = QueryDataSetCombiner.getInstance();
 
@@ -51,14 +60,46 @@ public class CombineExecutor implements ICombineExecutor {
 
         switch (requestContext.getType()) {
             case QueryData:
-                QueryDataResp resp = new QueryDataResp();
-                resp.setStatus(status);
+                QueryDataResp queryDataResp = new QueryDataResp();
+                queryDataResp.setStatus(status);
                 try {
-                    queryDataSetCombiner.combineResult(resp, planExecuteResults.stream().map(QueryDataPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    queryDataSetCombiner.combineResult(queryDataResp, planExecuteResults.stream().map(QueryDataPlanExecuteResult.class::cast).collect(Collectors.toList()));
                 } catch (ExecutionException e) {
                     logger.error("encounter error when combine query data results: ", e);
                 }
-                combineResult = new QueryDataCombineResult(status, resp);
+                combineResult = new QueryDataCombineResult(status, queryDataResp);
+                break;
+            case AggregateQuery:
+                AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
+                aggregateQueryResp.setStatus(status);
+                AggregateQueryReq req = ((AggregateQueryContext) requestContext).getReq();
+                switch (req.aggregateType) {
+                    case COUNT:
+                    case SUM:
+                        aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
+                                .map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case MAX:
+                        aggregateCombiner.combineMaxResult(aggregateQueryResp, planExecuteResults.stream()
+                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case MIN:
+                        aggregateCombiner.combineMinResult(aggregateQueryResp, planExecuteResults.stream()
+                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case FIRST:
+                        aggregateCombiner.combineFirstResult(aggregateQueryResp, planExecuteResults.stream()
+                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case LAST:
+                        aggregateCombiner.combineLastResult(aggregateQueryResp, planExecuteResults.stream()
+                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case AVG:
+                        aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
+                                .map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                }
+                combineResult = new AggregateCombineResult(status, aggregateQueryResp);
                 break;
             default:
                 combineResult = new NonDataCombineResult(status);

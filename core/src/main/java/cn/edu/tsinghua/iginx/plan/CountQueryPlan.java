@@ -11,12 +11,13 @@ public class CountQueryPlan extends AggregateQueryPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(CountQueryPlan.class);
 
-	protected CountQueryPlan(List<String> paths, long startTime, long endTime) {
+	public CountQueryPlan(List<String> paths, long startTime, long endTime) {
 		super(paths, startTime, endTime);
 		this.setIginxPlanType(COUNT);
 	}
 
-	protected CountQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		super(paths, startTime, endTime, storageEngineId);
+	public CountQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+		this(paths, startTime, endTime);
+		this.setStorageEngineId(storageEngineId);
 	}
 }

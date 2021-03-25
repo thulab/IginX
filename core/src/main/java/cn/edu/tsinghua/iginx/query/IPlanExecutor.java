@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.metadatav2.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 
 import java.util.List;

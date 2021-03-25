@@ -18,12 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.policy;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadatav2.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -57,6 +58,13 @@ public interface IPlanSplitter {
 	 * @return 拆分方式
 	 */
 	List<SplitInfo> getSplitInsertRecordsPlanResults(InsertRecordsPlan plan);
+
+	/**
+	 * 拆分 DeleteDataInColumnsPlan
+	 * @param plan 待拆分的 DeleteDataInColumnsPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDeleteDataInColumnsPlanResults(DeleteDataInColumnsPlan plan);
 
 	/**
 	 * 拆分 QueryDataPlan

@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +64,16 @@ public class AddColumnsPlan extends ColumnPlan {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = getPaths().indexOf(interval.getStartTimeSeries());
-		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : getPaths().indexOf(interval.getEndTimeSeries());
+		int startIndex = interval.getStartTimeSeries() == null ? 0 : getPathsNum();
+		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;
+		for (int i = 0; i < getPathsNum(); i++) {
+			if (interval.getStartTimeSeries() != null && getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
+				startIndex = i;
+			}
+			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
+				endIndex = i;
+			}
+		}
 		return attributesList.subList(startIndex, endIndex + 1);
 	}
 }

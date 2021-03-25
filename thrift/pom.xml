@@ -10,6 +10,7 @@
         <version>0.1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
+
     <artifactId>iginx-thrift</artifactId>
     <name>IginX Thrift</name>
 
@@ -168,8 +169,6 @@
                                     <generator>java</generator>
                                     <thriftExecutable>${thrift.exec.absolute.path}</thriftExecutable>
                                     <thriftSourceRoot>src/main/proto</thriftSourceRoot>
-                                    <!-->指定代码生成到 src下 -->
-                                    <outputDirectory>${basedir}/src/main/java</outputDirectory>
                                 </configuration>
                             </execution>
                         </executions>

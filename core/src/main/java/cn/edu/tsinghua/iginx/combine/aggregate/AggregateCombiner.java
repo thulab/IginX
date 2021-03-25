@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.combine.aggregate;
 
-import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.query.result.AggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
@@ -184,10 +183,49 @@ public class AggregateCombiner {
         resp.valuesList = ByteUtils.getByteBuffer(values, dataTypes);
     }
 
-    private void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
         constructPathAndTypeList(resp, planExecuteResults);
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
+        Map<String, Pair<DataType, List<Pair<Long, Object>>>> pathsRawData = new HashMap<>();
+        for (AvgAggregateQueryPlanExecuteResult planExecuteResult: planExecuteResults) {
+            List<String> subPaths = planExecuteResult.getPaths();
+            List<DataType> subDataTypes = planExecuteResult.getDataTypes();
+            List<Long> subCounts = planExecuteResult.getCounts();
+            List<Object> subSums = planExecuteResult.getSums();
+            for (int i = 0; i < subPaths.size(); i++) {
+                DataType dataType = subDataTypes.get(i);
+                Long subCount = subCounts.get(i);
+                Object subSum = subSums.get(i);
+                pathsRawData.computeIfAbsent(subPaths.get(i), e -> new Pair<>(dataType, new ArrayList<>()))
+                        .v.add(new Pair<>(subCount, subSum));
+            }
+        }
+        Object[] values = new Object[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            Pair<DataType, List<Pair<Long, Object>>> pair = pathsRawData.get(paths.get(i));
+            long count = pair.v.stream().map(e -> e.k).reduce(0L, Long::sum);
+            Object avg = null;
+            switch (pair.k) {
+                case INTEGER:
+                    avg = pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count;
+                    dataTypes.set(i, DataType.LONG);
+                    break;
+                case LONG:
+                    avg = pair.v.stream().map(e -> e.v).map(Long.class::cast).reduce(0L, Long::sum) / count;
+                    break;
+                case FLOAT:
+                    avg = pair.v.stream().map(e -> e.v).map(Float.class::cast).reduce(0.0f, Float::sum) / count;
+                    break;
+                case DOUBLE:
+                    avg = pair.v.stream().map(e -> e.v).map(Double.class::cast).reduce(0.0, Double::sum) / count;
+                    break;
+                default:
+                    logger.error("unsupported datatype: " + pair.k);
+            }
+            values[i] = avg;
+        }
+        resp.valuesList = ByteUtils.getByteBuffer(values, dataTypes);
     }
 
     public static AggregateCombiner getInstance() {

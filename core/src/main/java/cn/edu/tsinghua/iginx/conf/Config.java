@@ -32,8 +32,6 @@ public class Config {
 
     private String storageEngineList = "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5";
 
-    private int level = 2;
-
     private int maxAsyncRetryTimes = 2;
 
     private int syncExecuteThreadPool = 60;
@@ -45,6 +43,8 @@ public class Config {
     private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
+
+    private String token = "token";
 
     public String getIp() {
         return ip;
@@ -94,14 +94,6 @@ public class Config {
         this.storageEngineList = storageEngineList;
     }
 
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
-    }
-
     public int getMaxAsyncRetryTimes() {
         return maxAsyncRetryTimes;
     }
@@ -148,5 +140,13 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

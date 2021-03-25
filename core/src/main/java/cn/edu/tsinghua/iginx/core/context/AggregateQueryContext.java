@@ -19,13 +19,25 @@
 package cn.edu.tsinghua.iginx.core.context;
 
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
+@EqualsAndHashCode(callSuper = true)
+@Data
 public class AggregateQueryContext extends RequestContext {
 
     private AggregateQueryReq req;
 
     public AggregateQueryContext(AggregateQueryReq req) {
         super(req.sessionId, ContextType.AggregateQuery);
+        this.req = req;
     }
 
+    public AggregateQueryReq getReq() {
+        return req;
+    }
+
+    public void setReq(AggregateQueryReq req) {
+        this.req = req;
+    }
 }

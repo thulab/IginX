@@ -18,11 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadatav2.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.NON_DATABASE;
 
@@ -71,9 +72,15 @@ public abstract class NonDatabasePlan extends IginxPlan {
 			logger.error("There are no paths in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = paths.indexOf(interval.getStartTimeSeries());
-		int endIndex = interval.getEndTimeSeries() == null ? paths.size() - 1 : paths.indexOf(interval.getEndTimeSeries());
-		return paths.subList(startIndex, endIndex + 1);
+		if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
+			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0 && x.compareTo(interval.getEndTimeSeries()) <= 0).collect(Collectors.toList());
+		} else if (interval.getStartTimeSeries() != null){
+			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
+		} else if (interval.getEndTimeSeries() != null) {
+			return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) <= 0).collect(Collectors.toList());
+		} else {
+			return paths;
+		}
 	}
 
 	public String getStartPath() {
