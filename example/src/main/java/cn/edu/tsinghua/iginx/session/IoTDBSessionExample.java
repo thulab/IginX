@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;

@@ -30,5 +30,6 @@ public class DropDatabasePlan extends DatabasePlan {
 	public DropDatabasePlan(String databaseName) {
 		super(false, databaseName);
 		this.setIginxPlanType(DROP_DATABASE);
+		this.setSync(true);
 	}
 }

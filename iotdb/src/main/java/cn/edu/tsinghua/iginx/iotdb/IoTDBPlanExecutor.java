@@ -74,6 +74,8 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBPlanExecutor.class);
 
+    private static final int BATCH_SIZE = 10000;
+
     private static final String MAX = "SELECT MAX_TIME(%s), MAX_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
 
     private static final String MIN = "SELECT MIN_TIME(%s), MIN_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
@@ -152,28 +154,40 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             tablets.put(measurements.getKey(), new Tablet(measurements.getKey(), measurementSchemaList));
         }
 
-        // 插入 timestamps
-        for (int i = 0; i < plan.getTimestamps().length; i++) {
-            for (Map.Entry<String, Tablet> tablet : tablets.entrySet()) {
-                int row = tablet.getValue().rowSize++;
-                tablet.getValue().addTimestamp(row, plan.getTimestamp(i));
+        int cnt = 0;
+        while (true) {
+            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+            // 插入 timestamps
+            for (int i = cnt; i < size; i++) {
+                for (Map.Entry<String, Tablet> tablet : tablets.entrySet()) {
+                    int row = tablet.getValue().rowSize++;
+                    tablet.getValue().addTimestamp(row, plan.getTimestamp(i));
+                }
             }
-        }
 
-        // 插入 values
-        for (int i = 0; i < plan.getValuesList().length; i++) {
-            Object[] values = (Object[]) plan.getValuesList()[i];
-            String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
-            String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
-            for (int j = 0; j < values.length; j++) {
-                tablets.get(deviceId).addValue(measurement, j, values[j]);
+            // 插入 values
+            for (int i = 0; i < plan.getValuesList().length; i++) {
+                Object[] values = (Object[]) plan.getValuesList()[i];
+                String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
+                String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
+                for (int j = cnt; j < size; j++) {
+                    tablets.get(deviceId).addValue(measurement, j, values[j]);
+                }
             }
-        }
 
-        try {
-            sessionPool.insertTablets(tablets);
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
+            try {
+                sessionPool.insertTablets(tablets);
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                logger.error(e.getMessage());
+            }
+
+            for (Tablet tablet : tablets.values()) {
+                tablet.reset();
+            }
+            cnt += size;
+            if (cnt >= plan.getTimestamps().length) {
+                break;
+            }
         }
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);

@@ -30,5 +30,6 @@ public class CreateDatabasePlan extends DatabasePlan {
 	public CreateDatabasePlan(String databaseName) {
 		super(false, databaseName);
 		this.setIginxPlanType(CREATE_DATABASE);
+		this.setSync(true);
 	}
 }
