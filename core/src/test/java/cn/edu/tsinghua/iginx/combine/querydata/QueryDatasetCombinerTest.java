@@ -81,11 +81,11 @@ public class QueryDatasetCombinerTest {
         paths2.add("root.sg2.d1.s2");
         dataTypes2.add(DataType.STRING);
 
-        List<List<Object>> valuesList3 = Arrays.asList(Arrays.asList(0L, true, "OK1".getBytes(StandardCharsets.UTF_8)), Arrays.asList(1L, true, "OK2".getBytes(StandardCharsets.UTF_8)));
+        List<List<Object>> valuesList3 = Arrays.asList(Arrays.asList(0L, true, "OK1"), Arrays.asList(1L, true, "OK2"));
         QueryExecuteDataSet stub3 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList3);
         QueryDataPlanExecuteResult result3 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, stub3);
 
-        List<List<Object>> valuesList4 = Arrays.asList(Arrays.asList(10L, false, "OK3".getBytes(StandardCharsets.UTF_8)), Arrays.asList(12L, false, "OK4".getBytes(StandardCharsets.UTF_8)));
+        List<List<Object>> valuesList4 = Arrays.asList(Arrays.asList(10L, false, "OK3"), Arrays.asList(12L, false, "OK4"));
         QueryExecuteDataSet stub4 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList4);
         QueryDataPlanExecuteResult result4 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, stub4);
 

@@ -37,9 +37,9 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
-import cn.edu.tsinghua.iginx.query.aysnc.queue.AsyncTaskQueue;
-import cn.edu.tsinghua.iginx.query.aysnc.queue.MemoryAsyncTaskQueue;
-import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
+import cn.edu.tsinghua.iginx.query.async.queue.AsyncTaskQueue;
+import cn.edu.tsinghua.iginx.query.async.queue.MemoryAsyncTaskQueue;
+import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 import cn.edu.tsinghua.iginx.query.result.AsyncPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
@@ -84,6 +84,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                     SyncPlanExecuteResult planExecuteResult = null;
                     switch (plan.getIginxPlanType()) {
                         case INSERT_RECORDS:
+                            logger.info("execute async insert task");
                             planExecuteResult = syncExecuteInsertRecordsPlan((InsertRecordsPlan) plan);
                             break;
                         case ADD_COLUMNS:

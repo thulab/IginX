@@ -16,16 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.aysnc.queue;
+package cn.edu.tsinghua.iginx.query.async.queue;
 
-import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
+import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
 
-    private final Queue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
+    private static final Logger logger = LoggerFactory.getLogger(MemoryAsyncTaskQueue.class);
+
+    private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
 
     @Override
     public boolean addAsyncTask(AsyncTask asyncTask) {
@@ -34,6 +38,11 @@ public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
 
     @Override
     public AsyncTask getAsyncTask() {
-        return asyncTasks.remove();
+        try {
+            return asyncTasks.take();
+        } catch (Exception e) {
+            logger.error("encounter error when get async task: ", e);
+        }
+        return null;
     }
 }

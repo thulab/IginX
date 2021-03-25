@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.aysnc.queue;
+package cn.edu.tsinghua.iginx.query.async.queue;
 
-import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
+import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 
 public interface AsyncTaskQueue {
 
