@@ -10,7 +10,6 @@ import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.tsfile.read.common.Field;
-import org.apache.iotdb.tsfile.utils.Binary;
 
 import java.util.ArrayList;
 import java.util.List;

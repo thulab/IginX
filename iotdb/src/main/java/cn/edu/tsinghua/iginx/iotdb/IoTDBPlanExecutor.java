@@ -152,14 +152,14 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             for (int i = 0; i < measurements.getValue().size(); i++) {
                 measurementSchemaList.add(new MeasurementSchema(measurements.getValue().get(i), typesMap.get(measurements.getKey()).get(i)));
             }
-            tablets.put(measurements.getKey(), new Tablet(measurements.getKey(), measurementSchemaList));
+            tablets.put(measurements.getKey(), new Tablet(measurements.getKey(), measurementSchemaList, BATCH_SIZE));
         }
 
         int cnt = 0;
         while (true) {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
             // 插入 timestamps
-            for (int i = cnt; i < size; i++) {
+            for (int i = cnt; i < cnt + size; i++) {
                 for (Map.Entry<String, Tablet> tablet : tablets.entrySet()) {
                     int row = tablet.getValue().rowSize++;
                     tablet.getValue().addTimestamp(row, plan.getTimestamp(i));
