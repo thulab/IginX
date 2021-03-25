@@ -10,10 +10,13 @@ import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.tsfile.read.common.Field;
+import org.apache.iotdb.tsfile.utils.Binary;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
 
 public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
@@ -52,7 +55,11 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 			RowRecord rowRecord = new RowRecord(iotdbRowRecord.getTimestamp());
 			List<Object> fields = new ArrayList<>();
 			for (Field field : iotdbRowRecord.getFields()) {
-				fields.add(field.getObjectValue(field.getDataType()));
+				if (field.getDataType() == TEXT) {
+					fields.add(field.getBinaryV().getStringValue());
+				} else {
+					fields.add(field.getObjectValue(field.getDataType()));
+				}
 			}
 			rowRecord.setFields(fields);
 			return rowRecord;

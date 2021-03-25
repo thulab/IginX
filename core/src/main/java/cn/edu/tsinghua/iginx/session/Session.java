@@ -40,6 +40,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -49,6 +50,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -215,6 +218,29 @@ public class Session {
 
 	public void insertRecords(List<String> paths, long[] timestamps, Object[] valuesList,
 	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+		if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
+			logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
+			return;
+		}
+		if (attributesList != null && paths.size() != attributesList.size()) {
+			logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+			return;
+		}
+
+		Integer[] index = new Integer[timestamps.length];
+		for (int i = 0; i < timestamps.length; i++) {
+			index[i] = i;
+		}
+		Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+		Arrays.sort(timestamps);
+		for (int i = 0; i < valuesList.length; i++) {
+			Object[] values = new Object[index.length];
+			for (int j = 0; j < index.length; j++) {
+				values[j] = ((Object[]) valuesList[i])[index[j]];
+			}
+			valuesList[i] = values;
+		}
+
 		InsertRecordsReq req = new InsertRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
