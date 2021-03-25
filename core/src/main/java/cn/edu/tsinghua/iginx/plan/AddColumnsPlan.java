@@ -64,10 +64,10 @@ public class AddColumnsPlan extends ColumnPlan {
 			logger.error("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = getPathsNum();
+		int startIndex = interval.getStartTimeSeries() == null ? 0 : getPathsNum();
 		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;
 		for (int i = 0; i < getPathsNum(); i++) {
-			if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
+			if (interval.getStartTimeSeries() != null && getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
 				startIndex = i;
 			}
 			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
