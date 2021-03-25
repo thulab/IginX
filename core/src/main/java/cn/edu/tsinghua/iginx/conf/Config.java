@@ -40,10 +40,11 @@ public class Config {
 
     private int replicaNum = 1;
 
-    private String databaseClassName = "cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
-//    private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
+    private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
+
+    private String token = "token";
 
     public String getIp() {
         return ip;
@@ -139,5 +140,13 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }

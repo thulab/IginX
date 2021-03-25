@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
@@ -8,39 +7,34 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class InfluxDBSessionExample {
 
 	private static Session session;
 
-	private static final String ORGANIZATION_NAME = "thss";
-	private static final String BUCKET_NAME = "iotdb";
-	private static final String DATABASE_NAME = "root.sg1";
-	private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
-	private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
-	private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
-	private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
+	private static final String ORGANIZATION_NAME = "my-second-org";
+	private static final String BUCKET_NAME = "my-second-bucket";
+
+	// measurement tag(key-value) field
+	private static final String TS1 = "census.location-klamath.scientist-anderson.ants";
+	private static final String TS2 = "census.location-klamath.scientist-anderson.bees";
+	private static final String TS3 = "census.location-portland.scientist-mullen.ants";
+	private static final String TS4 = "census.location-portland.scientist-mullen.bees";
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
+//		createDatabase();
 
-
-//		session.createDatabase(DATABASE_NAME);
-//
-//		addColumns();
-//		insertRecords();
-//		queryData();
+		insertRecords();
+		queryData();
 //		aggregateQuery();
 //		deleteDataInColumns();
 //		queryData();
-//		deleteColumns();
-//
-//		session.dropDatabase(DATABASE_NAME);
+
+//		dropDatabase();
 
 		session.closeSession();
 	}
@@ -49,35 +43,16 @@ public class InfluxDBSessionExample {
 		session.createDatabase(ORGANIZATION_NAME + "$" + BUCKET_NAME);
 	}
 
-	private static void addColumns() throws SessionException, ExecutionException {
-		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
-
-		Map<String, String> attributesForOnePath = new HashMap<>();
-		// INT64
-		attributesForOnePath.put("DataType", "2");
-		// RLE
-		attributesForOnePath.put("Encoding", "2");
-		// SNAPPY
-		attributesForOnePath.put("Compression", "1");
-
-		List<Map<String, String>> attributes = new ArrayList<>();
-		for (int i = 0; i < 4; i++) {
-			attributes.add(attributesForOnePath);
-		}
-
-		session.addColumns(paths, attributes);
+	private static void dropDatabase() throws SessionException, ExecutionException {
+		session.dropDatabase(ORGANIZATION_NAME + "$" + BUCKET_NAME);
 	}
 
 	private static void insertRecords() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(TS1);
+		paths.add(TS2);
+		paths.add(TS3);
+		paths.add(TS4);
 
 		long[] timestamps = new long[100];
 		for (long i = 0; i < 100; i++) {
@@ -103,12 +78,12 @@ public class InfluxDBSessionExample {
 
 	private static void queryData() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(TS1);
+		paths.add(TS2);
+		paths.add(TS3);
+		paths.add(TS4);
 
-		long startTime = 5L;
+		long startTime = 0L;
 		long endTime = 55L;
 
 		SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
@@ -117,9 +92,9 @@ public class InfluxDBSessionExample {
 
 	private static void deleteDataInColumns() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(TS1);
+		paths.add(TS2);
+		paths.add(TS3);
 
 		long startTime = 25L;
 		long endTime = 30L;
@@ -127,22 +102,12 @@ public class InfluxDBSessionExample {
 		session.deleteDataInColumns(paths, startTime, endTime);
 	}
 
-	private static void deleteColumns() throws SessionException, ExecutionException {
-		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
-
-		session.deleteColumns(paths);
-	}
-
 	private static void aggregateQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(TS1);
+		paths.add(TS2);
+		paths.add(TS3);
+		paths.add(TS4);
 
 		long startTime = 5L;
 		long endTime = 55L;

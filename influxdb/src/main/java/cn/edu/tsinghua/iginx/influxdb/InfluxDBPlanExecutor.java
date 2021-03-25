@@ -1,6 +1,9 @@
 package cn.edu.tsinghua.iginx.influxdb;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
+import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
@@ -27,9 +30,14 @@ import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.domain.Bucket;
 import com.influxdb.client.domain.Organization;
+import com.influxdb.client.domain.WritePrecision;
+import com.influxdb.client.write.Point;
+import com.influxdb.query.FluxTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -41,6 +49,8 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 
 	private static final Logger logger = LoggerFactory.getLogger(InfluxDBPlanExecutor.class);
 
+	private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => r._measurement == \"%s\" and r._field == \"%s\" %s)";
+
 	private Map<Long, InfluxDBClient> storageEngineIdToClient;
 
 	private void createConnection(StorageEngineMeta storageEngineMeta) {
@@ -50,12 +60,8 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 		}
 		Map<String, String> extraParams = storageEngineMeta.getExtraParams();
 		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
-		InfluxDBClient client;
-		if (extraParams.containsKey("username") && extraParams.containsKey("password")) {
-			client = InfluxDBClientFactory.create(url, extraParams.get("username"), extraParams.get("password").toCharArray());
-		} else {
-			client = InfluxDBClientFactory.create(url);
-		}
+		// TODO 处理 token
+		InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getToken().toCharArray());
 		storageEngineIdToClient.put(storageEngineMeta.getId(), client);
 	}
 
@@ -68,13 +74,89 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 
 	@Override
 	protected NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		// TODO 处理 organization 和 bucket 名称
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals("my-org"))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+		Bucket bucket = client.getBucketsApi()
+				.findBucketsByOrgName("my-org").stream()
+				.filter(b -> b.getName().equals("my-bucket"))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
 
-		return null;
+		List<Point> points = new ArrayList<>();
+		for (int i = 0; i < plan.getPathsNum(); i++) {
+			String[] elements = plan.getPath(i).split("\\.");
+			String measurement = elements[0];
+			String field = elements[elements.length - 1];
+			Map<String, String> tags = new HashMap<>();
+			for (int j = 1; j < elements.length - 1; j++) {
+				String[] entry = elements[j].split("-");
+				tags.put(entry[0], entry[1]);
+			}
+			Object[] values = (Object[]) (plan.getValuesList()[i]);
+			for (int j = 0; j < plan.getTimestamps().length; j++) {
+				// TODO 增加处理精度
+				switch (plan.getDataType(i)) {
+					case BOOLEAN:
+						points.add(Point.measurement(measurement).addTags(tags).addField(field, (boolean) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
+						break;
+					case INTEGER:
+						points.add(Point.measurement(measurement).addTags(tags).addField(field, (int) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
+						break;
+					case LONG:
+						points.add(Point.measurement(measurement).addTags(tags).addField(field, (long) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
+						break;
+					case FLOAT:
+						points.add(Point.measurement(measurement).addTags(tags).addField(field, (float) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
+						break;
+					case DOUBLE:
+						points.add(Point.measurement(measurement).addTags(tags).addField(field, (double) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
+						break;
+					case STRING:
+						points.add(Point.measurement(measurement).addTags(tags).addField(field, (String) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
+						break;
+					default:
+						throw new UnsupportedDataTypeException(plan.getDataType(i).toString());
+				}
+			}
+		}
+		client.getWriteApi().writePoints(bucket.getId(), organization.getId(), points);
+		return new NonDataPlanExecuteResult(SUCCESS, plan);
 	}
 
 	@Override
 	protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals("my-org"))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<FluxTable> tableList = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String measurement = elements[0];
+			String field = elements[elements.length - 1];
+			StringBuilder tag = new StringBuilder();
+			for (int i = 1; i < elements.length - 1; i++) {
+				String[] entry = elements[i].split("-");
+				tag.append("and ");
+				tag.append(entry[0]);
+				tag.append(" == \"");
+				tag.append(entry[1]);
+				tag.append("\"");
+			}
+			// TODO 处理时间戳
+			List<FluxTable> tables = client.getQueryApi().query(String.format(QUERY_DATA, "my-bucket", plan.getStartTime(), plan.getEndTime(), measurement, field, tag), organization.getId());
+			tableList.addAll(tables);
+		}
+
+		return new QueryDataPlanExecuteResult(SUCCESS, plan, new InfluxDBQueryExecuteDataSet(tableList));
 	}
 
 	@Override
@@ -109,13 +191,17 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	@Override
 	protected NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
-		Bucket bucket;
-		if ((bucket = client.getBucketsApi().findBucketByName(plan.getDatabaseName())) != null) {
-			client.getBucketsApi().deleteBucket(bucket);
-			return new NonDataPlanExecuteResult(SUCCESS, plan);
-		} else {
-			return new NonDataPlanExecuteResult(FAILURE, plan);
+		// TODO 用 $ 分隔
+		String organizationName = plan.getDatabaseName().substring(0, plan.getDatabaseName().indexOf("$"));
+		String bucketName = plan.getDatabaseName().substring(plan.getDatabaseName().indexOf("$") + 1);
+		List<Bucket> buckets = client.getBucketsApi().findBucketsByOrgName(organizationName);
+		for (Bucket bucket : buckets) {
+			if (bucketName.equals(bucket.getName())) {
+				client.getBucketsApi().deleteBucket(bucket);
+				return new NonDataPlanExecuteResult(SUCCESS, plan);
+			}
 		}
+		return new NonDataPlanExecuteResult(FAILURE, plan);
 	}
 
 	@Override
