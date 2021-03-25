@@ -54,6 +54,7 @@ import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
+import org.apache.iotdb.tsfile.utils.Binary;
 import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
 import org.slf4j.Logger;
@@ -170,8 +171,13 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 Object[] values = (Object[]) plan.getValuesList()[i];
                 String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
                 String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
+                boolean isString = values[0] instanceof String;
                 for (int j = cnt; j < size; j++) {
-                    tablets.get(deviceId).addValue(measurement, j, values[j]);
+                    if (isString) {
+                        tablets.get(deviceId).addValue(measurement, j, new Binary((String) values[j]));
+                    } else {
+                        tablets.get(deviceId).addValue(measurement, j, values[j]);
+                    }
                 }
             }
 
