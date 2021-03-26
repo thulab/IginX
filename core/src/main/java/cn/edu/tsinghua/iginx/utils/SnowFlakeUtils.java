@@ -23,7 +23,7 @@ public class SnowFlakeUtils {
     private static SnowFlakeUtils instance;
 
     // 起始的时间戳
-    private final static long START_STAMP = 1480166465631L;
+    private final static long START_STAMP = 0L;
 
     // 每一部分占用的位数，就三个
     private final static long SEQUENCE_BIT = 12;// 序列号占用的位数

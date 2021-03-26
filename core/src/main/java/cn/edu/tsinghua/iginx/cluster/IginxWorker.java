@@ -76,12 +76,17 @@ public class IginxWorker implements IService.Iface {
 		logger.info("received open session request");
 		if (!req.username.equals(ConfigDescriptor.getInstance().getConfig().getUsername()) ||
 				!req.password.equals(ConfigDescriptor.getInstance().getConfig().getPassword())) {
+			logger.warn("wrong password or username");
 			return new OpenSessionResp(RpcUtils.WRONG_PASSWORD);
 		}
+		logger.info("start to generate test id");
 		long id = SnowFlakeUtils.getInstance().nextId();
+		logger.info("generate session id: " + id);
 		sessions.add(id);
+		logger.info("add session " + id + " into set");
 		OpenSessionResp resp = new OpenSessionResp(RpcUtils.SUCCESS);
 		resp.setSessionId(id);
+		logger.info("return request");
 		return resp;
 	}
 
