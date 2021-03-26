@@ -196,6 +196,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
             AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()));
             subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
 
