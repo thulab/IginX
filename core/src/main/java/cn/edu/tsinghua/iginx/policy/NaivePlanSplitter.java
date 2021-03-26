@@ -37,6 +37,8 @@ import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -50,6 +52,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class NaivePlanSplitter implements IPlanSplitter {
+
+    private static final Logger logger = LoggerFactory.getLogger(NaivePlanSplitter.class);
 
     private final IMetaManager iMetaManager;
 
@@ -125,7 +129,14 @@ public class NaivePlanSplitter implements IPlanSplitter {
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
+                Set<Long> storageEngineIds = new HashSet<>();
                 for (FragmentReplicaMeta replica : replicas) {
+                    if (storageEngineIds.contains(replica.getStorageEngineId())) {
+                        logger.info("storage engine id " + replica.getStorageEngineId() + " is duplicated.");
+                        continue;
+                    }
+                    storageEngineIds.add(replica.getStorageEngineId());
+                    logger.info("add storage engine id " + replica.getStorageEngineId() + " to duplicate remove set.");
                     infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replica));
                 }
             }
