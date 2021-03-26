@@ -29,6 +29,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
@@ -58,8 +59,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesListByDataType;
@@ -77,16 +78,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
         switch (requestContext.getType()) {
             case CreateDatabase:
                 CreateDatabaseReq createDatabaseReq = ((CreateDatabaseContext) requestContext).getReq();
-                CreateDatabasePlan createDatabasePlan = new CreateDatabasePlan(createDatabaseReq.getDatabaseName());
-                // TODO 所有 StorageEngine 都应执行 CreateDatabase 操作
-                createDatabasePlan.setStorageEngineId(SortedListAbstractMetaManager.getInstance().chooseStorageEngineIdForDatabasePlan());
-                return Collections.singletonList(createDatabasePlan);
+                return SortedListAbstractMetaManager.getInstance().getStorageEngineList().stream().map(StorageEngineMeta::getId)
+                        .map(e -> new CreateDatabasePlan(createDatabaseReq.getDatabaseName(), e)).collect(Collectors.toList());
             case DropDatabase:
                 DropDatabaseReq dropDatabaseReq = ((DropDatabaseContext) requestContext).getReq();
-                DropDatabasePlan dropDatabasePlan = new DropDatabasePlan(dropDatabaseReq.getDatabaseName());
-                // TODO 所有 StorageEngine 都应执行 DropDatabase 操作
-                dropDatabasePlan.setStorageEngineId(SortedListAbstractMetaManager.getInstance().chooseStorageEngineIdForDatabasePlan());
-                return Collections.singletonList(dropDatabasePlan);
+                return SortedListAbstractMetaManager.getInstance().getStorageEngineList().stream().map(StorageEngineMeta::getId)
+                        .map(e -> new DropDatabasePlan(dropDatabaseReq.getDatabaseName(), e)).collect(Collectors.toList());
             case AddColumns:
                 AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
                 AddColumnsPlan addColumnsPlan = new AddColumnsPlan(addColumnsReq.getPaths(), addColumnsReq.getAttributesList());

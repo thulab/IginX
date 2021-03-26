@@ -32,4 +32,10 @@ public class DropDatabasePlan extends DatabasePlan {
 		this.setIginxPlanType(DROP_DATABASE);
 		this.setSync(true);
 	}
+
+	public DropDatabasePlan(String databaseName, long storageEngineId) {
+		this(databaseName);
+		setStorageEngineId(storageEngineId);
+	}
+
 }
