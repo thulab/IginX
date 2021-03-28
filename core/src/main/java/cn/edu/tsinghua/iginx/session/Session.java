@@ -40,6 +40,8 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
@@ -50,6 +52,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -57,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBufferByDataType;
 
 public class Session {
@@ -272,10 +276,32 @@ public class Session {
 			return;
 		}
 
+		List<ByteBuffer> valueBufferList = new ArrayList<>();
+		List<ByteBuffer> bitmapBufferList = new ArrayList<>();
+		for (int i = 0; i < timestamps.length; i++) {
+			Object[] values = (Object[]) valuesList[i];
+			if (values.length != paths.size()) {
+				logger.error("The sizes of paths and the element of valuesList should be equal.");
+				return;
+			}
+			valueBufferList.add(getByteBuffer(values, dataTypeList));
+			Bitmap bitmap = new Bitmap(values.length);
+			for (int j = 0; j < values.length; j++) {
+				if (values[j] != null) {
+					bitmap.mark(j);
+				}
+			}
+			bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
+		}
+
 		InsertRowRecordsReq req = new InsertRowRecordsReq();
 		req.setSessionId(sessionId);
-
-		// TODO: 封装请求数据
+		req.setPaths(paths);
+		req.setTimestamps(getByteArrayFromLongArray(timestamps));
+		req.setDataTypeList(dataTypeList);
+		req.setAttributesList(attributesList);
+		req.setValuesList(valueBufferList);
+		req.setBitmapList(bitmapBufferList);
 
 		try {
 			RpcUtils.verifySuccess(client.insertRowRecords(req));
