@@ -105,7 +105,7 @@ public class IoTDBAfterDilatationExample {
                 }
                 valuesList[k] = values;
             }
-            session.insertRecords(paths, timestamps, valuesList, dataTypeList, null);
+            session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
             Thread.sleep(1);
             if ((i + 1) % 10 == 0) {
                 logger.info("insert progress: " + (i + 1) + "/1000.");

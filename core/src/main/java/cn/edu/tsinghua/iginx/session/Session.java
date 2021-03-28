@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -216,8 +217,8 @@ public class Session {
 		}
 	}
 
-	public void insertRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+	public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+									List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
 		if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
 			logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
 			return;
@@ -251,6 +252,33 @@ public class Session {
 
 		try {
 			RpcUtils.verifySuccess(client.insertColumnRecords(req));
+		} catch (TException e) {
+			throw new SessionException(e);
+		}
+	}
+
+	public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+								 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+		if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
+			logger.error("The sizes of paths and dataTypeList should be equal.");
+			return;
+		}
+		if (timestamps.length != valuesList.length) {
+			logger.error("The sizes of timestamps and valuesList should be equal.");
+			return;
+		}
+		if (attributesList != null && paths.size() != attributesList.size()) {
+			logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+			return;
+		}
+
+		InsertRowRecordsReq req = new InsertRowRecordsReq();
+		req.setSessionId(sessionId);
+
+		// TODO: 封装请求数据
+
+		try {
+			RpcUtils.verifySuccess(client.insertRowRecords(req));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}

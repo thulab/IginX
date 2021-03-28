@@ -106,7 +106,7 @@ public class IoTDBBeforeDilatationExample {
                 }
                 valuesList[k] = values;
             }
-            session.insertRecords(paths, timestamps, valuesList, dataTypeList, null);
+            session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
             Thread.sleep(1);
             if ((1000 - i + 1) % 10 == 0) {
                 logger.info("insert progress: " + (1000 - i + 1) + "/1000.");
