@@ -467,8 +467,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments) {
-        if (hasFragment())
-            return false;
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -477,6 +475,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta: initialFragments) {
+                logger.info("create initial fragment: " + new String(JsonUtils.toJson(fragmentMeta)));
                 String tsIntervalName = fragmentMeta.getTsInterval().toString();
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地

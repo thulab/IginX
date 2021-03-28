@@ -76,19 +76,24 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
             sortedFragmentMetaLists.add(pair);
             return;
         }
-        int left = 0, right = sortedFragmentMetaLists.size();
-        while (left <= right && left < sortedFragmentMetaLists.size()) {
+        int left = 0, right = sortedFragmentMetaLists.size() - 1;
+        while (left <= right) {
             int mid = (left + right) / 2;
             TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
             if (tsInterval.compareTo(midTsInterval) < 0) {
-                left = mid + 1;
-            } else if (tsInterval.compareTo(midTsInterval) > 0) {
                 right = mid - 1;
+            } else if (tsInterval.compareTo(midTsInterval) > 0) {
+                left = mid + 1;
             } else {
                 throw new RuntimeException("unexpected fragment");
             }
         }
-        sortedFragmentMetaLists.add(left - 1, pair);
+        if (left == sortedFragmentMetaLists.size()) {
+            sortedFragmentMetaLists.add(pair);
+        } else {
+            sortedFragmentMetaLists.add(left, pair);
+        }
+
     }
 
     @Override
