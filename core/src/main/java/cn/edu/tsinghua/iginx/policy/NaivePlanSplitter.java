@@ -171,7 +171,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                     plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
-            List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getIginxList().size() - 1), plan.getEndTime() + 10); // TODO: 抽象为配置
+            List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
             iMetaManager.createFragments(fragments);
             policy.setNeedReAllocate(false);
         }
