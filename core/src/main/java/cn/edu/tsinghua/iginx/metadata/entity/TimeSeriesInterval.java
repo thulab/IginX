@@ -70,6 +70,10 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
                 && (endTimeSeries == null || (tsName != null && endTimeSeries.compareTo(tsName) > 0));
     }
 
+    public boolean isCompletelyBefore(String tsName) {
+        return endTimeSeries != null && tsName != null && endTimeSeries.compareTo(tsName) <= 0;
+    }
+
     public boolean isBefore(String tsName) {
         return tsName == null ? (startTimeSeries != null) : (startTimeSeries != null && tsName.compareTo(startTimeSeries) < 0);
     }

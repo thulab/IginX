@@ -423,7 +423,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             mutex.acquire();
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta: latestFragments.values()) { // 终结老分片
-                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta();
+                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
                 // 在更新分片时，先更新本地
                 fragmentMeta.setUpdatedBy(iginxId);
                 updateFragment(fragmentMeta);
@@ -435,6 +435,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 fragmentMeta.setCreatedBy(iginxId);
                 addFragment(fragmentMeta);
                 this.zookeeperClient.create()
+                        .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
                         .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
             }
