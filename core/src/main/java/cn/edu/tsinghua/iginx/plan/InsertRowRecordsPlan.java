@@ -16,19 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.plan;
 
-public enum ContextType {
+import lombok.ToString;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    Unknown;
+import java.util.List;
 
+@ToString
+public class InsertRowRecordsPlan extends DataPlan {
+
+
+    // TODO: @anyanzhe
+
+    public InsertRowRecordsPlan(boolean isQuery, List<String> paths, long startTime, long endTime) {
+        super(isQuery, paths, startTime, endTime);
+    }
 }

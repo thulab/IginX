@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.query;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
@@ -31,7 +32,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -83,9 +85,13 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
                     IginxPlan plan = asyncTask.getIginxPlan();
                     SyncPlanExecuteResult planExecuteResult = null;
                     switch (plan.getIginxPlanType()) {
-                        case INSERT_RECORDS:
-                            logger.info("execute async insert task");
-                            planExecuteResult = syncExecuteInsertRecordsPlan((InsertRecordsPlan) plan);
+                        case INSERT_COLUMN_RECORDS:
+                            logger.info("execute async insert column records task");
+                            planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
+                            break;
+                        case INSERT_ROW_RECORDS:
+                            logger.info("execute async insert row records task");
+                            planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
                             break;
                         case ADD_COLUMNS:
                             planExecuteResult = syncExecuteAddColumnsPlan((AddColumnsPlan) plan);
@@ -118,9 +124,16 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
     }
 
 
-    protected Future<NonDataPlanExecuteResult> executeInsertRecordsPlan(InsertRecordsPlan plan) {
+    protected Future<NonDataPlanExecuteResult> executeInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteInsertRecordsPlan(plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertColumnRecordsPlan(plan));
+        }
+        return null;
+    }
+
+    protected Future<NonDataPlanExecuteResult> executeInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertRowRecordsPlan(plan));
         }
         return null;
     }
@@ -216,7 +229,9 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         return null;
     }
 
-    protected abstract NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan);
+    protected abstract NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan);
+
+    protected abstract NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan);
 
     protected abstract QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
 
@@ -254,8 +269,11 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         logger.info("" + requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans");
         logger.info("there are  " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
         switch (requestContext.getType()) {
-            case InsertRecords:
-                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(InsertRecordsPlan.class::cast).map(this::executeInsertRecordsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+            case InsertColumnRecords:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(InsertColumnRecordsPlan.class::cast).map(this::executeInsertColumnRecordsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
+                break;
+            case InsertRowRecords:
+                planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(InsertRowRecordsPlan.class::cast).map(this::executeInsertRowRecordsPlan).map(wrap(Future::get)).collect(Collectors.toList()));
                 break;
             case QueryData:
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(QueryDataPlan.class::cast).map(this::executeQueryDataPlan).map(wrap(Future::get)).collect(Collectors.toList()));
@@ -311,7 +329,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
     }
 
     @Override
-    public void shutdown() throws Exception {
+    public void shutdown() {
         asyncTaskDispatcher.shutdown();
         asyncTaskExecuteThreadPool.shutdown();
     }

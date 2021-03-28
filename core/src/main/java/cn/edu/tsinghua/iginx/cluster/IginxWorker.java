@@ -28,7 +28,8 @@ import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -130,15 +131,17 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public Status insertColumnRecords(InsertColumnRecordsReq req) throws TException {
-		InsertRecordsContext context = new InsertRecordsContext(req);
+	public Status insertColumnRecords(InsertColumnRecordsReq req) {
+		InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
 		core.processRequest(context);
 		return context.getStatus();
 	}
 
 	@Override
-	public Status insertRowRecords(InsertRowRecordsReq req) throws TException {
-		return null;
+	public Status insertRowRecords(InsertRowRecordsReq req) {
+		InsertRowRecordsContext context = new InsertRowRecordsContext(req);
+		core.processRequest(context);
+		return context.getStatus();
 	}
 
 	@Override

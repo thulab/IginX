@@ -24,12 +24,12 @@ import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class InsertRecordsContext extends RequestContext {
+public class InsertColumnRecordsContext extends RequestContext {
 
     private InsertColumnRecordsReq req;
 
-    public InsertRecordsContext(InsertColumnRecordsReq req) {
-        super(req.sessionId, ContextType.InsertRecords);
+    public InsertColumnRecordsContext(InsertColumnRecordsReq req) {
+        super(req.sessionId, ContextType.InsertColumnRecords);
         this.req = req;
     }
 

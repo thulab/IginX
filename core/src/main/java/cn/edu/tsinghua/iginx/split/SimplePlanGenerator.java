@@ -25,7 +25,7 @@ import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
@@ -38,7 +38,7 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -94,17 +94,17 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 DeleteColumnsPlan deleteColumnsPlan = new DeleteColumnsPlan(deleteColumnsReq.getPaths());
                 splitInfoList = planSplitter.getSplitDeleteColumnsPlanResults(deleteColumnsPlan);
                 return splitDeleteColumnsPlan(deleteColumnsPlan, splitInfoList);
-            case InsertRecords:
-                InsertColumnRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
-                InsertRecordsPlan insertRecordsPlan = new InsertRecordsPlan(
+            case InsertColumnRecords:
+                InsertColumnRecordsReq insertRecordsReq = ((InsertColumnRecordsContext) requestContext).getReq();
+                InsertColumnRecordsPlan insertColumnRecordsPlan = new InsertColumnRecordsPlan(
                         insertRecordsReq.getPaths(),
                         getLongArrayFromByteArray(insertRecordsReq.getTimestamps()),
                         getValuesListByDataType(insertRecordsReq.getValuesList(), insertRecordsReq.getDataTypeList()),
                         insertRecordsReq.dataTypeList,
                         insertRecordsReq.getAttributesList()
                 );
-                splitInfoList = planSplitter.getSplitInsertRecordsPlanResults(insertRecordsPlan);
-                return splitInsertRecordsPlan(insertRecordsPlan, splitInfoList);
+                splitInfoList = planSplitter.getSplitInsertRecordsPlanResults(insertColumnRecordsPlan);
+                return splitInsertRecordsPlan(insertColumnRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -212,12 +212,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
-    public List<InsertRecordsPlan> splitInsertRecordsPlan(InsertRecordsPlan plan, List<SplitInfo> infoList) {
-        List<InsertRecordsPlan> plans = new ArrayList<>();
+    public List<InsertColumnRecordsPlan> splitInsertRecordsPlan(InsertColumnRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertColumnRecordsPlan> plans = new ArrayList<>();
 
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
-            InsertRecordsPlan subPlan = new InsertRecordsPlan(
+            InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     timestampsAndIndexes.k,
                     plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval()),

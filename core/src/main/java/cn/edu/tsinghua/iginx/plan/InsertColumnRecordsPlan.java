@@ -32,12 +32,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_RECORDS;
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_COLUMN_RECORDS;
 
 @ToString
-public class InsertRecordsPlan extends DataPlan {
+public class InsertColumnRecordsPlan extends DataPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(InsertRecordsPlan.class);
+	private static final Logger logger = LoggerFactory.getLogger(InsertColumnRecordsPlan.class);
 
 	private long[] timestamps;
 
@@ -47,18 +47,18 @@ public class InsertRecordsPlan extends DataPlan {
 
 	private List<Map<String, String>> attributesList;
 
-	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+	public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+								   List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
 		super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
-		this.setIginxPlanType(INSERT_RECORDS);
+		this.setIginxPlanType(INSERT_COLUMN_RECORDS);
 		this.timestamps = timestamps;
 		this.valuesList = valuesList;
 		this.dataTypeList = dataTypeList;
 		this.attributesList = attributesList;
 	}
 
-	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
+	public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+								   List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
 		this(paths, timestamps, valuesList, dataTypeList, attributesList);
 		this.setStorageEngineId(storageEngineId);
 	}
