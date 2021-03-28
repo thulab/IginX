@@ -44,7 +44,8 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -52,6 +53,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,10 +130,15 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public Status insertRecords(InsertRecordsReq req) {
+	public Status insertColumnRecords(InsertColumnRecordsReq req) throws TException {
 		InsertRecordsContext context = new InsertRecordsContext(req);
 		core.processRequest(context);
 		return context.getStatus();
+	}
+
+	@Override
+	public Status insertRowRecords(InsertRowRecordsReq req) throws TException {
+		return null;
 	}
 
 	@Override

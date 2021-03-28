@@ -33,7 +33,7 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -241,7 +241,7 @@ public class Session {
 			valuesList[i] = values;
 		}
 
-		InsertRecordsReq req = new InsertRecordsReq();
+		InsertColumnRecordsReq req = new InsertColumnRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -250,7 +250,7 @@ public class Session {
 		req.setAttributesList(attributesList);
 
 		try {
-			RpcUtils.verifySuccess(client.insertRecords(req));
+			RpcUtils.verifySuccess(client.insertColumnRecords(req));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}

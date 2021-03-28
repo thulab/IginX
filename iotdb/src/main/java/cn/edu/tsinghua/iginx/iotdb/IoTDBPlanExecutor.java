@@ -126,7 +126,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
-        logger.info("执行插入计划！");
+        logger.info("write " + plan.getPaths().size() * plan.getTimestamps().length + " points to storage engine: " + plan.getStorageEngineId() + ".");
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
         Map<String, Tablet> tablets = new HashMap<>();

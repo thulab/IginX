@@ -52,7 +52,7 @@ import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
@@ -95,7 +95,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 splitInfoList = planSplitter.getSplitDeleteColumnsPlanResults(deleteColumnsPlan);
                 return splitDeleteColumnsPlan(deleteColumnsPlan, splitInfoList);
             case InsertRecords:
-                InsertRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
+                InsertColumnRecordsReq insertRecordsReq = ((InsertRecordsContext) requestContext).getReq();
                 InsertRecordsPlan insertRecordsPlan = new InsertRecordsPlan(
                         insertRecordsReq.getPaths(),
                         getLongArrayFromByteArray(insertRecordsReq.getTimestamps()),
