@@ -169,7 +169,7 @@ public class IginxClient {
             System.out.println("unsupported command");
             return;
         }
-        String[] storageEngineParts = commandParts[2].split(":");
+        String[] storageEngineParts = commandParts[2].split("#");
         String ip = storageEngineParts[0];
         int port = Integer.parseInt(storageEngineParts[1]);
         StorageEngineType storageEngineType = StorageEngineType.IOTDB;
