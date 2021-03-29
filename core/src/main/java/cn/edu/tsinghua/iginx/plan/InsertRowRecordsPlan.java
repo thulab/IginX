@@ -18,23 +18,20 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import lombok.ToString;
-import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ROW_RECORDS;
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.values;
 
 @ToString
 public class InsertRowRecordsPlan extends InsertRecordsPlan {
@@ -86,17 +83,24 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
         List<Bitmap> tempBitmaps = new ArrayList<>();
         for (int i = rowIndexes.k; i <= rowIndexes.v; i++) {
             Bitmap tempBitmap = new Bitmap(endIndex - startIndex + 1);
-            List<Integer> indexes = new ArrayList<>();
-            for (int j = startIndex; j <= endIndex; j++) {
+            // 该行的 values 的 index -> 路径的 index
+            Map<Integer, Integer> indexes = new HashMap<>();
+            int k = 0;
+            for (int j = 0; j < getPathsNum(); j++) {
                 if (getBitmapList().get(i).get(j)) {
-                    indexes.add(j);
-                    tempBitmap.mark(j - startIndex);
+                    if (j >= startIndex && j <= endIndex) {
+                        indexes.put(k, j);
+                        tempBitmap.mark(j - startIndex);
+                    }
+                    k++;
                 }
             }
             Object[] tempRowValues = new Object[indexes.size()];
-            for (int j = 0; j < indexes.size(); j++) {
-                // TODO
-                tempRowValues[j] = ((Object[]) (getValuesList()[i]))[indexes.get(j)];
+            k = 0;
+            for (Map.Entry<Integer, Integer> entry : indexes.entrySet()) {
+                // TODO 与数据类型有关吗？若有关，则需利用 entry.getValue()；否则不必使用 Map
+                tempRowValues[k] = ((Object[]) (getValuesList()[i]))[entry.getKey()];
+                k++;
             }
             tempValues[i - rowIndexes.k] = tempRowValues;
             tempBitmaps.add(tempBitmap);

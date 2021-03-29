@@ -28,10 +28,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class IoTDBInsertRowRecordsExample {
 
-    private static final Logger logger = LoggerFactory.getLogger(IoTDBBeforeDilatationExample.class);
+    private static final Logger logger = LoggerFactory.getLogger(IoTDBInsertRowRecordsExample.class);
 
     private static Session session;
 
@@ -96,11 +97,16 @@ public class IoTDBInsertRowRecordsExample {
         int size = (int)(endTimestamp - beginTimestamp) / interval;
         long[] timestamps = new long[size];
         Object[] valuesList = new Object[size];
+        Random random = new Random();
         for (int i = 0; i < size; i++) {
             timestamps[i] = beginTimestamp + i * interval;
             Object[] values = new Object[paths.size()];
             for (int j = 0; j < paths.size(); j++) {
-                values[j] = (long)(i * interval + j);
+                if (random.nextInt() % 2 == 0) {
+                    values[j] = null;
+                } else {
+                    values[j] = (long)(i * interval + j);
+                }
             }
             valuesList[i] = values;
         }
