@@ -276,10 +276,21 @@ public class Session {
 			return;
 		}
 
+		Integer[] index = new Integer[timestamps.length];
+		for (int i = 0; i < timestamps.length; i++) {
+			index[i] = i;
+		}
+		Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+		Arrays.sort(timestamps);
+		Object[] sortedValuesList = new Object[valuesList.length];
+		for (int i = 0; i < valuesList.length; i++) {
+			sortedValuesList[i] = valuesList[index[i]];
+		}
+
 		List<ByteBuffer> valueBufferList = new ArrayList<>();
 		List<ByteBuffer> bitmapBufferList = new ArrayList<>();
 		for (int i = 0; i < timestamps.length; i++) {
-			Object[] values = (Object[]) valuesList[i];
+			Object[] values = (Object[]) sortedValuesList[i];
 			if (values.length != paths.size()) {
 				logger.error("The sizes of paths and the element of valuesList should be equal.");
 				return;

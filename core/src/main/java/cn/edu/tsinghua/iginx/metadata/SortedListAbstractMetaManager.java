@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,15 +186,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
-        resultList = searchFragmentList(searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
-                return 0;
-            else if (o1.getTsInterval().getStartTimeSeries() == null)
-                return -1;
-            else if (o2.getTsInterval().getStartTimeSeries() == null)
-                return 1;
-            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
-        }).collect(Collectors.toList()), timeInterval);
+        List<FragmentMeta> fragmentMetas = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
+                .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
+        resultList = searchFragmentList(fragmentMetas, timeInterval);
         fragmentLock.readLock().unlock();
         return resultList;
     }
