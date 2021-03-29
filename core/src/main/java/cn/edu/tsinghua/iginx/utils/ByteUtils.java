@@ -98,6 +98,49 @@ public class ByteUtils {
 		return tempValues;
 	}
 
+	public static Object[] getRowValuesListByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, List<ByteBuffer> bitmapList) {
+		Object[] tempValues = new Object[valuesList.size()];
+		for (int i = 0; i < valuesList.size(); i++) {
+			Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapList.get(i).array());
+			List<Integer> indexes = new ArrayList<>();
+			for (int j = 0; j < dataTypeList.size(); j++) {
+				if (bitmap.get(j)) {
+					indexes.add(j);
+				}
+			}
+			Object[] tempRowValues = new Object[indexes.size()];
+			for (int j = 0; j < indexes.size(); j++) {
+				switch (dataTypeList.get(indexes.get(j))) {
+					case BOOLEAN:
+						tempRowValues[j] = valuesList.get(i).get() == 1;
+						break;
+					case INTEGER:
+						tempRowValues[j] = valuesList.get(i).getInt();
+						break;
+					case LONG:
+						tempRowValues[j] = valuesList.get(i).getLong();
+						break;
+					case FLOAT:
+						tempRowValues[j] = valuesList.get(i).getFloat();
+						break;
+					case DOUBLE:
+						tempRowValues[j] = valuesList.get(i).getDouble();
+						break;
+					case STRING:
+						int length = valuesList.get(i).getInt();
+						byte[] bytes = new byte[length];
+						valuesList.get(i).get(bytes, 0, length);
+						tempRowValues[j] = new String(bytes, 0, length);
+						break;
+					default:
+						throw new UnsupportedOperationException(dataTypeList.get(i).toString());
+				}
+			}
+			tempValues[i] = tempRowValues;
+		}
+		return tempValues;
+	}
+
 	public static byte[] getByteArrayFromLongArray(long[] array) {
 		ByteBuffer buffer = ByteBuffer.allocate(array.length * 8);
 		buffer.asLongBuffer().put(array);
@@ -404,11 +447,5 @@ public class ByteUtils {
 				throw new UnsupportedOperationException(dataType.toString());
 		}
 		return value;
-	}
-
-	public static Bitmap getBitmapFromByteBuffer(ByteBuffer buffer) {
-		byte[] bytes = new byte[buffer.remaining()];
-		buffer.get(bytes);
-		return new Bitmap(bytes.length, bytes);
 	}
 }

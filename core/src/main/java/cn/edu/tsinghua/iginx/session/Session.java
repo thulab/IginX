@@ -263,7 +263,7 @@ public class Session {
 
 	public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
 								 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
-		if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
+		if (paths.size() != dataTypeList.size()) {
 			logger.error("The sizes of paths and dataTypeList should be equal.");
 			return;
 		}

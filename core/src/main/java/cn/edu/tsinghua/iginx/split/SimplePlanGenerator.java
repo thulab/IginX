@@ -68,6 +68,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesListByDataType;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesListByDataType;
 
 public class SimplePlanGenerator implements IPlanGenerator {
@@ -116,8 +117,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
                         insertRowRecordsReq.getPaths(),
                         getLongArrayFromByteArray(insertRowRecordsReq.getTimestamps()),
-                        getValuesListByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList()),
-                        insertRowRecordsReq.getBitmapList().stream().map(ByteUtils::getBitmapFromByteBuffer).collect(Collectors.toList()),
+                        getRowValuesListByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList(), insertRowRecordsReq.getBitmapList()),
+                        insertRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
                         insertRowRecordsReq.getDataTypeList(),
                         insertRowRecordsReq.getAttributesList()
                 );
