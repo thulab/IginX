@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -53,11 +54,18 @@ public interface IPlanSplitter {
 	List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan);
 
 	/**
-	 * 拆分 InsertRecordsPlan
-	 * @param plan 待拆分的 InsertRecordsPlan
+	 * 拆分 InsertColumnRecordsPlan
+	 * @param plan 待拆分的 InsertColumnRecordsPlan
 	 * @return 拆分方式
 	 */
-	List<SplitInfo> getSplitInsertRecordsPlanResults(InsertColumnRecordsPlan plan);
+	List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan);
+
+	/**
+	 * 拆分 InsertRowRecordsPlan
+	 * @param plan 待拆分的 InsertRowRecordsPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan);
 
 	/**
 	 * 拆分 DeleteDataInColumnsPlan

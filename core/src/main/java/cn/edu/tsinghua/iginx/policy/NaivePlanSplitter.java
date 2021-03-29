@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -159,7 +160,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
-    public List<SplitInfo> getSplitInsertRecordsPlanResults(InsertColumnRecordsPlan plan) {
+    public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
@@ -167,8 +168,34 @@ public class NaivePlanSplitter implements IPlanSplitter {
         if (fragmentMap.isEmpty()) {
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
             iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
-            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                    plan.getTsInterval(), plan.getTimeInterval());
+            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
+            policy.setNeedReAllocate(false);
+        } else if (policy.isNeedReAllocate()) {
+            List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
+            iMetaManager.createFragments(fragments);
+            policy.setNeedReAllocate(false);
+        }
+        for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
+            for (FragmentMeta fragment : entry.getValue()) {
+                List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
+                for (FragmentReplicaMeta replica : replicas) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                }
+            }
+        }
+        return infoList;
+    }
+
+    @Override
+    public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
+        updatePrefix(plan);
+        List<SplitInfo> infoList = new ArrayList<>();
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+                plan.getTsInterval(), plan.getTimeInterval());
+        if (fragmentMap.isEmpty()) {
+            fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
+            iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
             List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());

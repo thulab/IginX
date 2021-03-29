@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
@@ -39,6 +40,7 @@ import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -53,7 +55,10 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,16 +100,29 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 splitInfoList = planSplitter.getSplitDeleteColumnsPlanResults(deleteColumnsPlan);
                 return splitDeleteColumnsPlan(deleteColumnsPlan, splitInfoList);
             case InsertColumnRecords:
-                InsertColumnRecordsReq insertRecordsReq = ((InsertColumnRecordsContext) requestContext).getReq();
+                InsertColumnRecordsReq insertColumnRecordsReq = ((InsertColumnRecordsContext) requestContext).getReq();
                 InsertColumnRecordsPlan insertColumnRecordsPlan = new InsertColumnRecordsPlan(
-                        insertRecordsReq.getPaths(),
-                        getLongArrayFromByteArray(insertRecordsReq.getTimestamps()),
-                        getValuesListByDataType(insertRecordsReq.getValuesList(), insertRecordsReq.getDataTypeList()),
-                        insertRecordsReq.dataTypeList,
-                        insertRecordsReq.getAttributesList()
+                        insertColumnRecordsReq.getPaths(),
+                        getLongArrayFromByteArray(insertColumnRecordsReq.getTimestamps()),
+                        getValuesListByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList()),
+                        null,
+                        insertColumnRecordsReq.getDataTypeList(),
+                        insertColumnRecordsReq.getAttributesList()
                 );
-                splitInfoList = planSplitter.getSplitInsertRecordsPlanResults(insertColumnRecordsPlan);
-                return splitInsertRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+                splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
+                return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+            case InsertRowRecords:
+                InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
+                InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
+                        insertRowRecordsReq.getPaths(),
+                        getLongArrayFromByteArray(insertRowRecordsReq.getTimestamps()),
+                        getValuesListByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList()),
+                        insertRowRecordsReq.getBitmapList().stream().map(ByteUtils::getBitmapFromByteBuffer).collect(Collectors.toList()),
+                        insertRowRecordsReq.getDataTypeList(),
+                        insertRowRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
+                return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -188,7 +206,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
 
     public List<AddColumnsPlan> splitAddColumnsPlan(AddColumnsPlan plan, List<SplitInfo> infoList) {
         List<AddColumnsPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()));
@@ -196,31 +213,28 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<DeleteColumnsPlan> splitDeleteColumnsPlan(DeleteColumnsPlan plan, List<SplitInfo> infoList) {
         List<DeleteColumnsPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             DeleteColumnsPlan subPlan = new DeleteColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()));
             subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
             plans.add(subPlan);
         }
-
         return plans;
     }
 
-    public List<InsertColumnRecordsPlan> splitInsertRecordsPlan(InsertColumnRecordsPlan plan, List<SplitInfo> infoList) {
+    public List<InsertColumnRecordsPlan> splitInsertColumnRecordsPlan(InsertColumnRecordsPlan plan, List<SplitInfo> infoList) {
         List<InsertColumnRecordsPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
             InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     timestampsAndIndexes.k,
                     plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval()),
+                    null,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
                     info.getReplica().getStorageEngineId()
@@ -228,13 +242,31 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
             plans.add(subPlan);
         }
+        return plans;
+    }
 
+    public List<InsertRowRecordsPlan> splitInsertRowRecordsPlan(InsertRowRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertRowRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            InsertRowRecordsPlan subPlan = new InsertRowRecordsPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    timestampsAndIndexes.k,
+                    valuesAndBitmaps.k,
+                    valuesAndBitmaps.v,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getReplica().getStorageEngineId()
+            );
+            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            plans.add(subPlan);
+        }
         return plans;
     }
 
     public List<DeleteDataInColumnsPlan> splitDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan, List<SplitInfo> infoList) {
         List<DeleteDataInColumnsPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             DeleteDataInColumnsPlan subPlan = new DeleteDataInColumnsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -244,13 +276,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<QueryDataPlan> splitQueryDataPlan(QueryDataPlan plan, List<SplitInfo> infoList) {
         List<QueryDataPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             QueryDataPlan subPlan = new QueryDataPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -260,13 +290,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<MaxQueryPlan> splitMaxQueryPlan(MaxQueryPlan plan, List<SplitInfo> infoList) {
         List<MaxQueryPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             MaxQueryPlan subPlan = new MaxQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -276,13 +304,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<MinQueryPlan> splitMinQueryPlan(MinQueryPlan plan, List<SplitInfo> infoList) {
         List<MinQueryPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             MinQueryPlan subPlan = new MinQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -292,13 +318,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<FirstQueryPlan> splitFirstQueryPlan(FirstQueryPlan plan, List<SplitInfo> infoList) {
         List<FirstQueryPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             FirstQueryPlan subPlan = new FirstQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -308,13 +332,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<LastQueryPlan> splitLastQueryPlan(LastQueryPlan plan, List<SplitInfo> infoList) {
         List<LastQueryPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             LastQueryPlan subPlan = new LastQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -324,13 +346,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<CountQueryPlan> splitCountQueryPlan(CountQueryPlan plan, List<SplitInfo> infoList) {
         List<CountQueryPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             CountQueryPlan subPlan = new CountQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -340,13 +360,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
 
     public List<SumQueryPlan> splitSumQueryPlan(SumQueryPlan plan, List<SplitInfo> infoList) {
         List<SumQueryPlan> plans = new ArrayList<>();
-
         for (SplitInfo info : infoList) {
             SumQueryPlan subPlan = new SumQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
@@ -356,8 +374,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
             );
             plans.add(subPlan);
         }
-
         return plans;
     }
-
 }

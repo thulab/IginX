@@ -71,6 +71,7 @@ import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
+import static cn.edu.tsinghua.iginx.thrift.DataType.STRING;
 
 public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
@@ -172,9 +173,8 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 Object[] values = (Object[]) plan.getValuesList()[i];
                 String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
                 String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
-                boolean isString = values[0] instanceof String;
-                for (int j = cnt; j < size; j++) {
-                    if (isString) {
+                for (int j = cnt; j < cnt + size; j++) {
+                    if (plan.getDataType(i) == STRING) {
                         tablets.get(deviceId).addValue(measurement, j, new Binary((String) values[j]));
                     } else {
                         tablets.get(deviceId).addValue(measurement, j, values[j]);
@@ -202,7 +202,79 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
-        return null;
+        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
+
+        Map<String, Tablet> tablets = new HashMap<>();
+        Map<String, List<String>> measurementsMap= new HashMap<>();
+        Map<String, List<TSDataType>> typesMap = new HashMap<>();
+
+        // 解析 deviceId 和 measurement
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
+            String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
+            TSDataType dataType = toIoTDB(plan.getDataType(i));
+
+            measurementsMap.computeIfAbsent(deviceId, k -> new ArrayList<>());
+            measurementsMap.get(deviceId).add(measurement);
+
+            typesMap.computeIfAbsent(deviceId, k -> new ArrayList<>());
+            typesMap.get(deviceId).add(dataType);
+        }
+
+        // 创建 schema
+        for (Map.Entry<String, List<String>> measurements : measurementsMap.entrySet()) {
+            List<MeasurementSchema> measurementSchemaList = new ArrayList<>();
+            for (int i = 0; i < measurements.getValue().size(); i++) {
+                measurementSchemaList.add(new MeasurementSchema(measurements.getValue().get(i), typesMap.get(measurements.getKey()).get(i)));
+            }
+            tablets.put(measurements.getKey(), new Tablet(measurements.getKey(), measurementSchemaList, BATCH_SIZE));
+        }
+
+        int cnt = 0;
+        while (true) {
+            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+            // 插入 timestamps
+            for (int i = cnt; i < cnt + size; i++) {
+                for (Map.Entry<String, Tablet> tablet : tablets.entrySet()) {
+                    int row = tablet.getValue().rowSize++;
+                    tablet.getValue().addTimestamp(row, plan.getTimestamp(i));
+                }
+            }
+
+            // 插入 values
+            for (int i = cnt; i < cnt + size; i++) {
+                Object[] values = (Object[]) plan.getValuesList()[i];
+                int k = 0;
+                for (int j = 0; j < plan.getPathsNum(); j++) {
+                    if (plan.getBitmapList().get(i).get(j)) {
+                        String deviceId = plan.getPath(j).substring(0, plan.getPath(j).lastIndexOf('.'));
+                        String measurement = plan.getPath(j).substring(plan.getPath(j).lastIndexOf('.') + 1);
+                        if (plan.getDataType(j) == STRING) {
+                            tablets.get(deviceId).addValue(measurement, i, new Binary((String) values[k]));
+                        } else {
+                            tablets.get(deviceId).addValue(measurement, i, values[k]);
+                        }
+                        k++;
+                    }
+                }
+            }
+
+            try {
+                sessionPool.insertTablets(tablets);
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                logger.error(e.getMessage());
+            }
+
+            for (Tablet tablet : tablets.values()) {
+                tablet.reset();
+            }
+            cnt += size;
+            if (cnt >= plan.getTimestamps().length) {
+                break;
+            }
+        }
+
+        return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
 
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws IoTDBConnectionException, StatementExecutionException {

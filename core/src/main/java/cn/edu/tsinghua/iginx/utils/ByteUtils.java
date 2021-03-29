@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.utils;
 
 import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ public class ByteUtils {
 					byte[] bytes = new byte[length];
 					valuesList.get(bytes, 0, length);
 					values[i] = new String(bytes, 0, length);
+//					values[i] = bytes;
 					break;
 				default:
 					throw new UnsupportedDataTypeException(dataTypeList.get(i).toString());
@@ -163,6 +165,20 @@ public class ByteUtils {
 		}
 		return stringList.toArray(new String[0]);
 	}
+
+//	public static byte[][] getStringArrayFromByteBuffer(ByteBuffer buffer) {
+//		List<byte[]> bytesList = new ArrayList<>();
+//		int cnt = 0;
+//		while (cnt < buffer.array().length) {
+//			int length = buffer.getInt();
+//			byte[] bytes = new byte[length];
+//			buffer.get(bytes, 0, length);
+//			bytesList.add(bytes);
+//			cnt += length + 4;
+//		}
+//		return null;
+////		return bytesList.toArray(new byte[][]);
+//	}
 
 	public static List<ByteBuffer> getByteBufferByDataType(Object[] valuesList, List<DataType> dataTypeList) {
 		List<ByteBuffer> byteBufferList = new ArrayList<>();
@@ -388,5 +404,11 @@ public class ByteUtils {
 				throw new UnsupportedOperationException(dataType.toString());
 		}
 		return value;
+	}
+
+	public static Bitmap getBitmapFromByteBuffer(ByteBuffer buffer) {
+		byte[] bytes = new byte[buffer.remaining()];
+		buffer.get(bytes);
+		return new Bitmap(bytes.length, bytes);
 	}
 }
