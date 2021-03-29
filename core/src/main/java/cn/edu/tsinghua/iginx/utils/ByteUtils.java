@@ -256,8 +256,8 @@ public class ByteUtils {
 					buffer.putDouble((double) value);
 					break;
 				case STRING:
-					buffer.putInt(((String) value).getBytes().length);
-					buffer.put(((String) value).getBytes());
+					buffer.putInt(((byte[]) value).length);
+					buffer.put((byte[]) value);
 					break;
 				default:
 					throw new UnsupportedOperationException(dataType.toString());
@@ -288,7 +288,7 @@ public class ByteUtils {
 					size += 8;
 					break;
 				case STRING:
-					size += 4 + ((String) value).getBytes().length;
+					size += 4 + ((byte[]) value).length;
 					break;
 				default:
 					throw new UnsupportedOperationException(dataType.toString());
