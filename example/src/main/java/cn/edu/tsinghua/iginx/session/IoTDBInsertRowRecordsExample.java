@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,9 +39,9 @@ public class IoTDBInsertRowRecordsExample {
 
     private static final String DATABASE_NAME = "root.sg1";
     private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
-    private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
-    private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
-    private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
+    private static final String COLUMN_D1_S2 = "root.sg1.d2.s2";
+    private static final String COLUMN_D2_S1 = "root.sg1.d3.s1";
+    private static final String COLUMN_D3_S1 = "root.sg1.d4.s1";
 
     private static final List<String> paths = new ArrayList<>();
 
@@ -75,10 +76,10 @@ public class IoTDBInsertRowRecordsExample {
 
     private static void addColumns() throws SessionException, ExecutionException {
         Map<String, String> attributesForOnePath = new HashMap<>();
-        // INT64
-        attributesForOnePath.put("DataType", "2");
-        // RLE
-        attributesForOnePath.put("Encoding", "2");
+        // TEXT
+        attributesForOnePath.put("DataType", "5");
+        // PLAIN
+        attributesForOnePath.put("Encoding", "0");
         // SNAPPY
         attributesForOnePath.put("Compression", "1");
 
@@ -92,7 +93,7 @@ public class IoTDBInsertRowRecordsExample {
     private static void insertRowRecords() throws SessionException, ExecutionException {
         List<DataType> dataTypeList = new ArrayList<>();
         for (int i = 0; i < paths.size(); i++) {
-            dataTypeList.add(DataType.LONG);
+            dataTypeList.add(DataType.STRING);
         }
         int size = (int)(endTimestamp - beginTimestamp) / interval;
         long[] timestamps = new long[size];
@@ -105,7 +106,7 @@ public class IoTDBInsertRowRecordsExample {
                 if (random.nextInt() % 2 == 0) {
                     values[j] = null;
                 } else {
-                    values[j] = (long)(i * interval + j);
+                    values[j] = RandomStringUtils.randomAlphanumeric(10);
                 }
             }
             valuesList[i] = values;

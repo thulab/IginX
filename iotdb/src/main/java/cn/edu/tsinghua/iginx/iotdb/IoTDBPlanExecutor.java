@@ -62,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -205,43 +206,19 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
         Map<String, Tablet> tablets = new HashMap<>();
-        Map<String, List<String>> measurementsMap= new HashMap<>();
-        Map<String, List<TSDataType>> typesMap = new HashMap<>();
 
-        // 解析 deviceId 和 measurement
+        // 创建 Tablet
         for (int i = 0; i < plan.getPathsNum(); i++) {
             String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
             String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
-            TSDataType dataType = toIoTDB(plan.getDataType(i));
-
-            measurementsMap.computeIfAbsent(deviceId, k -> new ArrayList<>());
-            measurementsMap.get(deviceId).add(measurement);
-
-            typesMap.computeIfAbsent(deviceId, k -> new ArrayList<>());
-            typesMap.get(deviceId).add(dataType);
-        }
-
-        // 创建 schema
-        for (Map.Entry<String, List<String>> measurements : measurementsMap.entrySet()) {
-            List<MeasurementSchema> measurementSchemaList = new ArrayList<>();
-            for (int i = 0; i < measurements.getValue().size(); i++) {
-                measurementSchemaList.add(new MeasurementSchema(measurements.getValue().get(i), typesMap.get(measurements.getKey()).get(i)));
-            }
-            tablets.put(measurements.getKey(), new Tablet(measurements.getKey(), measurementSchemaList, BATCH_SIZE));
+            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), BATCH_SIZE));
         }
 
         int cnt = 0;
         while (true) {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
-            // 插入 timestamps
-            for (int i = cnt; i < cnt + size; i++) {
-                for (Map.Entry<String, Tablet> tablet : tablets.entrySet()) {
-                    int row = tablet.getValue().rowSize++;
-                    tablet.getValue().addTimestamp(row, plan.getTimestamp(i));
-                }
-            }
 
-            // 插入 values
+            // 插入 timestamps 和 values
             for (int i = cnt; i < cnt + size; i++) {
                 Object[] values = (Object[]) plan.getValuesList()[i];
                 int k = 0;
@@ -249,10 +226,13 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                     if (plan.getBitmapList().get(i).get(j)) {
                         String deviceId = plan.getPath(j).substring(0, plan.getPath(j).lastIndexOf('.'));
                         String measurement = plan.getPath(j).substring(plan.getPath(j).lastIndexOf('.') + 1);
+                        Tablet tablet = tablets.get(deviceId);
+                        int row = tablet.rowSize++;
+                        tablets.get(deviceId).addTimestamp(row, plan.getTimestamp(i));
                         if (plan.getDataType(j) == STRING) {
-                            tablets.get(deviceId).addValue(measurement, i, new Binary((String) values[k]));
+                            tablets.get(deviceId).addValue(measurement, row, new Binary((String) values[k]));
                         } else {
-                            tablets.get(deviceId).addValue(measurement, i, values[k]);
+                            tablets.get(deviceId).addValue(measurement, row, values[k]);
                         }
                         k++;
                     }
