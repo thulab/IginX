@@ -176,7 +176,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
                 for (int j = cnt; j < cnt + size; j++) {
                     if (plan.getDataType(i) == STRING) {
-                        tablets.get(deviceId).addValue(measurement, j, new Binary((String) values[j]));
+                        tablets.get(deviceId).addValue(measurement, j, new Binary((byte[]) values[j]));
                     } else {
                         tablets.get(deviceId).addValue(measurement, j, values[j]);
                     }
@@ -230,7 +230,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                         int row = tablet.rowSize++;
                         tablets.get(deviceId).addTimestamp(row, plan.getTimestamp(i));
                         if (plan.getDataType(j) == STRING) {
-                            tablets.get(deviceId).addValue(measurement, row, new Binary((String) values[k]));
+                            tablets.get(deviceId).addValue(measurement, row, new Binary((byte[]) values[k]));
                         } else {
                             tablets.get(deviceId).addValue(measurement, row, values[k]);
                         }

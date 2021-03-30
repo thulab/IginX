@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.utils;
 
 import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import org.apache.commons.lang3.ArrayUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -59,8 +58,7 @@ public class ByteUtils {
 					int length = valuesList.getInt();
 					byte[] bytes = new byte[length];
 					valuesList.get(bytes, 0, length);
-					values[i] = new String(bytes, 0, length);
-//					values[i] = bytes;
+					values[i] = bytes;
 					break;
 				default:
 					throw new UnsupportedDataTypeException(dataTypeList.get(i).toString());
@@ -89,7 +87,7 @@ public class ByteUtils {
 					tempValues[i] = getDoubleArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case STRING:
-					tempValues[i] = getStringArrayFromByteBuffer(valuesList.get(i));
+					tempValues[i] = getBytesArrayFromByteBuffer(valuesList.get(i));
 					break;
 				default:
 					throw new UnsupportedOperationException(dataTypeList.get(i).toString());
@@ -130,7 +128,7 @@ public class ByteUtils {
 						int length = valuesList.get(i).getInt();
 						byte[] bytes = new byte[length];
 						valuesList.get(i).get(bytes, 0, length);
-						tempRowValues[j] = new String(bytes, 0, length);
+						tempRowValues[j] = bytes;
 						break;
 					default:
 						throw new UnsupportedOperationException(dataTypeList.get(i).toString());
@@ -196,32 +194,18 @@ public class ByteUtils {
 		return array;
 	}
 
-	public static String[] getStringArrayFromByteBuffer(ByteBuffer buffer) {
-		List<String> stringList = new ArrayList<>();
+	public static byte[][] getBytesArrayFromByteBuffer(ByteBuffer buffer) {
+		List<byte[]> bytesList = new ArrayList<>();
 		int cnt = 0;
 		while (cnt < buffer.array().length) {
 			int length = buffer.getInt();
 			byte[] bytes = new byte[length];
 			buffer.get(bytes, 0, length);
-			stringList.add(new String(bytes, 0, length));
+			bytesList.add(bytes);
 			cnt += length + 4;
 		}
-		return stringList.toArray(new String[0]);
+		return bytesList.toArray(new byte[bytesList.size()][]);
 	}
-
-//	public static byte[][] getStringArrayFromByteBuffer(ByteBuffer buffer) {
-//		List<byte[]> bytesList = new ArrayList<>();
-//		int cnt = 0;
-//		while (cnt < buffer.array().length) {
-//			int length = buffer.getInt();
-//			byte[] bytes = new byte[length];
-//			buffer.get(bytes, 0, length);
-//			bytesList.add(bytes);
-//			cnt += length + 4;
-//		}
-//		return null;
-////		return bytesList.toArray(new byte[][]);
-//	}
 
 	public static List<ByteBuffer> getByteBufferByDataType(Object[] valuesList, List<DataType> dataTypeList) {
 		List<ByteBuffer> byteBufferList = new ArrayList<>();
@@ -336,8 +320,8 @@ public class ByteUtils {
 				break;
 			case STRING:
 				for (Object value : values) {
-					buffer.putInt(((String) value).getBytes().length);
-					buffer.put(((String) value).getBytes());
+					buffer.putInt(((byte[]) value).length);
+					buffer.put((byte[]) value);
 				}
 				break;
 			default:
@@ -381,9 +365,9 @@ public class ByteUtils {
 				buffer.putDouble((double) value);
 				break;
 			case STRING:
-				buffer = ByteBuffer.allocate(4 + ((String) value).getBytes().length);
-				buffer.putInt(((String) value).getBytes().length);
-				buffer.put(((String) value).getBytes());
+				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
+				buffer.putInt(((byte[]) value).length);
+				buffer.put(((byte[]) value));
 				break;
 			default:
 				throw new UnsupportedOperationException(dataType.toString());
@@ -410,7 +394,7 @@ public class ByteUtils {
 			case STRING:
 				size += values.length * 4;
 				for (Object value : values) {
-					size += ((String) value).getBytes().length;
+					size += ((byte[]) value).length;
 				}
 				break;
 			default:
@@ -441,7 +425,7 @@ public class ByteUtils {
 				int length = buffer.getInt();
 				byte[] bytes = new byte[length];
 				buffer.get(bytes, 0, length);
-				value = new String(bytes, 0, length);
+				value = bytes;
 				break;
 			default:
 				throw new UnsupportedOperationException(dataType.toString());

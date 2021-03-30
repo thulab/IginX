@@ -55,7 +55,7 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 			List<Object> fields = new ArrayList<>();
 			for (Field field : iotdbRowRecord.getFields()) {
 				if (field.getDataType() == TEXT) {
-					fields.add(field.getBinaryV().getStringValue());
+					fields.add(field.getBinaryV().getValues());
 				} else {
 					fields.add(field.getObjectValue(field.getDataType()));
 				}

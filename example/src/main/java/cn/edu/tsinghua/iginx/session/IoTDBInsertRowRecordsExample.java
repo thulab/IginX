@@ -106,7 +106,7 @@ public class IoTDBInsertRowRecordsExample {
                 if (random.nextInt() % 2 == 0) {
                     values[j] = null;
                 } else {
-                    values[j] = RandomStringUtils.randomAlphanumeric(10);
+                    values[j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
                 }
             }
             valuesList[i] = values;
