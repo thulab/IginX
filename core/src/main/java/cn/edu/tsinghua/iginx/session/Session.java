@@ -223,6 +223,10 @@ public class Session {
 
 	public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
 									List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+		if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+			logger.error("Invalid insert request!");
+			return;
+		}
 		if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
 			logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
 			return;
@@ -263,6 +267,10 @@ public class Session {
 
 	public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
 								 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+		if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+			logger.error("Invalid insert request!");
+			return;
+		}
 		if (paths.size() != dataTypeList.size()) {
 			logger.error("The sizes of paths and dataTypeList should be equal.");
 			return;
