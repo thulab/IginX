@@ -47,6 +47,7 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
     public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
         super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId);
+        this.setIginxPlanType(INSERT_ROW_RECORDS);
     }
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
