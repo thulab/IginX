@@ -23,14 +23,16 @@ import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class QueryDataPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private QueryExecuteDataSet queryExecuteDataSet;
+    private List<QueryExecuteDataSet> queryExecuteDataSets;
 
-    public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, QueryExecuteDataSet queryExecuteDataSet) {
+    public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
         super(statusCode, plan);
-        this.queryExecuteDataSet = queryExecuteDataSet;
+        this.queryExecuteDataSets = queryExecuteDataSets;
     }
 }

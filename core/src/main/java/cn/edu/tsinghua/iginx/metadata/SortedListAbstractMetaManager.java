@@ -28,6 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         sortedFragmentMetaLists = new ArrayList<>();
         fragmentMetaListMap = new HashMap<>();
         fragmentLock.writeLock().lock();
-        sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream()
+        sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
         fragmentListMap.forEach(fragmentMetaListMap::put);
         fragmentLock.writeLock().unlock();
@@ -76,19 +77,24 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
             sortedFragmentMetaLists.add(pair);
             return;
         }
-        int left = 0, right = sortedFragmentMetaLists.size();
-        while (left <= right && left < sortedFragmentMetaLists.size()) {
+        int left = 0, right = sortedFragmentMetaLists.size() - 1;
+        while (left <= right) {
             int mid = (left + right) / 2;
             TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
             if (tsInterval.compareTo(midTsInterval) < 0) {
-                left = mid + 1;
-            } else if (tsInterval.compareTo(midTsInterval) > 0) {
                 right = mid - 1;
+            } else if (tsInterval.compareTo(midTsInterval) > 0) {
+                left = mid + 1;
             } else {
                 throw new RuntimeException("unexpected fragment");
             }
         }
-        sortedFragmentMetaLists.add(left, pair);
+        if (left == sortedFragmentMetaLists.size()) {
+            sortedFragmentMetaLists.add(pair);
+        } else {
+            sortedFragmentMetaLists.add(left, pair);
+        }
+
     }
 
     @Override
@@ -180,15 +186,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
-        resultList = searchFragmentList(searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
-                return 0;
-            else if (o1.getTsInterval().getStartTimeSeries() == null)
-                return -1;
-            else if (o2.getTsInterval().getStartTimeSeries() == null)
-                return 1;
-            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
-        }).collect(Collectors.toList()), timeInterval);
+        List<FragmentMeta> fragmentMetas = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
+                .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
+        resultList = searchFragmentList(fragmentMetas, timeInterval);
         fragmentLock.readLock().unlock();
         return resultList;
     }
@@ -203,13 +203,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         if (fragmentSeriesList.isEmpty()) {
             return resultList;
         }
-        int left = 0, right = fragmentSeriesList.size();
-        while (left < right) {
+        int left = 0, right = fragmentSeriesList.size() - 1;
+        while (left <= right) {
             int mid = (left + right) / 2;
-            if (fragmentSeriesList.get(mid).k.isBefore(tsInterval.getStartTimeSeries())) {
+            if (fragmentSeriesList.get(mid).k.isCompletelyBefore(tsInterval.getStartTimeSeries())) {
                 left = mid + 1;
             } else {
-                right = mid;
+                right = mid - 1;
             }
         }
         while (left < fragmentSeriesList.size() && fragmentSeriesList.get(left).k.isIntersect(tsInterval)) {
@@ -227,7 +227,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         int left = 0, right = fragmentSeriesList.size();
         while (left < right) {
             int mid = (left + right) / 2;
-            if (fragmentSeriesList.get(mid).k.isBefore(tsName)) {
+            if (fragmentSeriesList.get(mid).k.isCompletelyBefore(tsName)) {
                 left = mid + 1;
             } else {
                 right = mid;

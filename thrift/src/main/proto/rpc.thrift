@@ -11,6 +11,7 @@ enum DataType {
 
 enum StorageEngineType {
     IOTDB,
+    INFLUXDB,
 }
 
 enum AggregateType {
@@ -64,14 +65,23 @@ struct DeleteColumnsReq {
     2: required list<string> paths
 }
 
-struct InsertRecordsReq {
+struct InsertColumnRecordsReq {
     1: required i64 sessionId
-    // TODO add prefixes
     2: required list<string> paths
     3: required binary timestamps
     4: required list<binary> valuesList
     5: required list<DataType> dataTypeList
     6: optional list<map<string, string>> attributesList
+}
+
+struct InsertRowRecordsReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required binary timestamps
+    4: required list<binary> valuesList
+    5: required list<binary> bitmapList
+    6: required list<DataType> dataTypeList
+    7: optional list<map<string, string>> attributesList
 }
 
 struct DeleteDataInColumnsReq {
@@ -126,6 +136,7 @@ struct AggregateQueryResp {
 }
 
 service IService {
+
     OpenSessionResp openSession(1:OpenSessionReq req);
 
     Status closeSession(1:CloseSessionReq req);
@@ -138,7 +149,9 @@ service IService {
 
     Status deleteColumns(1:DeleteColumnsReq req);
 
-    Status insertRecords(1:InsertRecordsReq req);
+    Status insertColumnRecords(1:InsertColumnRecordsReq req);
+
+    Status insertRowRecords(1:InsertRowRecordsReq req);
 
     Status deleteDataInColumns(1:DeleteDataInColumnsReq req);
 

@@ -16,24 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.aysnc.queue;
+package cn.edu.tsinghua.iginx.query.async.queue;
 
-import cn.edu.tsinghua.iginx.query.aysnc.task.AsyncTask;
+import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 
-import java.util.Queue;
-import java.util.concurrent.LinkedBlockingQueue;
+public interface AsyncTaskQueue {
 
-public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
+    boolean addAsyncTask(AsyncTask asyncTask);
 
-    private final Queue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
+    /**
+     * 如果当前队列中不含未执行的计划，则该方法会阻塞。
+     * @return 距今最久的未执行的计划
+     */
+    AsyncTask getAsyncTask();
 
-    @Override
-    public boolean addAsyncTask(AsyncTask asyncTask) {
-        return asyncTasks.add(asyncTask);
-    }
-
-    @Override
-    public AsyncTask getAsyncTask() {
-        return asyncTasks.remove();
-    }
 }

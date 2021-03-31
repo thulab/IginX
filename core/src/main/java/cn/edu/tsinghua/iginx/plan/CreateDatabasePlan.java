@@ -32,4 +32,10 @@ public class CreateDatabasePlan extends DatabasePlan {
 		this.setIginxPlanType(CREATE_DATABASE);
 		this.setSync(true);
 	}
+
+	public CreateDatabasePlan(String databaseName, long storageEngineId) {
+		this(databaseName);
+		setStorageEngineId(storageEngineId);
+	}
+
 }

@@ -40,7 +40,17 @@ public abstract class NonDatabasePlan extends IginxPlan {
 		this.setIginxPlanType(NON_DATABASE);
 		this.setCanBeSplit(true);
 		this.paths = paths;
-		this.tsInterval = new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1));
+		String startTimeSeries = paths.get(0);
+		String endTimeSeries = paths.get(paths.size() - 1);
+		for (String path : paths) {
+			if (startTimeSeries.compareTo(path) >= 0) {
+				startTimeSeries = path;
+			}
+			if (endTimeSeries.compareTo(path) <= 0) {
+				endTimeSeries = path;
+			}
+		}
+		this.tsInterval = new TimeSeriesInterval(startTimeSeries, endTimeSeries);
 	}
 
 	public List<String> getPaths() {
@@ -57,7 +67,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	public String getPath(int index) {
 		if (paths.isEmpty()) {
-			logger.error("There are no paths in the InsertRecordsPlan.");
+			logger.error("There are no paths in the plan.");
 			return null;
 		}
 		if (index < 0 || index >= paths.size()) {
@@ -69,7 +79,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	public List<String> getPathsByInterval(TimeSeriesInterval interval) {
 		if (paths.isEmpty()) {
-			logger.error("There are no paths in the InsertRecordsPlan.");
+			logger.error("There are no paths in the plan.");
 			return null;
 		}
 		if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {

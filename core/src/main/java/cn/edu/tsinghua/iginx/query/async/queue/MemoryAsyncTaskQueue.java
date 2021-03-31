@@ -16,26 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan;
+package cn.edu.tsinghua.iginx.query.async.queue;
 
+import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DROP_DATABASE;
+import java.util.Queue;
+import java.util.concurrent.LinkedBlockingQueue;
 
-public class DropDatabasePlan extends DatabasePlan {
+public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
 
-	private static final Logger logger = LoggerFactory.getLogger(DropDatabasePlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(MemoryAsyncTaskQueue.class);
 
-	public DropDatabasePlan(String databaseName) {
-		super(false, databaseName);
-		this.setIginxPlanType(DROP_DATABASE);
-		this.setSync(true);
-	}
+    private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
 
-	public DropDatabasePlan(String databaseName, long storageEngineId) {
-		this(databaseName);
-		setStorageEngineId(storageEngineId);
-	}
+    @Override
+    public boolean addAsyncTask(AsyncTask asyncTask) {
+        return asyncTasks.add(asyncTask);
+    }
 
+    @Override
+    public AsyncTask getAsyncTask() {
+        try {
+            return asyncTasks.take();
+        } catch (Exception e) {
+            logger.error("encounter error when get async task: ", e);
+        }
+        return null;
+    }
 }

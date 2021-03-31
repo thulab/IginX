@@ -58,7 +58,7 @@ public class ByteUtils {
 					int length = valuesList.getInt();
 					byte[] bytes = new byte[length];
 					valuesList.get(bytes, 0, length);
-					values[i] = new String(bytes, 0, length);
+					values[i] = bytes;
 					break;
 				default:
 					throw new UnsupportedDataTypeException(dataTypeList.get(i).toString());
@@ -87,11 +87,54 @@ public class ByteUtils {
 					tempValues[i] = getDoubleArrayFromByteBuffer(valuesList.get(i));
 					break;
 				case STRING:
-					tempValues[i] = getStringArrayFromByteBuffer(valuesList.get(i));
+					tempValues[i] = getBytesArrayFromByteBuffer(valuesList.get(i));
 					break;
 				default:
 					throw new UnsupportedOperationException(dataTypeList.get(i).toString());
 			}
+		}
+		return tempValues;
+	}
+
+	public static Object[] getRowValuesListByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, List<ByteBuffer> bitmapList) {
+		Object[] tempValues = new Object[valuesList.size()];
+		for (int i = 0; i < valuesList.size(); i++) {
+			Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapList.get(i).array());
+			List<Integer> indexes = new ArrayList<>();
+			for (int j = 0; j < dataTypeList.size(); j++) {
+				if (bitmap.get(j)) {
+					indexes.add(j);
+				}
+			}
+			Object[] tempRowValues = new Object[indexes.size()];
+			for (int j = 0; j < indexes.size(); j++) {
+				switch (dataTypeList.get(indexes.get(j))) {
+					case BOOLEAN:
+						tempRowValues[j] = valuesList.get(i).get() == 1;
+						break;
+					case INTEGER:
+						tempRowValues[j] = valuesList.get(i).getInt();
+						break;
+					case LONG:
+						tempRowValues[j] = valuesList.get(i).getLong();
+						break;
+					case FLOAT:
+						tempRowValues[j] = valuesList.get(i).getFloat();
+						break;
+					case DOUBLE:
+						tempRowValues[j] = valuesList.get(i).getDouble();
+						break;
+					case STRING:
+						int length = valuesList.get(i).getInt();
+						byte[] bytes = new byte[length];
+						valuesList.get(i).get(bytes, 0, length);
+						tempRowValues[j] = bytes;
+						break;
+					default:
+						throw new UnsupportedOperationException(dataTypeList.get(i).toString());
+				}
+			}
+			tempValues[i] = tempRowValues;
 		}
 		return tempValues;
 	}
@@ -151,17 +194,17 @@ public class ByteUtils {
 		return array;
 	}
 
-	public static String[] getStringArrayFromByteBuffer(ByteBuffer buffer) {
-		List<String> stringList = new ArrayList<>();
+	public static byte[][] getBytesArrayFromByteBuffer(ByteBuffer buffer) {
+		List<byte[]> bytesList = new ArrayList<>();
 		int cnt = 0;
 		while (cnt < buffer.array().length) {
 			int length = buffer.getInt();
 			byte[] bytes = new byte[length];
 			buffer.get(bytes, 0, length);
-			stringList.add(new String(bytes, 0, length));
+			bytesList.add(bytes);
 			cnt += length + 4;
 		}
-		return stringList.toArray(new String[0]);
+		return bytesList.toArray(new byte[bytesList.size()][]);
 	}
 
 	public static List<ByteBuffer> getByteBufferByDataType(Object[] valuesList, List<DataType> dataTypeList) {
@@ -324,7 +367,7 @@ public class ByteUtils {
 			case STRING:
 				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
 				buffer.putInt(((byte[]) value).length);
-				buffer.put((byte[]) value);
+				buffer.put(((byte[]) value));
 				break;
 			default:
 				throw new UnsupportedOperationException(dataType.toString());
@@ -382,7 +425,7 @@ public class ByteUtils {
 				int length = buffer.getInt();
 				byte[] bytes = new byte[length];
 				buffer.get(bytes, 0, length);
-				value = new String(bytes, 0, length);
+				value = bytes;
 				break;
 			default:
 				throw new UnsupportedOperationException(dataType.toString());

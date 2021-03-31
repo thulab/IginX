@@ -18,17 +18,18 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    Unknown;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class InsertRowRecordsContext extends RequestContext {
 
+    private InsertRowRecordsReq req;
+
+    public InsertRowRecordsContext(InsertRowRecordsReq req) {
+        super(req.sessionId, ContextType.InsertRowRecords);
+        this.req = req;
+    }
 }

@@ -33,12 +33,15 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
@@ -49,6 +52,7 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -56,6 +60,7 @@ import java.util.List;
 import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBufferByDataType;
 
 public class Session {
@@ -216,8 +221,12 @@ public class Session {
 		}
 	}
 
-	public void insertRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+	public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+									List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+		if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+			logger.error("Invalid insert request!");
+			return;
+		}
 		if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
 			logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
 			return;
@@ -241,7 +250,7 @@ public class Session {
 			valuesList[i] = values;
 		}
 
-		InsertRecordsReq req = new InsertRecordsReq();
+		InsertColumnRecordsReq req = new InsertColumnRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -250,7 +259,71 @@ public class Session {
 		req.setAttributesList(attributesList);
 
 		try {
-			RpcUtils.verifySuccess(client.insertRecords(req));
+			RpcUtils.verifySuccess(client.insertColumnRecords(req));
+		} catch (TException e) {
+			throw new SessionException(e);
+		}
+	}
+
+	public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+								 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+		if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+			logger.error("Invalid insert request!");
+			return;
+		}
+		if (paths.size() != dataTypeList.size()) {
+			logger.error("The sizes of paths and dataTypeList should be equal.");
+			return;
+		}
+		if (timestamps.length != valuesList.length) {
+			logger.error("The sizes of timestamps and valuesList should be equal.");
+			return;
+		}
+		if (attributesList != null && paths.size() != attributesList.size()) {
+			logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+			return;
+		}
+
+		Integer[] index = new Integer[timestamps.length];
+		for (int i = 0; i < timestamps.length; i++) {
+			index[i] = i;
+		}
+		Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+		Arrays.sort(timestamps);
+		Object[] sortedValuesList = new Object[valuesList.length];
+		for (int i = 0; i < valuesList.length; i++) {
+			sortedValuesList[i] = valuesList[index[i]];
+		}
+
+		List<ByteBuffer> valueBufferList = new ArrayList<>();
+		List<ByteBuffer> bitmapBufferList = new ArrayList<>();
+		for (int i = 0; i < timestamps.length; i++) {
+			Object[] values = (Object[]) sortedValuesList[i];
+			if (values.length != paths.size()) {
+				logger.error("The sizes of paths and the element of valuesList should be equal.");
+				return;
+			}
+			valueBufferList.add(getByteBuffer(values, dataTypeList));
+			Bitmap bitmap = new Bitmap(values.length);
+			for (int j = 0; j < values.length; j++) {
+				if (values[j] != null) {
+					bitmap.mark(j);
+				}
+			}
+			bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
+		}
+
+		InsertRowRecordsReq req = new InsertRowRecordsReq();
+		req.setSessionId(sessionId);
+		req.setPaths(paths);
+		req.setTimestamps(getByteArrayFromLongArray(timestamps));
+		req.setDataTypeList(dataTypeList);
+		req.setAttributesList(attributesList);
+		req.setValuesList(valueBufferList);
+		req.setBitmapList(bitmapBufferList);
+
+		try {
+			RpcUtils.verifySuccess(client.insertRowRecords(req));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -274,6 +347,10 @@ public class Session {
 
 	public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
 			throws SessionException {
+		if (paths.isEmpty() || startTime > endTime) {
+			logger.error("Invalid query request!");
+			return null;
+		}
 		QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
 
 		QueryDataResp resp;

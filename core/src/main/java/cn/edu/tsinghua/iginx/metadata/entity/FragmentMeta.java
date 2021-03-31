@@ -88,8 +88,8 @@ public final class FragmentMeta {
         return replicaMetas.size();
     }
 
-    public FragmentMeta endFragmentMeta() {
-        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), Long.MAX_VALUE, replicaMetas);
+    public FragmentMeta endFragmentMeta(long endTime) {
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime, replicaMetas);
     }
 
     public long getCreatedBy() {

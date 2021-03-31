@@ -13,7 +13,10 @@ import org.apache.iotdb.tsfile.read.common.Field;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
 
 public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
@@ -21,9 +24,12 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	private final Session session;
 
-	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session) {
+	private AtomicInteger activeDataSetCount;
+
+	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session, AtomicInteger activeDataSetCount) {
 		this.dataSet = dataSet;
 		this.session = session;
+		this.activeDataSetCount = activeDataSetCount;
 	}
 
 	@Override
@@ -52,7 +58,11 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 			RowRecord rowRecord = new RowRecord(iotdbRowRecord.getTimestamp());
 			List<Object> fields = new ArrayList<>();
 			for (Field field : iotdbRowRecord.getFields()) {
-				fields.add(field.getObjectValue(field.getDataType()));
+				if (field.getDataType() == TEXT) {
+					fields.add(field.getBinaryV().getValues());
+				} else {
+					fields.add(field.getObjectValue(field.getDataType()));
+				}
 			}
 			rowRecord.setFields(fields);
 			return rowRecord;
@@ -65,9 +75,15 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 	public void close() throws ExecutionException {
 		try {
 			dataSet.closeOperationHandle();
-			session.close();
+			if (activeDataSetCount.decrementAndGet() == 0) {
+				session.close();
+			}
 		} catch (StatementExecutionException | IoTDBConnectionException e) {
 			throw new ExecutionException(e.getMessage());
 		}
+	}
+
+	public void setActiveDataSetCount(AtomicInteger activeDataSetCount) {
+		this.activeDataSetCount = activeDataSetCount;
 	}
 }

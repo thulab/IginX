@@ -14,7 +14,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -37,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,7 +75,7 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteInsertRecordsPlan(InsertRecordsPlan plan) {
+	protected NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		// TODO 处理 organization 和 bucket 名称
 		Organization organization = client.getOrganizationsApi()
@@ -129,6 +131,11 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
+	protected NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+		return null;
+	}
+
+	@Override
 	protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		Organization organization = client.getOrganizationsApi()
@@ -156,7 +163,7 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 			tableList.addAll(tables);
 		}
 
-		return new QueryDataPlanExecuteResult(SUCCESS, plan, new InfluxDBQueryExecuteDataSet(tableList));
+		return new QueryDataPlanExecuteResult(SUCCESS, plan, Collections.singletonList(new InfluxDBQueryExecuteDataSet(tableList)));
 	}
 
 	@Override

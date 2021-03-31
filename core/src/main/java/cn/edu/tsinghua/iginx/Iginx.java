@@ -25,6 +25,7 @@ import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
 import org.apache.thrift.server.TSimpleServer;
+import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerSocket;
 import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
@@ -42,10 +43,10 @@ public class Iginx {
     private void startServer() throws TTransportException {
         TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
         TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());
-        TServer.Args args = new TServer.Args(serverTransport);
-        args.processor(processor);
+        TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport).processor(processor)
+                .minWorkerThreads(20).maxWorkerThreads(50);
         args.protocolFactory(new TBinaryProtocol.Factory());
-        TServer server = new TSimpleServer(args);
+        TServer server = new TThreadPoolServer(args);
         server.serve();
     }
 

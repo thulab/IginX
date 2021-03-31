@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.cluster;
 
 import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
@@ -28,7 +27,8 @@ import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -44,7 +44,8 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -74,14 +75,14 @@ public class IginxWorker implements IService.Iface {
 	@Override
 	public OpenSessionResp openSession(OpenSessionReq req) {
 		logger.info("received open session request");
-		if (!req.username.equals(ConfigDescriptor.getInstance().getConfig().getUsername()) ||
-				!req.password.equals(ConfigDescriptor.getInstance().getConfig().getPassword())) {
-			return new OpenSessionResp(RpcUtils.WRONG_PASSWORD);
-		}
+		logger.info("start to generate test id");
 		long id = SnowFlakeUtils.getInstance().nextId();
+		logger.info("generate session id: " + id);
 		sessions.add(id);
+		logger.info("add session " + id + " into set");
 		OpenSessionResp resp = new OpenSessionResp(RpcUtils.SUCCESS);
 		resp.setSessionId(id);
+		logger.info("return request");
 		return resp;
 	}
 
@@ -123,8 +124,15 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public Status insertRecords(InsertRecordsReq req) {
-		InsertRecordsContext context = new InsertRecordsContext(req);
+	public Status insertColumnRecords(InsertColumnRecordsReq req) {
+		InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
+		core.processRequest(context);
+		return context.getStatus();
+	}
+
+	@Override
+	public Status insertRowRecords(InsertRowRecordsReq req) {
+		InsertRowRecordsContext context = new InsertRowRecordsContext(req);
 		core.processRequest(context);
 		return context.getStatus();
 	}

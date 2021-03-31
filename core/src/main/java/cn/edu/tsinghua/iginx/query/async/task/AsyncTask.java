@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.aysnc.task;
+package cn.edu.tsinghua.iginx.query.async.task;
 
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import lombok.AllArgsConstructor;

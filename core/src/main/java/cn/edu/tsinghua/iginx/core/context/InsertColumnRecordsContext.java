@@ -18,22 +18,22 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
-import cn.edu.tsinghua.iginx.thrift.InsertRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class InsertRecordsContext extends RequestContext {
+public class InsertColumnRecordsContext extends RequestContext {
 
-    private InsertRecordsReq req;
+    private InsertColumnRecordsReq req;
 
-    public InsertRecordsContext(InsertRecordsReq req) {
-        super(req.sessionId, ContextType.InsertRecords);
+    public InsertColumnRecordsContext(InsertColumnRecordsReq req) {
+        super(req.sessionId, ContextType.InsertColumnRecords);
         this.req = req;
     }
 
-    public InsertRecordsReq getReq() {
+    public InsertColumnRecordsReq getReq() {
         return req;
     }
 }

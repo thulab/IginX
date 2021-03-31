@@ -423,7 +423,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             mutex.acquire();
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta: latestFragments.values()) { // 终结老分片
-                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta();
+                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
                 // 在更新分片时，先更新本地
                 fragmentMeta.setUpdatedBy(iginxId);
                 updateFragment(fragmentMeta);
@@ -435,6 +435,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 fragmentMeta.setCreatedBy(iginxId);
                 addFragment(fragmentMeta);
                 this.zookeeperClient.create()
+                        .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
                         .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
             }
@@ -466,8 +467,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments) {
-        if (hasFragment())
-            return false;
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -476,6 +475,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta: initialFragments) {
+                logger.info("create initial fragment: " + new String(JsonUtils.toJson(fragmentMeta)));
                 String tsIntervalName = fragmentMeta.getTsInterval().toString();
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地

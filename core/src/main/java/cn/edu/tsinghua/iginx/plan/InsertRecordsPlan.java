@@ -21,8 +21,10 @@ package cn.edu.tsinghua.iginx.plan;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
-import lombok.ToString;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,8 +36,9 @@ import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_RECORDS;
 
-@ToString
-public class InsertRecordsPlan extends DataPlan {
+@Getter
+@Setter
+public abstract class InsertRecordsPlan extends DataPlan{
 
 	private static final Logger logger = LoggerFactory.getLogger(InsertRecordsPlan.class);
 
@@ -43,28 +46,27 @@ public class InsertRecordsPlan extends DataPlan {
 
 	private Object[] valuesList;
 
+	private List<Bitmap> bitmapList;
+
 	private List<DataType> dataTypeList;
 
 	private List<Map<String, String>> attributesList;
 
-	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+	protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
 		super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
 		this.setIginxPlanType(INSERT_RECORDS);
 		this.timestamps = timestamps;
 		this.valuesList = valuesList;
+		this.bitmapList = bitmapList;
 		this.dataTypeList = dataTypeList;
 		this.attributesList = attributesList;
 	}
 
-	public InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-	        List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
-		this(paths, timestamps, valuesList, dataTypeList, attributesList);
+	protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
+		this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList);
 		this.setStorageEngineId(storageEngineId);
-	}
-
-	public long[] getTimestamps() {
-		return timestamps;
 	}
 
 	public long getTimestamp(int index) {
@@ -79,40 +81,26 @@ public class InsertRecordsPlan extends DataPlan {
 		return timestamps[index];
 	}
 
-	public long[] getTimestampsByRange(long startTime, long endTime) {
-		if (timestamps.length == 0) {
-			logger.error("There are no timestamps in the InsertRecordsPlan.");
-			return null;
-		}
-		List<Long> tempTimestamps = new ArrayList<>();
-		for (long timestamp : timestamps) {
-			if (timestamp >= startTime && timestamp <= endTime) {
-				tempTimestamps.add(timestamp);
-			}
-		}
-		return tempTimestamps.stream().mapToLong(i -> i).toArray();
-	}
-
 	public Pair<long[], Pair<Integer, Integer>> getTimestampsAndIndexesByInterval(TimeInterval interval) {
 		if (timestamps.length == 0) {
 			logger.error("There are no timestamps in the InsertRecordsPlan.");
 			return null;
 		}
-		List<Long> tempTimestamps = new ArrayList<>();
 		int startIndex = timestamps.length;
 		int endIndex = 0;
 		for (int i = 0; i < timestamps.length; i++) {
-			if (timestamps[i] >= interval.getStartTime() && timestamps[i] <= interval.getEndTime()) {
-				tempTimestamps.add(timestamps[i]);
-				startIndex = Math.min(startIndex, i);
-				endIndex = Math.max(endIndex, i);
+			if (timestamps[i] >= interval.getStartTime()) {
+				startIndex = i;
+				break;
 			}
 		}
-		return new Pair<>(tempTimestamps.stream().mapToLong(Long::longValue).toArray(), new Pair<>(startIndex, endIndex));
-	}
-
-	public Object[] getValuesList() {
-		return valuesList;
+		for (int i = timestamps.length - 1; i >= 0; i--) {
+			if (timestamps[i] <= interval.getEndTime()) {
+				endIndex = i;
+				break;
+			}
+		}
+		return new Pair<>(Arrays.copyOfRange(timestamps, startIndex, endIndex + 1), new Pair<>(startIndex, endIndex));
 	}
 
 	public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
@@ -161,10 +149,6 @@ public class InsertRecordsPlan extends DataPlan {
 		return tempValues;
 	}
 
-	public List<DataType> getDataTypeList() {
-		return dataTypeList;
-	}
-
 	public DataType getDataType(int index) {
 		if (dataTypeList == null || dataTypeList.isEmpty()) {
 			logger.error("There are no DataType in the InsertRecordsPlan.");
@@ -193,10 +177,6 @@ public class InsertRecordsPlan extends DataPlan {
 			}
 		}
 		return dataTypeList.subList(startIndex, endIndex + 1);
-	}
-
-	public List<Map<String, String>> getAttributesList() {
-		return attributesList;
 	}
 
 	public Map<String, String> getAttributes(int index) {
