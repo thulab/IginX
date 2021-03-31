@@ -24,7 +24,7 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	private final Session session;
 
-	private final AtomicInteger activeDataSetCount;
+	private AtomicInteger activeDataSetCount;
 
 	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session, AtomicInteger activeDataSetCount) {
 		this.dataSet = dataSet;
@@ -81,5 +81,9 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 		} catch (StatementExecutionException | IoTDBConnectionException e) {
 			throw new ExecutionException(e.getMessage());
 		}
+	}
+
+	public void setActiveDataSetCount(AtomicInteger activeDataSetCount) {
+		this.activeDataSetCount = activeDataSetCount;
 	}
 }

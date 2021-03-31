@@ -267,12 +267,15 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             }
         }
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
-        AtomicInteger activeDataSetCount = new AtomicInteger((pathsWithoutStar.isEmpty() ? 1 : 0) + pathToStatementWithStar.size());
         if (!pathsWithoutStar.isEmpty()) {
-            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeRawDataQuery(pathsWithoutStar, plan.getStartTime(), plan.getEndTime()), session, activeDataSetCount));
+            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeRawDataQuery(pathsWithoutStar, plan.getStartTime(), plan.getEndTime()), session, null));
         }
         for (Map.Entry<String, String> entry : pathToStatementWithStar.entrySet()) {
-            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeQueryStatement(entry.getValue()), session, activeDataSetCount));
+            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeQueryStatement(entry.getValue()), session, null));
+        }
+        AtomicInteger activeDataSetCount = new AtomicInteger(sessionDataSets.size());
+        for (QueryExecuteDataSet dataSet: sessionDataSets) {
+            ((IoTDBQueryExecuteDataSet) dataSet).setActiveDataSetCount(activeDataSetCount);
         }
         return new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
