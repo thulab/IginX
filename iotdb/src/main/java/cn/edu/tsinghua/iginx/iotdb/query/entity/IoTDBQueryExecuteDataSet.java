@@ -13,6 +13,7 @@ import org.apache.iotdb.tsfile.read.common.Field;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
@@ -23,16 +24,12 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	private final Session session;
 
-	// TODO 好像不需要过滤？
-	private final boolean toBeFiltered;
+	private final AtomicInteger activeDataSetCount;
 
-	private final String filterPath;
-
-	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session, boolean toBeFiltered, String filterPath) {
+	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session, AtomicInteger activeDataSetCount) {
 		this.dataSet = dataSet;
 		this.session = session;
-		this.toBeFiltered = toBeFiltered;
-		this.filterPath = filterPath;
+		this.activeDataSetCount = activeDataSetCount;
 	}
 
 	@Override
@@ -78,7 +75,9 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 	public void close() throws ExecutionException {
 		try {
 			dataSet.closeOperationHandle();
-			session.close();
+			if (activeDataSetCount.decrementAndGet() == 0) {
+				session.close();
+			}
 		} catch (StatementExecutionException | IoTDBConnectionException e) {
 			throw new ExecutionException(e.getMessage());
 		}

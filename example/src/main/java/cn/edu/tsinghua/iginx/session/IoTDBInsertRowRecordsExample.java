@@ -116,9 +116,9 @@ public class IoTDBInsertRowRecordsExample {
 
     private static void queryData() throws SessionException {
         List<String> queryPaths = new ArrayList<>();
-        queryPaths.add("root.sg1.s1.*");
-        queryPaths.add("root.sg1.s2.*");
-        queryPaths.add("root.sg1.s3.*");
+        queryPaths.add("root.sg1.d1.*");
+        queryPaths.add("root.sg1.d2.*");
+        queryPaths.add("root.sg1.d3.*");
         SessionQueryDataSet dataSet = session.queryData(queryPaths, beginTimestamp, endTimestamp + 1);
         dataSet.print();
     }

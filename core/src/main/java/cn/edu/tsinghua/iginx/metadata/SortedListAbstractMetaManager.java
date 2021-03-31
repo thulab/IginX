@@ -203,13 +203,13 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         if (fragmentSeriesList.isEmpty()) {
             return resultList;
         }
-        int left = 0, right = fragmentSeriesList.size();
-        while (left < right) {
+        int left = 0, right = fragmentSeriesList.size() - 1;
+        while (left <= right) {
             int mid = (left + right) / 2;
             if (fragmentSeriesList.get(mid).k.isCompletelyBefore(tsInterval.getStartTimeSeries())) {
                 left = mid + 1;
             } else {
-                right = mid;
+                right = mid - 1;
             }
         }
         while (left < fragmentSeriesList.size() && fragmentSeriesList.get(left).k.isIntersect(tsInterval)) {

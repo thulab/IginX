@@ -67,6 +67,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
@@ -161,7 +162,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
         }
 
         int cnt = 0;
-        while (true) {
+        do {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
             // 插入 timestamps
             for (int i = cnt; i < cnt + size; i++) {
@@ -195,10 +196,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 tablet.reset();
             }
             cnt += size;
-            if (cnt >= plan.getTimestamps().length) {
-                break;
-            }
-        }
+        } while(cnt < plan.getTimestamps().length);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -218,7 +216,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
         }
 
         int cnt = 0;
-        while (true) {
+        do {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
 
             // 插入 timestamps 和 values
@@ -252,10 +250,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 tablet.reset();
             }
             cnt += size;
-            if (cnt >= plan.getTimestamps().length) {
-                break;
-            }
-        }
+        } while(cnt < plan.getTimestamps().length);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -272,11 +267,12 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             }
         }
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        AtomicInteger activeDataSetCount = new AtomicInteger((pathsWithoutStar.isEmpty() ? 1 : 0) + pathToStatementWithStar.size());
         if (!pathsWithoutStar.isEmpty()) {
-            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeRawDataQuery(pathsWithoutStar, plan.getStartTime(), plan.getEndTime()), session, false, null));
+            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeRawDataQuery(pathsWithoutStar, plan.getStartTime(), plan.getEndTime()), session, activeDataSetCount));
         }
         for (Map.Entry<String, String> entry : pathToStatementWithStar.entrySet()) {
-            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeQueryStatement(entry.getValue()), session, true, entry.getKey()));
+            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeQueryStatement(entry.getValue()), session, activeDataSetCount));
         }
         return new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
