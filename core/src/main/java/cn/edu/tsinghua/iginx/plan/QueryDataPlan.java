@@ -34,18 +34,29 @@ public class QueryDataPlan extends DataPlan {
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
 		super(true, paths, startTime, endTime);
 		this.setIginxPlanType(QUERY_DATA);
-		String startTimeSeries = paths.get(0).contains("*") ?
+		boolean isStartPrefix = paths.get(0).contains("*");
+		String startTimeSeries = isStartPrefix ?
 				paths.get(0).substring(0, paths.get(0).indexOf("*") - 1) : paths.get(0);
-		String endTimeSeries = paths.get(getPathsNum() - 1).contains("*") ?
+		boolean isEndPrefix = paths.get(getPathsNum() - 1).contains("*");
+		String endTimeSeries = isEndPrefix ?
 				paths.get(getPathsNum() - 1).substring(0, paths.get(getPathsNum() - 1).indexOf("*") - 1) : paths.get(getPathsNum() - 1);
 		for (String path : paths) {
-			String prefix = path.contains("*") ? path.substring(0, path.indexOf("*") - 1) : path;
+			boolean isPrefix = path.contains("*");
+			String prefix = isPrefix ? path.substring(0, path.indexOf("*") - 1) : path;
 			if (startTimeSeries.compareTo(prefix) >= 0) {
 				startTimeSeries = prefix;
+				isStartPrefix = true;
 			}
 			if (endTimeSeries.compareTo(prefix) <= 0) {
 				endTimeSeries = prefix;
+				isEndPrefix = true;
 			}
+		}
+		if (isStartPrefix) {
+			startTimeSeries += "." +  (char)('A' - 1);
+		}
+		if (isEndPrefix) {
+			endTimeSeries += "." +  (char)('z' + 1);
 		}
 		this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
 	}
