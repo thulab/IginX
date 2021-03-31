@@ -67,7 +67,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	public String getPath(int index) {
 		if (paths.isEmpty()) {
-			logger.error("There are no paths in the InsertRecordsPlan.");
+			logger.error("There are no paths in the plan.");
 			return null;
 		}
 		if (index < 0 || index >= paths.size()) {
@@ -79,7 +79,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
 
 	public List<String> getPathsByInterval(TimeSeriesInterval interval) {
 		if (paths.isEmpty()) {
-			logger.error("There are no paths in the InsertRecordsPlan.");
+			logger.error("There are no paths in the plan.");
 			return null;
 		}
 		if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {

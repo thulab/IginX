@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,7 +163,7 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 			tableList.addAll(tables);
 		}
 
-		return new QueryDataPlanExecuteResult(SUCCESS, plan, new InfluxDBQueryExecuteDataSet(tableList));
+		return new QueryDataPlanExecuteResult(SUCCESS, plan, Collections.singletonList(new InfluxDBQueryExecuteDataSet(tableList)));
 	}
 
 	@Override

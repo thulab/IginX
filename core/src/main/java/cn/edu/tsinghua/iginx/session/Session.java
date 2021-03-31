@@ -347,6 +347,10 @@ public class Session {
 
 	public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
 			throws SessionException {
+		if (paths.isEmpty() || startTime > endTime) {
+			logger.error("Invalid query request!");
+			return null;
+		}
 		QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
 
 		QueryDataResp resp;

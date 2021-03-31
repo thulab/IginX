@@ -34,6 +34,7 @@ import static org.junit.Assert.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class QueryDatasetCombinerTest {
@@ -66,11 +67,11 @@ public class QueryDatasetCombinerTest {
 
         List<List<Object>> valuesList1 = Arrays.asList(Arrays.asList(0L, 1L, 1.0), Arrays.asList(1L, 2L, 2.0));
         QueryExecuteDataSet stub1 = new QueryExecuteDataSetStub(paths1, dataTypes1, valuesList1);
-        QueryDataPlanExecuteResult result1 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, stub1);
+        QueryDataPlanExecuteResult result1 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, Collections.singletonList(stub1));
 
         List<List<Object>> valuesList2 = Arrays.asList(Arrays.asList(10L, 1L, 1.0), Arrays.asList(11L, 2L, 2.0));
         QueryExecuteDataSet stub2 = new QueryExecuteDataSetStub(paths1, dataTypes1, valuesList2);
-        QueryDataPlanExecuteResult result2 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, stub2);
+        QueryDataPlanExecuteResult result2 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, Collections.singletonList(stub2));
 
         List<String> paths2 = new ArrayList<>();
         List<DataType> dataTypes2 = new ArrayList<>();
@@ -83,11 +84,11 @@ public class QueryDatasetCombinerTest {
 
         List<List<Object>> valuesList3 = Arrays.asList(Arrays.asList(0L, true, "OK1"), Arrays.asList(1L, true, "OK2"));
         QueryExecuteDataSet stub3 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList3);
-        QueryDataPlanExecuteResult result3 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, stub3);
+        QueryDataPlanExecuteResult result3 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, Collections.singletonList(stub3));
 
         List<List<Object>> valuesList4 = Arrays.asList(Arrays.asList(10L, false, "OK3"), Arrays.asList(12L, false, "OK4"));
         QueryExecuteDataSet stub4 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList4);
-        QueryDataPlanExecuteResult result4 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, stub4);
+        QueryDataPlanExecuteResult result4 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, Collections.singletonList(stub4));
 
         List<QueryDataPlanExecuteResult> resultList = new ArrayList<>();
         resultList.add(result1);

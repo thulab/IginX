@@ -38,6 +38,7 @@ import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
+import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
@@ -48,7 +49,6 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
-import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
@@ -79,6 +79,8 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     private static final Logger logger = LoggerFactory.getLogger(IoTDBPlanExecutor.class);
 
     private static final int BATCH_SIZE = 10000;
+
+    private static final String QUERY_DATA = "SELECT %s FROM %s WHERE time >= %d and time <= %d";
 
     private static final String MAX = "SELECT MAX_TIME(%s), MAX_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
 
@@ -203,6 +205,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     @Override
     protected NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        // TODO
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
         Map<String, Tablet> tablets = new HashMap<>();
@@ -258,8 +261,22 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
     }
 
     protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan, Session session) throws IoTDBConnectionException, StatementExecutionException {
-        SessionDataSet sessionDataSet = session.executeRawDataQuery(plan.getPaths(), plan.getStartTime(), plan.getEndTime());
-        return new QueryDataPlanExecuteResult(SUCCESS, plan, new IoTDBQueryExecuteDataSet(sessionDataSet, session));
+        List<String> pathsWithoutStar = new ArrayList<>();
+        Map<String, String> pathToStatementWithStar = new HashMap<>();
+        for (String path : plan.getPaths()) {
+            if (!path.contains("*")) {
+                pathsWithoutStar.add(path);
+            } else {
+                pathToStatementWithStar.put(path,
+                        String.format(QUERY_DATA, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime()));
+            }
+        }
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeRawDataQuery(pathsWithoutStar, plan.getStartTime(), plan.getEndTime()), session, false, null));
+        for (Map.Entry<String, String> entry : pathToStatementWithStar.entrySet()) {
+            sessionDataSets.add(new IoTDBQueryExecuteDataSet(session.executeQueryStatement(entry.getValue()), session, true, entry.getKey()));
+        }
+        return new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override

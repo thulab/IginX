@@ -23,9 +23,16 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	private final Session session;
 
-	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session) {
+	// TODO 好像不需要过滤？
+	private final boolean toBeFiltered;
+
+	private final String filterPath;
+
+	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session, boolean toBeFiltered, String filterPath) {
 		this.dataSet = dataSet;
 		this.session = session;
+		this.toBeFiltered = toBeFiltered;
+		this.filterPath = filterPath;
 	}
 
 	@Override

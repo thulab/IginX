@@ -18,9 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
@@ -32,11 +34,47 @@ public class QueryDataPlan extends DataPlan {
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
 		super(true, paths, startTime, endTime);
 		this.setIginxPlanType(QUERY_DATA);
+		String startTimeSeries = paths.get(0).contains("*") ?
+				paths.get(0).substring(0, paths.get(0).indexOf("*") - 1) : paths.get(0);
+		String endTimeSeries = paths.get(getPathsNum() - 1).contains("*") ?
+				paths.get(getPathsNum() - 1).substring(0, paths.get(getPathsNum() - 1).indexOf("*") - 1) : paths.get(getPathsNum() - 1);
+		for (String path : paths) {
+			String prefix = path.contains("*") ? path.substring(0, path.indexOf("*") - 1) : path;
+			if (startTimeSeries.compareTo(prefix) >= 0) {
+				startTimeSeries = prefix;
+			}
+			if (endTimeSeries.compareTo(prefix) <= 0) {
+				endTimeSeries = prefix;
+			}
+		}
+		this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
 	}
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
 		this(paths, startTime, endTime);
 		this.setStorageEngineId(storageEngineId);
 		this.setSync(true);
+	}
+
+	public List<String> getPathsByInterval(TimeSeriesInterval interval) {
+		if (getPaths().isEmpty()) {
+			logger.error("There are no paths in the plan.");
+			return null;
+		}
+		if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
+			return getPaths();
+		}
+		List<String> tempPaths = new ArrayList<>();
+		for (String path : getPaths()) {
+			String prefix = path.contains("*") ? path.substring(0, path.indexOf("*") - 1) : path;
+			if (interval.getStartTimeSeries() != null && prefix.compareTo(interval.getStartTimeSeries()) < 0 && !interval.getStartTimeSeries().startsWith(prefix)) {
+				continue;
+			}
+			if (interval.getEndTimeSeries() != null && prefix.compareTo(interval.getEndTimeSeries()) > 0) {
+				continue;
+			}
+			tempPaths.add(path);
+		}
+		return tempPaths;
 	}
 }

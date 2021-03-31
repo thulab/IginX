@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -54,9 +55,10 @@ public class QueryDataSetCombiner {
     }
 
     public void combineResult(QueryDataResp resp, List<QueryDataPlanExecuteResult> planExecuteResults) throws ExecutionException {
-        Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSet() != null)
+        Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSets() != null)
                 .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
-                .map(QueryDataPlanExecuteResult::getQueryExecuteDataSet)
+                .map(QueryDataPlanExecuteResult::getQueryExecuteDataSets)
+                .flatMap(Collection::stream)
                 .map(CheckedFunction.wrap(QueryExecuteDataSetWrapper::new))
                 .collect(Collectors.toSet());
 
