@@ -36,7 +36,7 @@ public class DataTypeTransformer {
             case INT64:
                 return DataType.LONG;
             case TEXT:
-                return DataType.STRING;
+                return DataType.BINARY;
             default:
                 break;
         }
@@ -55,7 +55,7 @@ public class DataTypeTransformer {
                 return TSDataType.INT32;
             case LONG:
                 return TSDataType.INT64;
-            case STRING:
+            case BINARY:
                 return TSDataType.TEXT;
             default:
                 break;

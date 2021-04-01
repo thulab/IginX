@@ -93,7 +93,7 @@ public class IoTDBInsertRowRecordsExample {
     private static void insertRowRecords() throws SessionException, ExecutionException {
         List<DataType> dataTypeList = new ArrayList<>();
         for (int i = 0; i < paths.size(); i++) {
-            dataTypeList.add(DataType.STRING);
+            dataTypeList.add(DataType.BINARY);
         }
         int size = (int)(endTimestamp - beginTimestamp) / interval;
         long[] timestamps = new long[size];

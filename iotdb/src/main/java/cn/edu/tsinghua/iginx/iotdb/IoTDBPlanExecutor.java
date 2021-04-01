@@ -71,7 +71,7 @@ import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
-import static cn.edu.tsinghua.iginx.thrift.DataType.STRING;
+import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
 
 public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
@@ -176,7 +176,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 String deviceId = plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
                 String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
                 for (int j = cnt; j < cnt + size; j++) {
-                    if (plan.getDataType(i) == STRING) {
+                    if (plan.getDataType(i) == BINARY) {
                         tablets.get(deviceId).addValue(measurement, j, new Binary((byte[]) values[j]));
                     } else {
                         tablets.get(deviceId).addValue(measurement, j, values[j]);
@@ -228,7 +228,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                         Tablet tablet = tablets.get(deviceId);
                         int row = tablet.rowSize++;
                         tablets.get(deviceId).addTimestamp(row, plan.getTimestamp(i));
-                        if (plan.getDataType(j) == STRING) {
+                        if (plan.getDataType(j) == BINARY) {
                             tablets.get(deviceId).addValue(measurement, row, new Binary((byte[]) values[k]));
                         } else {
                             tablets.get(deviceId).addValue(measurement, row, values[k]);
@@ -439,7 +439,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                         sessionPool.executeQueryStatement(String.format(FIRST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(STRING);
+                    dataTypeList.add(BINARY);
                     values.add("null".getBytes());
                 } else {
                     dataTypeList.add(fromIoTDB(field.getDataType()));
@@ -474,7 +474,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                         sessionPool.executeQueryStatement(String.format(LAST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(STRING);
+                    dataTypeList.add(BINARY);
                     values.add("null".getBytes());
                 } else {
                     dataTypeList.add(fromIoTDB(field.getDataType()));
@@ -509,7 +509,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                         sessionPool.executeQueryStatement(String.format(MAX_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(STRING);
+                    dataTypeList.add(BINARY);
                     values.add("null".getBytes());
                 } else {
                     dataTypeList.add(fromIoTDB(field.getDataType()));
@@ -544,7 +544,7 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                         sessionPool.executeQueryStatement(String.format(MIN_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(STRING);
+                    dataTypeList.add(BINARY);
                     values.add("null".getBytes());
                 } else {
                     dataTypeList.add(fromIoTDB(field.getDataType()));

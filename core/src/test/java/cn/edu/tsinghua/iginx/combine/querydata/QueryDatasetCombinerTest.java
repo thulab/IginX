@@ -80,7 +80,7 @@ public class QueryDatasetCombinerTest {
         paths2.add("root.sg2.d1.s1");
         dataTypes2.add(DataType.BOOLEAN);
         paths2.add("root.sg2.d1.s2");
-        dataTypes2.add(DataType.STRING);
+        dataTypes2.add(DataType.BINARY);
 
         List<List<Object>> valuesList3 = Arrays.asList(Arrays.asList(0L, true, "OK1".getBytes(StandardCharsets.UTF_8)), Arrays.asList(1L, true, "OK2".getBytes(StandardCharsets.UTF_8)));
         QueryExecuteDataSet stub3 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList3);

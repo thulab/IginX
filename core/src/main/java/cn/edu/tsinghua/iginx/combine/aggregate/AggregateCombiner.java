@@ -207,7 +207,7 @@ public class AggregateCombiner {
             Pair<DataType, List<Pair<Long, Object>>> pair = pathsRawData.get(paths.get(i));
             long count = pair.v.stream().map(e -> e.k).reduce(0L, Long::sum);
             if (count == 0) {
-                dataTypes.set(i, DataType.STRING);
+                dataTypes.set(i, DataType.BINARY);
             }
             Object avg = null;
             switch (pair.k) {

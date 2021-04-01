@@ -118,7 +118,7 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 					case DOUBLE:
 						points.add(Point.measurement(measurement).addTags(tags).addField(field, (double) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
 						break;
-					case STRING:
+					case BINARY:
 						points.add(Point.measurement(measurement).addTags(tags).addField(field, (String) values[j]).time(plan.getTimestamp(j), WritePrecision.MS));
 						break;
 					default:

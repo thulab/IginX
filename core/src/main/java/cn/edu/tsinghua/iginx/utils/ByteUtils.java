@@ -54,7 +54,7 @@ public class ByteUtils {
 				case DOUBLE:
 					values[i] = valuesList.getDouble();
 					break;
-				case STRING:
+				case BINARY:
 					int length = valuesList.getInt();
 					byte[] bytes = new byte[length];
 					valuesList.get(bytes, 0, length);
@@ -86,7 +86,7 @@ public class ByteUtils {
 				case DOUBLE:
 					tempValues[i] = getDoubleArrayFromByteBuffer(valuesList.get(i));
 					break;
-				case STRING:
+				case BINARY:
 					tempValues[i] = getBytesArrayFromByteBuffer(valuesList.get(i));
 					break;
 				default:
@@ -124,7 +124,7 @@ public class ByteUtils {
 					case DOUBLE:
 						tempRowValues[j] = valuesList.get(i).getDouble();
 						break;
-					case STRING:
+					case BINARY:
 						int length = valuesList.get(i).getInt();
 						byte[] bytes = new byte[length];
 						valuesList.get(i).get(bytes, 0, length);
@@ -239,7 +239,7 @@ public class ByteUtils {
 				case DOUBLE:
 					buffer.putDouble((double) value);
 					break;
-				case STRING:
+				case BINARY:
 					buffer.putInt(((byte[]) value).length);
 					buffer.put((byte[]) value);
 					break;
@@ -271,7 +271,7 @@ public class ByteUtils {
 				case DOUBLE:
 					size += 8;
 					break;
-				case STRING:
+				case BINARY:
 					size += 4 + ((byte[]) value).length;
 					break;
 				default:
@@ -318,7 +318,7 @@ public class ByteUtils {
 					buffer.putDouble((double) value);
 				}
 				break;
-			case STRING:
+			case BINARY:
 				for (Object value : values) {
 					buffer.putInt(((byte[]) value).length);
 					buffer.put((byte[]) value);
@@ -364,7 +364,7 @@ public class ByteUtils {
 				buffer = ByteBuffer.allocate(8);
 				buffer.putDouble((double) value);
 				break;
-			case STRING:
+			case BINARY:
 				buffer = ByteBuffer.allocate(4 + ((byte[]) value).length);
 				buffer.putInt(((byte[]) value).length);
 				buffer.put(((byte[]) value));
@@ -391,7 +391,7 @@ public class ByteUtils {
 			case DOUBLE:
 				size = values.length * 8;
 				break;
-			case STRING:
+			case BINARY:
 				size += values.length * 4;
 				for (Object value : values) {
 					size += ((byte[]) value).length;
@@ -421,7 +421,7 @@ public class ByteUtils {
 			case DOUBLE:
 				value = buffer.getDouble();
 				break;
-			case STRING:
+			case BINARY:
 				int length = buffer.getInt();
 				byte[] bytes = new byte[length];
 				buffer.get(bytes, 0, length);
