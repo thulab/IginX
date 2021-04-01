@@ -37,7 +37,6 @@ public class DeleteDataInColumnsPlan extends DataPlan {
 	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
 		this(paths, startTime, endTime);
 		this.setStorageEngineId(storageEngineId);
-		// TODO TBD
 		this.setSync(true);
 	}
 }

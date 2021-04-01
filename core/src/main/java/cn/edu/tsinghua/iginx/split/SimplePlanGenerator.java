@@ -210,7 +210,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()));
-            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
             subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
@@ -221,7 +220,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<DeleteColumnsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
             DeleteColumnsPlan subPlan = new DeleteColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()));
-            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
         return plans;
