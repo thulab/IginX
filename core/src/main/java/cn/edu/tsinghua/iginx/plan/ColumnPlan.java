@@ -32,5 +32,6 @@ public abstract class ColumnPlan extends NonDatabasePlan {
 	protected ColumnPlan(boolean isQuery, List<String> paths) {
 		super(isQuery, paths);
 		this.setIginxPlanType(COLUMN);
+		this.setSync(true);
 	}
 }
