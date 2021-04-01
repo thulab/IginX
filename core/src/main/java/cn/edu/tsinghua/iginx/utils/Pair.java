@@ -29,4 +29,11 @@ public class Pair<K, V> {
         this.v = v;
     }
 
+    @Override
+    public String toString() {
+        return "Pair{" +
+                "k=" + k +
+                ", v=" + v +
+                '}';
+    }
 }

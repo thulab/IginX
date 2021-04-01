@@ -65,8 +65,9 @@ public final class TimeInterval {
         return Objects.hash(startTime, endTime);
     }
 
+    // 这里以及下面两个函数传入的都是闭区间
     public boolean isIntersect(TimeInterval timeInterval) {
-        return (timeInterval.startTime < endTime) && (timeInterval.endTime > startTime);
+        return (timeInterval.startTime < endTime) && (timeInterval.endTime >= startTime);
     }
 
     public boolean isBefore(TimeInterval timeInterval) {
@@ -74,15 +75,7 @@ public final class TimeInterval {
     }
 
     public boolean isAfter(TimeInterval timeInterval) {
-        return startTime >= timeInterval.endTime;
-    }
-
-    public boolean isContain(TimeInterval timeInterval) {
-        return (startTime <= timeInterval.startTime) && (endTime >= timeInterval.endTime);
-    }
-
-    public boolean isContainedBy(TimeInterval timeInterval) {
-        return (timeInterval.startTime <= startTime) && (timeInterval.endTime >= endTime);
+        return startTime > timeInterval.endTime;
     }
 
 }

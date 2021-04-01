@@ -107,4 +107,12 @@ public final class FragmentMeta {
     public void setUpdatedBy(long updatedBy) {
         this.updatedBy = updatedBy;
     }
+
+    @Override
+    public String toString() {
+        return "FragmentMeta{" +
+                "timeInterval=" + timeInterval +
+                ", tsInterval=" + tsInterval +
+                '}';
+    }
 }
