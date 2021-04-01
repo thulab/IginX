@@ -173,5 +173,8 @@ public class IoTDBSessionExample {
 
 		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
 		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
+		dataSet.print();
 	}
 }

@@ -41,19 +41,18 @@ import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
-import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.file.metadata.enums.TSEncoding;
+import org.apache.iotdb.tsfile.read.common.Field;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.utils.Binary;
 import org.apache.iotdb.tsfile.write.record.Tablet;
@@ -67,7 +66,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
@@ -83,9 +81,9 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
 
     private static final String QUERY_DATA = "SELECT %s FROM %s WHERE time >= %d and time <= %d";
 
-    private static final String MAX = "SELECT MAX_TIME(%s), MAX_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
+    private static final String MAX_VALUE = "SELECT MAX_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
 
-    private static final String MIN = "SELECT MIN_TIME(%s), MIN_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
+    private static final String MIN_VALUE = "SELECT MIN_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
 
     private static final String FIRST_VALUE = "SELECT FIRST_VALUE(%s) FROM %s WHERE time >= %d and time <= %d";
 
@@ -354,10 +352,10 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(AVG, measurement, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(1)));
                 RowRecord rowRecord = dataSet.next();
+                dataTypeList.add(fromIoTDB(rowRecord.getFields().get(1).getDataType()));
                 counts.add(rowRecord.getFields().get(0).getLongV());
-                sums.add(rowRecord.getFields().get(1).getObjectValue(dataSet.getColumnTypes().get(1)));
+                sums.add(rowRecord.getFields().get(1).getObjectValue(rowRecord.getFields().get(1).getDataType()));
                 dataSet.close();
             }
             AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -383,8 +381,9 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(COUNT, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(0)));
-                values.add(dataSet.next().getFields().get(0).getObjectValue(dataSet.getColumnTypes().get(0)));
+                Field field = dataSet.next().getFields().get(0);
+                dataTypeList.add(fromIoTDB(field.getDataType()));
+                values.add(field.getObjectValue(field.getDataType()));
                 dataSet.close();
             }
             StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -409,8 +408,9 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(SUM, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(0)));
-                values.add(dataSet.next().getFields().get(0).getObjectValue(dataSet.getColumnTypes().get(0)));
+                Field field = dataSet.next().getFields().get(0);
+                dataTypeList.add(fromIoTDB(field.getDataType()));
+                values.add(field.getObjectValue(field.getDataType()));
                 dataSet.close();
             }
             StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -432,13 +432,19 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
             for (String path : plan.getPaths()) {
+                timestamps.add(-1L);
                 String deviceId = path.substring(0, path.lastIndexOf('.'));
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(FIRST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(0)));
-                timestamps.add(0L);
-                values.add(dataSet.next().getFields().get(0).getObjectValue(dataSet.getColumnTypes().get(0)));
+                Field field = dataSet.next().getFields().get(0);
+                if (field.getStringValue().equals("null")) {
+                    dataTypeList.add(STRING);
+                    values.add("null".getBytes());
+                } else {
+                    dataTypeList.add(fromIoTDB(field.getDataType()));
+                    values.add(field.getObjectValue(field.getDataType()));
+                }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -461,13 +467,19 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
             for (String path : plan.getPaths()) {
+                timestamps.add(-1L);
                 String deviceId = path.substring(0, path.lastIndexOf('.'));
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(LAST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(0)));
-                timestamps.add(0L);
-                values.add(dataSet.next().getFields().get(0).getObjectValue(dataSet.getColumnTypes().get(0)));
+                Field field = dataSet.next().getFields().get(0);
+                if (field.getStringValue().equals("null")) {
+                    dataTypeList.add(STRING);
+                    values.add("null".getBytes());
+                } else {
+                    dataTypeList.add(fromIoTDB(field.getDataType()));
+                    values.add(field.getObjectValue(field.getDataType()));
+                }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -490,14 +502,19 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
             for (String path : plan.getPaths()) {
+                timestamps.add(-1L);
                 String deviceId = path.substring(0, path.lastIndexOf('.'));
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(MAX, measurement, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(1)));
-                RowRecord rowRecord = dataSet.next();
-                timestamps.add(rowRecord.getFields().get(0).getLongV());
-                values.add(rowRecord.getFields().get(1).getObjectValue(dataSet.getColumnTypes().get(1)));
+                        sessionPool.executeQueryStatement(String.format(MAX_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
+                Field field = dataSet.next().getFields().get(0);
+                if (field.getStringValue().equals("null")) {
+                    dataTypeList.add(STRING);
+                    values.add("null".getBytes());
+                } else {
+                    dataTypeList.add(fromIoTDB(field.getDataType()));
+                    values.add(field.getObjectValue(field.getDataType()));
+                }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -520,14 +537,19 @@ public class IoTDBPlanExecutor extends AbstractPlanExecutor {
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
             for (String path : plan.getPaths()) {
+                timestamps.add(-1L);
                 String deviceId = path.substring(0, path.lastIndexOf('.'));
                 String measurement = path.substring(path.lastIndexOf('.') + 1);
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(MIN, measurement, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(1)));
-                RowRecord rowRecord = dataSet.next();
-                timestamps.add(rowRecord.getFields().get(0).getLongV());
-                values.add(rowRecord.getFields().get(1).getObjectValue(dataSet.getColumnTypes().get(1)));
+                        sessionPool.executeQueryStatement(String.format(MIN_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
+                Field field = dataSet.next().getFields().get(0);
+                if (field.getStringValue().equals("null")) {
+                    dataTypeList.add(STRING);
+                    values.add("null".getBytes());
+                } else {
+                    dataTypeList.add(fromIoTDB(field.getDataType()));
+                    values.add(field.getObjectValue(field.getDataType()));
+                }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);

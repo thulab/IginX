@@ -372,6 +372,6 @@ public class Session {
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
-		return new SessionAggregateQueryDataSet(resp);
+		return new SessionAggregateQueryDataSet(resp, aggregateType);
 	}
 }
