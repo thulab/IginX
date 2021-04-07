@@ -9,6 +9,7 @@ import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.SessionDataSet;
+import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.tsfile.read.common.Field;
 
 import java.util.ArrayList;
@@ -20,16 +21,10 @@ import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
 
 public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
-	private final SessionDataSet dataSet;
+	private final SessionDataSetWrapper dataSet;
 
-	private final Session session;
-
-	private AtomicInteger activeDataSetCount;
-
-	public IoTDBQueryExecuteDataSet(SessionDataSet dataSet, Session session, AtomicInteger activeDataSetCount) {
+	public IoTDBQueryExecuteDataSet(SessionDataSetWrapper dataSet) {
 		this.dataSet = dataSet;
-		this.session = session;
-		this.activeDataSetCount = activeDataSetCount;
 	}
 
 	@Override
@@ -73,17 +68,6 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	@Override
 	public void close() throws ExecutionException {
-		try {
-			dataSet.closeOperationHandle();
-			if (activeDataSetCount.decrementAndGet() == 0) {
-				session.close();
-			}
-		} catch (StatementExecutionException | IoTDBConnectionException e) {
-			throw new ExecutionException(e.getMessage());
-		}
-	}
-
-	public void setActiveDataSetCount(AtomicInteger activeDataSetCount) {
-		this.activeDataSetCount = activeDataSetCount;
+		dataSet.close();
 	}
 }

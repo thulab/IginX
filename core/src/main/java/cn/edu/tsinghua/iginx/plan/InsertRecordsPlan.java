@@ -29,7 +29,6 @@ import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -137,9 +136,9 @@ public abstract class InsertRecordsPlan extends DataPlan{
 				case DOUBLE:
 					tempColValues = ArrayUtils.toObject((double[]) valuesList[i]);
 					break;
-				case STRING:
+				case BINARY:
 					// TODO
-					tempColValues = (String[]) valuesList[i];
+					tempColValues = (byte[][]) valuesList[i];
 					break;
 				default:
 					throw new UnsupportedOperationException(getDataType(i).toString());

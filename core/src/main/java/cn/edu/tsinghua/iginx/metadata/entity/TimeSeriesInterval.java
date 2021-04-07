@@ -74,23 +74,18 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return endTimeSeries != null && tsName != null && endTimeSeries.compareTo(tsName) <= 0;
     }
 
-    public boolean isBefore(String tsName) {
-        return tsName == null ? (startTimeSeries != null) : (startTimeSeries != null && tsName.compareTo(startTimeSeries) < 0);
-    }
-
+    // 输入参数是一个闭区间，下同
     public boolean isIntersect(TimeSeriesInterval tsInterval) {
         return (tsInterval.startTimeSeries == null || endTimeSeries == null || tsInterval.startTimeSeries.compareTo(endTimeSeries) < 0)
                 && (tsInterval.endTimeSeries == null || startTimeSeries == null || tsInterval.endTimeSeries.compareTo(startTimeSeries) > 0);
     }
 
-    public boolean isContain(TimeSeriesInterval tsInterval) {
-        return (startTimeSeries == null || (tsInterval.startTimeSeries != null && startTimeSeries.compareTo(tsInterval.startTimeSeries) <= 0))
-                && (endTimeSeries == null || (tsInterval.endTimeSeries != null && endTimeSeries.compareTo(tsInterval.endTimeSeries) >= 0));
+    public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {
+        return tsInterval.endTimeSeries != null && startTimeSeries != null && startTimeSeries.compareTo(tsInterval.endTimeSeries) > 0;
     }
 
-    public boolean isContainedBy(TimeSeriesInterval tsInterval) {
-        return (tsInterval.startTimeSeries == null || (startTimeSeries != null && tsInterval.startTimeSeries.compareTo(startTimeSeries) <= 0))
-                && (tsInterval.endTimeSeries == null || (endTimeSeries != null && tsInterval.endTimeSeries.compareTo(endTimeSeries) >= 0));
+    public boolean isAfter(String tsName) {
+        return startTimeSeries != null && startTimeSeries.compareTo(tsName) > 0;
     }
 
     public static TimeSeriesInterval fromString(String str) {

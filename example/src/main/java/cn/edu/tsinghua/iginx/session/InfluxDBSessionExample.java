@@ -31,20 +31,19 @@ public class InfluxDBSessionExample {
 
 	private static Session session;
 
-	private static final String ORGANIZATION_NAME = "my-second-org";
 	private static final String BUCKET_NAME = "my-second-bucket";
 
-	// measurement tag(key-value) field
-	private static final String TS1 = "census.location-klamath.scientist-anderson.ants";
-	private static final String TS2 = "census.location-klamath.scientist-anderson.bees";
-	private static final String TS3 = "census.location-portland.scientist-mullen.ants";
-	private static final String TS4 = "census.location-portland.scientist-mullen.bees";
+	// bucket measurement tag(key-value) field
+	private static final String TS1 = "my-bucket.census.location-klamath.scientist-anderson.ants";
+	private static final String TS2 = "my-bucket.census.location-klamath.scientist-anderson.bees";
+	private static final String TS3 = "my-second-bucket.census.location-portland.scientist-mullen.ants";
+	private static final String TS4 = "my-second-bucket.census.location-portland.scientist-mullen.bees";
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
-//		createDatabase();
+		createDatabase();
 
 		insertRecords();
 		queryData();
@@ -52,17 +51,17 @@ public class InfluxDBSessionExample {
 //		deleteDataInColumns();
 //		queryData();
 
-//		dropDatabase();
+		dropDatabase();
 
 		session.closeSession();
 	}
 
 	private static void createDatabase() throws SessionException, ExecutionException {
-		session.createDatabase(ORGANIZATION_NAME + "$" + BUCKET_NAME);
+		session.createDatabase(BUCKET_NAME);
 	}
 
 	private static void dropDatabase() throws SessionException, ExecutionException {
-		session.dropDatabase(ORGANIZATION_NAME + "$" + BUCKET_NAME);
+		session.dropDatabase(BUCKET_NAME);
 	}
 
 	private static void insertRecords() throws SessionException, ExecutionException {

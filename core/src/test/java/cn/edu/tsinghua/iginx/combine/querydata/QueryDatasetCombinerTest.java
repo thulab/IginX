@@ -80,13 +80,13 @@ public class QueryDatasetCombinerTest {
         paths2.add("root.sg2.d1.s1");
         dataTypes2.add(DataType.BOOLEAN);
         paths2.add("root.sg2.d1.s2");
-        dataTypes2.add(DataType.STRING);
+        dataTypes2.add(DataType.BINARY);
 
-        List<List<Object>> valuesList3 = Arrays.asList(Arrays.asList(0L, true, "OK1"), Arrays.asList(1L, true, "OK2"));
+        List<List<Object>> valuesList3 = Arrays.asList(Arrays.asList(0L, true, "OK1".getBytes(StandardCharsets.UTF_8)), Arrays.asList(1L, true, "OK2".getBytes(StandardCharsets.UTF_8)));
         QueryExecuteDataSet stub3 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList3);
         QueryDataPlanExecuteResult result3 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, Collections.singletonList(stub3));
 
-        List<List<Object>> valuesList4 = Arrays.asList(Arrays.asList(10L, false, "OK3"), Arrays.asList(12L, false, "OK4"));
+        List<List<Object>> valuesList4 = Arrays.asList(Arrays.asList(10L, false, "OK3".getBytes(StandardCharsets.UTF_8)), Arrays.asList(12L, false, "OK4".getBytes(StandardCharsets.UTF_8)));
         QueryExecuteDataSet stub4 = new QueryExecuteDataSetStub(paths2, dataTypes2, valuesList4);
         QueryDataPlanExecuteResult result4 = new QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, null, Collections.singletonList(stub4));
 
@@ -115,17 +115,17 @@ public class QueryDatasetCombinerTest {
         assertEquals(1L, (long)valuesList.get(0).get(0));
         assertEquals(1.0, (double)valuesList.get(0).get(1), 0.01);
         assertTrue((boolean) valuesList.get(0).get(2));
-        assertEquals("OK1", valuesList.get(0).get(3));
+        assertEquals("OK1", new String((byte[])valuesList.get(0).get(3)));
 
         assertEquals(2L, (long)valuesList.get(1).get(0));
         assertEquals(2.0, (double)valuesList.get(1).get(1), 0.01);
         assertTrue((boolean) valuesList.get(1).get(2));
-        assertEquals("OK2", valuesList.get(1).get(3));
+        assertEquals("OK2", new String((byte[])valuesList.get(1).get(3)));
 
         assertEquals(1L, (long)valuesList.get(2).get(0));
         assertEquals(1.0, (double)valuesList.get(2).get(1), 0.01);
         assertFalse((boolean) valuesList.get(2).get(2));
-        assertEquals("OK3", valuesList.get(2).get(3));
+        assertEquals("OK3", new String((byte[])valuesList.get(2).get(3)));
 
         assertEquals(2L, (long)valuesList.get(3).get(0));
         assertEquals(2.0, (double)valuesList.get(3).get(1), 0.01);
@@ -135,6 +135,6 @@ public class QueryDatasetCombinerTest {
         assertNull(valuesList.get(4).get(0));
         assertNull(valuesList.get(4).get(1));
         assertFalse((boolean) valuesList.get(4).get(2));
-        assertEquals("OK4", valuesList.get(4).get(3));
+        assertEquals("OK4", new String((byte[])valuesList.get(4).get(3)));
     }
 }

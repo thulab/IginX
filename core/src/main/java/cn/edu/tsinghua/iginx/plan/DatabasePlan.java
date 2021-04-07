@@ -34,6 +34,7 @@ public abstract class DatabasePlan extends IginxPlan {
 		this.setIginxPlanType(DATABASE);
 		this.setCanBeSplit(false);
 		this.databaseName = databaseName;
+		this.setSync(true);
 	}
 
 	public String getDatabaseName() {

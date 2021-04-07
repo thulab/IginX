@@ -206,20 +206,23 @@ public class AggregateCombiner {
         for (int i = 0; i < paths.size(); i++) {
             Pair<DataType, List<Pair<Long, Object>>> pair = pathsRawData.get(paths.get(i));
             long count = pair.v.stream().map(e -> e.k).reduce(0L, Long::sum);
+            if (count == 0) {
+                dataTypes.set(i, DataType.BINARY);
+            }
             Object avg = null;
             switch (pair.k) {
                 case INTEGER:
-                    avg = pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count;
+                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count : "null".getBytes();
                     dataTypes.set(i, DataType.LONG);
                     break;
                 case LONG:
-                    avg = pair.v.stream().map(e -> e.v).map(Long.class::cast).reduce(0L, Long::sum) / count;
+                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Long.class::cast).reduce(0L, Long::sum) / count : "null".getBytes();
                     break;
                 case FLOAT:
-                    avg = pair.v.stream().map(e -> e.v).map(Float.class::cast).reduce(0.0f, Float::sum) / count;
+                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Float.class::cast).reduce(0.0f, Float::sum) / count : "null".getBytes();
                     break;
                 case DOUBLE:
-                    avg = pair.v.stream().map(e -> e.v).map(Double.class::cast).reduce(0.0, Double::sum) / count;
+                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Double.class::cast).reduce(0.0, Double::sum) / count : "null".getBytes();
                     break;
                 default:
                     logger.error("unsupported datatype: " + pair.k);

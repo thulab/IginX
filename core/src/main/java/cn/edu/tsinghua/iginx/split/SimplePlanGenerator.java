@@ -32,6 +32,7 @@ import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -58,7 +59,6 @@ import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
-import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -178,7 +178,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         splitInfoList = planSplitter.getSplitLastQueryPlanResults(lastQueryPlan);
                         return splitLastQueryPlan(lastQueryPlan, splitInfoList);
                     case AVG:
-                        break;
+                        AvgQueryPlan avgQueryPlan = new AvgQueryPlan(
+                                aggregateQueryReq.getPaths(),
+                                aggregateQueryReq.getStartTime(),
+                                aggregateQueryReq.getEndTime()
+                        );
+                        splitInfoList = planSplitter.getSplitAvgQueryPlanResults(avgQueryPlan);
+                        return splitAvgQueryPlan(avgQueryPlan, splitInfoList);
                     case SUM:
                         SumQueryPlan sumQueryPlan = new SumQueryPlan(
                                 aggregateQueryReq.getPaths(),
@@ -198,11 +204,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     default:
                         throw new UnsupportedOperationException(aggregateQueryReq.getAggregateType().toString());
                 }
-                break;
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }
-        return null;
     }
 
     public List<AddColumnsPlan> splitAddColumnsPlan(AddColumnsPlan plan, List<SplitInfo> infoList) {
@@ -210,7 +214,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()));
-            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
             subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
@@ -221,7 +224,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<DeleteColumnsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
             DeleteColumnsPlan subPlan = new DeleteColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()));
-            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
             plans.add(subPlan);
         }
         return plans;
@@ -368,6 +371,20 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<SumQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
             SumQueryPlan subPlan = new SumQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    info.getReplica().getStorageEngineId()
+            );
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<AvgQueryPlan> splitAvgQueryPlan(AvgQueryPlan plan, List<SplitInfo> infoList) {
+        List<AvgQueryPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            AvgQueryPlan subPlan = new AvgQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
                     Math.min(plan.getEndTime(), info.getReplica().getEndTime()),

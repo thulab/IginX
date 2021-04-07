@@ -152,8 +152,15 @@ public class NaivePlanSplitter implements IPlanSplitter {
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = chooseFragmentReplicas(fragment, false);
+                Set<Long> storageEngineIds = new HashSet<>();
                 for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                    if (storageEngineIds.contains(replica.getStorageEngineId())) {
+                        logger.info("storage engine id " + replica.getStorageEngineId() + " is duplicated.");
+                        continue;
+                    }
+                    storageEngineIds.add(replica.getStorageEngineId());
+                    logger.info("add storage engine id " + replica.getStorageEngineId() + " to duplicate remove set.");
+                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replica));
                 }
             }
         }

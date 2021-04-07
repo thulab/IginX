@@ -43,7 +43,7 @@ public class CombineExecutorTest {
         columnNameList.add("b");
         List<DataType> columnTypeList = new LinkedList<>();
         columnTypeList.add(DataType.LONG);
-        columnTypeList.add(DataType.STRING);
+        columnTypeList.add(DataType.BINARY);
         columnTypeList.add(DataType.INTEGER);
         List<Long> timeStamps = new LinkedList<>();
         timeStamps.add((long) 0);
@@ -82,7 +82,7 @@ public class CombineExecutorTest {
         List<DataType> columnTypeList2 = new LinkedList<>();
         columnTypeList2.add(DataType.LONG);
         columnTypeList2.add(DataType.INTEGER);
-        columnTypeList2.add(DataType.STRING);
+        columnTypeList2.add(DataType.BINARY);
         List<Long> timeStamps2 = new LinkedList<>();
         timeStamps2.add((long) 250);
         timeStamps2.add((long) 300);
@@ -136,7 +136,7 @@ public class CombineExecutorTest {
             for (int j = 0; j < size; j++){
                 if (b.get(j)) {
                     System.out.print(j + ":");
-                    if(dt.get(j) == DataType.STRING) {
+                    if(dt.get(j) == DataType.BINARY) {
                         //only line 1 is integer，else are Strings
                         assertNotEquals(j, 1);
                         String queryResult = new String((byte[]) ByteUtils.getValueByDataType(value, dt.get(j)));

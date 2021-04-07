@@ -6,7 +6,7 @@ enum DataType {
     LONG,
     FLOAT,
     DOUBLE,
-    STRING,
+    BINARY,
 }
 
 enum StorageEngineType {

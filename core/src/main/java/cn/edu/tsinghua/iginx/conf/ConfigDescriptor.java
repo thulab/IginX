@@ -59,7 +59,8 @@ public class ConfigDescriptor {
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
             config.setDatabaseClassName(properties.getProperty("databaseClassName", "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor"));
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
-            config.setToken(properties.getProperty("token", "token"));
+            config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
+            config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

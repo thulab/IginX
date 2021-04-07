@@ -44,7 +44,9 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
 
-    private String token = "token";
+    private String influxDBToken = "token";
+
+    private String influxDBOrganizationName = "organization";
 
     public String getIp() {
         return ip;
@@ -142,11 +144,19 @@ public class Config {
         this.policyClassName = policyClassName;
     }
 
-    public String getToken() {
-        return token;
+    public String getInfluxDBToken() {
+        return influxDBToken;
     }
 
-    public void setToken(String token) {
-        this.token = token;
+    public void setInfluxDBToken(String influxDBToken) {
+        this.influxDBToken = influxDBToken;
+    }
+
+    public String getInfluxDBOrganizationName() {
+        return influxDBOrganizationName;
+    }
+
+    public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
+        this.influxDBOrganizationName = influxDBOrganizationName;
     }
 }
