@@ -29,6 +29,7 @@ import cn.edu.tsinghua.iginx.core.processor.PostQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
+import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
@@ -40,6 +41,7 @@ import cn.edu.tsinghua.iginx.query.IPlanExecutor;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.split.IPlanGenerator;
 import cn.edu.tsinghua.iginx.split.SimplePlanGenerator;
+import cn.edu.tsinghua.iginx.statistics.IStatisticsCollector;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +79,8 @@ public final class Core {
 
     private final List<PostQueryProcessor> postQueryProcessors = new ArrayList<>();
 
+    private final List<PreQueryProcessor> preQueryProcessors = new ArrayList<>();
+
     private final ExecutorService postQueryProcessThreadPool;
 
     private Core() {
@@ -96,6 +100,27 @@ public final class Core {
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             logger.error("initial plan executor error: ", e);
         }
+
+        try {
+            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
+            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
+                Class<?> statisticsCollectorClass = Core.class.getClassLoader().
+                        loadClass(statisticsCollectorClassName);
+                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
+                        .getConstructor().newInstance();
+                registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
+                registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
+                registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
+                registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
+                registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
+                registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
+                registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
+                registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            logger.error("initial statistics collector error: ", e);
+        }
+
         IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
         registerPreQueryPlanProcessor(policy.getPreQueryPlanProcessor());
@@ -134,6 +159,11 @@ public final class Core {
             preQueryResultCombineProcessors.add(preQueryResultCombineProcessor);
     }
 
+    public void registerPreQueryProcessor(PreQueryProcessor preQueryProcessor) {
+        if (preQueryProcessor != null)
+            preQueryProcessors.add(preQueryProcessor);
+    }
+
     public void registerPostQueryResultCombineProcessor(PostQueryResultCombineProcessor postQueryResultCombineProcessor) {
         if (postQueryResultCombineProcessor != null)
             postQueryResultCombineProcessors.add(postQueryResultCombineProcessor);
@@ -157,6 +187,14 @@ public final class Core {
     }
 
     public void processRequest(RequestContext requestContext) {
+        // 请求前处理器
+        for (PreQueryProcessor processor: preQueryProcessors) {
+            Status status = processor.process(requestContext);
+            if (status != null) {
+                requestContext.setStatus(status);
+                return;
+            }
+        }
         // 计划前处理器
         for (PreQueryPlanProcessor processor: preQueryPlanProcessors) {
             Status status = processor.process(requestContext);

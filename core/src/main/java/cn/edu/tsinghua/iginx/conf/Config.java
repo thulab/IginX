@@ -44,6 +44,8 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
 
+    private String statisticsCollectorClassName = "cn.tsinghua.iginx.statistics.NativeStatisticsCollector";
+
     private String token = "token";
 
     public String getIp() {
@@ -140,6 +142,14 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
+    }
+
+    public String getStatisticsCollectorClassName() {
+        return statisticsCollectorClassName;
+    }
+
+    public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
+        this.statisticsCollectorClassName = statisticsCollectorClassName;
     }
 
     public String getToken() {
