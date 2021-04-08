@@ -116,6 +116,7 @@ public final class Core {
                 registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
                 registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
                 registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
+                statisticsCollector.startBroadcasting();
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             logger.error("initial statistics collector error: ", e);

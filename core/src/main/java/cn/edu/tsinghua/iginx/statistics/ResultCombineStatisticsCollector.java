@@ -18,35 +18,25 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
-import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PostQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryResultCombineProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public interface IStatisticsCollector {
+public class ResultCombineStatisticsCollector {
 
-    PostQueryExecuteProcessor getPostQueryExecuteProcessor();
+    private static final Logger logger = LoggerFactory.getLogger(ResultCombineStatisticsCollector.class);
 
-    PostQueryPlanProcessor getPostQueryPlanProcessor();
+    public void broadcastStatistics() {
 
-    PostQueryProcessor getPostQueryProcessor();
+    }
 
-    PostQueryResultCombineProcessor getPostQueryResultCombineProcessor();
+    public PostQueryResultCombineProcessor getPostQueryResultCombineProcessor() {
+        return null;
+    }
 
-    PreQueryExecuteProcessor getPreQueryExecuteProcessor();
-
-    PreQueryPlanProcessor getPreQueryPlanProcessor();
-
-    PreQueryProcessor getPreQueryProcessor();
-
-    PreQueryResultCombineProcessor getPreQueryResultCombineProcessor();
-
-    void startBroadcasting();
-
-    void endBroadcasting();
+    public PreQueryResultCombineProcessor getPreQueryResultCombineProcessor() {
+        return null;
+    }
 
 }

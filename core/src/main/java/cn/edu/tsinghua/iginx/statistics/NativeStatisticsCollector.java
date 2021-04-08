@@ -15,7 +15,8 @@
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
  * under the License.
- */package cn.edu.tsinghua.iginx.statistics;
+ */
+package cn.edu.tsinghua.iginx.statistics;
 
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
@@ -25,46 +26,91 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NativeStatisticsCollector implements IStatisticsCollector {
 
+    private static final Logger logger = LoggerFactory.getLogger(NativeStatisticsCollector.class);
+
+    private final AtomicBoolean broadcast = new AtomicBoolean(false);
+
+    private final ExecutorService broadcastThreadPool = Executors.newSingleThreadExecutor();
+
+    private final PlanStatisticsCollector planStatisticsCollector = new PlanStatisticsCollector();
+
+    private final QueryStatisticsCollector queryStatisticsCollector = new QueryStatisticsCollector();
+
+    private final PlanExecuteStatisticsCollector planExecuteStatisticsCollector = new PlanExecuteStatisticsCollector();
+
+    private final ResultCombineStatisticsCollector resultCombineStatisticsCollector = new ResultCombineStatisticsCollector();
+
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
-        return null;
+        return planExecuteStatisticsCollector.getPostQueryExecuteProcessor();
     }
 
     @Override
     public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-        return null;
+        return planStatisticsCollector.getPostQueryPlanProcessor();
     }
 
     @Override
     public PostQueryProcessor getPostQueryProcessor() {
-        return null;
+        return queryStatisticsCollector.getPostQueryProcessor();
     }
 
     @Override
     public PostQueryResultCombineProcessor getPostQueryResultCombineProcessor() {
-        return null;
+        return resultCombineStatisticsCollector.getPostQueryResultCombineProcessor();
     }
 
     @Override
     public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
-        return null;
+        return planExecuteStatisticsCollector.getPreQueryExecuteProcessor();
     }
 
     @Override
     public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-        return null;
+        return planStatisticsCollector.getPreQueryPlanProcessor();
     }
 
     @Override
     public PreQueryProcessor getPreQueryProcessor() {
-        return null;
+        return queryStatisticsCollector.getPreQueryProcessor();
     }
 
     @Override
     public PreQueryResultCombineProcessor getPreQueryResultCombineProcessor() {
-        return null;
+        return resultCombineStatisticsCollector.getPreQueryResultCombineProcessor();
+    }
+
+    @Override
+    public void startBroadcasting() {
+        broadcast.set(true);
+        // 启动一个新线程，定期播报统计信息
+        broadcastThreadPool.execute(() -> {
+            try {
+                while (broadcast.get()) {
+                    logger.info("broadcast statistics info: ");
+                    planStatisticsCollector.broadcastStatistics();
+                    planExecuteStatisticsCollector.broadcastStatistics();
+                    resultCombineStatisticsCollector.broadcastStatistics();
+                    queryStatisticsCollector.broadcastStatistics();
+                    Thread.sleep(1000);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @Override
+    public void endBroadcasting() {
+        broadcast.set(false);
     }
 }

@@ -44,15 +44,11 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
 
-<<<<<<< HEAD
-    private String statisticsCollectorClassName = "cn.tsinghua.iginx.statistics.NativeStatisticsCollector";
+    private String statisticsCollectorClassName = "cn.edu.tsinghua.iginx.statistics.NativeStatisticsCollector";
 
-    private String token = "token";
-=======
     private String influxDBToken = "token";
 
     private String influxDBOrganizationName = "organization";
->>>>>>> 1b93de30dc792d6d35495bc5ac9cf58dcc49e10d
 
     public String getIp() {
         return ip;
@@ -150,7 +146,6 @@ public class Config {
         this.policyClassName = policyClassName;
     }
 
-<<<<<<< HEAD
     public String getStatisticsCollectorClassName() {
         return statisticsCollectorClassName;
     }
@@ -159,9 +154,6 @@ public class Config {
         this.statisticsCollectorClassName = statisticsCollectorClassName;
     }
 
-    public String getToken() {
-        return token;
-=======
     public String getInfluxDBToken() {
         return influxDBToken;
     }
@@ -172,7 +164,6 @@ public class Config {
 
     public String getInfluxDBOrganizationName() {
         return influxDBOrganizationName;
->>>>>>> 1b93de30dc792d6d35495bc5ac9cf58dcc49e10d
     }
 
     public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
