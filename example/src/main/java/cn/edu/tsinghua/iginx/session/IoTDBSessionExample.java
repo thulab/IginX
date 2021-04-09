@@ -33,11 +33,11 @@ public class IoTDBSessionExample {
 
 	private static Session session;
 
-	private static final String DATABASE_NAME = "root.sg1";
-	private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
-	private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
-	private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
-	private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
+	private static final String DATABASE_NAME = "sg1";
+	private static final String COLUMN_D1_S1 = "sg1.d1.s1";
+	private static final String COLUMN_D1_S2 = "sg1.d1.s2";
+	private static final String COLUMN_D2_S1 = "sg1.d2.s1";
+	private static final String COLUMN_D3_S1 = "sg1.d3.s1";
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");

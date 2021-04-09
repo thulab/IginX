@@ -57,6 +57,7 @@ public class SessionAggregateQueryDataSet {
 					System.out.print(value + "\t");
 				}
 			}
+			System.out.println();
 		} else {
 			for (int i = 0; i < timestamps.length; i++) {
 				System.out.print("Time\t");

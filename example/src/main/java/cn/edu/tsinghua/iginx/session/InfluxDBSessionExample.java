@@ -31,15 +31,15 @@ public class InfluxDBSessionExample {
 
 	private static Session session;
 
-	private static final String BUCKET_NAME = "my-second-bucket";
+	private static final String BUCKET_NAME = "demo";
 
 	// bucket measurement tag(key-value) field
-	private static final String TS1 = "my-bucket.census.location-klamath.scientist-anderson.ants";
-	private static final String TS2 = "my-bucket.census.location-klamath.scientist-anderson.bees";
-	private static final String TS3 = "my-second-bucket.census.location-portland.scientist-mullen.ants";
-	private static final String TS4 = "my-second-bucket.census.location-portland.scientist-mullen.bees";
+	private static final String TS1 = "demo.census.klamath.anderson.ants";
+	private static final String TS2 = "demo.census.klamath.anderson.bees";
+	private static final String TS3 = "demo.census.portland.mullen.ants";
+	private static final String TS4 = "demo.census.portland.mullen.bees";
 
-	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
+	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException, InterruptedException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
@@ -47,7 +47,8 @@ public class InfluxDBSessionExample {
 
 		insertRecords();
 		queryData();
-//		aggregateQuery();
+		aggregateQuery();
+		// TODO 不能做，InfluxDB 删除语句中不能指定 _field
 //		deleteDataInColumns();
 //		queryData();
 
@@ -145,6 +146,9 @@ public class InfluxDBSessionExample {
 		dataSet.print();
 
 		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
+		dataSet.print();
+
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
 		dataSet.print();
 	}
 }

@@ -37,7 +37,7 @@ public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet  {
 				"." +
 				table.getRecords().get(0).getMeasurement() +
 				"." +
-				table.getRecords().get(0).getValueByKey("tag") +
+				table.getRecords().get(0).getValueByKey("t") +
 				"." +
 				table.getRecords().get(0).getField());
 		return columnNames;
