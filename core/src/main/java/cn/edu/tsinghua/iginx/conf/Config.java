@@ -40,11 +40,9 @@ public class Config {
 
     private int replicaNum = 1;
 
-    private String databaseClassName = "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor";
+    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
-
-    private String statisticsCollectorClassName = "cn.edu.tsinghua.iginx.statistics.NativeStatisticsCollector";
 
     private String influxDBToken = "token";
 
@@ -130,12 +128,12 @@ public class Config {
         this.replicaNum = replicaNum;
     }
 
-    public String getDatabaseClassName() {
-        return databaseClassName;
+    public String getDatabaseClassNames() {
+        return databaseClassNames;
     }
 
-    public void setDatabaseClassName(String databaseClassName) {
-        this.databaseClassName = databaseClassName;
+    public void setDatabaseClassNames(String databaseClassNames) {
+        this.databaseClassNames = databaseClassNames;
     }
 
     public String getPolicyClassName() {
@@ -144,14 +142,6 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
-    }
-
-    public String getStatisticsCollectorClassName() {
-        return statisticsCollectorClassName;
-    }
-
-    public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
-        this.statisticsCollectorClassName = statisticsCollectorClassName;
     }
 
     public String getInfluxDBToken() {

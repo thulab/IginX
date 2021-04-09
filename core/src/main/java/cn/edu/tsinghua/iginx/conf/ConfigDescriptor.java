@@ -57,9 +57,8 @@ public class ConfigDescriptor {
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
-            config.setDatabaseClassName(properties.getProperty("databaseClassName", "cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor"));
+            config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
-            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", "cn.edu.tsinghua.iginx.statistics.NativeStatisticsCollector"));
             config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
             config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
         } catch (IOException e) {

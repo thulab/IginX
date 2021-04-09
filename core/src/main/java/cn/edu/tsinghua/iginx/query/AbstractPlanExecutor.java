@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.query;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
@@ -62,7 +61,7 @@ import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.CheckedFunction.wrap;
 
-public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
+public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, IStorageEngine {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractPlanExecutor.class);
 
@@ -229,36 +228,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
         return null;
     }
 
-    protected abstract NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan);
-
-    protected abstract NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan);
-
-    protected abstract QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
-
-    protected abstract NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan);
-
-    protected abstract NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan);
-
-    protected abstract NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan);
-
-    protected abstract NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan);
-
-    protected abstract NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan);
-
-    protected abstract AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan);
-
-    protected abstract StatisticsAggregateQueryPlanExecuteResult syncExecuteCountQueryPlan(CountQueryPlan plan);
-
-    protected abstract StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan);
-
-    protected abstract SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan);
-
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));
     }
@@ -266,8 +235,8 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService {
     @Override
     public List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext) {
         List<PlanExecuteResult> planExecuteResults = requestContext.getIginxPlans().stream().filter(e -> !e.isSync()).map(this::executeAsyncTask).collect(Collectors.toList());
-        logger.info("" + requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans");
-        logger.info("there are  " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
+        logger.debug("" + requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans");
+        logger.debug("there are  " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
         switch (requestContext.getType()) {
             case InsertColumnRecords:
                 planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(InsertColumnRecordsPlan.class::cast).map(this::executeInsertColumnRecordsPlan).map(wrap(Future::get)).collect(Collectors.toList()));

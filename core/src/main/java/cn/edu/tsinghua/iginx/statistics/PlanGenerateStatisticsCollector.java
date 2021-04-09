@@ -18,8 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
-import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
+import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
+import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,9 +29,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class PlanExecuteStatisticsCollector {
+public class PlanGenerateStatisticsCollector {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlanExecuteStatisticsCollector.class);
+    private static final Logger logger = LoggerFactory.getLogger(PlanGenerateStatisticsCollector.class);
 
     private final LinkedBlockingQueue<Statistics> statisticQueue = new LinkedBlockingQueue<>();
 
@@ -45,30 +45,9 @@ public class PlanExecuteStatisticsCollector {
 
     private long recentSpan = 0;
 
-    public PlanExecuteStatisticsCollector() {
-        Executors.newSingleThreadExecutor()
-                .submit(() -> {
-                   while (true) {
-                       Statistics statistics = statisticQueue.take();
-                       long span = statistics.getEndTime() - statistics.getBeginTime();
-                       lock.writeLock().lock();
-                       recentTimes += 1;
-                       recentSpan += span;
-                       if (recentTimes % 1000 == 0) {
-                           times += recentTimes;
-                           totalSpan += recentSpan;
-                           recentTimes = 0;
-                           recentSpan = 0;
-                       }
-                       lock.writeLock().unlock();
-                   }
-                });
-    }
-
-
     public void broadcastStatistics() {
         lock.readLock().lock();
-        logger.info("Plan Execute statisticsInfo: ");
+        logger.info("Plan Generate statisticsInfo: ");
         long times = this.times + this.recentTimes, totalSpan = this.totalSpan + this.recentSpan;
         logger.info("total-counts: " + times + ", total-span: " + totalSpan + "μs");
         if (times != 0) {
@@ -82,18 +61,38 @@ public class PlanExecuteStatisticsCollector {
         lock.readLock().unlock();
     }
 
-    public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
+    public PlanGenerateStatisticsCollector() {
+        Executors.newSingleThreadExecutor()
+                .submit(() -> {
+                    while (true) {
+                        Statistics statistics = statisticQueue.take();
+                        long span = statistics.getEndTime() - statistics.getBeginTime();
+                        lock.writeLock().lock();
+                        recentTimes += 1;
+                        recentSpan += span;
+                        if (recentTimes % 1000 == 0) {
+                            times += recentTimes;
+                            totalSpan += recentSpan;
+                            recentTimes = 0;
+                            recentSpan = 0;
+                        }
+                        lock.writeLock().unlock();
+                    }
+                });
+    }
+
+    public PostQueryPlanProcessor getPostQueryPlanProcessor() {
         return requestContext -> {
             long endExecuteTime = TimeUtils.getMicrosecond();
-            long beginExecuteTime = (long) requestContext.getExtraParam("beginExecuteTime");
+            long beginExecuteTime = (long) requestContext.getExtraParam("beginGeneratePlanTime");
             statisticQueue.add(new Statistics(requestContext.getId(), beginExecuteTime, endExecuteTime, requestContext.getType()));
             return null;
         };
     }
 
-    public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
+    public PreQueryPlanProcessor getPreQueryPlanProcessor() {
         return requestContext -> {
-            requestContext.setExtraParam("beginExecuteTime", TimeUtils.getMicrosecond());
+            requestContext.setExtraParam("beginGeneratePlanTime", TimeUtils.getMicrosecond());
             return null;
         };
     }

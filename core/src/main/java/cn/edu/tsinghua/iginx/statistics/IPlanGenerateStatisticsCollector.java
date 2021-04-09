@@ -18,11 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
-public interface IStatisticsCollector extends IPlanExecuteStatisticsCollector, IPlanGenerateStatisticsCollector,
-        IPlanResultCombineStatisticsCollector, IQueryStatisticsCollector {
+import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
+import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 
-    void startBroadcasting();
+public interface IPlanGenerateStatisticsCollector {
 
-    void endBroadcasting();
+    PostQueryPlanProcessor getPostQueryPlanProcessor();
+
+    PreQueryPlanProcessor getPreQueryPlanProcessor();
 
 }

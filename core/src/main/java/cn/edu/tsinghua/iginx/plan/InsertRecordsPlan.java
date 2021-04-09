@@ -180,7 +180,7 @@ public abstract class InsertRecordsPlan extends DataPlan{
 
 	public Map<String, String> getAttributes(int index) {
 		if (attributesList == null || attributesList.isEmpty()) {
-			logger.info("There are no attributes in the InsertRecordsPlan.");
+	//		logger.info("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
 		if (index < 0 || index >= attributesList.size()) {

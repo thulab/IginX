@@ -18,25 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
-import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
-import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
+import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 
-public class PlanStatisticsCollector {
+public interface IPlanExecuteStatisticsCollector {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlanStatisticsCollector.class);
+    PostQueryExecuteProcessor getPostQueryExecuteProcessor();
 
-    public void broadcastStatistics() {
-
-    }
-
-    public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-        return null;
-    }
-
-    public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-        return null;
-    }
+    PreQueryExecuteProcessor getPreQueryExecuteProcessor();
 
 }

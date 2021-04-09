@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.query.AbstractPlanExecutor;
+import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
@@ -53,7 +54,7 @@ import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static com.influxdb.client.domain.WritePrecision.MS;
 
-public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
+public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	private static final Logger logger = LoggerFactory.getLogger(InfluxDBPlanExecutor.class);
 
@@ -84,7 +85,7 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+	public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		Organization organization = client.getOrganizationsApi()
 				.findOrganizations().stream()
@@ -144,12 +145,12 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+	public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
+	public QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		Organization organization = client.getOrganizationsApi()
 				.findOrganizations().stream()
@@ -181,24 +182,24 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
+	public NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
 		return new NonDataPlanExecuteResult(SUCCESS, plan);
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
+	public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
 		return new NonDataPlanExecuteResult(SUCCESS, plan);
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
+	public NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		// TODO 没找到 DeletePredicateRequest 的例子
 		return new NonDataPlanExecuteResult(FAILURE, plan);
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
+	public NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		Organization organization = client.getOrganizationsApi()
 				.findOrganizations().stream()
@@ -210,7 +211,7 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
-	protected NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
+	public NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
 		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
 		Bucket bucket = client.getBucketsApi()
 				.findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
@@ -222,37 +223,37 @@ public class InfluxDBPlanExecutor extends AbstractPlanExecutor {
 	}
 
 	@Override
-	protected AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
+	public AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected StatisticsAggregateQueryPlanExecuteResult syncExecuteCountQueryPlan(CountQueryPlan plan) {
+	public StatisticsAggregateQueryPlanExecuteResult syncExecuteCountQueryPlan(CountQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan) {
+	public StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
+	public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+	public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan) {
+	public SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	protected SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan) {
+	public SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan) {
 		return null;
 	}
 

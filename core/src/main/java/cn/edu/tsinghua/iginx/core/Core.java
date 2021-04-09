@@ -38,6 +38,7 @@ import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.query.IPlanExecutor;
+import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.split.IPlanGenerator;
 import cn.edu.tsinghua.iginx.split.SimplePlanGenerator;
@@ -87,40 +88,34 @@ public final class Core {
         IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
         registerPlanGenerator(new SimplePlanGenerator());
         registerCombineExecutor(new CombineExecutor());
-        try {
-            Class<?> planExecutorClass = Core.class.getClassLoader().
-                    loadClass(ConfigDescriptor.getInstance().getConfig().getDatabaseClassName());
-            IPlanExecutor planExecutor = ((Class<? extends IPlanExecutor>) planExecutorClass)
-                    .getConstructor(List.class).newInstance(metaManager.getStorageEngineList());
-            registerQueryExecutor(planExecutor);
-            StorageEngineChangeHook hook = planExecutor.getStorageEngineChangeHook();
-            if (hook != null) {
-                metaManager.registerStorageEngineChangeHook(hook);
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            logger.error("initial plan executor error: ", e);
+
+        IPlanExecutor planExecutor = new MixIStorageEnginePlanExecutor(metaManager.getStorageEngineList());
+        registerQueryExecutor(planExecutor);
+        StorageEngineChangeHook hook = planExecutor.getStorageEngineChangeHook();
+        if (hook != null) {
+            metaManager.registerStorageEngineChangeHook(hook);
         }
 
-        try {
-            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
-            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
-                Class<?> statisticsCollectorClass = Core.class.getClassLoader().
-                        loadClass(statisticsCollectorClassName);
-                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
-                        .getConstructor().newInstance();
-                registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
-                registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
-                registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
-                registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
-                registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
-                registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
-                registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
-                registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
-                statisticsCollector.startBroadcasting();
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            logger.error("initial statistics collector error: ", e);
-        }
+//        try {
+//            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
+//            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
+//                Class<?> statisticsCollectorClass = Core.class.getClassLoader().
+//                        loadClass(statisticsCollectorClassName);
+//                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
+//                        .getConstructor().newInstance();
+//                registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
+//                registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
+//                registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
+//                registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
+//                registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
+//                registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
+//                registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
+//                registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
+//                statisticsCollector.startBroadcasting();
+//            }
+//        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+//            logger.error("initial statistics collector error: ", e);
+//        }
 
         IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 

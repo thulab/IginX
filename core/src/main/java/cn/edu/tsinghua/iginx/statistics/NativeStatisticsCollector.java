@@ -41,7 +41,7 @@ public class NativeStatisticsCollector implements IStatisticsCollector {
 
     private final ExecutorService broadcastThreadPool = Executors.newSingleThreadExecutor();
 
-    private final PlanStatisticsCollector planStatisticsCollector = new PlanStatisticsCollector();
+    private final PlanGenerateStatisticsCollector planGenerateStatisticsCollector = new PlanGenerateStatisticsCollector();
 
     private final QueryStatisticsCollector queryStatisticsCollector = new QueryStatisticsCollector();
 
@@ -56,7 +56,7 @@ public class NativeStatisticsCollector implements IStatisticsCollector {
 
     @Override
     public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-        return planStatisticsCollector.getPostQueryPlanProcessor();
+        return planGenerateStatisticsCollector.getPostQueryPlanProcessor();
     }
 
     @Override
@@ -76,7 +76,7 @@ public class NativeStatisticsCollector implements IStatisticsCollector {
 
     @Override
     public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-        return planStatisticsCollector.getPreQueryPlanProcessor();
+        return planGenerateStatisticsCollector.getPreQueryPlanProcessor();
     }
 
     @Override
@@ -96,12 +96,11 @@ public class NativeStatisticsCollector implements IStatisticsCollector {
         broadcastThreadPool.execute(() -> {
             try {
                 while (broadcast.get()) {
-                    logger.info("broadcast statistics info: ");
-                    planStatisticsCollector.broadcastStatistics();
+                    planGenerateStatisticsCollector.broadcastStatistics();
                     planExecuteStatisticsCollector.broadcastStatistics();
                     resultCombineStatisticsCollector.broadcastStatistics();
                     queryStatisticsCollector.broadcastStatistics();
-                    Thread.sleep(1000);
+                    Thread.sleep(5000);
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();

@@ -41,11 +41,11 @@ public class IoTDBBeforeDilatationExample {
     private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
     private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
 
-    private static final long endTimestamp = 1000000L;
+    private static final long endTimestamp = 100000000L;
 
-    private static final int insertTimes = 1000;
+    private static final int insertTimes = 10000;
 
-    private static final int recordPerInsert = 100;
+    private static final int recordPerInsert = 10;
 
 
     private static final List<String> paths = new ArrayList<>();
@@ -108,8 +108,8 @@ public class IoTDBBeforeDilatationExample {
             }
             session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
             Thread.sleep(1);
-            if ((1000 - i + 1) % 10 == 0) {
-                logger.info("insert progress: " + (1000 - i + 1) + "/1000.");
+            if ((insertTimes - i + 1) % 100 == 0) {
+                logger.info("insert progress: " + (insertTimes - i + 1) + "/" + insertTimes + ".");
             }
         }
 
