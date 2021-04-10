@@ -1,6 +1,6 @@
 # IginX
 
-- [**For support, please contact IginX members**](TSIginX@gmail.com)
+- [**For support, please contact IginX members**](mailto:TSIginX@gmail.com)
 
 ## What is IginX?
 
