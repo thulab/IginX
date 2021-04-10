@@ -44,7 +44,7 @@ Contributions are welcomed and greatly appreciated. To report a problem the best
 
 ## Architecture
 
-![architecture](./docs/images/cluster_arch.png)
+<img src="https://github.com/thulab/IginX/blob/main/docs/images/cluster_arch.png" width = "380" height = "300" alt="IginX cluster architecture" align=center />
 
 ## License
 
