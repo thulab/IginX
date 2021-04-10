@@ -32,7 +32,7 @@ For more details, please refer to our technological posts on time series managem
 
 ## Quick start
 
-Please refer to our [User manual in Chinese](./blob/main/docs/pdf/userManualC.pdf). User manual in English is still being written.
+Please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is still being written.
 
 ### To understand technological designs in IginX
 
@@ -44,7 +44,7 @@ Contributions are welcomed and greatly appreciated. To report a problem the best
 
 ## Architecture
 
-![architecture](./blob/main/docs/images/cluster_arch.png)
+![architecture](./docs/images/cluster_arch.png)
 
 ## License
 
