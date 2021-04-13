@@ -136,5 +136,5 @@ public interface IPlanSplitter {
 	 * @param isQuery 是否为查询计划选取副本
 	 * @return 选出的分片副本
 	 */
-	List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery);
+	List<FragmentReplicaMeta> selectFragmentReplicas(FragmentMeta fragment, boolean isQuery);
 }
