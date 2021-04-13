@@ -30,15 +30,28 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private static SortedListAbstractMetaManager INSTANCE = null;
 
-    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists = new ArrayList<>();
+    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
 
-    private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap = new HashMap<>();
+    private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
+
+    private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
+
+    private SortedListAbstractMetaManager() {
+        if (sortedFragmentMetaLists == null) {
+            sortedFragmentMetaLists = new ArrayList<>();
+        }
+        if (fragmentMetaListMap == null) {
+            fragmentMetaListMap = new HashMap<>();
+        }
+    }
 
     @Override
     protected void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
