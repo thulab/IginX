@@ -141,10 +141,6 @@ service IService {
 
     Status closeSession(1:CloseSessionReq req);
 
-    Status createDatabase(1:CreateDatabaseReq req);
-
-    Status dropDatabase(1:DropDatabaseReq req);
-
     Status addColumns(1:AddColumnsReq req);
 
     Status deleteColumns(1:DeleteColumnsReq req);

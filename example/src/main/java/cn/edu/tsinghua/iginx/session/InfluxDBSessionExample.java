@@ -43,8 +43,6 @@ public class InfluxDBSessionExample {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
-		createDatabase();
-
 		insertRecords();
 		queryData();
 		aggregateQuery();
@@ -52,17 +50,7 @@ public class InfluxDBSessionExample {
 //		deleteDataInColumns();
 //		queryData();
 
-		dropDatabase();
-
 		session.closeSession();
-	}
-
-	private static void createDatabase() throws SessionException, ExecutionException {
-		session.createDatabase(BUCKET_NAME);
-	}
-
-	private static void dropDatabase() throws SessionException, ExecutionException {
-		session.dropDatabase(BUCKET_NAME);
 	}
 
 	private static void insertRecords() throws SessionException, ExecutionException {

@@ -27,11 +27,9 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -142,27 +140,6 @@ public class Session {
 			if (transport != null) {
 				transport.close();
 			}
-		}
-	}
-
-	public void createDatabase(String databaseName) throws SessionException,
-			ExecutionException {
-		CreateDatabaseReq req = new CreateDatabaseReq(sessionId, databaseName);
-
-		try {
-			RpcUtils.verifySuccess(client.createDatabase(req));
-		} catch (TException e) {
-			throw new SessionException(e);
-		}
-	}
-
-	public void dropDatabase(String databaseName) throws SessionException, ExecutionException {
-		DropDatabaseReq req = new DropDatabaseReq(sessionId, databaseName);
-
-		try {
-			RpcUtils.verifySuccess(client.dropDatabase(req));
-		} catch (TException e) {
-			throw new SessionException(e);
 		}
 	}
 

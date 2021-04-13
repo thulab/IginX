@@ -35,7 +35,6 @@ public class IoTDBBeforeDilatationExample {
 
     private static Session session;
 
-    private static final String DATABASE_NAME = "root.sg1";
     private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
     private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
     private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
@@ -60,8 +59,6 @@ public class IoTDBBeforeDilatationExample {
     public static void main(String[] args) throws Exception {
         session = new Session("127.0.0.1", 6324, "root", "root");
         session.openSession();
-        // 创建数据库
-        session.createDatabase(DATABASE_NAME);
         // 增加时序列
         addColumns();
         // 插入数据

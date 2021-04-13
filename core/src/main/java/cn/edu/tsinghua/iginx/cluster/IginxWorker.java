@@ -23,10 +23,8 @@ import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
@@ -39,10 +37,8 @@ import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -93,20 +89,6 @@ public class IginxWorker implements IService.Iface {
 		}
 		sessions.remove(req.sessionId);
 		return RpcUtils.SUCCESS;
-	}
-
-	@Override
-	public Status createDatabase(CreateDatabaseReq req) {
-		CreateDatabaseContext context = new CreateDatabaseContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
-
-	@Override
-	public Status dropDatabase(DropDatabaseReq req) {
-		DropDatabaseContext context = new DropDatabaseContext(req);
-		core.processRequest(context);
-		return context.getStatus();
 	}
 
 	@Override

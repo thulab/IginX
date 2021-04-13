@@ -33,7 +33,6 @@ public class IoTDBSessionExample {
 
 	private static Session session;
 
-	private static final String DATABASE_NAME = "sg1";
 	private static final String COLUMN_D1_S1 = "sg1.d1.s1";
 	private static final String COLUMN_D1_S2 = "sg1.d1.s2";
 	private static final String COLUMN_D2_S1 = "sg1.d2.s1";
@@ -43,8 +42,6 @@ public class IoTDBSessionExample {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
-		session.createDatabase(DATABASE_NAME);
-
 		addColumns();
 		insertRecords();
 		queryData();
@@ -52,8 +49,6 @@ public class IoTDBSessionExample {
 		deleteDataInColumns();
 		queryData();
 		deleteColumns();
-
-		session.dropDatabase(DATABASE_NAME);
 
 		session.closeSession();
 	}
