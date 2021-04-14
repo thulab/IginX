@@ -60,6 +60,7 @@ public class IoTDBSessionExampleITest {
             Thread th = new Thread(new StartIginX());
             th.setDaemon(true);
             th.start();
+            Thread.sleep(20000);
             session = new Session("127.0.0.1", 6324, "root", "root");
             session.openSession();
             session.createDatabase(DATABASE_NAME);
