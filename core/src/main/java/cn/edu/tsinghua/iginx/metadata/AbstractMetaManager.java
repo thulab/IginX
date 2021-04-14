@@ -73,8 +73,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected TreeCache fragmentCache;
 
-    protected final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
-
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
                 .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
