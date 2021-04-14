@@ -21,7 +21,7 @@ import java.util.Map;
 
 import static org.junit.Assert.*;
 
-public class IoTDBSessionExampleIT {
+public class IoTDBSessionExampleITest {
 
     private static Session session;
 

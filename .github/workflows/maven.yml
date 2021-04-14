@@ -34,16 +34,16 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
     - name: run zk
       run: |
-           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-           "${GITHUB_WORKSPACE}/.github/zk.sh"
+        chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+        "${GITHUB_WORKSPACE}/.github/zk.sh"
     - name: run iotdb
       run: |
-           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+        chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+        "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
     - name: Coverage report
       run: mvn -B verify -P coverage --no-transfer-progress
     - uses: codecov/codecov-action@v1
