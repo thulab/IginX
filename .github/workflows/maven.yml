@@ -36,10 +36,10 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
     - name: run zk
       run: |
-        chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-        "${GITHUB_WORKSPACE}/.github/zk.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
     - name: run iotdb
-        run: |
+      run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
     - name: Install with Maven
