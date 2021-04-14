@@ -80,21 +80,25 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final int BATCH_SIZE = 10000;
 
-    private static final String QUERY_DATA = "SELECT %s FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String PREFIX = "root.";
 
-    private static final String MAX_VALUE = "SELECT MAX_VALUE(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String TIME_RANGE_WHERE_CLAUSE = "WHERE time >= %d and time <= %d";
 
-    private static final String MIN_VALUE = "SELECT MIN_VALUE(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String FIRST_VALUE = "SELECT FIRST_VALUE(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String MAX_VALUE = "SELECT MAX_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String LAST_VALUE = "SELECT LAST_VALUE(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String MIN_VALUE = "SELECT MIN_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String AVG = "SELECT COUNT(%s), SUM(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String FIRST_VALUE = "SELECT FIRST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String COUNT = "SELECT COUNT(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String LAST_VALUE = "SELECT LAST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String SUM = "SELECT SUM(%s) FROM root.%s WHERE time >= %d and time <= %d";
+    private static final String AVG = "SELECT COUNT(%s), SUM(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+
+    private static final String COUNT = "SELECT COUNT(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+
+    private static final String SUM = "SELECT SUM(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
     // TODO 升级到0.11.3后删除
     private final Map<Long, StorageEngineMeta> storageEngineMetas;
@@ -140,7 +144,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
         // 解析 deviceId 和 measurement
         for (int i = 0; i < plan.getPathsNum(); i++) {
-            String deviceId = "root." + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
+            String deviceId = PREFIX + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
             String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
             TSDataType dataType = toIoTDB(plan.getDataType(i));
 
@@ -174,7 +178,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             // 插入 values
             for (int i = 0; i < plan.getValuesList().length; i++) {
                 Object[] values = (Object[]) plan.getValuesList()[i];
-                String deviceId = "root." + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
+                String deviceId = PREFIX + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
                 String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
                 for (int j = cnt; j < cnt + size; j++) {
                     if (plan.getDataType(i) == BINARY) {
@@ -209,7 +213,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
         // 创建 Tablet
         for (int i = 0; i < plan.getPathsNum(); i++) {
-            String deviceId = "root." + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
+            String deviceId = PREFIX + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
             String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
             tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), BATCH_SIZE));
         }
@@ -224,7 +228,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 int k = 0;
                 for (int j = 0; j < plan.getPathsNum(); j++) {
                     if (plan.getBitmapList().get(i).get(j)) {
-                        String deviceId = "root." + plan.getPath(j).substring(0, plan.getPath(j).lastIndexOf('.'));
+                        String deviceId = PREFIX + plan.getPath(j).substring(0, plan.getPath(j).lastIndexOf('.'));
                         String measurement = plan.getPath(j).substring(plan.getPath(j).lastIndexOf('.') + 1);
                         Tablet tablet = tablets.get(deviceId);
                         int row = tablet.rowSize++;
@@ -273,11 +277,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         for (int i = 0; i < plan.getPathsNum(); i++) {
             try {
-                if (!sessionPool.checkTimeseriesExists("root." + plan.getPath(i))) {
+                if (!sessionPool.checkTimeseriesExists(PREFIX + plan.getPath(i))) {
                     TSDataType dataType = TSDataType.deserialize((byte) Short.parseShort(plan.getAttributes(i).getOrDefault("DataType", "5")));
                     TSEncoding encoding = TSEncoding.deserialize((byte) Short.parseShort(plan.getAttributes(i).getOrDefault("Encoding", "9")));
                     CompressionType compressionType = CompressionType.deserialize((byte) Short.parseShort(plan.getAttributesList().get(i).getOrDefault("CompressionType", "0")));
-                    sessionPool.createTimeseries("root." + plan.getPath(i), dataType, encoding, compressionType);
+                    sessionPool.createTimeseries(PREFIX + plan.getPath(i), dataType, encoding, compressionType);
                 }
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
@@ -290,7 +294,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
@@ -301,7 +305,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.deleteData(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime());
+            sessionPool.deleteData(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
@@ -312,7 +316,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.setStorageGroup("root." + plan.getDatabaseName());
+            sessionPool.setStorageGroup(PREFIX + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
@@ -323,7 +327,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.deleteStorageGroup("root." + plan.getDatabaseName());
+            sessionPool.deleteStorageGroup(PREFIX + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
@@ -360,7 +364,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setCounts(counts);
             result.setSums(sums);
@@ -388,7 +392,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setValues(values);
             return result;
@@ -415,7 +419,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setValues(values);
             return result;
@@ -449,7 +453,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -484,7 +488,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -519,7 +523,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -554,7 +558,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> "root." + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
