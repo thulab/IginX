@@ -36,9 +36,14 @@ public interface IMetaManager {
     boolean addStorageEngine(StorageEngineMeta storageEngineMeta);
 
     /**
-     * 获取所有的存储引擎实例的原信息（不包括每个存储引擎的分片列表）
+     * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
      */
     List<StorageEngineMeta> getStorageEngineList();
+
+    /**
+     * 获取某个存储引擎实例的原信息（包括存储引擎的存储单元列表）
+     */
+    StorageEngineMeta getStorageEngine(long id);
 
     /**
      * 获取某个存储引擎的所有分片的元信息

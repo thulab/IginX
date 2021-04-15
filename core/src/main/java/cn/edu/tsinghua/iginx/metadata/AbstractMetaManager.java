@@ -402,6 +402,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
+    public StorageEngineMeta getStorageEngine(long id) {
+        return this.storageEngineMetaMap.get(id);
+    }
+
+    @Override
     public List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long StorageEngineId) {
         return null;
     }
