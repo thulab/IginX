@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 
@@ -108,15 +109,20 @@ public interface IMetaManager {
     boolean hasFragment();
 
     /**
-     * 尝试创建初始分片
+     * 尝试创建初始分片和初始存储单元
      */
-    boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments);
+    boolean tryInitFragments(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
 
     /**
      * 为新创建的分片选择存储引擎实例
      * @return 选出的存储引擎实例 Id 列表
      */
     List<Long> chooseStorageEngineIdListForNewFragment();
+
+    /**
+     * 移动存储单元
+     */
+    boolean moveStorageUnit(String storageUnitId, long targetStorageEngineId);
 
     /**
      * 为 DatabasePlan 选择存储引擎实例
@@ -129,5 +135,6 @@ public interface IMetaManager {
     List<FragmentMeta> generateFragments(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
+
 
 }
