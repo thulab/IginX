@@ -45,7 +45,9 @@ jobs:
     - name: Install with Maven
       run: mvn clean install -DskipTests
     - name: move dependencies
-      run: cp iotdb/target/iotdb-0.1.0-SNAPSHOT.jar core/lib/iotdb-0.1.0-SNAPSHOT.jar
+      run: cp "${GITHUB_WORKSPACE}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar" "${GITHUB_WORKSPACE}/core/lib/iotdb-0.1.0-SNAPSHOT.jar"
+    - name: check is dependency moved
+      run: ls "${GITHUB_WORKSPACE}/core/lib/"
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - name: Coverage report
