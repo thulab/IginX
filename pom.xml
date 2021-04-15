@@ -15,12 +15,12 @@
   </properties>
 
   <modules>
-    <module>core</module>
     <module>thrift</module>
-    <module>example</module>
+    <module>core</module>
     <module>iotdb</module>
-    <module>client</module>
     <module>influxdb</module>
+    <module>client</module>
+    <module>example</module>
   </modules>
 
   <dependencies>
