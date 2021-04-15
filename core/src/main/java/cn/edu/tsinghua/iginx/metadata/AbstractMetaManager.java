@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -400,6 +401,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
+    public StorageEngineMeta getStorageEngine(long id) {
+        return this.storageEngineMetaMap.get(id);
+    }
+
+    @Override
     public List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long StorageEngineId) {
         return null;
     }
@@ -464,7 +470,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     protected abstract void updateFragment(FragmentMeta fragmentMeta);
 
     @Override
-    public boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments) {
+    public boolean tryInitFragments(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -495,6 +501,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 logger.error("release mutex error: ", e);
             }
         }
+        return false;
+    }
+
+    @Override
+    public boolean moveStorageUnit(String storageUnitId, long targetStorageEngineId) {
         return false;
     }
 

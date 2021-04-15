@@ -124,7 +124,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         if (fragmentMap.isEmpty()) {
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), 0L);
-            iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            iMetaManager.tryInitFragments(null, fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
@@ -174,7 +174,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
-            iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            iMetaManager.tryInitFragments(null, fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
@@ -201,7 +201,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
-            iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            iMetaManager.tryInitFragments(null, fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {

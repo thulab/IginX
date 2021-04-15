@@ -139,4 +139,9 @@ public final class StorageEngineMeta {
     public int getFragmentReplicaMetaNum() {
         return fragmentReplicaMetaList.size() + latestFragmentReplicaMetaList.size();
     }
+
+    public List<StorageUnitMeta> getStorageUnitList() {
+        return null;
+    }
+
 }
