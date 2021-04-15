@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface IMetaManager {
 
@@ -45,6 +46,11 @@ public interface IMetaManager {
      * 获取某个存储引擎实例的原信息（包括存储引擎的存储单元列表）
      */
     StorageEngineMeta getStorageEngine(long id);
+
+    StorageUnitMeta getStorageUnit(String id);
+
+    Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
+
 
     /**
      * 获取某个存储引擎的所有分片的元信息

@@ -115,4 +115,8 @@ public final class FragmentMeta {
                 ", tsInterval=" + tsInterval +
                 '}';
     }
+
+    public String getStorageUnitId() {
+        return "";
+    }
 }

@@ -18,15 +18,31 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public final class StorageUnitMeta {
 
     private final String id;
 
     private final long storageEngineId;
 
-    public StorageUnitMeta(String id, long storageEngineId) {
+    private final String masterId;
+
+    private final boolean isMaster;
+
+    private final transient List<StorageUnitMeta> replicas;
+
+    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
         this.id = id;
         this.storageEngineId = storageEngineId;
+        this.masterId = masterId;
+        this.isMaster = isMaster;
+        this.replicas = new ArrayList<>();
+    }
+
+    public void addReplica(StorageUnitMeta storageUnit) {
+        replicas.add(storageUnit);
     }
 
     public String getId() {
@@ -37,4 +53,15 @@ public final class StorageUnitMeta {
         return storageEngineId;
     }
 
+    public String getMasterId() {
+        return masterId;
+    }
+
+    public boolean isMaster() {
+        return isMaster;
+    }
+
+    public List<StorageUnitMeta> getReplicas() {
+        return replicas;
+    }
 }

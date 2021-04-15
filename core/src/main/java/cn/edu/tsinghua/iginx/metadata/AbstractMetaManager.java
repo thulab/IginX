@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -403,6 +404,16 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     @Override
     public StorageEngineMeta getStorageEngine(long id) {
         return this.storageEngineMetaMap.get(id);
+    }
+
+    @Override
+    public StorageUnitMeta getStorageUnit(String id) {
+        return null;
+    }
+
+    @Override
+    public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
+        return null;
     }
 
     @Override
