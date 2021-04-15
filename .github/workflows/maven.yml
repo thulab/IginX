@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - metadata_v2
   pull_request:
     branches: 
       - main
@@ -19,7 +18,7 @@ jobs:
       max-parallel: 20
       matrix:
         java: [ 8, 11, 15 ]
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
 
     steps:
@@ -35,7 +34,7 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
     - name: Build with Maven
-      run: mvn -B package --file -Dmaven.wagon.httpconnectionManager.ttlSeconds=25 -Dmaven.wagon.http.retryHandler.count=3
+      run: mvn -B package
     - name: run zk
       run: |
            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
