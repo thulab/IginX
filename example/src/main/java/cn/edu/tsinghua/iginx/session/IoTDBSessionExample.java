@@ -25,63 +25,63 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class IoTDBSessionExample {
 
 	private static Session session;
 
-	private static final String COLUMN_D1_S1 = "sg1.d1.s1";
-	private static final String COLUMN_D1_S2 = "sg1.d1.s2";
-	private static final String COLUMN_D2_S1 = "sg1.d2.s1";
-	private static final String COLUMN_D3_S1 = "sg1.d3.s1";
+	private static final String S1 = "sg.d1.s1";
+	private static final String S2 = "sg.d2.s2";
+	private static final String S3 = "sg.d3.s3";
+	private static final String S4 = "sg.d4.s4";
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
-//		addColumns();
-		insertRecords();
+		insertRecords1();
+//		insertRecords2();
 		queryData();
-		aggregateQuery();
-		deleteDataInColumns();
-		queryData();
-//		deleteColumns();
+//		aggregateQuery();
+//		deleteDataInColumns();
+//		queryData();
 
 		session.closeSession();
 	}
 
-	private static void addColumns() throws SessionException, ExecutionException {
+	private static void insertRecords1() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S2);
 
-		Map<String, String> attributesForOnePath = new HashMap<>();
-		// INT64
-		attributesForOnePath.put("DataType", "2");
-		// RLE
-		attributesForOnePath.put("Encoding", "2");
-		// SNAPPY
-		attributesForOnePath.put("Compression", "1");
-
-		List<Map<String, String>> attributes = new ArrayList<>();
-		for (int i = 0; i < 4; i++) {
-			attributes.add(attributesForOnePath);
+		long[] timestamps = new long[100];
+		for (long i = 0; i < 100; i++) {
+			timestamps[(int) i] = i;
 		}
 
-		session.addColumns(paths, attributes);
+		Object[] valuesList = new Object[4];
+		for (long i = 0; i < 4; i++) {
+			Object[] values = new Object[100];
+			for (long j = 0; j < 100; j++) {
+				values[(int) j] = i + j;
+			}
+			valuesList[(int) i] = values;
+		}
+
+		List<DataType> dataTypeList = new ArrayList<>();
+		for (int i = 0; i < 4; i++) {
+			dataTypeList.add(DataType.LONG);
+		}
+
+		session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
 	}
 
-	private static void insertRecords() throws SessionException, ExecutionException {
+	private static void insertRecords2() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long[] timestamps = new long[100];
 		for (long i = 0; i < 100; i++) {
@@ -107,10 +107,10 @@ public class IoTDBSessionExample {
 
 	private static void queryData() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = 5L;
 		long endTime = 55L;
@@ -121,9 +121,9 @@ public class IoTDBSessionExample {
 
 	private static void deleteDataInColumns() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
 
 		long startTime = 25L;
 		long endTime = 30L;
@@ -131,22 +131,12 @@ public class IoTDBSessionExample {
 		session.deleteDataInColumns(paths, startTime, endTime);
 	}
 
-	private static void deleteColumns() throws SessionException, ExecutionException {
-		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
-
-		session.deleteColumns(paths);
-	}
-
 	private static void aggregateQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = 5L;
 		long endTime = 55L;

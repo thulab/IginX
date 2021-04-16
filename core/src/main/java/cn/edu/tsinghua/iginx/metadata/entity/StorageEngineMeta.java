@@ -150,10 +150,16 @@ public final class StorageEngineMeta {
     }
 
     public void removeStorageUnit(String id) {
+        if (storageUnitList == null) {
+            storageUnitList = new ArrayList<>();
+        }
         storageUnitList.removeIf(e -> e.getId().equals(id));
     }
 
     public void addStorageUnit(StorageUnitMeta storageUnit) {
+        if (storageUnitList == null) {
+            storageUnitList = new ArrayList<>();
+        }
         storageUnitList.add(storageUnit);
     }
 

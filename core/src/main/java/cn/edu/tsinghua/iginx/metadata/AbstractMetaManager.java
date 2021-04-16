@@ -205,15 +205,15 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     private void registerStorageUnitListener() throws Exception {
-        this.storageUnitCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_ENGINE_NODE_PREFIX);
+        this.storageUnitCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_UNIT_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
                     byte[] data = event.getData().getData();
+                    logger.info("storage unit: " + new String(data));
                     logger.info("storage unit meta updated " + event.getData().getPath());
                     StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
-                    logger.info("storage unit: " + new String(data));
                     if (storageUnitMeta != null) {
                         logger.info("new storage unit comes to cluster: id = " + storageUnitMeta.getId());
                         storageUnitLock.writeLock().lock();
