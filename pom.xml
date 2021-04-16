@@ -21,6 +21,7 @@
     <module>iotdb</module>
     <module>client</module>
     <module>influxdb</module>
+    <module>test</module>
   </modules>
 
   <dependencies>
