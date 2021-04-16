@@ -51,7 +51,7 @@ jobs:
     - name: start Iginx
       run: |
           chmod +x "${GITHUB_WORKSPACE}/start.sh"
-          "nohup ${GITHUB_WORKSPACE}/start.sh &"
+          nohup "${GITHUB_WORKSPACE}/start.sh" &
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - name: Coverage report
