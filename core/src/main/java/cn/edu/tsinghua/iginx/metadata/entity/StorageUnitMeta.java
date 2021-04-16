@@ -79,7 +79,7 @@ public final class StorageUnitMeta {
         return replicas;
     }
 
-    public StorageUnitMeta moveStorageUnitMeta(long targetStorageEngineId) {
+    public StorageUnitMeta migrateStorageUnitMeta(long targetStorageEngineId) {
         return new StorageUnitMeta(id, targetStorageEngineId, masterId, isMaster);
     }
 

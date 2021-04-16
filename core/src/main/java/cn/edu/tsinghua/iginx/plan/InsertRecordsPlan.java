@@ -51,6 +51,8 @@ public abstract class InsertRecordsPlan extends DataPlan{
 
 	private List<Map<String, String>> attributesList;
 
+	private boolean hasCreatedDatabase;
+
 	protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
 	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
 		super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
@@ -206,5 +208,13 @@ public abstract class InsertRecordsPlan extends DataPlan{
 			}
 		}
 		return attributesList.subList(startIndex, endIndex + 1);
+	}
+
+	public boolean hasCreatedDatabase() {
+		return hasCreatedDatabase;
+	}
+
+	public void setHasCreatedDatabase(boolean hasCreatedDatabase) {
+		this.hasCreatedDatabase = hasCreatedDatabase;
 	}
 }

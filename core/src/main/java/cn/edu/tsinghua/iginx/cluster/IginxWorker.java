@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
@@ -138,7 +139,12 @@ public class IginxWorker implements IService.Iface {
 		// 处理扩容
 		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), StorageEngine.IoTDB);
 		metaManager.addStorageEngine(meta);
-		return RpcUtils.SUCCESS;
+		Map<String, Long> migrationMap = metaManager.selectStorageUnitsToMigrate(Collections.singletonList(meta.getId()));
+		boolean success = true;
+		for (Map.Entry<String, Long> entry : migrationMap.entrySet()) {
+			success &= metaManager.migrateStorageUnit(entry.getKey(), entry.getValue());
+		}
+		return success ? RpcUtils.SUCCESS : RpcUtils.FAILURE;
 	}
 
 	@Override

@@ -42,13 +42,13 @@ public class IoTDBSessionExample {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
-		addColumns();
+//		addColumns();
 		insertRecords();
 		queryData();
 		aggregateQuery();
 		deleteDataInColumns();
 		queryData();
-		deleteColumns();
+//		deleteColumns();
 
 		session.closeSession();
 	}

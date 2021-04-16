@@ -37,20 +37,20 @@ public final class FragmentReplicaMeta {
 
     private final String storageUnitId;
 
+    public FragmentReplicaMeta(TimeInterval timeInterval, TimeSeriesInterval tsInterval, int replicaIndex, long storageEngineId, String storageUnitId) {
+        this.timeInterval = timeInterval;
+        this.tsInterval = tsInterval;
+        this.replicaIndex = replicaIndex;
+        this.storageEngineId = storageEngineId;
+        this.storageUnitId = storageUnitId;
+    }
+
     public FragmentReplicaMeta(TimeInterval timeInterval, TimeSeriesInterval tsInterval, int replicaIndex, long storageEngineId) {
         this.timeInterval = timeInterval;
         this.tsInterval = tsInterval;
         this.replicaIndex = replicaIndex;
         this.storageEngineId = storageEngineId;
         this.storageUnitId = "";
-    }
-
-    public FragmentReplicaMeta(TimeInterval timeInterval, TimeSeriesInterval tsInterval, int replicaIndex, String storageUnitId) {
-        this.timeInterval = timeInterval;
-        this.tsInterval = tsInterval;
-        this.replicaIndex = replicaIndex;
-        this.storageEngineId = 0L;
-        this.storageUnitId = storageUnitId;
     }
 
     public int getReplicaIndex() {

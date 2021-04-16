@@ -70,11 +70,21 @@ public final class FragmentMeta {
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
+        Map<Integer, FragmentReplicaMeta> replicas = new HashMap<>();
         for (int i = 0; i < storageEngineIdList.size(); i++) {
-            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
+            replicas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
         }
-        this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
+        this.replicaMetas = Collections.unmodifiableMap(replicas);
+    }
+
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList, String storageUnitId) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        Map<Integer, FragmentReplicaMeta> replicas = new HashMap<>();
+        for (int i = 0; i < storageEngineIdList.size(); i++) {
+            replicas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i), storageUnitId));
+        }
+        this.replicaMetas = Collections.unmodifiableMap(replicas);
     }
 
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String masterStorageUnitId) {

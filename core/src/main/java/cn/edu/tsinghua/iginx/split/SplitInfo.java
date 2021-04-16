@@ -30,10 +30,19 @@ public class SplitInfo {
 
 	private FragmentReplicaMeta replica;
 
+	private boolean hasCreatedDatabase;
+
 	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica) {
 		this.timeInterval = timeInterval;
 		this.timeSeriesInterval = timeSeriesInterval;
 		this.replica = replica;
+	}
+
+	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica, boolean hasCreatedDatabase) {
+		this.timeInterval = timeInterval;
+		this.timeSeriesInterval = timeSeriesInterval;
+		this.replica = replica;
+		this.hasCreatedDatabase = hasCreatedDatabase;
 	}
 
 	public TimeInterval getTimeInterval() {
@@ -58,5 +67,13 @@ public class SplitInfo {
 
 	public void setReplica(FragmentReplicaMeta replica) {
 		this.replica = replica;
+	}
+
+	public boolean hasCreatedDatabase() {
+		return hasCreatedDatabase;
+	}
+
+	public void setHasCreatedDatabase(boolean hasCreatedDatabase) {
+		this.hasCreatedDatabase = hasCreatedDatabase;
 	}
 }

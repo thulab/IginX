@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.policy;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
@@ -38,6 +39,7 @@ import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,8 +125,8 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         if (fragmentMap.isEmpty()) {
-            fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), 0L);
-            iMetaManager.tryInitFragments(null, fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(plan.getStartPath(), 0L);
+            iMetaManager.tryInitFragments(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
@@ -172,21 +174,24 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
+        boolean hasCreatedDatabase = true;
         if (fragmentMap.isEmpty()) {
-            fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
-            iMetaManager.tryInitFragments(null, fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(plan.getStartPath(), plan.getStartTime());
+            iMetaManager.tryInitFragments(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
+            hasCreatedDatabase = false;
         } else if (policy.isNeedReAllocate()) {
-            List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
-            iMetaManager.createFragments(fragments);
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
+            iMetaManager.createFragments(fragmentsAndStorageUnits.k);
+
             policy.setNeedReAllocate(false);
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
                 for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica, hasCreatedDatabase));
                 }
             }
         }
@@ -200,13 +205,14 @@ public class NaivePlanSplitter implements IPlanSplitter {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
-            fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
-            iMetaManager.tryInitFragments(null, fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(plan.getStartPath(), plan.getStartTime());
+            iMetaManager.tryInitFragments(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
-            List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime() + 1);
-            iMetaManager.createFragments(fragments);
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
+            iMetaManager.createFragments(fragmentsAndStorageUnits.k);
+
             policy.setNeedReAllocate(false);
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
