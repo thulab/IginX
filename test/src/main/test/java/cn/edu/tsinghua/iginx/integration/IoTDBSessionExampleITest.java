@@ -164,16 +164,16 @@ public class IoTDBSessionExampleITest {
         for(int i = 0; i < 4; i++) {
             assertEquals(minDataSet.getTimestamps()[i], -1);
             switch (resPaths.get(i)){
-                case "sg1.d1.s1":
+                case "root.sg1.d1.s1":
                     assertEquals(result[i], startTime);
                     break;
-                case "sg1.d1.s2":
+                case "root.sg1.d1.s2":
                     assertEquals(result[i],  startTime + 1);
                     break;
-                case "sg1.d2.s1":
+                case "root.sg1.d2.s1":
                     assertEquals(result[i], startTime + 2);
                     break;
-                case "sg1.d3.s1":
+                case "root.sg1.d3.s1":
                     assertEquals(result[i], startTime + 3);
                     break;
                 default:
