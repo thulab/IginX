@@ -129,6 +129,10 @@ public final class FragmentMeta {
                 '}';
     }
 
+    public void setMasterStorageUnitId(String masterStorageUnitId) {
+        this.masterStorageUnitId = masterStorageUnitId;
+    }
+
     public String getMasterStorageUnitId() {
         return masterStorageUnitId;
     }

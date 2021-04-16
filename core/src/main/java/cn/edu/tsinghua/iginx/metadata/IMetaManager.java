@@ -127,6 +127,12 @@ public interface IMetaManager {
     List<Long> chooseStorageEngineIdListForNewFragment();
 
     /**
+     * 为新创建的分片选择存储单元
+     * @return 选出的存储单元实例 Id 列表
+     */
+    List<String> chooseStorageUnitIdListForNewFragment();
+
+    /**
      * 移动存储单元
      */
     boolean moveStorageUnit(String storageUnitId, long targetStorageEngineId);

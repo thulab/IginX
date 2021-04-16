@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class StorageUnitMeta {
 
@@ -82,4 +83,20 @@ public final class StorageUnitMeta {
         return new StorageUnitMeta(id, targetStorageEngineId, masterId, isMaster);
     }
 
+    public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
+        return new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        StorageUnitMeta that = (StorageUnitMeta) o;
+        return Objects.equals(id, that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

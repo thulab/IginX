@@ -79,7 +79,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected ReadWriteLock storageUnitLock = new ReentrantReadWriteLock();
 
-    protected Map<String, StorageUnitMeta> storageUnitMetaMap = new ConcurrentHashMap<>();
+    protected Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
 
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
@@ -241,6 +241,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         }
                         storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
                         storageUnitLock.writeLock().unlock();
+
+                        if (originStorageUnitMeta != null) {
+                            storageEngineMetaMap.get(originStorageUnitMeta.getStorageEngineId()).removeStorageUnit(originStorageUnitMeta.getId());
+                        }
+                        storageEngineMetaMap.get(storageUnitMeta.getStorageEngineId()).addStorageUnit(storageUnitMeta);
                     }
                     break;
             }
@@ -447,6 +452,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         }
                     }
                     storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+                    storageEngineMetaMap.get(storageUnitMeta.getStorageEngineId()).addStorageUnit(storageUnitMeta);
                 }
             }
             registerStorageUnitListener();
@@ -479,7 +485,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 logger.error("release mutex error: ", e);
             }
         }
-
         return false;
     }
 
@@ -580,8 +585,52 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected abstract void updateFragment(FragmentMeta fragmentMeta);
 
+    protected Map<String, String> tryInitStorageUnits(List<StorageUnitMeta> storageUnits) {
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_UNIT_LOCK_NODE);
+        Map<String, String> fakeNameMap = new HashMap<>();
+        try {
+            mutex.acquire();
+            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+                String fakeName = masterStorageUnit.getId();
+                String nodeName = this.zookeeperClient.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
+                String actualName = nodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
+                this.zookeeperClient.setData()
+                        .forPath(nodeName, JsonUtils.toJson(masterStorageUnit.renameStorageUnitMeta(actualName, actualName)));
+                fakeNameMap.put(fakeName, actualName);
+                for (StorageUnitMeta slaveStorageUnit: masterStorageUnit.getReplicas()) {
+                    String slaveFakeName = slaveStorageUnit.getId();
+                    String slaveNodeName = this.zookeeperClient.create()
+                            .creatingParentsIfNeeded()
+                            .withMode(CreateMode.PERSISTENT)
+                            .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
+                    String slaveActualName = slaveNodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
+                    this.zookeeperClient.setData()
+                            .forPath(slaveNodeName, JsonUtils.toJson(slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName)));
+                    fakeNameMap.put(slaveFakeName, slaveActualName);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("try init storageUnits error: ", e);
+            return null;
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e ) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+        return fakeNameMap;
+    }
+
     @Override
     public boolean tryInitFragments(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
+        Map<String, String> fakeNameMap = tryInitStorageUnits(storageUnits);
+        if (fakeNameMap == null) {
+            return false;
+        }
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -595,6 +644,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
+                fragmentMeta.setMasterStorageUnitId(fakeNameMap.get(fragmentMeta.getMasterStorageUnitId()));
                 addFragment(fragmentMeta);
                 this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
@@ -657,6 +707,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             storageEngineIdList.set(i, value);
         }
         return storageEngineIdList.subList(0, 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum());
+    }
+
+    @Override
+    public List<String> chooseStorageUnitIdListForNewFragment() {
+        return null;
     }
 
     @Override

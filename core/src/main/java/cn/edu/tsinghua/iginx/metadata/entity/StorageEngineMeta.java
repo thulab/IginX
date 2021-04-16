@@ -55,14 +55,23 @@ public final class StorageEngineMeta {
     /**
      * 时序数据库存储的数据分片，不进行序列化。
      */
+    @Deprecated
     private transient List<FragmentReplicaMeta> fragmentReplicaMetaList = new ArrayList<>();
 
+    @Deprecated
     private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList = new ArrayList<>();
 
+    /**
+     * 实例上管理的存储单元列表
+     */
+    private transient List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+    @Deprecated
     public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
         this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
     }
 
+    @Deprecated
     public void endLatestFragmentReplicaMetas(TimeSeriesInterval tsInterval, long endTime) {
         fragmentReplicaMetaList.addAll(latestFragmentReplicaMetaList.stream().filter(e -> e.getTsInterval().equals(tsInterval)).map(
                 e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getStartTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
@@ -70,11 +79,9 @@ public final class StorageEngineMeta {
         latestFragmentReplicaMetaList.removeIf(e -> e.getTsInterval().equals(tsInterval));
     }
 
+    @Deprecated
     public void addLatestFragmentReplicaMetas(FragmentReplicaMeta fragmentReplicaMeta) {
         latestFragmentReplicaMetaList.add(fragmentReplicaMeta);
-    }
-
-    public StorageEngineMeta() {
     }
 
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
@@ -125,6 +132,7 @@ public final class StorageEngineMeta {
         this.storageEngine = storageEngine;
     }
 
+    @Deprecated
     public List<FragmentReplicaMeta> getFragmentReplicaMetaList() {
         List<FragmentReplicaMeta> replicaMetas = new ArrayList<>();
         replicaMetas.addAll(fragmentReplicaMetaList);
@@ -132,16 +140,21 @@ public final class StorageEngineMeta {
         return replicaMetas;
     }
 
-    public StorageEngineMeta basicInfo() {
-        return new StorageEngineMeta(id, ip, port, extraParams, storageEngine);
-    }
-
+    @Deprecated
     public int getFragmentReplicaMetaNum() {
         return fragmentReplicaMetaList.size() + latestFragmentReplicaMetaList.size();
     }
 
     public List<StorageUnitMeta> getStorageUnitList() {
-        return null;
+        return storageUnitList;
+    }
+
+    public void removeStorageUnit(String id) {
+        storageUnitList.removeIf(e -> e.getId().equals(id));
+    }
+
+    public void addStorageUnit(StorageUnitMeta storageUnit) {
+        storageUnitList.add(storageUnit);
     }
 
 }
