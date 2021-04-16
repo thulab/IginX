@@ -212,7 +212,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 case NODE_UPDATED:
                     byte[] data = event.getData().getData();
                     logger.info("storage unit: " + new String(data));
+                    logger.info("storage unit event:" + event.getType());
                     logger.info("storage unit meta updated " + event.getData().getPath());
+                    if (event.getData().getPath().equals(Constants.STORAGE_UNIT_NODE_PREFIX)) {
+                        break;
+                    }
                     StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
                     if (storageUnitMeta != null) {
                         logger.info("new storage unit comes to cluster: id = " + storageUnitMeta.getId());
