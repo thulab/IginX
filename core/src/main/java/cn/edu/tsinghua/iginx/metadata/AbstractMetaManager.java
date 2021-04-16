@@ -75,6 +75,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected TreeCache fragmentCache;
 
+    protected TreeCache storageUnitCache;
+
+    protected ReadWriteLock storageUnitLock = new ReentrantReadWriteLock();
+
+    protected Map<String, StorageUnitMeta> storageUnitMetaMap = new ConcurrentHashMap<>();
+
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
                 .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
@@ -92,7 +98,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             registerStorageEngineListener();
             resolveStorageEngineFromZooKeeper();
 
-            resolveFragmentFromZooKeeper(); // 方法内部在从 ZooKeeper 上拉取 Fragment 之前需要，在内部会注册 Listener
+            resolveFragmentFromZooKeeper();
+
+            resolveStorageUnitFromZookeeper();
         } catch (Exception e) {
             logger.error("get error when init meta manager: ", e);
             System.exit(1);
@@ -192,6 +200,53 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         } finally {
             lock.release();
         }
+    }
+
+    private void registerStorageUnitListener() throws Exception {
+        this.storageUnitCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_ENGINE_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    byte[] data = event.getData().getData();
+                    logger.info("storage unit meta updated " + event.getData().getPath());
+                    StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
+                    logger.info("storage unit: " + new String(data));
+                    if (storageUnitMeta != null) {
+                        logger.info("new storage unit comes to cluster: id = " + storageUnitMeta.getId());
+                        storageUnitLock.writeLock().lock();
+                        StorageUnitMeta originStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getId());
+                        if (originStorageUnitMeta == null) {
+                            // 原本没有这个东西，是新加的
+                            if (!storageUnitMeta.isMaster()) { // 需要加入到主节点的子节点列表中
+                                StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
+                                if (masterStorageUnitMeta == null) { // 子节点先于主节点加入系统中，不应该发生，报错
+                                    logger.error("unexpected storage unit " + new String(data) + ", because it does not has a master storage unit");
+                                } else {
+                                    masterStorageUnitMeta.addReplica(storageUnitMeta);
+                                }
+                            }
+                        } else {
+                            if (storageUnitMeta.isMaster()) {
+                                storageUnitMeta.setReplicas(originStorageUnitMeta.getReplicas());
+                            } else {
+                                StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
+                                if (masterStorageUnitMeta == null) { // 子节点先于主节点加入系统中，不应该发生，报错
+                                    logger.error("unexpected storage unit " + new String(data) + ", because it does not has a master storage unit");
+                                } else {
+                                    masterStorageUnitMeta.removeReplica(originStorageUnitMeta);
+                                    masterStorageUnitMeta.addReplica(storageUnitMeta);
+                                }
+                            }
+                        }
+                        storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+                        storageUnitLock.writeLock().unlock();
+                    }
+                    break;
+            }
+        };
+        this.storageUnitCache.getListenable().addListener(listener);
+        this.storageUnitCache.start();
     }
 
     private void registerStorageEngineListener() throws Exception {
@@ -368,6 +423,38 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         this.fragmentCache.start();
     }
 
+    private void resolveStorageUnitFromZookeeper() throws Exception {
+        InterProcessMutex mutex = new InterProcessMutex(zookeeperClient, Constants.STORAGE_UNIT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.zookeeperClient.checkExists().forPath(Constants.STORAGE_UNIT_NODE_PREFIX) == null) {
+                // 当前还没有数据，创建父节点，然后不需要解析数据
+                this.zookeeperClient.create()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.STORAGE_UNIT_NODE_PREFIX);
+            } else {
+                List<String> storageUnitIds = this.zookeeperClient.getChildren().forPath(Constants.STORAGE_UNIT_NODE_PREFIX);
+                for (String storageUnitId: storageUnitIds) {
+                    byte[] data = this.zookeeperClient.getData()
+                            .forPath(Constants.STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitId);
+                    StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
+                    if (!storageUnitMeta.isMaster()) { // 需要加入到主节点的子节点列表中
+                        StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
+                        if (masterStorageUnitMeta == null) { // 子节点先于主节点加入系统中，不应该发生，报错
+                            logger.error("unexpected storage unit " + new String(data) + ", because it does not has a master storage unit");
+                        } else {
+                            masterStorageUnitMeta.addReplica(storageUnitMeta);
+                        }
+                    }
+                    storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+                }
+            }
+            registerStorageUnitListener();
+        } finally {
+            mutex.release();
+        }
+    }
+
     @Override
     public boolean addStorageEngine(StorageEngineMeta storageEngineMeta) {
         InterProcessMutex lock = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_ENGINE_LOCK_NODE);
@@ -408,12 +495,25 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public StorageUnitMeta getStorageUnit(String id) {
-        return null;
+        StorageUnitMeta storageUnit;
+        storageUnitLock.readLock().lock();
+        storageUnit = storageUnitMetaMap.get(id);
+        storageUnitLock.readLock().unlock();
+        return storageUnit;
     }
 
     @Override
     public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
-        return null;
+        Map<String, StorageUnitMeta> resultMap = new HashMap<>();
+        storageUnitLock.readLock().lock();
+        for (String id: ids) {
+            StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
+            if (storageUnit != null) {
+                resultMap.put(id, storageUnit);
+            }
+        }
+        storageUnitLock.readLock().unlock();
+        return resultMap;
     }
 
     @Override

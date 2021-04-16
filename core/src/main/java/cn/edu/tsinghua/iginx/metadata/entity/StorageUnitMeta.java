@@ -31,18 +31,25 @@ public final class StorageUnitMeta {
 
     private final boolean isMaster;
 
-    private final transient List<StorageUnitMeta> replicas;
+    private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
         this.id = id;
         this.storageEngineId = storageEngineId;
         this.masterId = masterId;
         this.isMaster = isMaster;
-        this.replicas = new ArrayList<>();
     }
 
     public void addReplica(StorageUnitMeta storageUnit) {
+        if (replicas == null)
+            replicas = new ArrayList<>();
         replicas.add(storageUnit);
+    }
+
+    public void removeReplica(StorageUnitMeta storageUnit) {
+        if (replicas == null)
+            replicas = new ArrayList<>();
+        replicas.remove(storageUnit);
     }
 
     public String getId() {
@@ -61,7 +68,13 @@ public final class StorageUnitMeta {
         return isMaster;
     }
 
+    public void setReplicas(List<StorageUnitMeta> replicas) {
+        this.replicas = replicas;
+    }
+
     public List<StorageUnitMeta> getReplicas() {
+        if (replicas == null)
+            replicas = new ArrayList<>();
         return replicas;
     }
 }
