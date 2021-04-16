@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -124,22 +125,21 @@ public interface IMetaManager {
      * 为新创建的分片选择存储引擎实例
      * @return 选出的存储引擎实例 Id 列表
      */
-    List<Long> chooseStorageEngineIdListForNewFragment();
+    List<Long> selectStorageEngineIdList();
 
     /**
-     * 移动存储单元
+     * 选择迁移的存储单元
      */
-    boolean moveStorageUnit(String storageUnitId, long targetStorageEngineId);
+    Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList);
 
     /**
-     * 为 DatabasePlan 选择存储引擎实例
-     * @return 选出的存储引擎实例 Id
+     * 迁移存储单元
      */
-    long chooseStorageEngineIdForDatabasePlan();
+    boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime);
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(String startPath, long startTime);
 
-    List<FragmentMeta> generateFragments(List<String> prefixList, long startTime);
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 

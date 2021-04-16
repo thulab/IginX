@@ -18,9 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.client;
 
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.session.Session;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -31,7 +29,6 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 

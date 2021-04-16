@@ -29,7 +29,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -616,7 +618,36 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public boolean moveStorageUnit(String storageUnitId, long targetStorageEngineId) {
+    public Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList) {
+        // TODO 目前先假设每个存储单元大小相同
+        // storageUnitId targetStorageEngineId
+        Map<String, Long> migrationMap = new HashMap<>();
+        // 新加存储引擎已有的存储单元
+        Map<Long, List<String>> storageEngineIdToCoveredStorageUnitIdList = new HashMap<>();
+        int avg = (int) Math.ceil((double) (int) storageEngineMetaMap.values().stream().map(StorageEngineMeta::getStorageUnitList).count()
+                / (storageEngineMetaMap.size() + addedStorageEngineIdList.size()));
+        for (StorageEngineMeta storageEngineMeta : storageEngineMetaMap.values()) {
+            int cnt = storageEngineMeta.getStorageUnitList().size() - avg;
+            for (int i = 0; i < cnt; i++) {
+                for (Long addedStorageEngineId : addedStorageEngineIdList) {
+                    if (storageEngineIdToCoveredStorageUnitIdList.containsKey(addedStorageEngineId) &&
+                            storageEngineIdToCoveredStorageUnitIdList.get(addedStorageEngineId).contains(storageEngineMeta.getStorageUnitList().get(i).getMasterId())) {
+                        continue;
+                    }
+                    List<String> coveredStorageUnitIdList = storageEngineIdToCoveredStorageUnitIdList.computeIfAbsent(addedStorageEngineId, v -> new ArrayList<>());
+                    if (coveredStorageUnitIdList.size() >= avg) {
+                        continue;
+                    }
+                    storageEngineIdToCoveredStorageUnitIdList.get(addedStorageEngineId).add(storageEngineMeta.getStorageUnitList().get(i).getMasterId());
+                    migrationMap.put(storageEngineMeta.getStorageUnitList().get(i).getId(), addedStorageEngineId);
+                }
+            }
+        }
+        return migrationMap;
+    }
+
+    @Override
+    public boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId) {
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -627,11 +658,18 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             if (storageUnit == null) {
                 return false;
             }
-            storageUnit = storageUnit.moveStorageUnitMeta(targetStorageEngineId);
+            String sourceDir = storageEngineMetaMap.get(storageUnit.getStorageEngineId()).getExtraParams().getOrDefault("dataDir", "/");
+            String targetDir = storageEngineMetaMap.get(targetStorageEngineId).getExtraParams().getOrDefault("dataDir", "/");
+            String cmd = String.format("migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
+            Process process = Runtime.getRuntime().exec(cmd);
+            if (process.waitFor() != 0) {
+                logger.error("migrate error: {} from {} to {}", storageUnitId, sourceDir, targetDir);
+            }
+            storageUnit = storageUnit.migrateStorageUnitMeta(targetStorageEngineId);
             this.zookeeperClient.setData()
                     .forPath(Constants.STORAGE_UNIT_NODE_PREFIX + "/" + storageUnit.getId(), JsonUtils.toJson(storageUnit));
         } catch (Exception e) {
-            logger.error("move fragment error: ", e);
+            logger.error("migrate fragment error: ", e);
             return false;
         } finally {
             try {
@@ -644,7 +682,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<Long> chooseStorageEngineIdListForNewFragment() {
+    public List<Long> selectStorageEngineIdList() {
         List<Long> storageEngineIdList = getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
         if (storageEngineIdList.size() <= 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum()) {
             return storageEngineIdList;
@@ -660,28 +698,40 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public long chooseStorageEngineIdForDatabasePlan() {
-        List<StorageEngineMeta> storageEngineMetaList = getStorageEngineList().stream().
-                sorted(Comparator.comparing(StorageEngineMeta::getFragmentReplicaMetaNum)).collect(Collectors.toList());
-        return storageEngineMetaList.get(0).getId();
-    }
-
-    @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime) {
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(String startPath, long startTime) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
         List<FragmentMeta> leftFragmentList = new ArrayList<>();
+        StorageUnitMeta topStorageUnit;
         List<FragmentMeta> rightFragmentList = new ArrayList<>();
+        StorageUnitMeta bottomStorageUnit;
 
-        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+        List<Long> storageEngineIdList = selectStorageEngineIdList();
+        String topId = RandomStringUtils.randomAlphanumeric(16);
+        topStorageUnit = new StorageUnitMeta(topId, storageEngineIdList.get(0), topId, true);
+        for (int i = 1; i < storageEngineIdList.size(); i++) {
+            topStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), topId, false));
+        }
+        storageUnitList.add(topStorageUnit);
+        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, topId));
+
+        storageEngineIdList = selectStorageEngineIdList();
+        String bottomId = RandomStringUtils.randomAlphanumeric(16);
+        bottomStorageUnit = new StorageUnitMeta(bottomId, storageEngineIdList.get(0), bottomId, true);
+        for (int i = 1; i < storageEngineIdList.size(); i++) {
+            bottomStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), bottomId, false));
+        }
+        storageUnitList.add(bottomStorageUnit);
+        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, storageEngineIdList, bottomId));
+
         if (startTime != 0) {
-            leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, chooseStorageEngineIdListForNewFragment()));
-            rightFragmentList.add(new FragmentMeta(null, startPath, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+            leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, topId));
+            rightFragmentList.add(new FragmentMeta(null, startPath, 0, startTime, bottomId));
         }
         fragmentMap.put(new TimeSeriesInterval(startPath, null), leftFragmentList);
         fragmentMap.put(new TimeSeriesInterval(null, startPath), rightFragmentList);
 
-        return fragmentMap;
+        return new Pair<>(fragmentMap, storageUnitList);
     }
 
     @Override
@@ -692,17 +742,19 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<FragmentMeta> generateFragments(List<String> prefixList, long startTime) {
-        List<FragmentMeta> resultList = new ArrayList<>();
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+        List<FragmentMeta> fragmentMetaList = new ArrayList<>();
+        // TODO 新建 StorageUnit
+        List<StorageUnitMeta> storageUnitMetaList = new ArrayList<>();
         prefixList = prefixList.stream().filter(Objects::nonNull).sorted(String::compareTo).collect(Collectors.toList());
         String previousPrefix;
         String prefix = null;
         for (String s : prefixList) {
             previousPrefix = prefix;
             prefix = s;
-            resultList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+            fragmentMetaList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, selectStorageEngineIdList()));
         }
-        resultList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        return resultList;
+        fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, selectStorageEngineIdList()));
+        return new Pair<>(fragmentMetaList, storageUnitMetaList);
     }
 }

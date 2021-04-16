@@ -32,6 +32,8 @@ public abstract class IginxPlan {
 
 	private long storageEngineId;
 
+	private String storageUnitId;
+
 	protected IginxPlan(boolean isQuery) {
 		this.iginxPlanType = IGINX;
 		this.isQuery = isQuery;
@@ -57,6 +59,10 @@ public abstract class IginxPlan {
 		return storageEngineId;
 	}
 
+	public String getStorageUnitId() {
+		return storageUnitId;
+	}
+
 	public void setIginxPlanType(IginxPlanType iginxPlanType) {
 		this.iginxPlanType = iginxPlanType;
 	}
@@ -75,6 +81,10 @@ public abstract class IginxPlan {
 
 	public void setStorageEngineId(long storageEngineId) {
 		this.storageEngineId = storageEngineId;
+	}
+
+	public void setStorageUnitId(String storageUnitId) {
+		this.storageUnitId = storageUnitId;
 	}
 
 	public enum IginxPlanType {
