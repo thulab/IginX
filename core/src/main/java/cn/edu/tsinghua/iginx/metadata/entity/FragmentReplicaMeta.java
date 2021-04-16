@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+@Deprecated
 public final class FragmentReplicaMeta {
 
     private final TimeInterval timeInterval;

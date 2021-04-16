@@ -77,4 +77,9 @@ public final class StorageUnitMeta {
             replicas = new ArrayList<>();
         return replicas;
     }
+
+    public StorageUnitMeta moveStorageUnitMeta(long targetStorageEngineId) {
+        return new StorageUnitMeta(id, targetStorageEngineId, masterId, isMaster);
+    }
+
 }

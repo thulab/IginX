@@ -617,7 +617,30 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public boolean moveStorageUnit(String storageUnitId, long targetStorageEngineId) {
-        return false;
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            StorageUnitMeta storageUnit;
+            storageUnitLock.readLock().lock();
+            storageUnit = storageUnitMetaMap.get(storageUnitId);
+            storageUnitLock.readLock().unlock();
+            if (storageUnit == null) {
+                return false;
+            }
+            storageUnit = storageUnit.moveStorageUnitMeta(targetStorageEngineId);
+            this.zookeeperClient.setData()
+                    .forPath(Constants.STORAGE_UNIT_NODE_PREFIX + "/" + storageUnit.getId(), JsonUtils.toJson(storageUnit));
+        } catch (Exception e) {
+            logger.error("move fragment error: ", e);
+            return false;
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e ) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+        return true;
     }
 
     @Override

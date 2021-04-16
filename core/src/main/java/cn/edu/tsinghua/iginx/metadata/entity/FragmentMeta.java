@@ -50,18 +50,23 @@ public final class FragmentMeta {
     /**
      * 所有的分片的信息
      */
-    private final Map<Integer, FragmentReplicaMeta> replicaMetas;
+    @Deprecated
+    private Map<Integer, FragmentReplicaMeta> replicaMetas;
 
     private long createdBy;
 
     private long updatedBy;
 
+    private String masterStorageUnitId;
+
+    @Deprecated
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         this.replicaMetas = replicaMetas;
     }
 
+    @Deprecated
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
@@ -72,6 +77,12 @@ public final class FragmentMeta {
         this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
     }
 
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String masterStorageUnitId) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        this.masterStorageUnitId = masterStorageUnitId;
+    }
+
     public TimeInterval getTimeInterval() {
         return timeInterval;
     }
@@ -80,10 +91,12 @@ public final class FragmentMeta {
         return tsInterval;
     }
 
+    @Deprecated
     public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
         return new HashMap<>(replicaMetas);
     }
 
+    @Deprecated
     public int getReplicaMetasNum() {
         return replicaMetas.size();
     }
@@ -116,7 +129,7 @@ public final class FragmentMeta {
                 '}';
     }
 
-    public String getStorageUnitId() {
-        return "";
+    public String getMasterStorageUnitId() {
+        return masterStorageUnitId;
     }
 }

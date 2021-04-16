@@ -55,6 +55,7 @@ public interface IMetaManager {
     /**
      * 获取某个存储引擎的所有分片的元信息
      */
+    @Deprecated
     List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long storageEngineId);
 
     /**
