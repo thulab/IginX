@@ -36,30 +36,9 @@ public class IoTDBSessionExampleITest {
     private static final long startTime = 0L;
     private static final long endTime = startTime + timePeriod - 1;
 
-
-    private static class StartIginX implements Runnable {
-
-        @Override
-        public void run()  {
-            Iginx iginx = new Iginx();
-            String[] args = new String[0];
-            Constants.CONFIG_FILE = "../conf/config.properties";
-            try {
-                iginx.main(args);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
     @Before
     public void setUp(){
-        //Start IginX
         try {
-            Thread th = new Thread(new StartIginX());
-            th.setDaemon(true);
-            th.start();
-            Thread.sleep(20000);
             session = new Session("127.0.0.1", 6324, "root", "root");
             session.openSession();
             session.createDatabase(DATABASE_NAME);
