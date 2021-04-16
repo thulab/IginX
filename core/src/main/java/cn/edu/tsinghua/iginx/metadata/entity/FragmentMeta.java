@@ -77,14 +77,15 @@ public final class FragmentMeta {
         this.replicaMetas = Collections.unmodifiableMap(replicas);
     }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList, String storageUnitId) {
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList, String masterStorageUnitId) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         Map<Integer, FragmentReplicaMeta> replicas = new HashMap<>();
         for (int i = 0; i < storageEngineIdList.size(); i++) {
-            replicas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i), storageUnitId));
+            replicas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i), masterStorageUnitId));
         }
         this.replicaMetas = Collections.unmodifiableMap(replicas);
+        this.masterStorageUnitId = masterStorageUnitId;
     }
 
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String masterStorageUnitId) {

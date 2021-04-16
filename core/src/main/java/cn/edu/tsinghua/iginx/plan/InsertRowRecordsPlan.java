@@ -39,14 +39,8 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
     private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
 
     public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList);
-        this.setIginxPlanType(INSERT_ROW_RECORDS);
-    }
-
-    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId);
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId, String storageUnitId) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId, storageUnitId);
         this.setIginxPlanType(INSERT_ROW_RECORDS);
     }
 

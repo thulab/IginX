@@ -133,14 +133,15 @@ public class NaivePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
                 Set<Long> storageEngineIds = new HashSet<>();
-                for (FragmentReplicaMeta replica : replicas) {
-                    if (storageEngineIds.contains(replica.getStorageEngineId())) {
-                        logger.info("storage engine id " + replica.getStorageEngineId() + " is duplicated.");
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
+                for (int i = 0; i < replicas.size(); i++) {
+                    if (storageEngineIds.contains(replicas.get(i).getStorageEngineId())) {
+                        logger.info("storage engine id " + replicas.get(i).getStorageEngineId() + " is duplicated.");
                         continue;
                     }
-                    storageEngineIds.add(replica.getStorageEngineId());
-                    logger.info("add storage engine id " + replica.getStorageEngineId() + " to duplicate remove set.");
-                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replica));
+                    storageEngineIds.add(replicas.get(i).getStorageEngineId());
+                    logger.info("add storage engine id " + replicas.get(i).getStorageEngineId() + " to duplicate remove set.");
+                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -155,14 +156,15 @@ public class NaivePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
                 Set<Long> storageEngineIds = new HashSet<>();
-                for (FragmentReplicaMeta replica : replicas) {
-                    if (storageEngineIds.contains(replica.getStorageEngineId())) {
-                        logger.info("storage engine id " + replica.getStorageEngineId() + " is duplicated.");
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
+                for (int i = 0; i < replicas.size(); i++) {
+                    if (storageEngineIds.contains(replicas.get(i).getStorageEngineId())) {
+                        logger.info("storage engine id " + replicas.get(i).getStorageEngineId() + " is duplicated.");
                         continue;
                     }
-                    storageEngineIds.add(replica.getStorageEngineId());
-                    logger.info("add storage engine id " + replica.getStorageEngineId() + " to duplicate remove set.");
-                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replica));
+                    storageEngineIds.add(replicas.get(i).getStorageEngineId());
+                    logger.info("add storage engine id " + replicas.get(i).getStorageEngineId() + " to duplicate remove set.");
+                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -174,24 +176,22 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
-        boolean hasCreatedDatabase = true;
         if (fragmentMap.isEmpty()) {
             Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(plan.getStartPath(), plan.getStartTime());
             iMetaManager.tryInitFragments(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
-            hasCreatedDatabase = false;
         } else if (policy.isNeedReAllocate()) {
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
             iMetaManager.createFragments(fragmentsAndStorageUnits.k);
-
             policy.setNeedReAllocate(false);
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica, hasCreatedDatabase));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), false, i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -212,14 +212,14 @@ public class NaivePlanSplitter implements IPlanSplitter {
         } else if (policy.isNeedReAllocate()) {
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
             iMetaManager.createFragments(fragmentsAndStorageUnits.k);
-
             policy.setNeedReAllocate(false);
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), false, i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -234,9 +234,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -250,9 +251,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -267,9 +269,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -284,9 +287,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -301,9 +305,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -318,9 +323,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -335,9 +341,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
+                StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
-                for (FragmentReplicaMeta replica : replicas) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                for (int i = 0; i < replicas.size(); i++) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
                 }
             }
         }
@@ -351,8 +358,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
             FragmentMeta fragment = fragmentList.get(0);
-            for (FragmentReplicaMeta replica : selectFragmentReplicas(fragment, true)) {
-                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), replica));
+            StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
+            List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
+            for (int i = 0; i < replicas.size(); i++) {
+                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
             }
         }
         return infoList;
@@ -365,8 +374,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
             FragmentMeta fragment = fragmentList.get(fragmentList.size() - 1);
-            for (FragmentReplicaMeta replica : selectFragmentReplicas(fragment, true)) {
-                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), replica));
+            StorageUnitMeta storageUnitMeta = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
+            List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
+            for (int i = 0; i < replicas.size(); i++) {
+                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), replicas.get(i), i == 0 ? fragment.getMasterStorageUnitId() : storageUnitMeta.getReplicas().get(i - 1).getId()));
             }
         }
         return infoList;

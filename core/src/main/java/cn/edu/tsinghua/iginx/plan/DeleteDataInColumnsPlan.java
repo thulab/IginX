@@ -29,14 +29,9 @@ public class DeleteDataInColumnsPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(DeleteDataInColumnsPlan.class);
 
-	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
-		super(false, paths, startTime, endTime);
+	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
+		super(false, paths, startTime, endTime, storageEngineId, storageUnitId);
 		this.setIginxPlanType(DELETE_DATA_IN_COLUMNS);
-	}
-
-	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
 		this.setSync(true);
 	}
 }

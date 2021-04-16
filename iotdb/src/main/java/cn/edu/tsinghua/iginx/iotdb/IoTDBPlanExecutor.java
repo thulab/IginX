@@ -138,12 +138,12 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         logger.info("write " + plan.getPaths().size() * plan.getTimestamps().length + " points to storage engine: " + plan.getStorageEngineId() + ".");
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
-        if (!plan.hasCreatedDatabase()) {
-            try {
-                sessionPool.setStorageGroup(PREFIX + plan.getStorageUnitId());
-            } catch (IoTDBConnectionException | StatementExecutionException e) {
-                logger.error(e.getMessage());
-            }
+        logger.info("paths: {} StorageEngineId: {} StorageUnitId: {}", plan.getPaths(), plan.getStorageEngineId(), plan.getStorageUnitId());
+
+        try {
+            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnitId());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
         }
 
         Map<String, Tablet> tablets = new HashMap<>();
@@ -217,12 +217,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         // TODO
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
-        if (!plan.hasCreatedDatabase()) {
-            try {
-                sessionPool.setStorageGroup(PREFIX + plan.getStorageUnitId());
-            } catch (IoTDBConnectionException | StatementExecutionException e) {
-                logger.error(e.getMessage());
-            }
+        try {
+            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnitId());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
         }
 
         Map<String, Tablet> tablets = new HashMap<>();

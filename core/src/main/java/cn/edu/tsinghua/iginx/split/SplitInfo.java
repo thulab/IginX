@@ -32,17 +32,21 @@ public class SplitInfo {
 
 	private boolean hasCreatedDatabase;
 
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica) {
+	private String storageUnitId;
+
+	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica, String storageUnitId) {
 		this.timeInterval = timeInterval;
 		this.timeSeriesInterval = timeSeriesInterval;
 		this.replica = replica;
+		this.storageUnitId = storageUnitId;
 	}
 
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica, boolean hasCreatedDatabase) {
+	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica, boolean hasCreatedDatabase, String storageUnitId) {
 		this.timeInterval = timeInterval;
 		this.timeSeriesInterval = timeSeriesInterval;
 		this.replica = replica;
 		this.hasCreatedDatabase = hasCreatedDatabase;
+		this.storageUnitId = storageUnitId;
 	}
 
 	public TimeInterval getTimeInterval() {
@@ -75,5 +79,13 @@ public class SplitInfo {
 
 	public void setHasCreatedDatabase(boolean hasCreatedDatabase) {
 		this.hasCreatedDatabase = hasCreatedDatabase;
+	}
+
+	public String getStorageUnitId() {
+		return storageUnitId;
+	}
+
+	public void setStorageUnitId(String storageUnitId) {
+		this.storageUnitId = storageUnitId;
 	}
 }

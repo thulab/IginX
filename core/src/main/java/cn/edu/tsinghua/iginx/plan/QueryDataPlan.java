@@ -31,8 +31,8 @@ public class QueryDataPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
 
-	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
-		super(true, paths, startTime, endTime);
+	public QueryDataPlan(List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
+		super(true, paths, startTime, endTime, storageEngineId, storageUnitId);
 		this.setIginxPlanType(QUERY_DATA);
 		boolean isStartPrefix = paths.get(0).contains("*");
 		String startTimeSeries = isStartPrefix ?
@@ -59,11 +59,6 @@ public class QueryDataPlan extends DataPlan {
 			endTimeSeries += "." +  (char)('z' + 1);
 		}
 		this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
-	}
-
-	public QueryDataPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
 		this.setSync(true);
 	}
 

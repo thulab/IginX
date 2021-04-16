@@ -146,6 +146,9 @@ public final class StorageEngineMeta {
     }
 
     public List<StorageUnitMeta> getStorageUnitList() {
+        if (storageUnitList == null) {
+            storageUnitList = new ArrayList<>();
+        }
         return storageUnitList;
     }
 

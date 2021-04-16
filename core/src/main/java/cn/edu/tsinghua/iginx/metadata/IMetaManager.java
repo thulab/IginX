@@ -150,5 +150,4 @@ public interface IMetaManager {
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 
-
 }

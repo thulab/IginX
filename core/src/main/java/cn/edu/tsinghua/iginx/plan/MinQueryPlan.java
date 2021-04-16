@@ -11,13 +11,8 @@ public class MinQueryPlan extends AggregateQueryPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(MinQueryPlan.class);
 
-	public MinQueryPlan(List<String> paths, long startTime, long endTime) {
-		super(paths, startTime, endTime);
+	public MinQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
+		super(paths, startTime, endTime, storageEngineId, storageUnitId);
 		this.setIginxPlanType(MIN);
-	}
-
-	public MinQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
 	}
 }

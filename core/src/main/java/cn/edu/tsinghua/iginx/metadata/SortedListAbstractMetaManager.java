@@ -75,9 +75,9 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         }
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
-        for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
-            storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
-        }
+//        for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
+//            storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
+//        }
     }
 
     public void updateSortedFragmentsList(TimeSeriesInterval tsInterval, List<FragmentMeta> fragmentMetas) {

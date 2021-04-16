@@ -37,7 +37,7 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_RECORDS;
 
 @Getter
 @Setter
-public abstract class InsertRecordsPlan extends DataPlan{
+public abstract class InsertRecordsPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsertRecordsPlan.class);
 
@@ -54,20 +54,14 @@ public abstract class InsertRecordsPlan extends DataPlan{
 	private boolean hasCreatedDatabase;
 
 	protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-		super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
+	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId, String storageUnitId) {
+		super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageEngineId, storageUnitId);
 		this.setIginxPlanType(INSERT_RECORDS);
 		this.timestamps = timestamps;
 		this.valuesList = valuesList;
 		this.bitmapList = bitmapList;
 		this.dataTypeList = dataTypeList;
 		this.attributesList = attributesList;
-	}
-
-	protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
-		this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList);
-		this.setStorageEngineId(storageEngineId);
 	}
 
 	public long getTimestamp(int index) {

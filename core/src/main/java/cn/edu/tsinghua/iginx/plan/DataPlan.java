@@ -32,10 +32,12 @@ public abstract class DataPlan extends NonDatabasePlan {
 
 	private TimeInterval timeInterval;
 
-	protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime) {
+	protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
 		super(isQuery, paths);
 		this.setIginxPlanType(DATA);
 		this.timeInterval = new TimeInterval(startTime, endTime);
+		this.setStorageEngineId(storageEngineId);
+		this.setStorageUnitId(storageUnitId);
 	}
 
 	public TimeInterval getTimeInterval() {

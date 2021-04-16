@@ -600,7 +600,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 String fakeName = masterStorageUnit.getId();
                 String nodeName = this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
-                        .withMode(CreateMode.PERSISTENT)
+                        .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                         .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
                 String actualName = nodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
                 this.zookeeperClient.setData()
@@ -610,7 +610,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     String slaveFakeName = slaveStorageUnit.getId();
                     String slaveNodeName = this.zookeeperClient.create()
                             .creatingParentsIfNeeded()
-                            .withMode(CreateMode.PERSISTENT)
+                            .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                             .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
                     String slaveActualName = slaveNodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
                     this.zookeeperClient.setData()
@@ -714,7 +714,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             }
             String sourceDir = storageEngineMetaMap.get(storageUnit.getStorageEngineId()).getExtraParams().getOrDefault("dataDir", "/");
             String targetDir = storageEngineMetaMap.get(targetStorageEngineId).getExtraParams().getOrDefault("dataDir", "/");
-            String cmd = String.format("migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
+            String cmd = String.format("/Users/anyanzhe/workspace/projects/IginX/migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
             Process process = Runtime.getRuntime().exec(cmd);
             if (process.waitFor() != 0) {
                 logger.error("migrate error: {} from {} to {}", storageUnitId, sourceDir, targetDir);
@@ -772,7 +772,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             topStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), topId, false));
         }
         storageUnitList.add(topStorageUnit);
-        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, topId));
+        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, storageEngineIdList, topId));
 
         storageEngineIdList = selectStorageEngineIdList();
         String bottomId = RandomStringUtils.randomAlphanumeric(16);

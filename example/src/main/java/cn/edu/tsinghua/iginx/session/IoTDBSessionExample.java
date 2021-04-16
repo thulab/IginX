@@ -41,7 +41,7 @@ public class IoTDBSessionExample {
 		session.openSession();
 
 		insertRecords1();
-//		insertRecords2();
+		insertRecords2();
 		queryData();
 //		aggregateQuery();
 //		deleteDataInColumns();
@@ -53,14 +53,15 @@ public class IoTDBSessionExample {
 	private static void insertRecords1() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S2);
+		paths.add(S3);
 
 		long[] timestamps = new long[100];
 		for (long i = 0; i < 100; i++) {
 			timestamps[(int) i] = i;
 		}
 
-		Object[] valuesList = new Object[4];
-		for (long i = 0; i < 4; i++) {
+		Object[] valuesList = new Object[2];
+		for (long i = 0; i < 2; i++) {
 			Object[] values = new Object[100];
 			for (long j = 0; j < 100; j++) {
 				values[(int) j] = i + j;
@@ -69,7 +70,7 @@ public class IoTDBSessionExample {
 		}
 
 		List<DataType> dataTypeList = new ArrayList<>();
-		for (int i = 0; i < 4; i++) {
+		for (int i = 0; i < 2; i++) {
 			dataTypeList.add(DataType.LONG);
 		}
 

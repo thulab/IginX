@@ -11,8 +11,8 @@ public abstract class AggregateQueryPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(AggregateQueryPlan.class);
 
-	protected AggregateQueryPlan(List<String> paths, long startTime, long endTime) {
-		super(true, paths, startTime, endTime);
+	protected AggregateQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
+		super(true, paths, startTime, endTime, storageEngineId, storageUnitId);
 		this.setIginxPlanType(AGGREGATE_QUERY);
 		this.setSync(true);
 	}

@@ -11,13 +11,8 @@ public class AvgQueryPlan extends AggregateQueryPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(AvgQueryPlan.class);
 
-	public AvgQueryPlan(List<String> paths, long startTime, long endTime) {
-		super(paths, startTime, endTime);
+	public AvgQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
+		super(paths, startTime, endTime, storageEngineId, storageUnitId);
 		this.setIginxPlanType(AVG);
-	}
-
-	public AvgQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
 	}
 }
