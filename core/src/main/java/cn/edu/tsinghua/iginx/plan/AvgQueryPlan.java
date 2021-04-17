@@ -15,4 +15,8 @@ public class AvgQueryPlan extends AggregateQueryPlan {
 		super(paths, startTime, endTime, storageEngineId, storageUnitId);
 		this.setIginxPlanType(AVG);
 	}
+
+	public AvgQueryPlan(List<String> paths, long startTime, long endTime) {
+		this(paths, startTime, endTime, -1L, "");
+	}
 }

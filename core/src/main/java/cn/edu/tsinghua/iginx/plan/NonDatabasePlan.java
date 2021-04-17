@@ -83,11 +83,11 @@ public abstract class NonDatabasePlan extends IginxPlan {
 			return null;
 		}
 		if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
-			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0 && x.compareTo(interval.getEndTimeSeries()) <= 0).collect(Collectors.toList());
+			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0 && x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
 		} else if (interval.getStartTimeSeries() != null){
 			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
 		} else if (interval.getEndTimeSeries() != null) {
-			return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) <= 0).collect(Collectors.toList());
+			return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
 		} else {
 			return paths;
 		}

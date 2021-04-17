@@ -44,6 +44,11 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
         this.setIginxPlanType(INSERT_ROW_RECORDS);
     }
 
+    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, -1L, "");
+    }
+
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
             logger.error("There are no values in the InsertRecordsPlan.");

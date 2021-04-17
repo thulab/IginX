@@ -39,4 +39,9 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
 		super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId, storageUnitId);
 		this.setIginxPlanType(INSERT_COLUMN_RECORDS);
 	}
+
+	public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+	                               List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+		this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, -1L, "");
+	}
 }

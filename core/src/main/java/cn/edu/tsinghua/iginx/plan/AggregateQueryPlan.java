@@ -16,4 +16,8 @@ public abstract class AggregateQueryPlan extends DataPlan {
 		this.setIginxPlanType(AGGREGATE_QUERY);
 		this.setSync(true);
 	}
+
+	protected AggregateQueryPlan(List<String> paths, long startTime, long endTime) {
+		this(paths, startTime, endTime, -1L, "");
+	}
 }

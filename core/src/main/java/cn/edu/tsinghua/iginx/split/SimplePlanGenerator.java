@@ -108,9 +108,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         getValuesListByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList()),
                         null,
                         insertColumnRecordsReq.getDataTypeList(),
-                        insertColumnRecordsReq.getAttributesList(),
-                        0L,
-                        ""
+                        insertColumnRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
@@ -122,9 +120,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         getRowValuesListByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList(), insertRowRecordsReq.getBitmapList()),
                         insertRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
                         insertRowRecordsReq.getDataTypeList(),
-                        insertRowRecordsReq.getAttributesList(),
-                        0L,
-                        ""
+                        insertRowRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
@@ -133,9 +129,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
                         deleteDataInColumnsReq.getPaths(),
                         deleteDataInColumnsReq.getStartTime(),
-                        deleteDataInColumnsReq.getEndTime(),
-                        0L,
-                        ""
+                        deleteDataInColumnsReq.getEndTime()
                 );
                 splitInfoList = planSplitter.getSplitDeleteDataInColumnsPlanResults(deleteDataInColumnsPlan);
                 return splitDeleteDataInColumnsPlan(deleteDataInColumnsPlan, splitInfoList);
@@ -144,9 +138,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 QueryDataPlan queryDataPlan = new QueryDataPlan(
                         queryDataReq.getPaths(),
                         queryDataReq.getStartTime(),
-                        queryDataReq.getEndTime(),
-                        0L,
-                        ""
+                        queryDataReq.getEndTime()
                 );
                 splitInfoList = planSplitter.getSplitQueryDataPlanResults(queryDataPlan);
                 return splitQueryDataPlan(queryDataPlan, splitInfoList);
@@ -157,9 +149,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         MaxQueryPlan maxQueryPlan = new MaxQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitMaxQueryPlanResults(maxQueryPlan);
                         return splitMaxQueryPlan(maxQueryPlan, splitInfoList);
@@ -167,9 +157,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         MinQueryPlan minQueryPlan = new MinQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitMinQueryPlanResults(minQueryPlan);
                         return splitMinQueryPlan(minQueryPlan, splitInfoList);
@@ -177,9 +165,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         FirstQueryPlan firstQueryPlan = new FirstQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitFirstQueryPlanResults(firstQueryPlan);
                         return splitFirstQueryPlan(firstQueryPlan, splitInfoList);
@@ -187,9 +173,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         LastQueryPlan lastQueryPlan = new LastQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitLastQueryPlanResults(lastQueryPlan);
                         return splitLastQueryPlan(lastQueryPlan, splitInfoList);
@@ -197,9 +181,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         AvgQueryPlan avgQueryPlan = new AvgQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitAvgQueryPlanResults(avgQueryPlan);
                         return splitAvgQueryPlan(avgQueryPlan, splitInfoList);
@@ -207,9 +189,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         SumQueryPlan sumQueryPlan = new SumQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitSumQueryPlanResults(sumQueryPlan);
                         return splitSumQueryPlan(sumQueryPlan, splitInfoList);
@@ -217,9 +197,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         CountQueryPlan countQueryPlan = new CountQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
-                                aggregateQueryReq.getEndTime(),
-                                0L,
-                                ""
+                                aggregateQueryReq.getEndTime()
                         );
                         splitInfoList = planSplitter.getSplitCountQueryPlanResults(countQueryPlan);
                         return splitCountQueryPlan(countQueryPlan, splitInfoList);

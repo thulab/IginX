@@ -62,6 +62,10 @@ public class QueryDataPlan extends DataPlan {
 		this.setSync(true);
 	}
 
+	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
+		this(paths, startTime, endTime, -1L, "");
+	}
+
 	public List<String> getPathsByInterval(TimeSeriesInterval interval) {
 		if (getPaths().isEmpty()) {
 			logger.error("There are no paths in the plan.");
