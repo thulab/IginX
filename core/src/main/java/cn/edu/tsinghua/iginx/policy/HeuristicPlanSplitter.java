@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ import java.util.stream.Collectors;
 public class HeuristicPlanSplitter implements IPlanSplitter
 {
 
-	private static final Logger logger = LoggerFactory.getLogger(NaivePlanSplitter.class);
+	private static final Logger logger = LoggerFactory.getLogger(HeuristicPlanSplitter.class);
 
 	private final IMetaManager iMetaManager;
 
@@ -59,7 +60,7 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 
 	private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-	static boolean isFirst = true;
+	static AtomicBoolean isFirst = new AtomicBoolean(true);
 
 	private final int prefixMaxSize;
 
@@ -73,7 +74,7 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 	{
 		this.policy = policy;
 		this.iMetaManager = iMetaManager;
-		this.prefixMaxSize = 1024;
+		this.prefixMaxSize = 400;
 		this.k = 1;
 	}
 
@@ -82,9 +83,9 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 		lock.writeLock().lock();
 		if (prefixMaxSize <= prefixSet.size())
 		{
-			if (isFirst)
+			if (isFirst.get())
 			{
-				isFirst = false;
+				isFirst.set(false);
 				policy.setNeedReAllocate(true);
 			}
 		}
@@ -137,6 +138,9 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 				resultList.add(prefixArray[tmp]);
 			}
 		}
+		logger.info(String.valueOf(resultList.size()));
+		for (String s : resultList)
+			logger.info(s);
 		return resultList;
 	}
 
@@ -250,9 +254,14 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 		}
 		else if (policy.isNeedReAllocate())
 		{
-			List<FragmentMeta> fragments = generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() * k - 1), plan.getEndTime());
-			iMetaManager.createFragments(fragments);
-			policy.setNeedReAllocate(false);
+			lock.writeLock().lock();
+			if (policy.isNeedReAllocate())
+			{
+				List<FragmentMeta> fragments = generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() * k - 1), plan.getEndTime());
+				iMetaManager.createFragments(fragments);
+				policy.setNeedReAllocate(false);
+			}
+			lock.writeLock().unlock();
 		}
 		for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet())
 		{
@@ -284,9 +293,14 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 		}
 		else if (policy.isNeedReAllocate())
 		{
-			List<FragmentMeta> fragments = generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() * k - 1), plan.getEndTime() + 1);
-			iMetaManager.createFragments(fragments);
-			policy.setNeedReAllocate(false);
+			lock.writeLock().lock();
+			if (policy.isNeedReAllocate())
+			{
+				List<FragmentMeta> fragments = generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() * k - 1), plan.getEndTime());
+				iMetaManager.createFragments(fragments);
+				policy.setNeedReAllocate(false);
+			}
+			lock.writeLock().unlock();
 		}
 		for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet())
 		{
