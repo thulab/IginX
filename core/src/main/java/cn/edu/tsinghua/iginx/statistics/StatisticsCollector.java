@@ -33,9 +33,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class NativeStatisticsCollector implements IStatisticsCollector {
+public class StatisticsCollector implements IStatisticsCollector {
 
-    private static final Logger logger = LoggerFactory.getLogger(NativeStatisticsCollector.class);
+    private static final Logger logger = LoggerFactory.getLogger(StatisticsCollector.class);
 
     private final AtomicBoolean broadcast = new AtomicBoolean(false);
 
@@ -100,10 +100,10 @@ public class NativeStatisticsCollector implements IStatisticsCollector {
                     planExecuteStatisticsCollector.broadcastStatistics();
                     resultCombineStatisticsCollector.broadcastStatistics();
                     queryStatisticsCollector.broadcastStatistics();
-                    Thread.sleep(5000);
+                    Thread.sleep(5000); // 每隔 10 秒播报一次统计信息
                 }
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                logger.error("encounter error when broadcasting statistics: ", e);
             }
         });
     }
