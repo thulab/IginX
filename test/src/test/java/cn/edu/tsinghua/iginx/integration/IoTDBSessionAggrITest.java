@@ -15,7 +15,7 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class IoTDBSessionExampleITest {
+public class IoTDBSessionAggrITest {
 
     private static Session session;
 
@@ -56,7 +56,7 @@ public class IoTDBSessionExampleITest {
 
     @Test
     public void queryDataTest() throws SessionException {
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
         assertEquals(resPaths.size(), 4);
@@ -91,7 +91,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void aggrMaxTest() throws SessionException {
 
-        SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
 
         int len = maxDataSet.getTimestamps().length;
         List<String> resPaths = maxDataSet.getPaths();
@@ -124,7 +124,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void aggrMinTest() throws SessionException {
 
-        SessionAggregateQueryDataSet minDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.MIN);
+        SessionAggregateQueryDataSet minDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
 
         int len = minDataSet.getTimestamps().length;
         List<String> resPaths = minDataSet.getPaths();
@@ -157,7 +157,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void aggrFirstTest() throws SessionException {
 
-        SessionAggregateQueryDataSet firstDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.FIRST);
+        SessionAggregateQueryDataSet firstDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
 
         int len = firstDataSet.getTimestamps().length;
         List<String> resPaths = firstDataSet.getPaths();
@@ -190,7 +190,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void aggrLastTest() throws SessionException {
 
-        SessionAggregateQueryDataSet lastDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.LAST);
+        SessionAggregateQueryDataSet lastDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
 
         int len = lastDataSet.getTimestamps().length;
         List<String> resPaths = lastDataSet.getPaths();
@@ -223,7 +223,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void aggrCountTest() throws SessionException {
 
-        SessionAggregateQueryDataSet countDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.COUNT);
+        SessionAggregateQueryDataSet countDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
         assertNull(countDataSet.getTimestamps());
         List<String> resPaths = countDataSet.getPaths();
         Object[] result = countDataSet.getValues();
@@ -236,7 +236,7 @@ public class IoTDBSessionExampleITest {
 
     @Test
     public void aggrSumTest() throws SessionException {
-        SessionAggregateQueryDataSet sumDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.SUM);
+        SessionAggregateQueryDataSet sumDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
         assertNull(sumDataSet.getTimestamps());
         List<String> resPaths = sumDataSet.getPaths();
         Object[] result = sumDataSet.getValues();
@@ -267,7 +267,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void aggrAvgTest() throws SessionException {
 
-        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
 
         assertNull(avgDataSet.getTimestamps());
         List<String> resPaths = avgDataSet.getPaths();
@@ -297,7 +297,7 @@ public class IoTDBSessionExampleITest {
     }
 
     @Test
-    public void deletePathTest() throws SessionException {
+    public void deletePartDataInColumnTest() throws SessionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D2_S1);
@@ -310,7 +310,7 @@ public class IoTDBSessionExampleITest {
 
         session.deleteDataInColumns(delPaths, delStartTime, delEndTime);
 
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
 
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
@@ -353,7 +353,7 @@ public class IoTDBSessionExampleITest {
         }
 
         // Test avg for the delete
-        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
         List<String> avgResPaths = avgDataSet.getPaths();
         Object[] avgResult = avgDataSet.getValues();
         assertEquals(avgResPaths.size(), 4);
@@ -382,7 +382,7 @@ public class IoTDBSessionExampleITest {
         }
 
         // Test max for the delete
-        SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
         List<String> maxResPaths = maxDataSet.getPaths();
         Object[] maxResult = maxDataSet.getValues();
         assertEquals(maxResPaths.size(), 4);
@@ -419,7 +419,7 @@ public class IoTDBSessionExampleITest {
 
         session.deleteDataInColumns(delPaths, startTime, endTime);
 
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
 
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
@@ -440,7 +440,7 @@ public class IoTDBSessionExampleITest {
         }
 
         // Test aggregate function for the delete
-        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, startTime, endTime + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
         List<String> avgResPaths = avgDataSet.getPaths();
         Object[] avgResult = avgDataSet.getValues();
         assertEquals(avgResPaths.size(), 4);
@@ -465,7 +465,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void deleteAllColumnTest() throws SessionException, ExecutionException {
         session.deleteColumns(paths);
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         assertEquals(dataSet.getPaths().size(), 0);
         assertEquals(dataSet.getTimestamps().length, 0);
         assertEquals(dataSet.getValues().size(), 0);
@@ -478,7 +478,7 @@ public class IoTDBSessionExampleITest {
         delPaths.add(COLUMN_D2_S1);
         delPaths.add(COLUMN_D3_S1);
         session.deleteColumns(delPaths);
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         int len = dataSet.getTimestamps().length;
         assertEquals(dataSet.getPaths().size(), 1);
         assertEquals(dataSet.getPaths().get(0), "root.sg1.d1.s2");
