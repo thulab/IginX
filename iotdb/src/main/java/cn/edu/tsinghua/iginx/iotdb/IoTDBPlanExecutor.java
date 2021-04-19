@@ -387,7 +387,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setCounts(counts);
             result.setSums(sums);
@@ -415,7 +415,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setValues(values);
             return result;
@@ -442,7 +442,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setValues(values);
             return result;
@@ -476,7 +476,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -511,7 +511,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -546,7 +546,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -581,7 +581,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            result.setPaths(plan.getPaths());
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
