@@ -68,16 +68,16 @@ public class IoTDBSessionAggrITest {
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
                 switch (resPaths.get(j)){
-                    case "root.sg1.d1.s1":
+                    case "sg1.d1.s1":
                         assertEquals(result.get(j), (long)i);
                         break;
-                    case "root.sg1.d1.s2":
+                    case "sg1.d1.s2":
                         assertEquals(result.get(j), (long)(i + 1));
                         break;
-                    case "root.sg1.d2.s1":
+                    case "sg1.d2.s1":
                         assertEquals(result.get(j), (long)(i + 2));
                         break;
-                    case "root.sg1.d3.s1":
+                    case "sg1.d3.s1":
                         assertEquals(result.get(j), (long)(i + 3));
                         break;
                     default:
@@ -102,16 +102,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             assertEquals(maxDataSet.getTimestamps()[i], -1);
             switch (resPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(result[i], endTime);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(result[i],  endTime + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(result[i], endTime + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(result[i], endTime + 3);
                     break;
                 default:
@@ -135,16 +135,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             assertEquals(minDataSet.getTimestamps()[i], -1);
             switch (resPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(result[i], startTime);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(result[i],  startTime + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(result[i], startTime + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(result[i], startTime + 3);
                     break;
                 default:
@@ -168,16 +168,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             assertEquals(firstDataSet.getTimestamps()[i], -1);
             switch (resPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(result[i], startTime);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(result[i],  startTime + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(result[i], startTime + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(result[i], startTime + 3);
                     break;
                 default:
@@ -201,16 +201,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             assertEquals(lastDataSet.getTimestamps()[i], -1);
             switch (resPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(result[i], endTime);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(result[i],  endTime + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(result[i], endTime + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(result[i], endTime + 3);
                     break;
                 default:
@@ -245,16 +245,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             double sum = (startTime + endTime) * timePeriod / 2.0;
             switch (resPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(result[i], sum);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(result[i], sum + timePeriod);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(result[i], sum + timePeriod * 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(result[i], sum + timePeriod * 3);
                     break;
                 default:
@@ -277,16 +277,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             double avg = (startTime + endTime) / 2.0;
             switch (resPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(result[i], avg);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(result[i],  avg + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(result[i], avg + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(result[i], avg + 3);
                     break;
                 default:
@@ -323,7 +323,7 @@ public class IoTDBSessionAggrITest {
             List<Object> result = dataSet.getValues().get(i);
             if (delStartTime <= i & i <= delEndTime) {
                 for (int j = 0; j < 4; j++) {
-                    if ("root.sg1.d1.s2".equals(resPaths.get(j))) {
+                    if ("sg1.d1.s2".equals(resPaths.get(j))) {
                         assertEquals(result.get(j), (long) (i + 1));
                     } else {
                         assertNull(result.get(j));
@@ -332,16 +332,16 @@ public class IoTDBSessionAggrITest {
             } else {
                 for (int j = 0; j < 4; j++) {
                     switch (resPaths.get(j)) {
-                        case "root.sg1.d1.s1":
+                        case "sg1.d1.s1":
                             assertEquals(result.get(j), (long) i);
                             break;
-                        case "root.sg1.d1.s2":
+                        case "sg1.d1.s2":
                             assertEquals(result.get(j), (long) (i + 1));
                             break;
-                        case "root.sg1.d2.s1":
+                        case "sg1.d2.s1":
                             assertEquals(result.get(j), (long) (i + 2));
                             break;
-                        case "root.sg1.d3.s1":
+                        case "sg1.d3.s1":
                             assertEquals(result.get(j), (long) (i + 3));
                             break;
                         default:
@@ -363,16 +363,16 @@ public class IoTDBSessionAggrITest {
             double avg = ((startTime + endTime) * timePeriod / 2.0
                     - (delStartTime + delEndTime) * delTimePeriod / 2.0) / (timePeriod - delTimePeriod);
             switch (avgResPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(avgResult[i], avg);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(avgResult[i],(startTime + endTime) / 2.0 + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(avgResult[i],avg + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(avgResult[i],avg + 3);
                     break;
                 default:
@@ -391,16 +391,16 @@ public class IoTDBSessionAggrITest {
         for(int i = 0; i < 4; i++) {
             long max = (delEndTime >= endTime) ? delStartTime - 1 : endTime;
             switch (maxResPaths.get(i)){
-                case "root.sg1.d1.s1":
+                case "sg1.d1.s1":
                     assertEquals(maxResult[i], max);
                     break;
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(maxResult[i], endTime + 1);
                     break;
-                case "root.sg1.d2.s1":
+                case "sg1.d2.s1":
                     assertEquals(maxResult[i], max + 2);
                     break;
-                case "root.sg1.d3.s1":
+                case "sg1.d3.s1":
                     assertEquals(maxResult[i], max + 3);
                     break;
                 default:
@@ -431,7 +431,7 @@ public class IoTDBSessionAggrITest {
             assertEquals(timestamp, i);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
-                if ("root.sg1.d1.s2".equals(resPaths.get(j))) {
+                if ("sg1.d1.s2".equals(resPaths.get(j))) {
                     assertEquals(result.get(j), (long) (i + 1));
                 } else {
                     assertNull(result.get(j));
@@ -447,12 +447,12 @@ public class IoTDBSessionAggrITest {
         assertEquals(avgDataSet.getValues().length, 4);
         for(int i = 0; i < 4; i++) {
             switch (avgResPaths.get(i)){
-                case "root.sg1.d1.s2":
+                case "sg1.d1.s2":
                     assertEquals(avgResult[i],(startTime + endTime) / 2.0 + 1);
                     break;
-                case "root.sg1.d2.s1":
-                case "root.sg1.d1.s1":
-                case "root.sg1.d3.s1":
+                case "sg1.d2.s1":
+                case "sg1.d1.s1":
+                case "sg1.d3.s1":
                     assertEquals(new String((byte[]) avgResult[i]), "null");
                     break;
                 default:
@@ -481,7 +481,7 @@ public class IoTDBSessionAggrITest {
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         int len = dataSet.getTimestamps().length;
         assertEquals(dataSet.getPaths().size(), 1);
-        assertEquals(dataSet.getPaths().get(0), "root.sg1.d1.s2");
+        assertEquals(dataSet.getPaths().get(0), "sg1.d1.s2");
         assertEquals(len, timePeriod);
         assertEquals(dataSet.getValues().size(), timePeriod);
         for (int i = 0; i < len; i++){
