@@ -41,6 +41,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
@@ -59,8 +60,6 @@ import java.util.List;
 import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBuffer;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBufferByDataType;
 
 public class Session {
 
@@ -249,11 +248,30 @@ public class Session {
 			valuesList[i] = values;
 		}
 
+		List<ByteBuffer> valueBufferList = new ArrayList<>();
+		List<ByteBuffer> bitmapBufferList = new ArrayList<>();
+		for (int i = 0; i < valuesList.length; i++) {
+			Object[] values = (Object[]) valuesList[i];
+			if (values.length != timestamps.length) {
+				logger.error("The sizes of timestamps and the element of valuesList should be equal.");
+				return;
+			}
+			valueBufferList.add(ByteUtils.getColumnByteBuffer(values, dataTypeList.get(i)));
+			Bitmap bitmap = new Bitmap(timestamps.length);
+			for (int j = 0; j < timestamps.length; j++) {
+				if (values[j] != null) {
+					bitmap.mark(j);
+				}
+			}
+			bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
+		}
+
 		InsertColumnRecordsReq req = new InsertColumnRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(getByteArrayFromLongArray(timestamps));
-		req.setValuesList(getByteBufferByDataType(valuesList, dataTypeList));
+		req.setValuesList(valueBufferList);
+		req.setBitmapList(bitmapBufferList);
 		req.setDataTypeList(dataTypeList);
 		req.setAttributesList(attributesList);
 
@@ -302,7 +320,7 @@ public class Session {
 				logger.error("The sizes of paths and the element of valuesList should be equal.");
 				return;
 			}
-			valueBufferList.add(getByteBuffer(values, dataTypeList));
+			valueBufferList.add(ByteUtils.getRowByteBuffer(values, dataTypeList));
 			Bitmap bitmap = new Bitmap(values.length);
 			for (int j = 0; j < values.length; j++) {
 				if (values[j] != null) {
@@ -316,10 +334,10 @@ public class Session {
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(getByteArrayFromLongArray(timestamps));
-		req.setDataTypeList(dataTypeList);
-		req.setAttributesList(attributesList);
 		req.setValuesList(valueBufferList);
 		req.setBitmapList(bitmapBufferList);
+		req.setDataTypeList(dataTypeList);
+		req.setAttributesList(attributesList);
 
 		try {
 			RpcUtils.verifySuccess(client.insertRowRecords(req));
@@ -328,7 +346,7 @@ public class Session {
 		}
 	}
 
-	public void deleteDataInColumns(String path, long startTime, long endTime) throws SessionException {
+	public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
 		deleteDataInColumns(paths, startTime, endTime);

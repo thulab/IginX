@@ -137,11 +137,19 @@ public class IoTDBSessionExample {
 			Object[] values = new Object[10500];
 			if (i < 2) {
 				for (long j = 0; j < 10500; j++) {
-					values[(int) j] = i + j;
+					if (j >= 50 && j <= 100) {
+						values[(int) j] = null;
+					} else {
+						values[(int) j] = i + j;
+					}
 				}
 			} else {
 				for (long j = 0; j < 10500; j++) {
-					values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+					if (j >= 100 && j <= 150) {
+						values[(int) j] = null;
+					} else {
+						values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+					}
 				}
 			}
 			valuesList[(int) i] = values;
