@@ -156,7 +156,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		}
 
 		for (Map.Entry<Bucket, List<Point>> entry : bucketToPoints.entrySet()) {
-			client.getWriteApi().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+			if (plan.isSync()) {
+				client.getWriteApiBlocking().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+			} else {
+				client.getWriteApi().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+			}
 		}
 		return new NonDataPlanExecuteResult(SUCCESS, plan);
 	}
