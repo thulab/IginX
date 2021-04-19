@@ -83,7 +83,8 @@ public abstract class NonDatabasePlan extends IginxPlan {
 			return null;
 		}
 		if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
-			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0 && x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
+			// TODO 时间序列区间左闭右开，存在左右端点相等的情况
+			return paths.stream().filter(x -> x.equals(interval.getStartTimeSeries()) || (x.compareTo(interval.getStartTimeSeries()) > 0 && x.compareTo(interval.getEndTimeSeries()) < 0)).collect(Collectors.toList());
 		} else if (interval.getStartTimeSeries() != null){
 			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
 		} else if (interval.getEndTimeSeries() != null) {

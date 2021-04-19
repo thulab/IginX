@@ -214,7 +214,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
-        // TODO
+        // TODO 目前 IoTDB 的 insertTablets 不支持空值
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
         try {
