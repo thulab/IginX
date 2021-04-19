@@ -20,81 +20,53 @@ package cn.edu.tsinghua.iginx.statistics;
 
 import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
-import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class PlanGenerateStatisticsCollector {
+public class PlanGenerateStatisticsCollector extends AbstractStageStatisticsCollector implements IPlanGenerateStatisticsCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(PlanGenerateStatisticsCollector.class);
 
-    private final LinkedBlockingQueue<Statistics> statisticQueue = new LinkedBlockingQueue<>();
+    private long count = 0;
+
+    private long span = 0;
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private long times = 0;
+    @Override
+    protected String getStageName() {
+        return "PlanGenerate";
+    }
 
-    private long totalSpan = 0;
+    @Override
+    protected void processStatistics(Statistics statistics) {
+        lock.writeLock().lock();
+        count += 1;
+        span += statistics.getEndTime() - statistics.getBeginTime();
+        lock.writeLock().unlock();
+    }
 
-    private long recentTimes = 0;
-
-    private long recentSpan = 0;
-
+    @Override
     public void broadcastStatistics() {
         lock.readLock().lock();
         logger.info("Plan Generate statisticsInfo: ");
-        long times = this.times + this.recentTimes, totalSpan = this.totalSpan + this.recentSpan;
-        logger.info("total-counts: " + times + ", total-span: " + totalSpan + "μs");
-        if (times != 0) {
-            logger.info("total-average-span: " + (1.0 * totalSpan) / times + "μs");
-        }
-        long recentTimes = this.recentTimes, recentSpan = this.recentSpan;
-        logger.info("recent-counts: " + recentTimes + ", recent-span: " + recentSpan + "μs");
-        if (recentTimes != 0) {
-            logger.info("recent-average-span: " + (1.0 * recentSpan) / recentTimes + "μs");
+        logger.info("\tcount: " + count + ", span: " + span + "μs");
+        if (count != 0) {
+            logger.info("\taverage-span: " + (1.0 * span) / count + "μs");
         }
         lock.readLock().unlock();
     }
 
-    public PlanGenerateStatisticsCollector() {
-        Executors.newSingleThreadExecutor()
-                .submit(() -> {
-                    while (true) {
-                        Statistics statistics = statisticQueue.take();
-                        long span = statistics.getEndTime() - statistics.getBeginTime();
-                        lock.writeLock().lock();
-                        recentTimes += 1;
-                        recentSpan += span;
-                        if (recentTimes % 1000 == 0) {
-                            times += recentTimes;
-                            totalSpan += recentSpan;
-                            recentTimes = 0;
-                            recentSpan = 0;
-                        }
-                        lock.writeLock().unlock();
-                    }
-                });
-    }
-
+    @Override
     public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-        return requestContext -> {
-            long endExecuteTime = TimeUtils.getMicrosecond();
-            long beginExecuteTime = (long) requestContext.getExtraParam("beginGeneratePlanTime");
-            statisticQueue.add(new Statistics(requestContext.getId(), beginExecuteTime, endExecuteTime, requestContext.getType()));
-            return null;
-        };
+        return after::apply;
     }
 
+    @Override
     public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-        return requestContext -> {
-            requestContext.setExtraParam("beginGeneratePlanTime", TimeUtils.getMicrosecond());
-            return null;
-        };
+        return before::apply;
     }
-
 }

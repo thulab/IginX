@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
-import cn.edu.tsinghua.iginx.core.context.ContextType;
+import cn.edu.tsinghua.iginx.core.context.RequestContext;
 
 public class Statistics {
 
@@ -28,13 +28,13 @@ public class Statistics {
 
     private long endTime;
 
-    private ContextType contextType;
+    private RequestContext requestContext;
 
-    public Statistics(long id, long beginTime, long endTime, ContextType contextType) {
+    public Statistics(long id, long beginTime, long endTime, RequestContext requestContext) {
         this.id = id;
         this.beginTime = beginTime;
         this.endTime = endTime;
-        this.contextType = contextType;
+        this.requestContext = requestContext;
     }
 
     public long getBeginTime() {
@@ -53,11 +53,19 @@ public class Statistics {
         this.endTime = endTime;
     }
 
-    public ContextType getContextType() {
-        return contextType;
+    public long getId() {
+        return id;
     }
 
-    public void setContextType(ContextType contextType) {
-        this.contextType = contextType;
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public RequestContext getRequestContext() {
+        return requestContext;
+    }
+
+    public void setRequestContext(RequestContext requestContext) {
+        this.requestContext = requestContext;
     }
 }
