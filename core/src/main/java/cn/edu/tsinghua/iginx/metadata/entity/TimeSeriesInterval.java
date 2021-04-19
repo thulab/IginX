@@ -77,7 +77,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     // 输入参数是一个闭区间，下同
     public boolean isIntersect(TimeSeriesInterval tsInterval) {
         return (tsInterval.startTimeSeries == null || endTimeSeries == null || tsInterval.startTimeSeries.compareTo(endTimeSeries) < 0)
-                && (tsInterval.endTimeSeries == null || startTimeSeries == null || tsInterval.endTimeSeries.compareTo(startTimeSeries) > 0);
+                && (tsInterval.endTimeSeries == null || startTimeSeries == null || tsInterval.endTimeSeries.compareTo(startTimeSeries) >= 0);
     }
 
     public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {
