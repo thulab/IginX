@@ -39,7 +39,7 @@ public class InfluxDBSessionExample {
 	private static final String TS3 = "demo.census.portland.mullen.ants";
 	private static final String TS4 = "demo.census.portland.mullen.bees";
 
-	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException, InterruptedException {
+	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		session.openSession();
 
