@@ -35,20 +35,20 @@ jobs:
         restore-keys: ${{ runner.os }}-m2
     - name: run zk
       run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+           "${GITHUB_WORKSPACE}/.github/zk.sh"
     - name: run iotdb
       run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
     - name: Install with Maven
       run: mvn clean install -DskipTests
     - name: move dependencies
       run: cp "${GITHUB_WORKSPACE}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar" "${GITHUB_WORKSPACE}/core/lib/iotdb-0.1.0-SNAPSHOT.jar"
     - name: start Iginx
       run: |
-          chmod +x "${GITHUB_WORKSPACE}/start.sh"
-          nohup "${GITHUB_WORKSPACE}/start.sh" &
+           chmod +x "${GITHUB_WORKSPACE}/start.sh"
+           nohup "${GITHUB_WORKSPACE}/start.sh" &
     - name: Build with Maven
       run: mvn -B package
     - name: Coverage report

@@ -24,7 +24,7 @@ public class Constants {
 
 	public static final String DEFAULT_PASSWORD = "password";
 
-	public static String CONFIG_FILE = "conf/config.properties";
+	public static final String CONFIG_FILE = "conf/config.properties";
 
 	public static final String IGINX_NODE = "/iginx/node";
 
