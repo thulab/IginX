@@ -56,7 +56,7 @@ public class IoTDBSessionExampleITest {
 
     @Test
     public void queryDataTest() throws SessionException {
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
         assertEquals(resPaths.size(), 4);
@@ -310,7 +310,7 @@ public class IoTDBSessionExampleITest {
 
         session.deleteDataInColumns(delPaths, delStartTime, delEndTime);
 
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
 
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
@@ -419,7 +419,7 @@ public class IoTDBSessionExampleITest {
 
         session.deleteDataInColumns(delPaths, startTime, endTime);
 
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
 
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
@@ -465,7 +465,7 @@ public class IoTDBSessionExampleITest {
     @Test
     public void deleteAllColumnTest() throws SessionException, ExecutionException {
         session.deleteColumns(paths);
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
         assertEquals(dataSet.getPaths().size(), 0);
         assertEquals(dataSet.getTimestamps().length, 0);
         assertEquals(dataSet.getValues().size(), 0);
@@ -478,7 +478,7 @@ public class IoTDBSessionExampleITest {
         delPaths.add(COLUMN_D2_S1);
         delPaths.add(COLUMN_D3_S1);
         session.deleteColumns(delPaths);
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime + 1);
         int len = dataSet.getTimestamps().length;
         assertEquals(dataSet.getPaths().size(), 1);
         assertEquals(dataSet.getPaths().get(0), "root.sg1.d1.s2");

@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -35,7 +36,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class QueryDatasetCombinerTest {
 
@@ -100,42 +105,49 @@ public class QueryDatasetCombinerTest {
 
     @Test
     public void testCombineResult() throws Exception {
-        /*
         combiner.combineResult(resp, constructQueryDataPlanExecuteResults());
         SessionQueryDataSet sessionQueryDataSet = new SessionQueryDataSet(resp);
         assertArrayEquals(new long[]{0L, 1L, 10L, 11L, 12L}, sessionQueryDataSet.getTimestamps());
         List<String> paths = sessionQueryDataSet.getPaths();
         assertEquals(4, paths.size());
-        assertEquals("root.sg1.d1.s1", paths.get(0));
-        assertEquals("root.sg1.d1.s2", paths.get(1));
-        assertEquals("root.sg2.d1.s1", paths.get(2));
-        assertEquals("root.sg2.d1.s2", paths.get(3));
+        Set<String> tsNames = new HashSet<>();
+        tsNames.add("root.sg1.d1.s1");
+        tsNames.add("root.sg1.d1.s2");
+        tsNames.add("root.sg2.d1.s1");
+        tsNames.add("root.sg2.d1.s2");
+
+        Map<String, Integer> tsOrders = new HashMap<>();
+
+        for (String path: paths) {
+            assertTrue(tsNames.contains(path));
+            tsOrders.put(path, tsOrders.size());
+        }
 
         List<List<Object>> valuesList = sessionQueryDataSet.getValues();
 
-        assertEquals(1L, (long)valuesList.get(0).get(0));
-        assertEquals(1.0, (double)valuesList.get(0).get(1), 0.01);
-        assertTrue((boolean) valuesList.get(0).get(2));
-        assertEquals("OK1", new String((byte[])valuesList.get(0).get(3)));
+        assertEquals(1L, (long)valuesList.get(0).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(1.0, (double)valuesList.get(0).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertTrue((boolean) valuesList.get(0).get(tsOrders.get("root.sg2.d1.s1")));
+        assertEquals("OK1", new String((byte[])valuesList.get(0).get(tsOrders.get("root.sg2.d1.s2"))));
 
-        assertEquals(2L, (long)valuesList.get(1).get(0));
-        assertEquals(2.0, (double)valuesList.get(1).get(1), 0.01);
-        assertTrue((boolean) valuesList.get(1).get(2));
-        assertEquals("OK2", new String((byte[])valuesList.get(1).get(3)));
+        assertEquals(2L, (long)valuesList.get(1).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(2.0, (double)valuesList.get(1).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertTrue((boolean) valuesList.get(1).get(tsOrders.get("root.sg2.d1.s1")));
+        assertEquals("OK2", new String((byte[])valuesList.get(1).get(tsOrders.get("root.sg2.d1.s2"))));
 
-        assertEquals(1L, (long)valuesList.get(2).get(0));
-        assertEquals(1.0, (double)valuesList.get(2).get(1), 0.01);
-        assertFalse((boolean) valuesList.get(2).get(2));
-        assertEquals("OK3", new String((byte[])valuesList.get(2).get(3)));
+        assertEquals(1L, (long)valuesList.get(2).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(1.0, (double)valuesList.get(2).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertFalse((boolean) valuesList.get(2).get(tsOrders.get("root.sg2.d1.s1")));
+        assertEquals("OK3", new String((byte[])valuesList.get(2).get(tsOrders.get("root.sg2.d1.s2"))));
 
-        assertEquals(2L, (long)valuesList.get(3).get(0));
-        assertEquals(2.0, (double)valuesList.get(3).get(1), 0.01);
-        assertNull(valuesList.get(3).get(2));
-        assertNull(valuesList.get(3).get(3));
+        assertEquals(2L, (long)valuesList.get(3).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(2.0, (double)valuesList.get(3).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertNull(valuesList.get(3).get(tsOrders.get("root.sg2.d1.s1")));
+        assertNull(valuesList.get(3).get(tsOrders.get("root.sg2.d1.s2")));
 
-        assertNull(valuesList.get(4).get(0));
-        assertNull(valuesList.get(4).get(1));
-        assertFalse((boolean) valuesList.get(4).get(2));
-        assertEquals("OK4", new String((byte[])valuesList.get(4).get(3)));*/
+        assertNull(valuesList.get(4).get(tsOrders.get("root.sg1.d1.s1")));
+        assertNull(valuesList.get(4).get(tsOrders.get("root.sg1.d1.s2")));
+        assertFalse((boolean) valuesList.get(4).get(tsOrders.get("root.sg2.d1.s1")));
+        assertEquals("OK4", new String((byte[])valuesList.get(4).get(tsOrders.get("root.sg2.d1.s2"))));
     }
 }

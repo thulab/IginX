@@ -18,84 +18,67 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
+import cn.edu.tsinghua.iginx.core.context.ContextType;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
-import cn.edu.tsinghua.iginx.utils.TimeUtils;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class PlanExecuteStatisticsCollector {
+public class PlanExecuteStatisticsCollector extends AbstractStageStatisticsCollector implements IPlanExecuteStatisticsCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(PlanExecuteStatisticsCollector.class);
 
-    private final LinkedBlockingQueue<Statistics> statisticQueue = new LinkedBlockingQueue<>();
+    private long count = 0;
+
+    private long span = 0;
+
+    private final Map<ContextType, Pair<Long, Long>> detailInfos = new HashMap<>();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private long times = 0;
-
-    private long totalSpan = 0;
-
-    private long recentTimes = 0;
-
-    private long recentSpan = 0;
-
-    public PlanExecuteStatisticsCollector() {
-        Executors.newSingleThreadExecutor()
-                .submit(() -> {
-                   while (true) {
-                       Statistics statistics = statisticQueue.take();
-                       long span = statistics.getEndTime() - statistics.getBeginTime();
-                       lock.writeLock().lock();
-                       recentTimes += 1;
-                       recentSpan += span;
-                       if (recentTimes % 1000 == 0) {
-                           times += recentTimes;
-                           totalSpan += recentSpan;
-                           recentTimes = 0;
-                           recentSpan = 0;
-                       }
-                       lock.writeLock().unlock();
-                   }
-                });
+    @Override
+    protected String getStageName() {
+        return "PlanExecute";
     }
 
+    @Override
+    protected void processStatistics(Statistics statistics) {
+        lock.writeLock().lock();
+        count += 1;
+        span += statistics.getEndTime() - statistics.getBeginTime();
+        Pair<Long, Long> detailInfo = detailInfos.computeIfAbsent(statistics.getRequestContext().getType(), e -> new Pair<>(0L, 0L));
+        detailInfo.k += 1;
+        detailInfo.v += statistics.getEndTime() - statistics.getBeginTime();
+        lock.writeLock().unlock();
+    }
 
+    @Override
     public void broadcastStatistics() {
         lock.readLock().lock();
-        logger.info("Plan Execute statisticsInfo: ");
-        long times = this.times + this.recentTimes, totalSpan = this.totalSpan + this.recentSpan;
-        logger.info("total-counts: " + times + ", total-span: " + totalSpan + "μs");
-        if (times != 0) {
-            logger.info("total-average-span: " + (1.0 * totalSpan) / times + "μs");
+        logger.info("Plan PlanExecute statisticsInfo: ");
+        logger.info("\tcount: " + count + ", span: " + span + "μs");
+        if (count != 0) {
+            logger.info("\taverage-span: " + (1.0 * span) / count + "μs");
         }
-        long recentTimes = this.recentTimes, recentSpan = this.recentSpan;
-        logger.info("recent-counts: " + recentTimes + ", recent-span: " + recentSpan + "μs");
-        if (recentTimes != 0) {
-            logger.info("recent-average-span: " + (1.0 * recentSpan) / recentTimes + "μs");
+        for (Map.Entry<ContextType, Pair<Long, Long>> entry: detailInfos.entrySet()) {
+            logger.info("\t\tFor Request: " + entry.getKey() + ", count: " + entry.getValue().k + ", span: " + entry.getValue().v + "μs");
         }
         lock.readLock().unlock();
     }
 
+    @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
-        return requestContext -> {
-            long endExecuteTime = TimeUtils.getMicrosecond();
-            long beginExecuteTime = (long) requestContext.getExtraParam("beginExecuteTime");
-            statisticQueue.add(new Statistics(requestContext.getId(), beginExecuteTime, endExecuteTime, requestContext.getType()));
-            return null;
-        };
+        return after::apply;
     }
 
+    @Override
     public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
-        return requestContext -> {
-            requestContext.setExtraParam("beginExecuteTime", TimeUtils.getMicrosecond());
-            return null;
-        };
+        return before::apply;
     }
-
 }

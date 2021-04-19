@@ -7,7 +7,6 @@ on:
   push:
     branches:
       - main
-      - metadata_v2
   pull_request:
     branches: 
       - main
@@ -19,7 +18,7 @@ jobs:
       max-parallel: 20
       matrix:
         java: [ 8, 11, 15 ]
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
 
     steps:
@@ -46,14 +45,12 @@ jobs:
       run: mvn clean install -DskipTests
     - name: move dependencies
       run: cp "${GITHUB_WORKSPACE}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar" "${GITHUB_WORKSPACE}/core/lib/iotdb-0.1.0-SNAPSHOT.jar"
-    - name: check is dependency moved
-      run: ls "${GITHUB_WORKSPACE}/core/lib/"
     - name: start Iginx
       run: |
           chmod +x "${GITHUB_WORKSPACE}/start.sh"
           nohup "${GITHUB_WORKSPACE}/start.sh" &
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn -B package
     - name: Coverage report
       run: mvn -B verify -P coverage --no-transfer-progress
     - uses: codecov/codecov-action@v1
