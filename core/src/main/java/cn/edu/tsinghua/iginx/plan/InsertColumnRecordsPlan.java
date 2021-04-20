@@ -18,12 +18,15 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -44,5 +47,60 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
 	                               List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
 		super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId);
 		this.setIginxPlanType(INSERT_COLUMN_RECORDS);
+	}
+
+	public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
+		if (getValuesList() == null || getValuesList().length == 0) {
+			logger.error("There are no values in the InsertColumnRecordsPlan.");
+			return null;
+		}
+		int startIndex;
+		int endIndex;
+		if (interval.getStartTimeSeries() == null) {
+			startIndex = 0;
+		} else {
+			startIndex = getPathsNum();
+			for (int i = 0; i < getPathsNum(); i++) {
+				if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0) {
+					startIndex = i;
+					break;
+				}
+			}
+		}
+		if (interval.getEndTimeSeries() == null) {
+			endIndex = getPathsNum() - 1;
+		} else {
+			endIndex = -1;
+			for (int i = getPathsNum() - 1; i >= 0; i--) {
+				if (getPath(i).compareTo(interval.getEndTimeSeries()) <= 0) {
+					endIndex = i;
+					break;
+				}
+			}
+		}
+
+		Object[] tempValues = new Object[endIndex - startIndex + 1];
+		List<Bitmap> tempBitmaps = new ArrayList<>();
+		for (int i = startIndex; i <= endIndex; i++) {
+			Bitmap tempBitmap = new Bitmap(rowIndexes.v - rowIndexes.k + 1);
+			List<Integer> indexes = new ArrayList<>();
+			int k = 0;
+			for (int j = 0; j < getTimestamps().length; j++) {
+				if (getBitmap(i).get(j)) {
+					if (j >= rowIndexes.k && j <= rowIndexes.v) {
+						indexes.add(k);
+						tempBitmap.mark(j - rowIndexes.k);
+					}
+					k++;
+				}
+			}
+			Object[] tempColumnValues = new Object[indexes.size()];
+			for (int j = 0; j < indexes.size(); j++) {
+				tempColumnValues[j] = getValues(i)[indexes.get(j)];
+			}
+			tempValues[i - startIndex] = tempColumnValues;
+			tempBitmaps.add(tempBitmap);
+		}
+		return new Pair<>(tempValues, tempBitmaps);
 	}
 }

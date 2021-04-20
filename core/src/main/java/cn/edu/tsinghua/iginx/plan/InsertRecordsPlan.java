@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,50 +101,28 @@ public abstract class InsertRecordsPlan extends DataPlan{
 		return new Pair<>(Arrays.copyOfRange(timestamps, startIndex, endIndex + 1), new Pair<>(startIndex, endIndex));
 	}
 
-	public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
+	public Object[] getValues(int index) {
 		if (valuesList == null || valuesList.length == 0) {
 			logger.error("There are no values in the InsertRecordsPlan.");
 			return null;
 		}
-		int startIndex = interval.getStartTimeSeries() == null ? 0 : getPathsNum();
-		int endIndex = interval.getEndTimeSeries() == null ? getPathsNum() - 1 : -1;
-		for (int i = 0; i < getPathsNum(); i++) {
-			if (interval.getStartTimeSeries() != null && getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
-				startIndex = i;
-			}
-			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) < 0 && i > endIndex) {
-				endIndex = i;
-			}
+		if (index < 0 || index >= valuesList.length) {
+			logger.error("The given index {} is out of bounds.", index);
+			return null;
 		}
-		Object[] tempValues = new Object[endIndex - startIndex + 1];
-		for (int i = startIndex; i <= endIndex; i++) {
-			Object[] tempColValues;
-			switch (getDataType(i)) {
-				case BOOLEAN:
-					tempColValues = ArrayUtils.toObject((boolean[]) valuesList[i]);
-					break;
-				case INTEGER:
-					tempColValues = ArrayUtils.toObject((int[]) valuesList[i]);
-					break;
-				case LONG:
-					tempColValues = ArrayUtils.toObject((long[]) valuesList[i]);
-					break;
-				case FLOAT:
-					tempColValues = ArrayUtils.toObject((float[]) valuesList[i]);
-					break;
-				case DOUBLE:
-					tempColValues = ArrayUtils.toObject((double[]) valuesList[i]);
-					break;
-				case BINARY:
-					// TODO
-					tempColValues = (byte[][]) valuesList[i];
-					break;
-				default:
-					throw new UnsupportedOperationException(getDataType(i).toString());
-			}
-			tempValues[i - startIndex] = Arrays.copyOfRange(tempColValues, rowIndexes.k, rowIndexes.v + 1);
+		return (Object[]) valuesList[index];
+	}
+
+	public Bitmap getBitmap(int index) {
+		if (bitmapList == null || bitmapList.isEmpty()) {
+			logger.error("There are no bitmaps in the InsertRecordsPlan.");
+			return null;
 		}
-		return tempValues;
+		if (index < 0 || index >= bitmapList.size()) {
+			logger.error("The given index {} is out of bounds.", index);
+			return null;
+		}
+		return bitmapList.get(index);
 	}
 
 	public DataType getDataType(int index) {
