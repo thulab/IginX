@@ -24,6 +24,8 @@ public class Constants {
 
 	public static final String DEFAULT_PASSWORD = "password";
 
+	public static final int MAX_REDIRECT_TIME = 5;
+
 	public static final String CONFIG_FILE = "conf/config.properties";
 
 	public static final String IGINX_NODE = "/iginx/node";
