@@ -42,6 +42,8 @@ import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownSampledAggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownSampledAggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
@@ -53,6 +55,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,6 +167,11 @@ public class IginxWorker implements IService.Iface {
 		AggregateQueryContext context = new AggregateQueryContext(req);
 		core.processRequest(context);
 		return ((AggregateCombineResult) context.getCombineResult()).getResp();
+	}
+
+	@Override
+	public DownSampledAggregateQueryResp downSampledAggregateQuery(DownSampledAggregateQueryReq req) {
+		return null;
 	}
 
 	public static IginxWorker getInstance() {
