@@ -27,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +50,7 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertRecordsPlan.");
+            logger.error("There are no values in the InsertRowRecordsPlan.");
             return null;
         }
         int startIndex;
@@ -83,24 +82,20 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
         List<Bitmap> tempBitmaps = new ArrayList<>();
         for (int i = rowIndexes.k; i <= rowIndexes.v; i++) {
             Bitmap tempBitmap = new Bitmap(endIndex - startIndex + 1);
-            // 该行的 values 的 index -> 路径的 index
-            Map<Integer, Integer> indexes = new HashMap<>();
+            List<Integer> indexes = new ArrayList<>();
             int k = 0;
             for (int j = 0; j < getPathsNum(); j++) {
-                if (getBitmapList().get(i).get(j)) {
+                if (getBitmap(i).get(j)) {
                     if (j >= startIndex && j <= endIndex) {
-                        indexes.put(k, j);
+                        indexes.add(k);
                         tempBitmap.mark(j - startIndex);
                     }
                     k++;
                 }
             }
             Object[] tempRowValues = new Object[indexes.size()];
-            k = 0;
-            for (Map.Entry<Integer, Integer> entry : indexes.entrySet()) {
-                // TODO 与数据类型有关吗？若有关，则需利用 entry.getValue()；否则不必使用 Map
-                tempRowValues[k] = ((Object[]) (getValuesList()[i]))[entry.getKey()];
-                k++;
+            for (int j = 0; j < indexes.size(); j++) {
+                tempRowValues[j] = getValues(i)[indexes.get(j)];
             }
             tempValues[i - rowIndexes.k] = tempRowValues;
             tempBitmaps.add(tempBitmap);

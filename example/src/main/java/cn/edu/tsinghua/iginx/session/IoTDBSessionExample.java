@@ -37,9 +37,11 @@ public class IoTDBSessionExample {
 	private static final String S3 = "sg.d3.s3";
 	private static final String S4 = "sg.d4.s4";
 
-	private static final long START_TIMESTAMP = 20000L;
-	private static final long END_TIMESTAMP = 20500L;
-	private static final int INTERVAL = 10;
+	private static final long COLUMN_START_TIMESTAMP = 0L;
+	private static final long COLUMN_END_TIMESTAMP = 10500L;
+	private static final long ROW_START_TIMESTAMP = 10501L;
+	private static final long ROW_END_TIMESTAMP = 21000L;
+	private static final int ROW_INTERVAL = 10;
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
@@ -70,21 +72,24 @@ public class IoTDBSessionExample {
 		paths.add(S3);
 		paths.add(S4);
 
-		long[] timestamps = new long[10500];
-		for (long i = 0; i < 10500; i++) {
+		int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP);
+		long[] timestamps = new long[size];
+		for (long i = 0; i < size; i++) {
 			timestamps[(int) i] = i;
 		}
 
 		Object[] valuesList = new Object[4];
 		for (long i = 0; i < 4; i++) {
-			Object[] values = new Object[10500];
-			if (i < 2) {
-				for (long j = 0; j < 10500; j++) {
-					values[(int) j] = i + j;
-				}
-			} else {
-				for (long j = 0; j < 10500; j++) {
-					values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+			Object[] values = new Object[size];
+			for (long j = 0; j < size; j++) {
+				if (j >= size - 50) {
+					values[(int) j] = null;
+				} else {
+					if (i < 2) {
+						values[(int) j] = i + j;
+					} else {
+						values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+					}
 				}
 			}
 			valuesList[(int) i] = values;
@@ -108,11 +113,11 @@ public class IoTDBSessionExample {
 		paths.add(S3);
 		paths.add(S4);
 
-		int size = (int)(END_TIMESTAMP - START_TIMESTAMP) / INTERVAL;
+		int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP) / ROW_INTERVAL;
 		long[] timestamps = new long[size];
 		Object[] valuesList = new Object[size];
 		for (long i = 0; i < size; i++) {
-			timestamps[(int) i] = START_TIMESTAMP + i * INTERVAL;
+			timestamps[(int) i] = ROW_START_TIMESTAMP + i * ROW_INTERVAL;
 			Object[] values = new Object[4];
 			for (long j = 0; j < 4; j++) {
 				if ((i + j) % 2 == 0) {
@@ -146,8 +151,8 @@ public class IoTDBSessionExample {
 		paths.add(S3);
 		paths.add(S4);
 
-		long startTime = 10000L;
-		long endTime = 10050L;
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
 
 		SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
 		dataSet.print();
@@ -158,8 +163,8 @@ public class IoTDBSessionExample {
 		paths.add(S1);
 		paths.add(S2);
 
-		long startTime = 10050L;
-		long endTime = 10300L;
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
 
 		// MAX
 		SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
@@ -196,8 +201,8 @@ public class IoTDBSessionExample {
 		paths.add(S2);
 		paths.add(S3);
 
-		long startTime = 10025L;
-		long endTime = 10030L;
+		long startTime = COLUMN_END_TIMESTAMP - 50L;
+		long endTime = ROW_START_TIMESTAMP + 50L;
 
 		session.deleteDataInColumns(paths, startTime, endTime);
 	}

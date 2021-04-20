@@ -67,9 +67,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getColumnValuesByDataType;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesListByDataType;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesListByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesByDataType;
 
 public class SimplePlanGenerator implements IPlanGenerator {
 
@@ -102,11 +102,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 return splitDeleteColumnsPlan(deleteColumnsPlan, splitInfoList);
             case InsertColumnRecords:
                 InsertColumnRecordsReq insertColumnRecordsReq = ((InsertColumnRecordsContext) requestContext).getReq();
+                long[] timestamps = getLongArrayFromByteArray(insertColumnRecordsReq.getTimestamps());
                 InsertColumnRecordsPlan insertColumnRecordsPlan = new InsertColumnRecordsPlan(
                         insertColumnRecordsReq.getPaths(),
-                        getLongArrayFromByteArray(insertColumnRecordsReq.getTimestamps()),
-                        getValuesListByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList()),
-                        null,
+                        timestamps,
+                        getColumnValuesByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList(), insertColumnRecordsReq.getBitmapList(), timestamps.length),
+                        insertColumnRecordsReq.getBitmapList().stream().map(x -> new Bitmap(timestamps.length, x.array())).collect(Collectors.toList()),
                         insertColumnRecordsReq.getDataTypeList(),
                         insertColumnRecordsReq.getAttributesList()
                 );
@@ -117,7 +118,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
                         insertRowRecordsReq.getPaths(),
                         getLongArrayFromByteArray(insertRowRecordsReq.getTimestamps()),
-                        getRowValuesListByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList(), insertRowRecordsReq.getBitmapList()),
+                        getRowValuesByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList(), insertRowRecordsReq.getBitmapList()),
                         insertRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
                         insertRowRecordsReq.getDataTypeList(),
                         insertRowRecordsReq.getAttributesList()
@@ -234,11 +235,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<InsertColumnRecordsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
             InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     timestampsAndIndexes.k,
-                    plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval()),
-                    null,
+                    valuesAndBitmaps.k,
+                    valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
                     info.getReplica().getStorageEngineId(),
