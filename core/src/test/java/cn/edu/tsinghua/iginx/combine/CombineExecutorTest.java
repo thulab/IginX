@@ -24,6 +24,8 @@ import static org.junit.Assert.assertNotEquals;
 
 public class CombineExecutorTest {
     CombineExecutor c;
+
+    // the size of the first and second resultset
     int size1 = 300;
     int size2 = 200;
 
@@ -33,13 +35,13 @@ public class CombineExecutorTest {
     }
 
     @Test
-    public void testCombineResult() throws Exception {
+    public void testCombineResult() {
 
         SnowFlakeUtils.init(0);
         RequestContext r = new RequestContext(0, QueryData);
         List<PlanExecuteResult> planExecuteResults = new LinkedList<>();
 
-        //Build query result1,with column a and column b, timestamp 0, 100, 200
+        //Build query result1, with column a and column b
 
         //Create column, initialize its name and type
         List<String> columnNameList = new LinkedList<>();
@@ -76,7 +78,7 @@ public class CombineExecutorTest {
                 QueryDataPlanExecuteResult(PlanExecuteResult.SUCCESS, plan, set1);
         planExecuteResults.add(per1);
 
-        // Build query result2, with column b and column c, timestamp 250, 300
+        // Build query result2, with column b and column c
 
         // Create column, initialize its name and type
         List<String> columnNameList2 = new LinkedList<>();
@@ -120,6 +122,7 @@ public class CombineExecutorTest {
         List<DataType> dt = res.getResp().dataTypeList;
         List<String> dn = res.getResp().getPaths();
 
+        // check if the result is correct
         QueryDataSet q = res.getResp().getQueryDataSet();
         byte[] timeStampByte = q.getTimestamps();
         long[] timeStamp = ByteUtils.getLongArrayFromByteArray(timeStampByte);
@@ -140,9 +143,8 @@ public class CombineExecutorTest {
             for (int j = 0; j < size; j++){
                 if (b.get(j)) {
                     if(dt.get(j) == DataType.BINARY) {
-                        //assertEquals(dn.get(j), "c");
                         //only line 1 is integer，else are Strings
-                        String queryResult = new String((byte[]) ByteUtils.getValueByDataType(value, dt.get(j)));
+                        String queryResult = new String((byte[]) ByteUtils.getValueFromByteBufferByDataType(value, dt.get(j)));
                         if(time % 100 == 0){
                             assertEquals(dn.get(j), "a");
                             assertEquals("test" + ((time + 100) / 100), queryResult);
@@ -151,8 +153,9 @@ public class CombineExecutorTest {
                             assertEquals("test2" + ((time - 201) / 50) , queryResult);
                         }
                     } else {
+                        assertEquals(dt.get(j), DataType.INTEGER);
                         assertEquals(dn.get(j),"b");
-                        long queryResult = (long)(Integer)ByteUtils.getValueByDataType(value, dt.get(j));
+                        long queryResult = (long)(Integer)ByteUtils.getValueFromByteBufferByDataType(value, dt.get(j));
                         if(time % 100 == 0){
                             assertEquals(time, queryResult);
                         } else {

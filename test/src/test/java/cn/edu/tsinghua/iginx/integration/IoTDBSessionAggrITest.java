@@ -21,9 +21,9 @@ public class IoTDBSessionAggrITest {
 
     private static final String DATABASE_NAME = "sg1";
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
-    private static final String COLUMN_D1_S2 = "sg1.d1.s2";
-    private static final String COLUMN_D2_S1 = "sg1.d2.s1";
-    private static final String COLUMN_D3_S1 = "sg1.d3.s1";
+    private static final String COLUMN_D2_S2 = "sg1.d2.s2";
+    private static final String COLUMN_D3_S3 = "sg1.d3.s3";
+    private static final String COLUMN_D4_S4 = "sg1.d4.s4";
     private List<String> paths = new ArrayList<>();
 
     private static final long timePeriod = 100000L;
@@ -35,9 +35,9 @@ public class IoTDBSessionAggrITest {
     public void setUp(){
         try {
             paths.add(COLUMN_D1_S1);
-            paths.add(COLUMN_D1_S2);
-            paths.add(COLUMN_D2_S1);
-            paths.add(COLUMN_D3_S1);
+            paths.add(COLUMN_D2_S2);
+            paths.add(COLUMN_D3_S3);
+            paths.add(COLUMN_D4_S4);
             session = new Session("127.0.0.1", 6324, "root", "root");
             session.openSession();
             session.createDatabase(DATABASE_NAME);
@@ -71,13 +71,13 @@ public class IoTDBSessionAggrITest {
                     case "sg1.d1.s1":
                         assertEquals(result.get(j), (long)i);
                         break;
-                    case "sg1.d1.s2":
+                    case "sg1.d2.s2":
                         assertEquals(result.get(j), (long)(i + 1));
                         break;
-                    case "sg1.d2.s1":
+                    case "sg1.d3.s3":
                         assertEquals(result.get(j), (long)(i + 2));
                         break;
-                    case "sg1.d3.s1":
+                    case "sg1.d4.s4":
                         assertEquals(result.get(j), (long)(i + 3));
                         break;
                     default:
@@ -105,13 +105,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(result[i], endTime);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(result[i],  endTime + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(result[i], endTime + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(result[i], endTime + 3);
                     break;
                 default:
@@ -138,13 +138,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(result[i], startTime);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(result[i],  startTime + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(result[i], startTime + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(result[i], startTime + 3);
                     break;
                 default:
@@ -171,13 +171,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(result[i], startTime);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(result[i],  startTime + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(result[i], startTime + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(result[i], startTime + 3);
                     break;
                 default:
@@ -204,13 +204,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(result[i], endTime);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(result[i],  endTime + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(result[i], endTime + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(result[i], endTime + 3);
                     break;
                 default:
@@ -248,13 +248,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(result[i], sum);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(result[i], sum + timePeriod);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(result[i], sum + timePeriod * 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(result[i], sum + timePeriod * 3);
                     break;
                 default:
@@ -280,13 +280,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(result[i], avg);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(result[i],  avg + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(result[i], avg + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(result[i], avg + 3);
                     break;
                 default:
@@ -300,12 +300,12 @@ public class IoTDBSessionAggrITest {
     public void deletePartDataInColumnTest() throws SessionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
-        delPaths.add(COLUMN_D2_S1);
-        delPaths.add(COLUMN_D3_S1);
+        delPaths.add(COLUMN_D3_S3);
+        delPaths.add(COLUMN_D4_S4);
 
         // ensure after delete there are still points in the timeseries
-        long delStartTime = 20000L;
-        long delEndTime = 90000L;
+        long delStartTime = timePeriod / 5;
+        long delEndTime = timePeriod / 10 * 9;
         long delTimePeriod = delEndTime - delStartTime + 1;
 
         session.deleteDataInColumns(delPaths, delStartTime, delEndTime);
@@ -323,7 +323,7 @@ public class IoTDBSessionAggrITest {
             List<Object> result = dataSet.getValues().get(i);
             if (delStartTime <= i & i <= delEndTime) {
                 for (int j = 0; j < 4; j++) {
-                    if ("sg1.d1.s2".equals(resPaths.get(j))) {
+                    if ("sg1.d2.s2".equals(resPaths.get(j))) {
                         assertEquals(result.get(j), (long) (i + 1));
                     } else {
                         assertNull(result.get(j));
@@ -335,13 +335,13 @@ public class IoTDBSessionAggrITest {
                         case "sg1.d1.s1":
                             assertEquals(result.get(j), (long) i);
                             break;
-                        case "sg1.d1.s2":
+                        case "sg1.d2.s2":
                             assertEquals(result.get(j), (long) (i + 1));
                             break;
-                        case "sg1.d2.s1":
+                        case "sg1.d3.s3":
                             assertEquals(result.get(j), (long) (i + 2));
                             break;
-                        case "sg1.d3.s1":
+                        case "sg1.d4.s4":
                             assertEquals(result.get(j), (long) (i + 3));
                             break;
                         default:
@@ -366,13 +366,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(avgResult[i], avg);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(avgResult[i],(startTime + endTime) / 2.0 + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(avgResult[i],avg + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(avgResult[i],avg + 3);
                     break;
                 default:
@@ -394,13 +394,13 @@ public class IoTDBSessionAggrITest {
                 case "sg1.d1.s1":
                     assertEquals(maxResult[i], max);
                     break;
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(maxResult[i], endTime + 1);
                     break;
-                case "sg1.d2.s1":
+                case "sg1.d3.s3":
                     assertEquals(maxResult[i], max + 2);
                     break;
-                case "sg1.d3.s1":
+                case "sg1.d4.s4":
                     assertEquals(maxResult[i], max + 3);
                     break;
                 default:
@@ -414,8 +414,8 @@ public class IoTDBSessionAggrITest {
     public void deleteAllDataInColumnTest() throws SessionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
-        delPaths.add(COLUMN_D2_S1);
-        delPaths.add(COLUMN_D3_S1);
+        delPaths.add(COLUMN_D3_S3);
+        delPaths.add(COLUMN_D4_S4);
 
         session.deleteDataInColumns(delPaths, startTime, endTime);
 
@@ -431,7 +431,7 @@ public class IoTDBSessionAggrITest {
             assertEquals(timestamp, i);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
-                if ("sg1.d1.s2".equals(resPaths.get(j))) {
+                if ("sg1.d2.s2".equals(resPaths.get(j))) {
                     assertEquals(result.get(j), (long) (i + 1));
                 } else {
                     assertNull(result.get(j));
@@ -447,12 +447,12 @@ public class IoTDBSessionAggrITest {
         assertEquals(avgDataSet.getValues().length, 4);
         for(int i = 0; i < 4; i++) {
             switch (avgResPaths.get(i)){
-                case "sg1.d1.s2":
+                case "sg1.d2.s2":
                     assertEquals(avgResult[i],(startTime + endTime) / 2.0 + 1);
                     break;
-                case "sg1.d2.s1":
                 case "sg1.d1.s1":
-                case "sg1.d3.s1":
+                case "sg1.d3.s3":
+                case "sg1.d4.s4":
                     assertEquals(new String((byte[]) avgResult[i]), "null");
                     break;
                 default:
@@ -475,13 +475,13 @@ public class IoTDBSessionAggrITest {
     public void deletePartColumnTest() throws SessionException, ExecutionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
-        delPaths.add(COLUMN_D2_S1);
-        delPaths.add(COLUMN_D3_S1);
+        delPaths.add(COLUMN_D3_S3);
+        delPaths.add(COLUMN_D4_S4);
         session.deleteColumns(delPaths);
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         int len = dataSet.getTimestamps().length;
         assertEquals(dataSet.getPaths().size(), 1);
-        assertEquals(dataSet.getPaths().get(0), "sg1.d1.s2");
+        assertEquals(dataSet.getPaths().get(0), "sg1.d2.s2");
         assertEquals(len, timePeriod);
         assertEquals(dataSet.getValues().size(), timePeriod);
         for (int i = 0; i < len; i++){
@@ -495,9 +495,9 @@ public class IoTDBSessionAggrITest {
     private static void addColumns() throws SessionException, ExecutionException {
         List<String> addPaths = new ArrayList<>();
         addPaths.add(COLUMN_D1_S1);
-        addPaths.add(COLUMN_D1_S2);
-        addPaths.add(COLUMN_D2_S1);
-        addPaths.add(COLUMN_D3_S1);
+        addPaths.add(COLUMN_D2_S2);
+        addPaths.add(COLUMN_D3_S3);
+        addPaths.add(COLUMN_D4_S4);
 
         Map<String, String> attributesForOnePath = new HashMap<>();
         // INT64
@@ -518,9 +518,9 @@ public class IoTDBSessionAggrITest {
     private static void insertRecords() throws SessionException, ExecutionException {
         List<String> insertPaths = new ArrayList<>();
         insertPaths.add(COLUMN_D1_S1);
-        insertPaths.add(COLUMN_D1_S2);
-        insertPaths.add(COLUMN_D2_S1);
-        insertPaths.add(COLUMN_D3_S1);
+        insertPaths.add(COLUMN_D2_S2);
+        insertPaths.add(COLUMN_D3_S3);
+        insertPaths.add(COLUMN_D4_S4);
 
         long[] timestamps = new long[(int) timePeriod];
         for (long i = 0; i < timePeriod; i++) {
