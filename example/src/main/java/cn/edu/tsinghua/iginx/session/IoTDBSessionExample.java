@@ -35,10 +35,10 @@ public class IoTDBSessionExample {
 	private static Session session;
 
 	private static final String DATABASE_NAME = "sg1";
-	private static final String COLUMN_D1_S1 = "sg1.d1.s1";
-	private static final String COLUMN_D1_S2 = "sg1.d2.s2";
-	private static final String COLUMN_D2_S1 = "sg1.d3.s3";
-	private static final String COLUMN_D3_S1 = "sg1.d4.s4";
+	private static final String S1 = "sg1.d1.s1";
+	private static final String S2 = "sg1.d2.s2";
+	private static final String S3 = "sg1.d3.s3";
+	private static final String S4 = "sg1.d4.s4";
 
 	private static final long COLUMN_START_TIMESTAMP = 0L;
 	private static final long COLUMN_END_TIMESTAMP = 10500L;
@@ -84,8 +84,8 @@ public class IoTDBSessionExample {
 		Map<String, String> attributesForOnePath = new HashMap<>();
 
 		// 先添加两条数据类型为 Long 的时间序列
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
+		paths.add(S1);
+		paths.add(S2);
 
 		// INT64
 		attributesForOnePath.put("DataType", "2");
@@ -105,8 +105,8 @@ public class IoTDBSessionExample {
 		attributes.clear();
 		attributesForOnePath.clear();
 
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S3);
+		paths.add(S4);
 
 		// TEXT
 		attributesForOnePath.put("DataType", "5");
@@ -124,10 +124,10 @@ public class IoTDBSessionExample {
 
 	private static void insertColumnRecords() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP);
 		long[] timestamps = new long[size];
@@ -165,10 +165,10 @@ public class IoTDBSessionExample {
 
 	private static void insertRowRecords() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP) / ROW_INTERVAL;
 		long[] timestamps = new long[size];
@@ -203,10 +203,10 @@ public class IoTDBSessionExample {
 
 	private static void queryData() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = COLUMN_END_TIMESTAMP - 100L;
 		long endTime = ROW_START_TIMESTAMP + 100L;
@@ -217,8 +217,8 @@ public class IoTDBSessionExample {
 
 	private static void aggregateQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
+		paths.add(S1);
+		paths.add(S2);
 
 		long startTime = COLUMN_END_TIMESTAMP - 100L;
 		long endTime = ROW_START_TIMESTAMP + 100L;
@@ -254,9 +254,9 @@ public class IoTDBSessionExample {
 
 	private static void deleteDataInColumns() throws SessionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = COLUMN_END_TIMESTAMP - 50L;
 		long endTime = ROW_START_TIMESTAMP + 50L;
@@ -266,10 +266,10 @@ public class IoTDBSessionExample {
 
 	private static void deleteColumns() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
-		paths.add(COLUMN_D1_S1);
-		paths.add(COLUMN_D1_S2);
-		paths.add(COLUMN_D2_S1);
-		paths.add(COLUMN_D3_S1);
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		session.deleteColumns(paths);
 	}
