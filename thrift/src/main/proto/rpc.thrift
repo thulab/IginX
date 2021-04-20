@@ -152,7 +152,8 @@ struct DownSampledAggregateQueryResp {
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
     4: optional binary timestamps
-    5: optional binary valuesList
+    5: optional list<binary> valuesList
+    6: optional list<binary> bitmapList
 }
 
 
