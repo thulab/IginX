@@ -136,6 +136,26 @@ struct AggregateQueryResp {
     5: optional binary valuesList
 }
 
+
+struct DownSampledAggregateQueryReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required i64 startTime
+    4: required i64 endTime
+    5: required AggregateType aggregateType
+    6: required i64 precision
+}
+
+
+struct DownSampledAggregateQueryResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+    4: optional binary timestamps
+    5: optional binary valuesList
+}
+
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -161,5 +181,7 @@ service IService {
     Status addStorageEngine(1: AddStorageEngineReq req);
 
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
+
+    DownSampledAggregateQueryResp downSampledAggregateQuery(DownSampledAggregateQueryReq req);
 
 }
