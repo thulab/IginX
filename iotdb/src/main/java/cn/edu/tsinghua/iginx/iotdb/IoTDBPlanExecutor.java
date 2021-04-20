@@ -149,12 +149,12 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         }
 
         int cnt = 0;
+        int[] indexes = new int[plan.getPathsNum()];
         do {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
 
             // 插入 timestamps 和 values
             for (int i = 0; i < plan.getPathsNum(); i++) {
-                int k = 0;
                 String deviceId = PREFIX + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
                 String measurement = plan.getPath(i).substring(plan.getPath(i).lastIndexOf('.') + 1);
                 Tablet tablet = tablets.get(deviceId);
@@ -163,11 +163,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         int row = tablet.rowSize++;
                         tablet.addTimestamp(row, plan.getTimestamp(j));
                         if (plan.getDataType(i) == BINARY) {
-                            tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[k]));
+                            tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[indexes[i]]));
                         } else {
-                            tablet.addValue(measurement, row, plan.getValues(i)[k]);
+                            tablet.addValue(measurement, row, plan.getValues(i)[indexes[i]]);
                         }
-                        k++;
+                        indexes[i]++;
                     }
                 }
             }
