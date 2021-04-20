@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
 
 public class SessionQueryDataSet {
 
@@ -52,7 +52,7 @@ public class SessionQueryDataSet {
 			Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapBuffer.array());
 			for (int j = 0; j < dataTypeList.size(); j++) {
 				if (bitmap.get(j)) {
-					tempValues.add(getValueByDataType(valuesBuffer, dataTypeList.get(j)));
+					tempValues.add(getValueFromByteBufferByDataType(valuesBuffer, dataTypeList.get(j)));
 				} else{
 					tempValues.add(null);
 				}

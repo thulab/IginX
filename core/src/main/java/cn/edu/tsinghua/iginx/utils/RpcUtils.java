@@ -43,4 +43,8 @@ public class RpcUtils {
 			throw new ExecutionException(status);
 		}
 	}
+
+	public static boolean verifyNoRedirect(Status status) {
+		return status.code != StatusCode.REDIRECT.getStatusCode();
+	}
 }

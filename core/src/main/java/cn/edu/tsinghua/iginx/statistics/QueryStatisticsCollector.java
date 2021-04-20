@@ -86,8 +86,8 @@ public class QueryStatisticsCollector extends AbstractStageStatisticsCollector i
         for (Map.Entry<ContextType, Pair<Long, Long>> entry: detailInfos.entrySet()) {
             logger.info("\t\tFor Request: " + entry.getKey() + ", count: " + entry.getValue().k + ", span: " + entry.getValue().v + "μs");
         }
-        logger.info("\ttotal insert count: " + insertPoints);
-        logger.info("\ttotal query count: " + queryPoints);
+        logger.info("\ttotal insert points: " + insertPoints);
+        logger.info("\ttotal query points: " + queryPoints);
         lock.readLock().unlock();
     }
 

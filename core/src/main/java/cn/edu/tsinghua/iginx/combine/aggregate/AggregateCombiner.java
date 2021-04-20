@@ -118,7 +118,7 @@ public class AggregateCombiner {
                     logger.error("unexpected type " + dataType);
             }
         }
-        resp.valuesList = ByteUtils.getByteBuffer(values, dataTypes);
+        resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
     }
 
     public void combineFirstResult(AggregateQueryResp resp, List<SingleValueAggregateQueryPlanExecuteResult> planExecuteResults) {
@@ -180,8 +180,8 @@ public class AggregateCombiner {
             times[i] = pair.k;
             values[i] = pair.v;
         }
-        resp.timestamps = ByteUtils.getByteBuffer(times);
-        resp.valuesList = ByteUtils.getByteBuffer(values, dataTypes);
+        resp.timestamps = ByteUtils.getByteBufferFromLongArray(times);
+        resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
     }
 
     public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
@@ -229,7 +229,7 @@ public class AggregateCombiner {
             }
             values[i] = avg;
         }
-        resp.valuesList = ByteUtils.getByteBuffer(values, dataTypes);
+        resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
     }
 
     public static AggregateCombiner getInstance() {
