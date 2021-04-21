@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
@@ -421,11 +420,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                                 break;
                             }
                             addFragment(fragmentMeta);
-                            for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
-                                long storageEngineId = replicaMeta.getStorageEngineId();
-                                StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
-                                storageEngineMeta.addLatestFragmentReplicaMetas(replicaMeta);
-                            }
+//                            for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
+//                                long storageEngineId = replicaMeta.getStorageEngineId();
+//                                StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
+//                                storageEngineMeta.addLatestFragmentReplicaMetas(replicaMeta);
+//                            }
                         }
                     }
                     break;
@@ -531,11 +530,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long StorageEngineId) {
-        return null;
-    }
-
-    @Override
     public List<IginxMeta> getIginxList() {
         return new ArrayList<>(iginxMetaMap.values());
     }
@@ -594,9 +588,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected abstract void updateFragment(FragmentMeta fragmentMeta);
 
-    protected Map<String, String> tryInitStorageUnits(List<StorageUnitMeta> storageUnits) {
+    protected Map<String, StorageUnitMeta> tryInitStorageUnits(List<StorageUnitMeta> storageUnits) {
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_UNIT_LOCK_NODE);
-        Map<String, String> fakeNameMap = new HashMap<>();
+        Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>();
         try {
             storageUnitLock.writeLock().lock();
             mutex.acquire();
@@ -611,7 +605,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
                 this.zookeeperClient.setData()
                         .forPath(nodeName, JsonUtils.toJson(actualMasterStorageUnit));
-                fakeNameMap.put(fakeName, actualName);
+                fakeIdToStorageUnit.put(fakeName, actualMasterStorageUnit);
                 for (StorageUnitMeta slaveStorageUnit: masterStorageUnit.getReplicas()) {
                     slaveStorageUnit.setCreatedBy(iginxId);
                     String slaveFakeName = slaveStorageUnit.getId();
@@ -626,7 +620,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     storageUnitMetaMap.put(actualSlaveStorageUnit.getId(), actualSlaveStorageUnit);
                     this.zookeeperClient.setData()
                             .forPath(slaveNodeName, JsonUtils.toJson(actualSlaveStorageUnit));
-                    fakeNameMap.put(slaveFakeName, slaveActualName);
+                    fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
                 }
                 storageUnitMetaMap.put(actualMasterStorageUnit.getId(), actualMasterStorageUnit);
             }
@@ -641,13 +635,13 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 logger.error("release mutex error: ", e);
             }
         }
-        return fakeNameMap;
+        return fakeIdToStorageUnit;
     }
 
     @Override
     public boolean tryInitFragments(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
-        Map<String, String> fakeNameMap = tryInitStorageUnits(storageUnits);
-        if (fakeNameMap == null) {
+        Map<String, StorageUnitMeta> fakeIdToStorageUnit = tryInitStorageUnits(storageUnits);
+        if (fakeIdToStorageUnit == null) {
             return false;
         }
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
@@ -663,7 +657,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
-                fragmentMeta.setMasterStorageUnitId(fakeNameMap.get(fragmentMeta.getMasterStorageUnitId()));
+                StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
+                if (storageUnit.isMaster()) {
+                    fragmentMeta.setMasterStorageUnit(storageUnit);
+                } else {
+                    fragmentMeta.setMasterStorageUnit(getStorageUnit(storageUnit.getMasterId()));
+                }
                 addFragment(fragmentMeta);
                 this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
@@ -765,11 +764,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<String> chooseStorageUnitIdListForNewFragment() {
-        return null;
-    }
-
-    @Override
     public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(String startPath, long startTime) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
@@ -785,7 +779,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             topStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), topId, false));
         }
         storageUnitList.add(topStorageUnit);
-        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, storageEngineIdList, topId));
+        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, topId));
 
         storageEngineIdList = selectStorageEngineIdList();
         String bottomId = RandomStringUtils.randomAlphanumeric(16);
@@ -794,7 +788,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             bottomStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), bottomId, false));
         }
         storageUnitList.add(bottomStorageUnit);
-        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, storageEngineIdList, bottomId));
+        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, bottomId));
 
         if (startTime != 0) {
             leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, topId));
@@ -824,9 +818,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         for (String s : prefixList) {
             previousPrefix = prefix;
             prefix = s;
-            fragmentMetaList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, selectStorageEngineIdList()));
+            fragmentMetaList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE));
         }
-        fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, selectStorageEngineIdList()));
+        fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE));
         return new Pair<>(fragmentMetaList, storageUnitMetaList);
     }
 }

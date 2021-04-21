@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 
@@ -28,25 +28,12 @@ public class SplitInfo {
 
 	private TimeSeriesInterval timeSeriesInterval;
 
-	private FragmentReplicaMeta replica;
+	private StorageUnitMeta storageUnit;
 
-	private boolean hasCreatedDatabase;
-
-	private String storageUnitId;
-
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica, String storageUnitId) {
+	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit) {
 		this.timeInterval = timeInterval;
 		this.timeSeriesInterval = timeSeriesInterval;
-		this.replica = replica;
-		this.storageUnitId = storageUnitId;
-	}
-
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica, boolean hasCreatedDatabase, String storageUnitId) {
-		this.timeInterval = timeInterval;
-		this.timeSeriesInterval = timeSeriesInterval;
-		this.replica = replica;
-		this.hasCreatedDatabase = hasCreatedDatabase;
-		this.storageUnitId = storageUnitId;
+		this.storageUnit = storageUnit;
 	}
 
 	public TimeInterval getTimeInterval() {
@@ -65,27 +52,11 @@ public class SplitInfo {
 		this.timeSeriesInterval = timeSeriesInterval;
 	}
 
-	public FragmentReplicaMeta getReplica() {
-		return replica;
+	public StorageUnitMeta getStorageUnit() {
+		return storageUnit;
 	}
 
-	public void setReplica(FragmentReplicaMeta replica) {
-		this.replica = replica;
-	}
-
-	public boolean hasCreatedDatabase() {
-		return hasCreatedDatabase;
-	}
-
-	public void setHasCreatedDatabase(boolean hasCreatedDatabase) {
-		this.hasCreatedDatabase = hasCreatedDatabase;
-	}
-
-	public String getStorageUnitId() {
-		return storageUnitId;
-	}
-
-	public void setStorageUnitId(String storageUnitId) {
-		this.storageUnitId = storageUnitId;
+	public void setStorageUnit(StorageUnitMeta storageUnit) {
+		this.storageUnit = storageUnit;
 	}
 }

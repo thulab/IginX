@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
 
 public abstract class IginxPlan {
@@ -30,9 +32,7 @@ public abstract class IginxPlan {
 
 	private boolean isSync;
 
-	private long storageEngineId;
-
-	private String storageUnitId;
+	private StorageUnitMeta storageUnit;
 
 	protected IginxPlan(boolean isQuery) {
 		this.iginxPlanType = IGINX;
@@ -55,12 +55,12 @@ public abstract class IginxPlan {
 		return isSync;
 	}
 
-	public long getStorageEngineId() {
-		return storageEngineId;
+	public StorageUnitMeta getStorageUnit() {
+		return storageUnit;
 	}
 
-	public String getStorageUnitId() {
-		return storageUnitId;
+	public long getStorageEngineId() {
+		return storageUnit.getStorageEngineId();
 	}
 
 	public void setIginxPlanType(IginxPlanType iginxPlanType) {
@@ -79,12 +79,8 @@ public abstract class IginxPlan {
 		this.isSync = isSync;
 	}
 
-	public void setStorageEngineId(long storageEngineId) {
-		this.storageEngineId = storageEngineId;
-	}
-
-	public void setStorageUnitId(String storageUnitId) {
-		this.storageUnitId = storageUnitId;
+	public void setStorageUnit(StorageUnitMeta storageUnit) {
+		this.storageUnit = storageUnit;
 	}
 
 	public enum IginxPlanType {

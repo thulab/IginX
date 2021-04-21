@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
@@ -131,10 +131,10 @@ public interface IPlanSplitter {
 	List<SplitInfo> getSplitLastQueryPlanResults(LastQueryPlan plan);
 
 	/**
-	 * 从给定的分片中选择副本
-	 * @param fragment 被选择的分片
-	 * @param isQuery 是否为查询计划选取副本
-	 * @return 选出的分片副本
+	 * 从给定的分片中选择存储单元
+	 * @param fragment 给定的分片
+	 * @param isQuery 是否为查询计划
+	 * @return 选出的存储单元列表
 	 */
-	List<FragmentReplicaMeta> selectFragmentReplicas(FragmentMeta fragment, boolean isQuery);
+	List<StorageUnitMeta> selectStorageUnitList(FragmentMeta fragment, boolean isQuery);
 }

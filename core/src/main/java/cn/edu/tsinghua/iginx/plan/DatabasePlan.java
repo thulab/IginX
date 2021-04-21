@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,12 +30,13 @@ public abstract class DatabasePlan extends IginxPlan {
 
 	private String databaseName;
 
-	protected DatabasePlan(boolean isQuery, String databaseName) {
-		super(isQuery);
+	protected DatabasePlan(String databaseName, StorageUnitMeta storageUnit) {
+		super(false);
 		this.setIginxPlanType(DATABASE);
 		this.setCanBeSplit(false);
 		this.databaseName = databaseName;
 		this.setSync(true);
+		this.setStorageUnit(storageUnit);
 	}
 
 	public String getDatabaseName() {

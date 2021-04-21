@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -53,8 +54,8 @@ public abstract class InsertRecordsPlan extends DataPlan {
 	private boolean hasCreatedDatabase;
 
 	protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId, String storageUnitId) {
-		super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageEngineId, storageUnitId);
+	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+		super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageUnit);
 		this.setIginxPlanType(INSERT_RECORDS);
 		this.timestamps = timestamps;
 		this.valuesList = valuesList;

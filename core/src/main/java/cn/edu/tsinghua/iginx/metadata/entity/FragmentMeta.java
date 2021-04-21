@@ -36,62 +36,35 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public final class FragmentMeta {
 
     private final TimeInterval timeInterval;
 
     private final TimeSeriesInterval tsInterval;
 
-    /**
-     * 所有的分片的信息
-     */
-    @Deprecated
-    private Map<Integer, FragmentReplicaMeta> replicaMetas;
-
     private long createdBy;
 
     private long updatedBy;
 
-    private String masterStorageUnitId;
+    private StorageUnitMeta masterStorageUnit;
 
-    @Deprecated
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+    private String fakeStorageUnitId;
+
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        this.replicaMetas = replicaMetas;
     }
 
-    @Deprecated
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String fakeStorageUnitId) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        Map<Integer, FragmentReplicaMeta> replicas = new HashMap<>();
-        for (int i = 0; i < storageEngineIdList.size(); i++) {
-            replicas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
-        }
-        this.replicaMetas = Collections.unmodifiableMap(replicas);
+        this.fakeStorageUnitId = fakeStorageUnitId;
     }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList, String masterStorageUnitId) {
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, StorageUnitMeta masterStorageUnit) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        Map<Integer, FragmentReplicaMeta> replicas = new HashMap<>();
-        for (int i = 0; i < storageEngineIdList.size(); i++) {
-            replicas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i), masterStorageUnitId));
-        }
-        this.replicaMetas = Collections.unmodifiableMap(replicas);
-        this.masterStorageUnitId = masterStorageUnitId;
-    }
-
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String masterStorageUnitId) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        this.masterStorageUnitId = masterStorageUnitId;
+        this.masterStorageUnit = masterStorageUnit;
     }
 
     public TimeInterval getTimeInterval() {
@@ -102,18 +75,8 @@ public final class FragmentMeta {
         return tsInterval;
     }
 
-    @Deprecated
-    public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
-        return new HashMap<>(replicaMetas);
-    }
-
-    @Deprecated
-    public int getReplicaMetasNum() {
-        return replicaMetas.size();
-    }
-
     public FragmentMeta endFragmentMeta(long endTime) {
-        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime, replicaMetas);
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
     }
 
     public long getCreatedBy() {
@@ -140,11 +103,19 @@ public final class FragmentMeta {
                 '}';
     }
 
-    public void setMasterStorageUnitId(String masterStorageUnitId) {
-        this.masterStorageUnitId = masterStorageUnitId;
+    public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
+        this.masterStorageUnit = masterStorageUnit;
     }
 
-    public String getMasterStorageUnitId() {
-        return masterStorageUnitId;
+    public StorageUnitMeta getMasterStorageUnit() {
+        return masterStorageUnit;
+    }
+
+    public String getFakeStorageUnitId() {
+        return fakeStorageUnitId;
+    }
+
+    public void setFakeStorageUnitId(String fakeStorageUnitId) {
+        this.fakeStorageUnitId = fakeStorageUnitId;
     }
 }

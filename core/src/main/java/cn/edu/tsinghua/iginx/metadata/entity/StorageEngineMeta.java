@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public final class StorageEngineMeta {
 
@@ -53,36 +52,9 @@ public final class StorageEngineMeta {
     private StorageEngine storageEngine;
 
     /**
-     * 时序数据库存储的数据分片，不进行序列化。
-     */
-    @Deprecated
-    private transient List<FragmentReplicaMeta> fragmentReplicaMetaList = new ArrayList<>();
-
-    @Deprecated
-    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList = new ArrayList<>();
-
-    /**
      * 实例上管理的存储单元列表
      */
     private transient List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-
-    @Deprecated
-    public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
-        this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
-    }
-
-    @Deprecated
-    public void endLatestFragmentReplicaMetas(TimeSeriesInterval tsInterval, long endTime) {
-        fragmentReplicaMetaList.addAll(latestFragmentReplicaMetaList.stream().filter(e -> e.getTsInterval().equals(tsInterval)).map(
-                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getStartTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
-                        e.getStorageEngineId())).collect(Collectors.toList()));
-        latestFragmentReplicaMetaList.removeIf(e -> e.getTsInterval().equals(tsInterval));
-    }
-
-    @Deprecated
-    public void addLatestFragmentReplicaMetas(FragmentReplicaMeta fragmentReplicaMeta) {
-        latestFragmentReplicaMetaList.add(fragmentReplicaMeta);
-    }
 
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
         this.id = id;
@@ -130,19 +102,6 @@ public final class StorageEngineMeta {
 
     public void setDbType(StorageEngine storageEngine) {
         this.storageEngine = storageEngine;
-    }
-
-    @Deprecated
-    public List<FragmentReplicaMeta> getFragmentReplicaMetaList() {
-        List<FragmentReplicaMeta> replicaMetas = new ArrayList<>();
-        replicaMetas.addAll(fragmentReplicaMetaList);
-        replicaMetas.addAll(latestFragmentReplicaMetaList);
-        return replicaMetas;
-    }
-
-    @Deprecated
-    public int getFragmentReplicaMetaNum() {
-        return fragmentReplicaMetaList.size() + latestFragmentReplicaMetaList.size();
     }
 
     public List<StorageUnitMeta> getStorageUnitList() {

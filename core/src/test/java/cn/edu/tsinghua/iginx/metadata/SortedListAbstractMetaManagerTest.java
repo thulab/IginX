@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -29,9 +28,9 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 public class SortedListAbstractMetaManagerTest {
 
@@ -47,19 +46,19 @@ public class SortedListAbstractMetaManagerTest {
     public void testSearchFragmentList() {
         // 构造分片
         List<FragmentMeta> fragmentMetas = new ArrayList<>();
-        FragmentMeta fragmentMeta0 = new FragmentMeta("root.sg1.d1.s1", null, 0L, 50L, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta0 = new FragmentMeta("root.sg1.d1.s1", null, 0L, 50L);
         fragmentMetas.add(fragmentMeta0);
-        FragmentMeta fragmentMeta1 = new FragmentMeta(null, "root.sg1.d1.s1", 0L, 100L, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta1 = new FragmentMeta(null, "root.sg1.d1.s1", 0L, 100L);
         fragmentMetas.add(fragmentMeta1);
-        FragmentMeta fragmentMeta2 = new FragmentMeta("root.sg1.d1.s1", null, 50L, 150L, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta2 = new FragmentMeta("root.sg1.d1.s1", null, 50L, 150L);
         fragmentMetas.add(fragmentMeta2);
-        FragmentMeta fragmentMeta3 = new FragmentMeta(null, "root.sg1.d1.s1", 100L, 120L, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta3 = new FragmentMeta(null, "root.sg1.d1.s1", 100L, 120L);
         fragmentMetas.add(fragmentMeta3);
-        FragmentMeta fragmentMeta4 = new FragmentMeta(null, "root.sg1.d1.s1", 120L, 500L, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta4 = new FragmentMeta(null, "root.sg1.d1.s1", 120L, 500L);
         fragmentMetas.add(fragmentMeta4);
-        FragmentMeta fragmentMeta5 = new FragmentMeta("root.sg1.d1.s1", null, 150L, Long.MAX_VALUE, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta5 = new FragmentMeta("root.sg1.d1.s1", null, 150L, Long.MAX_VALUE);
         fragmentMetas.add(fragmentMeta5);
-        FragmentMeta fragmentMeta6 = new FragmentMeta(null, "root.sg1.d1.s1", 500L, Long.MAX_VALUE, (Map<Integer, FragmentReplicaMeta>) null);
+        FragmentMeta fragmentMeta6 = new FragmentMeta(null, "root.sg1.d1.s1", 500L, Long.MAX_VALUE);
         fragmentMetas.add(fragmentMeta6);
 
         List<FragmentMeta> resultList;

@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +38,13 @@ public class AddColumnsPlan extends ColumnPlan {
 		super(false, paths);
 		this.setIginxPlanType(ADD_COLUMNS);
 		this.attributesList = attributesList;
+	}
+
+	public AddColumnsPlan(List<String> paths, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+		super(false, paths);
+		this.setIginxPlanType(ADD_COLUMNS);
+		this.attributesList = attributesList;
+		this.setStorageUnit(storageUnit);
 	}
 
 	public List<Map<String, String>> getAttributesList() {

@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +32,8 @@ public class QueryDataPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
 
-	public QueryDataPlan(List<String> paths, long startTime, long endTime, long storageEngineId, String storageUnitId) {
-		super(true, paths, startTime, endTime, storageEngineId, storageUnitId);
+	public QueryDataPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+		super(true, paths, startTime, endTime, storageUnit);
 		this.setIginxPlanType(QUERY_DATA);
 		boolean isStartPrefix = paths.get(0).contains("*");
 		String startTimeSeries = isStartPrefix ?
@@ -63,7 +64,7 @@ public class QueryDataPlan extends DataPlan {
 	}
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
-		this(paths, startTime, endTime, -1L, "");
+		this(paths, startTime, endTime, null);
 	}
 
 	public List<String> getPathsByInterval(TimeSeriesInterval interval) {

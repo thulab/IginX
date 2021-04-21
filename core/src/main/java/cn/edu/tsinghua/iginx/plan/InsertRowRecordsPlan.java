@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -38,14 +39,14 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
     private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
 
     public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId, String storageUnitId) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId, storageUnitId);
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
         this.setIginxPlanType(INSERT_ROW_RECORDS);
     }
 
     public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, -1L, "");
+        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, null);
     }
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {

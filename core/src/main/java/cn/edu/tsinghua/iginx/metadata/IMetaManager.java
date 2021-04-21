@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
@@ -51,13 +50,6 @@ public interface IMetaManager {
     StorageUnitMeta getStorageUnit(String id);
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
-
-
-    /**
-     * 获取某个存储引擎的所有分片的元信息
-     */
-    @Deprecated
-    List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long storageEngineId);
 
     /**
      * 获取所有活跃的 iginx 节点的元信息
@@ -126,12 +118,6 @@ public interface IMetaManager {
      * @return 选出的存储引擎实例 Id 列表
      */
     List<Long> selectStorageEngineIdList();
-
-    /**
-     * 为新创建的分片选择存储单元
-     * @return 选出的存储单元实例 Id 列表
-     */
-    List<String> chooseStorageUnitIdListForNewFragment();
 
     /**
      * 移动存储单元
