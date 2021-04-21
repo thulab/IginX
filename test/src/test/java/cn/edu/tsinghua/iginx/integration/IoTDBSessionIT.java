@@ -15,7 +15,7 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
-public class IoTDBSessionAggrITest {
+public class IoTDBSessionIT {
 
     private static Session session;
 
@@ -297,7 +297,7 @@ public class IoTDBSessionAggrITest {
     }
 
     @Test
-    public void deletePartDataInColumnTest() throws SessionException {
+    public void deletePartialDataInColumnTest() throws SessionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
@@ -463,7 +463,7 @@ public class IoTDBSessionAggrITest {
     }
 
     @Test
-    public void deleteAllColumnTest() throws SessionException, ExecutionException {
+    public void deleteAllColumnsTest() throws SessionException, ExecutionException {
         session.deleteColumns(paths);
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         assertEquals(dataSet.getPaths().size(), 0);
@@ -472,7 +472,7 @@ public class IoTDBSessionAggrITest {
     }
 
     @Test
-    public void deletePartColumnTest() throws SessionException, ExecutionException {
+    public void deletePartialColumnsTest() throws SessionException, ExecutionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
