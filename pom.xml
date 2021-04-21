@@ -21,6 +21,7 @@
     <module>influxdb</module>
     <module>client</module>
     <module>example</module>
+    <module>test</module>
   </modules>
 
   <dependencies>
