@@ -220,6 +220,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
                     if (storageUnitMeta != null) {
                         logger.info("new storage unit comes to cluster: id = " + storageUnitMeta.getId());
+                        if (storageUnitMeta.getCreatedBy() == iginxId) {
+                            break;
+                        }
                         storageUnitLock.writeLock().lock();
                         StorageUnitMeta originStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getId());
                         if (originStorageUnitMeta == null) {
@@ -595,33 +598,43 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_UNIT_LOCK_NODE);
         Map<String, String> fakeNameMap = new HashMap<>();
         try {
+            storageUnitLock.writeLock().lock();
             mutex.acquire();
             for (StorageUnitMeta masterStorageUnit: storageUnits) {
+                masterStorageUnit.setCreatedBy(iginxId);
                 String fakeName = masterStorageUnit.getId();
                 String nodeName = this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                         .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
                 String actualName = nodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
+                StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
                 this.zookeeperClient.setData()
-                        .forPath(nodeName, JsonUtils.toJson(masterStorageUnit.renameStorageUnitMeta(actualName, actualName)));
+                        .forPath(nodeName, JsonUtils.toJson(actualMasterStorageUnit));
                 fakeNameMap.put(fakeName, actualName);
                 for (StorageUnitMeta slaveStorageUnit: masterStorageUnit.getReplicas()) {
+                    slaveStorageUnit.setCreatedBy(iginxId);
                     String slaveFakeName = slaveStorageUnit.getId();
                     String slaveNodeName = this.zookeeperClient.create()
                             .creatingParentsIfNeeded()
                             .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                             .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
                     String slaveActualName = slaveNodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
+
+                    StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
+                    actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+                    storageUnitMetaMap.put(actualSlaveStorageUnit.getId(), actualSlaveStorageUnit);
                     this.zookeeperClient.setData()
-                            .forPath(slaveNodeName, JsonUtils.toJson(slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName)));
+                            .forPath(slaveNodeName, JsonUtils.toJson(actualSlaveStorageUnit));
                     fakeNameMap.put(slaveFakeName, slaveActualName);
                 }
+                storageUnitMetaMap.put(actualMasterStorageUnit.getId(), actualMasterStorageUnit);
             }
         } catch (Exception e) {
             logger.error("try init storageUnits error: ", e);
             return null;
         } finally {
+            storageUnitLock.writeLock().unlock();
             try {
                 mutex.release();
             } catch (Exception e ) {

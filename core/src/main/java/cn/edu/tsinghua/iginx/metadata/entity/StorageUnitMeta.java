@@ -32,6 +32,8 @@ public final class StorageUnitMeta {
 
     private final boolean isMaster;
 
+    private long createdBy;
+
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
@@ -80,11 +82,15 @@ public final class StorageUnitMeta {
     }
 
     public StorageUnitMeta migrateStorageUnitMeta(long targetStorageEngineId) {
-        return new StorageUnitMeta(id, targetStorageEngineId, masterId, isMaster);
+        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, targetStorageEngineId, masterId, isMaster);
+        storageUnitMeta.setCreatedBy(createdBy);
+        return storageUnitMeta;
     }
 
     public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
-        return new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
+        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
+        storageUnitMeta.setCreatedBy(createdBy);
+        return storageUnitMeta;
     }
 
     @Override
@@ -98,5 +104,13 @@ public final class StorageUnitMeta {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(long createdBy) {
+        this.createdBy = createdBy;
     }
 }
