@@ -344,6 +344,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<SplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
+            if (fragmentList.isEmpty()) {
+                continue;
+            }
             FragmentMeta fragment = fragmentList.get(0);
             for (FragmentReplicaMeta replica : selectFragmentReplicas(fragment, true)) {
                 infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), replica));
@@ -358,6 +361,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<SplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
+            if (fragmentList.isEmpty()) {
+                continue;
+            }
             FragmentMeta fragment = fragmentList.get(fragmentList.size() - 1);
             for (FragmentReplicaMeta replica : selectFragmentReplicas(fragment, true)) {
                 infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), replica));
