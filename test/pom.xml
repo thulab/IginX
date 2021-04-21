@@ -11,7 +11,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>iginx-test</artifactId>
+    <artifactId>test</artifactId>
     <name>IginX Test</name>
 
     <properties>
