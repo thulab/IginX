@@ -39,6 +39,8 @@ import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
@@ -281,6 +283,22 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
             return storageEngine.syncExecuteDownsampleMinQueryDataPlan(plan);
+        return null;
+    }
+
+    @Override
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryDataPlan(DownsampleFirstQueryPlan plan) {
+        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
+        if (storageEngine != null)
+            return storageEngine.syncExecuteDownsampleFirstQueryDataPlan(plan);
+        return null;
+    }
+
+    @Override
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryDataPlan(DownsampleLastQueryPlan plan) {
+        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
+        if (storageEngine != null)
+            return storageEngine.syncExecuteDownsampleLastQueryDataPlan(plan);
         return null;
     }
 
