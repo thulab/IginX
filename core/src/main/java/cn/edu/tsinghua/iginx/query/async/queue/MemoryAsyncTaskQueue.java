@@ -22,7 +22,6 @@ import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class MemoryAsyncTaskQueue implements AsyncTaskQueue {

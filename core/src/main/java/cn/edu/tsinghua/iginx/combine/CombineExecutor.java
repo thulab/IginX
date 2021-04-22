@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteRe
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -101,6 +102,15 @@ public class CombineExecutor implements ICombineExecutor {
                 }
                 combineResult = new AggregateCombineResult(status, aggregateQueryResp);
                 break;
+            case DownsampleQuery:
+                DownsampleQueryResp downsampleQueryResp = new DownsampleQueryResp();
+                downsampleQueryResp.setStatus(status);
+                try {
+                    // TODO: combine downsample query
+                } catch (Exception e) {
+                    logger.error("encounter error when combine downsample data results: ", e);
+                }
+                combineResult = new DownsampleQueryCombineResult(status, downsampleQueryResp);
             default:
                 combineResult = new NonDataCombineResult(status);
         }

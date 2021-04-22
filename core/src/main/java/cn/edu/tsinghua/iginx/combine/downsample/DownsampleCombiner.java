@@ -16,20 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.combine.downsample;
 
-public enum ContextType {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    Unknown;
+public class DownsampleCombiner {
+
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleCombiner.class);
 
 }

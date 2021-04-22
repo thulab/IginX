@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
@@ -31,13 +32,19 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByData
 
 public class SessionQueryDataSet {
 
-	private List<String> paths;
+	private final List<String> paths;
 
-	private long[] timestamps;
+	private final long[] timestamps;
 
 	private List<List<Object>> values;
 
 	public SessionQueryDataSet(QueryDataResp resp) {
+		this.paths = resp.getPaths();
+		this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+		parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+	}
+
+	public SessionQueryDataSet(DownsampleQueryResp resp) {
 		this.paths = resp.getPaths();
 		this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
 		parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
@@ -63,10 +70,6 @@ public class SessionQueryDataSet {
 
 	public List<String> getPaths() {
 		return paths;
-	}
-
-	public void setPaths(List<String> paths) {
-		this.paths = paths;
 	}
 
 	public long[] getTimestamps() {

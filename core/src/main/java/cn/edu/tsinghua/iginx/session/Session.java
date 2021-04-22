@@ -31,6 +31,8 @@ import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
@@ -587,4 +589,27 @@ public class Session {
 
 		return new SessionAggregateQueryDataSet(resp, aggregateType);
 	}
+
+	public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException {
+		DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
+				aggregateType, precision);
+
+		DownsampleQueryResp resp;
+
+		try {
+			do {
+				lock.readLock().lock();
+				try {
+					resp = client.downsampleQuery(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(resp.status));
+		} catch (TException e) {
+			throw new SessionException(e);
+		}
+
+		return new SessionQueryDataSet(resp);
+	}
+
 }

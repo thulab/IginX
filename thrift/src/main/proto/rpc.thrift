@@ -137,7 +137,7 @@ struct AggregateQueryResp {
 }
 
 
-struct DownSampledAggregateQueryReq {
+struct DownsampleQueryReq {
     1: required i64 sessionId
     2: required list<string> paths
     3: required i64 startTime
@@ -147,13 +147,11 @@ struct DownSampledAggregateQueryReq {
 }
 
 
-struct DownSampledAggregateQueryResp {
+struct DownsampleQueryResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
-    4: optional binary timestamps
-    5: optional list<binary> valuesList
-    6: optional list<binary> bitmapList
+    4: optional QueryDataSet queryDataSet
 }
 
 
@@ -183,6 +181,6 @@ service IService {
 
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
 
-    DownSampledAggregateQueryResp downSampledAggregateQuery(DownSampledAggregateQueryReq req);
+    DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 
 }
