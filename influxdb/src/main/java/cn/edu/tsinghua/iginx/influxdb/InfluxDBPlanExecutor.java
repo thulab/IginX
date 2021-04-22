@@ -626,37 +626,37 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryDataPlan(DownsampleAvgQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryDataPlan(DownsampleCountQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryPlan(DownsampleCountQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryDataPlan(DownsampleSumQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryPlan(DownsampleSumQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryDataPlan(DownsampleMaxQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryDataPlan(DownsampleMinQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryPlan(DownsampleMinQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryDataPlan(DownsampleFirstQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
 		return null;
 	}
 
 	@Override
-	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryDataPlan(DownsampleLastQueryPlan plan) {
+	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
 		return null;
 	}
 

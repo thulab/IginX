@@ -80,19 +80,19 @@ public interface IStorageEngine {
 
     SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryDataPlan(DownsampleAvgQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryDataPlan(DownsampleCountQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryPlan(DownsampleCountQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryDataPlan(DownsampleSumQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryPlan(DownsampleSumQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryDataPlan(DownsampleMaxQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryDataPlan(DownsampleMinQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryPlan(DownsampleMinQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryDataPlan(DownsampleFirstQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan);
 
-    DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryDataPlan(DownsampleLastQueryPlan plan);
+    DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan);
 
     StorageEngineChangeHook getStorageEngineChangeHook();
 
