@@ -50,7 +50,7 @@ jobs:
            chmod +x "${GITHUB_WORKSPACE}/start.sh"
            nohup "${GITHUB_WORKSPACE}/start.sh" &
     - name: A Lame Integration Test with Maven
-      run: mvn -B clean install
+      run: mvn -B install
     - name: Coverage report
       run: mvn -B verify -P coverage --no-transfer-progress
     - uses: codecov/codecov-action@v1
