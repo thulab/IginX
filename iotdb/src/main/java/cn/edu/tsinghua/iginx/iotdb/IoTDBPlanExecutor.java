@@ -92,6 +92,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String TIME_RANGE_WHERE_CLAUSE = "WHERE time >= %d and time <= %d";
 
+    private static final String GROUP_BY_CLAUSE = "GROUP BY ([%s, %s), %sms)";
+
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
     private static final String MAX_VALUE = "SELECT MAX_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
@@ -107,6 +109,20 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     private static final String COUNT = "SELECT COUNT(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
     private static final String SUM = "SELECT SUM(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+
+    private static final String MAX_VALUE_DOWNSAMPLE = "SELECT MAX_VALUE(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String MIN_VALUE_DOWNSAMPLE = "SELECT MIN_VALUE(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String FIRST_VALUE_DOWNSAMPLE = "SELECT FIRST_VALUE(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String LAST_VALUE_DOWNSAMPLE = "SELECT LAST_VALUE(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String AVG_DOWNSAMPLE = "SELECT AVG(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String COUNT_DOWNSAMPLE = "SELECT COUNT(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String SUM_DOWNSAMPLE = "SELECT SUM(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
 
     // TODO 升级到0.11.3后删除
     private final Map<Long, StorageEngineMeta> storageEngineMetas;
@@ -561,36 +577,106 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(AVG_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryPlan(DownsampleCountQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(COUNT_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryPlan(DownsampleSumQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(SUM_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(MAX_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryPlan(DownsampleMinQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(MIN_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(FIRST_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(LAST_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 }
