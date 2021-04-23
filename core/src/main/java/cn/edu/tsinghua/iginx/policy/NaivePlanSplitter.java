@@ -37,11 +37,19 @@ import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -251,6 +259,41 @@ public class NaivePlanSplitter implements IPlanSplitter {
             }
         }
         return infoList;
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleMinQueryPlanResults(DownsampleMinQueryPlan plan) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleSumQueryPlanResults(DownsampleSumQueryPlan plan) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleCountQueryPlanResults(DownsampleCountQueryPlan plan) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleAvgQueryPlanResults(DownsampleAvgQueryPlan plan) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleFirstQueryPlanResults(DownsampleFirstQueryPlan plan) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan) {
+        return Collections.emptyList();
     }
 
     @Override

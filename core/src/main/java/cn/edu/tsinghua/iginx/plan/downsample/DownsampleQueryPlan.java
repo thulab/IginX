@@ -30,6 +30,8 @@ public class DownsampleQueryPlan extends DataPlan {
 
     private final long precision;
 
+    private int combineGroup;
+
     public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
         super(true, paths, startTime, endTime);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
@@ -38,5 +40,13 @@ public class DownsampleQueryPlan extends DataPlan {
 
     public long getPrecision() {
         return precision;
+    }
+
+    public int getCombineGroup() {
+        return combineGroup;
+    }
+
+    public void setCombineGroup(int combineGroup) {
+        this.combineGroup = combineGroup;
     }
 }
