@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
@@ -47,6 +48,13 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
@@ -54,6 +62,7 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -64,6 +73,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -205,6 +215,75 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     default:
                         throw new UnsupportedOperationException(aggregateQueryReq.getAggregateType().toString());
                 }
+            case DownsampleQuery:
+                DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
+                switch (downsampleQueryReq.aggregateType) {
+                    case MAX:
+                        DownsampleMaxQueryPlan downsampleMaxQueryPlan = new DownsampleMaxQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                                );
+                        splitInfoList = planSplitter.getSplitDownsampleMaxQueryPlanResults(downsampleMaxQueryPlan);
+                        return splitDownsampleMaxQueryPlan(downsampleMaxQueryPlan, splitInfoList);
+                    case MIN:
+                        DownsampleMinQueryPlan downsampleMinQueryPlan = new DownsampleMinQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleMinQueryPlanResults(downsampleMinQueryPlan);
+                        return splitDownsampleMinQueryPlan(downsampleMinQueryPlan, splitInfoList);
+                    case AVG:
+                        DownsampleAvgQueryPlan downsampleAvgQueryPlan = new DownsampleAvgQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleAvgQueryPlanResults(downsampleAvgQueryPlan);
+                        return splitDownsampleAvgQueryPlan(downsampleAvgQueryPlan, splitInfoList);
+                    case SUM:
+                        DownsampleSumQueryPlan downsampleSumQueryPlan = new DownsampleSumQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleSumQueryPlanResults(downsampleSumQueryPlan);
+                        return splitDownsampleSumQueryPlan(downsampleSumQueryPlan, splitInfoList);
+                    case COUNT:
+                        DownsampleCountQueryPlan downsampleCountQueryPlan = new DownsampleCountQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleCountQueryPlanResults(downsampleCountQueryPlan);
+                        return splitDownsampleCountQueryPlan(downsampleCountQueryPlan, splitInfoList);
+                    case FIRST:
+                        DownsampleFirstQueryPlan downsampleFirstQueryPlan = new DownsampleFirstQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleFirstQueryPlanResults(downsampleFirstQueryPlan);
+                        return splitDownsampleFirstQueryPlan(downsampleFirstQueryPlan, splitInfoList);
+                    case LAST:
+                        DownsampleLastQueryPlan downsampleLastQueryPlan = new DownsampleLastQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleLastQueryPlanResults(downsampleLastQueryPlan);
+                        return splitDownsampleLastQueryPlan(downsampleLastQueryPlan, splitInfoList);
+                    default:
+                        throw new UnsupportedOperationException(downsampleQueryReq.getAggregateType().toString());
+                }
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }
@@ -313,6 +392,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<IginxPlan> splitDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
+    }
+
     public List<MinQueryPlan> splitMinQueryPlan(MinQueryPlan plan, List<SplitInfo> infoList) {
         List<MinQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -325,6 +408,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
             plans.add(subPlan);
         }
         return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleMinQueryPlan(DownsampleMinQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
     }
 
     public List<FirstQueryPlan> splitFirstQueryPlan(FirstQueryPlan plan, List<SplitInfo> infoList) {
@@ -341,6 +428,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<IginxPlan> splitDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
+    }
+
     public List<LastQueryPlan> splitLastQueryPlan(LastQueryPlan plan, List<SplitInfo> infoList) {
         List<LastQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -353,6 +444,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
             plans.add(subPlan);
         }
         return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleLastQueryPlan(DownsampleLastQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
     }
 
     public List<CountQueryPlan> splitCountQueryPlan(CountQueryPlan plan, List<SplitInfo> infoList) {
@@ -369,6 +464,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<IginxPlan> splitDownsampleCountQueryPlan(DownsampleCountQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
+    }
+
     public List<SumQueryPlan> splitSumQueryPlan(SumQueryPlan plan, List<SplitInfo> infoList) {
         List<SumQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -381,6 +480,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
             plans.add(subPlan);
         }
         return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleSumQueryPlan(DownsampleSumQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
     }
 
     public List<AvgQueryPlan> splitAvgQueryPlan(AvgQueryPlan plan, List<SplitInfo> infoList) {
@@ -396,4 +499,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         }
         return plans;
     }
+
+    public List<IginxPlan> splitDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan, List<SplitInfo> infoList) {
+        return Collections.emptyList();
+    }
+
 }
