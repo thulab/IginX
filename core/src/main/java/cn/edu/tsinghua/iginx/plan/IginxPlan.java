@@ -103,6 +103,17 @@ public abstract class IginxPlan {
 		DELETE_COLUMNS, DATA, INSERT_RECORDS, INSERT_COLUMN_RECORDS, INSERT_ROW_RECORDS,
 		DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY, MAX, MIN, SUM, COUNT, AVG, FIRST, LAST,
 		DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX, DOWNSAMPLE_MIN, DOWNSAMPLE_SUM, DOWNSAMPLE_COUNT, DOWNSAMPLE_AVG,
-		DOWNSAMPLE_FIRST, DOWNSAMPLE_LAST
+		DOWNSAMPLE_FIRST, DOWNSAMPLE_LAST;
+
+		public boolean isDownsampleQuery() {
+			return this == DOWNSAMPLE_QUERY || this == DOWNSAMPLE_AVG || this == DOWNSAMPLE_COUNT || this == DOWNSAMPLE_SUM ||
+					this == DOWNSAMPLE_MIN || this == DOWNSAMPLE_MAX || this == DOWNSAMPLE_FIRST || this == DOWNSAMPLE_LAST;
+		}
+
+		public boolean isAggregateQuery() {
+			return this == AGGREGATE_QUERY || this == AVG || this == COUNT || this == SUM ||
+					this == MIN || this == MAX || this == FIRST || this == LAST;
+		}
+
 	}
 }

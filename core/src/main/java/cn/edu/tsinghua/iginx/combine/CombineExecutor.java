@@ -19,8 +19,10 @@
 package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
+import cn.edu.tsinghua.iginx.combine.downsample.DownsampleCombiner;
 import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
@@ -30,6 +32,7 @@ import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteRe
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
@@ -105,12 +108,14 @@ public class CombineExecutor implements ICombineExecutor {
             case DownsampleQuery:
                 DownsampleQueryResp downsampleQueryResp = new DownsampleQueryResp();
                 downsampleQueryResp.setStatus(status);
+                DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
                 try {
-                    // TODO: combine downsample query
+                    DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults, downsampleQueryReq.aggregateType);
                 } catch (Exception e) {
                     logger.error("encounter error when combine downsample data results: ", e);
                 }
                 combineResult = new DownsampleQueryCombineResult(status, downsampleQueryResp);
+                break;
             default:
                 combineResult = new NonDataCombineResult(status);
         }
