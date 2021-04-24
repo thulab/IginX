@@ -34,6 +34,8 @@ public abstract class IginxPlan {
 
 	private long storageEngineId;
 
+	private int combineGroup;;
+
 	protected IginxPlan(boolean isQuery) {
 		this.iginxPlanType = IGINX;
 		this.isQuery = isQuery;
@@ -85,6 +87,14 @@ public abstract class IginxPlan {
 
 	public void setStorageEngineId(long storageEngineId) {
 		this.storageEngineId = storageEngineId;
+	}
+
+	public int getCombineGroup() {
+		return combineGroup;
+	}
+
+	public void setCombineGroup(int combineGroup) {
+		this.combineGroup = combineGroup;
 	}
 
 	public enum IginxPlanType {

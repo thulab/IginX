@@ -29,6 +29,7 @@ import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -43,13 +44,16 @@ import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -261,39 +265,114 @@ public class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
+    private List<SplitInfo> getSplitResultsForDownsamplePlan(DownsampleQueryPlan plan, IginxPlan.IginxPlanType intervalQueryPlan) {
+        updatePrefix(plan);
+        // 初始化结果集
+        List<SplitInfo> infoList = new ArrayList<>();
+        // 对查出来的分片结果按照开始时间进行排序、分组
+        List<List<FragmentMeta>> fragmentMetasList = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+                plan.getTsInterval(), plan.getTimeInterval()).values().stream().flatMap(List::stream)
+                .sorted(Comparator.comparingLong(e -> e.getTimeInterval().getStartTime()))
+                .collect(Collectors.groupingBy(e -> e.getTimeInterval().getStartTime())).entrySet().stream()
+                .sorted(Comparator.comparingLong(Map.Entry::getKey)).map(Map.Entry::getValue).collect(Collectors.toList());
+        // 聚合精度，后续会多次用到
+        long precision = plan.getPrecision();
+        // 计算子查询时间片列表
+        List<TimeInterval> planTimeIntervals = splitTimeIntervalForDownsampleQuery(fragmentMetasList.stream()
+                .map(e -> e.get(0).getTimeInterval()).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+        // 所属的合并组的组号
+        int combineGroup = 0;
+        int index = 0;
+        long timespan = 0L;
+        for (List<FragmentMeta> fragmentMetas: fragmentMetasList) {
+            long endTime = fragmentMetas.get(0).getTimeInterval().getEndTime();
+            while (planTimeIntervals.get(index).getEndTime() <= endTime) {
+                TimeInterval timeInterval = planTimeIntervals.get(index++);
+                if (timeInterval.getSpan() >= precision) {
+                    // 对于聚合子查询，清空 timespan，并且在计划全部加入之后增加组号
+                    for (FragmentMeta fragment: fragmentMetas) {
+                        List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
+                        for (FragmentReplicaMeta replica : replicas) {
+                            infoList.add(new SplitInfo(timeInterval, fragment.getTsInterval(), replica, plan.getIginxPlanType(), combineGroup));
+                        }
+                    }
+                    timespan = 0L;
+                    combineGroup += 1;
+                } else {
+                    for (FragmentMeta fragment: fragmentMetas) {
+                        List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
+                        for (FragmentReplicaMeta replica : replicas) {
+                            infoList.add(new SplitInfo(timeInterval, fragment.getTsInterval(), replica, intervalQueryPlan, combineGroup));
+                        }
+                    }
+                    timespan += timeInterval.getSpan();
+                    if (timespan >= precision) {
+                        timespan = 0L;
+                        combineGroup += 1;
+                    }
+                }
+            }
+        }
+        return infoList;
+    }
+
+    public static List<TimeInterval> splitTimeIntervalForDownsampleQuery(List<TimeInterval> timeIntervals,
+                                                                         long beginTime, long endTime, long precision) {
+        List<TimeInterval> resultList = new ArrayList<>();
+        for (TimeInterval timeInterval: timeIntervals) {
+            long midIntervalBeginTime = Math.max(timeInterval.getStartTime(), beginTime);
+            long midIntervalEndTime = Math.min(timeInterval.getEndTime(), endTime);
+            if (timeInterval.getStartTime() > beginTime && (timeInterval.getStartTime() - beginTime) % precision != 0) { // 只有非第一个分片才有可能创建前缀分片
+                long prefixIntervalEndTime = Math.min(midIntervalBeginTime + precision - (timeInterval.getStartTime() - beginTime) % precision, midIntervalEndTime);
+                resultList.add(new TimeInterval(midIntervalBeginTime, prefixIntervalEndTime));
+                midIntervalBeginTime = prefixIntervalEndTime;
+            }
+            if ((midIntervalEndTime - midIntervalBeginTime) >= precision) {
+                midIntervalEndTime -= (midIntervalEndTime - midIntervalBeginTime) % precision;
+                resultList.add(new TimeInterval(midIntervalBeginTime, midIntervalEndTime));
+            } else {
+                midIntervalEndTime = midIntervalBeginTime;
+            }
+            if (midIntervalEndTime != Math.min(timeInterval.getEndTime(), endTime)) {
+                resultList.add(new TimeInterval(midIntervalEndTime, Math.min(timeInterval.getEndTime(), endTime)));
+            }
+        }
+        return resultList;
+    }
+
     @Override
     public List<SplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.MAX);
     }
 
     @Override
     public List<SplitInfo> getSplitDownsampleMinQueryPlanResults(DownsampleMinQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.MIN);
     }
 
     @Override
     public List<SplitInfo> getSplitDownsampleSumQueryPlanResults(DownsampleSumQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.SUM);
     }
 
     @Override
     public List<SplitInfo> getSplitDownsampleCountQueryPlanResults(DownsampleCountQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.COUNT);
     }
 
     @Override
     public List<SplitInfo> getSplitDownsampleAvgQueryPlanResults(DownsampleAvgQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.AVG);
     }
 
     @Override
     public List<SplitInfo> getSplitDownsampleFirstQueryPlanResults(DownsampleFirstQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.FIRST);
     }
 
     @Override
     public List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan) {
-        return Collections.emptyList();
+        return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.LAST);
     }
 
     @Override

@@ -90,7 +90,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String PREFIX = "root.";
 
-    private static final String TIME_RANGE_WHERE_CLAUSE = "WHERE time >= %d and time <= %d";
+    private static final String TIME_RANGE_WHERE_CLAUSE = "WHERE time >= %d and time < %d";
 
     private static final String GROUP_BY_CLAUSE = "GROUP BY ([%s, %s), %sms)";
 

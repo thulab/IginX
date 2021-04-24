@@ -35,6 +35,10 @@ public final class TimeInterval {
         return startTime;
     }
 
+    public long getSpan() {
+        return endTime - startTime;
+    }
+
     public long getEndTime() {
         return endTime;
     }
