@@ -16,14 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.combine.querydata;
+package cn.edu.tsinghua.iginx.combine.downsample;
 
+import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
+import cn.edu.tsinghua.iginx.combine.querydata.QueryExecuteDataSetWrapper;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
+import cn.edu.tsinghua.iginx.plan.AggregateQueryPlan;
+import cn.edu.tsinghua.iginx.plan.DataPlan;
+import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
+import cn.edu.tsinghua.iginx.query.result.AggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
@@ -42,24 +54,55 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class QueryDataSetCombiner {
+public class DownsampleCombiner {
 
-    private static final Logger logger = LoggerFactory.getLogger(QueryDataSetCombiner.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleCombiner.class);
 
-    private static final QueryDataSetCombiner instance = new QueryDataSetCombiner();
-
-    private QueryDataSetCombiner() {
+    public static void combineDownsampleQueryResult(DownsampleQueryResp resp, List<PlanExecuteResult> planExecuteResults, AggregateType aggregateType)
+            throws ExecutionException {
+        Map<Integer, List<PlanExecuteResult>> aggregateResultGroups = planExecuteResults.stream().filter(e -> e.getPlan().getIginxPlanType().isAggregateQuery()).collect(Collectors
+                .groupingBy(e -> e.getPlan().getCombineGroup()));
+        List<QueryExecuteDataSet> downsampleQueryPlanExecuteResults = planExecuteResults.stream().filter(e -> e.getPlan().getIginxPlanType().isDownsampleQuery())
+                .map(DownsampleQueryPlanExecuteResult.class::cast).map(DownsampleQueryPlanExecuteResult::getQueryExecuteDataSets).flatMap(List::stream).collect(Collectors.toList());
+        for (List<PlanExecuteResult> aggregateResultGroup: aggregateResultGroups.values()) {
+            long timestamp = aggregateResultGroup.stream().map(PlanExecuteResult::getPlan).map(AggregateQueryPlan.class::cast).mapToLong(DataPlan::getStartTime)
+                    .min().orElse(0);
+            AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
+            switch (aggregateType) {
+                case MAX:
+                    AggregateCombiner.getInstance().combineMaxResult(aggregateQueryResp, aggregateResultGroup.stream()
+                            .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    break;
+                case MIN:
+                    AggregateCombiner.getInstance().combineMinResult(aggregateQueryResp, aggregateResultGroup.stream()
+                            .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    break;
+                case AVG:
+                    AggregateCombiner.getInstance().combineAvgResult(aggregateQueryResp, aggregateResultGroup.stream()
+                            .map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    break;
+                case COUNT:
+                case SUM:
+                    AggregateCombiner.getInstance().combineSumOrCountResult(aggregateQueryResp, aggregateResultGroup.stream()
+                            .map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    break;
+                case FIRST:
+                    AggregateCombiner.getInstance().combineFirstResult(aggregateQueryResp, aggregateResultGroup.stream()
+                            .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    break;
+                case LAST:
+                    AggregateCombiner.getInstance().combineLastResult(aggregateQueryResp, aggregateResultGroup.stream()
+                            .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    break;
+            }
+            downsampleQueryPlanExecuteResults.add(new DownsampleGroupQueryExecuteDataSet(timestamp, aggregateQueryResp));
+        }
+        combineResult(resp, downsampleQueryPlanExecuteResults);
     }
 
-    public static QueryDataSetCombiner getInstance() {
-        return instance;
-    }
 
-    public void combineResult(QueryDataResp resp, List<QueryDataPlanExecuteResult> planExecuteResults) throws ExecutionException {
-        Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSets() != null)
-                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
-                .map(QueryDataPlanExecuteResult::getQueryExecuteDataSets)
-                .flatMap(Collection::stream)
+    public static void combineResult(DownsampleQueryResp resp, List<QueryExecuteDataSet> queryExecuteDataSets) throws ExecutionException {
+        Set<QueryExecuteDataSetWrapper> dataSetWrappers = queryExecuteDataSets.stream()
                 .map(CheckedFunction.wrap(QueryExecuteDataSetWrapper::new))
                 .collect(Collectors.toSet());
 

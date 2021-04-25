@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
@@ -47,6 +48,14 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
@@ -54,6 +63,7 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -64,6 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -205,6 +216,75 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     default:
                         throw new UnsupportedOperationException(aggregateQueryReq.getAggregateType().toString());
                 }
+            case DownsampleQuery:
+                DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
+                switch (downsampleQueryReq.aggregateType) {
+                    case MAX:
+                        DownsampleMaxQueryPlan downsampleMaxQueryPlan = new DownsampleMaxQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                                );
+                        splitInfoList = planSplitter.getSplitDownsampleMaxQueryPlanResults(downsampleMaxQueryPlan);
+                        return splitDownsampleMaxQueryPlan(downsampleMaxQueryPlan, splitInfoList);
+                    case MIN:
+                        DownsampleMinQueryPlan downsampleMinQueryPlan = new DownsampleMinQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleMinQueryPlanResults(downsampleMinQueryPlan);
+                        return splitDownsampleMinQueryPlan(downsampleMinQueryPlan, splitInfoList);
+                    case AVG:
+                        DownsampleAvgQueryPlan downsampleAvgQueryPlan = new DownsampleAvgQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleAvgQueryPlanResults(downsampleAvgQueryPlan);
+                        return splitDownsampleAvgQueryPlan(downsampleAvgQueryPlan, splitInfoList);
+                    case SUM:
+                        DownsampleSumQueryPlan downsampleSumQueryPlan = new DownsampleSumQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleSumQueryPlanResults(downsampleSumQueryPlan);
+                        return splitDownsampleSumQueryPlan(downsampleSumQueryPlan, splitInfoList);
+                    case COUNT:
+                        DownsampleCountQueryPlan downsampleCountQueryPlan = new DownsampleCountQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleCountQueryPlanResults(downsampleCountQueryPlan);
+                        return splitDownsampleCountQueryPlan(downsampleCountQueryPlan, splitInfoList);
+                    case FIRST:
+                        DownsampleFirstQueryPlan downsampleFirstQueryPlan = new DownsampleFirstQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleFirstQueryPlanResults(downsampleFirstQueryPlan);
+                        return splitDownsampleFirstQueryPlan(downsampleFirstQueryPlan, splitInfoList);
+                    case LAST:
+                        DownsampleLastQueryPlan downsampleLastQueryPlan = new DownsampleLastQueryPlan(
+                                downsampleQueryReq.getPaths(),
+                                downsampleQueryReq.getStartTime(),
+                                downsampleQueryReq.getEndTime(),
+                                downsampleQueryReq.getPrecision()
+                        );
+                        splitInfoList = planSplitter.getSplitDownsampleLastQueryPlanResults(downsampleLastQueryPlan);
+                        return splitDownsampleLastQueryPlan(downsampleLastQueryPlan, splitInfoList);
+                    default:
+                        throw new UnsupportedOperationException(downsampleQueryReq.getAggregateType().toString());
+                }
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }
@@ -313,6 +393,143 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    private List<IginxPlan> splitDownsampleQueryPlan(DownsampleQueryPlan plan, List<SplitInfo> infoList) {
+        List<IginxPlan> plans = new ArrayList<>();
+        for (SplitInfo info: infoList) {
+            IginxPlan subPlan = null;
+            switch (info.getType()) {
+                case MAX:
+                    subPlan = new MaxQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case MIN:
+                    subPlan = new MinQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case FIRST:
+                    subPlan = new FirstQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case LAST:
+                    subPlan = new LastQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case AVG:
+                    subPlan = new AvgQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case SUM:
+                    subPlan = new SumQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case COUNT:
+                    subPlan = new CountQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_MAX:
+                    subPlan = new DownsampleMaxQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_MIN:
+                    subPlan = new DownsampleMinQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_FIRST:
+                    subPlan = new DownsampleFirstQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_LAST:
+                    subPlan = new DownsampleLastQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_AVG:
+                    subPlan = new DownsampleAvgQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_SUM:
+                    subPlan = new DownsampleSumQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+                case DOWNSAMPLE_COUNT:
+                    subPlan = new DownsampleCountQueryPlan(
+                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            info.getTimeInterval().getStartTime(),
+                            info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
+                            info.getReplica().getStorageEngineId()
+                    );
+                    break;
+            }
+            if (subPlan != null) {
+                subPlan.setCombineGroup(info.getCombineGroup());
+            }
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
+    }
+
     public List<MinQueryPlan> splitMinQueryPlan(MinQueryPlan plan, List<SplitInfo> infoList) {
         List<MinQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -325,6 +542,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
             plans.add(subPlan);
         }
         return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleMinQueryPlan(DownsampleMinQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
     }
 
     public List<FirstQueryPlan> splitFirstQueryPlan(FirstQueryPlan plan, List<SplitInfo> infoList) {
@@ -341,6 +562,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<IginxPlan> splitDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
+    }
+
     public List<LastQueryPlan> splitLastQueryPlan(LastQueryPlan plan, List<SplitInfo> infoList) {
         List<LastQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -353,6 +578,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
             plans.add(subPlan);
         }
         return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleLastQueryPlan(DownsampleLastQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
     }
 
     public List<CountQueryPlan> splitCountQueryPlan(CountQueryPlan plan, List<SplitInfo> infoList) {
@@ -369,6 +598,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<IginxPlan> splitDownsampleCountQueryPlan(DownsampleCountQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
+    }
+
     public List<SumQueryPlan> splitSumQueryPlan(SumQueryPlan plan, List<SplitInfo> infoList) {
         List<SumQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -381,6 +614,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
             plans.add(subPlan);
         }
         return plans;
+    }
+
+    public List<IginxPlan> splitDownsampleSumQueryPlan(DownsampleSumQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
     }
 
     public List<AvgQueryPlan> splitAvgQueryPlan(AvgQueryPlan plan, List<SplitInfo> infoList) {
@@ -396,4 +633,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         }
         return plans;
     }
+
+    public List<IginxPlan> splitDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan, List<SplitInfo> infoList) {
+        return splitDownsampleQueryPlan(plan, infoList);
+    }
+
 }

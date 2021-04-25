@@ -16,20 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.plan.downsample;
 
-public enum ContextType {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    Unknown;
+import java.util.List;
+
+public class DownsampleSumQueryPlan extends DownsampleQueryPlan {
+
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleSumQueryPlan.class);
+
+    public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        super(paths, startTime, endTime, precision);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
+    }
+
+    public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
+    }
 
 }

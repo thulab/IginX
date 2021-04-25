@@ -18,18 +18,18 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    Unknown;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class DownsampleQueryContext extends RequestContext {
 
+    private DownsampleQueryReq req;
+
+    public DownsampleQueryContext(DownsampleQueryReq req) {
+        super(req.sessionId, ContextType.DownsampleQuery);
+        this.req = req;
+    }
 }
