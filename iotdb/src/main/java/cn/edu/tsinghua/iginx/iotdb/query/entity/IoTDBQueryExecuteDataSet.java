@@ -26,9 +26,19 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 		this.dataSet = dataSet;
 	}
 
+	private String transformColumnName(String columnName) {
+		if (columnName.indexOf('(') != -1) {
+			columnName = columnName.substring(columnName.indexOf('(') + 1, columnName.length() - 1);
+		}
+		if (columnName.startsWith(PREFIX)) {
+			columnName = columnName.substring(5);
+		}
+		return columnName;
+	}
+
 	@Override
 	public List<String> getColumnNames() throws ExecutionException {
-		return new ArrayList<>(dataSet.getColumnNames()).stream().map(x -> x.startsWith(PREFIX) ? x.substring(5) : x).collect(Collectors.toList());
+		return new ArrayList<>(dataSet.getColumnNames()).stream().map(this::transformColumnName).collect(Collectors.toList());
 	}
 
 	@Override

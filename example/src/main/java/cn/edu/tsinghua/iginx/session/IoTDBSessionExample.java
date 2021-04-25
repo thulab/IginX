@@ -62,20 +62,20 @@ public class IoTDBSessionExample {
 		// 行式插入数据
 		insertRowRecords();
 		// 查询数据
-		queryData();
+		//queryData();
 		// 聚合查询数据
-		aggregateQuery();
+		//aggregateQuery();
 		// 降采样聚合查询
 		downsampleQuery();
 		// 删除数据
-		deleteDataInColumns();
+		//deleteDataInColumns();
 		// 再次查询数据
-		queryData();
+		//queryData();
 		// 删除列
-		deleteColumns();
+		//deleteColumns();
 
 		// 删除数据库
-		session.dropDatabase(DATABASE_NAME);
+		//session.dropDatabase(DATABASE_NAME);
 
 		// 关闭 Session
 		session.closeSession();
@@ -233,27 +233,27 @@ public class IoTDBSessionExample {
 		dataSet.print();
 
 		// MIN
-		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 10);
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 100);
 		dataSet.print();
 
 		// FIRST
-		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 10);
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
 		dataSet.print();
 
 		// LAST
-		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 10);
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
 		dataSet.print();
 
 		// COUNT
-		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 10);
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 100);
 		dataSet.print();
 
 		// SUM
-		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 10);
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 100);
 		dataSet.print();
 
 		// AVG
-		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 10);
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 100);
 		dataSet.print();
 
 		// 降采样查询结束

@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.utils.ByteUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class DownsampleGroupQueryExecuteDataSet implements QueryExecuteDataSet {
@@ -49,6 +50,11 @@ public class DownsampleGroupQueryExecuteDataSet implements QueryExecuteDataSet {
             Arrays.fill(this.timestamps, timestamp);
         } else {
             this.timestamps = ByteUtils.getLongArrayFromByteArray(resp.getTimestamps());
+            for (int i = 0; i < timestamps.length; i++) {
+                if (timestamps[i] == -1) {
+                    timestamps[i] = timestamp;
+                }
+            }
         }
         this.values = Arrays.asList(ByteUtils.getValuesByDataType(resp.valuesList, this.columnTypes));
         this.currentTimestamp = -1;
@@ -56,11 +62,15 @@ public class DownsampleGroupQueryExecuteDataSet implements QueryExecuteDataSet {
 
     @Override
     public List<String> getColumnNames() throws ExecutionException {
+        List<String> columnNames = new ArrayList<>(Collections.singletonList("Time"));
+        columnNames.addAll(this.columnNames);
         return columnNames;
     }
 
     @Override
     public List<DataType> getColumnTypes() throws ExecutionException {
+        List<DataType> columnTypes = new ArrayList<>(Collections.singletonList(DataType.LONG));
+        columnTypes.addAll(this.columnTypes);
         return columnTypes;
     }
 
