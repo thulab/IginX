@@ -2,7 +2,7 @@
 
 set -e
 
-sh -c "wget -nv https://mirror.olnevhost.net/pub/apache/iotdb/0.11.3/apache-iotdb-0.11.3-bin.zip"
+sh -c "wget -nv https://mirrors.ocf.berkeley.edu/apache/iotdb/0.11.3/apache-iotdb-0.11.3-bin.zip"
 
 sh -c "unzip apache-iotdb-0.11.3-bin.zip"
 
