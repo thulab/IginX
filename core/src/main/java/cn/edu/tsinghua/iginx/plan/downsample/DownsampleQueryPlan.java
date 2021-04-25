@@ -33,8 +33,18 @@ public class DownsampleQueryPlan extends DataPlan {
     public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
         super(true, paths, startTime, endTime);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
+        this.setSync(true);
         this.precision = precision;
     }
+
+    public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(true, paths, startTime, endTime);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
+        this.setSync(true);
+        this.precision = precision;
+        this.setStorageEngineId(storageEngineId);
+    }
+
 
     public long getPrecision() {
         return precision;

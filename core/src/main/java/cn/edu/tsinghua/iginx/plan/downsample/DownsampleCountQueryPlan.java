@@ -31,4 +31,10 @@ public class DownsampleCountQueryPlan extends DownsampleQueryPlan {
         super(paths, startTime, endTime, precision);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_COUNT);
     }
+
+    public DownsampleCountQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_COUNT);
+    }
+
 }

@@ -286,7 +286,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         long timespan = 0L;
         for (List<FragmentMeta> fragmentMetas: fragmentMetasList) {
             long endTime = fragmentMetas.get(0).getTimeInterval().getEndTime();
-            while (planTimeIntervals.get(index).getEndTime() <= endTime) {
+            while (index < planTimeIntervals.size() && planTimeIntervals.get(index).getEndTime() <= endTime) {
                 TimeInterval timeInterval = planTimeIntervals.get(index++);
                 if (timeInterval.getSpan() >= precision) {
                     // 对于聚合子查询，清空 timespan，并且在计划全部加入之后增加组号

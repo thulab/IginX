@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.iotdb.session.SessionDataSet;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
@@ -64,6 +65,8 @@ public class IoTDBSessionExample {
 		queryData();
 		// 聚合查询数据
 		aggregateQuery();
+		// 降采样聚合查询
+		downsampleQuery();
 		// 删除数据
 		deleteDataInColumns();
 		// 再次查询数据
@@ -213,6 +216,48 @@ public class IoTDBSessionExample {
 
 		SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
 		dataSet.print();
+	}
+
+	private static void downsampleQuery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+
+		long startTime = ROW_START_TIMESTAMP;
+		long endTime = ROW_END_TIMESTAMP + 1;
+
+		System.out.println("Downsample Query: ");
+
+		// MAX
+		SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// MIN
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 10);
+		dataSet.print();
+
+		// FIRST
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 10);
+		dataSet.print();
+
+		// LAST
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 10);
+		dataSet.print();
+
+		// COUNT
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 10);
+		dataSet.print();
+
+		// SUM
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 10);
+		dataSet.print();
+
+		// AVG
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 10);
+		dataSet.print();
+
+		// 降采样查询结束
+		System.out.println("Downsample Query Finished.");
 	}
 
 	private static void aggregateQuery() throws SessionException {

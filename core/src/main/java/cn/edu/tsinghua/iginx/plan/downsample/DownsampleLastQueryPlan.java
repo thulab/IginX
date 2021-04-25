@@ -32,4 +32,9 @@ public class DownsampleLastQueryPlan extends DownsampleQueryPlan {
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_LAST);
     }
 
+    public DownsampleLastQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_LAST);
+    }
+
 }

@@ -459,6 +459,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -467,6 +468,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -475,6 +477,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -483,6 +486,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -491,6 +495,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -499,6 +504,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -507,6 +513,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
+                            plan.getPrecision(),
                             info.getReplica().getStorageEngineId()
                     );
                     break;
@@ -514,8 +521,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
             if (subPlan != null) {
                 subPlan.setCombineGroup(info.getCombineGroup());
             }
+            plans.add(subPlan);
         }
-        return new ArrayList<>();
+        return plans;
     }
 
     public List<IginxPlan> splitDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan, List<SplitInfo> infoList) {

@@ -32,4 +32,9 @@ public class DownsampleSumQueryPlan extends DownsampleQueryPlan {
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
     }
 
+    public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
+    }
+
 }

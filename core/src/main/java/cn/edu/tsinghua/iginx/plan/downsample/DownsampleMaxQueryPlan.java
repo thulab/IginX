@@ -31,4 +31,10 @@ public class DownsampleMaxQueryPlan extends DownsampleQueryPlan {
         super(paths, startTime, endTime, precision);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MAX);
     }
+
+    public DownsampleMaxQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MAX);
+    }
+
 }
