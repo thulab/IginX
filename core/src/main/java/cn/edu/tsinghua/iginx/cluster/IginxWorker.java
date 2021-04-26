@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.cluster;
 
 import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
+import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
@@ -26,6 +27,7 @@ import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
@@ -42,6 +44,8 @@ import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
@@ -164,6 +168,13 @@ public class IginxWorker implements IService.Iface {
 		AggregateQueryContext context = new AggregateQueryContext(req);
 		core.processRequest(context);
 		return ((AggregateCombineResult) context.getCombineResult()).getResp();
+	}
+
+	@Override
+	public DownsampleQueryResp downsampleQuery(DownsampleQueryReq req) {
+		DownsampleQueryContext context = new DownsampleQueryContext(req);
+		core.processRequest(context);
+		return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
 	}
 
 	public static IginxWorker getInstance() {

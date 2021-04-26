@@ -42,7 +42,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
 
     private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
-    private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
+    private ReadWriteLock fragmentLock;
 
     private SortedListAbstractMetaManager() {
         if (sortedFragmentMetaLists == null) {
@@ -51,12 +51,18 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         if (fragmentMetaListMap == null) {
             fragmentMetaListMap = new HashMap<>();
         }
+        if (fragmentLock == null) {
+            fragmentLock = new ReentrantReadWriteLock();
+        }
     }
 
     @Override
     protected void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
         sortedFragmentMetaLists = new ArrayList<>();
         fragmentMetaListMap = new HashMap<>();
+        if (fragmentLock == null) {
+            fragmentLock = new ReentrantReadWriteLock();
+        }
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));

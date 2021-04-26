@@ -29,6 +29,7 @@ public enum ContextType {
     CreateDatabase,
     DropDatabase,
     AggregateQuery,
+    DownsampleQuery,
     Unknown;
 
 }

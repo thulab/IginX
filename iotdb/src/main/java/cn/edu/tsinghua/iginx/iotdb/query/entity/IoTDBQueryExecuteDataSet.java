@@ -7,19 +7,18 @@ import cn.edu.tsinghua.iginx.query.entity.RowRecord;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
-import org.apache.iotdb.session.Session;
-import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.tsfile.read.common.Field;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
 
 public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
+
+	private static final String PREFIX = "root.";
 
 	private final SessionDataSetWrapper dataSet;
 
@@ -27,9 +26,19 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
 		this.dataSet = dataSet;
 	}
 
+	private String transformColumnName(String columnName) {
+		if (columnName.indexOf('(') != -1) {
+			columnName = columnName.substring(columnName.indexOf('(') + 1, columnName.length() - 1);
+		}
+		if (columnName.startsWith(PREFIX)) {
+			columnName = columnName.substring(5);
+		}
+		return columnName;
+	}
+
 	@Override
 	public List<String> getColumnNames() throws ExecutionException {
-		return new ArrayList<>(dataSet.getColumnNames());
+		return new ArrayList<>(dataSet.getColumnNames()).stream().map(this::transformColumnName).collect(Collectors.toList());
 	}
 
 	@Override

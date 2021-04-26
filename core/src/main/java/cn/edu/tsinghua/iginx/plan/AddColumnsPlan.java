@@ -70,7 +70,7 @@ public class AddColumnsPlan extends ColumnPlan {
 			if (interval.getStartTimeSeries() != null && getPath(i).compareTo(interval.getStartTimeSeries()) >= 0 && i < startIndex) {
 				startIndex = i;
 			}
-			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) <= 0 && i > endIndex) {
+			if (interval.getEndTimeSeries() != null && getPath(i).compareTo(interval.getEndTimeSeries()) < 0 && i > endIndex) {
 				endIndex = i;
 			}
 		}

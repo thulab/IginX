@@ -31,6 +31,8 @@ import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
@@ -39,8 +41,10 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
@@ -57,23 +61,34 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBuffer;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteBufferByDataType;
 
 public class Session {
 
 	private static final Logger logger = LoggerFactory.getLogger(Session.class);
 
 	private String host;
+
 	private int port;
-	private String username;
-	private String password;
+
+	private final String username;
+
+	private final String password;
+
 	private IService.Iface client;
+
 	private long sessionId;
+
 	private TTransport transport;
+
 	private boolean isClosed;
+
+	private int redirectTimes;
+
+	private final ReadWriteLock lock;
 
 	public Session(String host, int port) {
 		this(host, port, Constants.DEFAULT_USERNAME, Constants.DEFAULT_PASSWORD);
@@ -93,13 +108,59 @@ public class Session {
 		this.username = username;
 		this.password = password;
 		this.isClosed = true;
+		this.redirectTimes = 0;
+		this.lock = new ReentrantReadWriteLock();
 	}
 
-	public synchronized void openSession() throws SessionException, TTransportException {
-		if (!isClosed)  {
-			return;
+	private synchronized boolean checkRedirect(Status status) throws SessionException, TException {
+		if (RpcUtils.verifyNoRedirect(status)) {
+			redirectTimes = 0;
+			return false;
 		}
 
+		redirectTimes += 1;
+		if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
+			throw new SessionException("重定向次数过多！");
+		}
+
+		lock.writeLock().lock();
+
+		try {
+			tryCloseSession();
+
+			while (redirectTimes <= Constants.MAX_REDIRECT_TIME) {
+
+				String[] targetAddress = status.getMessage().split(":");
+				if (targetAddress.length != 2) {
+					throw new SessionException("unexpected redirect address " + status.getMessage());
+				}
+				logger.info("当前请求将被重定向到：" + status.getMessage());
+				this.host = targetAddress[0];
+				this.port = Integer.parseInt(targetAddress[1]);
+
+				OpenSessionResp resp = tryOpenSession();
+
+				if (RpcUtils.verifyNoRedirect(resp.status)) {
+					sessionId = resp.getSessionId();
+					break;
+				}
+
+				status = resp.status;
+
+				redirectTimes += 1;
+			}
+
+			if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
+				throw new SessionException("重定向次数过多！");
+			}
+		} finally {
+			lock.writeLock().unlock();
+		}
+
+		return true;
+	}
+
+	private OpenSessionResp tryOpenSession() throws SessionException, TException {
 		transport = new TSocket(host, port);
 		if (!transport.isOpen()) {
 			try {
@@ -115,10 +176,55 @@ public class Session {
 		req.setUsername(username);
 		req.setPassword(password);
 
-		try {
-			OpenSessionResp resp = client.openSession(req);
+		return client.openSession(req);
+	}
 
-			sessionId = resp.getSessionId();
+	private void tryCloseSession() throws SessionException {
+		CloseSessionReq req = new CloseSessionReq(sessionId);
+		try {
+			client.closeSession(req);
+		} catch (TException e) {
+			throw new SessionException(e);
+		} finally {
+			if (transport != null) {
+				transport.close();
+			}
+		}
+	}
+
+	public synchronized void openSession() throws SessionException {
+		if (!isClosed)  {
+			return;
+		}
+
+		try {
+			do {
+				OpenSessionResp resp = tryOpenSession();
+
+				if (RpcUtils.verifyNoRedirect(resp.status)) {
+					sessionId = resp.getSessionId();
+					break;
+				}
+
+				transport.close();
+
+				String[] targetAddress = resp.status.getMessage().split(":");
+				if (targetAddress.length != 2) {
+					throw new SessionException("unexpected redirect address " + resp.status.getMessage());
+				}
+				logger.info("当前请求将被重定向到：" + resp.status.getMessage());
+
+				this.host = targetAddress[0];
+				this.port = Integer.parseInt(targetAddress[1]);
+				redirectTimes += 1;
+
+			} while(redirectTimes <= Constants.MAX_REDIRECT_TIME);
+
+			if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
+				throw new SessionException("重定向次数过多！");
+			}
+			redirectTimes = 0;
+
 		} catch (TException e) {
 			transport.close();
 			throw new SessionException(e);
@@ -131,17 +237,10 @@ public class Session {
 		if (isClosed) {
 			return;
 		}
-
-		CloseSessionReq req = new CloseSessionReq(sessionId);
 		try {
-			client.closeSession(req);
-		} catch (TException e) {
-			throw new SessionException(e);
-		} finally {
+			tryCloseSession();
+		}  finally {
 			isClosed = true;
-			if (transport != null) {
-				transport.close();
-			}
 		}
 	}
 
@@ -150,17 +249,36 @@ public class Session {
 		CreateDatabaseReq req = new CreateDatabaseReq(sessionId, databaseName);
 
 		try {
-			RpcUtils.verifySuccess(client.createDatabase(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.createDatabase(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
+
 	}
 
 	public void dropDatabase(String databaseName) throws SessionException, ExecutionException {
 		DropDatabaseReq req = new DropDatabaseReq(sessionId, databaseName);
 
 		try {
-			RpcUtils.verifySuccess(client.dropDatabase(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.dropDatabase(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -170,7 +288,16 @@ public class Session {
 		AddStorageEngineReq req = new AddStorageEngineReq(sessionId, ip, port, type, extraParams);
 
 		try {
-			RpcUtils.verifySuccess(client.addStorageEngine(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.addStorageEngine(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -186,7 +313,16 @@ public class Session {
 		AddColumnsReq req = new AddColumnsReq(sessionId, paths);
 
 		try {
-			RpcUtils.verifySuccess(client.addColumns(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.addColumns(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -197,7 +333,16 @@ public class Session {
 		req.setAttributesList(attributes);
 
 		try {
-			RpcUtils.verifySuccess(client.addColumns(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.addColumns(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -214,7 +359,16 @@ public class Session {
 		DeleteColumnsReq req = new DeleteColumnsReq(sessionId, paths);
 
 		try {
-			RpcUtils.verifySuccess(client.deleteColumns(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.deleteColumns(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -249,16 +403,44 @@ public class Session {
 			valuesList[i] = values;
 		}
 
+		List<ByteBuffer> valueBufferList = new ArrayList<>();
+		List<ByteBuffer> bitmapBufferList = new ArrayList<>();
+		for (int i = 0; i < valuesList.length; i++) {
+			Object[] values = (Object[]) valuesList[i];
+			if (values.length != timestamps.length) {
+				logger.error("The sizes of timestamps and the element of valuesList should be equal.");
+				return;
+			}
+			valueBufferList.add(ByteUtils.getColumnByteBuffer(values, dataTypeList.get(i)));
+			Bitmap bitmap = new Bitmap(timestamps.length);
+			for (int j = 0; j < timestamps.length; j++) {
+				if (values[j] != null) {
+					bitmap.mark(j);
+				}
+			}
+			bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
+		}
+
 		InsertColumnRecordsReq req = new InsertColumnRecordsReq();
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(getByteArrayFromLongArray(timestamps));
-		req.setValuesList(getByteBufferByDataType(valuesList, dataTypeList));
+		req.setValuesList(valueBufferList);
+		req.setBitmapList(bitmapBufferList);
 		req.setDataTypeList(dataTypeList);
 		req.setAttributesList(attributesList);
 
 		try {
-			RpcUtils.verifySuccess(client.insertColumnRecords(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.insertColumnRecords(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -302,7 +484,7 @@ public class Session {
 				logger.error("The sizes of paths and the element of valuesList should be equal.");
 				return;
 			}
-			valueBufferList.add(getByteBuffer(values, dataTypeList));
+			valueBufferList.add(ByteUtils.getRowByteBuffer(values, dataTypeList));
 			Bitmap bitmap = new Bitmap(values.length);
 			for (int j = 0; j < values.length; j++) {
 				if (values[j] != null) {
@@ -316,19 +498,28 @@ public class Session {
 		req.setSessionId(sessionId);
 		req.setPaths(paths);
 		req.setTimestamps(getByteArrayFromLongArray(timestamps));
-		req.setDataTypeList(dataTypeList);
-		req.setAttributesList(attributesList);
 		req.setValuesList(valueBufferList);
 		req.setBitmapList(bitmapBufferList);
+		req.setDataTypeList(dataTypeList);
+		req.setAttributesList(attributesList);
 
 		try {
-			RpcUtils.verifySuccess(client.insertRowRecords(req));
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.insertRowRecords(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
 	}
 
-	public void deleteDataInColumns(String path, long startTime, long endTime) throws SessionException {
+	public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
 		deleteDataInColumns(paths, startTime, endTime);
@@ -338,7 +529,15 @@ public class Session {
 		DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
 
 		try {
-			client.deleteDataInColumns(req);
+			Status status;
+			do {
+				lock.readLock().lock();
+				try {
+					status = client.deleteDataInColumns(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(status));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -353,11 +552,20 @@ public class Session {
 		QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
 
 		QueryDataResp resp;
+
 		try {
-			resp = client.queryData(req);
+			do {
+				lock.readLock().lock();
+				try {
+					resp = client.queryData(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(resp.status));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
+
 		return new SessionQueryDataSet(resp);
 	}
 
@@ -367,10 +575,41 @@ public class Session {
 
 		AggregateQueryResp resp;
 		try {
-			resp = client.aggregateQuery(req);
+			do {
+				lock.readLock().lock();
+				try {
+					resp = client.aggregateQuery(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(resp.status));
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
+
 		return new SessionAggregateQueryDataSet(resp, aggregateType);
 	}
+
+	public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException {
+		DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
+				aggregateType, precision);
+
+		DownsampleQueryResp resp;
+
+		try {
+			do {
+				lock.readLock().lock();
+				try {
+					resp = client.downsampleQuery(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while(checkRedirect(resp.status));
+		} catch (TException e) {
+			throw new SessionException(e);
+		}
+
+		return new SessionQueryDataSet(resp);
+	}
+
 }

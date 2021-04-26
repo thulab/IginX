@@ -48,6 +48,8 @@ public class Config {
 
     private String influxDBOrganizationName = "organization";
 
+    private String statisticsCollectorClassName = "cn.edu.tsinghua.iginx.statistics.StatisticsCollector";
+
     public String getIp() {
         return ip;
     }
@@ -158,5 +160,13 @@ public class Config {
 
     public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
         this.influxDBOrganizationName = influxDBOrganizationName;
+    }
+
+    public String getStatisticsCollectorClassName() {
+        return statisticsCollectorClassName;
+    }
+
+    public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
+        this.statisticsCollectorClassName = statisticsCollectorClassName;
     }
 }

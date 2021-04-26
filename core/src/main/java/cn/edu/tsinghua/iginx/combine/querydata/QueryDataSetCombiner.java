@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -137,7 +138,7 @@ public class QueryDataSetCombiner {
                     }
                 }
             }
-            ByteBuffer buffer = ByteUtils.getByteBuffer(values, columnTypeList);
+            ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, columnTypeList);
             valuesList.add(buffer);
             bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
             // 在加载完一轮数据之后，把更新加载过数据的时间
@@ -166,7 +167,7 @@ public class QueryDataSetCombiner {
         }
         resp.setPaths(columnNameList);
         resp.setDataTypeList(columnTypeList);
-        resp.setQueryDataSet(new QueryDataSet(ByteUtils.getByteBuffer(timestamps.toArray(), DataType.LONG),
+        resp.setQueryDataSet(new QueryDataSet(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG),
                 valuesList, bitmapList));
     }
 
