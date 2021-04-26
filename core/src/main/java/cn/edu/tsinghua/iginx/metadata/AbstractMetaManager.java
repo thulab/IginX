@@ -150,8 +150,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     break;
             }
         };
-        this.iginxCache.getListenable().addListener(listener);
-        this.iginxCache.start();
+        this.schemaMappingsCache.getListenable().addListener(listener);
+        this.schemaMappingsCache.start();
     }
 
     private void registerIginxListener() throws Exception {
