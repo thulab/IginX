@@ -30,9 +30,10 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.VALUEFILTER_QUE
 public class ValueFilterQueryPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(ValueFilterQueryPlan.class);
-
-	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime) {
+	String booleanExpression;
+	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, String booleanExpression) {
 		super(true, paths, startTime, endTime);
+		this.booleanExpression = booleanExpression;
 		this.setIginxPlanType(VALUEFILTER_QUERY);
 		boolean isStartPrefix = paths.get(0).contains("*");
 		String startTimeSeries = isStartPrefix ?
@@ -61,8 +62,8 @@ public class ValueFilterQueryPlan extends DataPlan {
 		this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
 	}
 
-	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
+	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, String booleanExpression, long storageEngineId) {
+		this(paths, startTime, endTime, booleanExpression);
 		this.setStorageEngineId(storageEngineId);
 		this.setSync(true);
 	}
@@ -87,5 +88,10 @@ public class ValueFilterQueryPlan extends DataPlan {
 			tempPaths.add(path);
 		}
 		return tempPaths;
+	}
+
+	public String getBooleanExpression()
+	{
+		return booleanExpression;
 	}
 }

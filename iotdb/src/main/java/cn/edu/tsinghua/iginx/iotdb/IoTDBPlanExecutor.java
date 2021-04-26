@@ -73,9 +73,13 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String TIME_RANGE_WHERE_CLAUSE = "WHERE time >= %d and time < %d";
 
+    private static final String VALUE_FILTER_WHERE_CLAUSE = "and (%s)";
+
     private static final String GROUP_BY_CLAUSE = "GROUP BY ([%s, %s), %sms)";
 
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+
+    private static final String VALUE_FILTER_QUERY = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE + VALUE_FILTER_WHERE_CLAUSE;
 
     private static final String MAX_VALUE = "SELECT MAX_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
@@ -664,6 +668,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     @Override
     public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
     {
-        return null;
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(VALUE_FILTER_QUERY, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getBooleanExpression());
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 }

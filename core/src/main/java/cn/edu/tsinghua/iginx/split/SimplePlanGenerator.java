@@ -257,7 +257,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 ValueFilterQueryPlan valueFilterQueryPlan = new ValueFilterQueryPlan(
                         valueFilterQueryReq.getPaths(),
                         valueFilterQueryReq.getStartTime(),
-                        valueFilterQueryReq.getEndTime()
+                        valueFilterQueryReq.getEndTime(),
+                        valueFilterQueryReq.getBooleanExpression()
                 );
                 splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
                 return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
@@ -364,6 +365,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
                     Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    plan.getBooleanExpression(),
                     info.getReplica().getStorageEngineId()
             );
             plans.add(subPlan);

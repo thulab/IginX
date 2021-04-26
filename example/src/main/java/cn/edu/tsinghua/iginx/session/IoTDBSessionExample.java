@@ -218,6 +218,20 @@ public class IoTDBSessionExample {
 		dataSet.print();
 	}
 
+	private static void valuefilterquery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
+
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
+		String booleanExpression = S1 + "> 20 and " + S2 + "< 100";
+		SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
+		dataSet.print();
+	}
+
 	private static void downsampleQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
