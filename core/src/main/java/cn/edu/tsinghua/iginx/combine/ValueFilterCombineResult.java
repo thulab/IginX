@@ -16,21 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.combine;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    Unknown;
+public class ValueFilterCombineResult extends DataCombineResult {
+
+	private final ValueFilterQueryResp resp;
+
+	public ValueFilterCombineResult(Status status, ValueFilterQueryResp resp) {
+		super(status);
+		this.resp = resp;
+	}
+
+	public ValueFilterQueryResp getResp() {
+		return resp;
+	}
 
 }

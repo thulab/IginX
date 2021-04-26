@@ -21,20 +21,8 @@ package cn.edu.tsinghua.iginx.policy;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
-import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
-import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.*;
+import cn.edu.tsinghua.iginx.plan.downsample.*;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -365,6 +353,12 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 	}
 
 	@Override
+	public List<SplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan)
+	{
+		return null;
+	}
+
+	@Override
 	public List<SplitInfo> getSplitMinQueryPlanResults(MinQueryPlan plan)
 	{
 		updatePrefix(plan);
@@ -383,6 +377,12 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 			}
 		}
 		return infoList;
+	}
+
+	@Override
+	public List<SplitInfo> getSplitDownsampleMinQueryPlanResults(DownsampleMinQueryPlan plan)
+	{
+		return null;
 	}
 
 	@Override
@@ -407,6 +407,12 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 	}
 
 	@Override
+	public List<SplitInfo> getSplitDownsampleSumQueryPlanResults(DownsampleSumQueryPlan plan)
+	{
+		return null;
+	}
+
+	@Override
 	public List<SplitInfo> getSplitCountQueryPlanResults(CountQueryPlan plan)
 	{
 		updatePrefix(plan);
@@ -425,6 +431,12 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 			}
 		}
 		return infoList;
+	}
+
+	@Override
+	public List<SplitInfo> getSplitDownsampleCountQueryPlanResults(DownsampleCountQueryPlan plan)
+	{
+		return null;
 	}
 
 	@Override
@@ -449,6 +461,12 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 	}
 
 	@Override
+	public List<SplitInfo> getSplitDownsampleAvgQueryPlanResults(DownsampleAvgQueryPlan plan)
+	{
+		return null;
+	}
+
+	@Override
 	public List<SplitInfo> getSplitFirstQueryPlanResults(FirstQueryPlan plan)
 	{
 		updatePrefix(plan);
@@ -463,6 +481,12 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 			}
 		}
 		return infoList;
+	}
+
+	@Override
+	public List<SplitInfo> getSplitDownsampleFirstQueryPlanResults(DownsampleFirstQueryPlan plan)
+	{
+		return null;
 	}
 
 	@Override
@@ -483,6 +507,23 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 	}
 
 	@Override
+	public List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan)
+	{
+		return null;
+	}
+
+	@Override
+	public List<SplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan)
+	{
+		return null;
+	}
+
+	@Override
+	public List<FragmentReplicaMeta> selectFragmentReplicas(FragmentMeta fragment, boolean isQuery)
+	{
+		return null;
+	}
+
 	public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery)
 	{
 		List<FragmentReplicaMeta> replicas = new ArrayList<>();
