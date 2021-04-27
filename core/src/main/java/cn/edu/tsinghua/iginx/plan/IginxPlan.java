@@ -24,6 +24,8 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
 
 public abstract class IginxPlan {
 
+	private long subPlanId;
+
 	private IginxPlanType iginxPlanType;
 
 	private boolean isQuery;
@@ -34,9 +36,19 @@ public abstract class IginxPlan {
 
 	private StorageUnitMeta storageUnit;
 
+	private int combineGroup;;
+
 	protected IginxPlan(boolean isQuery) {
 		this.iginxPlanType = IGINX;
 		this.isQuery = isQuery;
+	}
+
+	public long getSubPlanId() {
+		return subPlanId;
+	}
+
+	public void setSubPlanId(long subPlanId) {
+		this.subPlanId = subPlanId;
 	}
 
 	public IginxPlanType getIginxPlanType() {
@@ -83,9 +95,31 @@ public abstract class IginxPlan {
 		this.storageUnit = storageUnit;
 	}
 
+	public int getCombineGroup() {
+		return combineGroup;
+	}
+
+	public void setCombineGroup(int combineGroup) {
+		this.combineGroup = combineGroup;
+	}
+
 	public enum IginxPlanType {
+		UNKNOWN,
 		IGINX, DATABASE, CREATE_DATABASE, DROP_DATABASE, NON_DATABASE, COLUMN, ADD_COLUMNS,
 		DELETE_COLUMNS, DATA, INSERT_RECORDS, INSERT_COLUMN_RECORDS, INSERT_ROW_RECORDS,
 		DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY, MAX, MIN, SUM, COUNT, AVG, FIRST, LAST,
+		DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX, DOWNSAMPLE_MIN, DOWNSAMPLE_SUM, DOWNSAMPLE_COUNT, DOWNSAMPLE_AVG,
+		DOWNSAMPLE_FIRST, DOWNSAMPLE_LAST;
+
+		public boolean isDownsampleQuery() {
+			return this == DOWNSAMPLE_QUERY || this == DOWNSAMPLE_AVG || this == DOWNSAMPLE_COUNT || this == DOWNSAMPLE_SUM ||
+					this == DOWNSAMPLE_MIN || this == DOWNSAMPLE_MAX || this == DOWNSAMPLE_FIRST || this == DOWNSAMPLE_LAST;
+		}
+
+		public boolean isAggregateQuery() {
+			return this == AGGREGATE_QUERY || this == AVG || this == COUNT || this == SUM ||
+					this == MIN || this == MAX || this == FIRST || this == LAST;
+		}
+
 	}
 }

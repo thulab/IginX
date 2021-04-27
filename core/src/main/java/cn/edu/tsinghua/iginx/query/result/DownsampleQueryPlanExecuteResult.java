@@ -16,20 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.query.result;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    Unknown;
+import java.util.List;
+
+public class DownsampleQueryPlanExecuteResult extends SyncPlanExecuteResult {
+
+    private final List<QueryExecuteDataSet> queryExecuteDataSets;
+
+    public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
+        super(statusCode, plan);
+        this.queryExecuteDataSets = queryExecuteDataSets;
+    }
+
+    public List<QueryExecuteDataSet> getQueryExecuteDataSets() {
+        return queryExecuteDataSets;
+    }
 
 }

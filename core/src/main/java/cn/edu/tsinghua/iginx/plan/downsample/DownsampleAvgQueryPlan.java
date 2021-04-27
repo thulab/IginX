@@ -16,32 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.async.queue;
+package cn.edu.tsinghua.iginx.plan.downsample;
 
-import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.List;
 
-public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
+public class DownsampleAvgQueryPlan extends DownsampleQueryPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(MemoryAsyncTaskQueue.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleAvgQueryPlan.class);
 
-    private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
-
-    @Override
-    public boolean addAsyncTask(AsyncTask asyncTask) {
-        return asyncTasks.add(asyncTask);
+    public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        this(paths, startTime, endTime, precision, null);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
     }
 
-    @Override
-    public AsyncTask getAsyncTask() {
-        try {
-            return asyncTasks.take();
-        } catch (Exception e) {
-            logger.error("encounter error when get async task: ", e);
-        }
-        return null;
+    public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, precision, storageUnit);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
     }
 }

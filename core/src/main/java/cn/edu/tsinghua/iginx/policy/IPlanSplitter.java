@@ -33,6 +33,13 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 
 import java.util.List;
@@ -89,11 +96,25 @@ public interface IPlanSplitter {
 	List<SplitInfo> getSplitMaxQueryPlanResults(MaxQueryPlan plan);
 
 	/**
+	 * 拆分 DownsampleMaxQueryPlan
+	 * @param plan 待拆分的 DownsampleMaxQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan);
+
+	/**
 	 * 拆分 MinQueryPlan
 	 * @param plan 待拆分的 MinQueryPlan
 	 * @return 拆分方式
 	 */
 	List<SplitInfo> getSplitMinQueryPlanResults(MinQueryPlan plan);
+
+	/**
+	 * 拆分 DownsampleMinQueryPlan
+	 * @param plan 待拆分的 DownsampleMinQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleMinQueryPlanResults(DownsampleMinQueryPlan plan);
 
 	/**
 	 * 拆分 SumQueryPlan
@@ -103,11 +124,25 @@ public interface IPlanSplitter {
 	List<SplitInfo> getSplitSumQueryPlanResults(SumQueryPlan plan);
 
 	/**
+	 * 拆分 DownsampleSumQueryPlan
+	 * @param plan 待拆分的 DownsampleSumQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleSumQueryPlanResults(DownsampleSumQueryPlan plan);
+
+	/**
 	 * 拆分 CountQueryPlan
 	 * @param plan 待拆分的 CountQueryPlan
 	 * @return 拆分方式
 	 */
 	List<SplitInfo> getSplitCountQueryPlanResults(CountQueryPlan plan);
+
+	/**
+	 * 拆分 DownsampleCountQueryPlan
+	 * @param plan 待拆分的 DownsampleCountQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleCountQueryPlanResults(DownsampleCountQueryPlan plan);
 
 	/**
 	 * 拆分 AvgQueryPlan
@@ -117,11 +152,25 @@ public interface IPlanSplitter {
 	List<SplitInfo> getSplitAvgQueryPlanResults(AvgQueryPlan plan);
 
 	/**
+	 * 拆分 DownsampleAvgQueryPlan
+	 * @param plan 待拆分的 DownsampleAvgQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleAvgQueryPlanResults(DownsampleAvgQueryPlan plan);
+
+	/**
 	 * 拆分 FirstQueryPlan
 	 * @param plan 待拆分的 FirstQueryPlan
 	 * @return 拆分方式
 	 */
 	List<SplitInfo> getSplitFirstQueryPlanResults(FirstQueryPlan plan);
+
+	/**
+	 * 拆分 DownsampleFirstQueryPlan
+	 * @param plan 待拆分的 DownsampleFirstQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleFirstQueryPlanResults(DownsampleFirstQueryPlan plan);
 
 	/**
 	 * 拆分 LastQueryPlan
@@ -137,4 +186,11 @@ public interface IPlanSplitter {
 	 * @return 选出的存储单元列表
 	 */
 	List<StorageUnitMeta> selectStorageUnitList(FragmentMeta fragment, boolean isQuery);
+
+	/**
+	 * 拆分 DownsampleLastQueryPlan
+	 * @param plan 待拆分的 DownsampleLastQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan);
 }
