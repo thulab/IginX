@@ -105,34 +105,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	private static final String SUM_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> sum()";
 
-	private static final String DOWNSAMPLE_MAX_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: max)";
-
-	private static final String DOWNSAMPLE_MIN_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: min)";
-
-	private static final String DOWNSAMPLE_FIRST_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: first)";
-
-	private static final String DOWNSAMPLE_LAST_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: last)";
-
-	private static final String DOWNSAMPLE_AVG_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: mean)";
-
-	private static final String DOWNSAMPLE_COUNT_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: count)";
-
-	private static final String DOWNSAMPLE_SUM_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: sum)";
-
-	private static final String DOWNSAMPLE_MAX_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: max)";
-
-	private static final String DOWNSAMPLE_MIN_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: min)";
-
-	private static final String DOWNSAMPLE_FIRST_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: first)";
-
-	private static final String DOWNSAMPLE_LAST_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: last)";
-
-	private static final String DOWNSAMPLE_AVG_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: mean)";
-
-	private static final String DOWNSAMPLE_COUNT_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: count)";
-
-	private static final String DOWNSAMPLE_SUM_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: sum)";
-
 	private Map<Long, InfluxDBClient> storageEngineIdToClient;
 
 	private void createConnection(StorageEngineMeta storageEngineMeta) {
