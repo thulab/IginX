@@ -220,9 +220,9 @@ public class AggregateCombiner {
             switch (pair.k) {
                 case INTEGER:
                     if (processNull) {
-                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count : "null".getBytes();
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / (int)count : "null".getBytes();
                     } else {
-                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count : null;
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / (int)count : null;
                     }
                     break;
                 case LONG:
