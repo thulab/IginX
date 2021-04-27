@@ -59,7 +59,7 @@ public class CombineExecutor implements ICombineExecutor {
         int failureCount = (int) planExecuteResults.stream().filter(e -> e.getStatusCode() == PlanExecuteResult.FAILURE).count();
         if (failureCount > 0)
             status = RpcUtils.PARTIAL_SUCCESS;
-        if (failureCount == planExecuteResults.size())
+        if (failureCount == planExecuteResults.size() && failureCount != 0)
             status = RpcUtils.FAILURE;
 
         switch (requestContext.getType()) {
