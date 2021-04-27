@@ -58,14 +58,15 @@ public class IoTDBSessionExample {
 		// 添加列
 		addColumns();
 		// 列式插入数据
-		insertColumnRecords();
+		//insertColumnRecords();
 		// 行式插入数据
-		insertRowRecords();
+		//insertRowRecords();
 		// 查询数据
-		//queryData();
+		queryData();
 		// 聚合查询数据
 		//aggregateQuery();
 		// 降采样聚合查询
+		//deleteDataInColumns();
 		downsampleQuery();
 		// 删除数据
 		//deleteDataInColumns();
@@ -75,7 +76,7 @@ public class IoTDBSessionExample {
 		//deleteColumns();
 
 		// 删除数据库
-		//session.dropDatabase(DATABASE_NAME);
+		session.dropDatabase(DATABASE_NAME);
 
 		// 关闭 Session
 		session.closeSession();
@@ -304,7 +305,7 @@ public class IoTDBSessionExample {
 		paths.add(S4);
 
 		long startTime = COLUMN_END_TIMESTAMP - 50L;
-		long endTime = ROW_START_TIMESTAMP + 50L;
+		long endTime = ROW_END_TIMESTAMP - 20L;
 
 		session.deleteDataInColumns(paths, startTime, endTime);
 	}
