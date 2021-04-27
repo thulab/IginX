@@ -58,7 +58,7 @@ public class IoTDBSessionExample {
 		// 添加列
 		addColumns();
 		// 列式插入数据
-		insertColumnRecords();
+		//insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
 		// 查询数据
