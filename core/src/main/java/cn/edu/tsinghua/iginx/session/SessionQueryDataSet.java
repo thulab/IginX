@@ -32,7 +32,7 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByData
 
 public class SessionQueryDataSet {
 
-	private final List<String> paths;
+	private List<String> paths;
 
 	private final long[] timestamps;
 
@@ -46,8 +46,17 @@ public class SessionQueryDataSet {
 
 	public SessionQueryDataSet(DownsampleQueryResp resp) {
 		this.paths = resp.getPaths();
-		this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
-		parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+		if (resp.queryDataSet != null) {
+			this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+			parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+		} else {
+			this.timestamps = new long[0];
+			values = new ArrayList<>();
+		}
+		if (this.paths == null) {
+			this.paths = new ArrayList<>();
+		}
+
 	}
 
 	private void parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
