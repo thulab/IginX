@@ -255,9 +255,9 @@ public class AggregateCombiner {
             }
         }
         for (int i = valuesToDelete.size() - 1; i >= 0; i--) {
-            valueList.remove(i);
-            resp.dataTypeList.remove(i);
-            resp.paths.remove(i);
+            valueList.remove((int) valuesToDelete.get(i));
+            resp.dataTypeList.remove((int) valuesToDelete.get(i));
+            resp.paths.remove((int) valuesToDelete.get(i));
         }
         Object[] values = new Object[valueList.size()];
         for (int i = 0; i < valueList.size(); i++) {
