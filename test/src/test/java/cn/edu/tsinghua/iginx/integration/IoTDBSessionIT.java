@@ -29,8 +29,7 @@ public class IoTDBSessionIT {
     private static final long TIME_PERIOD = 100000L;
     private static final long START_TIME = 0L;
     private static final long END_TIME = START_TIME + TIME_PERIOD - 1;
-
-    private static final long PRECISION = 997L;
+    private static final long PRECISION = 123L;
     private static final double delta = 1e-7;
 
     @Before
@@ -325,7 +324,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
             long dsTimestamp = dsDataSet.getTimestamps()[i];
@@ -693,8 +691,7 @@ public class IoTDBSessionIT {
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D4_S4);
-
-        session.deleteDataInColumns(delPaths, START_TIME, END_TIME + 1);
+        session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
 
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
 
@@ -736,7 +733,6 @@ public class IoTDBSessionIT {
                     break;
             }
         }
-
         // Test downsample function for the delete
         SessionQueryDataSet dsDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
         int dsLen = dsDataSet.getTimestamps().length;
