@@ -104,6 +104,34 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	private static final String SUM_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> sum()";
 
+	private static final String DOWNSAMPLE_MAX_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: max)";
+
+	private static final String DOWNSAMPLE_MIN_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: min)";
+
+	private static final String DOWNSAMPLE_FIRST_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: first)";
+
+	private static final String DOWNSAMPLE_LAST_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: last)";
+
+	private static final String DOWNSAMPLE_AVG_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: mean)";
+
+	private static final String DOWNSAMPLE_COUNT_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: count)";
+
+	private static final String DOWNSAMPLE_SUM_WITH_TAG = QUERY_DATA_WITH_TAG + " |> aggregateWindow(every: %sms, fn: sum)";
+
+	private static final String DOWNSAMPLE_MAX_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: max)";
+
+	private static final String DOWNSAMPLE_MIN_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: min)";
+
+	private static final String DOWNSAMPLE_FIRST_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: first)";
+
+	private static final String DOWNSAMPLE_LAST_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: last)";
+
+	private static final String DOWNSAMPLE_AVG_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: mean)";
+
+	private static final String DOWNSAMPLE_COUNT_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: count)";
+
+	private static final String DOWNSAMPLE_SUM_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> aggregateWindow(every: %sms, fn: sum)";
+
 	private Map<Long, InfluxDBClient> storageEngineIdToClient;
 
 	private void createConnection(StorageEngineMeta storageEngineMeta) {
@@ -437,8 +465,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
-						field,
-						value
+						field
 				), organization.getId());
 				sumTables = client.getQueryApi().query(String.format(
 						SUM_WITHOUT_TAG,
@@ -446,8 +473,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
-						field,
-						value
+						field
 				), organization.getId());
 			}
 
@@ -849,37 +875,359 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_AVG_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_AVG_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryPlan(DownsampleCountQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_COUNT_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_COUNT_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryPlan(DownsampleSumQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_SUM_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_SUM_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_MAX_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_MAX_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryPlan(DownsampleMinQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_MIN_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_MIN_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_FIRST_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_FIRST_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
-		return null;
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_LAST_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value,
+						plan.getPrecision()
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						DOWNSAMPLE_LAST_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						plan.getPrecision()
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override
