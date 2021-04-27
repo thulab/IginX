@@ -185,6 +185,10 @@ public class AggregateCombiner {
     }
 
     public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
+        combineAvgResult(resp, planExecuteResults, true);
+    }
+
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, boolean processNull) {
         constructPathAndTypeList(resp, planExecuteResults);
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
@@ -202,32 +206,62 @@ public class AggregateCombiner {
                         .v.add(new Pair<>(subCount, subSum));
             }
         }
-        Object[] values = new Object[paths.size()];
+        List<Object> valueList = new ArrayList<>();
+        List<Integer> valuesToDelete = new ArrayList<>();
         for (int i = 0; i < paths.size(); i++) {
             Pair<DataType, List<Pair<Long, Object>>> pair = pathsRawData.get(paths.get(i));
             long count = pair.v.stream().map(e -> e.k).reduce(0L, Long::sum);
-            if (count == 0) {
-                dataTypes.set(i, DataType.BINARY);
+            if (processNull) {
+                if (count == 0) {
+                    dataTypes.set(i, DataType.BINARY);
+                }
             }
             Object avg = null;
             switch (pair.k) {
                 case INTEGER:
-                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count : "null".getBytes();
-                    dataTypes.set(i, DataType.LONG);
+                    if (processNull) {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count : "null".getBytes();
+                    } else {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Integer.class::cast).reduce(0, Integer::sum)  / count : null;
+                    }
                     break;
                 case LONG:
-                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Long.class::cast).reduce(0L, Long::sum) / count : "null".getBytes();
+                    if (processNull) {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Long.class::cast).reduce(0L, Long::sum) / count : "null".getBytes();
+                    } else {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Long.class::cast).reduce(0L, Long::sum) / count : null;
+                    }
                     break;
                 case FLOAT:
-                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Float.class::cast).reduce(0.0f, Float::sum) / count : "null".getBytes();
+                    if (processNull) {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Float.class::cast).reduce(0.0f, Float::sum) / count : "null".getBytes();
+                    } else {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Float.class::cast).reduce(0.0f, Float::sum) / count : null;
+                    }
                     break;
                 case DOUBLE:
-                    avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Double.class::cast).reduce(0.0, Double::sum) / count : "null".getBytes();
+                    if (processNull) {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Double.class::cast).reduce(0.0, Double::sum) / count : "null".getBytes();
+                    } else {
+                        avg = count != 0 ? pair.v.stream().map(e -> e.v).map(Double.class::cast).reduce(0.0, Double::sum) / count : null;
+                    }
                     break;
                 default:
                     logger.error("unsupported datatype: " + pair.k);
             }
-            values[i] = avg;
+            valueList.add(avg);
+            if (avg == null) {
+                valuesToDelete.add(i);
+            }
+        }
+        for (int i = valuesToDelete.size() - 1; i >= 0; i--) {
+            valueList.remove(i);
+            resp.dataTypeList.remove(i);
+            resp.paths.remove(i);
+        }
+        Object[] values = new Object[valueList.size()];
+        for (int i = 0; i < valueList.size(); i++) {
+            values[i] = valueList.get(i);
         }
         resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
     }
