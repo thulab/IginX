@@ -48,7 +48,7 @@ public class IoTDBSessionExample {
 	private static final int ROW_INTERVAL = 10;
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
-		session = new Session("127.0.0.1", 6667, "root", "root");
+		session = new Session("127.0.0.1", 6324, "root", "root");
 		// 打开 Session
 		session.openSession();
 
@@ -61,9 +61,9 @@ public class IoTDBSessionExample {
 	//	insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
-		valuefilterquery();
 		// 查询数据
-		//queryData();
+		queryData();
+        valuefilterquery();
 		// 聚合查询数据
 		//aggregateQuery();
 		// 降采样聚合查询
@@ -228,7 +228,7 @@ public class IoTDBSessionExample {
 
 		long startTime = COLUMN_END_TIMESTAMP - 100L;
 		long endTime = ROW_START_TIMESTAMP + 100L;
-		String booleanExpression = S1 + "> 20 and " + S2 + "< 100";
+		String booleanExpression =  "root.sg1.d2.s2 < 100";
 		SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
 		dataSet.print();
 	}
