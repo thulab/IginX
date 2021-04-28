@@ -46,8 +46,10 @@ public class InfluxDBSessionExample {
 
 	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
+		// 打开 Session
 		session.openSession();
 
+		// 创建数据库
 		session.createDatabase(DATABASE_NAME);
 
 		// 列式插入数据
@@ -58,14 +60,18 @@ public class InfluxDBSessionExample {
 		queryData();
 		// 聚合查询数据
 		aggregateQuery();
+		// 降采样聚合查询
+		downsampleQuery();
 		// 删除数据
 		// TODO 不能做，InfluxDB 删除语句中不能指定 _field
 //		deleteDataInColumns();
 		// 再次查询数据
 //		queryData();
 
+		// 删除数据库
 		session.dropDatabase(DATABASE_NAME);
 
+		// 关闭 Session
 		session.closeSession();
 	}
 
@@ -160,6 +166,48 @@ public class InfluxDBSessionExample {
 
 		SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
 		dataSet.print();
+	}
+
+	private static void downsampleQuery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+
+		long startTime = ROW_START_TIMESTAMP;
+		long endTime = ROW_END_TIMESTAMP + 1;
+
+		System.out.println("Downsample Query: ");
+
+		// MAX
+		SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// MIN
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// FIRST
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// LAST
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// COUNT
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// SUM
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// AVG
+		dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 100);
+		dataSet.print();
+
+		// 降采样查询结束
+		System.out.println("Downsample Query Finished.");
 	}
 
 	private static void aggregateQuery() throws SessionException {
