@@ -297,7 +297,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						QUERY_DATA_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -307,7 +307,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						QUERY_DATA_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -417,7 +417,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -426,7 +426,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -436,7 +436,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -444,7 +444,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -497,7 +497,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -507,7 +507,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -557,7 +557,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -567,7 +567,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -618,7 +618,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						FIRST_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -628,7 +628,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						FIRST_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -682,7 +682,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						LAST_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -692,7 +692,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						LAST_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -746,7 +746,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MAX_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -756,7 +756,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MAX_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -810,7 +810,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MIN_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -820,7 +820,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MIN_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -913,7 +913,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						QUERY_DATA_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -923,32 +923,32 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						QUERY_DATA_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				);
 			}
 			switch (plan.getIginxPlanType()) {
 				case DOWNSAMPLE_AVG:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: mean)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: mean, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				case DOWNSAMPLE_SUM:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: sum)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: sum, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				case DOWNSAMPLE_COUNT:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: count)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: count, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				case DOWNSAMPLE_MAX:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: max)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: max, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				case DOWNSAMPLE_MIN:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: min)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: min, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				case DOWNSAMPLE_FIRST:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: first)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: first, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				case DOWNSAMPLE_LAST:
-					statement += String.format(" |> aggregateWindow(every: %sms, fn: last)", plan.getPrecision());
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: last, timeSrc: \"_start\")", plan.getPrecision());
 					break;
 				default:
 					throw new UnsupportedOperationException(plan.getIginxPlanType().toString());
