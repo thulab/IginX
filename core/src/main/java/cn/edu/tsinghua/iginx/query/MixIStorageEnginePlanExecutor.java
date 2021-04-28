@@ -286,6 +286,9 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     @Override
     public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
     {
+        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
+        if (storageEngine != null)
+            return storageEngine.syncExecuteValueFilterQueryPlan(plan);
         return null;
     }
 

@@ -355,7 +355,19 @@ public class HeuristicPlanSplitter implements IPlanSplitter
 	@Override
 	public List<SplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan)
 	{
-		return null;
+	    updatePrefix(plan);
+        List<SplitInfo> infoList = new ArrayList<>();
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+                plan.getTsInterval(), plan.getTimeInterval());
+        for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
+            for (FragmentMeta fragment : entry.getValue()) {
+                List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
+                for (FragmentReplicaMeta replica : replicas) {
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), replica));
+                }
+            }
+        }
+        return infoList;
 	}
 
 	@Override
