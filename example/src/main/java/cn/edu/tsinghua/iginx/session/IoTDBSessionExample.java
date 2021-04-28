@@ -61,9 +61,9 @@ public class IoTDBSessionExample {
 	//	insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
+		valuefilterquery();
 		// 查询数据
-		queryData();
-        valuefilterquery();
+		//queryData();
 		// 聚合查询数据
 		//aggregateQuery();
 		// 降采样聚合查询
