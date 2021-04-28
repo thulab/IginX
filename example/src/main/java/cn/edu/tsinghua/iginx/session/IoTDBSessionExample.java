@@ -61,6 +61,7 @@ public class IoTDBSessionExample {
 		// 删除数据
 		deleteDataInColumns();
 		// 再次查询数据
+		queryData();
 
 		// 关闭 Session
 		session.closeSession();

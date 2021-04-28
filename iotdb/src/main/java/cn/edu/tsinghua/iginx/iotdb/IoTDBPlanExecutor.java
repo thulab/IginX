@@ -460,6 +460,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
+            List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
@@ -471,16 +472,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         sessionPool.executeQueryStatement(String.format(FIRST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(BINARY);
-                    values.add("null".getBytes());
+                    continue;
                 } else {
+                    paths.add(path);
                     dataTypeList.add(fromIoTDB(field.getDataType()));
                     values.add(field.getObjectValue(field.getDataType()));
                 }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths());
+            result.setPaths(paths);
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -495,6 +496,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
+            List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
@@ -506,16 +508,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         sessionPool.executeQueryStatement(String.format(LAST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(BINARY);
-                    values.add("null".getBytes());
+                    continue;
                 } else {
+                    paths.add(path);
                     dataTypeList.add(fromIoTDB(field.getDataType()));
                     values.add(field.getObjectValue(field.getDataType()));
                 }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths());
+            result.setPaths(paths);
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -530,6 +532,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
+            List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
@@ -542,16 +545,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 // TODO 有空指针
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(BINARY);
-                    values.add("null".getBytes());
+                    continue;
                 } else {
+                    paths.add(path);
                     dataTypeList.add(fromIoTDB(field.getDataType()));
                     values.add(field.getObjectValue(field.getDataType()));
                 }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths());
+            result.setPaths(paths);
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
@@ -566,6 +569,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
+            List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
             List<Long> timestamps = new ArrayList<>();
             List<Object> values = new ArrayList<>();
@@ -577,16 +581,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         sessionPool.executeQueryStatement(String.format(MIN_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 Field field = dataSet.next().getFields().get(0);
                 if (field.getStringValue().equals("null")) {
-                    dataTypeList.add(BINARY);
-                    values.add("null".getBytes());
+                    continue;
                 } else {
+                    paths.add(path);
                     dataTypeList.add(fromIoTDB(field.getDataType()));
                     values.add(field.getObjectValue(field.getDataType()));
                 }
                 dataSet.close();
             }
             SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(plan.getPaths());
+            result.setPaths(paths);
             result.setDataTypes(dataTypeList);
             result.setTimes(timestamps);
             result.setValues(values);
