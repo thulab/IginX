@@ -102,8 +102,8 @@ public class IoTDBSessionIT {
         paths.add(COLUMN_D3_S3);
         paths.add(COLUMN_D4_S4);
 
-        String booleanExpression = "root."+COLUMN_D1_S1 + ">" +  s1 + " and root." + COLUMN_D2_S2 + "<" + s2 + " and(root." +
-                COLUMN_D3_S3 + " > " + s3 + " or root." + COLUMN_D4_S4 + " < " + s4 +")";
+        String booleanExpression = COLUMN_D1_S1 + ">" +  s1 + " and " + COLUMN_D2_S2 + "<" + s2 + " and(" +
+                COLUMN_D3_S3 + " > " + s3 + " or " + COLUMN_D4_S4 + " < " + s4 +")";
         SessionQueryDataSet dataSet = session.valueFilterQuery(paths, START_TIME, END_TIME, booleanExpression);
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
@@ -764,7 +764,7 @@ public class IoTDBSessionIT {
 
         // Test value filter for the delete
         int vftime = 1123;
-        String booleanExpression = "root."+ COLUMN_D2_S2 + " > "+vftime;
+        String booleanExpression = COLUMN_D2_S2 + " > "+vftime;
         SessionQueryDataSet vfDataSet = session.valueFilterQuery(paths, START_TIME, END_TIME, booleanExpression);
         int vflen = vfDataSet.getTimestamps().length;
         List<String> vfResPaths = vfDataSet.getPaths();

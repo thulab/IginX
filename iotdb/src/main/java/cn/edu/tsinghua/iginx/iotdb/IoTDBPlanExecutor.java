@@ -669,14 +669,34 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
+
     @Override
     public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
     {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        String[] tmpstr = plan.getBooleanExpression().split(" ");
+        StringBuilder finalstr = new StringBuilder("");
+        for (int i=0; i<tmpstr.length; i++)
+        {
+            boolean isPath = false;
+            String s = tmpstr[i];
+            try
+            {
+                Double.parseDouble(s);
+            }
+            catch (NumberFormatException e)
+            {
+                if (s.contains("."))
+                    isPath = true;
+            }
+            if (isPath)
+                finalstr.append("root.");
+            finalstr.append(s + " ");
+        }
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(VALUE_FILTER_QUERY, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getBooleanExpression());
+                String statement = String.format(VALUE_FILTER_QUERY, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), finalstr);
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {

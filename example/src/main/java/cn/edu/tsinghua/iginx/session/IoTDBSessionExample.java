@@ -227,7 +227,7 @@ public class IoTDBSessionExample {
 
 		long startTime = COLUMN_END_TIMESTAMP - 100L;
 		long endTime = ROW_START_TIMESTAMP + 100L;
-		String booleanExpression =  "root.sg1.d2.s2 > 3";
+		String booleanExpression =  S2 + " > 3";
 		SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
 		dataSet.print();
 	}
