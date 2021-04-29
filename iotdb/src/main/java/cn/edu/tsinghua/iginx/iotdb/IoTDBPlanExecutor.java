@@ -676,8 +676,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         String[] tmpstr = plan.getBooleanExpression().
-                replace("and"," and ").
-                replace("or"," or ").
                 replace("(", " ( ").
                 replace(")"," ) ").
                 split(" ");
