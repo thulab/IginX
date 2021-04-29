@@ -394,8 +394,10 @@ public class AggregateCombinerTest {
             Object value = values[i];
             switch (path) {
                 case "root.sg1.d1.s1":
-                case "root.sg2.d1.s1":
                     assertEquals(10L, (long) value);
+                    break;
+                case "root.sg2.d1.s1":
+                    assertEquals(10, (int) value);
                     break;
                 case "root.sg1.d1.s2":
                     assertEquals(5.0, (double) value, 0.001);

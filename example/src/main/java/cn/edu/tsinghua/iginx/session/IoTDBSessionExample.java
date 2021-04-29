@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.iotdb.session.SessionDataSet;
 import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
@@ -63,20 +62,20 @@ public class IoTDBSessionExample {
 		insertRowRecords();
 		valuefilterquery();
 		// 查询数据
-		//queryData();
+		queryData();
 		// 聚合查询数据
-		//aggregateQuery();
+		aggregateQuery();
 		// 降采样聚合查询
 	//	downsampleQuery();
 		// 删除数据
-		//deleteDataInColumns();
+		deleteDataInColumns();
 		// 再次查询数据
-		//queryData();
+		queryData();
 		// 删除列
-		//deleteColumns();
+		deleteColumns();
 
 		// 删除数据库
-		//session.dropDatabase(DATABASE_NAME);
+		session.dropDatabase(DATABASE_NAME);
 
 		// 关闭 Session
 		session.closeSession();

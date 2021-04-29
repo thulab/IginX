@@ -79,7 +79,7 @@ public class DownsampleCombiner {
                     break;
                 case AVG:
                     AggregateCombiner.getInstance().combineAvgResult(aggregateQueryResp, aggregateResultGroup.stream()
-                            .map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                            .map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()), false);
                     break;
                 case COUNT:
                 case SUM:
