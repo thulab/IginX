@@ -6,36 +6,18 @@ import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
-import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.*;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import com.influxdb.client.InfluxDBClient;
@@ -296,7 +278,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						QUERY_DATA_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -306,7 +288,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						QUERY_DATA_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -416,7 +398,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -425,7 +407,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -435,19 +417,17 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
-						field,
-						value
+						field
 				), organization.getId());
 				sumTables = client.getQueryApi().query(String.format(
 						SUM_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
-						field,
-						value
+						field
 				), organization.getId());
 			}
 
@@ -498,7 +478,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -508,7 +488,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						COUNT_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -558,7 +538,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -568,7 +548,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						SUM_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -619,7 +599,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						FIRST_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -629,7 +609,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						FIRST_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -683,7 +663,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						LAST_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -693,7 +673,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						LAST_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -747,7 +727,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MAX_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -757,7 +737,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MAX_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -811,7 +791,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MIN_WITH_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field,
 						value
@@ -821,7 +801,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						MIN_WITHOUT_TAG,
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime() + 1), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
 						measurement,
 						field
 				), organization.getId());
@@ -849,41 +829,123 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan) {
-		return null;
+		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryPlan(DownsampleCountQueryPlan plan) {
-		return null;
+		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryPlan(DownsampleSumQueryPlan plan) {
-		return null;
+		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan) {
-		return null;
+		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryPlan(DownsampleMinQueryPlan plan) {
-		return null;
+		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
-		return null;
+		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
+		return syncExecuteDownsampleQueryPlan(plan);
+	}
+
+	@Override
+	public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
+	{
 		return null;
 	}
 
 	@Override
 	public StorageEngineChangeHook getStorageEngineChangeHook() {
 		return null;
+	}
+
+	private DownsampleQueryPlanExecuteResult syncExecuteDownsampleQueryPlan(DownsampleQueryPlan plan) {
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			String statement;
+			if (value != null) {
+				statement = String.format(
+						QUERY_DATA_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value
+				);
+			} else {
+				statement = String.format(
+						QUERY_DATA_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field
+				);
+			}
+			switch (plan.getIginxPlanType()) {
+				case DOWNSAMPLE_AVG:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: mean, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				case DOWNSAMPLE_SUM:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: sum, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				case DOWNSAMPLE_COUNT:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: count, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				case DOWNSAMPLE_MAX:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: max, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				case DOWNSAMPLE_MIN:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: min, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				case DOWNSAMPLE_FIRST:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: first, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				case DOWNSAMPLE_LAST:
+					statement += String.format(" |> aggregateWindow(every: %sms, fn: last, timeSrc: \"_start\")", plan.getPrecision());
+					break;
+				default:
+					throw new UnsupportedOperationException(plan.getIginxPlanType().toString());
+			}
+
+			tables = client.getQueryApi().query(statement, organization.getId());
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+		return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 }

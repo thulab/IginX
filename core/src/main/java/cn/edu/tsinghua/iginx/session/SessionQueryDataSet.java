@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
 import java.nio.ByteBuffer;
@@ -32,7 +33,7 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByData
 
 public class SessionQueryDataSet {
 
-	private final List<String> paths;
+	private List<String> paths;
 
 	private final long[] timestamps;
 
@@ -44,10 +45,25 @@ public class SessionQueryDataSet {
 		parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
 	}
 
-	public SessionQueryDataSet(DownsampleQueryResp resp) {
+	public SessionQueryDataSet(ValueFilterQueryResp resp) {
 		this.paths = resp.getPaths();
 		this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
 		parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+	}
+
+	public SessionQueryDataSet(DownsampleQueryResp resp) {
+		this.paths = resp.getPaths();
+		if (resp.queryDataSet != null) {
+			this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+			parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+		} else {
+			this.timestamps = new long[0];
+			values = new ArrayList<>();
+		}
+		if (this.paths == null) {
+			this.paths = new ArrayList<>();
+		}
+
 	}
 
 	private void parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {

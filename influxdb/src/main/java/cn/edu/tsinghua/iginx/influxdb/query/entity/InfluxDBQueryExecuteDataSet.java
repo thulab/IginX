@@ -33,13 +33,21 @@ public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet  {
 	public List<String> getColumnNames() throws ExecutionException {
 		List<String> columnNames = new ArrayList<>();
 		columnNames.add("Time");
-		columnNames.add(bucketName +
-				"." +
-				table.getRecords().get(0).getMeasurement() +
-				"." +
-				table.getRecords().get(0).getValueByKey("t") +
-				"." +
-				table.getRecords().get(0).getField());
+		if (table.getRecords().get(0).getValueByKey("t") == null) {
+			columnNames.add(bucketName +
+					"." +
+					table.getRecords().get(0).getMeasurement() +
+					"." +
+					table.getRecords().get(0).getField());
+		} else {
+			columnNames.add(bucketName +
+					"." +
+					table.getRecords().get(0).getMeasurement() +
+					"." +
+					table.getRecords().get(0).getValueByKey("t") +
+					"." +
+					table.getRecords().get(0).getField());
+		}
 		return columnNames;
 	}
 
