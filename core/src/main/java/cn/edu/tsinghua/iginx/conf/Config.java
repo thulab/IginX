@@ -50,6 +50,10 @@ public class Config {
 
     private String statisticsCollectorClassName = "cn.edu.tsinghua.iginx.statistics.StatisticsCollector";
 
+    private String restip = "127.0.0.1";
+
+    private int restport = 6666;
+
     public String getIp() {
         return ip;
     }
@@ -168,5 +172,15 @@ public class Config {
 
     public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
         this.statisticsCollectorClassName = statisticsCollectorClassName;
+    }
+
+    public String getRestip()
+    {
+        return restip;
+    }
+
+    public int getRestport()
+    {
+        return restport;
     }
 }

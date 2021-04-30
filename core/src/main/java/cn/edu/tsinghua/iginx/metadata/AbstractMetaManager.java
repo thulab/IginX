@@ -689,6 +689,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     @Override
     public Map<String, Integer> getSchemaMapping(String schema) {
+        if (this.schemaMappings.get(schema) == null)
+            return null;
         return Collections.unmodifiableMap(this.schemaMappings.get(schema));
     }
 
