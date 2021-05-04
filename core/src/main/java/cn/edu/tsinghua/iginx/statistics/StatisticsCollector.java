@@ -100,7 +100,7 @@ public class StatisticsCollector implements IStatisticsCollector {
                     planExecuteStatisticsCollector.broadcastStatistics();
                     resultCombineStatisticsCollector.broadcastStatistics();
                     queryStatisticsCollector.broadcastStatistics();
-                    Thread.sleep(5000); // 每隔 10 秒播报一次统计信息
+                    Thread.sleep(555000); // 每隔 10 秒播报一次统计信息
                 }
             } catch (InterruptedException e) {
                 logger.error("encounter error when broadcasting statistics: ", e);

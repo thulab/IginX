@@ -10,6 +10,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.stringtemplate.v4.ST;
 
 import java.util.*;
 
@@ -27,9 +28,8 @@ public class IoTDBSessionIT {
     private List<String> paths = new ArrayList<>();
 
     private static final long TIME_PERIOD = 100000L;
-    private static final long START_TIME = 0L;
+    private static final long START_TIME = 1000L;
     private static final long END_TIME = START_TIME + TIME_PERIOD - 1;
-
     private static final long PRECISION = 123L;
     private static final double delta = 1e-7;
 
@@ -66,21 +66,21 @@ public class IoTDBSessionIT {
         assertEquals(dataSet.getValues().size(), TIME_PERIOD);
         for (int i = 0; i < len; i++){
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i);
+            assertEquals(timestamp, i + START_TIME);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
                 switch (resPaths.get(j)){
                     case "sg1.d1.s1":
-                        assertEquals(result.get(j), (long)i);
+                        assertEquals(result.get(j), timestamp);
                         break;
                     case "sg1.d2.s2":
-                        assertEquals(result.get(j), (long)(i + 1));
+                        assertEquals(result.get(j), timestamp + 1);
                         break;
                     case "sg1.d3.s3":
-                        assertEquals(result.get(j), (long)(i + 2));
+                        assertEquals(result.get(j), timestamp + 2);
                         break;
                     case "sg1.d4.s4":
-                        assertEquals(result.get(j), (long)(i + 3));
+                        assertEquals(result.get(j), timestamp + 3);
                         break;
                     default:
                         fail();
@@ -127,7 +127,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
@@ -194,7 +193,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
@@ -202,7 +200,7 @@ public class IoTDBSessionIT {
             assertEquals(dsTimestamp, START_TIME + i * PRECISION);
             List<Object> dsResult = dsDataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
-                long minNum = i * PRECISION;
+                long minNum = START_TIME + i * PRECISION;
                 switch (dsResPaths.get(j)){
                     case "sg1.d1.s1":
                         assertEquals(dsResult.get(j), minNum);
@@ -261,7 +259,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
@@ -269,7 +266,7 @@ public class IoTDBSessionIT {
             assertEquals(dsTimestamp, START_TIME + i * PRECISION);
             List<Object> dsResult = dsDataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
-                long firstNum = i * PRECISION;
+                long firstNum = START_TIME + i * PRECISION;
                 switch (dsResPaths.get(j)){
                     case "sg1.d1.s1":
                         assertEquals(dsResult.get(j), firstNum);
@@ -328,8 +325,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
-        assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
             long dsTimestamp = dsDataSet.getTimestamps()[i];
@@ -377,7 +372,6 @@ public class IoTDBSessionIT {
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
-        System.out.println(dsLen);
         for (int i = 0; i < dsLen; i++){
             long dsTimestamp = dsDataSet.getTimestamps()[i];
             assertEquals(dsTimestamp, START_TIME + i * PRECISION);
@@ -423,7 +417,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
@@ -490,7 +483,6 @@ public class IoTDBSessionIT {
         List<String> dsResPaths = dsDataSet.getPaths();
         assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
@@ -529,8 +521,8 @@ public class IoTDBSessionIT {
         delPaths.add(COLUMN_D4_S4);
 
         // ensure after delete there are still points in the timeseries
-        long delStartTime = TIME_PERIOD / 5;
-        long delEndTime = TIME_PERIOD / 10 * 9;
+        long delStartTime = START_TIME + TIME_PERIOD / 5;
+        long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
         long delTimePeriod = delEndTime - delStartTime + 1;
 
         session.deleteDataInColumns(delPaths, delStartTime, delEndTime);
@@ -544,12 +536,12 @@ public class IoTDBSessionIT {
         assertEquals(dataSet.getValues().size(), TIME_PERIOD);
         for (int i = 0; i < len; i++){
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i);
+            assertEquals(timestamp, i + START_TIME);
             List<Object> result = dataSet.getValues().get(i);
-            if (delStartTime <= i & i <= delEndTime) {
+            if (delStartTime <= timestamp && timestamp <= delEndTime) {
                 for (int j = 0; j < 4; j++) {
                     if ("sg1.d2.s2".equals(resPaths.get(j))) {
-                        assertEquals(result.get(j), (long) (i + 1));
+                        assertEquals(result.get(j), timestamp + 1);
                     } else {
                         assertNull(result.get(j));
                     }
@@ -558,16 +550,16 @@ public class IoTDBSessionIT {
                 for (int j = 0; j < 4; j++) {
                     switch (resPaths.get(j)) {
                         case "sg1.d1.s1":
-                            assertEquals(result.get(j), (long) i);
+                            assertEquals(result.get(j), timestamp);
                             break;
                         case "sg1.d2.s2":
-                            assertEquals(result.get(j), (long) (i + 1));
+                            assertEquals(result.get(j), timestamp + 1);
                             break;
                         case "sg1.d3.s3":
-                            assertEquals(result.get(j), (long) (i + 2));
+                            assertEquals(result.get(j), timestamp + 2);
                             break;
                         case "sg1.d4.s4":
-                            assertEquals(result.get(j), (long) (i + 3));
+                            assertEquals(result.get(j), timestamp + 3);
                             break;
                         default:
                             fail();
@@ -633,6 +625,65 @@ public class IoTDBSessionIT {
                     break;
             }
         }
+
+        // Test downSample avg of the delete
+        SessionQueryDataSet dsDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
+        int dsLen = dsDataSet.getTimestamps().length;
+        List<String> dsResPaths = dsDataSet.getPaths();
+        long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
+        assertEquals(dsLen, factLen);
+        assertEquals(dsDataSet.getValues().size(), factLen);
+        for (int i = 0; i < dsLen; i++){
+            long dsStartTime = dsDataSet.getTimestamps()[i];
+            assertEquals(dsStartTime, START_TIME + i * PRECISION);
+            List<Object> dsResult = dsDataSet.getValues().get(i);
+            for (int j = 0; j < dsResPaths.size(); j++) {
+                long dsEndTime = Math.min((START_TIME + (i + 1) * PRECISION - 1), END_TIME);
+                double avg = (dsStartTime + dsEndTime) / 2.0;
+                switch (dsResPaths.get(j)){
+                    case "sg1.d2.s2":
+                        assertEquals((double)dsResult.get(j), avg + 1, delta);
+                        break;
+                    case "sg1.d1.s1":
+                        if(dsStartTime > delEndTime || dsEndTime < delStartTime){
+                            assertEquals((double)dsResult.get(j), avg, delta);
+                        } else if(dsStartTime >= delStartTime && dsEndTime <= delEndTime){
+                            assertNull(dsResult.get(j));
+                        } else if (dsStartTime < delStartTime){
+                            assertEquals((double)dsResult.get(j), (dsStartTime + delStartTime - 1) / 2.0, delta);
+                        } else {
+                            assertEquals((double)dsResult.get(j), (dsEndTime + delEndTime + 1) / 2.0, delta);
+                        }
+                        break;
+                    case "sg1.d3.s3":
+                        if(dsStartTime > delEndTime || dsEndTime < delStartTime){
+                            assertEquals((double)dsResult.get(j), avg + 2, delta);
+                        } else if(dsStartTime >= delStartTime && dsEndTime <= delEndTime){
+                            assertNull(dsResult.get(j));
+                        } else if (dsStartTime < delStartTime){
+                            assertEquals((double)dsResult.get(j), (dsStartTime + delStartTime - 1) / 2.0 + 2, delta);
+                        } else {
+                            assertEquals((double)dsResult.get(j), (dsEndTime + delEndTime + 1) / 2.0 + 2, delta);
+                        }
+                        break;
+                    case "sg1.d4.s4":
+                        if(dsStartTime > delEndTime || dsEndTime < delStartTime){
+                            assertEquals((double)dsResult.get(j), avg + 3, delta);
+                        } else if(dsStartTime >= delStartTime && dsEndTime <= delEndTime){
+                            assertNull(dsResult.get(j));
+                        } else if (dsStartTime < delStartTime){
+                            assertEquals((double)dsResult.get(j), (dsStartTime + delStartTime - 1) / 2.0 + 3, delta);
+                        } else {
+                            assertEquals((double)dsResult.get(j), (dsEndTime + delEndTime + 1) / 2.0 + 3, delta);
+                        }
+                        break;
+                    default:
+                        fail();
+                        break;
+                }
+            }
+        }
+
     }
 
     @Test
@@ -641,23 +692,20 @@ public class IoTDBSessionIT {
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D4_S4);
-
         session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
-
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
 
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
-        assertEquals(resPaths.size(), 4);
         assertEquals(dataSet.getTimestamps().length, TIME_PERIOD);
         assertEquals(dataSet.getValues().size(), TIME_PERIOD);
         for (int i = 0; i < len; i++){
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i);
+            assertEquals(timestamp, i + START_TIME);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
                 if ("sg1.d2.s2".equals(resPaths.get(j))) {
-                    assertEquals(result.get(j), (long) (i + 1));
+                    assertEquals(result.get(j), timestamp + 1);
                 } else {
                     assertNull(result.get(j));
                 }
@@ -685,23 +733,18 @@ public class IoTDBSessionIT {
                     break;
             }
         }
-
-        dataSet.print();
-
         // Test downsample function for the delete
         SessionQueryDataSet dsDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
         int dsLen = dsDataSet.getTimestamps().length;
         List<String> dsResPaths = dsDataSet.getPaths();
-        assertEquals(dsResPaths.size(), 4);
         long factLen = (TIME_PERIOD / PRECISION) + ((TIME_PERIOD % PRECISION == 0) ? 0 : 1);
-        dsDataSet.print();
         assertEquals(dsLen, factLen);
         assertEquals(dsDataSet.getValues().size(), factLen);
         for (int i = 0; i < dsLen; i++){
             long dsTimestamp = dsDataSet.getTimestamps()[i];
             assertEquals(dsTimestamp, START_TIME + i * PRECISION);
             List<Object> dsResult = dsDataSet.getValues().get(i);
-            for (int j = 0; j < 4; j++) {
+            for (int j = 0; j < dsResPaths.size(); j++) {
                 long maxNum = Math.min((START_TIME + (i + 1) * PRECISION - 1), END_TIME);
                 double avg = (dsTimestamp + maxNum) / 2.0;
                 switch (dsResPaths.get(j)){
@@ -711,7 +754,8 @@ public class IoTDBSessionIT {
                     case "sg1.d1.s1":
                     case "sg1.d3.s3":
                     case "sg1.d4.s4":
-                        assertEquals(new String((byte[]) dsResult.get(j)), "null");
+                        assertNull(dsResult.get(j));
+                        break;
                     default:
                         fail();
                         break;
@@ -744,9 +788,9 @@ public class IoTDBSessionIT {
         assertEquals(dataSet.getValues().size(), TIME_PERIOD);
         for (int i = 0; i < len; i++){
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i);
+            assertEquals(timestamp, i + START_TIME);
             List<Object> result = dataSet.getValues().get(i);
-            assertEquals(result.get(0), (long)(i + 1));
+            assertEquals(result.get(0), timestamp + 1);
         }
     }
 
