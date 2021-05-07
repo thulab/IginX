@@ -64,7 +64,18 @@ public class QueryExecutor
             }
             else
             {
-                //session.downsampleQuery();
+                for (QueryAggregator queryAggregator: queryMetric.getAggregators())
+                {
+                    try
+                    {
+                        ret.addResultSet(session.downsampleQuery(paths, query.getStartAbsolute(), query.getEndAbsolute(),
+                                queryAggregator.getAggregateType(), queryAggregator.getDur()), queryMetric);
+                    }
+                    catch (SessionException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
             }
         }
         return ret;

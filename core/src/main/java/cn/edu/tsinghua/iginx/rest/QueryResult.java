@@ -1,7 +1,5 @@
 package cn.edu.tsinghua.iginx.rest;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
@@ -57,7 +55,7 @@ public class QueryResult
         SessionQueryDataSet queryDataSet = queryDataSets.get(num);
         QueryMetric queryMetric = queryMetrics.get(num);
         ret.append("\"sample_size\": ");
-        ret.append(queryDataSet.getTimestamps().length);
+        ret.append(countanswer(num));
         ret.append(",");
         ret.append("\"results\": [{ ");
         ret.append(String.format("\"name\": \"%s\",",queryMetric.getName()));
@@ -95,10 +93,10 @@ public class QueryResult
         int m = queryDataSets.get(num).getPaths().size();
         for (int i=0;i<n;i++)
         {
-            ret.append(String.format("[%d,", queryDataSets.get(num).getTimestamps()[i]));
             for (int j=0;j<m;j++)
                 if (queryDataSets.get(num).getValues().get(i).get(j) != null)
                 {
+                    ret.append(String.format("[%d,", queryDataSets.get(num).getTimestamps()[i]));
                     if (queryDataSets.get(num).getValues().get(i).get(j) instanceof byte[])
                         ret.append(queryDataSets.get(num).getValues().get(i).get(j));
                     else
@@ -109,6 +107,22 @@ public class QueryResult
         }
         ret.deleteCharAt(ret.length()-1);
         return ret.toString();
+    }
+    private long countanswer(int num)
+    {
+        long ret = 0;
+        int n = queryDataSets.get(num).getTimestamps().length;
+        int m = queryDataSets.get(num).getPaths().size();
+        for (int i=0;i<n;i++)
+        {
+            for (int j=0;j<m;j++)
+                if (queryDataSets.get(num).getValues().get(i).get(j) != null)
+                {
+                    ret++;
+                    break;
+                }
+        }
+        return ret;
     }
 
 }

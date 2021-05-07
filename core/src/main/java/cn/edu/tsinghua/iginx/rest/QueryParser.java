@@ -163,7 +163,66 @@ public class QueryParser
 
     public void addAggregators(QueryMetric q, JsonNode node)
     {
-
+        JsonNode aggregators = node.get("aggregators");
+        if (aggregators == null || !aggregators.isArray())
+            return;
+        for (JsonNode aggregator: aggregators)
+        {
+            JsonNode name = aggregator.get("name");
+            if (name == null) continue;
+            switch (name.asText())
+            {
+                case "max":
+                case "min":
+                case "sum":
+                case "count":
+                case "avg":
+                case "first":
+                case "last":
+                    QueryAggregator qa = new QueryAggregator(name.asText());
+                    JsonNode sampling = aggregator.get("sampling");
+                    if (sampling == null) break;
+                    JsonNode value = sampling.get("value");
+                    if (value == null) break;
+                    JsonNode unit = sampling.get("unit");
+                    if (unit == null) break;
+                    switch (unit.asText())
+                    {
+                        case "millis":
+                            qa.setDur(value.asLong() * 1L);
+                            break;
+                        case "seconds":
+                            qa.setDur(value.asLong() * 1000L);
+                            break;
+                        case "minutes":
+                            qa.setDur(value.asLong() * 60000L);
+                            break;
+                        case "hours":
+                            qa.setDur(value.asLong() * 3600000L);
+                            break;
+                        case "days":
+                            qa.setDur(value.asLong() * 86400000L);
+                            break;
+                        case "weeks":
+                            qa.setDur(value.asLong() * 604800000L);
+                            break;
+                        case "months":
+                            qa.setDur(value.asLong() * 2419200000L);
+                            break;
+                        case "years":
+                            qa.setDur(value.asLong() * 29030400000L);
+                            break;
+                        default:
+                            qa.setDur(0L);
+                            break;
+                    }
+                    if (qa.getDur()!=0)
+                        q.addAggregator(qa);
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 
     public String parseResultToJson(QueryResult result)

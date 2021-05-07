@@ -53,5 +53,8 @@ public class QueryMetric
             tags.put(key, new ArrayList<>());
         tags.get(key).add(value);
     }
-
+    public void addAggregator(QueryAggregator qa)
+    {
+        aggregators.add(qa);
+    }
 }
