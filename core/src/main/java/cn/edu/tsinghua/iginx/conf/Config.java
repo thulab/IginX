@@ -54,6 +54,8 @@ public class Config {
 
     private int restport = 6666;
 
+    private int defaultTimeseriesLength = 2;
+
     public String getIp() {
         return ip;
     }
@@ -182,5 +184,15 @@ public class Config {
     public int getRestport()
     {
         return restport;
+    }
+
+    public int getDefaultTimeseriesLength()
+    {
+        return defaultTimeseriesLength;
+    }
+
+    public void setDefaultTimeseriesLength(int defaultTimeseriesLength)
+    {
+        this.defaultTimeseriesLength = defaultTimeseriesLength;
     }
 }

@@ -4,8 +4,11 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import java.io.InputStream;
+
+import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -60,50 +63,80 @@ public class MetricsResource {
     @Path("/datapoints")
     public void add(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse)
     {
-        threadPool.execute(new IngestionWorker(asyncResponse, httpheaders, stream, gson));
+        threadPool.execute(new IngestionWorker(asyncResponse, httpheaders, stream));
     }
 
 
+    private static String inputStreamToString(InputStream inputStream) throws UnsupportedEncodingException
+    {
+        StringBuffer buffer = new StringBuffer();
+        InputStreamReader inputStreamReader  = new InputStreamReader(inputStream, "utf-8");;
+        try {
+            BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+            String str = null;
+            while ((str = bufferedReader.readLine()) != null) {
+                buffer.append(str);
+            }
+            // 释放资源
+            try
+            {
+                bufferedReader.close();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+            inputStreamReader.close();
+            inputStream.close();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return buffer.toString();
+    }
 
-/*
-
-    @GET
+    @POST
     @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
     @Path(QUERY_URL)
-    public Response getQuery(@QueryParam("query") String jsonStr)
+    public Response getQuery(@Context HttpHeaders httpheaders, final InputStream stream)
+    {
+        try
+        {
+            return getQuery(inputStreamToString(stream));
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Response getQuery(String jsonStr)
     {
         try
         {
             if (jsonStr == null)
             {
-                throw new BeanValidationException(new QueryParser.SimpleConstraintViolation("query json", "must not be null or empty"), "");
+                throw new Exception("query json must not be null or empty");
             }
             long start = System.currentTimeMillis();
             QueryParser parser = new QueryParser();
             Query query = parser.parseQueryMetric(jsonStr);
             QueryExecutor executor = new QueryExecutor(query);
             QueryResult result = executor.execute();
-            if(config.DEBUG == 1)
-            {
-                long elapse = System.currentTimeMillis() - start;
-                LOGGER.info("2 [QueryResult result = executor.execute()] cost {} ms", elapse);
-                start = System.currentTimeMillis();
-            }
             String entity = parser.parseResultToJson(result);
             return Response.status(Status.OK).header("Access-Control-Allow-Origin", "*").header("Pragma", NO_CACHE)
                 .header("Cache-Control", NO_CACHE).header("Expires", 0)
                 .entity(entity).build();
 
         }
-        catch (BeanValidationException e)
+        catch (Exception e)
         {
             JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            return builder.addErrors(e.getErrorMessages()).build();
+            List<String> ret = new ArrayList<>();
+            ret.add(e.getMessage());
+            return builder.addErrors(ret).build();
         }
-        catch (QueryException e)
-        {
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            return builder.addError(e.getMessage()).build();
-        }
-    }*/
+    }
 }

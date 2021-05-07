@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.rest;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.MalformedJsonException;
@@ -22,16 +21,14 @@ public class IngestionWorker extends Thread
     private static final String NO_CACHE = "no-cache";
     private HttpHeaders httpheaders;
     private InputStream stream;
-    private Gson gson;
     private AsyncResponse asyncResponse;
 
     public IngestionWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
-                           InputStream stream, Gson gson)
+                           InputStream stream)
     {
         this.asyncResponse = asyncResponse;
         this.httpheaders = httpheaders;
         this.stream = stream;
-        this.gson = gson;
     }
 
 
@@ -48,7 +45,7 @@ public class IngestionWorker extends Thread
                     stream = new GZIPInputStream(stream);
                 }
             }
-            DataPointsParser parser = new DataPointsParser(new InputStreamReader(stream, StandardCharsets.UTF_8), gson);
+            DataPointsParser parser = new DataPointsParser(new InputStreamReader(stream, StandardCharsets.UTF_8));
             ValidationErrors validationErrors = parser.parse();
             if (!validationErrors.hasErrors())
             {

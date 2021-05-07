@@ -10,23 +10,13 @@ import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonPrimitive;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import st4hidden.org.antlr.runtime.tree.Tree;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-
-
-import static com.google.common.base.Preconditions.checkNotNull;
 
 public class DataPointsParser
 {
@@ -34,16 +24,14 @@ public class DataPointsParser
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
     private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final Reader inputStream;
-    private final Gson gson;
     private ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
     private Session session = new Session("127.0.0.1", 6324, "root", "root");
     private Map<String, Map<String,Integer>> schemamapping = MetricsResource.schemamapping;
 
-    public DataPointsParser(Reader stream, Gson gson)
+    public DataPointsParser(Reader stream)
     {
         this.inputStream = stream;
-        this.gson = gson;
     }
 
     public ValidationErrors parse() throws IOException
