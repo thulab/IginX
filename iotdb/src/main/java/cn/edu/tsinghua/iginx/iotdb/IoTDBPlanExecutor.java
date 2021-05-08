@@ -17,26 +17,12 @@
  * under the License.
  */
 package cn.edu.tsinghua.iginx.iotdb;
-
+//todo
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
-import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.*;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -46,12 +32,7 @@ import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
@@ -92,9 +73,13 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String TIME_RANGE_WHERE_CLAUSE = "WHERE time >= %d and time < %d";
 
+    private static final String VALUE_FILTER_WHERE_CLAUSE = " and (%s)";
+
     private static final String GROUP_BY_CLAUSE = "GROUP BY ([%s, %s), %sms)";
 
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+
+    private static final String VALUE_FILTER_QUERY = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE + VALUE_FILTER_WHERE_CLAUSE;
 
     private static final String MAX_VALUE = "SELECT MAX_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
@@ -682,5 +667,44 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             logger.error(e.getMessage());
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
+    }
+
+
+    @Override
+    public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
+    {
+        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        String[] tmpstr = plan.getBooleanExpression().
+                replace("(", " ( ").
+                replace(")"," ) ").
+                split(" ");
+        StringBuilder finalstr = new StringBuilder("");
+        for (int i=0; i<tmpstr.length; i++)
+        {
+            boolean isPath = false;
+            String s = tmpstr[i];
+            try
+            {
+                Double.parseDouble(s);
+            }
+            catch (NumberFormatException e)
+            {
+                if (s.contains("."))
+                    isPath = true;
+            }
+            if (isPath)
+                finalstr.append("root.");
+            finalstr.append(s + " ");
+        }
+        try {
+            for (String path : plan.getPaths()) {
+                String statement = String.format(VALUE_FILTER_QUERY, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), finalstr);
+                sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+            }
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 }

@@ -55,17 +55,18 @@ public class IoTDBSessionExample {
 		session.createDatabase(DATABASE_NAME);
 
 		// 添加列
-		addColumns();
+	//	addColumns();
 		// 列式插入数据
-		insertColumnRecords();
+	//	insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
+		valuefilterquery();
 		// 查询数据
 		queryData();
 		// 聚合查询数据
 		aggregateQuery();
 		// 降采样聚合查询
-		downsampleQuery();
+	//	downsampleQuery();
 		// 删除数据
 		deleteDataInColumns();
 		// 再次查询数据
@@ -214,6 +215,20 @@ public class IoTDBSessionExample {
 		long endTime = ROW_START_TIMESTAMP + 100L;
 
 		SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+		dataSet.print();
+	}
+
+	private static void valuefilterquery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
+
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
+		String booleanExpression =  S2 + " > 3";
+		SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
 		dataSet.print();
 	}
 
