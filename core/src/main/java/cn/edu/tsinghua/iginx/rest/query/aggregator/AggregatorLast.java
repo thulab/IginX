@@ -4,14 +4,23 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
 import java.util.List;
 
+//todo
 public class AggregatorLast extends QueryAggregator
 {
     public AggregatorLast() {
         super(QueryAggregatorType.LAST);
     }
+
+    @Override
+    public AggregateType getAggregateType()
+    {
+        return AggregateType.LAST;
+    }
+
     @Override
     public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)
     {

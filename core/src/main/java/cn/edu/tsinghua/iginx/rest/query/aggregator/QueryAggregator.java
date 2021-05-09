@@ -21,41 +21,11 @@ public abstract class QueryAggregator
         return Dur;
     }
 
-    private final QueryAggregatorType type;
+    private QueryAggregatorType type;
+
     protected QueryAggregator(QueryAggregatorType type)
     {
         this.type = type;
-    }
-
-    public QueryAggregator(String type)
-    {
-        switch (type)
-        {
-            case "max":
-                this.type = QueryAggregatorType.MAX;
-                break;
-            case "min":
-                this.type = QueryAggregatorType.MIN;
-                break;
-            case "sum":
-                this.type = QueryAggregatorType.SUM;
-                break;
-            case "count":
-                this.type = QueryAggregatorType.COUNT;
-                break;
-            case "avg":
-                this.type = QueryAggregatorType.AVG;
-                break;
-            case "first":
-                this.type = QueryAggregatorType.FIRST;
-                break;
-            case "last":
-                this.type = QueryAggregatorType.LAST;
-                break;
-            default:
-                this.type = QueryAggregatorType.NONE;
-                break;
-        }
     }
 
     public QueryAggregatorType getType() {

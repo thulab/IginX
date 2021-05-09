@@ -26,6 +26,7 @@ public class DataPointsParser
     private final Reader inputStream;
     private ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
+    //todo
     private Session session = new Session("127.0.0.1", 6324, "root", "root");
 
     public DataPointsParser(Reader stream)

@@ -2,13 +2,10 @@ package cn.edu.tsinghua.iginx.rest.query;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.AggregatorAvg;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.AggregatorNone;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
 import cn.edu.tsinghua.iginx.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,31 +34,24 @@ public class QueryExecutor
         try
         {
             session.openSession();
-        }
-        catch (SessionException e)
-        {
-            e.printStackTrace();
-        }
-        for (QueryMetric queryMetric : query.getQueryMetrics())
-        {
-            List<String> paths = getPaths(queryMetric);
-            if (queryMetric.getAggregators().size() == 0)
+            for (QueryMetric queryMetric : query.getQueryMetrics())
             {
-                ret.addResultSet(new AggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
-            }
-            else
-            {
-                for (QueryAggregator queryAggregator: queryMetric.getAggregators())
+                List<String> paths = getPaths(queryMetric);
+                if (queryMetric.getAggregators().size() == 0)
                 {
-                    ret.addResultSet(queryAggregator.doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
+                    ret.addResultSet(new AggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
+                }
+                else
+                {
+                    for (QueryAggregator queryAggregator : queryMetric.getAggregators())
+                    {
+                        ret.addResultSet(queryAggregator.doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
+                    }
                 }
             }
-        }
-        try
-        {
             session.closeSession();
         }
-        catch (SessionException e)
+        catch (Exception e)
         {
             e.printStackTrace();
         }
@@ -69,13 +59,13 @@ public class QueryExecutor
         return ret;
     }
 
-    public List<String> getPaths(QueryMetric queryMetric)
+    public List<String> getPaths(QueryMetric queryMetric) throws Exception
     {
         List<String> ret = new ArrayList<>();
         Map<String, Integer> metricschema = metaManager.getSchemaMapping(queryMetric.getName());
         if (metricschema == null)
         {
-
+            throw new Exception("No metadata found");
         }
         else
         {
@@ -83,7 +73,7 @@ public class QueryExecutor
             for (Map.Entry<String, Integer> entry: metricschema.entrySet())
                 pos2path.put(entry.getValue(), entry.getKey());
             List<Integer> pos = new ArrayList<>();
-            for (int i=0;i<pos2path.size();i++)
+            for (int i=0;i < pos2path.size();i++)
                 pos.add(0);
             dfsInsert(0, ret, pos2path, queryMetric, pos);
         }
