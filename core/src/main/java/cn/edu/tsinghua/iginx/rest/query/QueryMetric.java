@@ -1,5 +1,7 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.query;
 
+
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 
 import java.util.ArrayList;
 import java.util.List;

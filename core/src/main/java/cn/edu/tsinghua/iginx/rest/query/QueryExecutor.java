@@ -1,17 +1,19 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.query;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.AggregatorAvg;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.AggregatorNone;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
 import cn.edu.tsinghua.iginx.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class QueryExecutor
 {
@@ -21,16 +23,8 @@ public class QueryExecutor
 
     private Query query;
 
-    private Long startTime;
-    private Long endTime;
-
-    private Map<String, Integer> tag2pos;
     private Session session = new Session("127.0.0.1", 6324, "root", "root");
-    private Map<String, Map<String,Integer>> schemamapping = MetricsResource.schemamapping;
 
-    private String[] sortedTagKeys; //将指定的key和未指定的key（用*代替）按位置排序
-
-    private Map<Integer, List<String>> tmpTags;
 
     public QueryExecutor(Query query)
     {
@@ -53,38 +47,32 @@ public class QueryExecutor
             List<String> paths = getPaths(queryMetric);
             if (queryMetric.getAggregators().size() == 0)
             {
-                try
-                {
-                    ret.addResultSet(session.queryData(paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
-                }
-                catch (SessionException e)
-                {
-                    e.printStackTrace();
-                }
+                ret.addResultSet(new AggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
             }
             else
             {
                 for (QueryAggregator queryAggregator: queryMetric.getAggregators())
                 {
-                    try
-                    {
-                        ret.addResultSet(session.downsampleQuery(paths, query.getStartAbsolute(), query.getEndAbsolute(),
-                                queryAggregator.getAggregateType(), queryAggregator.getDur()), queryMetric);
-                    }
-                    catch (SessionException e)
-                    {
-                        e.printStackTrace();
-                    }
+                    ret.addResultSet(queryAggregator.doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
                 }
             }
         }
+        try
+        {
+            session.closeSession();
+        }
+        catch (SessionException e)
+        {
+            e.printStackTrace();
+        }
+
         return ret;
     }
 
     public List<String> getPaths(QueryMetric queryMetric)
     {
         List<String> ret = new ArrayList<>();
-        Map<String, Integer> metricschema = schemamapping.get(queryMetric.getName());
+        Map<String, Integer> metricschema = metaManager.getSchemaMapping(queryMetric.getName());
         if (metricschema == null)
         {
 
@@ -129,5 +117,4 @@ public class QueryExecutor
             dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos);
         }
     }
-
 }

@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.insert;
 
 import java.util.*;
 

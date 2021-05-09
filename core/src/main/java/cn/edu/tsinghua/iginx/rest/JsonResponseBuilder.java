@@ -44,17 +44,5 @@ public class JsonResponseBuilder
                 .entity(stringBuilder.toString()).build();
     }
 
-    public Response buildPlainText() {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String msg : errorMessages) {
-            stringBuilder.append(msg);
-            stringBuilder.append("\n");
-        }
-        return Response
-                .status(status)
-                .header("Access-Control-Allow-Origin", "*")
-                .type(MediaType.TEXT_PLAIN)
-                .entity(stringBuilder.toString())
-                .build();
-    }
+
 }

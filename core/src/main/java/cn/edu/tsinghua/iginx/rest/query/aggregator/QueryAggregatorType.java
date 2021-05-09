@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 public enum QueryAggregatorType
 {
@@ -8,7 +8,8 @@ public enum QueryAggregatorType
     COUNT("count"),
     AVG("avg"),
     FIRST("first"),
-    LAST("last");
+    LAST("last"),
+    NONE("");
     private String type;
 
     QueryAggregatorType(String type) {

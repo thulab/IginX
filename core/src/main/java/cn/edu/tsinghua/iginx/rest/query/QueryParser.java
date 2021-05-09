@@ -1,5 +1,6 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.query;
 
+import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -170,58 +171,73 @@ public class QueryParser
         {
             JsonNode name = aggregator.get("name");
             if (name == null) continue;
+            QueryAggregator qa;
             switch (name.asText())
             {
                 case "max":
+                    qa = new AggregatorMax();
+                    break;
                 case "min":
+                    qa = new AggregatorMin();
+                    break;
                 case "sum":
+                    qa = new AggregatorSum();
+                    break;
                 case "count":
+                    qa = new AggregatorCount();
+                    break;
                 case "avg":
+                    qa = new AggregatorAvg();
+                    break;
                 case "first":
+                    qa = new AggregatorFirst();
+                    break;
                 case "last":
-                    QueryAggregator qa = new QueryAggregator(name.asText());
-                    JsonNode sampling = aggregator.get("sampling");
-                    if (sampling == null) break;
-                    JsonNode value = sampling.get("value");
-                    if (value == null) break;
-                    JsonNode unit = sampling.get("unit");
-                    if (unit == null) break;
-                    switch (unit.asText())
-                    {
-                        case "millis":
-                            qa.setDur(value.asLong() * 1L);
-                            break;
-                        case "seconds":
-                            qa.setDur(value.asLong() * 1000L);
-                            break;
-                        case "minutes":
-                            qa.setDur(value.asLong() * 60000L);
-                            break;
-                        case "hours":
-                            qa.setDur(value.asLong() * 3600000L);
-                            break;
-                        case "days":
-                            qa.setDur(value.asLong() * 86400000L);
-                            break;
-                        case "weeks":
-                            qa.setDur(value.asLong() * 604800000L);
-                            break;
-                        case "months":
-                            qa.setDur(value.asLong() * 2419200000L);
-                            break;
-                        case "years":
-                            qa.setDur(value.asLong() * 29030400000L);
-                            break;
-                        default:
-                            qa.setDur(0L);
-                            break;
-                    }
-                    if (qa.getDur()!=0)
-                        q.addAggregator(qa);
+                    qa = new AggregatorLast();
                     break;
                 default:
+                    //todo
+                    qa = new AggregatorNone();
                     break;
             }
+            JsonNode sampling = aggregator.get("sampling");
+            if (sampling == null) break;
+            JsonNode value = sampling.get("value");
+            if (value == null) break;
+            JsonNode unit = sampling.get("unit");
+            if (unit == null) break;
+            switch (unit.asText())
+            {
+                case "millis":
+                    qa.setDur(value.asLong() * 1L);
+                    break;
+                case "seconds":
+                    qa.setDur(value.asLong() * 1000L);
+                    break;
+                case "minutes":
+                    qa.setDur(value.asLong() * 60000L);
+                    break;
+                case "hours":
+                    qa.setDur(value.asLong() * 3600000L);
+                    break;
+                case "days":
+                    qa.setDur(value.asLong() * 86400000L);
+                    break;
+                case "weeks":
+                    qa.setDur(value.asLong() * 604800000L);
+                    break;
+                case "months":
+                    qa.setDur(value.asLong() * 2419200000L);
+                    break;
+                case "years":
+                    qa.setDur(value.asLong() * 29030400000L);
+                    break;
+                default:
+                    qa.setDur(0L);
+                    break;
+            }
+            if (qa.getDur()!=0)
+                q.addAggregator(qa);
         }
     }
 

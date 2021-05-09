@@ -2,22 +2,15 @@ package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.inject.Inject;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
@@ -26,26 +19,29 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+
+import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
+import cn.edu.tsinghua.iginx.rest.query.Query;
+import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
+import cn.edu.tsinghua.iginx.rest.query.QueryParser;
+import cn.edu.tsinghua.iginx.rest.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/api/v1")
 public class MetricsResource {
 
-    public static Map<String, Map<String, Integer>> schemamapping = new ConcurrentHashMap<>();
     private static final String QUERY_URL = "/datapoints/query";
     private static final String NO_CACHE = "no-cache";
-    private static final ExecutorService threadPool = Executors.newCachedThreadPool();
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(10);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
 
-    private final Gson gson;
 
     @Inject
     public MetricsResource()
     {
-        GsonBuilder builder = new GsonBuilder();
-        gson = builder.disableHtmlEscaping().create();
+
     }
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder)
@@ -63,7 +59,7 @@ public class MetricsResource {
     @Path("/datapoints")
     public void add(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse)
     {
-        threadPool.execute(new IngestionWorker(asyncResponse, httpheaders, stream));
+        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream));
     }
 
 
@@ -99,11 +95,11 @@ public class MetricsResource {
     @POST
     @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
     @Path(QUERY_URL)
-    public Response getQuery(@Context HttpHeaders httpheaders, final InputStream stream)
+    public Response postQuery(@Context HttpHeaders httpheaders, final InputStream stream)
     {
         try
         {
-            return getQuery(inputStreamToString(stream));
+            return postQuery(inputStreamToString(stream));
         }
         catch (UnsupportedEncodingException e)
         {
@@ -112,7 +108,7 @@ public class MetricsResource {
         return null;
     }
 
-    public Response getQuery(String jsonStr)
+    public Response postQuery(String jsonStr)
     {
         try
         {
@@ -120,7 +116,6 @@ public class MetricsResource {
             {
                 throw new Exception("query json must not be null or empty");
             }
-            long start = System.currentTimeMillis();
             QueryParser parser = new QueryParser();
             Query query = parser.parseQueryMetric(jsonStr);
             QueryExecutor executor = new QueryExecutor(query);

@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.query;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -4,13 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.sql.Connection;
-import java.sql.SQLException;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Config;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.UriBuilder;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
@@ -35,8 +31,7 @@ public class RestServer
         return GrizzlyHttpServerFactory.createHttpServer(baseURI, rc);
     }
 
-
-    public static void main(String[] argv)
+    public static void start()
     {
         HttpServer server = null;
         try
@@ -59,5 +54,10 @@ public class RestServer
             Thread.currentThread().interrupt();
         }
         server.shutdown();
+    }
+
+    public static void main(String[] argv)
+    {
+        start();
     }
 }

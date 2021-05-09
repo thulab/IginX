@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.rest.insert;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -27,14 +27,13 @@ public class DataPointsParser
     private ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
     private Session session = new Session("127.0.0.1", 6324, "root", "root");
-    private Map<String, Map<String,Integer>> schemamapping = MetricsResource.schemamapping;
 
     public DataPointsParser(Reader stream)
     {
         this.inputStream = stream;
     }
 
-    public ValidationErrors parse() throws IOException
+    public void parse() throws SessionException, IOException
     {
         try
         {
@@ -43,8 +42,8 @@ public class DataPointsParser
         catch (SessionException e)
         {
             e.printStackTrace();
+            throw e;
         }
-        ValidationErrors validationErrors = new ValidationErrors();
         try
         {
             JsonNode node = mapper.readTree(inputStream);
@@ -63,7 +62,8 @@ public class DataPointsParser
         }
         catch (Exception e)
         {
-            validationErrors.addErrorMessage("Invalid json. No content due to end of input.");
+            e.printStackTrace();
+            throw e;
         }
         try
         {
@@ -72,8 +72,20 @@ public class DataPointsParser
         catch (Exception e)
         {
             LOGGER.debug("Exception occur for create and send:,", e);
+            throw e;
         }
-        return validationErrors;
+        finally
+        {
+            try
+            {
+                session.closeSession();
+            }
+            catch (SessionException e)
+            {
+                e.printStackTrace();
+                throw e;
+            }
+        }
     }
 
     private Metric getMetricObject(JsonNode node)
@@ -115,16 +127,11 @@ public class DataPointsParser
         for (Metric metric: metricList)
         {
             boolean needUpdate = false;
-            Map<String, Integer> metricschema = schemamapping.get(metric.getName());
+            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
             if (metricschema == null)
             {
                 needUpdate = true;
-                metricschema = metaManager.getSchemaMapping(metric.getName());
-                if (metricschema == null)
-                {
-                    metricschema = new ConcurrentHashMap<>();
-                }
-                schemamapping.put(metric.getName(),metricschema);
+                metricschema = new ConcurrentHashMap<>();
             }
             Iterator iter = metric.getTags().entrySet().iterator();
             while (iter.hasNext())
