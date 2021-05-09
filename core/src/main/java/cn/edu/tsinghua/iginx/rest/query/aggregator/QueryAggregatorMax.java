@@ -12,9 +12,9 @@ import java.util.List;
 
 import static java.lang.Math.max;
 
-public class AggregatorMax extends QueryAggregator
+public class QueryAggregatorMax extends QueryAggregator
 {
-    public AggregatorMax() {
+    public QueryAggregatorMax() {
         super(QueryAggregatorType.MAX);
     }
 

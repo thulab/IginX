@@ -10,9 +10,9 @@ import cn.edu.tsinghua.iginx.utils.RestUtils;
 
 import java.util.List;
 
-public class AggregatorSum extends QueryAggregator
+public class QueryAggregatorSum extends QueryAggregator
 {
-    public AggregatorSum()
+    public QueryAggregatorSum()
     {
         super(QueryAggregatorType.SUM);
     }

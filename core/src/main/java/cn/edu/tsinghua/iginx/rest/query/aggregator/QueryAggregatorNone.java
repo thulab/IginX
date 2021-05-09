@@ -1,8 +1,8 @@
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
-public class AggregatorNone extends QueryAggregator
+public class QueryAggregatorNone extends QueryAggregator
 {
-    public AggregatorNone() {
+    public QueryAggregatorNone() {
         super(QueryAggregatorType.NONE);
     }
 }

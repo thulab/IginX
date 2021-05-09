@@ -103,7 +103,6 @@ public class QueryResult
             else
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             ret.append("],");
-            break;
         }
         ret.deleteCharAt(ret.length()-1);
         ret.append("]");

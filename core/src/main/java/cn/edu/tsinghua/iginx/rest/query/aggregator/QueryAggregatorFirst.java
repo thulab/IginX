@@ -9,9 +9,9 @@ import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import java.util.List;
 
 //todo
-public class AggregatorFirst extends QueryAggregator
+public class QueryAggregatorFirst extends QueryAggregator
 {
-    public AggregatorFirst() {
+    public QueryAggregatorFirst() {
         super(QueryAggregatorType.FIRST);
     }
 

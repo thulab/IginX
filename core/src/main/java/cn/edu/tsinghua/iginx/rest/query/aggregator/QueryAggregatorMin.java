@@ -12,9 +12,9 @@ import java.util.List;
 
 import static java.lang.Math.min;
 
-public class AggregatorMin extends QueryAggregator
+public class QueryAggregatorMin extends QueryAggregator
 {
-    public AggregatorMin() {
+    public QueryAggregatorMin() {
         super(QueryAggregatorType.MIN);
     }
 

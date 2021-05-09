@@ -4,7 +4,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.AggregatorNone;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.session.Session;
 import org.slf4j.Logger;
@@ -39,7 +39,7 @@ public class QueryExecutor
                 List<String> paths = getPaths(queryMetric);
                 if (queryMetric.getAggregators().size() == 0)
                 {
-                    ret.addResultSet(new AggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
+                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric);
                 }
                 else
                 {

@@ -33,7 +33,7 @@ public class MetricsResource {
 
     private static final String QUERY_URL = "/datapoints/query";
     private static final String NO_CACHE = "no-cache";
-    private static final ExecutorService threadPool = Executors.newFixedThreadPool(10);
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(100);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
 

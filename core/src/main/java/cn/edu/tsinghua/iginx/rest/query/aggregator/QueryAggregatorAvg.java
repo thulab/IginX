@@ -10,9 +10,9 @@ import cn.edu.tsinghua.iginx.utils.RestUtils;
 
 import java.util.List;
 
-public class AggregatorAvg extends QueryAggregator
+public class QueryAggregatorAvg extends QueryAggregator
 {
-    public AggregatorAvg()
+    public QueryAggregatorAvg()
     {
         super(QueryAggregatorType.AVG);
     }

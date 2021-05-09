@@ -12,6 +12,7 @@ public class RestUtils
         int ret = 0;
         for (int i = 0; i < n; i++)
             for (int j = 0; j < m; j++)
+            if (sessionQueryDataSet.getValues().get(i).get(j) != null)
             {
                 if (sessionQueryDataSet.getValues().get(i).get(j) instanceof Integer ||
                         sessionQueryDataSet.getValues().get(i).get(j) instanceof Long)

@@ -184,29 +184,29 @@ public class QueryParser
             switch (name.asText())
             {
                 case "max":
-                    qa = new AggregatorMax();
+                    qa = new QueryAggregatorMax();
                     break;
                 case "min":
-                    qa = new AggregatorMin();
+                    qa = new QueryAggregatorMin();
                     break;
                 case "sum":
-                    qa = new AggregatorSum();
+                    qa = new QueryAggregatorSum();
                     break;
                 case "count":
-                    qa = new AggregatorCount();
+                    qa = new QueryAggregatorCount();
                     break;
                 case "avg":
-                    qa = new AggregatorAvg();
+                    qa = new QueryAggregatorAvg();
                     break;
                 case "first":
-                    qa = new AggregatorFirst();
+                    qa = new QueryAggregatorFirst();
                     break;
                 case "last":
-                    qa = new AggregatorLast();
+                    qa = new QueryAggregatorLast();
                     break;
                 default:
                     //todo
-                    qa = new AggregatorNone();
+                    qa = new QueryAggregatorNone();
                     break;
             }
             JsonNode sampling = aggregator.get("sampling");

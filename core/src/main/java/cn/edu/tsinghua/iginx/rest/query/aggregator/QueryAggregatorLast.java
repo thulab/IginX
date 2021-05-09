@@ -9,16 +9,16 @@ import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import java.util.List;
 
 //todo
-public class AggregatorCount extends QueryAggregator
+public class QueryAggregatorLast extends QueryAggregator
 {
-    public AggregatorCount() {
-        super(QueryAggregatorType.COUNT);
+    public QueryAggregatorLast() {
+        super(QueryAggregatorType.LAST);
     }
 
     @Override
     public AggregateType getAggregateType()
     {
-        return AggregateType.COUNT;
+        return AggregateType.LAST;
     }
 
     @Override
@@ -33,16 +33,12 @@ public class AggregatorCount extends QueryAggregator
             int m = sessionQueryDataSet.getPaths().size();
             for (int i=0;i<n;i++)
             {
-                boolean flag = false;
-                long cnt = 0;
                 for (int j=0;j<m;j++)
                     if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                     {
-                        flag = true;
-                        cnt += (long)sessionQueryDataSet.getValues().get(i).get(j);
+                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+                        break;
                     }
-                if (flag)
-                    queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], cnt);
             }
         }
         catch (SessionException e)
