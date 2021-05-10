@@ -213,6 +213,15 @@ public class QueryParser
                 case "div":
                     qa = new QueryAggregatorDiv();
                     break;
+                case "rate":
+                    qa = new QueryAggregatorRate();
+                    break;
+                case "sampler":
+                    qa = new QueryAggregatorSampler();
+                    break;
+                case "percentile":
+                    qa = new QueryAggregatorPercentile();
+                    break;
                 default:
                     continue;
             }
@@ -226,12 +235,13 @@ public class QueryParser
                 case "first":
                 case "last":
                 case "dev":
+                case "percentile":
                     JsonNode sampling = aggregator.get("sampling");
-                    if (sampling == null) break;
+                    if (sampling == null) continue;
                     JsonNode value = sampling.get("value");
-                    if (value == null) break;
+                    if (value == null) continue;
                     JsonNode unit = sampling.get("unit");
-                    if (unit == null) break;
+                    if (unit == null) continue;
                     switch (unit.asText())
                     {
                         case "millis":
@@ -269,9 +279,88 @@ public class QueryParser
                     if (divisor == null) continue;
                     qa.setDivisor(Double.parseDouble(divisor.asText()));
                     break;
+                case "rate":
+                    sampling = aggregator.get("sampling");
+                    if (sampling == null) continue;
+                    unit = sampling.get("unit");
+                    if (unit == null) continue;
+                    switch (unit.asText())
+                    {
+                        case "millis":
+                            qa.setUnit(1L);
+                            break;
+                        case "seconds":
+                            qa.setUnit(1000L);
+                            break;
+                        case "minutes":
+                            qa.setUnit(60000L);
+                            break;
+                        case "hours":
+                            qa.setUnit(3600000L);
+                            break;
+                        case "days":
+                            qa.setUnit(86400000L);
+                            break;
+                        case "weeks":
+                            qa.setUnit(604800000L);
+                            break;
+                        case "months":
+                            qa.setUnit(2419200000L);
+                            break;
+                        case "years":
+                            qa.setUnit(29030400000L);
+                            break;
+                        default:
+                            continue;
+                    }
+                    break;
+                case "sampler":
+                    unit = aggregator.get("unit");
+                    if (unit == null) continue;
+                    switch (unit.asText())
+                    {
+                        case "millis":
+                            qa.setUnit(1L);
+                            break;
+                        case "seconds":
+                            qa.setUnit(1000L);
+                            break;
+                        case "minutes":
+                            qa.setUnit(60000L);
+                            break;
+                        case "hours":
+                            qa.setUnit(3600000L);
+                            break;
+                        case "days":
+                            qa.setUnit(86400000L);
+                            break;
+                        case "weeks":
+                            qa.setUnit(604800000L);
+                            break;
+                        case "months":
+                            qa.setUnit(2419200000L);
+                            break;
+                        case "years":
+                            qa.setUnit(29030400000L);
+                            break;
+                        default:
+                            continue;
+                    }
+                    break;
                 default:
                     break;
                     
+            }
+            switch (name.asText())
+            {
+                case "percentile":
+                    JsonNode percentile = aggregator.get("percentile");
+                    if (percentile == null) continue;
+                    qa.setPercentile(Double.parseDouble(percentile.asText()));
+                    break;
+                default:
+                    break;
+
             }
             q.addAggregator(qa);
         }

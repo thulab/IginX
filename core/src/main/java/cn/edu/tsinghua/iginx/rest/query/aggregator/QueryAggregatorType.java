@@ -12,6 +12,9 @@ public enum QueryAggregatorType
     DEV("dev"),
     DIFF("diff"),
     DIV("div"),
+    RATE("rate"),
+    SAMPLER("sampler"),
+    PERSENTILE("percentile"),
     NONE("");
     private String type;
 

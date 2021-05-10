@@ -32,6 +32,35 @@ public abstract class QueryAggregator
         return Dur;
     }
 
+    private double Percentile;
+
+
+    public void setPercentile(double percentile)
+    {
+        Percentile = percentile;
+    }
+
+    public double getPercentile()
+    {
+        return Percentile;
+    }
+
+    private long Unit;
+
+    public long getUnit()
+    {
+        return Unit;
+    }
+
+    public void setUnit(long unit)
+    {
+        Unit = unit;
+    }
+
+    public void setType(QueryAggregatorType type)
+    {
+        this.type = type;
+    }
 
     private QueryAggregatorType type;
 
