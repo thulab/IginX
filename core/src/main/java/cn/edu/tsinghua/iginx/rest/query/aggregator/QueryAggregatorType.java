@@ -9,6 +9,7 @@ public enum QueryAggregatorType
     AVG("avg"),
     FIRST("first"),
     LAST("last"),
+    DEV("dev"),
     NONE("");
     private String type;
 

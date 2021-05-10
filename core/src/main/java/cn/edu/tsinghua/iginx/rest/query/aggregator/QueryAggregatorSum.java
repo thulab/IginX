@@ -31,9 +31,12 @@ public class QueryAggregatorSum extends QueryAggregator
         {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
                     startTimestamp, endTimestamp, getAggregateType(), getDur());
+            SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
+                    startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
+            int datapoints = 0;
             switch (type)
             {
                 case BOOLEAN:
@@ -41,10 +44,16 @@ public class QueryAggregatorSum extends QueryAggregator
                     {
                         boolean flag = false;
                         boolean sum = false;
+                        long cnt=0;
+                        for (int j=0;j<m;j++)
+                        if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
+                        {
+                            flag = true;
+                            cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
+                        }
                         for (int j = 0; j < m; j++)
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                flag = true;
                                 sum |= (boolean) sessionQueryDataSet.getValues().get(i).get(j);
                             }
                         if (flag)
@@ -56,10 +65,16 @@ public class QueryAggregatorSum extends QueryAggregator
                     {
                         boolean flag = false;
                         long sum = 0;
+                        long cnt=0;
+                        for (int j=0;j<m;j++)
+                            if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
+                            {
+                                flag = true;
+                                cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
+                            }
                         for (int j = 0; j < m; j++)
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                flag = true;
                                 sum += (long) sessionQueryDataSet.getValues().get(i).get(j);
                             }
                         if (flag)
@@ -71,12 +86,19 @@ public class QueryAggregatorSum extends QueryAggregator
                     {
                         boolean flag = false;
                         double sum = 0;
+                        long cnt = 0;
+                        for (int j=0;j<m;j++)
+                            if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
+                            {
+                                flag = true;
+                                cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
+                            }
                         for (int j = 0; j < m; j++)
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                flag = true;
                                 sum += (double) sessionQueryDataSet.getValues().get(i).get(j);
                             }
+                        datapoints += cnt;
                         if (flag)
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sum);
                     }
@@ -84,6 +106,7 @@ public class QueryAggregatorSum extends QueryAggregator
                 default:
                     throw new Exception("Unsupported data type");
             }
+            queryResultDataset.setSampleSize(datapoints);
         }
         catch (Exception e)
         {

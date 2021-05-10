@@ -31,19 +31,22 @@ public class QueryAggregatorCount extends QueryAggregator
                     startTimestamp, endTimestamp, getAggregateType(), getDur());
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
+            int datapoints = 0;
             for (int i=0;i<n;i++)
             {
                 boolean flag = false;
                 long cnt = 0;
                 for (int j=0;j<m;j++)
-                    if (sessionQueryDataSet.getValues().get(i).get(j) != null)
+                    if (sessionQueryDataSet.getValues().get(i).get(j) != null && (long)sessionQueryDataSet.getValues().get(i).get(j) != 0)
                     {
                         flag = true;
                         cnt += (long)sessionQueryDataSet.getValues().get(i).get(j);
                     }
+                datapoints += cnt;
                 if (flag)
                     queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], cnt);
             }
+            queryResultDataset.setSampleSize(datapoints);
         }
         catch (SessionException e)
         {

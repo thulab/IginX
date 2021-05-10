@@ -32,9 +32,12 @@ public class QueryAggregatorMin extends QueryAggregator
         {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
                     startTimestamp, endTimestamp, getAggregateType(), getDur());
+            SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
+                    startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
+            int datapoints = 0;
             switch (type)
             {
                 case BOOLEAN:
@@ -85,6 +88,17 @@ public class QueryAggregatorMin extends QueryAggregator
                 default:
                     throw new Exception("Unsupported data type");
             }
+            for (int i=0;i<n;i++)
+            {
+                long cnt = 0;
+                for (int j=0;j<m;j++)
+                    if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
+                    {
+                        cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
+                    }
+                datapoints += cnt;
+            }
+            queryResultDataset.setSampleSize(datapoints);
         }
         catch (Exception e)
         {

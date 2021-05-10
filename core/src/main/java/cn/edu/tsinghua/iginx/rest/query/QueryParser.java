@@ -204,49 +204,59 @@ public class QueryParser
                 case "last":
                     qa = new QueryAggregatorLast();
                     break;
-                default:
-                    //todo
-                    qa = new QueryAggregatorNone();
+                case "dev":
+                    qa = new QueryAggregatorDev();
                     break;
+                default:
+                    continue;
             }
-            JsonNode sampling = aggregator.get("sampling");
-            if (sampling == null) break;
-            JsonNode value = sampling.get("value");
-            if (value == null) break;
-            JsonNode unit = sampling.get("unit");
-            if (unit == null) break;
-            switch (unit.asText())
+            switch (name.asText())
             {
-                case "millis":
-                    qa.setDur(value.asLong() * 1L);
-                    break;
-                case "seconds":
-                    qa.setDur(value.asLong() * 1000L);
-                    break;
-                case "minutes":
-                    qa.setDur(value.asLong() * 60000L);
-                    break;
-                case "hours":
-                    qa.setDur(value.asLong() * 3600000L);
-                    break;
-                case "days":
-                    qa.setDur(value.asLong() * 86400000L);
-                    break;
-                case "weeks":
-                    qa.setDur(value.asLong() * 604800000L);
-                    break;
-                case "months":
-                    qa.setDur(value.asLong() * 2419200000L);
-                    break;
-                case "years":
-                    qa.setDur(value.asLong() * 29030400000L);
-                    break;
-                default:
-                    qa.setDur(0L);
-                    break;
+                case "max":
+                case "min":
+                case "sum":
+                case "count":
+                case "avg":
+                case "first":
+                case "last":
+                case "dev":
+                    JsonNode sampling = aggregator.get("sampling");
+                    if (sampling == null) break;
+                    JsonNode value = sampling.get("value");
+                    if (value == null) break;
+                    JsonNode unit = sampling.get("unit");
+                    if (unit == null) break;
+                    switch (unit.asText())
+                    {
+                        case "millis":
+                            qa.setDur(value.asLong() * 1L);
+                            break;
+                        case "seconds":
+                            qa.setDur(value.asLong() * 1000L);
+                            break;
+                        case "minutes":
+                            qa.setDur(value.asLong() * 60000L);
+                            break;
+                        case "hours":
+                            qa.setDur(value.asLong() * 3600000L);
+                            break;
+                        case "days":
+                            qa.setDur(value.asLong() * 86400000L);
+                            break;
+                        case "weeks":
+                            qa.setDur(value.asLong() * 604800000L);
+                            break;
+                        case "months":
+                            qa.setDur(value.asLong() * 2419200000L);
+                            break;
+                        case "years":
+                            qa.setDur(value.asLong() * 29030400000L);
+                            break;
+                        default:
+                            continue;
+                }
             }
-            if (qa.getDur()!=0)
-                q.addAggregator(qa);
+            q.addAggregator(qa);
         }
     }
 

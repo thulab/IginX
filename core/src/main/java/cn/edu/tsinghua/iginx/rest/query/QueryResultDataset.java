@@ -6,6 +6,7 @@ import java.util.List;
 public class QueryResultDataset
 {
     private int size = 0;
+    private int sampleSize = 0;
     private List<Long> timestamps = new ArrayList<>();
     private List<Object> values = new ArrayList<>();
 
@@ -59,5 +60,15 @@ public class QueryResultDataset
         addTimestamp(timestamp);
         addValue(value);
         addSize();
+    }
+
+    public void setSampleSize(int sampleSize)
+    {
+        this.sampleSize = sampleSize;
+    }
+
+    public int getSampleSize()
+    {
+        return sampleSize;
     }
 }

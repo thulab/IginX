@@ -51,7 +51,7 @@ public class QueryResult
     public String toResultString(int num)
     {
         StringBuilder ret = new StringBuilder("{");
-        ret.append(sizeToString(num));
+        ret.append(sampleSizeToString(num));
         ret.append(",");
         ret.append("\"results\": [{ ");
         ret.append(nameToString(num));
@@ -104,15 +104,15 @@ public class QueryResult
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             ret.append("],");
         }
-        ret.deleteCharAt(ret.length()-1);
+        ret.deleteCharAt(ret.length() - 1);
         ret.append("]");
         return ret.toString();
     }
 
-    private String sizeToString(int num)
+    private String sampleSizeToString(int num)
     {
         StringBuilder ret = new StringBuilder("\"sample_size\": ");
-        ret.append(queryResultDatasets.get(num).getSize());
+        ret.append(queryResultDatasets.get(num).getSampleSize());
         return ret.toString();
     }
 

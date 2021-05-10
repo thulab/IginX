@@ -45,8 +45,7 @@ public class InsertWorker extends Thread
             }
             DataPointsParser parser = new DataPointsParser(new InputStreamReader(stream, StandardCharsets.UTF_8));
             parser.parse();
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.OK);
-            response = builder.build();
+            response = Response.status(Response.Status.OK).build();
         }
         catch (Exception e)
         {

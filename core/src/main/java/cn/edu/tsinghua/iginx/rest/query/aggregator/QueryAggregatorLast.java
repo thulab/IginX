@@ -5,6 +5,8 @@ import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.RestUtils;
 
 import java.util.List;
 
@@ -27,21 +29,39 @@ public class QueryAggregatorLast extends QueryAggregator
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try
         {
-            SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, getAggregateType(), getDur());
+            SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
+            DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
-            for (int i=0;i<n;i++)
+            switch (type)
             {
-                for (int j=0;j<m;j++)
-                    if (sessionQueryDataSet.getValues().get(i).get(j) != null)
+                case BOOLEAN:
+                case LONG:
+                case DOUBLE:
+                case BINARY:
+                    Object ins = null;
+                    int datapoints = 0;
+                    for (int i = 0; i < n; i++)
                     {
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
-                        break;
+                        for (int j = 0; j < m; j++)
+                            if (sessionQueryDataSet.getValues().get(i).get(j) != null)
+                            {
+                                ins = sessionQueryDataSet.getValues().get(i).get(j);
+                                datapoints += 1;
+                            }
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                        {
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), ins);
+                        }
                     }
+                    queryResultDataset.setSampleSize(datapoints);
+                    break;
+                default:
+                    throw new Exception("Unsupported data type");
             }
         }
-        catch (SessionException e)
+        catch (Exception e)
         {
             e.printStackTrace();
         }

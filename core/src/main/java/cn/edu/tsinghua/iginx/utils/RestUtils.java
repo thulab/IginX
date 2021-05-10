@@ -36,4 +36,14 @@ public class RestUtils
                 return DataType.BINARY;
         }
     }
+
+    public static long getInterval(long timestamp, long startTime, long duration)
+    {
+        return (timestamp - startTime) / duration;
+    }
+
+    public static long getIntervalStart(long timestamp, long startTime, long duration)
+    {
+        return (timestamp - startTime) / duration * duration + startTime;
+    }
 }
