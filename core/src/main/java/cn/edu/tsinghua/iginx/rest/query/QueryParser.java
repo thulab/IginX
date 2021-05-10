@@ -213,6 +213,12 @@ public class QueryParser
                 case "div":
                     qa = new QueryAggregatorDiv();
                     break;
+                case "filter":
+                    qa = new QueryAggregatorFilter();
+                    break;
+                case "save_as":
+                    qa = new QueryAggregatorSaveAs();
+                    break;
                 case "rate":
                     qa = new QueryAggregatorRate();
                     break;
@@ -278,6 +284,18 @@ public class QueryParser
                     JsonNode divisor = aggregator.get("divisor");
                     if (divisor == null) continue;
                     qa.setDivisor(Double.parseDouble(divisor.asText()));
+                    break;
+                case "filter":
+                    JsonNode filter_op = aggregator.get("filter_op");
+                    if (filter_op == null) continue;
+                    JsonNode threshold = aggregator.get("threshold");
+                    if (threshold == null) continue;
+                    qa.setFilter(new Filter(filter_op.asText(), threshold.asDouble()));
+                    break;
+                case "save_as":
+                    JsonNode metric_name = aggregator.get("metric_name");
+                    if (metric_name == null) continue;
+                    qa.setMetric_name(metric_name.asText());
                     break;
                 case "rate":
                     sampling = aggregator.get("sampling");
@@ -369,7 +387,7 @@ public class QueryParser
     public String parseResultToJson(QueryResult result)
     {
         StringBuilder ret = new StringBuilder("{\"queries\":[");
-        for (int i=0; i< result.siz; i++)
+        for (int i=0; i< result.getSiz(); i++)
         {
             ret.append(result.toResultString(i));
         }

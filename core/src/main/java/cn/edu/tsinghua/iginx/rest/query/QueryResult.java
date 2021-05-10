@@ -1,6 +1,9 @@
 package cn.edu.tsinghua.iginx.rest.query;
 
 
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +12,28 @@ public class QueryResult
 {
     private List<QueryMetric> queryMetrics = new ArrayList<>();
     private List<QueryResultDataset> queryResultDatasets = new ArrayList<>();
-    public int siz = 0;
+    private List<QueryAggregator> queryAggregators = new ArrayList<>();
+    private int siz = 0;
+
+    public void setQueryAggregators(List<QueryAggregator> queryAggregators)
+    {
+        this.queryAggregators = queryAggregators;
+    }
+
+    public void setSiz(int siz)
+    {
+        this.siz = siz;
+    }
+
+    public int getSiz()
+    {
+        return siz;
+    }
+
+    public List<QueryAggregator> getQueryAggregators()
+    {
+        return queryAggregators;
+    }
 
     public void setQueryMetrics(List<QueryMetric> queryMetrics)
     {
@@ -41,10 +65,16 @@ public class QueryResult
     {
         queryResultDatasets.add(queryResultDataset);
     }
-    public void addResultSet(QueryResultDataset queryDataSet, QueryMetric queryMetric)
+    public void addQueryAggregator(QueryAggregator queryAggregator)
+    {
+        queryAggregators.add(queryAggregator);
+    }
+
+    public void addResultSet(QueryResultDataset queryDataSet, QueryMetric queryMetric, QueryAggregator queryAggregator)
     {
         addqueryResultDataset(queryDataSet);
         addQueryMetric(queryMetric);
+        addQueryAggregator(queryAggregator);
         siz += 1;
     }
 
@@ -67,7 +97,14 @@ public class QueryResult
 
     private String nameToString(int num)
     {
-        return String.format("\"name\": \"%s\"",queryMetrics.get(num).getName());
+        if (queryAggregators.get(num).getType() == QueryAggregatorType.SAVE_AS)
+        {
+            return String.format("\"name\": \"%s\"",queryAggregators.get(num).getMetric_name());
+        }
+        else
+        {
+            return String.format("\"name\": \"%s\"", queryMetrics.get(num).getName());
+        }
     }
 
     private String groupbyToString(int num)

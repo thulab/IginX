@@ -12,6 +12,8 @@ public enum QueryAggregatorType
     DEV("dev"),
     DIFF("diff"),
     DIV("div"),
+    FILTER("filter"),
+    SAVE_AS("save_as"),
     RATE("rate"),
     SAMPLER("sampler"),
     PERSENTILE("percentile"),

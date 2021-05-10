@@ -57,6 +57,30 @@ public abstract class QueryAggregator
         Unit = unit;
     }
 
+    private String metric_name;
+
+    public void setMetric_name(String metric_name)
+    {
+        this.metric_name = metric_name;
+    }
+
+    public String getMetric_name()
+    {
+        return metric_name;
+    }
+
+    private Filter filter;
+
+    public void setFilter(Filter filter)
+    {
+        this.filter = filter;
+    }
+
+    public Filter getFilter()
+    {
+        return filter;
+    }
+
     public void setType(QueryAggregatorType type)
     {
         this.type = type;
