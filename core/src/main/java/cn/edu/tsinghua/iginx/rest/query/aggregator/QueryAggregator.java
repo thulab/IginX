@@ -10,6 +10,17 @@ import java.util.List;
 
 public abstract class QueryAggregator
 {
+    private Double divisor;
+
+    public void setDivisor(Double divisor)
+    {
+        this.divisor = divisor;
+    }
+
+    public Double getDivisor()
+    {
+        return divisor;
+    }
 
     private Long Dur;
     public void setDur(Long dur)
@@ -20,6 +31,7 @@ public abstract class QueryAggregator
     {
         return Dur;
     }
+
 
     private QueryAggregatorType type;
 
@@ -32,28 +44,6 @@ public abstract class QueryAggregator
         return type;
     }
 
-    public AggregateType getAggregateType()
-    {
-        switch (type)
-        {
-            case MAX:
-                return AggregateType.MAX;
-            case MIN:
-                return AggregateType.MIN;
-            case SUM:
-                return AggregateType.SUM;
-            case COUNT:
-                return AggregateType.COUNT;
-            case AVG:
-                return AggregateType.AVG;
-            case FIRST:
-                return AggregateType.FIRST;
-            case LAST:
-                return AggregateType.LAST;
-            default:
-                return null;
-        }
-    }
 
     public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)
     {
@@ -63,15 +53,22 @@ public abstract class QueryAggregator
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
+            int datapoints = 0;
             for (int i=0;i<n;i++)
             {
+                boolean flag = false;
                 for (int j=0;j<m;j++)
                     if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                     {
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
-                        break;
+                        if (!flag)
+                        {
+                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+                            flag = true;
+                        }
+                        datapoints += 1;
                     }
             }
+            queryResultDataset.setSampleSize(datapoints);
         }
         catch (SessionException e)
         {

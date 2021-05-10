@@ -18,11 +18,6 @@ public class QueryAggregatorMax extends QueryAggregator
         super(QueryAggregatorType.MAX);
     }
 
-    @Override
-    public AggregateType getAggregateType()
-    {
-        return AggregateType.MAX;
-    }
 
     @Override
     public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)
@@ -31,7 +26,7 @@ public class QueryAggregatorMax extends QueryAggregator
         try
         {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, getAggregateType(), getDur());
+                    startTimestamp, endTimestamp, AggregateType.MAX, getDur());
             SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
                     startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
             DataType type = RestUtils.checkType(sessionQueryDataSet);

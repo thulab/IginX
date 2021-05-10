@@ -10,6 +10,8 @@ public enum QueryAggregatorType
     FIRST("first"),
     LAST("last"),
     DEV("dev"),
+    DIFF("diff"),
+    DIV("div"),
     NONE("");
     private String type;
 

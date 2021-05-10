@@ -11,16 +11,12 @@ import java.util.List;
 
 public class QueryAggregatorAvg extends QueryAggregator
 {
+
     public QueryAggregatorAvg()
     {
         super(QueryAggregatorType.AVG);
     }
 
-    @Override
-    public AggregateType getAggregateType()
-    {
-        return AggregateType.AVG;
-    }
 
     @Override
     public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)
@@ -29,7 +25,7 @@ public class QueryAggregatorAvg extends QueryAggregator
         try
         {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, getAggregateType(), getDur());
+                    startTimestamp, endTimestamp, AggregateType.AVG, getDur());
             SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
                     startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
             DataType type = RestUtils.checkType(sessionQueryDataSet);

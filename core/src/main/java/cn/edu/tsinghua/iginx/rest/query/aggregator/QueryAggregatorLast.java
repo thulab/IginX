@@ -17,11 +17,6 @@ public class QueryAggregatorLast extends QueryAggregator
         super(QueryAggregatorType.LAST);
     }
 
-    @Override
-    public AggregateType getAggregateType()
-    {
-        return AggregateType.LAST;
-    }
 
     @Override
     public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)

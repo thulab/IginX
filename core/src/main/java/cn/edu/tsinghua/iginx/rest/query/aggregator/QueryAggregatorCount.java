@@ -15,11 +15,6 @@ public class QueryAggregatorCount extends QueryAggregator
         super(QueryAggregatorType.COUNT);
     }
 
-    @Override
-    public AggregateType getAggregateType()
-    {
-        return AggregateType.COUNT;
-    }
 
     @Override
     public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)
@@ -28,7 +23,7 @@ public class QueryAggregatorCount extends QueryAggregator
         try
         {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, getAggregateType(), getDur());
+                    startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;

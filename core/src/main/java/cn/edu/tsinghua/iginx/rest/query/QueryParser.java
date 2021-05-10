@@ -207,6 +207,12 @@ public class QueryParser
                 case "dev":
                     qa = new QueryAggregatorDev();
                     break;
+                case "diff":
+                    qa = new QueryAggregatorDiff();
+                    break;
+                case "div":
+                    qa = new QueryAggregatorDiv();
+                    break;
                 default:
                     continue;
             }
@@ -254,7 +260,18 @@ public class QueryParser
                             break;
                         default:
                             continue;
-                }
+                    }
+                    break; 
+                case "diff":
+                    break;
+                case "div":
+                    JsonNode divisor = aggregator.get("divisor");
+                    if (divisor == null) continue;
+                    qa.setDivisor(Double.parseDouble(divisor.asText()));
+                    break;
+                default:
+                    break;
+                    
             }
             q.addAggregator(qa);
         }
