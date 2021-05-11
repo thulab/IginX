@@ -25,7 +25,7 @@ public class QueryAggregatorAvg extends QueryAggregator
         try
         {
             SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, AggregateType.AVG, getDur());
+                    startTimestamp, endTimestamp, AggregateType.SUM, getDur());
             SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
                     startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
             DataType type = RestUtils.checkType(sessionQueryDataSet);
@@ -44,12 +44,12 @@ public class QueryAggregatorAvg extends QueryAggregator
                         for (int j = 0; j < m; j++)
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                flag = true;
                                 sum += (double) sessionQueryDataSet.getValues().get(i).get(j);
                             }
                         for (int j = 0; j < m; j++)
-                            if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null)
+                            if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
                             {
+                                flag = true;
                                 cnt += (long) sessionQueryDataSetcnt.getValues().get(i).get(j);
                             }
                         datapoints += cnt;
