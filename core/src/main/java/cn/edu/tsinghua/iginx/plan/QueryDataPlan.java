@@ -23,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
@@ -31,32 +33,53 @@ public class QueryDataPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
 
+	private static String trimPath(String path) {
+		int index = path.indexOf("*");
+		if (index == -1) { // 不含有 *，则不对字符串进行变更
+			return path;
+		}
+		if (index == 0) {
+			return "";
+		}
+		return path.substring(0, index - 1);
+	}
+
+	private static String addEndPrefix(String path, boolean start) {
+		if (path.length() != 0) {
+			path += ".";
+		}
+		if (start) {
+			path += (char)('A' - 1);
+		} else {
+			path += (char)('z' + 1);
+		}
+		return path;
+	}
+
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
 		super(true, paths, startTime, endTime);
 		this.setIginxPlanType(QUERY_DATA);
 		boolean isStartPrefix = paths.get(0).contains("*");
-		String startTimeSeries = isStartPrefix ?
-				paths.get(0).substring(0, paths.get(0).indexOf("*") - 1) : paths.get(0);
+		String startTimeSeries = trimPath(paths.get(0));
 		boolean isEndPrefix = paths.get(getPathsNum() - 1).contains("*");
-		String endTimeSeries = isEndPrefix ?
-				paths.get(getPathsNum() - 1).substring(0, paths.get(getPathsNum() - 1).indexOf("*") - 1) : paths.get(getPathsNum() - 1);
+		String endTimeSeries = trimPath(paths.get(getPathsNum() - 1));
 		for (String path : paths) {
 			boolean isPrefix = path.contains("*");
-			String prefix = isPrefix ? path.substring(0, path.indexOf("*") - 1) : path;
+			String prefix = trimPath(path);
 			if (startTimeSeries.compareTo(prefix) >= 0) {
 				startTimeSeries = prefix;
-				isStartPrefix = true;
+				isStartPrefix = isPrefix;
 			}
 			if (endTimeSeries.compareTo(prefix) <= 0) {
 				endTimeSeries = prefix;
-				isEndPrefix = true;
+				isEndPrefix = isPrefix;
 			}
 		}
 		if (isStartPrefix) {
-			startTimeSeries += "." +  (char)('A' - 1);
+			startTimeSeries = addEndPrefix(startTimeSeries, true);
 		}
 		if (isEndPrefix) {
-			endTimeSeries += "." +  (char)('z' + 1);
+			endTimeSeries = addEndPrefix(endTimeSeries, false);
 		}
 		this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
 	}
