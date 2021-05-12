@@ -2,6 +2,8 @@ package cn.edu.tsinghua.iginx.rest.query;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class QueryResultDataset
 {
@@ -9,6 +11,22 @@ public class QueryResultDataset
     private int sampleSize = 0;
     private List<Long> timestamps = new ArrayList<>();
     private List<Object> values = new ArrayList<>();
+    private List<String> paths = new ArrayList<>();
+
+    public List<String> getPaths()
+    {
+        return paths;
+    }
+
+    public void setPaths(List<String> paths)
+    {
+        this.paths = paths;
+    }
+
+    public void addPath(String path)
+    {
+        paths.add(path);
+    }
 
     public int getSize()
     {

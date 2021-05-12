@@ -24,6 +24,7 @@ public class QueryAggregatorDiff extends QueryAggregator
         try
         {
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
+            queryResultDataset.setPaths(sessionQueryDataSet.getPaths());
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();

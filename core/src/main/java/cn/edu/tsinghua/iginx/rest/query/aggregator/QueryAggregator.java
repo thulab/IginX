@@ -104,6 +104,7 @@ public abstract class QueryAggregator
     {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
+        queryResultDataset.setPaths(sessionQueryDataSet.getPaths());
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
         int datapoints = 0;
