@@ -563,7 +563,7 @@ public class IoTDBSessionIT {
     }
 
     @Test
-    public void deletePartialDataInColumnTest() throws SessionException {
+    public void deletePartialDataInColumnTest() throws SessionException, InterruptedException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
@@ -574,6 +574,8 @@ public class IoTDBSessionIT {
         long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
         long delTimePeriod = delEndTime - delStartTime + 1;
 
+        //TODO remove this line when the new iotdb release version fix this bug
+        Thread.sleep(5000);
         session.deleteDataInColumns(delPaths, delStartTime, delEndTime);
 
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
@@ -736,11 +738,14 @@ public class IoTDBSessionIT {
     }
 
     @Test
-    public void deleteAllDataInColumnTest() throws SessionException {
+    public void deleteAllDataInColumnTest() throws SessionException, InterruptedException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D4_S4);
+
+        //TODO remove this line when the new iotdb release version fix this bug
+        Thread.sleep(5000);
         session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
 
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
