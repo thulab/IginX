@@ -175,7 +175,7 @@ public class IoTDBSessionDataTypeTest {
     }
 
     @Test
-    public void deletePartDataTest() throws SessionException {
+    public void deletePartDataTest() throws SessionException, InterruptedException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
@@ -185,6 +185,9 @@ public class IoTDBSessionDataTypeTest {
         long delStartTime = START_TIME + TIME_PERIOD / 5;
         long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
         long delTimePeriod = delEndTime - delStartTime + 1;
+
+        //TODO remove this line when the new iotdb release version fix this bug
+        Thread.sleep(5000);
 
         session.deleteDataInColumns(delPaths, delStartTime, delEndTime);
 
@@ -237,7 +240,7 @@ public class IoTDBSessionDataTypeTest {
             }
         }
 
-        /*
+
         List<String> aggrPaths = new ArrayList<>();
         aggrPaths.add(COLUMN_D1_S1);
         aggrPaths.add(COLUMN_D2_S2);
@@ -266,7 +269,7 @@ public class IoTDBSessionDataTypeTest {
                     fail();
                     break;
             }
-        }*/
+        }
     }
 
 
@@ -276,8 +279,10 @@ public class IoTDBSessionDataTypeTest {
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D5_S5);
+
         //TODO remove this line when the new iotdb release version fix this bug
         Thread.sleep(10000);
+
         session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
         int len = dataSet.getTimestamps().length;
