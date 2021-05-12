@@ -48,7 +48,7 @@ public class Config {
 
     private String influxDBOrganizationName = "organization";
 
-    private String statisticsCollectorClassName = "cn.edu.tsinghua.iginx.statistics.StatisticsCollector";
+    private String statisticsCollectorClassName = "";
 
     private String restip = "127.0.0.1";
 
