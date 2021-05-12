@@ -390,7 +390,10 @@ public class QueryParser
         for (int i=0; i< result.getSiz(); i++)
         {
             ret.append(result.toResultString(i));
+            ret.append(",");
         }
+        if (ret.charAt(ret.length()-1) == ',')
+            ret.deleteCharAt(ret.length()-1);
         ret.append("]}");
         return ret.toString();
     }

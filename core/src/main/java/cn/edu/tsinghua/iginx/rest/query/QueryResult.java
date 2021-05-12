@@ -123,7 +123,8 @@ public class QueryResult
             ret.deleteCharAt(ret.length()-1);
             ret.append("],");
         }
-        ret.deleteCharAt(ret.length()-1);
+        if (ret.charAt(ret.length()-1) == ',')
+            ret.deleteCharAt(ret.length()-1);
         ret.append("}");
         return ret.toString();
     }
@@ -141,7 +142,8 @@ public class QueryResult
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             ret.append("],");
         }
-        ret.deleteCharAt(ret.length() - 1);
+        if (ret.charAt(ret.length()-1) == ',')
+            ret.deleteCharAt(ret.length()-1);
         ret.append("]");
         return ret.toString();
     }

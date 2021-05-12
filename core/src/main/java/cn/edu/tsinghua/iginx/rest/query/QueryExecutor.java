@@ -75,7 +75,7 @@ public class QueryExecutor
                 pos2path.put(entry.getValue(), entry.getKey());
             List<Integer> pos = new ArrayList<>();
             for (int i=0;i < pos2path.size();i++)
-                pos.add(0);
+                pos.add(-1);
             dfsInsert(0, ret, pos2path, queryMetric, pos);
         }
         return ret;
@@ -90,8 +90,11 @@ public class QueryExecutor
             int now = 0;
             while (iter.hasNext())
             {
+                String ins = null;
                 Map.Entry entry = (Map.Entry) iter.next();
-                String ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
+                List<String> tmp = queryMetric.getTags().get(entry.getValue());
+                if (tmp != null)
+                    ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
                 if (ins != null)
                     path.append(ins + ".");
                 else
@@ -102,10 +105,18 @@ public class QueryExecutor
             Paths.add(path.toString());
             return;
         }
-        for (int i=0;i<queryMetric.getTags().get(pos2path.get(depth+1)).size();i++)
+        if (queryMetric.getTags().get(pos2path.get(depth+1)) == null)
         {
-            pos.set(depth, i);
+            pos.set(depth, -1);
             dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos);
+        }
+        else
+        {
+            for (int i = 0; i < queryMetric.getTags().get(pos2path.get(depth + 1)).size(); i++)
+            {
+                pos.set(depth, i);
+                dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos);
+            }
         }
     }
 }
