@@ -186,6 +186,16 @@ public class Config {
         return restport;
     }
 
+    public void setRestip(String restip)
+    {
+        this.restip = restip;
+    }
+
+    public void setRestport(int restport)
+    {
+        this.restport = restport;
+    }
+
     public int getDefaultTimeseriesLength()
     {
         return defaultTimeseriesLength;
