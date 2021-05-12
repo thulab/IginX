@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.rest;
 
+import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 
@@ -8,9 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.inject.Inject;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
@@ -20,6 +19,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
@@ -132,6 +134,50 @@ public class MetricsResource {
             List<String> ret = new ArrayList<>();
             ret.add(e.getMessage());
             return builder.addErrors(ret).build();
+        }
+    }
+
+    @DELETE
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    @Path("/metric/{metricName}")
+    public Response metricDelete(@PathParam("metricName") String metricName)
+    {
+        deleteMetric(metricName);
+        return setHeaders(Response.status(Response.Status.OK)).build();
+    }
+
+    void deleteMetric(String metricName)
+    {
+        RestSession restSession = new RestSession();
+        try
+        {
+            restSession.openSession();
+        }
+        catch (SessionException e)
+        {
+            e.printStackTrace();
+        }
+        List<String> ins = new ArrayList<>();
+        for (int i = 1; i < ConfigDescriptor.getInstance().getConfig().getMaxTimeseriesLength(); i++)
+        {
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int j = 0; j < i; j++)
+                stringBuilder.append("*.");
+            stringBuilder.append(metricName);
+            ins.add(stringBuilder.toString());
+        }
+        try
+        {
+            restSession.deleteColumns(ins);
+        }
+        catch (ExecutionException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            restSession.closeSession();
+            SortedListAbstractMetaManager.getInstance().addOrUpdateSchemaMapping(metricName, null);
         }
     }
 }

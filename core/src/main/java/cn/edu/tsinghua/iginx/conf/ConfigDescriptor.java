@@ -67,6 +67,7 @@ public class ConfigDescriptor {
             config.setRestip(properties.getProperty("restip", "127.0.0.1"));
             config.setRestport(Integer.parseInt(properties.getProperty("restport", "6666")));
 
+            config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
