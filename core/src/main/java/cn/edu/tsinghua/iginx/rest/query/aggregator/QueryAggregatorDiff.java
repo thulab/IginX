@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
+import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
@@ -17,7 +18,7 @@ public class QueryAggregatorDiff extends QueryAggregator
     }
 
     @Override
-    public QueryResultDataset doAggregate(Session session, List<String> paths, long startTimestamp, long endTimestamp)
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp)
     {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try

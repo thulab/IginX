@@ -12,7 +12,7 @@ import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 
-public class RestServer
+public class RestServer implements Runnable
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(RestServer.class);
     private static Config config = ConfigDescriptor.getInstance().getConfig();
@@ -54,6 +54,12 @@ public class RestServer
             Thread.currentThread().interrupt();
         }
         server.shutdown();
+    }
+
+    @Override
+    public void run()
+    {
+        start();
     }
 
     public static void main(String[] argv)

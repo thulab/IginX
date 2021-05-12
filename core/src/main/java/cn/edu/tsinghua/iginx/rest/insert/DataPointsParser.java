@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -26,8 +27,7 @@ public class DataPointsParser
     private final Reader inputStream;
     private ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
-    //todo
-    private Session session = new Session("127.0.0.1", 6324, "root", "root");
+    private RestSession session = new RestSession();
 
     public DataPointsParser(Reader stream)
     {
@@ -77,15 +77,7 @@ public class DataPointsParser
         }
         finally
         {
-            try
-            {
-                session.closeSession();
-            }
-            catch (SessionException e)
-            {
-                e.printStackTrace();
-                throw e;
-            }
+            session.closeSession();
         }
     }
 
@@ -177,10 +169,6 @@ public class DataPointsParser
             try
             {
                 session.insertColumnRecords(paths,metric.getTimestamps().stream().mapToLong(t->t.longValue()).toArray(),valuesList,type,null);
-            }
-            catch (SessionException e)
-            {
-                e.printStackTrace();
             }
             catch (ExecutionException e)
             {

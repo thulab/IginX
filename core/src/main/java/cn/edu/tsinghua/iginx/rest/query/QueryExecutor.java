@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
@@ -21,7 +22,7 @@ public class QueryExecutor
 
     private Query query;
 
-    private Session session = new Session("127.0.0.1", 6324, "root", "root");
+    private RestSession session = new RestSession();
 
 
     public QueryExecutor(Query query)
