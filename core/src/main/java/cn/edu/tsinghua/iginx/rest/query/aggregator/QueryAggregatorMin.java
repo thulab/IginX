@@ -26,73 +26,55 @@ public class QueryAggregatorMin extends QueryAggregator
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try
         {
-            SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, AggregateType.MIN, getDur());
-            SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
+            SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
             switch (type)
             {
-                case BOOLEAN:
-                    for (int i = 0; i < n; i++)
-                    {
-                        boolean flag = false;
-                        boolean minn = true;
-                        for (int j = 0; j < m; j++)
-                            if (sessionQueryDataSet.getValues().get(i).get(j) != null)
-                            {
-                                flag = true;
-                                minn &= (boolean) sessionQueryDataSet.getValues().get(i).get(j);
-                            }
-                        if (flag)
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], minn);
-                    }
-                    break;
                 case LONG:
+                    long minn = Long.MAX_VALUE;
                     for (int i = 0; i < n; i++)
                     {
-                        boolean flag = false;
-                        long minn = Long.MAX_VALUE;
                         for (int j = 0; j < m; j++)
+                        {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                flag = true;
                                 minn = min(minn, (long) sessionQueryDataSet.getValues().get(i).get(j));
+                                datapoints += 1;
                             }
-                        if (flag)
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], minn);
+                            if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                    RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                            {
+                                queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), minn);
+                                minn = Long.MAX_VALUE;
+                            }
+                        }
                     }
                     break;
                 case DOUBLE:
+                    double minnd = Double.MAX_VALUE;
                     for (int i = 0; i < n; i++)
                     {
-                        boolean flag = false;
-                        double minn = Double.MAX_VALUE;
                         for (int j = 0; j < m; j++)
+                        {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                flag = true;
-                                minn = min(minn, (double) sessionQueryDataSet.getValues().get(i).get(j));
+                                minnd = min(minnd, (double) sessionQueryDataSet.getValues().get(i).get(j));
+                                datapoints += 1;
                             }
-                        if (flag)
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], minn);
+                            if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                    RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                            {
+                                queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), minnd);
+                                minnd = Double.MAX_VALUE;
+                            }
+                        }
                     }
                     break;
                 default:
                     throw new Exception("Unsupported data type");
-            }
-            for (int i=0;i<n;i++)
-            {
-                long cnt = 0;
-                for (int j=0;j<m;j++)
-                    if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
-                    {
-                        cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
-                    }
-                datapoints += cnt;
             }
             queryResultDataset.setSampleSize(datapoints);
         }

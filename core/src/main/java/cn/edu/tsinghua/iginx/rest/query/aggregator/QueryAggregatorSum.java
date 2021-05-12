@@ -25,78 +25,47 @@ public class QueryAggregatorSum extends QueryAggregator
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try
         {
-            SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, AggregateType.SUM, getDur());
-            SessionQueryDataSet sessionQueryDataSetcnt = session.downsampleQuery(paths,
-                    startTimestamp, endTimestamp, AggregateType.COUNT, getDur());
+            SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
             switch (type)
             {
-                case BOOLEAN:
-                    for (int i = 0; i < n; i++)
-                    {
-                        boolean flag = false;
-                        boolean sum = false;
-                        long cnt=0;
-                        for (int j=0;j<m;j++)
-                        if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
-                        {
-                            flag = true;
-                            cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
-                        }
-                        for (int j = 0; j < m; j++)
-                            if (sessionQueryDataSet.getValues().get(i).get(j) != null)
-                            {
-                                sum |= (boolean) sessionQueryDataSet.getValues().get(i).get(j);
-                            }
-                        if (flag)
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sum);
-                    }
-                    break;
                 case LONG:
+                    long sum = 0;
                     for (int i = 0; i < n; i++)
                     {
-                        boolean flag = false;
-                        long sum = 0;
-                        long cnt=0;
-                        for (int j=0;j<m;j++)
-                            if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
-                            {
-                                flag = true;
-                                cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
-                            }
                         for (int j = 0; j < m; j++)
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                sum += (long) sessionQueryDataSet.getValues().get(i).get(j);
+                                sum += (long)sessionQueryDataSet.getValues().get(i).get(j);
+                                datapoints += 1;
                             }
-                        if (flag)
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sum);
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                        {
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), sum);
+                            sum = 0;
+                        }
                     }
                     break;
                 case DOUBLE:
+                    double sumd = 0;
                     for (int i = 0; i < n; i++)
                     {
-                        boolean flag = false;
-                        double sum = 0;
-                        long cnt = 0;
-                        for (int j=0;j<m;j++)
-                            if (sessionQueryDataSetcnt.getValues().get(i).get(j) != null && (long)sessionQueryDataSetcnt.getValues().get(i).get(j) != 0)
-                            {
-                                flag = true;
-                                cnt += (long)sessionQueryDataSetcnt.getValues().get(i).get(j);
-                            }
                         for (int j = 0; j < m; j++)
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null)
                             {
-                                sum += (double) sessionQueryDataSet.getValues().get(i).get(j);
+                                sumd += (double)sessionQueryDataSet.getValues().get(i).get(j);
+                                datapoints += 1;
                             }
-                        datapoints += cnt;
-                        if (flag)
-                            queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sum);
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                        {
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), sumd);
+                            sumd = 0;
+                        }
                     }
                     break;
                 default:
