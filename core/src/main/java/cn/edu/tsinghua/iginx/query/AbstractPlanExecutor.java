@@ -23,22 +23,7 @@ import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
-import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.*;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -163,6 +148,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_MIN, this::executeDownsampleMinQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_FIRST, this::executeDownsampleFirstQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_LAST, this::executeDownsampleLastQueryPlan);
+        functionMap.put(IginxPlan.IginxPlanType.VALUEFILTER_QUERY, this::executeValueFilterQueryPlan);
     }
 
 
@@ -183,6 +169,13 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     protected Future<? extends PlanExecuteResult> executeQueryDataPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteQueryDataPlan((QueryDataPlan)plan));
+        }
+        return null;
+    }
+
+    protected Future<? extends PlanExecuteResult> executeValueFilterQueryPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteValueFilterQueryPlan((ValueFilterQueryPlan)plan));
         }
         return null;
     }

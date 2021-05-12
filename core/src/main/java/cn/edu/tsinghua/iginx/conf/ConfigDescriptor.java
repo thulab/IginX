@@ -61,7 +61,7 @@ public class ConfigDescriptor {
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
             config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
             config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
-            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", "cn.edu.tsinghua.iginx.statistics.StatisticsCollector"));
+            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
