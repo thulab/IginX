@@ -30,7 +30,7 @@ public class QueryExecutor
         this.query = query;
     }
 
-    public QueryResult execute()
+    public QueryResult execute(boolean isDelete)
     {
         QueryResult ret = new QueryResult();
         try
@@ -39,7 +39,14 @@ public class QueryExecutor
             for (QueryMetric queryMetric : query.getQueryMetrics())
             {
                 List<String> paths = getPaths(queryMetric);
-                if (queryMetric.getAggregators().size() == 0)
+                if (isDelete)
+                {
+                    RestSession session = new RestSession();
+                    session.openSession();
+                    session.deleteDataInColumns(paths, query.getStartAbsolute(), query.getEndAbsolute());
+                    session.closeSession();
+                }
+                else if (queryMetric.getAggregators().size() == 0)
                 {
                     ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());
                 }

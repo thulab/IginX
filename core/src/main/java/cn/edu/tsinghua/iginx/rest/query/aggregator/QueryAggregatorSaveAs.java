@@ -28,7 +28,7 @@ public class QueryAggregatorSaveAs extends QueryAggregator
         ins.addTag("saved_from", name);
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
-        queryResultDataset.setPaths(sessionQueryDataSet.getPaths());
+        queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
         int datapoints = 0;
@@ -44,7 +44,6 @@ public class QueryAggregatorSaveAs extends QueryAggregator
                         flag = true;
                         ins.addTimestamp(sessionQueryDataSet.getTimestamps()[i]);
                         ins.addValue(sessionQueryDataSet.getValues().get(i).get(j).toString());
-                        break;
                     }
                     datapoints += 1;
                 }

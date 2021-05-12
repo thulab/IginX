@@ -8,6 +8,7 @@ import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class QueryAggregator
@@ -104,7 +105,7 @@ public abstract class QueryAggregator
     {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
-        queryResultDataset.setPaths(sessionQueryDataSet.getPaths());
+        queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
         int datapoints = 0;
@@ -118,12 +119,33 @@ public abstract class QueryAggregator
                     {
                         queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
                         flag = true;
-                        break;
                     }
                     datapoints += 1;
                 }
         }
         queryResultDataset.setSampleSize(datapoints);
         return queryResultDataset;
+    }
+
+    public List<String> getPathsFromSessionQueryDataSet(SessionQueryDataSet sessionQueryDataSet)
+    {
+        List<String> ret = new ArrayList<>();
+        List<Boolean> notNull = new ArrayList<>();
+        int n = sessionQueryDataSet.getTimestamps().length;
+        int m = sessionQueryDataSet.getPaths().size();
+        for (int i=0; i<m; i++)
+            notNull.add(false);
+        for (int i=0; i<n; i++)
+            for (int j=0;j<m;j++)
+            {
+                if (sessionQueryDataSet.getValues().get(i).get(j) != null)
+                {
+                    notNull.set(j, true);
+                }
+            }
+        for (int i=0; i<m; i++)
+            if (notNull.get(i))
+                ret.add(sessionQueryDataSet.getPaths().get(i));
+            return ret;
     }
 }

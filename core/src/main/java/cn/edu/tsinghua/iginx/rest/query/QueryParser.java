@@ -384,8 +384,10 @@ public class QueryParser
         }
     }
 
-    public String parseResultToJson(QueryResult result)
+    public String parseResultToJson(QueryResult result, boolean isDelete)
     {
+        if (isDelete)
+            return "";
         StringBuilder ret = new StringBuilder("{\"queries\":[");
         for (int i=0; i< result.getSiz(); i++)
         {

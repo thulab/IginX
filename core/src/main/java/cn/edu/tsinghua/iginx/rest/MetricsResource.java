@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
 public class MetricsResource {
 
     private static final String QUERY_URL = "/datapoints/query";
+    private static final String DELETE_URL = "/datapoints/delete";
     private static final String NO_CACHE = "no-cache";
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(100);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
@@ -121,8 +122,8 @@ public class MetricsResource {
             QueryParser parser = new QueryParser();
             Query query = parser.parseQueryMetric(jsonStr);
             QueryExecutor executor = new QueryExecutor(query);
-            QueryResult result = executor.execute();
-            String entity = parser.parseResultToJson(result);
+            QueryResult result = executor.execute(false);
+            String entity = parser.parseResultToJson(result, false);
             return Response.status(Status.OK).header("Access-Control-Allow-Origin", "*").header("Pragma", NO_CACHE)
                 .header("Cache-Control", NO_CACHE).header("Expires", 0)
                 .entity(entity).build();
@@ -136,6 +137,50 @@ public class MetricsResource {
             return builder.addErrors(ret).build();
         }
     }
+
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    @Path(DELETE_URL)
+    public Response postDelete(@Context HttpHeaders httpheaders, final InputStream stream)
+    {
+        try
+        {
+            return postDelete(inputStreamToString(stream));
+        }
+        catch (UnsupportedEncodingException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Response postDelete(String jsonStr)
+    {
+        try
+        {
+            if (jsonStr == null)
+            {
+                throw new Exception("query json must not be null or empty");
+            }
+            QueryParser parser = new QueryParser();
+            Query query = parser.parseQueryMetric(jsonStr);
+            QueryExecutor executor = new QueryExecutor(query);
+            QueryResult result = executor.execute(true);
+            String entity = parser.parseResultToJson(result, true);
+            return Response.status(Status.OK).header("Access-Control-Allow-Origin", "*").header("Pragma", NO_CACHE)
+                    .header("Cache-Control", NO_CACHE).header("Expires", 0)
+                    .entity(entity).build();
+
+        }
+        catch (Exception e)
+        {
+            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
+            List<String> ret = new ArrayList<>();
+            ret.add(e.getMessage());
+            return builder.addErrors(ret).build();
+        }
+    }
+
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
