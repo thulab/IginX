@@ -68,7 +68,7 @@ public class IoTDBSessionDataTypeTest {
 
     @After
     public void tearDown() throws ExecutionException, SessionException {
-        //session.dropDatabase(DATABASE_NAME);
+        session.dropDatabase(DATABASE_NAME);
         session.closeSession();
     }
 
@@ -276,7 +276,8 @@ public class IoTDBSessionDataTypeTest {
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D5_S5);
-        //Thread.sleep(10000);
+        //TODO remove this line when the new iotdb release version fix this bug
+        Thread.sleep(10000);
         session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
         int len = dataSet.getTimestamps().length;

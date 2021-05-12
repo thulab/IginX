@@ -742,6 +742,7 @@ public class IoTDBSessionIT {
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D4_S4);
         session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
+
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
 
         int len = dataSet.getTimestamps().length;

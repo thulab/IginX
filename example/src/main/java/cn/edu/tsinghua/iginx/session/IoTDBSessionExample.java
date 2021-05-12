@@ -318,7 +318,7 @@ public class IoTDBSessionExample {
 		paths.add(S4);
 
 		long startTime = COLUMN_END_TIMESTAMP - 50L;
-		long endTime = ROW_END_TIMESTAMP - 20L;
+		long endTime = ROW_START_TIMESTAMP + 50L;
 
 		session.deleteDataInColumns(paths, startTime, endTime);
 	}
