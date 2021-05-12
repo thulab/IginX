@@ -24,10 +24,15 @@ public class DataPointsParser
     private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
     private static Config config = ConfigDescriptor.getInstance().getConfig();
-    private final Reader inputStream;
+    private Reader inputStream = null;
     private ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
     private RestSession session = new RestSession();
+
+    public DataPointsParser()
+    {
+
+    }
 
     public DataPointsParser(Reader stream)
     {
@@ -113,6 +118,30 @@ public class DataPointsParser
             }
         }
         return ret;
+    }
+
+    public void sendData()
+    {
+        try
+        {
+            session.openSession();
+        }
+        catch (SessionException e)
+        {
+            e.printStackTrace();
+        }
+        sendMetricsData();
+        session.closeSession();
+    }
+
+    public void setMetricList(List<Metric> metricList)
+    {
+        this.metricList = metricList;
+    }
+
+    public List<Metric> getMetricList()
+    {
+        return metricList;
     }
 
     private void sendMetricsData()

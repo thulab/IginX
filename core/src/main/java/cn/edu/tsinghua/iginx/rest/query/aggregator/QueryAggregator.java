@@ -118,6 +118,7 @@ public abstract class QueryAggregator
                     {
                         queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
                         flag = true;
+                        break;
                     }
                     datapoints += 1;
                 }

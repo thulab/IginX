@@ -177,7 +177,6 @@ public class MetricsResource {
         finally
         {
             restSession.closeSession();
-            SortedListAbstractMetaManager.getInstance().addOrUpdateSchemaMapping(metricName, null);
         }
     }
 }
