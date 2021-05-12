@@ -44,12 +44,13 @@ public class QueryAggregatorMin extends QueryAggregator
                                 minn = min(minn, (long) sessionQueryDataSet.getValues().get(i).get(j));
                                 datapoints += 1;
                             }
-                            if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                    RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
-                            {
-                                queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), minn);
-                                minn = Long.MAX_VALUE;
-                            }
+
+                        }
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                        {
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), minn);
+                            minn = Long.MAX_VALUE;
                         }
                     }
                     break;
@@ -64,12 +65,13 @@ public class QueryAggregatorMin extends QueryAggregator
                                 minnd = min(minnd, (double) sessionQueryDataSet.getValues().get(i).get(j));
                                 datapoints += 1;
                             }
-                            if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                    RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
-                            {
-                                queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), minnd);
-                                minnd = Double.MAX_VALUE;
-                            }
+
+                        }
+                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
+                        {
+                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), minnd);
+                            minnd = Double.MAX_VALUE;
                         }
                     }
                     break;
