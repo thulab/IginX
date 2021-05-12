@@ -10,6 +10,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.stringtemplate.v4.ST;
 
 import java.util.*;
 
@@ -262,8 +263,12 @@ public class IoTDBSessionDataTypeTest {
                     assertEquals((double)avgResult[i], (START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, delta * 1000);
                     break;
                 case "sg1.d1.s1":
+                    assertEquals((double)avgResult[i], ((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
+                            (END_TIME - delStartTime + END_TIME - delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod) + 1.0, delta * 1000);
+                    break;
                 case "sg1.d3.s3":
-                    assertEquals(new String((byte[]) avgResult[i]), "null");
+                    assertEquals((double)avgResult[i], ((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
+                            (delStartTime + delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod) + 3.01, delta * 1000);
                     break;
                 default:
                     fail();
