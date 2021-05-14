@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.rest.RestServer;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -35,10 +36,10 @@ public class Iginx {
     private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
 
     public static void main(String[] args) throws Exception {
+        new Thread(new RestServer()).start();
         Iginx iginx = new Iginx();
         iginx.startServer();
     }
-
     private void startServer() throws TTransportException {
         TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
         TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());

@@ -66,7 +66,7 @@ public class IoTDBSessionExample {
 		// 聚合查询数据
 		aggregateQuery();
 		// 降采样聚合查询
-	//	downsampleQuery();
+		downsampleQuery();
 		// 删除数据
 		deleteDataInColumns();
 		// 再次查询数据

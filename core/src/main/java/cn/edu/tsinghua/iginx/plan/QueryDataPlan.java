@@ -100,7 +100,7 @@ public class QueryDataPlan extends DataPlan {
 		}
 		List<String> tempPaths = new ArrayList<>();
 		for (String path : getPaths()) {
-			String prefix = path.contains("*") ? path.substring(0, path.indexOf("*") - 1) : path;
+			String prefix = trimPath(path).contains("*") ? path.substring(0, path.indexOf("*") - 1) : trimPath(path);
 			if (interval.getStartTimeSeries() != null && prefix.compareTo(interval.getStartTimeSeries()) < 0 && !interval.getStartTimeSeries().startsWith(prefix)) {
 				continue;
 			}

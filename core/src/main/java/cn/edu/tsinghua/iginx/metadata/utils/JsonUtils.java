@@ -36,6 +36,7 @@ public class JsonUtils {
         return gson.fromJson(new String(data), clazz);
     }
 
-
-
+    public static Gson getGson() {
+        return gson;
+    }
 }

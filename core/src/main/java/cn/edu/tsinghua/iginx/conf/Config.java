@@ -50,6 +50,22 @@ public class Config {
 
     private String statisticsCollectorClassName = "";
 
+    private String restip = "127.0.0.1";
+
+    private int restport = 6666;
+
+    private int maxTimeseriesLength = 10;
+
+    public int getMaxTimeseriesLength()
+    {
+        return maxTimeseriesLength;
+    }
+
+    public void setMaxTimeseriesLength(int maxTimeseriesLength)
+    {
+        this.maxTimeseriesLength = maxTimeseriesLength;
+    }
+
     public String getIp() {
         return ip;
     }
@@ -169,4 +185,25 @@ public class Config {
     public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
         this.statisticsCollectorClassName = statisticsCollectorClassName;
     }
+
+    public String getRestip()
+    {
+        return restip;
+    }
+
+    public int getRestport()
+    {
+        return restport;
+    }
+
+    public void setRestip(String restip)
+    {
+        this.restip = restip;
+    }
+
+    public void setRestport(int restport)
+    {
+        this.restport = restport;
+    }
+
 }
