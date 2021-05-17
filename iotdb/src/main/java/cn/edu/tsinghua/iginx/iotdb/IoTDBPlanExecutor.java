@@ -36,6 +36,7 @@ import cn.edu.tsinghua.iginx.query.result.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
+import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
@@ -121,6 +122,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             logger.warn("unexpected database: " + storageEngineMeta.getDbType());
             return;
         }
+        if (!testConnection(storageEngineMeta)) {
+            logger.error("cannot connect to " + storageEngineMeta.toString());
+            return;
+        }
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String username = extraParams.getOrDefault("username", "root");
         String password = extraParams.getOrDefault("password", "root");
@@ -131,6 +136,23 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
         writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
         storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+    }
+
+    public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
+        Map<String, String> extraParams = storageEngineMeta.getExtraParams();
+        String username = extraParams.getOrDefault("username", "root");
+        String password = extraParams.getOrDefault("password", "root");
+
+        Session session = new Session(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password);
+
+        try {
+            session.open(false);
+            session.close();
+        } catch (IoTDBConnectionException e) {
+            logger.error("test connection error: ", e);
+            return false;
+        }
+        return true;
     }
 
     public IoTDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {

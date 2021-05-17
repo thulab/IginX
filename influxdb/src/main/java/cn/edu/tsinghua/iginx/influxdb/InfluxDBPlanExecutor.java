@@ -99,6 +99,10 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		storageEngineIdToClient.put(storageEngineMeta.getId(), client);
 	}
 
+	public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
+		return true;
+	}
+
 	public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
 		storageEngineIdToClient = new ConcurrentHashMap<>();
 		for (StorageEngineMeta storageEngineMeta : storageEngineMetaList) {
