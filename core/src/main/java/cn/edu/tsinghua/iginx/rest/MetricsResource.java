@@ -30,11 +30,11 @@ import cn.edu.tsinghua.iginx.rest.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Path("/api/v1")
+@Path("/")
 public class MetricsResource {
 
-    private static final String QUERY_URL = "/datapoints/query";
-    private static final String DELETE_URL = "/datapoints/delete";
+    private static final String QUERY_URL = "api/v1/datapoints/query";
+    private static final String DELETE_URL = "api/v1/datapoints/delete";
     private static final String NO_CACHE = "no-cache";
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(100);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
@@ -56,14 +56,27 @@ public class MetricsResource {
         return (responseBuilder);
     }
 
+    @POST
+    @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
+    @Path("{string : .+}")
+    public Response errorPath(@PathParam("string") String str)
+    {
+        JsonResponseBuilder builder = new JsonResponseBuilder(Status.NOT_FOUND);
+        List<String> ret = new ArrayList<>();
+        ret.add("Wrong Path");
+        return builder.addErrors(ret).build();
+    }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
-    @Path("/datapoints")
+    @Path("api/v1/datapoints")
     public void add(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse)
     {
+        System.out.println("add");
         threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream));
     }
+
+
 
 
     private static String inputStreamToString(InputStream inputStream) throws UnsupportedEncodingException
@@ -184,7 +197,7 @@ public class MetricsResource {
 
     @DELETE
     @Produces(MediaType.APPLICATION_JSON + "; charset=UTF-8")
-    @Path("/metric/{metricName}")
+    @Path("api/v1/metric/{metricName}")
     public Response metricDelete(@PathParam("metricName") String metricName)
     {
         deleteMetric(metricName);
