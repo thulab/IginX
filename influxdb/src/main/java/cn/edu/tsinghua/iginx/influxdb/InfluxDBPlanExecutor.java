@@ -62,30 +62,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\" AND t=\"%s\"";
 
-	private static final String MAX_WITH_TAG = QUERY_DATA_WITH_TAG + " |> max()";
-
-	private static final String MIN_WITH_TAG = QUERY_DATA_WITH_TAG + " |> min()";
-
-	private static final String FIRST_WITH_TAG = QUERY_DATA_WITH_TAG + " |> first()";
-
-	private static final String LAST_WITH_TAG = QUERY_DATA_WITH_TAG + " |> last()";
-
-	private static final String COUNT_WITH_TAG = QUERY_DATA_WITH_TAG + " |> count()";
-
-	private static final String SUM_WITH_TAG = QUERY_DATA_WITH_TAG + " |> sum()";
-
-	private static final String MAX_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> max()";
-
-	private static final String MIN_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> min()";
-
-	private static final String FIRST_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> first()";
-
-	private static final String LAST_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> last()";
-
-	private static final String COUNT_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> count()";
-
-	private static final String SUM_WITHOUT_TAG = QUERY_DATA_WITHOUT_TAG + " |> sum()";
-
 	private Map<Long, InfluxDBClient> storageEngineIdToClient;
 
 	private void createConnection(StorageEngineMeta storageEngineMeta) {
@@ -395,7 +371,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> sumTables;
 			if (value != null) {
 				countTables = client.getQueryApi().query(String.format(
-						COUNT_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> count()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -404,7 +380,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						value
 				), organization.getId());
 				sumTables = client.getQueryApi().query(String.format(
-						SUM_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> sum()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -414,7 +390,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				countTables = client.getQueryApi().query(String.format(
-						COUNT_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> count()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -422,7 +398,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 						field
 				), organization.getId());
 				sumTables = client.getQueryApi().query(String.format(
-						SUM_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> sum()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -475,7 +451,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> tables;
 			if (value != null) {
 				tables = client.getQueryApi().query(String.format(
-						COUNT_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> count()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -485,7 +461,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				tables = client.getQueryApi().query(String.format(
-						COUNT_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> count()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -535,7 +511,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> tables;
 			if (value != null) {
 				tables = client.getQueryApi().query(String.format(
-						SUM_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> sum()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -545,7 +521,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				tables = client.getQueryApi().query(String.format(
-						SUM_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> sum()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -596,7 +572,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> tables;
 			if (value != null) {
 				tables = client.getQueryApi().query(String.format(
-						FIRST_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> first()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -606,7 +582,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				tables = client.getQueryApi().query(String.format(
-						FIRST_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> first()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -660,7 +636,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> tables;
 			if (value != null) {
 				tables = client.getQueryApi().query(String.format(
-						LAST_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> last()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -670,7 +646,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				tables = client.getQueryApi().query(String.format(
-						LAST_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> last()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -724,7 +700,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> tables;
 			if (value != null) {
 				tables = client.getQueryApi().query(String.format(
-						MAX_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> max()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -734,7 +710,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				tables = client.getQueryApi().query(String.format(
-						MAX_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> max()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -788,7 +764,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			List<FluxTable> tables;
 			if (value != null) {
 				tables = client.getQueryApi().query(String.format(
-						MIN_WITH_TAG,
+						QUERY_DATA_WITH_TAG + " |> min()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -798,7 +774,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				), organization.getId());
 			} else {
 				tables = client.getQueryApi().query(String.format(
-						MIN_WITHOUT_TAG,
+						QUERY_DATA_WITHOUT_TAG + " |> min()",
 						bucketName,
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
 						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
@@ -863,8 +839,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 	}
 
 	@Override
-	public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
-	{
+	public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan) {
 		return null;
 	}
 

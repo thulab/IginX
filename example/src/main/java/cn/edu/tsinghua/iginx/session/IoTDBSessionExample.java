@@ -55,9 +55,9 @@ public class IoTDBSessionExample {
 		session.createDatabase(DATABASE_NAME);
 
 		// 添加列
-	//	addColumns();
+		addColumns();
 		// 列式插入数据
-	//	insertColumnRecords();
+		insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
 		valuefilterquery();
