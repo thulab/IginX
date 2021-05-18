@@ -33,6 +33,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -193,4 +194,11 @@ public interface IPlanSplitter {
 	 * @return 拆分方式
 	 */
 	List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan);
+
+	/**
+	 * 拆分 ValueFilterQueryPlan
+	 * @param plan 待拆分的 ValueFilterQueryPlan
+	 * @return 拆分方式
+	 */
+	List<SplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan);
 }

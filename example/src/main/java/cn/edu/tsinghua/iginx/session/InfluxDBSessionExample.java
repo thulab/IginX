@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +43,7 @@ public class InfluxDBSessionExample {
 	private static final long ROW_END_TIMESTAMP = 21000L;
 	private static final int ROW_INTERVAL = 10;
 
-	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
+	public static void main(String[] args) throws SessionException, ExecutionException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		// 打开 Session
 		session.openSession();
@@ -162,10 +161,51 @@ public class InfluxDBSessionExample {
 		dataSet.print();
 	}
 
+	private static void aggregateQuery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
+
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
+
+		// MAX
+		SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
+		dataSet.print();
+
+		// MIN
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
+		dataSet.print();
+
+		// FIRST
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+		dataSet.print();
+
+		// LAST
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+		dataSet.print();
+
+		// COUNT
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
+		dataSet.print();
+
+		// SUM
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
+		dataSet.print();
+
+		// AVG
+		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
+		dataSet.print();
+	}
+
 	private static void downsampleQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = ROW_START_TIMESTAMP;
 		long endTime = ROW_END_TIMESTAMP + 1;
@@ -202,43 +242,6 @@ public class InfluxDBSessionExample {
 
 		// 降采样查询结束
 		System.out.println("Downsample Query Finished.");
-	}
-
-	private static void aggregateQuery() throws SessionException {
-		List<String> paths = new ArrayList<>();
-		paths.add(S1);
-		paths.add(S2);
-
-		long startTime = COLUMN_END_TIMESTAMP - 100L;
-		long endTime = ROW_START_TIMESTAMP + 100L;
-
-		// MAX
-		SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
-		dataSet.print();
-
-		// MIN
-		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
-		dataSet.print();
-
-		// FIRST
-		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
-		dataSet.print();
-
-		// LAST
-		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
-		dataSet.print();
-
-		// COUNT
-		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
-		dataSet.print();
-
-		// SUM
-		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
-		dataSet.print();
-
-		// AVG
-		dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
-		dataSet.print();
 	}
 
 	private static void deleteDataInColumns() throws SessionException {

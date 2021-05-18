@@ -19,21 +19,7 @@
 package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
-import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
-import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
-import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.*;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -41,12 +27,7 @@ import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
-import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.*;
 
 public interface IStorageEngine {
 
@@ -93,6 +74,8 @@ public interface IStorageEngine {
     DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan);
 
     DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan);
+
+    ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan);
 
     StorageEngineChangeHook getStorageEngineChangeHook();
 

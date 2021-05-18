@@ -45,6 +45,8 @@ public class IoTDBSessionIT {
             session.createDatabase(DATABASE_NAME);
             addColumns();
             insertRecords();
+            //TODO remove this line when the new iotdb release version fix this bug
+            Thread.sleep(10000);
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -88,6 +90,55 @@ public class IoTDBSessionIT {
                 }
             }
         }
+    }
+
+    @Test
+    public void valueFilterQueryTest() throws SessionException {
+        long s1 = 9900;
+        long s2 = 90000;
+        long s3 = 40050;
+        long s4 = 40001;
+
+        paths.add(COLUMN_D1_S1);
+        paths.add(COLUMN_D2_S2);
+        paths.add(COLUMN_D3_S3);
+        paths.add(COLUMN_D4_S4);
+
+        String booleanExpression = COLUMN_D1_S1 + ">" +  s1 + " and " + COLUMN_D2_S2 + "<" + s2 + " and(" +
+                COLUMN_D3_S3 + " > " + s3 + " or " + COLUMN_D4_S4 + " < " + s4 +")";
+        SessionQueryDataSet dataSet = session.valueFilterQuery(paths, START_TIME, END_TIME, booleanExpression);
+        int len = dataSet.getTimestamps().length;
+        List<String> resPaths = dataSet.getPaths();
+        assertEquals(resPaths.size(), 4);
+        assertEquals(len, TIME_PERIOD - (s1 - START_TIME + 1) - (END_TIME - s2 + 2) - (s3 - s4 + 2));
+        for (int i = 0; i < len; i++){
+            long timestamp = dataSet.getTimestamps()[i];
+            List<Object> result = dataSet.getValues().get(i);
+            for (int j = 0; j < 4; j++) {
+                switch (resPaths.get(j)){
+                    case "sg1.d1.s1":
+                        assertEquals(result.get(j), timestamp);
+                        assertTrue(timestamp > s1);
+                        break;
+                    case "sg1.d2.s2":
+                        assertEquals(result.get(j), timestamp + 1);
+                        assertTrue(timestamp + 1 < s2);
+                        break;
+                    case "sg1.d3.s3":
+                        assertEquals(result.get(j), timestamp + 2);
+                        assertTrue(timestamp + 2 > s3 || timestamp + 3 < s4);
+                        break;
+                    case "sg1.d4.s4":
+                        assertEquals(result.get(j), timestamp + 3);
+                        assertTrue(timestamp + 2 > s3 || timestamp + 3 < s4);
+                        break;
+                    default:
+                        fail();
+                        break;
+                }
+            }
+        }
+
     }
 
     @Test
@@ -514,7 +565,7 @@ public class IoTDBSessionIT {
     }
 
     @Test
-    public void deletePartialDataInColumnTest() throws SessionException {
+    public void deletePartialDataInColumnTest() throws SessionException, InterruptedException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
@@ -687,11 +738,12 @@ public class IoTDBSessionIT {
     }
 
     @Test
-    public void deleteAllDataInColumnTest() throws SessionException {
+    public void deleteAllDataInColumnTest() throws SessionException, InterruptedException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
         delPaths.add(COLUMN_D4_S4);
+
         session.deleteDataInColumns(delPaths, START_TIME, END_TIME);
 
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
@@ -706,6 +758,26 @@ public class IoTDBSessionIT {
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 4; j++) {
                 if ("sg1.d2.s2".equals(resPaths.get(j))) {
+                    assertEquals(result.get(j), timestamp + 1);
+                } else {
+                    assertNull(result.get(j));
+                }
+            }
+        }
+
+        // Test value filter for the delete
+        int vftime = 1123;
+        String booleanExpression = COLUMN_D2_S2 + " > "+vftime;
+        SessionQueryDataSet vfDataSet = session.valueFilterQuery(paths, START_TIME, END_TIME, booleanExpression);
+        int vflen = vfDataSet.getTimestamps().length;
+        List<String> vfResPaths = vfDataSet.getPaths();
+        assertEquals(vfDataSet.getTimestamps().length, TIME_PERIOD + START_TIME - vftime - 1);
+        for (int i = 0; i < vflen; i++){
+            long timestamp = vfDataSet.getTimestamps()[i];
+            assertEquals(timestamp, i + vftime);
+            List<Object> result = vfDataSet.getValues().get(i);
+            for (int j = 0; j < 4; j++) {
+                if ("sg1.d2.s2".equals(vfResPaths.get(j))) {
                     assertEquals(result.get(j), timestamp + 1);
                 } else {
                     assertNull(result.get(j));

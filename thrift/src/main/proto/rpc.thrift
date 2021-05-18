@@ -136,6 +136,20 @@ struct AggregateQueryResp {
     5: optional binary valuesList
 }
 
+struct ValueFilterQueryReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required i64 startTime
+    4: required i64 endTime
+    5: required string booleanExpression
+}
+
+struct ValueFilterQueryResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+    4: optional QueryDataSet queryDataSet
+}
 
 struct DownsampleQueryReq {
     1: required i64 sessionId
@@ -146,14 +160,12 @@ struct DownsampleQueryReq {
     6: required i64 precision
 }
 
-
 struct DownsampleQueryResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
     4: optional QueryDataSet queryDataSet
 }
-
 
 service IService {
 
@@ -176,6 +188,8 @@ service IService {
     Status addStorageEngine(1: AddStorageEngineReq req);
 
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
+
+    ValueFilterQueryResp valueFilterQuery(1:ValueFilterQueryReq req);
 
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 

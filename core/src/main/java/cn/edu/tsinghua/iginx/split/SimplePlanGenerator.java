@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
@@ -44,6 +45,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -64,13 +66,13 @@ import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -283,6 +285,17 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     default:
                         throw new UnsupportedOperationException(downsampleQueryReq.getAggregateType().toString());
                 }
+            case ValueFilterQuery: {
+                ValueFilterQueryReq valueFilterQueryReq = ((ValueFilterQueryContext) requestContext).getReq();
+                ValueFilterQueryPlan valueFilterQueryPlan = new ValueFilterQueryPlan(
+                        valueFilterQueryReq.getPaths(),
+                        valueFilterQueryReq.getStartTime(),
+                        valueFilterQueryReq.getEndTime(),
+                        valueFilterQueryReq.getBooleanExpression()
+                );
+                splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
+                return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
+            }
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }
@@ -374,6 +387,22 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
+            );
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<ValueFilterQueryPlan> splitValueFilterQueryPlan(ValueFilterQueryPlan plan, List<SplitInfo> infoList) {
+        List<ValueFilterQueryPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList)
+        {
+            ValueFilterQueryPlan subPlan = new ValueFilterQueryPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    plan.getBooleanExpression(),
                     info.getStorageUnit()
             );
             plans.add(subPlan);

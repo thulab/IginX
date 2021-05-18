@@ -61,7 +61,14 @@ public class ConfigDescriptor {
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
             config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
             config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
+
+            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", "cn.edu.tsinghua.iginx.statistics.StatisticsCollector"));
+            config.setRestip(properties.getProperty("restip", "127.0.0.1"));
+            config.setRestport(Integer.parseInt(properties.getProperty("restport", "6666")));
+
+            config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

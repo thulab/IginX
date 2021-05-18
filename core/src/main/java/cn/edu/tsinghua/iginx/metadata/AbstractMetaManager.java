@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import com.google.gson.reflect.TypeToken;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -82,6 +83,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
 
+    private final Map<String, Map<String, Integer>> schemaMappings = new ConcurrentHashMap<>();
+
+    protected TreeCache schemaMappingsCache;
+
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
                 .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
@@ -98,14 +103,65 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             registerStorageEngineMeta();
             registerStorageEngineListener();
             resolveStorageEngineFromZooKeeper();
-
             resolveFragmentFromZooKeeper();
-
             resolveStorageUnitFromZookeeper();
+            resolveSchemaMappingsFromZooKeeper();
         } catch (Exception e) {
             logger.error("get error when init meta manager: ", e);
             System.exit(1);
         }
+    }
+
+    private void resolveSchemaMappingsFromZooKeeper() throws Exception {
+        InterProcessMutex mutex = new InterProcessMutex(zookeeperClient, Constants.SCHEMA_MAPPING_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.zookeeperClient.checkExists().forPath(Constants.SCHEMA_MAPPING_PREFIX) == null) {
+                // 当前还没有数据，创建父节点，然后不需要解析数据
+                this.zookeeperClient.create()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.SCHEMA_MAPPING_PREFIX);
+            } else {
+                // 从 zookeeper 中解析 schema mapping 数据
+                List<String> schemas = this.zookeeperClient.getChildren()
+                        .forPath(Constants.SCHEMA_MAPPING_PREFIX);
+                for (String schema: schemas) {
+                    Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(new String(this.zookeeperClient.getData()
+                            .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {}.getType());
+                    schemaMappings.put(schema, schemaMapping);
+                }
+            }
+            registerSchemaMappingsListener();
+        } finally {
+            mutex.release();
+        }
+    }
+
+    private void registerSchemaMappingsListener() throws Exception {
+        this.schemaMappingsCache = new TreeCache(this.zookeeperClient, Constants.SCHEMA_MAPPING_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (event.getData() == null || event.getData().getPath() == null || event.getData().getPath().equals(Constants.SCHEMA_MAPPING_PREFIX)) {
+                return; // 创建根节点，不必理会
+            }
+            byte[] data;
+            Map<String, Integer> schemaMapping;
+            String schema = event.getData().getPath().substring(Constants.SCHEMA_MAPPING_PREFIX.length());
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    schemaMapping = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<String, Integer>>() {}.getType());
+                    schemaMappings.put(schema, schemaMapping);
+                    break;
+                case NODE_REMOVED:
+                    schemaMappings.remove(schema);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.schemaMappingsCache.getListenable().addListener(listener);
+        this.schemaMappingsCache.start();
     }
 
     private void registerIginxListener() throws Exception {
@@ -822,5 +878,89 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         }
         fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE));
         return new Pair<>(fragmentMetaList, storageUnitMetaList);
+    }
+
+    @Override
+    public void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping) {
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.SCHEMA_MAPPING_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (schemaMapping == null) { // 删除数据
+                if (schemaMappings.containsKey(schema)) {
+                    schemaMappings.remove(schema);
+                    this.zookeeperClient.delete()
+                            .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema);
+                }
+            } else { // 增加/更新数据
+                if (schemaMappings.containsKey(schema)) { // 更新数据
+                    schemaMappings.put(schema, schemaMapping);
+                    this.zookeeperClient.setData()
+                            .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema, JsonUtils.toJson(schemaMapping));
+                } else { // 增加数据
+                    schemaMappings.put(schema, schemaMapping);
+                    this.zookeeperClient.create()
+                            .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema, JsonUtils.toJson(schemaMapping));
+                }
+            }
+        } catch (Exception e) {
+            logger.error("add or update schema mapping  error: ", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.SCHEMA_MAPPING_LOCK_NODE);
+        try {
+            mutex.acquire();
+            boolean isNew = false;
+            Map<String, Integer> schemaMapping = schemaMappings.get(schema);
+            if (schemaMapping == null) {
+                isNew = true;
+                schemaMapping = new HashMap<>();
+                schemaMappings.put(schema, schemaMapping);
+            }
+            if (value == -1) { // 删除数据
+                schemaMapping.remove(key);
+            } else { // 增加/更新数据
+                schemaMapping.put(key, value);
+            }
+            if (isNew) {
+                this.zookeeperClient.create()
+                        .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema, JsonUtils.toJson(schemaMapping));
+            } else {
+                this.zookeeperClient.setData()
+                        .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema, JsonUtils.toJson(schemaMapping));
+            }
+        } catch (Exception e) {
+            logger.error("add or update schema mapping  error: ", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public Map<String, Integer> getSchemaMapping(String schema) {
+        if (this.schemaMappings.get(schema) == null)
+            return null;
+        return Collections.unmodifiableMap(this.schemaMappings.get(schema));
+    }
+
+    @Override
+    public int getSchemaMappingItem(String schema, String key) {
+        Map<String, Integer> schemaMapping = schemaMappings.get(schema);
+        if (schemaMapping == null) {
+            return -1;
+        }
+        return schemaMapping.getOrDefault(key, -1);
     }
 }

@@ -30,6 +30,7 @@ public enum ContextType {
     DropDatabase,
     AggregateQuery,
     DownsampleQuery,
+    ValueFilterQuery,
     Unknown;
 
 }

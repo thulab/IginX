@@ -183,7 +183,7 @@ public class IginxClient {
             session.addStorageEngine(ip, port, storageEngineType, extraParams);
             System.out.println("success");
         } catch (Exception e) {
-            System.out.println("encounter error: " + e.getMessage());
+            System.out.println("encounter error when add storage engine, please check the status of storage engine.");
         }
     }
 

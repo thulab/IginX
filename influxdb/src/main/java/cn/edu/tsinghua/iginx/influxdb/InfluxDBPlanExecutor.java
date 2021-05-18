@@ -21,6 +21,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -37,6 +38,7 @@ import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import com.influxdb.client.InfluxDBClient;
@@ -62,6 +64,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInfluxDB;
+import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
 import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
@@ -116,6 +119,10 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
 		InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
 		storageEngineIdToClient.put(storageEngineMeta.getId(), client);
+	}
+
+	public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
+		return true;
 	}
 
 	public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
@@ -397,6 +404,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
+		List<String> paths = new ArrayList<>();
 		List<DataType> dataTypeList = new ArrayList<>();
 		List<Long> counts = new ArrayList<>();
 		List<Object> sums = new ArrayList<>();
@@ -412,44 +420,53 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 			List<FluxTable> countTables;
 			List<FluxTable> sumTables;
-			if (value != null) {
-				countTables = client.getQueryApi().query(String.format(
-						COUNT_WITH_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field,
-						value
-				), organization.getId());
-				sumTables = client.getQueryApi().query(String.format(
-						SUM_WITH_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field,
-						value
-				), organization.getId());
-			} else {
-				countTables = client.getQueryApi().query(String.format(
-						COUNT_WITHOUT_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field
-				), organization.getId());
-				sumTables = client.getQueryApi().query(String.format(
-						SUM_WITHOUT_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field
-				), organization.getId());
+			try {
+				if (value != null) {
+					countTables = client.getQueryApi().query(String.format(
+							COUNT_WITH_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field,
+							value
+					), organization.getId());
+					sumTables = client.getQueryApi().query(String.format(
+							SUM_WITH_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field,
+							value
+					), organization.getId());
+				} else {
+					countTables = client.getQueryApi().query(String.format(
+							COUNT_WITHOUT_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field
+					), organization.getId());
+					sumTables = client.getQueryApi().query(String.format(
+							SUM_WITHOUT_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field
+					), organization.getId());
+				}
+			} catch (Exception e) {
+				if (e.getMessage().contains("unsupported input type for sum aggregate")) {
+					continue;
+				} else {
+					return new AvgAggregateQueryPlanExecuteResult(FAILURE, plan);
+				}
 			}
 
+			paths.add(path);
 			if (!countTables.isEmpty() && !sumTables.isEmpty()) {
 				dataTypeList.add(fromInfluxDB(sumTables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
 				counts.add((Long) countTables.get(0).getRecords().get(0).getValue());
@@ -462,7 +479,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		}
 
 		AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
-		result.setPaths(plan.getPaths());
+		result.setPaths(paths);
 		result.setDataTypes(dataTypeList);
 		result.setCounts(counts);
 		result.setSums(sums);
@@ -539,6 +556,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
+		List<String> paths = new ArrayList<>();
 		List<DataType> dataTypeList = new ArrayList<>();
 		List<Object> values = new ArrayList<>();
 		for (String path : plan.getPaths()) {
@@ -552,27 +570,36 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			}
 
 			List<FluxTable> tables;
-			if (value != null) {
-				tables = client.getQueryApi().query(String.format(
-						SUM_WITH_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field,
-						value
-				), organization.getId());
-			} else {
-				tables = client.getQueryApi().query(String.format(
-						SUM_WITHOUT_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field
-				), organization.getId());
+			try {
+				if (value != null) {
+					tables = client.getQueryApi().query(String.format(
+							SUM_WITH_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field,
+							value
+					), organization.getId());
+				} else {
+					tables = client.getQueryApi().query(String.format(
+							SUM_WITHOUT_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field
+					), organization.getId());
+				}
+			} catch (Exception e) {
+				if (e.getMessage().contains("unsupported input type for sum aggregate")) {
+					continue;
+				} else {
+					return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, plan);
+				}
 			}
 
+			paths.add(path);
 			if (!tables.isEmpty()) {
 				dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
 				values.add(tables.get(0).getRecords().get(0).getValue());
@@ -583,7 +610,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		}
 
 		StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-		result.setPaths(plan.getPaths());
+		result.setPaths(paths);
 		result.setDataTypes(dataTypeList);
 		result.setValues(values);
 
@@ -599,6 +626,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
+		List<String> paths = new ArrayList<>();
 		List<DataType> dataTypeList = new ArrayList<>();
 		List<Long> timestamps = new ArrayList<>();
 		List<Object> values = new ArrayList<>();
@@ -635,18 +663,20 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			}
 
 			if (!tables.isEmpty()) {
-				dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+				paths.add(path);
+				DataType dataType = fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+				dataTypeList.add(dataType);
 				timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
-				values.add(tables.get(0).getRecords().get(0).getValue());
-			} else {
-				dataTypeList.add(BINARY);
-				timestamps.add(-1L);
-				values.add("null".getBytes());
+				if (dataType != BINARY) {
+					values.add(tables.get(0).getRecords().get(0).getValue());
+				} else {
+					values.add(((String) tables.get(0).getRecords().get(0).getValue()).getBytes());
+				}
 			}
 		}
 
 		SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-		result.setPaths(plan.getPaths());
+		result.setPaths(paths);
 		result.setTimes(timestamps);
 		result.setDataTypes(dataTypeList);
 		result.setValues(values);
@@ -663,6 +693,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
+		List<String> paths = new ArrayList<>();
 		List<DataType> dataTypeList = new ArrayList<>();
 		List<Long> timestamps = new ArrayList<>();
 		List<Object> values = new ArrayList<>();
@@ -699,18 +730,20 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			}
 
 			if (!tables.isEmpty()) {
-				dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+				paths.add(path);
+				DataType dataType = fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+				dataTypeList.add(dataType);
 				timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
-				values.add(tables.get(0).getRecords().get(0).getValue());
-			} else {
-				dataTypeList.add(BINARY);
-				timestamps.add(-1L);
-				values.add("null".getBytes());
+				if (dataType != BINARY) {
+					values.add(tables.get(0).getRecords().get(0).getValue());
+				} else {
+					values.add(((String) tables.get(0).getRecords().get(0).getValue()).getBytes());
+				}
 			}
 		}
 
 		SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-		result.setPaths(plan.getPaths());
+		result.setPaths(paths);
 		result.setTimes(timestamps);
 		result.setDataTypes(dataTypeList);
 		result.setValues(values);
@@ -727,6 +760,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
+		List<String> paths = new ArrayList<>();
 		List<DataType> dataTypeList = new ArrayList<>();
 		List<Long> timestamps = new ArrayList<>();
 		List<Object> values = new ArrayList<>();
@@ -741,40 +775,46 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			}
 
 			List<FluxTable> tables;
-			if (value != null) {
-				tables = client.getQueryApi().query(String.format(
-						MAX_WITH_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field,
-						value
-				), organization.getId());
-			} else {
-				tables = client.getQueryApi().query(String.format(
-						MAX_WITHOUT_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field
-				), organization.getId());
+			try {
+				if (value != null) {
+					tables = client.getQueryApi().query(String.format(
+							MAX_WITH_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field,
+							value
+					), organization.getId());
+				} else {
+					tables = client.getQueryApi().query(String.format(
+							MAX_WITHOUT_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field
+					), organization.getId());
+				}
+			} catch (Exception e) {
+				// TODO 字符串类型不支持 Max 和 Min
+				if (e.getMessage().contains("panic: unsupported for aggregate max")) {
+					continue;
+				} else {
+					return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, plan);
+				}
 			}
 
 			if (!tables.isEmpty()) {
+				paths.add(path);
 				dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
 				timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
 				values.add(tables.get(0).getRecords().get(0).getValue());
-			} else {
-				dataTypeList.add(BINARY);
-				timestamps.add(-1L);
-				values.add("null".getBytes());
 			}
 		}
 
 		SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-		result.setPaths(plan.getPaths());
+		result.setPaths(paths);
 		result.setTimes(timestamps);
 		result.setDataTypes(dataTypeList);
 		result.setValues(values);
@@ -791,6 +831,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
+		List<String> paths = new ArrayList<>();
 		List<DataType> dataTypeList = new ArrayList<>();
 		List<Long> timestamps = new ArrayList<>();
 		List<Object> values = new ArrayList<>();
@@ -805,40 +846,45 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			}
 
 			List<FluxTable> tables;
-			if (value != null) {
-				tables = client.getQueryApi().query(String.format(
-						MIN_WITH_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field,
-						value
-				), organization.getId());
-			} else {
-				tables = client.getQueryApi().query(String.format(
-						MIN_WITHOUT_TAG,
-						bucketName,
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-						measurement,
-						field
-				), organization.getId());
+			try {
+				if (value != null) {
+					tables = client.getQueryApi().query(String.format(
+							MIN_WITH_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field,
+							value
+					), organization.getId());
+				} else {
+					tables = client.getQueryApi().query(String.format(
+							MIN_WITHOUT_TAG,
+							bucketName,
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+							ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+							measurement,
+							field
+					), organization.getId());
+				}
+			} catch (Exception e) {
+				if (e.getMessage().contains("panic: unsupported for aggregate min")) {
+					continue;
+				} else {
+					return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, plan);
+				}
 			}
 
 			if (!tables.isEmpty()) {
+				paths.add(path);
 				dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
 				timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
 				values.add(tables.get(0).getRecords().get(0).getValue());
-			} else {
-				dataTypeList.add(BINARY);
-				timestamps.add(-1L);
-				values.add("null".getBytes());
 			}
 		}
 
 		SingleValueAggregateQueryPlanExecuteResult result = new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
-		result.setPaths(plan.getPaths());
+		result.setPaths(paths);
 		result.setTimes(timestamps);
 		result.setDataTypes(dataTypeList);
 		result.setValues(values);
@@ -879,6 +925,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 	@Override
 	public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
 		return syncExecuteDownsampleQueryPlan(plan);
+	}
+
+	@Override
+	public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
+	{
+		return null;
 	}
 
 	@Override
@@ -954,7 +1006,18 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 					throw new UnsupportedOperationException(plan.getIginxPlanType().toString());
 			}
 
-			tables = client.getQueryApi().query(statement, organization.getId());
+			try {
+				tables = client.getQueryApi().query(statement, organization.getId());
+			} catch (Exception e) {
+				if (e.getMessage().contains("panic: unsupported for aggregate max")
+						|| e.getMessage().contains("panic: unsupported for aggregate min")
+						|| e.getMessage().contains("unsupported input type for sum aggregate")
+						|| e.getMessage().contains("unsupported input type for mean aggregate")) {
+					continue;
+				} else {
+					return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
+				}
+			}
 
 			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
 		}
