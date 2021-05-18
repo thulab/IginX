@@ -149,7 +149,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             session.open(false);
             session.close();
         } catch (IoTDBConnectionException e) {
-            logger.error("test connection error: ", e);
+            logger.error("test connection error: {}", e.getMessage());
             return false;
         }
         return true;
