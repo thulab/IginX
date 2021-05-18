@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryProcessor;
@@ -100,7 +102,7 @@ public class StatisticsCollector implements IStatisticsCollector {
                     planExecuteStatisticsCollector.broadcastStatistics();
                     resultCombineStatisticsCollector.broadcastStatistics();
                     queryStatisticsCollector.broadcastStatistics();
-                    Thread.sleep(555000); // 每隔 10 秒播报一次统计信息
+                    Thread.sleep(ConfigDescriptor.getInstance().getConfig().getStatisticsLogInterval()); // 每隔 10 秒播报一次统计信息
                 }
             } catch (InterruptedException e) {
                 logger.error("encounter error when broadcasting statistics: ", e);
