@@ -24,14 +24,43 @@ import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.*;
+import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
+import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
+import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
+import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.thrift.TException;
@@ -42,7 +71,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
@@ -141,24 +169,22 @@ public class IginxWorker implements IService.Iface {
 		// 处理扩容
 		StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
 		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine);
-		if (storageEngine == StorageEngine.IoTDB) {
-			String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-			for (String part: parts) {
-				String[] kAndV = part.split("=");
-				if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
-					continue;
+		String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
+		for (String part: parts) {
+			String[] kAndV = part.split("=");
+			if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
+				continue;
+			}
+			String className = kAndV[1];
+			try {
+				Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
+						loadClass(className);
+				Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
+				if (!((boolean) method.invoke(null, meta))) {
+					return RpcUtils.FAILURE;
 				}
-				String className = kAndV[1];
-				try {
-					Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
-							loadClass(className);
-					Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-					if (!((boolean) method.invoke(null, meta))) {
-						return RpcUtils.FAILURE;
-					}
-				} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
-					logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
-				}
+			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
+				logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
 			}
 		}
 		if (!metaManager.addStorageEngine(meta)) {

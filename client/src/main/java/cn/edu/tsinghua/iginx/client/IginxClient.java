@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.client;
 
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
@@ -169,7 +170,7 @@ public class IginxClient {
         String[] storageEngineParts = commandParts[2].split("#");
         String ip = storageEngineParts[0];
         int port = Integer.parseInt(storageEngineParts[1]);
-        StorageEngineType storageEngineType = StorageEngineType.IOTDB;
+        StorageEngineType storageEngineType = StorageEngine.toThrift(StorageEngine.fromString(storageEngineParts[2]));
         Map<String, String> extraParams = new HashMap<>();
         for (int i = 3; i < storageEngineParts.length; i++) {
             String[] KAndV = storageEngineParts[i].split("=");
