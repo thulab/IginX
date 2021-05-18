@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.thrift.transport.TTransportException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,7 +45,7 @@ public class IoTDBSessionExample {
 	private static final long ROW_END_TIMESTAMP = 21000L;
 	private static final int ROW_INTERVAL = 10;
 
-	public static void main(String[] args) throws SessionException, ExecutionException, TTransportException {
+	public static void main(String[] args) throws SessionException, ExecutionException {
 		session = new Session("127.0.0.1", 6324, "root", "root");
 		// 打开 Session
 		session.openSession();
@@ -60,7 +59,7 @@ public class IoTDBSessionExample {
 		insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
-		valuefilterquery();
+		valueFilterQuery();
 		// 查询数据
 		queryData();
 		// 聚合查询数据
@@ -218,7 +217,7 @@ public class IoTDBSessionExample {
 		dataSet.print();
 	}
 
-	private static void valuefilterquery() throws SessionException {
+	private static void valueFilterQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
@@ -236,6 +235,8 @@ public class IoTDBSessionExample {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = ROW_START_TIMESTAMP;
 		long endTime = ROW_END_TIMESTAMP + 1;
@@ -278,6 +279,8 @@ public class IoTDBSessionExample {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
 		long startTime = COLUMN_END_TIMESTAMP - 100L;
 		long endTime = ROW_START_TIMESTAMP + 100L;

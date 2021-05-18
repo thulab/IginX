@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.core.db;
 
+import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+
 import java.util.Locale;
 
 public enum StorageEngine {
@@ -29,6 +31,17 @@ public enum StorageEngine {
             case "iotdb":
                 return IoTDB;
             case "influxdb":
+                return InfluxDB;
+            default:
+                return null;
+        }
+    }
+
+    public static StorageEngine fromThrift(StorageEngineType s) {
+        switch (s) {
+            case IOTDB:
+                return IoTDB;
+            case INFLUXDB:
                 return InfluxDB;
             default:
                 return null;

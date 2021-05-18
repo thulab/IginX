@@ -36,6 +36,7 @@ import cn.edu.tsinghua.iginx.query.result.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
+import org.apache.iotdb.session.Session;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
@@ -121,6 +122,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             logger.warn("unexpected database: " + storageEngineMeta.getDbType());
             return;
         }
+        if (!testConnection(storageEngineMeta)) {
+            logger.error("cannot connect to " + storageEngineMeta.toString());
+            return;
+        }
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String username = extraParams.getOrDefault("username", "root");
         String password = extraParams.getOrDefault("password", "root");
@@ -131,6 +136,23 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
         writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
         storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+    }
+
+    public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
+        Map<String, String> extraParams = storageEngineMeta.getExtraParams();
+        String username = extraParams.getOrDefault("username", "root");
+        String password = extraParams.getOrDefault("password", "root");
+
+        Session session = new Session(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password);
+
+        try {
+            session.open(false);
+            session.close();
+        } catch (IoTDBConnectionException e) {
+            logger.error("test connection error: ", e);
+            return false;
+        }
+        return true;
     }
 
     public IoTDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
@@ -339,35 +361,40 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     @Override
     public AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
-        try {
-            List<String> paths = new ArrayList<>();
-            List<DataType> dataTypeList = new ArrayList<>();
-            List<Long> counts = new ArrayList<>();
-            List<Object> sums = new ArrayList<>();
-            for (String path : plan.getPaths()) {
-                String deviceId = path.substring(0, path.lastIndexOf('.'));
-                String measurement = path.substring(path.lastIndexOf('.') + 1);
-                SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(AVG, measurement, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
-                    paths.add(path);
-                    dataTypeList.add(fromIoTDB(rowRecord.getFields().get(1).getDataType()));
-                    counts.add(rowRecord.getFields().get(0).getLongV());
-                    sums.add(rowRecord.getFields().get(1).getObjectValue(rowRecord.getFields().get(1).getDataType()));
+        List<String> paths = new ArrayList<>();
+        List<DataType> dataTypeList = new ArrayList<>();
+        List<Long> counts = new ArrayList<>();
+        List<Object> sums = new ArrayList<>();
+        for (String path : plan.getPaths()) {
+            String deviceId = path.substring(0, path.lastIndexOf('.'));
+            String measurement = path.substring(path.lastIndexOf('.') + 1);
+            SessionDataSetWrapper dataSet;
+            RowRecord rowRecord;
+            try {
+                dataSet = sessionPool.executeQueryStatement(String.format(AVG, measurement, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
+                rowRecord = dataSet.next();
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                if (e.getMessage().contains("Unsupported data type in aggregation SUM : TEXT")) {
+                    continue;
+                } else {
+                    logger.error(e.getMessage());
+                    return new AvgAggregateQueryPlanExecuteResult(FAILURE, null);
                 }
-                dataSet.close();
             }
-            AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(paths);
-            result.setDataTypes(dataTypeList);
-            result.setCounts(counts);
-            result.setSums(sums);
-            return result;
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
+            if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                paths.add(path);
+                dataTypeList.add(fromIoTDB(rowRecord.getFields().get(1).getDataType()));
+                counts.add(rowRecord.getFields().get(0).getLongV());
+                sums.add(rowRecord.getFields().get(1).getObjectValue(rowRecord.getFields().get(1).getDataType()));
+            }
+            dataSet.close();
         }
-        return new AvgAggregateQueryPlanExecuteResult(FAILURE, null);
+        AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        result.setPaths(paths);
+        result.setDataTypes(dataTypeList);
+        result.setCounts(counts);
+        result.setSums(sums);
+        return result;
     }
 
     @Override
@@ -387,7 +414,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     Field field = rowRecord.getFields().get(0);
                     paths.add(path);
                     dataTypeList.add(fromIoTDB(field.getDataType()));
-                    values.add(field.getObjectValue(field.getDataType()));
+                    if (field.getDataType() != TSDataType.TEXT) {
+                        values.add(field.getObjectValue(field.getDataType()));
+                    } else {
+                        values.add(field.getBinaryV().getValues());
+                    }
                 }
                 dataSet.close();
             }
@@ -405,33 +436,42 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     @Override
     public StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
-        try {
-            List<String> paths = new ArrayList<>();
-            List<DataType> dataTypeList = new ArrayList<>();
-            List<Object> values = new ArrayList<>();
-            for (String path : plan.getPaths()) {
-                String deviceId = path.substring(0, path.lastIndexOf('.'));
-                String measurement = path.substring(path.lastIndexOf('.') + 1);
-                SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(SUM, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
-                RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
-                    Field field = rowRecord.getFields().get(0);
-                    paths.add(path);
-                    dataTypeList.add(fromIoTDB(field.getDataType()));
-                    values.add(field.getObjectValue(field.getDataType()));
+        List<String> paths = new ArrayList<>();
+        List<DataType> dataTypeList = new ArrayList<>();
+        List<Object> values = new ArrayList<>();
+        for (String path : plan.getPaths()) {
+            String deviceId = path.substring(0, path.lastIndexOf('.'));
+            String measurement = path.substring(path.lastIndexOf('.') + 1);
+            SessionDataSetWrapper dataSet;
+            RowRecord rowRecord;
+            try {
+                dataSet = sessionPool.executeQueryStatement(String.format(SUM, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
+                rowRecord = dataSet.next();
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                if (e.getMessage().contains("Unsupported data type in aggregation SUM : TEXT")) {
+                    continue;
+                } else {
+                    logger.error(e.getMessage());
+                    return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, null);
                 }
-                dataSet.close();
             }
-            StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-            result.setPaths(paths);
-            result.setDataTypes(dataTypeList);
-            result.setValues(values);
-            return result;
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
+            if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                Field field = rowRecord.getFields().get(0);
+                paths.add(path);
+                dataTypeList.add(fromIoTDB(field.getDataType()));
+                if (field.getDataType() != TSDataType.TEXT) {
+                    values.add(field.getObjectValue(field.getDataType()));
+                } else {
+                    values.add(field.getBinaryV().getValues());
+                }
+            }
+            dataSet.close();
         }
-        return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, null);
+        StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        result.setPaths(paths);
+        result.setDataTypes(dataTypeList);
+        result.setValues(values);
+        return result;
     }
 
     @Override
@@ -456,7 +496,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     } else {
                         paths.add(path);
                         dataTypeList.add(fromIoTDB(field.getDataType()));
-                        values.add(field.getObjectValue(field.getDataType()));
+                        if (field.getDataType() != TSDataType.TEXT) {
+                            values.add(field.getObjectValue(field.getDataType()));
+                        } else {
+                            values.add(field.getBinaryV().getValues());
+                        }
                     }
                 }
                 dataSet.close();
@@ -495,7 +539,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     } else {
                         paths.add(path);
                         dataTypeList.add(fromIoTDB(field.getDataType()));
-                        values.add(field.getObjectValue(field.getDataType()));
+                        if (field.getDataType() != TSDataType.TEXT) {
+                            values.add(field.getObjectValue(field.getDataType()));
+                        } else {
+                            values.add(field.getBinaryV().getValues());
+                        }
                     }
                 }
                 dataSet.close();
@@ -534,7 +582,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     } else {
                         paths.add(path);
                         dataTypeList.add(fromIoTDB(field.getDataType()));
-                        values.add(field.getObjectValue(field.getDataType()));
+                        if (field.getDataType() != TSDataType.TEXT) {
+                            values.add(field.getObjectValue(field.getDataType()));
+                        } else {
+                            values.add(field.getBinaryV().getValues());
+                        }
                     }
                 }
                 dataSet.close();
@@ -573,7 +625,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     } else {
                         paths.add(path);
                         dataTypeList.add(fromIoTDB(field.getDataType()));
-                        values.add(field.getObjectValue(field.getDataType()));
+                        if (field.getDataType() != TSDataType.TEXT) {
+                            values.add(field.getObjectValue(field.getDataType()));
+                        } else {
+                            values.add(field.getBinaryV().getValues());
+                        }
                     }
                 }
                 dataSet.close();
