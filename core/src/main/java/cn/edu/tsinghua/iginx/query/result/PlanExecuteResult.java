@@ -34,4 +34,13 @@ public abstract class PlanExecuteResult {
 
     private IginxPlan plan;
 
+    public PlanExecuteResult(int statusCode, IginxPlan plan) {
+        this.statusCode = statusCode;
+        this.plan = plan;
+    }
+
+    private long span;
+
+    private long executeSpan;
+
 }

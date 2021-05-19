@@ -21,11 +21,13 @@ package cn.edu.tsinghua.iginx.statistics;
 import cn.edu.tsinghua.iginx.core.context.ContextType;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
+import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -38,7 +40,11 @@ public class PlanExecuteStatisticsCollector extends AbstractStageStatisticsColle
 
     private long span = 0;
 
-    private final Map<ContextType, Pair<Long, Long>> detailInfos = new HashMap<>();
+    private long executeSpan = 0;
+
+    private long innerSpan = 0;
+
+    private final Map<ContextType, Pair<Long, Long[]>> detailInfos = new HashMap<>();
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
@@ -52,9 +58,22 @@ public class PlanExecuteStatisticsCollector extends AbstractStageStatisticsColle
         lock.writeLock().lock();
         count += 1;
         span += statistics.getEndTime() - statistics.getBeginTime();
-        Pair<Long, Long> detailInfo = detailInfos.computeIfAbsent(statistics.getRequestContext().getType(), e -> new Pair<>(0L, 0L));
+        Pair<Long, Long[]> detailInfo = detailInfos.computeIfAbsent(statistics.getRequestContext().getType(), e -> new Pair<>(0L, new Long[] {0L, 0L, 0L}));
         detailInfo.k += 1;
-        detailInfo.v += statistics.getEndTime() - statistics.getBeginTime();
+        detailInfo.v[0] += statistics.getEndTime() - statistics.getBeginTime();
+
+        List<PlanExecuteResult> planExecuteResultList = statistics.getRequestContext().getPlanExecuteResults();
+        long localInnerSpan = 0;
+        long localExecuteSpan = 0;
+        for (PlanExecuteResult planExecuteResult: planExecuteResultList) {
+            localExecuteSpan = Math.max(localExecuteSpan, planExecuteResult.getExecuteSpan());
+            localInnerSpan = Math.max(localInnerSpan, planExecuteResult.getSpan());
+        }
+        executeSpan += localExecuteSpan;
+        innerSpan += localInnerSpan;
+        detailInfo.v[1] += executeSpan;
+        detailInfo.v[2] += innerSpan;
+
         lock.writeLock().unlock();
     }
 
@@ -66,8 +85,13 @@ public class PlanExecuteStatisticsCollector extends AbstractStageStatisticsColle
         if (count != 0) {
             logger.info("\taverage-span: " + (1.0 * span) / count + "μs");
         }
-        for (Map.Entry<ContextType, Pair<Long, Long>> entry: detailInfos.entrySet()) {
-            logger.info("\t\tFor Request: " + entry.getKey() + ", count: " + entry.getValue().k + ", span: " + entry.getValue().v + "μs");
+        logger.info("\texecuteSpan: " + executeSpan + ", innerSpan: " + innerSpan + "μs");
+        if (count != 0) {
+            logger.info("\taverage-execute-span: " + (1.0 * executeSpan) / count + "μs");
+            logger.info("\taverage-inner-span: " + (1.0 * innerSpan) / count + "μs");
+        }
+        for (Map.Entry<ContextType, Pair<Long, Long[]>> entry: detailInfos.entrySet()) {
+            logger.info("\t\tFor Request: " + entry.getKey() + ", count: " + entry.getValue().k + ", span: " + entry.getValue().v[0] + "μs, executeSpan: " + entry.getValue().v[1] + "μs, innerSpan: " + entry.getValue().v[2] + "μs.");
         }
         lock.readLock().unlock();
     }

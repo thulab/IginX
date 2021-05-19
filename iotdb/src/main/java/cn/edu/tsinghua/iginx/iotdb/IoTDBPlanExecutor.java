@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
@@ -220,6 +221,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        long beginTime = TimeUtils.getMicrosecond();
         // TODO 目前 IoTDB 的 insertTablets 不支持空值，因此要求 plan 的 path 属于不同 device
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
@@ -233,6 +235,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         }
 
         int cnt = 0;
+        long executeSpan = 0;
         do {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
 
@@ -255,9 +258,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     }
                 }
             }
-
             try {
+                long beginExecuteTime = TimeUtils.getMicrosecond();
                 sessionPool.insertTablets(tablets);
+                executeSpan += TimeUtils.getMicrosecond() - beginExecuteTime;
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
             }
@@ -268,21 +272,33 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             cnt += size;
         } while (cnt < plan.getTimestamps().length);
 
-        return new NonDataPlanExecuteResult(SUCCESS, plan);
+        long span = TimeUtils.getMicrosecond() - beginTime;
+        NonDataPlanExecuteResult result = new NonDataPlanExecuteResult(SUCCESS, plan);
+        result.setSpan(span);
+        result.setExecuteSpan(executeSpan);
+        return result;
     }
 
     public QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
+        long beginTime = TimeUtils.getMicrosecond();
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
+        long executeSpan = 0;
         try {
             for (String path : plan.getPaths()) {
                 String statement = String.format(QUERY_DATA, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime());
+                long beginExecuteTime = TimeUtils.getMicrosecond();
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+                executeSpan += TimeUtils.getMicrosecond() - beginExecuteTime;
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
+        long span = TimeUtils.getMicrosecond() - beginTime;
+        QueryDataPlanExecuteResult result = new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
+        result.setSpan(span);
+        result.setExecuteSpan(executeSpan);
+        return result;
     }
 
     @Override
