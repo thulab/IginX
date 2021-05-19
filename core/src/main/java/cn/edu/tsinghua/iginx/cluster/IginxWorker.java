@@ -152,24 +152,22 @@ public class IginxWorker implements IService.Iface {
 		// 处理扩容
 		StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
 		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine);
-		if (storageEngine == StorageEngine.IoTDB) {
-			String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-			for (String part: parts) {
-				String[] kAndV = part.split("=");
-				if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
-					continue;
+		String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
+		for (String part: parts) {
+			String[] kAndV = part.split("=");
+			if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
+				continue;
+			}
+			String className = kAndV[1];
+			try {
+				Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
+						loadClass(className);
+				Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
+				if (!((boolean) method.invoke(null, meta))) {
+					return RpcUtils.FAILURE;
 				}
-				String className = kAndV[1];
-				try {
-					Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
-							loadClass(className);
-					Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-					if (!((boolean) method.invoke(null, meta))) {
-						return RpcUtils.FAILURE;
-					}
-				} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
-					logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
-				}
+			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
+				logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
 			}
 		}
 		metaManager.addStorageEngine(meta);
