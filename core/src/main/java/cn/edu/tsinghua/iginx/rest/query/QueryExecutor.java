@@ -30,7 +30,7 @@ public class QueryExecutor
         this.query = query;
     }
 
-    public QueryResult execute(boolean isDelete)
+    public QueryResult execute(boolean isDelete) throws Exception
     {
         QueryResult ret = new QueryResult();
         try
@@ -62,7 +62,8 @@ public class QueryExecutor
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            LOGGER.error("Error occurred during executeing: {}", e.getMessage());
+            throw e;
         }
 
         return ret;
