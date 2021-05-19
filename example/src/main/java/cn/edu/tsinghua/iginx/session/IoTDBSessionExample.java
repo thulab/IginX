@@ -59,6 +59,7 @@ public class IoTDBSessionExample {
 		insertColumnRecords();
 		// 行式插入数据
 		insertRowRecords();
+		valueFilterQuery();
 		// 查询数据
 		queryData();
 		// 聚合查询数据
@@ -216,7 +217,19 @@ public class IoTDBSessionExample {
 		dataSet.print();
 	}
 
+	private static void valueFilterQuery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
 
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
+		String booleanExpression =  S2 + " > 3";
+		SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
+		dataSet.print();
+	}
 
 	private static void downsampleQuery() throws SessionException {
 		List<String> paths = new ArrayList<>();
