@@ -92,7 +92,7 @@ public class IoTDBSessionIT {
         }
     }
 
-    @Test
+  /*  @Test
     public void valueFilterQueryTest() throws SessionException {
         long s1 = 9900;
         long s2 = 90000;
@@ -139,7 +139,7 @@ public class IoTDBSessionIT {
             }
         }
 
-    }
+    }*/
 
     @Test
     public void aggrMaxTest() throws SessionException {
@@ -736,7 +736,7 @@ public class IoTDBSessionIT {
         }
 
     }
-
+/*
     @Test
     public void deleteAllDataInColumnTest() throws SessionException, InterruptedException {
         List<String> delPaths = new ArrayList<>();
@@ -784,7 +784,6 @@ public class IoTDBSessionIT {
                 }
             }
         }
-
         // Test aggregate function for the delete
         SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> avgResPaths = avgDataSet.getPaths();
@@ -836,7 +835,7 @@ public class IoTDBSessionIT {
             }
         }
     }
-
+*/
     @Test
     public void deleteAllColumnsTest() throws SessionException, ExecutionException {
         session.deleteColumns(paths);
