@@ -50,6 +50,8 @@ public class Config {
 
     private String statisticsCollectorClassName = "";
 
+    private int statisticsLogInterval = 1000;
+
     private String restip = "127.0.0.1";
 
     private int restport = 6666;
@@ -184,6 +186,14 @@ public class Config {
 
     public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
         this.statisticsCollectorClassName = statisticsCollectorClassName;
+    }
+
+    public int getStatisticsLogInterval() {
+        return statisticsLogInterval;
+    }
+
+    public void setStatisticsLogInterval(int statisticsLogInterval) {
+        this.statisticsLogInterval = statisticsLogInterval;
     }
 
     public String getRestip()

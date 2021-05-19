@@ -63,7 +63,8 @@ public class ConfigDescriptor {
             config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
 
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
-            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", "cn.edu.tsinghua.iginx.statistics.StatisticsCollector"));
+            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
+
             config.setRestip(properties.getProperty("restip", "127.0.0.1"));
             config.setRestport(Integer.parseInt(properties.getProperty("restport", "6666")));
 

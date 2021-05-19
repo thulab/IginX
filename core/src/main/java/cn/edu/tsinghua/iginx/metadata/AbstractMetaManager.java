@@ -130,7 +130,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     private void registerSchemaMappingsListener() throws Exception {
         this.schemaMappingsCache = new TreeCache(this.zookeeperClient, Constants.SCHEMA_MAPPING_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
-            if (event.getData().getPath().equals(Constants.SCHEMA_MAPPING_PREFIX)) {
+            if (event.getData() == null || event.getData().getPath() == null || event.getData().getPath().equals(Constants.SCHEMA_MAPPING_PREFIX)) {
                 return; // 创建根节点，不必理会
             }
             byte[] data;
