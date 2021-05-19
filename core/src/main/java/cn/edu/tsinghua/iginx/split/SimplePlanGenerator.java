@@ -251,18 +251,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     default:
                         throw new UnsupportedOperationException(downsampleQueryReq.getAggregateType().toString());
                 }
-            case ValueFilterQuery:
-            {
-                ValueFilterQueryReq valueFilterQueryReq = ((ValueFilterQueryContext) requestContext).getReq();
-                ValueFilterQueryPlan valueFilterQueryPlan = new ValueFilterQueryPlan(
-                        valueFilterQueryReq.getPaths(),
-                        valueFilterQueryReq.getStartTime(),
-                        valueFilterQueryReq.getEndTime(),
-                        valueFilterQueryReq.getBooleanExpression()
-                );
-                splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
-                return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
-            }
+
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }
@@ -357,21 +346,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
-    public List<ValueFilterQueryPlan> splitValueFilterQueryPlan(ValueFilterQueryPlan plan, List<SplitInfo> infoList) {
-        List<ValueFilterQueryPlan> plans = new ArrayList<>();
-        for (SplitInfo info : infoList)
-        {
-            ValueFilterQueryPlan subPlan = new ValueFilterQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    plan.getBooleanExpression(),
-                    info.getReplica().getStorageEngineId()
-            );
-            plans.add(subPlan);
-        }
-        return plans;
-    }
 
     public List<MaxQueryPlan> splitMaxQueryPlan(MaxQueryPlan plan, List<SplitInfo> infoList) {
         List<MaxQueryPlan> plans = new ArrayList<>();

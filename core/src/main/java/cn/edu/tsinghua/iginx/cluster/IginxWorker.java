@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.cluster;
 import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
-import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
@@ -34,7 +33,6 @@ import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
@@ -59,8 +57,6 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.thrift.TException;
@@ -200,13 +196,6 @@ public class IginxWorker implements IService.Iface {
 		return ((AggregateCombineResult) context.getCombineResult()).getResp();
 	}
 
-	@Override
-	public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) throws TException
-	{
-		ValueFilterQueryContext context = new ValueFilterQueryContext(req);
-		core.processRequest(context);
-		return ((ValueFilterCombineResult) context.getCombineResult()).getResp();
-	}
 
 	@Override
 	public DownsampleQueryResp downsampleQuery(DownsampleQueryReq req) {

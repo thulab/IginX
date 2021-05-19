@@ -179,7 +179,6 @@ public interface IPlanSplitter {
 	 * @param plan 待拆分的 DownsampleFirstQueryPlan
 	 * @return 拆分方式
 	 */
-	List<SplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan);
 
 	/**
 	 * 从给定的分片中选择副本

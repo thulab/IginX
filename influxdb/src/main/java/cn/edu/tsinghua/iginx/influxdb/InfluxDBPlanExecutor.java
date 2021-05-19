@@ -21,7 +21,6 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
-import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -38,7 +37,6 @@ import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import com.influxdb.client.InfluxDBClient;
@@ -940,11 +938,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		return syncExecuteDownsampleQueryPlan(plan);
 	}
 
-	@Override
-	public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan)
-	{
-		return null;
-	}
+
 
 	@Override
 	public StorageEngineChangeHook getStorageEngineChangeHook() {

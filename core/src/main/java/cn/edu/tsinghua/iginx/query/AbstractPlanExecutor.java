@@ -148,7 +148,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_MIN, this::executeDownsampleMinQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_FIRST, this::executeDownsampleFirstQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_LAST, this::executeDownsampleLastQueryPlan);
-        functionMap.put(IginxPlan.IginxPlanType.VALUEFILTER_QUERY, this::executeValueFilterQueryPlan);
     }
 
 
@@ -173,12 +172,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         return null;
     }
 
-    protected Future<? extends PlanExecuteResult> executeValueFilterQueryPlan(IginxPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteValueFilterQueryPlan((ValueFilterQueryPlan)plan));
-        }
-        return null;
-    }
 
     protected Future<? extends PlanExecuteResult> executeCreateDatabasePlan(IginxPlan plan) {
         if (plan.isSync()) {

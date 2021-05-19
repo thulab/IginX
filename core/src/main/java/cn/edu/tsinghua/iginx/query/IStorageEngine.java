@@ -75,7 +75,6 @@ public interface IStorageEngine {
 
     DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan);
 
-    ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan);
 
     StorageEngineChangeHook getStorageEngineChangeHook();
 

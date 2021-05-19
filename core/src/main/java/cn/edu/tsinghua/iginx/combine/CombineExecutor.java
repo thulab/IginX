@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.combine;
 import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
 import cn.edu.tsinghua.iginx.combine.downsample.DownsampleCombiner;
 import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
-import cn.edu.tsinghua.iginx.combine.valuefilter.ValueFilterCombiner;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
@@ -43,7 +42,6 @@ public class CombineExecutor implements ICombineExecutor {
 
     private final QueryDataSetCombiner queryDataSetCombiner = QueryDataSetCombiner.getInstance();
 
-    private final ValueFilterCombiner valueFilterCombiner = ValueFilterCombiner.getInstance();
 
     @Override
     public CombineResult combineResult(RequestContext requestContext) {
@@ -110,16 +108,7 @@ public class CombineExecutor implements ICombineExecutor {
                 }
                 combineResult = new DownsampleQueryCombineResult(status, downsampleQueryResp);
                 break;
-            case ValueFilterQuery:
-                ValueFilterQueryResp valueFilterQueryResp = new ValueFilterQueryResp();
-                valueFilterQueryResp.setStatus(status);
-                try {
-                    valueFilterCombiner.combineResult(valueFilterQueryResp, planExecuteResults.stream().map(ValueFilterQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-                } catch (ExecutionException e) {
-                    logger.error("encounter error when combine query data results: ", e);
-                }
-                combineResult = new ValueFilterCombineResult(status, valueFilterQueryResp);
-                break;
+
             default:
                 combineResult = new NonDataCombineResult(status);
         }
