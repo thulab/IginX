@@ -47,7 +47,7 @@ public class DataPointsParser
         }
         catch (SessionException e)
         {
-            e.printStackTrace();
+            LOGGER.error("Error occurred during opening session: {}", e.getMessage());
             throw e;
         }
         try
@@ -68,7 +68,7 @@ public class DataPointsParser
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            LOGGER.error("Error occurred during parsing data: {}", e.getMessage());
             throw e;
         }
         try
@@ -128,7 +128,7 @@ public class DataPointsParser
         }
         catch (SessionException e)
         {
-            e.printStackTrace();
+            LOGGER.error("Error occurred during opening session: {}", e.getMessage());
         }
         sendMetricsData();
         session.closeSession();
@@ -201,7 +201,7 @@ public class DataPointsParser
             }
             catch (ExecutionException e)
             {
-                e.printStackTrace();
+                LOGGER.error("Error occurred during insert: {}", e.getMessage());
             }
         }
     }

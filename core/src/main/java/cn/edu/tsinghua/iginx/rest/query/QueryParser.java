@@ -1,23 +1,27 @@
 package cn.edu.tsinghua.iginx.rest.query;
 
+import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
 public class QueryParser
 
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     private ObjectMapper mapper = new ObjectMapper();
     public QueryParser()
     {
 
     }
 
-    public Query parseQueryMetric(String json)
+    public Query parseQueryMetric(String json) throws Exception
     {
-        Query ret = new Query();
+        Query ret;
         try
         {
             JsonNode node = mapper.readTree(json);
@@ -25,7 +29,8 @@ public class QueryParser
         }
         catch (Exception e)
         {
-
+            LOGGER.error("Error occurred during parsing query: {}", e.getMessage());
+            throw e;
         }
         return ret;
     }
