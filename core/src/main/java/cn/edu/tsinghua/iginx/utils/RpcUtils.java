@@ -44,6 +44,12 @@ public class RpcUtils {
 		}
 	}
 
+	public static Status status(StatusCode code, String msg) {
+		Status status = new Status(code.getStatusCode());
+		status.setMessage(msg);
+		return status;
+	}
+
 	public static boolean verifyNoRedirect(Status status) {
 		return status.code != StatusCode.REDIRECT.getStatusCode();
 	}
