@@ -203,7 +203,7 @@ public class IoTDBSessionExample {
 		session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
 	}
 
-	private static void queryData() throws SessionException {
+	private static void queryData() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
@@ -217,7 +217,7 @@ public class IoTDBSessionExample {
 		dataSet.print();
 	}
 
-	private static void valueFilterQuery() throws SessionException {
+	private static void valueFilterQuery() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
@@ -231,12 +231,10 @@ public class IoTDBSessionExample {
 		dataSet.print();
 	}
 
-	private static void downsampleQuery() throws SessionException {
+	private static void downsampleQuery() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
-		paths.add(S3);
-		paths.add(S4);
 
 		long startTime = ROW_START_TIMESTAMP;
 		long endTime = ROW_END_TIMESTAMP + 1;
@@ -275,12 +273,10 @@ public class IoTDBSessionExample {
 		System.out.println("Downsample Query Finished.");
 	}
 
-	private static void aggregateQuery() throws SessionException {
+	private static void aggregateQuery() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
-		paths.add(S3);
-		paths.add(S4);
 
 		long startTime = COLUMN_END_TIMESTAMP - 100L;
 		long endTime = ROW_START_TIMESTAMP + 100L;
@@ -314,7 +310,7 @@ public class IoTDBSessionExample {
 		dataSet.print();
 	}
 
-	private static void deleteDataInColumns() throws SessionException {
+	private static void deleteDataInColumns() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S3);

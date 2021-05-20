@@ -87,27 +87,27 @@ public class CombineExecutor implements ICombineExecutor {
                     case COUNT:
                     case SUM:
                         aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
-                                .map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
                     case MAX:
                         aggregateCombiner.combineMaxResult(aggregateQueryResp, planExecuteResults.stream()
-                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
                     case MIN:
                         aggregateCombiner.combineMinResult(aggregateQueryResp, planExecuteResults.stream()
-                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
                     case FIRST:
                         aggregateCombiner.combineFirstResult(aggregateQueryResp, planExecuteResults.stream()
-                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
                     case LAST:
                         aggregateCombiner.combineLastResult(aggregateQueryResp, planExecuteResults.stream()
-                                .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
                     case AVG:
                         aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
-                                .map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                 }
                 combineResult = new AggregateCombineResult(RpcUtils.status(statusCode, statusMessage), aggregateQueryResp);
                 break;
@@ -116,7 +116,8 @@ public class CombineExecutor implements ICombineExecutor {
                 downsampleQueryResp.setStatus(RpcUtils.SUCCESS);
                 DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
                 try {
-                    DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults, downsampleQueryReq.aggregateType);
+                    DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
+                            downsampleQueryReq.aggregateType);
                 } catch (Exception e) {
                     logger.error("encounter error when combine downsample data results: ", e);
                     statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;

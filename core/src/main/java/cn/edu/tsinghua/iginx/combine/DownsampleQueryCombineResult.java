@@ -29,6 +29,7 @@ public class DownsampleQueryCombineResult extends DataCombineResult {
     public DownsampleQueryCombineResult(Status status, DownsampleQueryResp resp) {
         super(status);
         this.resp = resp;
+        this.resp.setStatus(status);
     }
 
     public DownsampleQueryResp getResp() {
