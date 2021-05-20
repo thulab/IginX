@@ -157,6 +157,10 @@ public class BooleanExpression
                 ret.add(infixExpression.get(i));
             }
         }
+        Element end = new Element();
+        end.setType(Type.OPERATOR);
+        end.setOperator(new Operator(OperatorType.END));
+        ret.add(end);
         return ret;
     }
 
