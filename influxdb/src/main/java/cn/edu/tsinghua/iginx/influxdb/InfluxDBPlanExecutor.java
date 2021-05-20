@@ -117,7 +117,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		}
 		if (!testConnection(storageEngineMeta)) {
 			logger.error("cannot connect to " + storageEngineMeta.toString());
-			return;
+			return false;
 		}
 		Map<String, String> extraParams = storageEngineMeta.getExtraParams();
 		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
