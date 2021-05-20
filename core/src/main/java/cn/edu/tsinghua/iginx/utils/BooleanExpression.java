@@ -10,12 +10,14 @@ public class BooleanExpression
     private String boolExpression;
     private List<Element> postfixExpression;
     private TreeNode root;
+
     public BooleanExpression(String str)
     {
         boolExpression = str;
         postfixExpression = analysis(str);
         root = build(postfixExpression);
     }
+
     public int getOperatorPriority(OperatorType tp)
     {
         switch (tp)
@@ -46,21 +48,25 @@ public class BooleanExpression
     private List<Element> getInfixExpression(String str)
     {
         List<Element> infixExpression = new ArrayList<>();
-        String[] tmp = str.replace("("," ( ")
-                .replace(")"," ) ")
-                .replace(">=","__1")
-                .replace("<=","__2")
-                .replace("!=","__3")
-                .replace("<>","__3")
-                .replace(">"," > ")
-                .replace("="," = ")
-                .replace("<"," < ")
-                .replace("__1"," >= ")
-                .replace("__2"," <= ")
-                .replace("__3"," != ")
+        String[] tmp = str.replace("(", " ( ")
+                .replace(")", " ) ")
+                .replace(">=", "__1")
+                .replace("<=", "__2")
+                .replace("!=", "__3")
+                .replace("<>", "__3")
+                .replace(">", " > ")
+                .replace("=", " = ")
+                .replace("<", " < ")
+                .replace("&&", " && ")
+                .replace("||", " || ")
+                .replace("!", " ! ")
+                .replace("__1", " >= ")
+                .replace("__2", " <= ")
+                .replace("__3", " != ")
                 .split("\\s+");
         for (int i = 0; i < tmp.length; i++)
         {
+            if (tmp[i].length() == 0) continue;
             Element ins = new Element();
             switch (tmp[i])
             {
@@ -136,16 +142,71 @@ public class BooleanExpression
         List<Element> ret = new ArrayList<>();
         int n = infixExpression.size();
         for (int i = 0; i < n; i++)
-        if (infixExpression.get(i).getType() == Type.OPERATOR
-                && infixExpression.get(i).getOperator().getOperatorType() == OperatorType.NOT
-                && i + 2 < n
-                && infixExpression.get(i + 1).getType() == Type.VALUE
-                && infixExpression.get(i + 2).getType() == Type.OPERATOR
-                && getOperatorPriority(infixExpression.get(i).getOperator().getOperatorType()) == 2)
         {
-            infixExpression.get(i + 2).getOperator().reverse();
+            if (infixExpression.get(i).getType() == Type.OPERATOR
+                    && infixExpression.get(i).getOperator().getOperatorType() == OperatorType.NOT
+                    && i + 2 < n
+                    && infixExpression.get(i + 1).getType() == Type.VALUE
+                    && infixExpression.get(i + 2).getType() == Type.OPERATOR
+                    && getOperatorPriority(infixExpression.get(i + 2).getOperator().getOperatorType()) == 0)
+            {
+                infixExpression.get(i + 2).getOperator().reverse();
+            }
+            else
+            {
+                ret.add(infixExpression.get(i));
+            }
         }
         return ret;
+    }
+
+    public String asString(List<Element> elements)
+    {
+        StringBuilder stringBuilder = new StringBuilder("");
+        for (Element element : elements)
+        {
+            if (element.getType() == Type.VALUE)
+                stringBuilder.append(" " + element.getValue() + " ");
+            else switch (element.getOperator().operatorType)
+            {
+                case NOT:
+                    stringBuilder.append(" ! ");
+                    break;
+                case AND:
+                    stringBuilder.append(" && ");
+                    break;
+                case OR:
+                    stringBuilder.append(" || ");
+                    break;
+                case GT:
+                    stringBuilder.append(" > ");
+                    break;
+                case GTE:
+                    stringBuilder.append(" >= ");
+                    break;
+                case EQ:
+                    stringBuilder.append(" == ");
+                    break;
+                case NE:
+                    stringBuilder.append(" != ");
+                    break;
+                case LTE:
+                    stringBuilder.append(" <= ");
+                    break;
+                case LT:
+                    stringBuilder.append(" < ");
+                    break;
+                case LEFTBRACKET:
+                    stringBuilder.append("(");
+                    break;
+                case RIGHTBRACKET:
+                    stringBuilder.append(")");
+                    break;
+                default:
+                    break;
+            }
+        }
+        return stringBuilder.toString();
     }
 
     private List<Element> analysis(String str)
@@ -153,7 +214,7 @@ public class BooleanExpression
         List<Element> infixExpression = getInfixExpression(str);
         List<Element> postfixExpression = new ArrayList<>();
         Stack<Element> operatorStack = new Stack<>();
-        for (Element e: infixExpression)
+        for (Element e : infixExpression)
         {
             if (e.getType() == Type.VALUE)
                 postfixExpression.add(e);
@@ -175,7 +236,7 @@ public class BooleanExpression
                         if (!operatorStack.empty() &&
                                 operatorStack.peek().getOperator().getOperatorType() == OperatorType.NOT)
                         {
-                            postfixExpression.get(postfixExpression.size()).getOperator().reverse();
+                            postfixExpression.get(postfixExpression.size() - 1).getOperator().reverse();
                             operatorStack.pop();
                         }
                         break;
@@ -213,12 +274,12 @@ public class BooleanExpression
             ins.setData(postfixExpression.get(i));
             if (postfixExpression.get(i).getType() == Type.OPERATOR)
             {
-                if(stack.isEmpty() || stack.size()<2)
+                if (stack.isEmpty() || stack.size() < 2)
                 {
                     return null;
                 }
-                ins.setLeft(stack.pop());
                 ins.setRight(stack.pop());
+                ins.setLeft(stack.pop());
                 stack.push(ins);
             }
             else
@@ -226,7 +287,7 @@ public class BooleanExpression
                 stack.push(ins);
             }
         }
-        if(stack.isEmpty() || stack.size()>1)
+        if (stack.isEmpty() || stack.size() > 1)
         {
             return null;
         }
@@ -332,7 +393,6 @@ class Element
         this.operator = operator;
     }
 
-
     public void setValue(String value)
     {
         this.value = value;
@@ -349,6 +409,7 @@ class Operator
 {
     OperatorType operatorType;
     boolean reverse = false;
+
     Operator(OperatorType tp)
     {
         operatorType = tp;
@@ -366,13 +427,13 @@ class Operator
 
     void reverse()
     {
-        if (operatorType == OperatorType.GT) operatorType = OperatorType.LT;
-        if (operatorType == OperatorType.GTE) operatorType = OperatorType.LTE;
-        if (operatorType == OperatorType.EQ) operatorType = OperatorType.NE;
-        if (operatorType == OperatorType.NE) operatorType = OperatorType.EQ;
-        if (operatorType == OperatorType.LTE) operatorType = OperatorType.GTE;
-        if (operatorType == OperatorType.LT) operatorType = OperatorType.GT;
-        if (operatorType == OperatorType.AND || operatorType == OperatorType.OR)
+        if (operatorType == OperatorType.GT) operatorType = OperatorType.LTE;
+        else if (operatorType == OperatorType.GTE) operatorType = OperatorType.LT;
+        else if (operatorType == OperatorType.EQ) operatorType = OperatorType.NE;
+        else if (operatorType == OperatorType.NE) operatorType = OperatorType.EQ;
+        else if (operatorType == OperatorType.LTE) operatorType = OperatorType.GT;
+        else if (operatorType == OperatorType.LT) operatorType = OperatorType.GTE;
+        else if (operatorType == OperatorType.AND || operatorType == OperatorType.OR)
             reverse = true;
     }
 }
