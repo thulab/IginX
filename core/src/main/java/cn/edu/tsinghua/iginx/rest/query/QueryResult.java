@@ -5,6 +5,8 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -14,6 +16,7 @@ public class QueryResult
     private List<QueryMetric> queryMetrics = new ArrayList<>();
     private List<QueryResultDataset> queryResultDatasets = new ArrayList<>();
     private List<QueryAggregator> queryAggregators = new ArrayList<>();
+    public static final Logger LOGGER = LoggerFactory.getLogger(QueryResult.class);
     private int siz = 0;
 
     public void setQueryAggregators(List<QueryAggregator> queryAggregators)
@@ -124,7 +127,7 @@ public class QueryResult
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            LOGGER.error("Error occurred during getting tags: {}", e.getMessage());
         }
         for (Map.Entry<String, List<String>> entry: tags.entrySet())
         {

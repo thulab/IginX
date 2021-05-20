@@ -149,7 +149,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             session.open(false);
             session.close();
         } catch (IoTDBConnectionException e) {
-            logger.error("test connection error: ", e);
+            logger.error("test connection error: {}", e.getMessage());
             return false;
         }
         return true;
@@ -757,7 +757,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
-        String[] tmpstr = plan.getBooleanExpression().
+        String[] tmpstr = plan.getBooleanExpression().getBoolExpression().
                 replace("(", " ( ").
                 replace(")"," ) ").
                 split(" ");

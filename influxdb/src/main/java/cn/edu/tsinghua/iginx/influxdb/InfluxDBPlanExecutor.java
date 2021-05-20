@@ -91,6 +91,10 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			logger.warn("unexpected database: " + storageEngineMeta.getDbType());
 			return;
 		}
+		if (!testConnection(storageEngineMeta)) {
+			logger.error("cannot connect to " + storageEngineMeta.toString());
+			return;
+		}
 		Map<String, String> extraParams = storageEngineMeta.getExtraParams();
 		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
 		InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
@@ -98,6 +102,15 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 	}
 
 	public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
+		Map<String, String> extraParams = storageEngineMeta.getExtraParams();
+		String url = extraParams.get("url");
+		try {
+			InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
+			client.close();
+		} catch (Exception e) {
+			logger.error("test connection error: {}", e.getMessage());
+			return false;
+		}
 		return true;
 	}
 
@@ -910,7 +923,13 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	@Override
 	public StorageEngineChangeHook getStorageEngineChangeHook() {
-		return null;
+		return (before, after) -> {
+			if (before == null && after != null) {
+				logger.info("a new influxdb engine added: " + after.getIp() + ":" + after.getPort());
+				createConnection(after);
+			}
+			// TODO: 考虑结点删除等情况
+		};
 	}
 
 	private DownsampleQueryPlanExecuteResult syncExecuteDownsampleQueryPlan(DownsampleQueryPlan plan) {
