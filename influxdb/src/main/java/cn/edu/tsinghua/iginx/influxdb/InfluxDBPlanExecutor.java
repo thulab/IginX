@@ -110,10 +110,10 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	private Map<Long, InfluxDBClient> storageEngineIdToClient;
 
-	private void createConnection(StorageEngineMeta storageEngineMeta) {
+	private boolean createConnection(StorageEngineMeta storageEngineMeta) {
 		if (storageEngineMeta.getDbType() != StorageEngine.InfluxDB) {
 			logger.warn("unexpected database: " + storageEngineMeta.getDbType());
-			return;
+			return false;
 		}
 		if (!testConnection(storageEngineMeta)) {
 			logger.error("cannot connect to " + storageEngineMeta.toString());
@@ -123,6 +123,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
 		InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
 		storageEngineIdToClient.put(storageEngineMeta.getId(), client);
+		return true;
 	}
 
 	public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
@@ -141,7 +142,9 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 	public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
 		storageEngineIdToClient = new ConcurrentHashMap<>();
 		for (StorageEngineMeta storageEngineMeta : storageEngineMetaList) {
-			createConnection(storageEngineMeta);
+			if (!createConnection(storageEngineMeta)) {
+				System.exit(1);
+			}
 		}
 	}
 

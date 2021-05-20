@@ -117,14 +117,14 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private final Map<Long, SessionPool> writeSessionPools;
 
-    private void createSessionPool(StorageEngineMeta storageEngineMeta) {
+    private boolean createSessionPool(StorageEngineMeta storageEngineMeta) {
         if (storageEngineMeta.getDbType() != StorageEngine.IoTDB) {
             logger.warn("unexpected database: " + storageEngineMeta.getDbType());
-            return;
+            return false;
         }
         if (!testConnection(storageEngineMeta)) {
             logger.error("cannot connect to " + storageEngineMeta.toString());
-            return;
+            return false;
         }
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String username = extraParams.getOrDefault("username", "root");
@@ -136,6 +136,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
         writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
         storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+        return true;
     }
 
     public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
@@ -160,7 +161,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         writeSessionPools = new ConcurrentHashMap<>();
         storageEngineMetas = new ConcurrentHashMap<>();
         for (StorageEngineMeta storageEngineMeta: storageEngineMetaList) {
-            createSessionPool(storageEngineMeta);
+            if (!createSessionPool(storageEngineMeta)) {
+                System.exit(1);
+            }
         }
     }
 
