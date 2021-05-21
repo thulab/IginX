@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.rest.RestServer;
 import cn.edu.tsinghua.iginx.thrift.IService;
@@ -35,8 +36,12 @@ public class Iginx {
 
     private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
 
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
     public static void main(String[] args) throws Exception {
-        new Thread(new RestServer()).start();
+        if (config.isEnableRestService())
+        {
+            new Thread(new RestServer()).start();
+        }
         Iginx iginx = new Iginx();
         iginx.startServer();
     }

@@ -69,6 +69,7 @@ public class ConfigDescriptor {
             config.setRestport(Integer.parseInt(properties.getProperty("restport", "6666")));
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
+            config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
