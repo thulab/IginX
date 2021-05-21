@@ -29,7 +29,7 @@ public class QueryParser
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during parsing query: {}", e.getMessage());
+            LOGGER.error("Error occurred during parsing query ", e);
             throw e;
         }
         return ret;

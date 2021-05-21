@@ -127,7 +127,8 @@ public class QueryResult
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during getting tags: {}", e.getMessage());
+            LOGGER.error("Error occurred during parsing tags ", e);
+
         }
         for (Map.Entry<String, List<String>> entry: tags.entrySet())
         {

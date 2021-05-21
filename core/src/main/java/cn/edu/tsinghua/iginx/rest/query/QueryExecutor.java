@@ -62,7 +62,7 @@ public class QueryExecutor
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during executeing: {}", e.getMessage());
+            LOGGER.error("Error occurred during executing", e);
             throw e;
         }
 

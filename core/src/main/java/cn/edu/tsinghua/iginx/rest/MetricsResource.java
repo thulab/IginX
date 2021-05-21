@@ -18,8 +18,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
@@ -60,10 +58,7 @@ public class MetricsResource {
     @Path("{string : .+}")
     public Response errorPath(@PathParam("string") String str)
     {
-        JsonResponseBuilder builder = new JsonResponseBuilder(Status.NOT_FOUND);
-        List<String> ret = new ArrayList<>();
-        ret.add("Wrong Path");
-        return builder.addErrors(ret).build();
+        return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
     }
 
     @POST
@@ -103,11 +98,8 @@ public class MetricsResource {
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during execution : {}", e.getMessage());
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            List<String> ret = new ArrayList<>();
-            ret.add(e.getMessage());
-            return builder.addErrors(ret).build();
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
@@ -124,16 +116,13 @@ public class MetricsResource {
             QueryExecutor executor = new QueryExecutor(query);
             QueryResult result = executor.execute(false);
             String entity = parser.parseResultToJson(result, false);
-            return setHeaders(Response.status(Status.OK).entity(entity)).build();
+            return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during execution : {}", e.getMessage());
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            List<String> ret = new ArrayList<>();
-            ret.add(e.getMessage());
-            return builder.addErrors(ret).build();
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
@@ -148,11 +137,8 @@ public class MetricsResource {
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during execution : {}", e.getMessage());
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            List<String> ret = new ArrayList<>();
-            ret.add(e.getMessage());
-            return builder.addErrors(ret).build();
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
@@ -169,15 +155,12 @@ public class MetricsResource {
             QueryExecutor executor = new QueryExecutor(query);
             QueryResult result = executor.execute(true);
             String entity = parser.parseResultToJson(result, true);
-            return setHeaders(Response.status(Status.OK).entity(entity)).build();
+            return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during execution : {}", e.getMessage());
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            List<String> ret = new ArrayList<>();
-            ret.add(e.getMessage());
-            return builder.addErrors(ret).build();
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
@@ -193,11 +176,8 @@ public class MetricsResource {
         }
         catch (Exception e)
         {
-            LOGGER.error("Error occurred during execution : {}", e.getMessage());
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            List<String> ret = new ArrayList<>();
-            ret.add(e.getMessage());
-            return builder.addErrors(ret).build();
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
