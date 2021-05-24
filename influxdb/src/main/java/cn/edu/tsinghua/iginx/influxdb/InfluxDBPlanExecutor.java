@@ -41,6 +41,10 @@ import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteRes
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.Element;
+import cn.edu.tsinghua.iginx.utils.OperatorType;
+import cn.edu.tsinghua.iginx.utils.TreeNode;
+import cn.edu.tsinghua.iginx.utils.Type;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.domain.Bucket;
@@ -60,6 +64,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -918,6 +923,104 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	@Override
 	public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan) {
+		InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+		Organization organization = client.getOrganizationsApi()
+				.findOrganizations().stream()
+				.filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+				.findFirst()
+				.orElseThrow(IllegalStateException::new);
+
+		String valueFilter = "";
+		int cnt = 0;
+		OperatorType prevOp = null;
+		for (Element element : plan.getBooleanExpression().getPostfixExpression()) {
+			if (element.getType() == Type.OPERATOR && (element.getOperator().getOperatorType() == OperatorType.AND || element.getOperator().getOperatorType() == OperatorType.OR)) {
+				if (prevOp != null && prevOp != element.getOperator().getOperatorType()) {
+					cnt++;
+				}
+				prevOp = element.getOperator().getOperatorType();
+			}
+		}
+		for (int i = 0; i < cnt; i++) {
+			valueFilter += "( ";
+		}
+		Stack<TreeNode> stack = new Stack<>();
+		TreeNode node = plan.getBooleanExpression().getRoot();
+
+		prevOp = null;
+		boolean needBracket = false;
+		while (node != null || !stack.isEmpty()) {
+			while (node != null) {
+				stack.push(node);
+				node = node.getLeft();
+			}
+			if (!stack.isEmpty()) {
+				node = stack.pop();
+				if (node.getData().getType() == Type.OPERATOR && (node.getData().getOperator().getOperatorType() == OperatorType.AND || node.getData().getOperator().getOperatorType() == OperatorType.OR)) {
+					if (prevOp == null) {
+						prevOp = node.getData().getOperator().getOperatorType();
+					} else {
+						if (node.getData().getOperator().getOperatorType() != prevOp) {
+							needBracket = true;
+							valueFilter += " ) ";
+						}
+						prevOp = node.getData().getOperator().getOperatorType();
+					}
+				}
+				if (node.getData().getType() == Type.OPERATOR) {
+					valueFilter += node.getData().getOperator().getOperatorType() + " ";
+				} else {
+					valueFilter += node.getData().getValue() + " ";
+				}
+				if (needBracket) {
+					valueFilter += " ( ";
+					needBracket = false;
+				}
+				node = node.getRight();
+			}
+		}
+		for (int i = 0; i < cnt; i++) {
+			valueFilter += " )";
+		}
+
+		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
+		for (String path : plan.getPaths()) {
+			String[] elements = path.split("\\.");
+			String bucketName = elements[0];
+			String measurement = elements[1];
+			String field = elements[elements.length - 1];
+			String value = null;
+			if (elements.length > 3) {
+				value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+			}
+
+			// TODO 处理时区
+			List<FluxTable> tables;
+			if (value != null) {
+				tables = client.getQueryApi().query(String.format(
+						QUERY_DATA_WITH_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field,
+						value
+				), organization.getId());
+			} else {
+				tables = client.getQueryApi().query(String.format(
+						QUERY_DATA_WITHOUT_TAG,
+						bucketName,
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
+						ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
+						measurement,
+						field
+				), organization.getId());
+			}
+
+			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+		}
+
+//		return new QueryDataPlanExecuteResult(SUCCESS, plan, dataSets);
 		return null;
 	}
 

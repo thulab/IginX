@@ -56,11 +56,13 @@ public class InfluxDBSessionExample {
 		// 行式插入数据
 		insertRowRecords();
 		// 查询数据
-		queryData();
+//		queryData();
 		// 聚合查询数据
-		aggregateQuery();
+//		aggregateQuery();
 		// 降采样聚合查询
-		downsampleQuery();
+//		downsampleQuery();
+		// 值过滤查询
+		valueFilterQuery();
 		// 删除数据
 		// TODO 不能做，InfluxDB 删除语句中不能指定 _field
 //		deleteDataInColumns();
@@ -260,5 +262,19 @@ public class InfluxDBSessionExample {
 		long endTime = ROW_START_TIMESTAMP + 50L;
 
 		session.deleteDataInColumns(paths, startTime, endTime);
+	}
+
+	private static void valueFilterQuery() throws SessionException {
+		List<String> paths = new ArrayList<>();
+		paths.add(S1);
+		paths.add(S2);
+		paths.add(S3);
+		paths.add(S4);
+
+		long startTime = COLUMN_END_TIMESTAMP - 100L;
+		long endTime = ROW_START_TIMESTAMP + 100L;
+		String booleanExpression =  "( ( ( " + S1 + " > 3 ) and ( " + S2 + " < 10 ) ) or ( ( " + S2 + " > 100 ) and ( " + S1 + " < 50 ) ) )";
+		SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
+		dataSet.print();
 	}
 }
