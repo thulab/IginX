@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 public class BooleanExpression
@@ -10,13 +11,161 @@ public class BooleanExpression
     private String boolExpression;
     private List<Element> postfixExpression;
     private TreeNode root;
+    private List<String> timeseries = new ArrayList<>();
 
     public BooleanExpression(String str)
     {
         boolExpression = str;
         postfixExpression = analysis(str);
         root = build(postfixExpression);
+        dfs(root);
     }
+
+    public boolean getBool(Map<String, Object> values)
+    {
+        return getAnswer(root, values);
+    }
+
+
+    private boolean getAnswer(TreeNode now, Map<String, Object> values)
+    {
+        if (now.getData().getType() == Type.OPERATOR && getOperatorPriority(now.getData().getOperator().getOperatorType()) == 0)
+        {
+            try
+            {
+                Object value = values.get(now.getLeft().getData().getTimeseries());
+                String compareValue = now.getRight().getData().getValue();
+                if (value instanceof Long)
+                {
+                    long longValue = Long.parseLong(compareValue);
+                    if (isBool((Long)value, longValue, now.getData().getOperator()))
+                        return true;
+                    return false;
+                }
+                else if (value instanceof Double)
+                {
+                    double doubleValue = Double.parseDouble(compareValue);
+                    if (isBool((Double)value, doubleValue,  now.getData().getOperator()))
+                        return true;
+                    return false;
+                }
+                else if (value instanceof String)
+                {
+                    if (isBool((String)value, compareValue,  now.getData().getOperator()))
+                        return true;
+                    return false;
+                }
+                else
+                    return false;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Boolean leftAns = getAnswer(now.getLeft(), values);
+            Boolean rightAns = getAnswer(now.getLeft(), values);
+            if (now.getData().getOperator().getOperatorType() == OperatorType.AND)
+                return leftAns && rightAns;
+            else
+                return leftAns || rightAns;
+        }
+    }
+
+    private Boolean isBool(long lef, long rig, Operator op)
+    {
+        switch (op.getOperatorType())
+        {
+            case GT:
+                return lef > rig;
+            case GTE:
+                return lef >= rig;
+            case EQ:
+                return lef == rig;
+            case NE:
+                return lef != rig;
+            case LTE:
+                return lef <= rig;
+            case LT:
+                return lef < rig;
+            default:
+                return false;
+        }
+    }
+
+
+    private Boolean isBool(double lef, double rig, Operator op)
+    {
+        switch (op.getOperatorType())
+        {
+            case GT:
+                return lef > rig;
+            case GTE:
+                return lef >= rig;
+            case EQ:
+                return lef == rig;
+            case NE:
+                return lef != rig;
+            case LTE:
+                return lef <= rig;
+            case LT:
+                return lef < rig;
+            default:
+                return false;
+        }
+    }
+
+
+
+    private Boolean isBool(String lef, String rig, Operator op)
+    {
+        switch (op.getOperatorType())
+        {
+            case GT:
+                return lef.compareTo(rig) > 0;
+            case GTE:
+                return lef.compareTo(rig) >= 0;
+            case EQ:
+                return lef.compareTo(rig) == 0;
+            case NE:
+                return lef.compareTo(rig) != 0;
+            case LTE:
+                return lef.compareTo(rig) <= 0;
+            case LT:
+                return lef.compareTo(rig) < 0;
+            default:
+                return false;
+        }
+    }
+
+    private void dfs(TreeNode now)
+    {
+        if (now.getData().getType() == Type.OPERATOR && now.getData().getOperator().reverse)
+        {
+            now.getData().getOperator().reverse = false;
+            if (now.getData().getOperator().operatorType == OperatorType.AND ||
+                    now.getData().getOperator().operatorType == OperatorType.OR)
+            {
+                now.getLeft().getData().getOperator().reverse();
+                now.getRight().getData().getOperator().reverse();
+                if (now.getData().getOperator().operatorType == OperatorType.AND)
+                    now.getData().setOperator(new Operator(OperatorType.OR));
+                else
+                    now.getData().setOperator(new Operator(OperatorType.AND));
+            }
+            else
+                now.getData().getOperator().reverse();
+        }
+        if (now.getData().getType() == Type.TIMESERIES)
+            timeseries.add(now.getData().getTimeseries());
+        if (now.getLeft() != null)
+            dfs(now.getLeft());
+        if (now.getRight() != null)
+            dfs(now.getRight());
+    }
+
 
     public int getOperatorPriority(OperatorType tp)
     {
@@ -284,6 +433,12 @@ public class BooleanExpression
                 }
                 ins.setRight(stack.pop());
                 ins.setLeft(stack.pop());
+                if (ins.getLeft().getData().getType() == Type.VALUE)
+                {
+                    ins.getLeft().getData().setType(Type.TIMESERIES);
+                    String tmp = ins.getLeft().getData().getValue();
+                    ins.getLeft().getData().setTimeseries(tmp);
+                }
                 stack.push(ins);
             }
             else
@@ -326,6 +481,16 @@ public class BooleanExpression
     public void setRoot(TreeNode root)
     {
         this.root = root;
+    }
+
+    public List<String> getTimeseries()
+    {
+        return timeseries;
+    }
+
+    public void setTimeseries(List<String> timeseries)
+    {
+        this.timeseries = timeseries;
     }
 }
 
@@ -370,6 +535,7 @@ class Element
 {
     Type type;
     Operator operator;
+    String timeseries;
     String value;
 
     public Type getType()
@@ -401,11 +567,22 @@ class Element
     {
         this.value = value;
     }
+
+    public String getTimeseries()
+    {
+        return timeseries;
+    }
+
+    public void setTimeseries(String timeseries)
+    {
+        this.timeseries = timeseries;
+    }
 }
 
 enum Type
 {
     OPERATOR,
+    TIMESERIES,
     VALUE;
 }
 

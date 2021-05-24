@@ -46,35 +46,35 @@ public class IoTDBSessionExample {
 	private static final int ROW_INTERVAL = 10;
 
 	public static void main(String[] args) throws SessionException, ExecutionException {
-		session = new Session("127.0.0.1", 6324, "root", "root");
+		session = new Session("127.0.0.1", 6888, "root", "root");
 		// 打开 Session
 		session.openSession();
 
 		// 创建数据库
-		session.createDatabase(DATABASE_NAME);
+	//	session.createDatabase(DATABASE_NAME);
 
 		// 添加列
 		addColumns();
 		// 列式插入数据
 		insertColumnRecords();
 		// 行式插入数据
-		insertRowRecords();
+//		insertRowRecords();
 		valueFilterQuery();
 		// 查询数据
-		queryData();
+//		queryData();
 		// 聚合查询数据
-		aggregateQuery();
+//		aggregateQuery();
 		// 降采样聚合查询
-		downsampleQuery();
+//		downsampleQuery();
 		// 删除数据
-		deleteDataInColumns();
+//		deleteDataInColumns();
 		// 再次查询数据
-		queryData();
+//		queryData();
 		// 删除列
-		deleteColumns();
+//		deleteColumns();
 
 		// 删除数据库
-		session.dropDatabase(DATABASE_NAME);
+//		session.dropDatabase(DATABASE_NAME);
 
 		// 关闭 Session
 		session.closeSession();
