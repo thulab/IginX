@@ -156,6 +156,10 @@ public class TDEngineExecutor implements IStorageEngine {
             for (int i = 0; i < plan.getPathsNum(); i++) {
                 String path = plan.getPath(i).replace('.', '_');
                 String table = path.substring(0, path.lastIndexOf('_'));
+                if (!tables.contains(table)) { // 数据表不存在，尝试建表
+                    stmt.executeUpdate(String.format(CREATE_TABLE, table));
+                    tables.add(table);
+                }
                 String value = valueBuilders.get(i).toString();
                 stmt.executeUpdate(String.format(INSERT_DATA, table, value));
             }
@@ -178,7 +182,10 @@ public class TDEngineExecutor implements IStorageEngine {
 
                 Statement stmt = conn.createStatement();
 
-                stmt.executeUpdate(String.format(CREATE_TABLE, table));
+                if (!tables.contains(table)) { // 如果表不存在，尝试创建表
+                    stmt.executeUpdate(String.format(CREATE_TABLE, table));
+                    tables.add(table);
+                }
 
                 ResultSet result = stmt.executeQuery(String.format(QUERY_DATA, table, plan.getStartTime(), plan.getEndTime()));
                 // 加载出来数据

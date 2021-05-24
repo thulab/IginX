@@ -70,12 +70,15 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
             }
             String className = kAndV[1];
             try {
+                logger.info("load class " + className);
                 Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
                         loadClass(className);
+                logger.info("load class " + className + " success.");
                 return ((Class<? extends IStorageEngine>) planExecutorClass)
                         .getConstructor(List.class).newInstance(storageEngineMetaList);
             } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
                 logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
+                logger.error("error: ", e);
             }
         }
         throw new RuntimeException("cannot find class for " + storageEngine.name() + ", please check config.properties ");
@@ -85,7 +88,7 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
         List<StorageEngineMeta> tdEngineMetaList = storageEngineMetaList.stream().filter(e -> e.getDbType() == StorageEngine.TDEngine)
                 .collect(Collectors.toList());
         if (tdEngineMetaList.size() != 0) {
-            tdStorageEngine = loadStorageEngine(StorageEngine.IoTDB, tdEngineMetaList);
+            tdStorageEngine = loadStorageEngine(StorageEngine.TDEngine, tdEngineMetaList);
             tdStorageEngines = Collections.synchronizedSet(tdEngineMetaList.stream().map(StorageEngineMeta::getId).collect(Collectors.toSet()));
         } else {
             tdStorageEngines = Collections.synchronizedSet(new HashSet<>());
