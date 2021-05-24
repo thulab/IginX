@@ -22,6 +22,7 @@
     <module>client</module>
     <module>example</module>
     <module>test</module>
+      <module>tdengine</module>
   </modules>
 
   <dependencies>

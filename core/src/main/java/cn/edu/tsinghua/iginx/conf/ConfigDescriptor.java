@@ -70,7 +70,7 @@ public class ConfigDescriptor {
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
-
+            config.setTdEngineDriver(properties.getProperty("tdEngineDriver", "com.taosdata.jdbc.rs.RestfulDriver"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

@@ -60,6 +60,8 @@ public class Config {
 
     private boolean enableRestService = true;
 
+    private String tdEngineDriver = "com.taosdata.jdbc.rs.RestfulDriver";
+
     public int getMaxTimeseriesLength()
     {
         return maxTimeseriesLength;
@@ -226,5 +228,13 @@ public class Config {
     public void setEnableRestService(boolean enableRestService)
     {
         this.enableRestService = enableRestService;
+    }
+
+    public String getTdEngineDriver() {
+        return tdEngineDriver;
+    }
+
+    public void setTdEngineDriver(String tdEngineDriver) {
+        this.tdEngineDriver = tdEngineDriver;
     }
 }

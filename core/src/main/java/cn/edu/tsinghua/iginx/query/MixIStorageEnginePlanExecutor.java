@@ -57,6 +57,10 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
 
     private StorageEngineChangeHook influxdbChangeHook;
 
+    private final Set<Long> tdStorageEngines;
+
+    private IStorageEngine tdStorageEngine;
+
     private IStorageEngine loadStorageEngine(StorageEngine storageEngine, List<StorageEngineMeta> storageEngineMetaList) {
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String part: parts) {
@@ -78,6 +82,14 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     public MixIStorageEnginePlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
+        List<StorageEngineMeta> tdEngineMetaList = storageEngineMetaList.stream().filter(e -> e.getDbType() == StorageEngine.TDEngine)
+                .collect(Collectors.toList());
+        if (tdEngineMetaList.size() != 0) {
+            tdStorageEngine = loadStorageEngine(StorageEngine.IoTDB, tdEngineMetaList);
+            tdStorageEngines = Collections.synchronizedSet(tdEngineMetaList.stream().map(StorageEngineMeta::getId).collect(Collectors.toSet()));
+        } else {
+            tdStorageEngines = Collections.synchronizedSet(new HashSet<>());
+        }
         List<StorageEngineMeta> iotdbStorageEngineMetaList = storageEngineMetaList.stream().filter(e -> e.getDbType() == StorageEngine.IoTDB)
                 .collect(Collectors.toList());
         if (iotdbStorageEngineMetaList.size() != 0) {
@@ -99,6 +111,9 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     private IStorageEngine findStorageEngine(long storageEngineId) {
+        if (tdStorageEngines.contains(storageEngineId)) {
+            return tdStorageEngine;
+        }
         if (iotdbStorageEngines.contains(storageEngineId))
             return iotdbStorageEngine;
         if (influxdbStorageEngines.contains(storageEngineId))

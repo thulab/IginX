@@ -27,7 +27,8 @@ import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.IOTDB;
 
 public enum StorageEngine {
     IoTDB,
-    InfluxDB;
+    InfluxDB,
+    TDEngine;
 
     public static StorageEngine fromString(String s) {
         switch (s.toLowerCase(Locale.ROOT)) {
@@ -35,6 +36,8 @@ public enum StorageEngine {
                 return IoTDB;
             case "influxdb":
                 return InfluxDB;
+            case "tdengine":
+                return TDEngine;
             default:
                 return null;
         }
