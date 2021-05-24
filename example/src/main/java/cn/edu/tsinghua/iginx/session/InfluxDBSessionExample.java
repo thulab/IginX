@@ -147,7 +147,7 @@ public class InfluxDBSessionExample {
 		session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
 	}
 
-	private static void queryData() throws SessionException {
+	private static void queryData() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
@@ -161,7 +161,7 @@ public class InfluxDBSessionExample {
 		dataSet.print();
 	}
 
-	private static void aggregateQuery() throws SessionException {
+	private static void aggregateQuery() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
@@ -200,7 +200,7 @@ public class InfluxDBSessionExample {
 		dataSet.print();
 	}
 
-	private static void downsampleQuery() throws SessionException {
+	private static void downsampleQuery() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S2);
@@ -244,7 +244,7 @@ public class InfluxDBSessionExample {
 		System.out.println("Downsample Query Finished.");
 	}
 
-	private static void deleteDataInColumns() throws SessionException {
+	private static void deleteDataInColumns() throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(S1);
 		paths.add(S3);

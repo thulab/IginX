@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.rest.insert;
 
-import cn.edu.tsinghua.iginx.rest.JsonResponseBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,6 +14,7 @@ import java.util.zip.GZIPInputStream;
 
 public class InsertWorker extends Thread
 {
+    private static final String NO_CACHE = "no-cache";
     private static final Logger LOGGER = LoggerFactory.getLogger(InsertWorker.class);
     private HttpHeaders httpheaders;
     private InputStream stream;
@@ -49,9 +49,17 @@ public class InsertWorker extends Thread
         }
         catch (Exception e)
         {
-            JsonResponseBuilder builder = new JsonResponseBuilder(Response.Status.BAD_REQUEST);
-            response = builder.addError(e.getMessage()).build();
+            response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
         asyncResponse.resume(response);
+    }
+
+    static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder)
+    {
+        responseBuilder.header("Access-Control-Allow-Origin", "*");
+        responseBuilder.header("Pragma", NO_CACHE);
+        responseBuilder.header("Cache-Control", NO_CACHE);
+        responseBuilder.header("Expires", 0);
+        return (responseBuilder);
     }
 }

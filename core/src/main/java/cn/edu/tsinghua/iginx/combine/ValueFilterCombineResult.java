@@ -28,6 +28,7 @@ public class ValueFilterCombineResult extends DataCombineResult {
 	public ValueFilterCombineResult(Status status, ValueFilterQueryResp resp) {
 		super(status);
 		this.resp = resp;
+		this.resp.setStatus(status);
 	}
 
 	public ValueFilterQueryResp getResp() {

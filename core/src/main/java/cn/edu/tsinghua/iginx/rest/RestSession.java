@@ -477,7 +477,7 @@ public class RestSession
                 }
             } while (checkRedirect(resp.status));
         }
-        catch (TException e)
+        catch (Exception e)
         {
             throw new SessionException(e);
         }

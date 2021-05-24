@@ -28,6 +28,7 @@ public class QueryDataCombineResult extends DataCombineResult {
     public QueryDataCombineResult(Status status, QueryDataResp resp) {
         super(status);
         this.resp = resp;
+        this.resp.setStatus(status);
     }
 
     public QueryDataResp getResp() {

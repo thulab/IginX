@@ -187,7 +187,7 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) throws TException {
+	public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) {
 		ValueFilterQueryContext context = new ValueFilterQueryContext(req);
 		core.processRequest(context);
 		return ((ValueFilterCombineResult) context.getCombineResult()).getResp();

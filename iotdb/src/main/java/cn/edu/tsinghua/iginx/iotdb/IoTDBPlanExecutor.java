@@ -117,14 +117,14 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private final Map<Long, SessionPool> writeSessionPools;
 
-    private void createSessionPool(StorageEngineMeta storageEngineMeta) {
+    private boolean createSessionPool(StorageEngineMeta storageEngineMeta) {
         if (storageEngineMeta.getDbType() != StorageEngine.IoTDB) {
             logger.warn("unexpected database: " + storageEngineMeta.getDbType());
-            return;
+            return false;
         }
         if (!testConnection(storageEngineMeta)) {
             logger.error("cannot connect to " + storageEngineMeta.toString());
-            return;
+            return false;
         }
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String username = extraParams.getOrDefault("username", "root");
@@ -136,6 +136,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
         writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
         storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+        return true;
     }
 
     public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
@@ -160,7 +161,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         writeSessionPools = new ConcurrentHashMap<>();
         storageEngineMetas = new ConcurrentHashMap<>();
         for (StorageEngineMeta storageEngineMeta: storageEngineMetaList) {
-            createSessionPool(storageEngineMeta);
+            if (!createSessionPool(storageEngineMeta)) {
+                System.exit(1);
+            }
         }
     }
 
@@ -213,6 +216,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 sessionPool.insertTablets(tablets);
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
             }
 
             for (Tablet tablet : tablets.values()) {
@@ -272,6 +276,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 sessionPool.insertTablets(tablets);
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
             }
 
             for (Tablet tablet : tablets.values()) {
@@ -295,6 +300,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new QueryDataPlanExecuteResult(FAILURE, plan, null);
         }
         return new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -319,6 +325,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 }
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
             }
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
@@ -331,6 +338,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new NonDataPlanExecuteResult(FAILURE, plan);
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -342,6 +350,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             sessionPool.deleteData(plan.getPaths().stream().map(x -> PREFIX + plan.getStorageUnit().getId() + "." + x).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new NonDataPlanExecuteResult(FAILURE, plan);
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -353,6 +362,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             sessionPool.setStorageGroup(PREFIX + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new NonDataPlanExecuteResult(FAILURE, plan);
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -364,6 +374,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             sessionPool.deleteStorageGroup(PREFIX + plan.getStorageUnit().getId() + "." + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new NonDataPlanExecuteResult(FAILURE, plan);
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -399,7 +410,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     continue;
                 } else {
                     logger.error(e.getMessage());
-                    return new AvgAggregateQueryPlanExecuteResult(FAILURE, null);
+                    return new AvgAggregateQueryPlanExecuteResult(FAILURE, plan);
                 }
             }
             if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
@@ -451,7 +462,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, null);
+        return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, plan);
     }
 
     @Override
@@ -535,7 +546,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, null);
+        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, plan);
     }
 
     @Override
@@ -578,7 +589,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, null);
+        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, plan);
     }
 
     @Override
@@ -621,7 +632,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, null);
+        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, plan);
     }
 
     @Override
@@ -664,7 +675,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
         }
-        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, null);
+        return new SingleValueAggregateQueryPlanExecuteResult(FAILURE, plan);
     }
 
     @Override
@@ -678,6 +689,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -693,6 +705,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -708,6 +721,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -723,6 +737,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -738,6 +753,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -753,6 +769,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -768,6 +785,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
@@ -778,7 +796,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
-        String[] tmpstr = plan.getBooleanExpression().
+        String[] tmpstr = plan.getBooleanExpression().getBoolExpression().
                 replace("(", " ( ").
                 replace(")"," ) ").
                 split(" ");
@@ -807,6 +825,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
+            return new ValueFilterQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }

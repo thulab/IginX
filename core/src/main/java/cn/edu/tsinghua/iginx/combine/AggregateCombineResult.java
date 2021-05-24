@@ -10,6 +10,7 @@ public class AggregateCombineResult extends DataCombineResult {
     public AggregateCombineResult(Status status, AggregateQueryResp resp) {
         super(status);
         this.resp = resp;
+        this.resp.setStatus(status);
     }
 
     public AggregateQueryResp getResp() {

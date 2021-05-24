@@ -291,7 +291,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         valueFilterQueryReq.getPaths(),
                         valueFilterQueryReq.getStartTime(),
                         valueFilterQueryReq.getEndTime(),
-                        valueFilterQueryReq.getBooleanExpression()
+                        ((ValueFilterQueryContext)requestContext).getBooleanExpression()
                 );
                 splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
                 return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);

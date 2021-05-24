@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.plan;
 //todo
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.BooleanExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +32,8 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.VALUEFILTER_QUE
 public class ValueFilterQueryPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(ValueFilterQueryPlan.class);
-	String booleanExpression;
-	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, String booleanExpression, StorageUnitMeta storageUnit) {
+	BooleanExpression booleanExpression;
+	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, StorageUnitMeta storageUnit) {
 		super(true, paths, startTime, endTime, storageUnit);
 		this.booleanExpression = booleanExpression;
 		this.setIginxPlanType(VALUEFILTER_QUERY);
@@ -64,7 +65,7 @@ public class ValueFilterQueryPlan extends DataPlan {
 		this.setSync(true);
 	}
 
-	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, String booleanExpression) {
+	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression) {
 		this(paths, startTime, endTime, booleanExpression, null);
 	}
 
@@ -90,7 +91,7 @@ public class ValueFilterQueryPlan extends DataPlan {
 		return tempPaths;
 	}
 
-	public String getBooleanExpression()
+	public BooleanExpression getBooleanExpression()
 	{
 		return booleanExpression;
 	}

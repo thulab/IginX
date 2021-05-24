@@ -479,13 +479,13 @@ public class Session {
 		}
 	}
 
-	public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException {
+	public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
 		deleteDataInColumns(paths, startTime, endTime);
 	}
 
-	public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException {
+	public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException, ExecutionException {
 		DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
 
 		try {
@@ -498,13 +498,14 @@ public class Session {
 					lock.readLock().unlock();
 				}
 			} while(checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
 	}
 
 	public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
-			throws SessionException {
+			throws SessionException, ExecutionException {
 		if (paths.isEmpty() || startTime > endTime) {
 			logger.error("Invalid query request!");
 			return null;
@@ -522,6 +523,7 @@ public class Session {
 					lock.readLock().unlock();
 				}
 			} while(checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -530,7 +532,7 @@ public class Session {
 	}
 
 	public SessionQueryDataSet valueFilterQuery(List<String> paths, long startTime, long endTime, String booleanExpression)
-			throws SessionException {
+			throws SessionException, ExecutionException {
 		if (paths.isEmpty() || startTime > endTime) {
 			logger.error("Invalid query request!");
 			return null;
@@ -548,6 +550,7 @@ public class Session {
 					lock.readLock().unlock();
 				}
 			} while(checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -556,7 +559,7 @@ public class Session {
 	}
 
 	public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
-			throws SessionException {
+			throws SessionException, ExecutionException {
 		AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
 
 		AggregateQueryResp resp;
@@ -569,6 +572,7 @@ public class Session {
 					lock.readLock().unlock();
 				}
 			} while(checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -576,7 +580,7 @@ public class Session {
 		return new SessionAggregateQueryDataSet(resp, aggregateType);
 	}
 
-	public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException {
+	public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
 		DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
 				aggregateType, precision);
 
@@ -591,6 +595,7 @@ public class Session {
 					lock.readLock().unlock();
 				}
 			} while(checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}

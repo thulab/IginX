@@ -58,6 +58,8 @@ public class Config {
 
     private int maxTimeseriesLength = 10;
 
+    private boolean enableRestService = true;
+
     public int getMaxTimeseriesLength()
     {
         return maxTimeseriesLength;
@@ -216,4 +218,13 @@ public class Config {
         this.restport = restport;
     }
 
+    public boolean isEnableRestService()
+    {
+        return enableRestService;
+    }
+
+    public void setEnableRestService(boolean enableRestService)
+    {
+        this.enableRestService = enableRestService;
+    }
 }

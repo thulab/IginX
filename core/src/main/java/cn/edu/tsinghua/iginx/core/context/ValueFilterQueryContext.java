@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.core.context;
 
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.utils.BooleanExpression;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -27,9 +28,11 @@ import lombok.EqualsAndHashCode;
 public class ValueFilterQueryContext extends RequestContext {
 
 	private ValueFilterQueryReq req;
+	private BooleanExpression booleanExpression;
 
 	public ValueFilterQueryContext(ValueFilterQueryReq req) {
 		super(req.sessionId, ContextType.ValueFilterQuery);
+		this.booleanExpression = new BooleanExpression(req.booleanExpression);
 		this.req = req;
 	}
 

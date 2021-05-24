@@ -76,7 +76,7 @@ public class IoTDBSessionDataTypeTest {
     }
 
     @Test
-    public void queryDataTest() throws SessionException {
+    public void queryDataTest() throws SessionException, ExecutionException {
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
@@ -116,7 +116,7 @@ public class IoTDBSessionDataTypeTest {
     }
 
     @Test
-    public void aggregateTest() throws SessionException {
+    public void aggregateTest() throws SessionException, ExecutionException {
         //Test aggrgate functions:  max avg
         List<String> aggrPaths = new ArrayList<>();
         aggrPaths.add(COLUMN_D1_S1);
@@ -178,7 +178,7 @@ public class IoTDBSessionDataTypeTest {
     }
 
     @Test
-    public void deletePartDataTest() throws SessionException, InterruptedException {
+    public void deletePartDataTest() throws SessionException, ExecutionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
@@ -280,7 +280,7 @@ public class IoTDBSessionDataTypeTest {
 
 
     @Test
-    public void deleteAllDataInColumnTest() throws SessionException, InterruptedException {
+    public void deleteAllDataInColumnTest() throws SessionException, ExecutionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
