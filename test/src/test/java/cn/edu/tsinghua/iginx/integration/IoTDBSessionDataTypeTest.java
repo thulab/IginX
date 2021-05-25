@@ -57,7 +57,7 @@ public class IoTDBSessionDataTypeTest {
             paths.add(COLUMN_D3_S3);
             paths.add(COLUMN_D4_S4);
             paths.add(COLUMN_D5_S5);
-            session = new Session("127.0.0.1", 6324, "root", "root");
+            session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
             session.createDatabase(DATABASE_NAME);
             addColumns();

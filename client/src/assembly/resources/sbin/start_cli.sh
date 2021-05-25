@@ -66,7 +66,7 @@ case "$PARAMETERS" in
 esac
 case "$PARAMETERS" in
 *"-p "*) PARAMETERS=$PARAMETERS ;;
-*            ) PARAMETERS="-p 6324 $PARAMETERS" ;;
+*            ) PARAMETERS="-p 6888 $PARAMETERS" ;;
 esac
 case "$PARAMETERS" in
 *"-h "*) PARAMETERS=$PARAMETERS ;;
