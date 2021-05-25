@@ -54,9 +54,32 @@ public class MetricsResource {
         return (responseBuilder);
     }
 
+    @GET
+    @Path("")
+    public Response OK()
+    {
+        return setHeaders(Response.status(Status.OK)).build();
+    }
+
+    @POST
+    @Path("query")
+    public Response Grafana_query(final InputStream stream)
+    {
+
+        return setHeaders(Response.status(Status.OK)).build();
+    }
+
     @POST
     @Path("{string : .+}")
     public Response errorPath(@PathParam("string") String str)
+    {
+        return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
+    }
+
+
+    @GET
+    @Path("{string : .+}")
+    public Response geterrorPath(@PathParam("string") String str)
     {
         return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
     }

@@ -34,6 +34,8 @@ public class BooleanExpression
             try
             {
                 Object value = values.get(now.getLeft().getData().getTimeseries());
+                if (value == null)
+                    return false;
                 String compareValue = now.getRight().getData().getValue();
                 if (value instanceof Long)
                 {
