@@ -44,7 +44,7 @@ public class InfluxDBSessionExample {
 	private static final int ROW_INTERVAL = 10;
 
 	public static void main(String[] args) throws SessionException, ExecutionException {
-		session = new Session("127.0.0.1", 6324, "root", "root");
+		session = new Session("127.0.0.1", 6888, "root", "root");
 		// 打开 Session
 		session.openSession();
 

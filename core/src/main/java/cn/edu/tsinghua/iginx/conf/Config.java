@@ -22,7 +22,7 @@ public class Config {
 
     private String ip = "0.0.0.0";
 
-    private int port = 6324;
+    private int port = 6888;
 
     private String username = "root";
 

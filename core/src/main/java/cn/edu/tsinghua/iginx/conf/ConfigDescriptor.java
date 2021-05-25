@@ -46,7 +46,7 @@ public class ConfigDescriptor {
             properties.load(in);
 
             config.setIp(properties.getProperty("ip", "0.0.0.0"));
-            config.setPort(Integer.parseInt(properties.getProperty("port", "6324")));
+            config.setPort(Integer.parseInt(properties.getProperty("port", "6888")));
             config.setUsername(properties.getProperty("username", "root"));
             config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",

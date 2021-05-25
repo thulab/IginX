@@ -139,7 +139,7 @@ public class IginxClient {
     private static void serve() {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             host = parseArg(HOST_ARGS, HOST_NAME, false, "127.0.0.1");
-            port = parseArg(PORT_ARGS, PORT_NAME, false, "6324");
+            port = parseArg(PORT_ARGS, PORT_NAME, false, "6888");
             username = parseArg(USERNAME_ARGS, USERNAME_NAME, false, "root");
             password = parseArg(PASSWORD_ARGS, PASSWORD_NAME, false, "root");
 

@@ -58,7 +58,7 @@ public class IoTDBBeforeDilatationExample {
     }
 
     public static void main(String[] args) throws Exception {
-        session = new Session("127.0.0.1", 6324, "root", "root");
+        session = new Session("127.0.0.1", 6888, "root", "root");
         session.openSession();
         // 创建数据库
         session.createDatabase(DATABASE_NAME);
