@@ -15,13 +15,12 @@ public class BooleanExpressionTest extends TestCase {
 
     public void testGetRoot() {
         TreeNode root = booleanExpression.getRoot();
-        assertEquals(root.getData().getOperator().isReversed(), true);
+        assertEquals(root.getData().getOperator().isReversed(), false);
     }
 
     public void testSetPostfixExpression() {
-        //     BooleanExpression booleanExpression1 = new BooleanExpression("sg1.d2.s2 > 3 and sg1.d3.s3 < 10");
         String postfixExpression = booleanExpression.asString(booleanExpression.getPostfixExpression());
-        assertEquals(" a.b.a  3  <=  a.b.b  3  ==  a.b.c  \"123\"  ==  a.b.d  0.7  >  &&  ||  a.b.e  1.15  ==  ||  && "
+        assertEquals(" a.b.a  3  >  a.b.b  3  !=  a.b.c  \"123\"  !=  a.b.d  0.7  <=  ||  &&  a.b.e  1.15  !=  &&  || "
                 , postfixExpression);
     }
 }

@@ -260,7 +260,7 @@ public class BooleanExpression {
     public String asString(List<Element> elements) {
         StringBuilder stringBuilder = new StringBuilder("");
         for (Element element : elements) {
-            if (element.getType() == Type.VALUE)
+            if (element.getType() == Type.VALUE || element.getType() == Type.TIMESERIES)
                 stringBuilder.append(" " + element.getValue() + " ");
             else switch (element.getOperator().getOperatorType()) {
                 case NOT:
