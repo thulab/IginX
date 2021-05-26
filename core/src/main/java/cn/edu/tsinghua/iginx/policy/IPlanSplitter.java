@@ -175,8 +175,8 @@ public interface IPlanSplitter {
 	List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan);
 
 	/**
-	 * 拆分 DownsampleFirstQueryPlan
-	 * @param plan 待拆分的 DownsampleFirstQueryPlan
+	 * 拆分 ValueFilterQueryPlan
+	 * @param plan 待拆分的 ValueFilterQueryPlan
 	 * @return 拆分方式
 	 */
 	List<SplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan);

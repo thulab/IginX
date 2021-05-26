@@ -42,7 +42,7 @@ public class IoTDBSessionIT {
             paths.add(COLUMN_D4_S4);
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
-            session.createDatabase(DATABASE_NAME);
+      //      session.createDatabase(DATABASE_NAME);
             addColumns();
             insertRecords();
             //TODO remove this line when the new iotdb release version fix this bug

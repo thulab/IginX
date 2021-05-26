@@ -775,31 +775,12 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
-        String[] tmpstr = plan.getBooleanExpression().getBoolExpression().
-                replace("(", " ( ").
-                replace(")"," ) ").
-                split(" ");
-        StringBuilder finalstr = new StringBuilder("");
-        for (int i=0; i<tmpstr.length; i++)
-        {
-            boolean isPath = false;
-            String s = tmpstr[i];
-            try
-            {
-                Double.parseDouble(s);
-            }
-            catch (NumberFormatException e)
-            {
-                if (s.contains("."))
-                    isPath = true;
-            }
-            if (isPath)
-                finalstr.append("root.");
-            finalstr.append(s + " ");
-        }
+
+
         try {
-            for (String path : plan.getPaths()) {
-                String statement = String.format(VALUE_FILTER_QUERY, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), finalstr);
+            for (String path : plan.getPaths())
+            {
+                String statement = String.format(QUERY_DATA, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {

@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.combine.valuefilter.ValueFilterCombiner;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.query.result.*;
@@ -129,7 +130,8 @@ public class CombineExecutor implements ICombineExecutor {
                 ValueFilterQueryResp valueFilterQueryResp = new ValueFilterQueryResp();
                 valueFilterQueryResp.setStatus(RpcUtils.SUCCESS);
                 try {
-                    valueFilterCombiner.combineResult(valueFilterQueryResp, planExecuteResults.stream().map(ValueFilterQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                    valueFilterCombiner.combineResult(valueFilterQueryResp, planExecuteResults.stream().map(ValueFilterQueryPlanExecuteResult.class::cast).collect(Collectors.toList()),
+                            ((ValueFilterQueryContext)requestContext).getReq().getPaths(), ((ValueFilterQueryContext)requestContext).getBooleanExpression());
                 } catch (ExecutionException e) {
                     logger.error("encounter error when combine query data results: ", e);
                     statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;

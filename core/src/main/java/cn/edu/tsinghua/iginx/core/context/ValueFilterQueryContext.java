@@ -39,4 +39,19 @@ public class ValueFilterQueryContext extends RequestContext {
 	public ValueFilterQueryReq getReq() {
 		return req;
 	}
+
+    public BooleanExpression getBooleanExpression()
+    {
+        return booleanExpression;
+    }
+
+    public void setBooleanExpression(BooleanExpression booleanExpression)
+    {
+        this.booleanExpression = booleanExpression;
+    }
+
+    public void setReq(ValueFilterQueryReq req)
+    {
+        this.req = req;
+    }
 }
