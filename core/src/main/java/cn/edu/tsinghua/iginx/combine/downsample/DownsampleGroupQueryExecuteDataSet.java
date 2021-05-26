@@ -32,82 +32,82 @@ import java.util.List;
 
 public class DownsampleGroupQueryExecuteDataSet implements QueryExecuteDataSet {
 
-	private final List<String> columnNames;
+    private final List<String> columnNames;
 
-	private final List<DataType> columnTypes;
+    private final List<DataType> columnTypes;
 
-	private final long[] timestamps;
+    private final long[] timestamps;
 
-	private final List<Object> values;
+    private final List<Object> values;
 
-	private long currentTimestamp;
+    private long currentTimestamp;
 
-	public DownsampleGroupQueryExecuteDataSet(long timestamp, AggregateQueryResp resp) {
-		this.columnNames = resp.getPaths();
-		this.columnTypes = resp.dataTypeList;
-		if (resp.getTimestamps() == null) {
-			this.timestamps = new long[this.columnNames.size()];
-			Arrays.fill(this.timestamps, timestamp);
-		} else {
-			this.timestamps = ByteUtils.getLongArrayFromByteArray(resp.getTimestamps());
-			for (int i = 0; i < timestamps.length; i++) {
-				if (timestamps[i] == -1) {
-					timestamps[i] = timestamp;
-				}
-			}
-		}
-		this.values = Arrays.asList(ByteUtils.getValuesByDataType(resp.valuesList, this.columnTypes));
-		this.currentTimestamp = -1;
-	}
+    public DownsampleGroupQueryExecuteDataSet(long timestamp, AggregateQueryResp resp) {
+        this.columnNames = resp.getPaths();
+        this.columnTypes = resp.dataTypeList;
+        if (resp.getTimestamps() == null) {
+            this.timestamps = new long[this.columnNames.size()];
+            Arrays.fill(this.timestamps, timestamp);
+        } else {
+            this.timestamps = ByteUtils.getLongArrayFromByteArray(resp.getTimestamps());
+            for (int i = 0; i < timestamps.length; i++) {
+                if (timestamps[i] == -1) {
+                    timestamps[i] = timestamp;
+                }
+            }
+        }
+        this.values = Arrays.asList(ByteUtils.getValuesByDataType(resp.valuesList, this.columnTypes));
+        this.currentTimestamp = -1;
+    }
 
-	@Override
-	public List<String> getColumnNames() throws ExecutionException {
-		List<String> columnNames = new ArrayList<>(Collections.singletonList("Time"));
-		columnNames.addAll(this.columnNames);
-		return columnNames;
-	}
+    @Override
+    public List<String> getColumnNames() throws ExecutionException {
+        List<String> columnNames = new ArrayList<>(Collections.singletonList("Time"));
+        columnNames.addAll(this.columnNames);
+        return columnNames;
+    }
 
-	@Override
-	public List<DataType> getColumnTypes() throws ExecutionException {
-		List<DataType> columnTypes = new ArrayList<>(Collections.singletonList(DataType.LONG));
-		columnTypes.addAll(this.columnTypes);
-		return columnTypes;
-	}
+    @Override
+    public List<DataType> getColumnTypes() throws ExecutionException {
+        List<DataType> columnTypes = new ArrayList<>(Collections.singletonList(DataType.LONG));
+        columnTypes.addAll(this.columnTypes);
+        return columnTypes;
+    }
 
-	@Override
-	public boolean hasNext() throws ExecutionException {
-		long timestamp = currentTimestamp;
-		for (long l : timestamps) {
-			if (l > currentTimestamp) {
-				if (timestamp != currentTimestamp) {
-					timestamp = Math.min(timestamp, l);
-				} else {
-					timestamp = l;
-				}
-			}
-		}
-		if (timestamp == currentTimestamp) {
-			return false;
-		}
-		currentTimestamp = timestamp;
-		return true;
-	}
+    @Override
+    public boolean hasNext() throws ExecutionException {
+        long timestamp = currentTimestamp;
+        for (long l : timestamps) {
+            if (l > currentTimestamp) {
+                if (timestamp != currentTimestamp) {
+                    timestamp = Math.min(timestamp, l);
+                } else {
+                    timestamp = l;
+                }
+            }
+        }
+        if (timestamp == currentTimestamp) {
+            return false;
+        }
+        currentTimestamp = timestamp;
+        return true;
+    }
 
-	@Override
-	public RowRecord next() throws ExecutionException {
-		List<Object> values = new ArrayList<>();
-		for (int i = 0; i < timestamps.length; i++) {
-			if (currentTimestamp == timestamps[i]) {
-				values.add(this.values.get(i));
-			} else {
-				values.add(null);
-			}
-		}
-		return new RowRecord(currentTimestamp, values);
-	}
+    @Override
+    public RowRecord next() throws ExecutionException {
+        List<Object> values = new ArrayList<>();
+        for (int i = 0; i < timestamps.length; i++) {
+            if (currentTimestamp == timestamps[i]) {
+                values.add(this.values.get(i));
+            } else {
+                values.add(null);
+            }
+        }
+        return new RowRecord(currentTimestamp, values);
+    }
 
-	@Override
-	public void close() throws ExecutionException {
-		// DO NOTHING
-	}
+    @Override
+    public void close() throws ExecutionException {
+        // DO NOTHING
+    }
 }

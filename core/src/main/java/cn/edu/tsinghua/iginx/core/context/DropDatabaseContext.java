@@ -26,10 +26,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class DropDatabaseContext extends RequestContext {
 
-	private DropDatabaseReq req;
+    private DropDatabaseReq req;
 
-	public DropDatabaseContext(DropDatabaseReq req) {
-		super(req.sessionId, ContextType.DropDatabase);
-		this.req = req;
-	}
+    public DropDatabaseContext(DropDatabaseReq req) {
+        super(req.sessionId, ContextType.DropDatabase);
+        this.req = req;
+    }
 }

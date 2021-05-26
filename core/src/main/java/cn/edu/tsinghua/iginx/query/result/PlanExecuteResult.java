@@ -26,12 +26,12 @@ import lombok.Data;
 @AllArgsConstructor
 public abstract class PlanExecuteResult {
 
-	public static final int SUCCESS = 200;
+    public static final int SUCCESS = 200;
 
-	public static final int FAILURE = 400;
+    public static final int FAILURE = 400;
 
-	private int statusCode;
+    private int statusCode;
 
-	private IginxPlan plan;
+    private IginxPlan plan;
 
 }

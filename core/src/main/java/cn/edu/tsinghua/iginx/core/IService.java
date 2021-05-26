@@ -20,6 +20,6 @@ package cn.edu.tsinghua.iginx.core;
 
 public interface IService {
 
-	void shutdown() throws Exception;
+    void shutdown() throws Exception;
 
 }

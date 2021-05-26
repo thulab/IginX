@@ -23,15 +23,15 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public class DownsampleQueryCombineResult extends DataCombineResult {
 
-	private final DownsampleQueryResp resp;
+    private final DownsampleQueryResp resp;
 
-	public DownsampleQueryCombineResult(Status status, DownsampleQueryResp resp) {
-		super(status);
-		this.resp = resp;
-		this.resp.setStatus(status);
-	}
+    public DownsampleQueryCombineResult(Status status, DownsampleQueryResp resp) {
+        super(status);
+        this.resp = resp;
+        this.resp.setStatus(status);
+    }
 
-	public DownsampleQueryResp getResp() {
-		return resp;
-	}
+    public DownsampleQueryResp getResp() {
+        return resp;
+    }
 }

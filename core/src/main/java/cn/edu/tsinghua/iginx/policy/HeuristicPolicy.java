@@ -30,72 +30,72 @@ import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 
 public class HeuristicPolicy implements IPolicy {
 
-	protected boolean needReAllocate = false;
-	private IPlanSplitter iPlanSplitter;
+    protected boolean needReAllocate = false;
+    private IPlanSplitter iPlanSplitter;
 
-	@Override
-	public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
-		return null;
-	}
+    @Override
+    public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
+        return null;
+    }
 
-	@Override
-	public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-		return null;
-	}
+    @Override
+    public PostQueryPlanProcessor getPostQueryPlanProcessor() {
+        return null;
+    }
 
-	@Override
-	public PostQueryProcessor getPostQueryProcessor() {
-		return null;
-	}
+    @Override
+    public PostQueryProcessor getPostQueryProcessor() {
+        return null;
+    }
 
-	@Override
-	public PostQueryResultCombineProcessor getPostQueryResultCombineProcessor() {
-		return null;
-	}
+    @Override
+    public PostQueryResultCombineProcessor getPostQueryResultCombineProcessor() {
+        return null;
+    }
 
-	@Override
-	public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
-		return null;
-	}
+    @Override
+    public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
+        return null;
+    }
 
-	@Override
-	public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-		return null;
-	}
+    @Override
+    public PreQueryPlanProcessor getPreQueryPlanProcessor() {
+        return null;
+    }
 
-	@Override
-	public PreQueryResultCombineProcessor getPreQueryResultCombineProcessor() {
-		return null;
-	}
+    @Override
+    public PreQueryResultCombineProcessor getPreQueryResultCombineProcessor() {
+        return null;
+    }
 
-	@Override
-	public IPlanSplitter getIPlanSplitter() {
-		return this.iPlanSplitter;
-	}
+    @Override
+    public IPlanSplitter getIPlanSplitter() {
+        return this.iPlanSplitter;
+    }
 
-	@Override
-	public void init(IMetaManager iMetaManager) {
-		this.iPlanSplitter = new HeuristicPlanSplitter(this, iMetaManager);
-		StorageEngineChangeHook hook = getStorageEngineChangeHook();
-		if (hook != null) {
-			iMetaManager.registerStorageEngineChangeHook(hook);
-		}
-	}
+    @Override
+    public void init(IMetaManager iMetaManager) {
+        this.iPlanSplitter = new HeuristicPlanSplitter(this, iMetaManager);
+        StorageEngineChangeHook hook = getStorageEngineChangeHook();
+        if (hook != null) {
+            iMetaManager.registerStorageEngineChangeHook(hook);
+        }
+    }
 
-	@Override
-	public StorageEngineChangeHook getStorageEngineChangeHook() {
-		return (before, after) ->
-		{
+    @Override
+    public StorageEngineChangeHook getStorageEngineChangeHook() {
+        return (before, after) ->
+        {
 
-		};
-	}
+        };
+    }
 
-	public boolean isNeedReAllocate() {
-		return needReAllocate;
-	}
+    public boolean isNeedReAllocate() {
+        return needReAllocate;
+    }
 
 
-	public void setNeedReAllocate(boolean needReAllocate) {
-		this.needReAllocate = needReAllocate;
-	}
+    public void setNeedReAllocate(boolean needReAllocate) {
+        this.needReAllocate = needReAllocate;
+    }
 }

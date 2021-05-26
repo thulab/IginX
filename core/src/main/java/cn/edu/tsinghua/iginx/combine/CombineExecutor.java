@@ -49,109 +49,109 @@ import java.util.stream.Collectors;
 
 public class CombineExecutor implements ICombineExecutor {
 
-	private static final Logger logger = LoggerFactory.getLogger(CombineExecutor.class);
+    private static final Logger logger = LoggerFactory.getLogger(CombineExecutor.class);
 
-	private final AggregateCombiner aggregateCombiner = AggregateCombiner.getInstance();
+    private final AggregateCombiner aggregateCombiner = AggregateCombiner.getInstance();
 
-	private final QueryDataSetCombiner queryDataSetCombiner = QueryDataSetCombiner.getInstance();
+    private final QueryDataSetCombiner queryDataSetCombiner = QueryDataSetCombiner.getInstance();
 
-	private final ValueFilterCombiner valueFilterCombiner = ValueFilterCombiner.getInstance();
+    private final ValueFilterCombiner valueFilterCombiner = ValueFilterCombiner.getInstance();
 
-	@Override
-	public CombineResult combineResult(RequestContext requestContext) {
-		CombineResult combineResult;
-		List<PlanExecuteResult> planExecuteResults = requestContext.getPlanExecuteResults();
-		StatusCode statusCode = StatusCode.SUCCESS_STATUS;
-		String statusMessage = null;
+    @Override
+    public CombineResult combineResult(RequestContext requestContext) {
+        CombineResult combineResult;
+        List<PlanExecuteResult> planExecuteResults = requestContext.getPlanExecuteResults();
+        StatusCode statusCode = StatusCode.SUCCESS_STATUS;
+        String statusMessage = null;
 
-		int failureCount = (int) planExecuteResults.stream().filter(e -> e.getStatusCode() == PlanExecuteResult.FAILURE).count();
-		if (failureCount > 0) {
-			StringBuilder errorMessageBuilder = new StringBuilder();
-			if (failureCount == planExecuteResults.size()) {
-				statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
-				errorMessageBuilder.append("Request execute failure.");
-			} else {
-				statusCode = StatusCode.PARTIAL_SUCCESS;
-				errorMessageBuilder.append("Request execute partial failure.");
-			}
-			statusMessage = errorMessageBuilder.toString();
-		}
+        int failureCount = (int) planExecuteResults.stream().filter(e -> e.getStatusCode() == PlanExecuteResult.FAILURE).count();
+        if (failureCount > 0) {
+            StringBuilder errorMessageBuilder = new StringBuilder();
+            if (failureCount == planExecuteResults.size()) {
+                statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
+                errorMessageBuilder.append("Request execute failure.");
+            } else {
+                statusCode = StatusCode.PARTIAL_SUCCESS;
+                errorMessageBuilder.append("Request execute partial failure.");
+            }
+            statusMessage = errorMessageBuilder.toString();
+        }
 
-		switch (requestContext.getType()) {
-			case QueryData:
-				QueryDataResp queryDataResp = new QueryDataResp();
-				queryDataResp.setStatus(RpcUtils.SUCCESS);
-				try {
-					queryDataSetCombiner.combineResult(queryDataResp, planExecuteResults.stream().map(QueryDataPlanExecuteResult.class::cast).collect(Collectors.toList()));
-				} catch (ExecutionException e) {
-					logger.error("encounter error when combine query data results: ", e);
-					statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
-					statusMessage = "Combine execute results failed: " + e.getMessage();
-				}
-				combineResult = new QueryDataCombineResult(RpcUtils.status(statusCode, statusMessage), queryDataResp);
-				break;
-			case AggregateQuery:
-				AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
-				aggregateQueryResp.setStatus(RpcUtils.SUCCESS);
-				AggregateQueryReq req = ((AggregateQueryContext) requestContext).getReq();
-				switch (req.aggregateType) {
-					case COUNT:
-					case SUM:
-						aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
-								.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-						break;
-					case MAX:
-						aggregateCombiner.combineMaxResult(aggregateQueryResp, planExecuteResults.stream()
-								.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-						break;
-					case MIN:
-						aggregateCombiner.combineMinResult(aggregateQueryResp, planExecuteResults.stream()
-								.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-						break;
-					case FIRST:
-						aggregateCombiner.combineFirstResult(aggregateQueryResp, planExecuteResults.stream()
-								.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-						break;
-					case LAST:
-						aggregateCombiner.combineLastResult(aggregateQueryResp, planExecuteResults.stream()
-								.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-						break;
-					case AVG:
-						aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
-								.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
-				}
-				combineResult = new AggregateCombineResult(RpcUtils.status(statusCode, statusMessage), aggregateQueryResp);
-				break;
-			case DownsampleQuery:
-				DownsampleQueryResp downsampleQueryResp = new DownsampleQueryResp();
-				downsampleQueryResp.setStatus(RpcUtils.SUCCESS);
-				DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
-				try {
-					DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
-							downsampleQueryReq.aggregateType);
-				} catch (Exception e) {
-					logger.error("encounter error when combine downsample data results: ", e);
-					statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
-					statusMessage = "Combine execute results failed: " + e.getMessage();
-				}
-				combineResult = new DownsampleQueryCombineResult(RpcUtils.status(statusCode, statusMessage), downsampleQueryResp);
-				break;
-			case ValueFilterQuery:
-				ValueFilterQueryResp valueFilterQueryResp = new ValueFilterQueryResp();
-				valueFilterQueryResp.setStatus(RpcUtils.SUCCESS);
-				try {
-					valueFilterCombiner.combineResult(valueFilterQueryResp, planExecuteResults.stream().map(ValueFilterQueryPlanExecuteResult.class::cast).collect(Collectors.toList()),
-							((ValueFilterQueryContext) requestContext).getReq().getPaths(), ((ValueFilterQueryContext) requestContext).getBooleanExpression());
-				} catch (ExecutionException e) {
-					logger.error("encounter error when combine query data results: ", e);
-					statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
-					statusMessage = "Combine execute results failed: " + e.getMessage();
-				}
-				combineResult = new ValueFilterCombineResult(RpcUtils.status(statusCode, statusMessage), valueFilterQueryResp);
-				break;
-			default:
-				combineResult = new NonDataCombineResult(RpcUtils.status(statusCode, statusMessage));
-		}
-		return combineResult;
-	}
+        switch (requestContext.getType()) {
+            case QueryData:
+                QueryDataResp queryDataResp = new QueryDataResp();
+                queryDataResp.setStatus(RpcUtils.SUCCESS);
+                try {
+                    queryDataSetCombiner.combineResult(queryDataResp, planExecuteResults.stream().map(QueryDataPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                } catch (ExecutionException e) {
+                    logger.error("encounter error when combine query data results: ", e);
+                    statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
+                    statusMessage = "Combine execute results failed: " + e.getMessage();
+                }
+                combineResult = new QueryDataCombineResult(RpcUtils.status(statusCode, statusMessage), queryDataResp);
+                break;
+            case AggregateQuery:
+                AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
+                aggregateQueryResp.setStatus(RpcUtils.SUCCESS);
+                AggregateQueryReq req = ((AggregateQueryContext) requestContext).getReq();
+                switch (req.aggregateType) {
+                    case COUNT:
+                    case SUM:
+                        aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case MAX:
+                        aggregateCombiner.combineMaxResult(aggregateQueryResp, planExecuteResults.stream()
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case MIN:
+                        aggregateCombiner.combineMinResult(aggregateQueryResp, planExecuteResults.stream()
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case FIRST:
+                        aggregateCombiner.combineFirstResult(aggregateQueryResp, planExecuteResults.stream()
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case LAST:
+                        aggregateCombiner.combineLastResult(aggregateQueryResp, planExecuteResults.stream()
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        break;
+                    case AVG:
+                        aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                }
+                combineResult = new AggregateCombineResult(RpcUtils.status(statusCode, statusMessage), aggregateQueryResp);
+                break;
+            case DownsampleQuery:
+                DownsampleQueryResp downsampleQueryResp = new DownsampleQueryResp();
+                downsampleQueryResp.setStatus(RpcUtils.SUCCESS);
+                DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
+                try {
+                    DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
+                            downsampleQueryReq.aggregateType);
+                } catch (Exception e) {
+                    logger.error("encounter error when combine downsample data results: ", e);
+                    statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
+                    statusMessage = "Combine execute results failed: " + e.getMessage();
+                }
+                combineResult = new DownsampleQueryCombineResult(RpcUtils.status(statusCode, statusMessage), downsampleQueryResp);
+                break;
+            case ValueFilterQuery:
+                ValueFilterQueryResp valueFilterQueryResp = new ValueFilterQueryResp();
+                valueFilterQueryResp.setStatus(RpcUtils.SUCCESS);
+                try {
+                    valueFilterCombiner.combineResult(valueFilterQueryResp, planExecuteResults.stream().map(ValueFilterQueryPlanExecuteResult.class::cast).collect(Collectors.toList()),
+                            ((ValueFilterQueryContext) requestContext).getReq().getPaths(), ((ValueFilterQueryContext) requestContext).getBooleanExpression());
+                } catch (ExecutionException e) {
+                    logger.error("encounter error when combine query data results: ", e);
+                    statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
+                    statusMessage = "Combine execute results failed: " + e.getMessage();
+                }
+                combineResult = new ValueFilterCombineResult(RpcUtils.status(statusCode, statusMessage), valueFilterQueryResp);
+                break;
+            default:
+                combineResult = new NonDataCombineResult(RpcUtils.status(statusCode, statusMessage));
+        }
+        return combineResult;
+    }
 }

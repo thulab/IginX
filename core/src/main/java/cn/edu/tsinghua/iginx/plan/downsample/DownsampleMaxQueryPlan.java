@@ -25,16 +25,16 @@ import java.util.List;
 
 public class DownsampleMaxQueryPlan extends DownsampleQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DownsampleMaxQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleMaxQueryPlan.class);
 
-	public DownsampleMaxQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-		super(paths, startTime, endTime, precision);
-		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MAX);
-	}
+    public DownsampleMaxQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        super(paths, startTime, endTime, precision);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MAX);
+    }
 
-	public DownsampleMaxQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-		super(paths, startTime, endTime, precision, storageEngineId);
-		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MAX);
-	}
+    public DownsampleMaxQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MAX);
+    }
 
 }

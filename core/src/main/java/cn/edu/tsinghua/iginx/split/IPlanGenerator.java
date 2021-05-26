@@ -25,6 +25,6 @@ import java.util.List;
 
 public interface IPlanGenerator {
 
-	List<? extends IginxPlan> generateSubPlans(RequestContext requestContext);
+    List<? extends IginxPlan> generateSubPlans(RequestContext requestContext);
 
 }

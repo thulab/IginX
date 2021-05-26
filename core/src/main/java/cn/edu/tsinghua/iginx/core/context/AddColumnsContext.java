@@ -26,10 +26,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class AddColumnsContext extends RequestContext {
 
-	private AddColumnsReq req;
+    private AddColumnsReq req;
 
-	public AddColumnsContext(AddColumnsReq req) {
-		super(req.sessionId, ContextType.AddColumns);
-		this.req = req;
-	}
+    public AddColumnsContext(AddColumnsReq req) {
+        super(req.sessionId, ContextType.AddColumns);
+        this.req = req;
+    }
 }

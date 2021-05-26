@@ -36,81 +36,81 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StatisticsCollector implements IStatisticsCollector {
 
-	private static final Logger logger = LoggerFactory.getLogger(StatisticsCollector.class);
+    private static final Logger logger = LoggerFactory.getLogger(StatisticsCollector.class);
 
-	private final AtomicBoolean broadcast = new AtomicBoolean(false);
+    private final AtomicBoolean broadcast = new AtomicBoolean(false);
 
-	private final ExecutorService broadcastThreadPool = Executors.newSingleThreadExecutor();
+    private final ExecutorService broadcastThreadPool = Executors.newSingleThreadExecutor();
 
-	private final PlanGenerateStatisticsCollector planGenerateStatisticsCollector = new PlanGenerateStatisticsCollector();
+    private final PlanGenerateStatisticsCollector planGenerateStatisticsCollector = new PlanGenerateStatisticsCollector();
 
-	private final QueryStatisticsCollector queryStatisticsCollector = new QueryStatisticsCollector();
+    private final QueryStatisticsCollector queryStatisticsCollector = new QueryStatisticsCollector();
 
-	private final PlanExecuteStatisticsCollector planExecuteStatisticsCollector = new PlanExecuteStatisticsCollector();
+    private final PlanExecuteStatisticsCollector planExecuteStatisticsCollector = new PlanExecuteStatisticsCollector();
 
-	private final ResultCombineStatisticsCollector resultCombineStatisticsCollector = new ResultCombineStatisticsCollector();
+    private final ResultCombineStatisticsCollector resultCombineStatisticsCollector = new ResultCombineStatisticsCollector();
 
-	@Override
-	public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
-		return planExecuteStatisticsCollector.getPostQueryExecuteProcessor();
-	}
+    @Override
+    public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
+        return planExecuteStatisticsCollector.getPostQueryExecuteProcessor();
+    }
 
-	@Override
-	public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-		return planGenerateStatisticsCollector.getPostQueryPlanProcessor();
-	}
+    @Override
+    public PostQueryPlanProcessor getPostQueryPlanProcessor() {
+        return planGenerateStatisticsCollector.getPostQueryPlanProcessor();
+    }
 
-	@Override
-	public PostQueryProcessor getPostQueryProcessor() {
-		return queryStatisticsCollector.getPostQueryProcessor();
-	}
+    @Override
+    public PostQueryProcessor getPostQueryProcessor() {
+        return queryStatisticsCollector.getPostQueryProcessor();
+    }
 
-	@Override
-	public PostQueryResultCombineProcessor getPostQueryResultCombineProcessor() {
-		return resultCombineStatisticsCollector.getPostQueryResultCombineProcessor();
-	}
+    @Override
+    public PostQueryResultCombineProcessor getPostQueryResultCombineProcessor() {
+        return resultCombineStatisticsCollector.getPostQueryResultCombineProcessor();
+    }
 
-	@Override
-	public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
-		return planExecuteStatisticsCollector.getPreQueryExecuteProcessor();
-	}
+    @Override
+    public PreQueryExecuteProcessor getPreQueryExecuteProcessor() {
+        return planExecuteStatisticsCollector.getPreQueryExecuteProcessor();
+    }
 
-	@Override
-	public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-		return planGenerateStatisticsCollector.getPreQueryPlanProcessor();
-	}
+    @Override
+    public PreQueryPlanProcessor getPreQueryPlanProcessor() {
+        return planGenerateStatisticsCollector.getPreQueryPlanProcessor();
+    }
 
-	@Override
-	public PreQueryProcessor getPreQueryProcessor() {
-		return queryStatisticsCollector.getPreQueryProcessor();
-	}
+    @Override
+    public PreQueryProcessor getPreQueryProcessor() {
+        return queryStatisticsCollector.getPreQueryProcessor();
+    }
 
-	@Override
-	public PreQueryResultCombineProcessor getPreQueryResultCombineProcessor() {
-		return resultCombineStatisticsCollector.getPreQueryResultCombineProcessor();
-	}
+    @Override
+    public PreQueryResultCombineProcessor getPreQueryResultCombineProcessor() {
+        return resultCombineStatisticsCollector.getPreQueryResultCombineProcessor();
+    }
 
-	@Override
-	public void startBroadcasting() {
-		broadcast.set(true);
-		// 启动一个新线程，定期播报统计信息
-		broadcastThreadPool.execute(() -> {
-			try {
-				while (broadcast.get()) {
-					planGenerateStatisticsCollector.broadcastStatistics();
-					planExecuteStatisticsCollector.broadcastStatistics();
-					resultCombineStatisticsCollector.broadcastStatistics();
-					queryStatisticsCollector.broadcastStatistics();
-					Thread.sleep(ConfigDescriptor.getInstance().getConfig().getStatisticsLogInterval()); // 每隔 10 秒播报一次统计信息
-				}
-			} catch (InterruptedException e) {
-				logger.error("encounter error when broadcasting statistics: ", e);
-			}
-		});
-	}
+    @Override
+    public void startBroadcasting() {
+        broadcast.set(true);
+        // 启动一个新线程，定期播报统计信息
+        broadcastThreadPool.execute(() -> {
+            try {
+                while (broadcast.get()) {
+                    planGenerateStatisticsCollector.broadcastStatistics();
+                    planExecuteStatisticsCollector.broadcastStatistics();
+                    resultCombineStatisticsCollector.broadcastStatistics();
+                    queryStatisticsCollector.broadcastStatistics();
+                    Thread.sleep(ConfigDescriptor.getInstance().getConfig().getStatisticsLogInterval()); // 每隔 10 秒播报一次统计信息
+                }
+            } catch (InterruptedException e) {
+                logger.error("encounter error when broadcasting statistics: ", e);
+            }
+        });
+    }
 
-	@Override
-	public void endBroadcasting() {
-		broadcast.set(false);
-	}
+    @Override
+    public void endBroadcasting() {
+        broadcast.set(false);
+    }
 }

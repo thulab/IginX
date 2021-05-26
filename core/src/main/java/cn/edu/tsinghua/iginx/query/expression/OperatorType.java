@@ -19,16 +19,16 @@
 package cn.edu.tsinghua.iginx.query.expression;
 
 public enum OperatorType {
-	LEFTBRACKET,
-	RIGHTBRACKET,
-	GT,
-	GTE,
-	EQ,
-	NE,
-	LTE,
-	LT,
-	NOT,
-	AND,
-	OR,
-	END;
+    LEFTBRACKET,
+    RIGHTBRACKET,
+    GT,
+    GTE,
+    EQ,
+    NE,
+    LTE,
+    LT,
+    NOT,
+    AND,
+    OR,
+    END;
 }

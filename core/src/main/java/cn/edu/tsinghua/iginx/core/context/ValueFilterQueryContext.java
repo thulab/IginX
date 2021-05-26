@@ -27,28 +27,28 @@ import lombok.EqualsAndHashCode;
 @Data
 public class ValueFilterQueryContext extends RequestContext {
 
-	private ValueFilterQueryReq req;
-	private BooleanExpression booleanExpression;
+    private ValueFilterQueryReq req;
+    private BooleanExpression booleanExpression;
 
-	public ValueFilterQueryContext(ValueFilterQueryReq req) {
-		super(req.sessionId, ContextType.ValueFilterQuery);
-		this.booleanExpression = new BooleanExpression(req.booleanExpression);
-		this.req = req;
-	}
+    public ValueFilterQueryContext(ValueFilterQueryReq req) {
+        super(req.sessionId, ContextType.ValueFilterQuery);
+        this.booleanExpression = new BooleanExpression(req.booleanExpression);
+        this.req = req;
+    }
 
-	public ValueFilterQueryReq getReq() {
-		return req;
-	}
+    public ValueFilterQueryReq getReq() {
+        return req;
+    }
 
-	public void setReq(ValueFilterQueryReq req) {
-		this.req = req;
-	}
+    public void setReq(ValueFilterQueryReq req) {
+        this.req = req;
+    }
 
-	public BooleanExpression getBooleanExpression() {
-		return booleanExpression;
-	}
+    public BooleanExpression getBooleanExpression() {
+        return booleanExpression;
+    }
 
-	public void setBooleanExpression(BooleanExpression booleanExpression) {
-		this.booleanExpression = booleanExpression;
-	}
+    public void setBooleanExpression(BooleanExpression booleanExpression) {
+        this.booleanExpression = booleanExpression;
+    }
 }

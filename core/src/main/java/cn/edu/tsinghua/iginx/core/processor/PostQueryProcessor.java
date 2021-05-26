@@ -22,6 +22,6 @@ import cn.edu.tsinghua.iginx.core.context.RequestContext;
 
 public interface PostQueryProcessor {
 
-	void process(RequestContext requestContext);
+    void process(RequestContext requestContext);
 
 }

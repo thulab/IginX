@@ -28,39 +28,39 @@ import static org.junit.Assert.assertNull;
 
 public class MemoryAsyncTaskQueueTest {
 
-	private static MemoryAsyncTaskQueue asyncTaskQueue = null;
+    private static MemoryAsyncTaskQueue asyncTaskQueue = null;
 
-	@Before
-	public void setUp() throws Exception {
-		asyncTaskQueue = new MemoryAsyncTaskQueue();
-	}
+    @Before
+    public void setUp() throws Exception {
+        asyncTaskQueue = new MemoryAsyncTaskQueue();
+    }
 
-	@After
-	public void tearDown() throws Exception {
-		asyncTaskQueue = null;
-	}
+    @After
+    public void tearDown() throws Exception {
+        asyncTaskQueue = null;
+    }
 
-	@Test
-	public void testAddAsyncTask() {
-		asyncTaskQueue.addAsyncTask(new AsyncTask(null, 0));
-		AsyncTask task = asyncTaskQueue.getAsyncTask();
-		assertNull(task.getIginxPlan());
-		assertEquals(0, task.getRetryTimes());
-	}
+    @Test
+    public void testAddAsyncTask() {
+        asyncTaskQueue.addAsyncTask(new AsyncTask(null, 0));
+        AsyncTask task = asyncTaskQueue.getAsyncTask();
+        assertNull(task.getIginxPlan());
+        assertEquals(0, task.getRetryTimes());
+    }
 
-	@Test
-	public void testGetAsyncTask() {
-		new Thread(() -> {
-			try {
-				Thread.sleep(2000);
-				asyncTaskQueue.addAsyncTask(new AsyncTask(null, 1));
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
+    @Test
+    public void testGetAsyncTask() {
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+                asyncTaskQueue.addAsyncTask(new AsyncTask(null, 1));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
 
-		}).start();
-		AsyncTask task = asyncTaskQueue.getAsyncTask();
-		assertNull(task.getIginxPlan());
-		assertEquals(1, task.getRetryTimes());
-	}
+        }).start();
+        AsyncTask task = asyncTaskQueue.getAsyncTask();
+        assertNull(task.getIginxPlan());
+        assertEquals(1, task.getRetryTimes());
+    }
 }

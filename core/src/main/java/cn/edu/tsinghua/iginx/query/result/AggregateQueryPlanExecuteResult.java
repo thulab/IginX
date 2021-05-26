@@ -25,28 +25,28 @@ import java.util.List;
 
 public abstract class AggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
-	private List<String> paths;
+    private List<String> paths;
 
-	private List<DataType> dataTypes;
+    private List<DataType> dataTypes;
 
-	public AggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
-		super(statusCode, plan);
-	}
+    public AggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
 
-	public List<String> getPaths() {
-		return paths;
-	}
+    public List<String> getPaths() {
+        return paths;
+    }
 
-	public void setPaths(List<String> paths) {
-		this.paths = paths;
-	}
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
+    }
 
-	public List<DataType> getDataTypes() {
-		return dataTypes;
-	}
+    public List<DataType> getDataTypes() {
+        return dataTypes;
+    }
 
-	public void setDataTypes(List<DataType> dataTypes) {
-		this.dataTypes = dataTypes;
-	}
+    public void setDataTypes(List<DataType> dataTypes) {
+        this.dataTypes = dataTypes;
+    }
 }
 

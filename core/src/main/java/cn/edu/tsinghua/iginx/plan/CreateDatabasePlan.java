@@ -25,16 +25,16 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.CREATE_DATABASE
 
 public class CreateDatabasePlan extends DatabasePlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(CreateDatabasePlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(CreateDatabasePlan.class);
 
-	public CreateDatabasePlan(String databaseName) {
-		super(false, databaseName);
-		this.setIginxPlanType(CREATE_DATABASE);
-	}
+    public CreateDatabasePlan(String databaseName) {
+        super(false, databaseName);
+        this.setIginxPlanType(CREATE_DATABASE);
+    }
 
-	public CreateDatabasePlan(String databaseName, long storageEngineId) {
-		this(databaseName);
-		setStorageEngineId(storageEngineId);
-	}
+    public CreateDatabasePlan(String databaseName, long storageEngineId) {
+        this(databaseName);
+        setStorageEngineId(storageEngineId);
+    }
 
 }

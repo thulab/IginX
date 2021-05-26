@@ -23,8 +23,8 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 
 public interface IPlanGenerateStatisticsCollector {
 
-	PostQueryPlanProcessor getPostQueryPlanProcessor();
+    PostQueryPlanProcessor getPostQueryPlanProcessor();
 
-	PreQueryPlanProcessor getPreQueryPlanProcessor();
+    PreQueryPlanProcessor getPreQueryPlanProcessor();
 
 }

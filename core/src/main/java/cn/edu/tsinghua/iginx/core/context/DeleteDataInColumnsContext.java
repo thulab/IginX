@@ -26,10 +26,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class DeleteDataInColumnsContext extends RequestContext {
 
-	private DeleteDataInColumnsReq req;
+    private DeleteDataInColumnsReq req;
 
-	public DeleteDataInColumnsContext(DeleteDataInColumnsReq req) {
-		super(req.sessionId, ContextType.DeleteDataInColumns);
-		this.req = req;
-	}
+    public DeleteDataInColumnsContext(DeleteDataInColumnsReq req) {
+        super(req.sessionId, ContextType.DeleteDataInColumns);
+        this.req = req;
+    }
 }

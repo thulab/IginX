@@ -6,15 +6,15 @@ import org.slf4j.LoggerFactory;
 
 public class EnvironmentUtils {
 
-	private static final Logger logger = LoggerFactory.getLogger(EnvironmentUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(EnvironmentUtils.class);
 
-	private static Iginx iginx;
+    private static Iginx iginx;
 
-	public static void setUpEnv() {
-		iginx = new Iginx();
-	}
+    public static void setUpEnv() {
+        iginx = new Iginx();
+    }
 
-	public static void tearDownEnv() {
+    public static void tearDownEnv() {
 
-	}
+    }
 }

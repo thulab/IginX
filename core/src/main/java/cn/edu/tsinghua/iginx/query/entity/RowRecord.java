@@ -23,42 +23,42 @@ import java.util.List;
 
 public class RowRecord {
 
-	private long timestamp;
+    private long timestamp;
 
-	private List<Object> fields;
+    private List<Object> fields;
 
-	public RowRecord(long timestamp) {
-		this.timestamp = timestamp;
-		this.fields = new ArrayList<>();
-	}
+    public RowRecord(long timestamp) {
+        this.timestamp = timestamp;
+        this.fields = new ArrayList<>();
+    }
 
-	public RowRecord(long timestamp, List<Object> fields) {
-		this.timestamp = timestamp;
-		this.fields = fields;
-	}
+    public RowRecord(long timestamp, List<Object> fields) {
+        this.timestamp = timestamp;
+        this.fields = fields;
+    }
 
-	public void addField(Object field) {
-		fields.add(field);
-	}
+    public void addField(Object field) {
+        fields.add(field);
+    }
 
-	public long getTimestamp() {
-		return timestamp;
-	}
+    public long getTimestamp() {
+        return timestamp;
+    }
 
-	public void setTimestamp(long timestamp) {
-		this.timestamp = timestamp;
-	}
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
 
-	public List<Object> getFields() {
-		return fields;
-	}
+    public List<Object> getFields() {
+        return fields;
+    }
 
-	public void setFields(List<Object> fields) {
-		this.fields = fields;
-	}
+    public void setFields(List<Object> fields) {
+        this.fields = fields;
+    }
 
-	public void setField(int index, Object field) {
-		this.fields.set(index, field);
-	}
+    public void setField(int index, Object field) {
+        this.fields.set(index, field);
+    }
 
 }

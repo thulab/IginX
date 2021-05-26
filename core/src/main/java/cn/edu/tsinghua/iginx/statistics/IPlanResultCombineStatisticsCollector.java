@@ -23,7 +23,7 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 
 public interface IPlanResultCombineStatisticsCollector {
 
-	PostQueryResultCombineProcessor getPostQueryResultCombineProcessor();
+    PostQueryResultCombineProcessor getPostQueryResultCombineProcessor();
 
-	PreQueryResultCombineProcessor getPreQueryResultCombineProcessor();
+    PreQueryResultCombineProcessor getPreQueryResultCombineProcessor();
 }

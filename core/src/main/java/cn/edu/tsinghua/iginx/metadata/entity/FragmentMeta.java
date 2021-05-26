@@ -43,76 +43,76 @@ import java.util.Map;
 
 public final class FragmentMeta {
 
-	private final TimeInterval timeInterval;
+    private final TimeInterval timeInterval;
 
-	private final TimeSeriesInterval tsInterval;
+    private final TimeSeriesInterval tsInterval;
 
-	/**
-	 * 所有的分片的信息
-	 */
-	private final Map<Integer, FragmentReplicaMeta> replicaMetas;
+    /**
+     * 所有的分片的信息
+     */
+    private final Map<Integer, FragmentReplicaMeta> replicaMetas;
 
-	private long createdBy;
+    private long createdBy;
 
-	private long updatedBy;
+    private long updatedBy;
 
-	public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
-		this.timeInterval = new TimeInterval(startTime, endTime);
-		this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-		this.replicaMetas = replicaMetas;
-	}
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        this.replicaMetas = replicaMetas;
+    }
 
-	public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
-		this.timeInterval = new TimeInterval(startTime, endTime);
-		this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-		Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
-		for (int i = 0; i < storageEngineIdList.size(); i++) {
-			replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
-		}
-		this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
-	}
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
+        for (int i = 0; i < storageEngineIdList.size(); i++) {
+            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
+        }
+        this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
+    }
 
-	public TimeInterval getTimeInterval() {
-		return timeInterval;
-	}
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
+    }
 
-	public TimeSeriesInterval getTsInterval() {
-		return tsInterval;
-	}
+    public TimeSeriesInterval getTsInterval() {
+        return tsInterval;
+    }
 
-	public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
-		return new HashMap<>(replicaMetas);
-	}
+    public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
+        return new HashMap<>(replicaMetas);
+    }
 
-	public int getReplicaMetasNum() {
-		return replicaMetas.size();
-	}
+    public int getReplicaMetasNum() {
+        return replicaMetas.size();
+    }
 
-	public FragmentMeta endFragmentMeta(long endTime) {
-		return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime, replicaMetas);
-	}
+    public FragmentMeta endFragmentMeta(long endTime) {
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime, replicaMetas);
+    }
 
-	public long getCreatedBy() {
-		return createdBy;
-	}
+    public long getCreatedBy() {
+        return createdBy;
+    }
 
-	public void setCreatedBy(long createdBy) {
-		this.createdBy = createdBy;
-	}
+    public void setCreatedBy(long createdBy) {
+        this.createdBy = createdBy;
+    }
 
-	public long getUpdatedBy() {
-		return updatedBy;
-	}
+    public long getUpdatedBy() {
+        return updatedBy;
+    }
 
-	public void setUpdatedBy(long updatedBy) {
-		this.updatedBy = updatedBy;
-	}
+    public void setUpdatedBy(long updatedBy) {
+        this.updatedBy = updatedBy;
+    }
 
-	@Override
-	public String toString() {
-		return "FragmentMeta{" +
-				"timeInterval=" + timeInterval +
-				", tsInterval=" + tsInterval +
-				'}';
-	}
+    @Override
+    public String toString() {
+        return "FragmentMeta{" +
+                "timeInterval=" + timeInterval +
+                ", tsInterval=" + tsInterval +
+                '}';
+    }
 }

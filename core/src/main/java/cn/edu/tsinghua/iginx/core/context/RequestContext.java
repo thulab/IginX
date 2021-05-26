@@ -32,47 +32,47 @@ import java.util.Map;
 @Data
 public class RequestContext {
 
-	private long id;
+    private long id;
 
-	private long startTime;
+    private long startTime;
 
-	private long endTime;
+    private long endTime;
 
-	private long sessionId;
+    private long sessionId;
 
-	private String version;
+    private String version;
 
-	private Map<String, Object> extraParams;
+    private Map<String, Object> extraParams;
 
-	private ContextType type;
+    private ContextType type;
 
-	private Status status;
+    private Status status;
 
-	private List<? extends IginxPlan> iginxPlans;
+    private List<? extends IginxPlan> iginxPlans;
 
-	private List<PlanExecuteResult> planExecuteResults;
+    private List<PlanExecuteResult> planExecuteResults;
 
-	private CombineResult combineResult;
+    private CombineResult combineResult;
 
-	public RequestContext() {
-		this(0, ContextType.Unknown);
-	}
+    public RequestContext() {
+        this(0, ContextType.Unknown);
+    }
 
-	public RequestContext(long sessionId, ContextType type) {
-		this.id = SnowFlakeUtils.getInstance().nextId();
-		this.startTime = System.currentTimeMillis();
-		this.sessionId = sessionId;
-		this.version = null;
-		this.type = type;
-		this.extraParams = new HashMap<>();
-	}
+    public RequestContext(long sessionId, ContextType type) {
+        this.id = SnowFlakeUtils.getInstance().nextId();
+        this.startTime = System.currentTimeMillis();
+        this.sessionId = sessionId;
+        this.version = null;
+        this.type = type;
+        this.extraParams = new HashMap<>();
+    }
 
-	public Object getExtraParam(String key) {
-		return extraParams.getOrDefault(key, null);
-	}
+    public Object getExtraParam(String key) {
+        return extraParams.getOrDefault(key, null);
+    }
 
-	public void setExtraParam(String key, Object value) {
-		extraParams.put(key, value);
-	}
+    public void setExtraParam(String key, Object value) {
+        extraParams.put(key, value);
+    }
 
 }

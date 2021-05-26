@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public abstract class DataCombineResult extends CombineResult {
 
-	public DataCombineResult(Status status) {
-		super(status);
-	}
+    public DataCombineResult(Status status) {
+        super(status);
+    }
 }

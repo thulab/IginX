@@ -24,27 +24,27 @@ import java.util.List;
 
 public class AvgAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
 
-	private List<Object> sums;
+    private List<Object> sums;
 
-	private List<Long> counts;
+    private List<Long> counts;
 
-	public AvgAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
-		super(statusCode, plan);
-	}
+    public AvgAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
 
-	public List<Object> getSums() {
-		return sums;
-	}
+    public List<Object> getSums() {
+        return sums;
+    }
 
-	public void setSums(List<Object> sums) {
-		this.sums = sums;
-	}
+    public void setSums(List<Object> sums) {
+        this.sums = sums;
+    }
 
-	public List<Long> getCounts() {
-		return counts;
-	}
+    public List<Long> getCounts() {
+        return counts;
+    }
 
-	public void setCounts(List<Long> counts) {
-		this.counts = counts;
-	}
+    public void setCounts(List<Long> counts) {
+        this.counts = counts;
+    }
 }

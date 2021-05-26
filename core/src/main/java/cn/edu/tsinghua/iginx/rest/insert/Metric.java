@@ -24,52 +24,52 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class Metric {
-	private String name;
-	private Map<String, String> tags = new TreeMap<>();
-	private List<Long> timestamps = new ArrayList<>();
-	private List<String> values = new ArrayList<>();
+    private String name;
+    private Map<String, String> tags = new TreeMap<>();
+    private List<Long> timestamps = new ArrayList<>();
+    private List<String> values = new ArrayList<>();
 
-	public String getName() {
-		return name;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public List<Long> getTimestamps() {
-		return timestamps;
-	}
+    public List<Long> getTimestamps() {
+        return timestamps;
+    }
 
-	public void setTimestamps(List<Long> timestamps) {
-		this.timestamps = timestamps;
-	}
+    public void setTimestamps(List<Long> timestamps) {
+        this.timestamps = timestamps;
+    }
 
-	public List<String> getValues() {
-		return values;
-	}
+    public List<String> getValues() {
+        return values;
+    }
 
-	public void setValues(List<String> values) {
-		this.values = values;
-	}
+    public void setValues(List<String> values) {
+        this.values = values;
+    }
 
-	public Map<String, String> getTags() {
-		return tags;
-	}
+    public Map<String, String> getTags() {
+        return tags;
+    }
 
-	public void setTags(Map<String, String> tags) {
-		this.tags = tags;
-	}
+    public void setTags(Map<String, String> tags) {
+        this.tags = tags;
+    }
 
-	public void addTag(String key, String value) {
-		tags.put(key, value);
-	}
+    public void addTag(String key, String value) {
+        tags.put(key, value);
+    }
 
-	public void addTimestamp(Long timestamp) {
-		timestamps.add(timestamp);
-	}
+    public void addTimestamp(Long timestamp) {
+        timestamps.add(timestamp);
+    }
 
-	public void addValue(String value) {
-		values.add(value);
-	}
+    public void addValue(String value) {
+        values.add(value);
+    }
 }

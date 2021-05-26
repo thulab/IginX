@@ -23,6 +23,6 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public interface PostQueryResultCombineProcessor {
 
-	Status process(RequestContext requestContext);
+    Status process(RequestContext requestContext);
 
 }

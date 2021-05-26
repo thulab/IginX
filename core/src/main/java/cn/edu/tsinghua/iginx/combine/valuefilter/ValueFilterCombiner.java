@@ -45,162 +45,162 @@ import java.util.stream.Collectors;
 
 public class ValueFilterCombiner {
 
-	private static final Logger logger = LoggerFactory.getLogger(ValueFilterCombiner.class);
+    private static final Logger logger = LoggerFactory.getLogger(ValueFilterCombiner.class);
 
-	private static final ValueFilterCombiner instance = new ValueFilterCombiner();
+    private static final ValueFilterCombiner instance = new ValueFilterCombiner();
 
-	private ValueFilterCombiner() {
-	}
+    private ValueFilterCombiner() {
+    }
 
-	public static ValueFilterCombiner getInstance() {
-		return instance;
-	}
+    public static ValueFilterCombiner getInstance() {
+        return instance;
+    }
 
-	public boolean insPath(String path, List<String> queryPaths) {
-		for (String queryPath : queryPaths) {
-			if (path.compareTo(queryPath) == 0)
-				return true;
-			String[] tmpPath = path.split("\\.");
-			String[] tmpQueryPath = queryPath.split("\\.");
-			if (tmpPath.length != tmpQueryPath.length) continue;
-			boolean flag = true;
-			for (int i = 0; i < tmpPath.length; i++)
-				if (tmpPath[i].compareTo(tmpQueryPath[i]) != 0 && tmpQueryPath[i].compareTo("*") != 0) {
-					flag = false;
-					break;
-				}
-			if (flag) return true;
-		}
-		return false;
-	}
+    public boolean insPath(String path, List<String> queryPaths) {
+        for (String queryPath : queryPaths) {
+            if (path.compareTo(queryPath) == 0)
+                return true;
+            String[] tmpPath = path.split("\\.");
+            String[] tmpQueryPath = queryPath.split("\\.");
+            if (tmpPath.length != tmpQueryPath.length) continue;
+            boolean flag = true;
+            for (int i = 0; i < tmpPath.length; i++)
+                if (tmpPath[i].compareTo(tmpQueryPath[i]) != 0 && tmpQueryPath[i].compareTo("*") != 0) {
+                    flag = false;
+                    break;
+                }
+            if (flag) return true;
+        }
+        return false;
+    }
 
-	public void combineResult(ValueFilterQueryResp resp, List<ValueFilterQueryPlanExecuteResult> planExecuteResults, List<String> queryPaths, BooleanExpression booleanExpression) throws ExecutionException {
-		Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSets() != null)
-				.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
-				.map(ValueFilterQueryPlanExecuteResult::getQueryExecuteDataSets)
-				.flatMap(Collection::stream)
-				.map(CheckedFunction.wrap(QueryExecuteDataSetWrapper::new))
-				.collect(Collectors.toSet());
+    public void combineResult(ValueFilterQueryResp resp, List<ValueFilterQueryPlanExecuteResult> planExecuteResults, List<String> queryPaths, BooleanExpression booleanExpression) throws ExecutionException {
+        Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSets() != null)
+                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
+                .map(ValueFilterQueryPlanExecuteResult::getQueryExecuteDataSets)
+                .flatMap(Collection::stream)
+                .map(CheckedFunction.wrap(QueryExecuteDataSetWrapper::new))
+                .collect(Collectors.toSet());
 
-		List<String> columnNameList = new ArrayList<>();
-		List<DataType> columnTypeList = new ArrayList<>();
-		List<String> newColumnNameList = new ArrayList<>();
-		List<DataType> newColumnTypeList = new ArrayList<>();
-		Map<String, List<QueryExecuteDataSetWrapper>> columnSourcesList = new HashMap<>();
-		List<Long> timestamps = new ArrayList<>();
-		List<ByteBuffer> valuesList = new ArrayList<>();
-		List<ByteBuffer> bitmapList = new ArrayList<>();
-		Map<String, Integer> columnPositionMap = new HashMap<>();
-		for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
-			List<String> columnNameSubList = dataSetWrapper.getColumnNames();
-			List<DataType> columnTypeSubList = dataSetWrapper.getColumnTypes();
-			for (int i = 0; i < columnNameSubList.size(); i++) {
-				String columnName = columnNameSubList.get(i);
-				DataType columnType = columnTypeSubList.get(i);
-				if (!columnPositionMap.containsKey(columnName)) {
-					columnPositionMap.put(columnName, columnNameList.size());
-					columnNameList.add(columnName);
-					columnTypeList.add(columnType);
-					columnSourcesList.put(columnName, new ArrayList<>());
-					if (insPath(columnName, queryPaths))//
-					{
-						newColumnNameList.add(columnName);
-						newColumnTypeList.add(columnType);
-					}
-				}
-				columnSourcesList.get(columnName).add(dataSetWrapper);
-			}
-		}
-		{
-			Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
-			Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-			while (it.hasNext()) {
-				QueryExecuteDataSetWrapper dataSetWrapper = it.next();
-				if (dataSetWrapper.hasNext()) {
-					dataSetWrapper.next();
-				} else {
-					dataSetWrapper.close();
-					deletedDataSetWrappers.add(dataSetWrapper);
-					it.remove();
-				}
-			}
-			for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
-				List<String> columnNames = dataSetWrapper.getColumnNames();
-				for (String columnName : columnNames) {
-					columnSourcesList.get(columnName).remove(dataSetWrapper);
-				}
-			}
-		}
+        List<String> columnNameList = new ArrayList<>();
+        List<DataType> columnTypeList = new ArrayList<>();
+        List<String> newColumnNameList = new ArrayList<>();
+        List<DataType> newColumnTypeList = new ArrayList<>();
+        Map<String, List<QueryExecuteDataSetWrapper>> columnSourcesList = new HashMap<>();
+        List<Long> timestamps = new ArrayList<>();
+        List<ByteBuffer> valuesList = new ArrayList<>();
+        List<ByteBuffer> bitmapList = new ArrayList<>();
+        Map<String, Integer> columnPositionMap = new HashMap<>();
+        for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
+            List<String> columnNameSubList = dataSetWrapper.getColumnNames();
+            List<DataType> columnTypeSubList = dataSetWrapper.getColumnTypes();
+            for (int i = 0; i < columnNameSubList.size(); i++) {
+                String columnName = columnNameSubList.get(i);
+                DataType columnType = columnTypeSubList.get(i);
+                if (!columnPositionMap.containsKey(columnName)) {
+                    columnPositionMap.put(columnName, columnNameList.size());
+                    columnNameList.add(columnName);
+                    columnTypeList.add(columnType);
+                    columnSourcesList.put(columnName, new ArrayList<>());
+                    if (insPath(columnName, queryPaths))//
+                    {
+                        newColumnNameList.add(columnName);
+                        newColumnTypeList.add(columnType);
+                    }
+                }
+                columnSourcesList.get(columnName).add(dataSetWrapper);
+            }
+        }
+        {
+            Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
+            Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
+            while (it.hasNext()) {
+                QueryExecuteDataSetWrapper dataSetWrapper = it.next();
+                if (dataSetWrapper.hasNext()) {
+                    dataSetWrapper.next();
+                } else {
+                    dataSetWrapper.close();
+                    deletedDataSetWrappers.add(dataSetWrapper);
+                    it.remove();
+                }
+            }
+            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
+                List<String> columnNames = dataSetWrapper.getColumnNames();
+                for (String columnName : columnNames) {
+                    columnSourcesList.get(columnName).remove(dataSetWrapper);
+                }
+            }
+        }
 
-		while (!dataSetWrappers.isEmpty()) {
-			long timestamp = Long.MAX_VALUE;
-			for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
-				timestamp = Math.min(dataSetWrapper.getTimestamp(), timestamp);
-			}
-			Map<String, Object> objectMap = new HashMap<>();
-			Object[] values = new Object[newColumnTypeList.size()];
-			Bitmap bitmap = new Bitmap(newColumnTypeList.size());
-			for (int i = 0; i < newColumnTypeList.size(); i++) {
-				String columnName = newColumnNameList.get(i);
-				List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
-				for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
-					if (dataSetWrapper.getTimestamp() == timestamp) {
-						Object value = dataSetWrapper.getValue(columnName);
-						if (value != null) {
-							values[i] = value;
-							bitmap.mark(i);
-							break;
-						}
-					}
-				}
-			}
+        while (!dataSetWrappers.isEmpty()) {
+            long timestamp = Long.MAX_VALUE;
+            for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
+                timestamp = Math.min(dataSetWrapper.getTimestamp(), timestamp);
+            }
+            Map<String, Object> objectMap = new HashMap<>();
+            Object[] values = new Object[newColumnTypeList.size()];
+            Bitmap bitmap = new Bitmap(newColumnTypeList.size());
+            for (int i = 0; i < newColumnTypeList.size(); i++) {
+                String columnName = newColumnNameList.get(i);
+                List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
+                for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
+                    if (dataSetWrapper.getTimestamp() == timestamp) {
+                        Object value = dataSetWrapper.getValue(columnName);
+                        if (value != null) {
+                            values[i] = value;
+                            bitmap.mark(i);
+                            break;
+                        }
+                    }
+                }
+            }
 
-			for (int i = 0; i < booleanExpression.getTimeseries().size(); i++) {
-				String columnName = columnNameList.get(i);
-				List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
-				for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
-					if (dataSetWrapper.getTimestamp() == timestamp) {
-						Object value = dataSetWrapper.getValue(columnName);
-						if (value != null) {
-							objectMap.put(columnName, value);
-							break;
-						}
-					}
-				}
-			}
+            for (int i = 0; i < booleanExpression.getTimeseries().size(); i++) {
+                String columnName = columnNameList.get(i);
+                List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
+                for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
+                    if (dataSetWrapper.getTimestamp() == timestamp) {
+                        Object value = dataSetWrapper.getValue(columnName);
+                        if (value != null) {
+                            objectMap.put(columnName, value);
+                            break;
+                        }
+                    }
+                }
+            }
 
-			if (booleanExpression.getBool(objectMap)) {
-				timestamps.add(timestamp);
-				ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, newColumnTypeList);
-				valuesList.add(buffer);
-				bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
-			}
+            if (booleanExpression.getBool(objectMap)) {
+                timestamps.add(timestamp);
+                ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, newColumnTypeList);
+                valuesList.add(buffer);
+                bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
+            }
 
-			Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
-			Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-			while (it.hasNext()) {
-				QueryExecuteDataSetWrapper dataSetWrapper = it.next();
-				if (dataSetWrapper.getTimestamp() == timestamp) {
-					if (dataSetWrapper.hasNext()) {
-						dataSetWrapper.next();
-					} else {
-						dataSetWrapper.close();
-						deletedDataSetWrappers.add(dataSetWrapper);
-						it.remove();
-					}
-				}
-			}
-			for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
-				List<String> columnNames = dataSetWrapper.getColumnNames();
-				for (String columnName : columnNames) {
-					columnSourcesList.get(columnName).remove(dataSetWrapper);
-				}
-			}
-		}
+            Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
+            Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
+            while (it.hasNext()) {
+                QueryExecuteDataSetWrapper dataSetWrapper = it.next();
+                if (dataSetWrapper.getTimestamp() == timestamp) {
+                    if (dataSetWrapper.hasNext()) {
+                        dataSetWrapper.next();
+                    } else {
+                        dataSetWrapper.close();
+                        deletedDataSetWrappers.add(dataSetWrapper);
+                        it.remove();
+                    }
+                }
+            }
+            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
+                List<String> columnNames = dataSetWrapper.getColumnNames();
+                for (String columnName : columnNames) {
+                    columnSourcesList.get(columnName).remove(dataSetWrapper);
+                }
+            }
+        }
 
-		resp.setPaths(columnNameList);
-		resp.setDataTypeList(columnTypeList);
-		resp.setQueryDataSet(new QueryDataSet(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG),
-				valuesList, bitmapList));
-	}
+        resp.setPaths(columnNameList);
+        resp.setDataTypeList(columnTypeList);
+        resp.setQueryDataSet(new QueryDataSet(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG),
+                valuesList, bitmapList));
+    }
 }

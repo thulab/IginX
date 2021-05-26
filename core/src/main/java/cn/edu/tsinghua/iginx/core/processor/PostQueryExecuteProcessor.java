@@ -24,6 +24,6 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public interface PostQueryExecuteProcessor {
 
-	Status process(RequestContext context);
+    Status process(RequestContext context);
 
 }

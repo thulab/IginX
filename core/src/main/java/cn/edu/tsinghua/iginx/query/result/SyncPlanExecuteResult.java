@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
 public class SyncPlanExecuteResult extends PlanExecuteResult {
 
-	public SyncPlanExecuteResult(int statusCode, IginxPlan plan) {
-		super(statusCode, plan);
-	}
+    public SyncPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
 }

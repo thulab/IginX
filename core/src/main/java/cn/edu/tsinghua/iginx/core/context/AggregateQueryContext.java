@@ -26,18 +26,18 @@ import lombok.EqualsAndHashCode;
 @Data
 public class AggregateQueryContext extends RequestContext {
 
-	private AggregateQueryReq req;
+    private AggregateQueryReq req;
 
-	public AggregateQueryContext(AggregateQueryReq req) {
-		super(req.sessionId, ContextType.AggregateQuery);
-		this.req = req;
-	}
+    public AggregateQueryContext(AggregateQueryReq req) {
+        super(req.sessionId, ContextType.AggregateQuery);
+        this.req = req;
+    }
 
-	public AggregateQueryReq getReq() {
-		return req;
-	}
+    public AggregateQueryReq getReq() {
+        return req;
+    }
 
-	public void setReq(AggregateQueryReq req) {
-		this.req = req;
-	}
+    public void setReq(AggregateQueryReq req) {
+        this.req = req;
+    }
 }

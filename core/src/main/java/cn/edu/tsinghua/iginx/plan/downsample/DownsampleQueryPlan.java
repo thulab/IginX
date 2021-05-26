@@ -26,28 +26,28 @@ import java.util.List;
 
 public class DownsampleQueryPlan extends DataPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DownsampleQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleQueryPlan.class);
 
-	private final long precision;
+    private final long precision;
 
-	public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-		super(true, paths, startTime, endTime);
-		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
-		this.setSync(true);
-		this.precision = precision;
-	}
+    public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        super(true, paths, startTime, endTime);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
+        this.setSync(true);
+        this.precision = precision;
+    }
 
-	public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-		super(true, paths, startTime, endTime);
-		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
-		this.setSync(true);
-		this.precision = precision;
-		this.setStorageEngineId(storageEngineId);
-	}
+    public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(true, paths, startTime, endTime);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
+        this.setSync(true);
+        this.precision = precision;
+        this.setStorageEngineId(storageEngineId);
+    }
 
 
-	public long getPrecision() {
-		return precision;
-	}
+    public long getPrecision() {
+        return precision;
+    }
 
 }

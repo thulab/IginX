@@ -35,72 +35,72 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ROW_RECO
 @ToString
 public class InsertRowRecordsPlan extends InsertRecordsPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
 
-	public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-		super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList);
-		this.setIginxPlanType(INSERT_ROW_RECORDS);
-	}
+    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList);
+        this.setIginxPlanType(INSERT_ROW_RECORDS);
+    }
 
-	public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-	                            List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
-		super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId);
-		this.setIginxPlanType(INSERT_ROW_RECORDS);
-	}
+    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageEngineId);
+        this.setIginxPlanType(INSERT_ROW_RECORDS);
+    }
 
-	public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
-		if (getValuesList() == null || getValuesList().length == 0) {
-			logger.error("There are no values in the InsertRowRecordsPlan.");
-			return null;
-		}
-		int startIndex;
-		int endIndex;
-		if (interval.getStartTimeSeries() == null) {
-			startIndex = 0;
-		} else {
-			startIndex = getPathsNum();
-			for (int i = 0; i < getPathsNum(); i++) {
-				if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0) {
-					startIndex = i;
-					break;
-				}
-			}
-		}
-		if (interval.getEndTimeSeries() == null) {
-			endIndex = getPathsNum() - 1;
-		} else {
-			endIndex = -1;
-			for (int i = getPathsNum() - 1; i >= 0; i--) {
-				if (getPath(i).compareTo(interval.getEndTimeSeries()) <= 0) {
-					endIndex = i;
-					break;
-				}
-			}
-		}
+    public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
+        if (getValuesList() == null || getValuesList().length == 0) {
+            logger.error("There are no values in the InsertRowRecordsPlan.");
+            return null;
+        }
+        int startIndex;
+        int endIndex;
+        if (interval.getStartTimeSeries() == null) {
+            startIndex = 0;
+        } else {
+            startIndex = getPathsNum();
+            for (int i = 0; i < getPathsNum(); i++) {
+                if (getPath(i).compareTo(interval.getStartTimeSeries()) >= 0) {
+                    startIndex = i;
+                    break;
+                }
+            }
+        }
+        if (interval.getEndTimeSeries() == null) {
+            endIndex = getPathsNum() - 1;
+        } else {
+            endIndex = -1;
+            for (int i = getPathsNum() - 1; i >= 0; i--) {
+                if (getPath(i).compareTo(interval.getEndTimeSeries()) <= 0) {
+                    endIndex = i;
+                    break;
+                }
+            }
+        }
 
-		Object[] tempValues = new Object[rowIndexes.v - rowIndexes.k + 1];
-		List<Bitmap> tempBitmaps = new ArrayList<>();
-		for (int i = rowIndexes.k; i <= rowIndexes.v; i++) {
-			Bitmap tempBitmap = new Bitmap(endIndex - startIndex + 1);
-			List<Integer> indexes = new ArrayList<>();
-			int k = 0;
-			for (int j = 0; j < getPathsNum(); j++) {
-				if (getBitmap(i).get(j)) {
-					if (j >= startIndex && j <= endIndex) {
-						indexes.add(k);
-						tempBitmap.mark(j - startIndex);
-					}
-					k++;
-				}
-			}
-			Object[] tempRowValues = new Object[indexes.size()];
-			for (int j = 0; j < indexes.size(); j++) {
-				tempRowValues[j] = getValues(i)[indexes.get(j)];
-			}
-			tempValues[i - rowIndexes.k] = tempRowValues;
-			tempBitmaps.add(tempBitmap);
-		}
-		return new Pair<>(tempValues, tempBitmaps);
-	}
+        Object[] tempValues = new Object[rowIndexes.v - rowIndexes.k + 1];
+        List<Bitmap> tempBitmaps = new ArrayList<>();
+        for (int i = rowIndexes.k; i <= rowIndexes.v; i++) {
+            Bitmap tempBitmap = new Bitmap(endIndex - startIndex + 1);
+            List<Integer> indexes = new ArrayList<>();
+            int k = 0;
+            for (int j = 0; j < getPathsNum(); j++) {
+                if (getBitmap(i).get(j)) {
+                    if (j >= startIndex && j <= endIndex) {
+                        indexes.add(k);
+                        tempBitmap.mark(j - startIndex);
+                    }
+                    k++;
+                }
+            }
+            Object[] tempRowValues = new Object[indexes.size()];
+            for (int j = 0; j < indexes.size(); j++) {
+                tempRowValues[j] = getValues(i)[indexes.get(j)];
+            }
+            tempValues[i - rowIndexes.k] = tempRowValues;
+            tempBitmaps.add(tempBitmap);
+        }
+        return new Pair<>(tempValues, tempBitmaps);
+    }
 }

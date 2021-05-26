@@ -19,37 +19,37 @@
 package cn.edu.tsinghua.iginx.query.expression;
 
 public class Operator {
-	private OperatorType operatorType;
-	private boolean reversed = false;
+    private OperatorType operatorType;
+    private boolean reversed = false;
 
-	Operator(OperatorType tp) {
-		operatorType = tp;
-	}
+    Operator(OperatorType tp) {
+        operatorType = tp;
+    }
 
-	public OperatorType getOperatorType() {
-		return operatorType;
-	}
+    public OperatorType getOperatorType() {
+        return operatorType;
+    }
 
-	public void setOperatorType(OperatorType operatorType) {
-		this.operatorType = operatorType;
-	}
+    public void setOperatorType(OperatorType operatorType) {
+        this.operatorType = operatorType;
+    }
 
-	public boolean isReversed() {
-		return reversed;
-	}
+    public boolean isReversed() {
+        return reversed;
+    }
 
-	public void setReversed(boolean reversed) {
-		this.reversed = reversed;
-	}
+    public void setReversed(boolean reversed) {
+        this.reversed = reversed;
+    }
 
-	void reverse() {
-		if (operatorType == OperatorType.GT) operatorType = OperatorType.LTE;
-		else if (operatorType == OperatorType.GTE) operatorType = OperatorType.LT;
-		else if (operatorType == OperatorType.EQ) operatorType = OperatorType.NE;
-		else if (operatorType == OperatorType.NE) operatorType = OperatorType.EQ;
-		else if (operatorType == OperatorType.LTE) operatorType = OperatorType.GT;
-		else if (operatorType == OperatorType.LT) operatorType = OperatorType.GTE;
-		else if (operatorType == OperatorType.AND || operatorType == OperatorType.OR)
-			reversed = true;
-	}
+    void reverse() {
+        if (operatorType == OperatorType.GT) operatorType = OperatorType.LTE;
+        else if (operatorType == OperatorType.GTE) operatorType = OperatorType.LT;
+        else if (operatorType == OperatorType.EQ) operatorType = OperatorType.NE;
+        else if (operatorType == OperatorType.NE) operatorType = OperatorType.EQ;
+        else if (operatorType == OperatorType.LTE) operatorType = OperatorType.GT;
+        else if (operatorType == OperatorType.LT) operatorType = OperatorType.GTE;
+        else if (operatorType == OperatorType.AND || operatorType == OperatorType.OR)
+            reversed = true;
+    }
 }

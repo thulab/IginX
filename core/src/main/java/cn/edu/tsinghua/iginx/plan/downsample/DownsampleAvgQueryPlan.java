@@ -25,15 +25,15 @@ import java.util.List;
 
 public class DownsampleAvgQueryPlan extends DownsampleQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DownsampleAvgQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleAvgQueryPlan.class);
 
-	public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-		super(paths, startTime, endTime, precision);
-		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
-	}
+    public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        super(paths, startTime, endTime, precision);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
+    }
 
-	public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-		super(paths, startTime, endTime, precision, storageEngineId);
-		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
-	}
+    public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+        super(paths, startTime, endTime, precision, storageEngineId);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
+    }
 }

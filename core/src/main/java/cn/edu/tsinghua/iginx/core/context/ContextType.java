@@ -20,17 +20,17 @@ package cn.edu.tsinghua.iginx.core.context;
 
 public enum ContextType {
 
-	InsertRowRecords,
-	InsertColumnRecords,
-	QueryData,
-	AddColumns,
-	DeleteColumns,
-	DeleteDataInColumns,
-	CreateDatabase,
-	DropDatabase,
-	AggregateQuery,
-	DownsampleQuery,
-	ValueFilterQuery,
-	Unknown;
+    InsertRowRecords,
+    InsertColumnRecords,
+    QueryData,
+    AddColumns,
+    DeleteColumns,
+    DeleteDataInColumns,
+    CreateDatabase,
+    DropDatabase,
+    AggregateQuery,
+    DownsampleQuery,
+    ValueFilterQuery,
+    Unknown;
 
 }

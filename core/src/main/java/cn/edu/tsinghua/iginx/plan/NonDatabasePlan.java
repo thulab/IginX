@@ -29,84 +29,84 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.NON_DATABASE;
 
 public abstract class NonDatabasePlan extends IginxPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(NonDatabasePlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(NonDatabasePlan.class);
 
-	private List<String> paths;
+    private List<String> paths;
 
-	private TimeSeriesInterval tsInterval;
+    private TimeSeriesInterval tsInterval;
 
-	protected NonDatabasePlan(boolean isQuery, List<String> paths) {
-		super(isQuery);
-		this.setIginxPlanType(NON_DATABASE);
-		this.setCanBeSplit(true);
-		this.paths = paths;
-		String startTimeSeries = paths.get(0);
-		String endTimeSeries = paths.get(paths.size() - 1);
-		for (String path : paths) {
-			if (startTimeSeries.compareTo(path) >= 0) {
-				startTimeSeries = path;
-			}
-			if (endTimeSeries.compareTo(path) <= 0) {
-				endTimeSeries = path;
-			}
-		}
-		this.tsInterval = new TimeSeriesInterval(startTimeSeries, endTimeSeries);
-	}
+    protected NonDatabasePlan(boolean isQuery, List<String> paths) {
+        super(isQuery);
+        this.setIginxPlanType(NON_DATABASE);
+        this.setCanBeSplit(true);
+        this.paths = paths;
+        String startTimeSeries = paths.get(0);
+        String endTimeSeries = paths.get(paths.size() - 1);
+        for (String path : paths) {
+            if (startTimeSeries.compareTo(path) >= 0) {
+                startTimeSeries = path;
+            }
+            if (endTimeSeries.compareTo(path) <= 0) {
+                endTimeSeries = path;
+            }
+        }
+        this.tsInterval = new TimeSeriesInterval(startTimeSeries, endTimeSeries);
+    }
 
-	public List<String> getPaths() {
-		return paths;
-	}
+    public List<String> getPaths() {
+        return paths;
+    }
 
-	public void setPaths(List<String> paths) {
-		this.paths = paths;
-	}
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
+    }
 
-	public int getPathsNum() {
-		return paths.size();
-	}
+    public int getPathsNum() {
+        return paths.size();
+    }
 
-	public String getPath(int index) {
-		if (paths.isEmpty()) {
-			logger.error("There are no paths in the plan.");
-			return null;
-		}
-		if (index < 0 || index >= paths.size()) {
-			logger.error("The given index {} is out of bounds.", index);
-			return null;
-		}
-		return paths.get(index);
-	}
+    public String getPath(int index) {
+        if (paths.isEmpty()) {
+            logger.error("There are no paths in the plan.");
+            return null;
+        }
+        if (index < 0 || index >= paths.size()) {
+            logger.error("The given index {} is out of bounds.", index);
+            return null;
+        }
+        return paths.get(index);
+    }
 
-	public List<String> getPathsByInterval(TimeSeriesInterval interval) {
-		if (paths.isEmpty()) {
-			logger.error("There are no paths in the plan.");
-			return null;
-		}
-		if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
-			// TODO 时间序列区间左闭右开，存在左右端点相等的情况
-			return paths.stream().filter(x -> x.equals(interval.getStartTimeSeries()) || (x.compareTo(interval.getStartTimeSeries()) > 0 && x.compareTo(interval.getEndTimeSeries()) < 0)).collect(Collectors.toList());
-		} else if (interval.getStartTimeSeries() != null) {
-			return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
-		} else if (interval.getEndTimeSeries() != null) {
-			return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
-		} else {
-			return paths;
-		}
-	}
+    public List<String> getPathsByInterval(TimeSeriesInterval interval) {
+        if (paths.isEmpty()) {
+            logger.error("There are no paths in the plan.");
+            return null;
+        }
+        if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
+            // TODO 时间序列区间左闭右开，存在左右端点相等的情况
+            return paths.stream().filter(x -> x.equals(interval.getStartTimeSeries()) || (x.compareTo(interval.getStartTimeSeries()) > 0 && x.compareTo(interval.getEndTimeSeries()) < 0)).collect(Collectors.toList());
+        } else if (interval.getStartTimeSeries() != null) {
+            return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
+        } else if (interval.getEndTimeSeries() != null) {
+            return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
+        } else {
+            return paths;
+        }
+    }
 
-	public String getStartPath() {
-		return tsInterval.getStartTimeSeries();
-	}
+    public String getStartPath() {
+        return tsInterval.getStartTimeSeries();
+    }
 
-	public String getEndPath() {
-		return tsInterval.getEndTimeSeries();
-	}
+    public String getEndPath() {
+        return tsInterval.getEndTimeSeries();
+    }
 
-	public TimeSeriesInterval getTsInterval() {
-		return tsInterval;
-	}
+    public TimeSeriesInterval getTsInterval() {
+        return tsInterval;
+    }
 
-	public void setTsInterval(TimeSeriesInterval tsInterval) {
-		this.tsInterval = tsInterval;
-	}
+    public void setTsInterval(TimeSeriesInterval tsInterval) {
+        this.tsInterval = tsInterval;
+    }
 }

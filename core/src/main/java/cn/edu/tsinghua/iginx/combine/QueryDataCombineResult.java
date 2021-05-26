@@ -23,16 +23,16 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public class QueryDataCombineResult extends DataCombineResult {
 
-	private final QueryDataResp resp;
+    private final QueryDataResp resp;
 
-	public QueryDataCombineResult(Status status, QueryDataResp resp) {
-		super(status);
-		this.resp = resp;
-		this.resp.setStatus(status);
-	}
+    public QueryDataCombineResult(Status status, QueryDataResp resp) {
+        super(status);
+        this.resp = resp;
+        this.resp.setStatus(status);
+    }
 
-	public QueryDataResp getResp() {
-		return resp;
-	}
+    public QueryDataResp getResp() {
+        return resp;
+    }
 
 }

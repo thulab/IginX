@@ -22,6 +22,6 @@ import cn.edu.tsinghua.iginx.core.context.RequestContext;
 
 public interface ICombineExecutor {
 
-	CombineResult combineResult(RequestContext requestContext);
+    CombineResult combineResult(RequestContext requestContext);
 
 }

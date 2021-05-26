@@ -19,24 +19,24 @@
 package cn.edu.tsinghua.iginx.exceptions;
 
 public enum StatusCode {
-	WRONG_PASSWORD(100),
-	INVALID_SESSION(101),
+    WRONG_PASSWORD(100),
+    INVALID_SESSION(101),
 
-	SUCCESS_STATUS(200),
-	PARTIAL_SUCCESS(204),
+    SUCCESS_STATUS(200),
+    PARTIAL_SUCCESS(204),
 
-	REDIRECT(300),
+    REDIRECT(300),
 
-	SESSION_ERROR(400),
-	STATEMENT_EXECUTION_ERROR(401);
+    SESSION_ERROR(400),
+    STATEMENT_EXECUTION_ERROR(401);
 
-	private int statusCode;
+    private int statusCode;
 
-	StatusCode(int statusCode) {
-		this.statusCode = statusCode;
-	}
+    StatusCode(int statusCode) {
+        this.statusCode = statusCode;
+    }
 
-	public int getStatusCode() {
-		return statusCode;
-	}
+    public int getStatusCode() {
+        return statusCode;
+    }
 }

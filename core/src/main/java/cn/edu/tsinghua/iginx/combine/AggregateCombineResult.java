@@ -5,15 +5,15 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public class AggregateCombineResult extends DataCombineResult {
 
-	private final AggregateQueryResp resp;
+    private final AggregateQueryResp resp;
 
-	public AggregateCombineResult(Status status, AggregateQueryResp resp) {
-		super(status);
-		this.resp = resp;
-		this.resp.setStatus(status);
-	}
+    public AggregateCombineResult(Status status, AggregateQueryResp resp) {
+        super(status);
+        this.resp = resp;
+        this.resp.setStatus(status);
+    }
 
-	public AggregateQueryResp getResp() {
-		return resp;
-	}
+    public AggregateQueryResp getResp() {
+        return resp;
+    }
 }

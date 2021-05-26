@@ -24,27 +24,27 @@ import java.util.List;
 
 public class SingleValueAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
 
-	private List<Long> times;
+    private List<Long> times;
 
-	private List<Object> values;
+    private List<Object> values;
 
-	public SingleValueAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
-		super(statusCode, plan);
-	}
+    public SingleValueAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+    }
 
-	public List<Long> getTimes() {
-		return times;
-	}
+    public List<Long> getTimes() {
+        return times;
+    }
 
-	public void setTimes(List<Long> times) {
-		this.times = times;
-	}
+    public void setTimes(List<Long> times) {
+        this.times = times;
+    }
 
-	public List<Object> getValues() {
-		return values;
-	}
+    public List<Object> getValues() {
+        return values;
+    }
 
-	public void setValues(List<Object> values) {
-		this.values = values;
-	}
+    public void setValues(List<Object> values) {
+        this.values = values;
+    }
 }

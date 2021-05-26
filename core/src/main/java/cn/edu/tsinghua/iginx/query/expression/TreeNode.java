@@ -19,31 +19,31 @@
 package cn.edu.tsinghua.iginx.query.expression;
 
 public class TreeNode {
-	private Element data;
-	private TreeNode left;
-	private TreeNode right;
+    private Element data;
+    private TreeNode left;
+    private TreeNode right;
 
-	public Element getData() {
-		return data;
-	}
+    public Element getData() {
+        return data;
+    }
 
-	public void setData(Element data) {
-		this.data = data;
-	}
+    public void setData(Element data) {
+        this.data = data;
+    }
 
-	public TreeNode getLeft() {
-		return left;
-	}
+    public TreeNode getLeft() {
+        return left;
+    }
 
-	public void setLeft(TreeNode left) {
-		this.left = left;
-	}
+    public void setLeft(TreeNode left) {
+        this.left = left;
+    }
 
-	public TreeNode getRight() {
-		return right;
-	}
+    public TreeNode getRight() {
+        return right;
+    }
 
-	public void setRight(TreeNode right) {
-		this.right = right;
-	}
+    public void setRight(TreeNode right) {
+        this.right = right;
+    }
 }

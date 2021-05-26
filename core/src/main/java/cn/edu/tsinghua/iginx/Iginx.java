@@ -34,27 +34,27 @@ import org.slf4j.LoggerFactory;
 
 public class Iginx {
 
-	private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
+    private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
 
-	private static final Config config = ConfigDescriptor.getInstance().getConfig();
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
-	public static void main(String[] args) throws Exception {
-		if (config.isEnableRestService()) {
-			new Thread(new RestServer()).start();
-		}
-		Iginx iginx = new Iginx();
-		iginx.startServer();
-	}
+    public static void main(String[] args) throws Exception {
+        if (config.isEnableRestService()) {
+            new Thread(new RestServer()).start();
+        }
+        Iginx iginx = new Iginx();
+        iginx.startServer();
+    }
 
-	private void startServer() throws TTransportException {
-		TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
-		TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());
-		TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport).processor(processor)
-				.minWorkerThreads(20);
-		args.protocolFactory(new TBinaryProtocol.Factory());
-		TServer server = new TThreadPoolServer(args);
-		server.serve();
-	}
+    private void startServer() throws TTransportException {
+        TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
+        TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());
+        TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport).processor(processor)
+                .minWorkerThreads(20);
+        args.protocolFactory(new TBinaryProtocol.Factory());
+        TServer server = new TThreadPoolServer(args);
+        server.serve();
+    }
 
 
 }

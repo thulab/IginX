@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.query.expression;
 
 public enum Type {
-	OPERATOR,
-	TIMESERIES,
-	VALUE;
+    OPERATOR,
+    TIMESERIES,
+    VALUE;
 }

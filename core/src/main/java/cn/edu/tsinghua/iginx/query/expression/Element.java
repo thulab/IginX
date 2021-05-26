@@ -19,40 +19,40 @@
 package cn.edu.tsinghua.iginx.query.expression;
 
 public class Element {
-	Type type;
-	Operator operator;
-	String timeseries;
-	String value;
+    Type type;
+    Operator operator;
+    String timeseries;
+    String value;
 
-	public Type getType() {
-		return type;
-	}
+    public Type getType() {
+        return type;
+    }
 
-	public void setType(Type type) {
-		this.type = type;
-	}
+    public void setType(Type type) {
+        this.type = type;
+    }
 
-	public Operator getOperator() {
-		return operator;
-	}
+    public Operator getOperator() {
+        return operator;
+    }
 
-	public void setOperator(Operator operator) {
-		this.operator = operator;
-	}
+    public void setOperator(Operator operator) {
+        this.operator = operator;
+    }
 
-	public String getValue() {
-		return value;
-	}
+    public String getValue() {
+        return value;
+    }
 
-	public void setValue(String value) {
-		this.value = value;
-	}
+    public void setValue(String value) {
+        this.value = value;
+    }
 
-	public String getTimeseries() {
-		return timeseries;
-	}
+    public String getTimeseries() {
+        return timeseries;
+    }
 
-	public void setTimeseries(String timeseries) {
-		this.timeseries = timeseries;
-	}
+    public void setTimeseries(String timeseries) {
+        this.timeseries = timeseries;
+    }
 }

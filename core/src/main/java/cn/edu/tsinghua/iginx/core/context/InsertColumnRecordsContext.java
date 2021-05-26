@@ -26,14 +26,14 @@ import lombok.EqualsAndHashCode;
 @Data
 public class InsertColumnRecordsContext extends RequestContext {
 
-	private InsertColumnRecordsReq req;
+    private InsertColumnRecordsReq req;
 
-	public InsertColumnRecordsContext(InsertColumnRecordsReq req) {
-		super(req.sessionId, ContextType.InsertColumnRecords);
-		this.req = req;
-	}
+    public InsertColumnRecordsContext(InsertColumnRecordsReq req) {
+        super(req.sessionId, ContextType.InsertColumnRecords);
+        this.req = req;
+    }
 
-	public InsertColumnRecordsReq getReq() {
-		return req;
-	}
+    public InsertColumnRecordsReq getReq() {
+        return req;
+    }
 }
