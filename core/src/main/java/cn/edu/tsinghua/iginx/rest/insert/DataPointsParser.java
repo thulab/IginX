@@ -39,7 +39,7 @@ public class DataPointsParser
         this.inputStream = stream;
     }
 
-    public void parse() throws SessionException, IOException
+    public void parse() throws Exception
     {
         try
         {
@@ -125,12 +125,12 @@ public class DataPointsParser
         try
         {
             session.openSession();
+            sendMetricsData();
         }
-        catch (SessionException e)
+        catch (Exception e)
         {
-            LOGGER.error("Error occurred during opening session ", e);
+            LOGGER.error("Error occurred during sending data ", e);
         }
-        sendMetricsData();
         session.closeSession();
     }
 
@@ -144,7 +144,7 @@ public class DataPointsParser
         return metricList;
     }
 
-    private void sendMetricsData()
+    private void sendMetricsData() throws Exception
     {
         for (Metric metric: metricList)
         {
@@ -202,6 +202,7 @@ public class DataPointsParser
             catch (ExecutionException e)
             {
                 LOGGER.error("Error occurred during insert ", e);
+                throw e;
             }
         }
     }
