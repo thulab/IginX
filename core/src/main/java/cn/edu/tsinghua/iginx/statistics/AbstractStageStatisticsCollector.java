@@ -31,20 +31,15 @@ public abstract class AbstractStageStatisticsCollector {
     protected static final String BEGIN = "begin";
 
     protected static final String END = "end";
-
-    protected abstract String getStageName();
-
     private final LinkedBlockingQueue<Statistics> statisticsQueue = new LinkedBlockingQueue<>();
-
     protected Function<RequestContext, Status> before = requestContext -> {
         requestContext.setExtraParam(BEGIN + getStageName(), TimeUtils.getMicrosecond());
         return null;
     };
-
     protected Function<RequestContext, Status> after = requestContext -> {
         long endTime = TimeUtils.getMicrosecond();
         requestContext.setExtraParam(END + getStageName(), endTime);
-        long beginTime = (long)requestContext.getExtraParam(BEGIN + getStageName());
+        long beginTime = (long) requestContext.getExtraParam(BEGIN + getStageName());
         statisticsQueue.add(new Statistics(requestContext.getId(), beginTime, endTime, requestContext));
         return null;
     };
@@ -58,6 +53,8 @@ public abstract class AbstractStageStatisticsCollector {
                     }
                 });
     }
+
+    protected abstract String getStageName();
 
     protected abstract void processStatistics(Statistics statistics);
 

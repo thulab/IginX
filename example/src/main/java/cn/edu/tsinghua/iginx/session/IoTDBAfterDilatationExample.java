@@ -32,23 +32,16 @@ import java.util.Map;
 public class IoTDBAfterDilatationExample {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBAfterDilatationExample.class);
-
-    private static Session session;
-
     private static final String COLUMN_C1_S1 = "root.sg1.c1.s1";
     private static final String COLUMN_C1_S2 = "root.sg1.c1.s2";
     private static final String COLUMN_E2_S1 = "root.sg1.e2.s1";
     private static final String COLUMN_E3_S1 = "root.sg1.e3.s1";
-
     private static final String DATABASE_NAME = "root.sg1";
-
     private static final long beginTimestamp = 1000000L;
-
     private static final int insertTimes = 1000;
-
     private static final int recordPerInsert = 100;
-
     private static final List<String> paths = new ArrayList<>();
+    private static Session session;
 
     static {
         paths.add(COLUMN_C1_S1);

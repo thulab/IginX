@@ -22,98 +22,98 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
 
 public abstract class IginxPlan {
 
-	private long subPlanId;
+    private long subPlanId;
 
-	private IginxPlanType iginxPlanType;
+    private IginxPlanType iginxPlanType;
 
-	private boolean isQuery;
+    private boolean isQuery;
 
-	private boolean canBeSplit;
+    private boolean canBeSplit;
 
-	private boolean isSync;
+    private boolean isSync;
 
-	private long storageEngineId;
+    private long storageEngineId;
 
-	private int combineGroup;
+    private int combineGroup;
 
-	protected IginxPlan(boolean isQuery) {
-		this.iginxPlanType = IGINX;
-		this.isQuery = isQuery;
-	}
+    protected IginxPlan(boolean isQuery) {
+        this.iginxPlanType = IGINX;
+        this.isQuery = isQuery;
+    }
 
-	public long getSubPlanId() {
-		return subPlanId;
-	}
+    public long getSubPlanId() {
+        return subPlanId;
+    }
 
-	public void setSubPlanId(long subPlanId) {
-		this.subPlanId = subPlanId;
-	}
+    public void setSubPlanId(long subPlanId) {
+        this.subPlanId = subPlanId;
+    }
 
-	public IginxPlanType getIginxPlanType() {
-		return iginxPlanType;
-	}
+    public IginxPlanType getIginxPlanType() {
+        return iginxPlanType;
+    }
 
-	public boolean isQuery() {
-		return isQuery;
-	}
+    public void setIginxPlanType(IginxPlanType iginxPlanType) {
+        this.iginxPlanType = iginxPlanType;
+    }
 
-	public boolean canBeSplit() {
-		return canBeSplit;
-	}
+    public boolean isQuery() {
+        return isQuery;
+    }
 
-	public boolean isSync() {
-		return isSync;
-	}
+    public void setQuery(boolean isQuery) {
+        this.isQuery = isQuery;
+    }
 
-	public long getStorageEngineId() {
-		return storageEngineId;
-	}
+    public boolean canBeSplit() {
+        return canBeSplit;
+    }
 
-	public void setIginxPlanType(IginxPlanType iginxPlanType) {
-		this.iginxPlanType = iginxPlanType;
-	}
+    public boolean isSync() {
+        return isSync;
+    }
 
-	public void setQuery(boolean isQuery) {
-		this.isQuery = isQuery;
-	}
+    public void setSync(boolean isSync) {
+        this.isSync = isSync;
+    }
 
-	public void setCanBeSplit(boolean canBeSplit) {
-		this.canBeSplit = canBeSplit;
-	}
+    public long getStorageEngineId() {
+        return storageEngineId;
+    }
 
-	public void setSync(boolean isSync) {
-		this.isSync = isSync;
-	}
+    public void setStorageEngineId(long storageEngineId) {
+        this.storageEngineId = storageEngineId;
+    }
 
-	public void setStorageEngineId(long storageEngineId) {
-		this.storageEngineId = storageEngineId;
-	}
+    public void setCanBeSplit(boolean canBeSplit) {
+        this.canBeSplit = canBeSplit;
+    }
 
-	public int getCombineGroup() {
-		return combineGroup;
-	}
+    public int getCombineGroup() {
+        return combineGroup;
+    }
 
-	public void setCombineGroup(int combineGroup) {
-		this.combineGroup = combineGroup;
-	}
+    public void setCombineGroup(int combineGroup) {
+        this.combineGroup = combineGroup;
+    }
 
-	public enum IginxPlanType {
-		UNKNOWN,
-		IGINX, DATABASE, CREATE_DATABASE, DROP_DATABASE, NON_DATABASE, COLUMN, ADD_COLUMNS,
-		DELETE_COLUMNS, DATA, INSERT_RECORDS, INSERT_COLUMN_RECORDS, INSERT_ROW_RECORDS,
-		DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY, MAX, MIN, SUM, COUNT, AVG, FIRST, LAST,
-		DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX, DOWNSAMPLE_MIN, DOWNSAMPLE_SUM, DOWNSAMPLE_COUNT, DOWNSAMPLE_AVG,
-		DOWNSAMPLE_FIRST, DOWNSAMPLE_LAST, VALUEFILTER_QUERY;
+    public enum IginxPlanType {
+        UNKNOWN,
+        IGINX, DATABASE, CREATE_DATABASE, DROP_DATABASE, NON_DATABASE, COLUMN, ADD_COLUMNS,
+        DELETE_COLUMNS, DATA, INSERT_RECORDS, INSERT_COLUMN_RECORDS, INSERT_ROW_RECORDS,
+        DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY, MAX, MIN, SUM, COUNT, AVG, FIRST, LAST,
+        DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX, DOWNSAMPLE_MIN, DOWNSAMPLE_SUM, DOWNSAMPLE_COUNT, DOWNSAMPLE_AVG,
+        DOWNSAMPLE_FIRST, DOWNSAMPLE_LAST, VALUEFILTER_QUERY;
 
-		public boolean isDownsampleQuery() {
-			return this == DOWNSAMPLE_QUERY || this == DOWNSAMPLE_AVG || this == DOWNSAMPLE_COUNT || this == DOWNSAMPLE_SUM ||
-					this == DOWNSAMPLE_MIN || this == DOWNSAMPLE_MAX || this == DOWNSAMPLE_FIRST || this == DOWNSAMPLE_LAST;
-		}
+        public boolean isDownsampleQuery() {
+            return this == DOWNSAMPLE_QUERY || this == DOWNSAMPLE_AVG || this == DOWNSAMPLE_COUNT || this == DOWNSAMPLE_SUM ||
+                    this == DOWNSAMPLE_MIN || this == DOWNSAMPLE_MAX || this == DOWNSAMPLE_FIRST || this == DOWNSAMPLE_LAST;
+        }
 
-		public boolean isAggregateQuery() {
-			return this == AGGREGATE_QUERY || this == AVG || this == COUNT || this == SUM ||
-					this == MIN || this == MAX || this == FIRST || this == LAST;
-		}
+        public boolean isAggregateQuery() {
+            return this == AGGREGATE_QUERY || this == AVG || this == COUNT || this == SUM ||
+                    this == MIN || this == MAX || this == FIRST || this == LAST;
+        }
 
-	}
+    }
 }

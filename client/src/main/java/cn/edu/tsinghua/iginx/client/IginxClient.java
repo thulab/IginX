@@ -33,7 +33,9 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
-/** args[]: -h 127.0.0.1 -p 6667 -u root -pw root */
+/**
+ * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
+ */
 public class IginxClient {
 
     private static final String IGINX_CLI_PREFIX = "IginX";

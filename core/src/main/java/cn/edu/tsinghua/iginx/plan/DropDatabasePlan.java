@@ -25,16 +25,16 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DROP_DATABASE;
 
 public class DropDatabasePlan extends DatabasePlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DropDatabasePlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DropDatabasePlan.class);
 
-	public DropDatabasePlan(String databaseName) {
-		super(false, databaseName);
-		this.setIginxPlanType(DROP_DATABASE);
-	}
+    public DropDatabasePlan(String databaseName) {
+        super(false, databaseName);
+        this.setIginxPlanType(DROP_DATABASE);
+    }
 
-	public DropDatabasePlan(String databaseName, long storageEngineId) {
-		this(databaseName);
-		setStorageEngineId(storageEngineId);
-	}
+    public DropDatabasePlan(String databaseName, long storageEngineId) {
+        this(databaseName);
+        setStorageEngineId(storageEngineId);
+    }
 
 }

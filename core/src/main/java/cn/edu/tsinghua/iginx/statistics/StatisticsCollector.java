@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.statistics;
 
-import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;

@@ -21,15 +21,12 @@ package cn.edu.tsinghua.iginx.combine.downsample;
 import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
 import cn.edu.tsinghua.iginx.combine.querydata.QueryExecuteDataSetWrapper;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.plan.AggregateQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.query.result.AggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
@@ -45,7 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -64,7 +60,7 @@ public class DownsampleCombiner {
                 .groupingBy(e -> e.getPlan().getCombineGroup()));
         List<QueryExecuteDataSet> downsampleQueryPlanExecuteResults = planExecuteResults.stream().filter(e -> e.getPlan().getIginxPlanType().isDownsampleQuery())
                 .map(DownsampleQueryPlanExecuteResult.class::cast).map(DownsampleQueryPlanExecuteResult::getQueryExecuteDataSets).flatMap(List::stream).collect(Collectors.toList());
-        for (List<PlanExecuteResult> aggregateResultGroup: aggregateResultGroups.values()) {
+        for (List<PlanExecuteResult> aggregateResultGroup : aggregateResultGroups.values()) {
             long timestamp = aggregateResultGroup.stream().map(PlanExecuteResult::getPlan).map(AggregateQueryPlan.class::cast).mapToLong(DataPlan::getStartTime)
                     .min().orElse(0);
             AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
@@ -135,7 +131,7 @@ public class DownsampleCombiner {
         {
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
                 if (dataSetWrapper.hasNext()) {
                     dataSetWrapper.next();
@@ -155,7 +151,7 @@ public class DownsampleCombiner {
             }
         }
 
-        while(!dataSetWrappers.isEmpty()) {
+        while (!dataSetWrappers.isEmpty()) {
             long timestamp = Long.MAX_VALUE;
             // 顺序访问所有的还有数据数据的 timestamp，获取当前的时间戳
             for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
@@ -187,7 +183,7 @@ public class DownsampleCombiner {
             // 在加载完一轮数据之后，把更新加载过数据的时间
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
                 if (dataSetWrapper.getTimestamp() == timestamp) { // 如果时间戳是当前的时间戳，则意味着本行读完了，加载下一行
                     if (dataSetWrapper.hasNext()) {

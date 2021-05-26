@@ -28,8 +28,18 @@ import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.query.result.*;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,7 +141,7 @@ public class CombineExecutor implements ICombineExecutor {
                 valueFilterQueryResp.setStatus(RpcUtils.SUCCESS);
                 try {
                     valueFilterCombiner.combineResult(valueFilterQueryResp, planExecuteResults.stream().map(ValueFilterQueryPlanExecuteResult.class::cast).collect(Collectors.toList()),
-                            ((ValueFilterQueryContext)requestContext).getReq().getPaths(), ((ValueFilterQueryContext)requestContext).getBooleanExpression());
+                            ((ValueFilterQueryContext) requestContext).getReq().getPaths(), ((ValueFilterQueryContext) requestContext).getBooleanExpression());
                 } catch (ExecutionException e) {
                     logger.error("encounter error when combine query data results: ", e);
                     statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;

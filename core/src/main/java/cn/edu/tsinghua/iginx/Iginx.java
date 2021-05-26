@@ -37,14 +37,15 @@ public class Iginx {
     private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
 
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
     public static void main(String[] args) throws Exception {
-        if (config.isEnableRestService())
-        {
+        if (config.isEnableRestService()) {
             new Thread(new RestServer()).start();
         }
         Iginx iginx = new Iginx();
         iginx.startServer();
     }
+
     private void startServer() throws TTransportException {
         TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
         TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());

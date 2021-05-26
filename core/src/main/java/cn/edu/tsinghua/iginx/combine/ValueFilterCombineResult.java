@@ -23,16 +23,16 @@ import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 
 public class ValueFilterCombineResult extends DataCombineResult {
 
-	private final ValueFilterQueryResp resp;
+    private final ValueFilterQueryResp resp;
 
-	public ValueFilterCombineResult(Status status, ValueFilterQueryResp resp) {
-		super(status);
-		this.resp = resp;
-		this.resp.setStatus(status);
-	}
+    public ValueFilterCombineResult(Status status, ValueFilterQueryResp resp) {
+        super(status);
+        this.resp = resp;
+        this.resp.setStatus(status);
+    }
 
-	public ValueFilterQueryResp getResp() {
-		return resp;
-	}
+    public ValueFilterQueryResp getResp() {
+        return resp;
+    }
 
 }

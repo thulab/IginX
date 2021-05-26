@@ -1,23 +1,25 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.rest;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import javax.ws.rs.*;
-import javax.inject.Inject;
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
-
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
@@ -25,6 +27,26 @@ import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.rest.query.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.inject.Inject;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Path("/")
 public class MetricsResource {
@@ -40,13 +62,11 @@ public class MetricsResource {
 
 
     @Inject
-    public MetricsResource()
-    {
+    public MetricsResource() {
 
     }
 
-    static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder)
-    {
+    static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
         responseBuilder.header("Access-Control-Allow-Origin", "*");
         responseBuilder.header("Pragma", NO_CACHE);
         responseBuilder.header("Cache-Control", NO_CACHE);
@@ -54,54 +74,12 @@ public class MetricsResource {
         return (responseBuilder);
     }
 
-    @GET
-    @Path("")
-    public Response OK()
-    {
-        return setHeaders(Response.status(Status.OK)).build();
-    }
-
-    @POST
-    @Path("query")
-    public Response Grafana_query(final InputStream stream)
-    {
-
-        return setHeaders(Response.status(Status.OK)).build();
-    }
-
-    @POST
-    @Path("{string : .+}")
-    public Response errorPath(@PathParam("string") String str)
-    {
-        return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
-    }
-
-
-    @GET
-    @Path("{string : .+}")
-    public Response geterrorPath(@PathParam("string") String str)
-    {
-        return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
-    }
-
-    @POST
-    @Path(INSERT_URL)
-    public void add(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse)
-    {
-        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream));
-    }
-
-
-
-
-    private static String inputStreamToString(InputStream inputStream) throws Exception
-    {
+    private static String inputStreamToString(InputStream inputStream) throws Exception {
         StringBuffer buffer = new StringBuffer();
-        InputStreamReader inputStreamReader  = new InputStreamReader(inputStream, "utf-8");
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "utf-8");
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
         String str;
-        while ((str = bufferedReader.readLine()) != null)
-        {
+        while ((str = bufferedReader.readLine()) != null) {
             buffer.append(str);
         }
         bufferedReader.close();
@@ -110,28 +88,52 @@ public class MetricsResource {
         return buffer.toString();
     }
 
+    @GET
+    @Path("")
+    public Response OK() {
+        return setHeaders(Response.status(Status.OK)).build();
+    }
+
+    @POST
+    @Path("query")
+    public Response Grafana_query(final InputStream stream) {
+
+        return setHeaders(Response.status(Status.OK)).build();
+    }
+
+    @POST
+    @Path("{string : .+}")
+    public Response errorPath(@PathParam("string") String str) {
+        return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
+    }
+
+    @GET
+    @Path("{string : .+}")
+    public Response geterrorPath(@PathParam("string") String str) {
+        return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
+    }
+
+    @POST
+    @Path(INSERT_URL)
+    public void add(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream));
+    }
+
     @POST
     @Path(QUERY_URL)
-    public Response postQuery(final InputStream stream)
-    {
-        try
-        {
+    public Response postQuery(final InputStream stream) {
+        try {
             String str = inputStreamToString(stream);
             return postQuery(str);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
-    public Response postQuery(String jsonStr)
-    {
-        try
-        {
-            if (jsonStr == null)
-            {
+    public Response postQuery(String jsonStr) {
+        try {
+            if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");
             }
             QueryParser parser = new QueryParser();
@@ -141,9 +143,7 @@ public class MetricsResource {
             String entity = parser.parseResultToJson(result, false);
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
@@ -151,26 +151,19 @@ public class MetricsResource {
 
     @POST
     @Path(DELETE_URL)
-    public Response postDelete(final InputStream stream)
-    {
-        try
-        {
+    public Response postDelete(final InputStream stream) {
+        try {
             String str = inputStreamToString(stream);
             return postDelete(str);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
-    public Response postDelete(String jsonStr)
-    {
-        try
-        {
-            if (jsonStr == null)
-            {
+    public Response postDelete(String jsonStr) {
+        try {
+            if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");
             }
             QueryParser parser = new QueryParser();
@@ -179,9 +172,7 @@ public class MetricsResource {
             QueryResult result = executor.execute(true);
             String entity = parser.parseResultToJson(result, true);
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
@@ -190,27 +181,21 @@ public class MetricsResource {
 
     @DELETE
     @Path(DELETE_METRIC_URL)
-    public Response metricDelete(@PathParam("metricName") String metricName)
-    {
-        try
-        {
+    public Response metricDelete(@PathParam("metricName") String metricName) {
+        try {
             deleteMetric(metricName);
             return setHeaders(Response.status(Response.Status.OK)).build();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
     }
 
-    void deleteMetric(String metricName) throws Exception
-    {
+    void deleteMetric(String metricName) throws Exception {
         RestSession restSession = new RestSession();
         restSession.openSession();
         List<String> ins = new ArrayList<>();
-        for (int i = 1; i < ConfigDescriptor.getInstance().getConfig().getMaxTimeseriesLength(); i++)
-        {
+        for (int i = 1; i < ConfigDescriptor.getInstance().getConfig().getMaxTimeseriesLength(); i++) {
             StringBuilder stringBuilder = new StringBuilder();
             for (int j = 0; j < i; j++)
                 stringBuilder.append("*.");

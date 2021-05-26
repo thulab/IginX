@@ -1,7 +1,40 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.rest.query;
 
-import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.Filter;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorAvg;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorCount;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorDev;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorDiff;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorDiv;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorFilter;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorFirst;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorLast;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorMax;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorMin;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorPercentile;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorRate;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSampler;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSaveAs;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSum;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -9,61 +42,49 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
 
-public class QueryParser
-
-{
+public class QueryParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     private ObjectMapper mapper = new ObjectMapper();
-    public QueryParser()
-    {
+
+    public QueryParser() {
 
     }
 
-    public Query parseQueryMetric(String json) throws Exception
-    {
+    public Query parseQueryMetric(String json) throws Exception {
         Query ret;
-        try
-        {
+        try {
             JsonNode node = mapper.readTree(json);
             ret = getQuery(node);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during parsing query ", e);
             throw e;
         }
         return ret;
     }
 
-    private Query getQuery(JsonNode node)
-    {
+    private Query getQuery(JsonNode node) {
         Query ret = new Query();
         JsonNode start_absolute = node.get("start_absolute");
         JsonNode end_absolute = node.get("end_absolute");
         Long now = System.currentTimeMillis();
         if (start_absolute == null && end_absolute == null)
             return null;
-        else if (start_absolute != null && end_absolute != null)
-        {
+        else if (start_absolute != null && end_absolute != null) {
             ret.setStartAbsolute(start_absolute.asLong());
             ret.setEndAbsolute(end_absolute.asLong());
-        }
-        else if (start_absolute != null)
-        {
+        } else if (start_absolute != null) {
             ret.setStartAbsolute(start_absolute.asLong());
             JsonNode end_relative = node.get("end_relative");
             if (end_relative == null)
                 ret.setEndAbsolute(now);
-            else
-            {
+            else {
                 JsonNode value = end_relative.get("value");
                 if (value == null) return null;
                 long v = value.asLong();
                 JsonNode unit = end_relative.get("unit");
                 if (unit == null) return null;
                 String u = unit.asText();
-                switch (u)
-                {
+                switch (u) {
                     case "millis":
                         ret.setEndAbsolute(now - v * 1L);
                         break;
@@ -93,24 +114,20 @@ public class QueryParser
                         break;
                 }
             }
-        }
-        else
-        {
+        } else {
 
             ret.setEndAbsolute(end_absolute.asLong());
             JsonNode start_relative = node.get("start_relative");
             if (start_relative == null)
                 ret.setStartAbsolute(now);
-            else
-            {
+            else {
                 JsonNode value = start_relative.get("value");
                 if (value == null) return null;
                 long v = value.asLong();
                 JsonNode unit = start_relative.get("unit");
                 if (unit == null) return null;
                 String u = value.asText();
-                switch (u)
-                {
+                switch (u) {
                     case "millis":
                         ret.setStartAbsolute(now - v * 1L);
                         break;
@@ -149,21 +166,17 @@ public class QueryParser
             ret.setTimeZone(timeZone.asText());
 
         JsonNode metrics = node.get("metrics");
-        if (metrics != null && metrics.isArray())
-        {
-            for (JsonNode dpnode : metrics)
-            {
+        if (metrics != null && metrics.isArray()) {
+            for (JsonNode dpnode : metrics) {
                 QueryMetric ins = new QueryMetric();
                 JsonNode name = dpnode.get("name");
                 if (name != null)
                     ins.setName(name.asText());
                 JsonNode tags = dpnode.get("tags");
-                if (tags != null)
-                {
+                if (tags != null) {
                     Iterator<String> fieldNames = tags.fieldNames();
                     Iterator<JsonNode> elements = tags.elements();
-                    while (elements.hasNext() && fieldNames.hasNext())
-                    {
+                    while (elements.hasNext() && fieldNames.hasNext()) {
                         String key = fieldNames.next();
                         for (JsonNode valuenode : elements.next())
                             ins.addTag(key, valuenode.asText());
@@ -176,18 +189,15 @@ public class QueryParser
         return ret;
     }
 
-    public void addAggregators(QueryMetric q, JsonNode node)
-    {
+    public void addAggregators(QueryMetric q, JsonNode node) {
         JsonNode aggregators = node.get("aggregators");
         if (aggregators == null || !aggregators.isArray())
             return;
-        for (JsonNode aggregator: aggregators)
-        {
+        for (JsonNode aggregator : aggregators) {
             JsonNode name = aggregator.get("name");
             if (name == null) continue;
             QueryAggregator qa;
-            switch (name.asText())
-            {
+            switch (name.asText()) {
                 case "max":
                     qa = new QueryAggregatorMax();
                     break;
@@ -236,8 +246,7 @@ public class QueryParser
                 default:
                     continue;
             }
-            switch (name.asText())
-            {
+            switch (name.asText()) {
                 case "max":
                 case "min":
                 case "sum":
@@ -253,8 +262,7 @@ public class QueryParser
                     if (value == null) continue;
                     JsonNode unit = sampling.get("unit");
                     if (unit == null) continue;
-                    switch (unit.asText())
-                    {
+                    switch (unit.asText()) {
                         case "millis":
                             qa.setDur(value.asLong() * 1L);
                             break;
@@ -282,7 +290,7 @@ public class QueryParser
                         default:
                             continue;
                     }
-                    break; 
+                    break;
                 case "diff":
                     break;
                 case "div":
@@ -307,8 +315,7 @@ public class QueryParser
                     if (sampling == null) continue;
                     unit = sampling.get("unit");
                     if (unit == null) continue;
-                    switch (unit.asText())
-                    {
+                    switch (unit.asText()) {
                         case "millis":
                             qa.setUnit(1L);
                             break;
@@ -340,8 +347,7 @@ public class QueryParser
                 case "sampler":
                     unit = aggregator.get("unit");
                     if (unit == null) continue;
-                    switch (unit.asText())
-                    {
+                    switch (unit.asText()) {
                         case "millis":
                             qa.setUnit(1L);
                             break;
@@ -372,10 +378,9 @@ public class QueryParser
                     break;
                 default:
                     break;
-                    
+
             }
-            switch (name.asText())
-            {
+            switch (name.asText()) {
                 case "percentile":
                     JsonNode percentile = aggregator.get("percentile");
                     if (percentile == null) continue;
@@ -389,18 +394,16 @@ public class QueryParser
         }
     }
 
-    public String parseResultToJson(QueryResult result, boolean isDelete)
-    {
+    public String parseResultToJson(QueryResult result, boolean isDelete) {
         if (isDelete)
             return "";
         StringBuilder ret = new StringBuilder("{\"queries\":[");
-        for (int i=0; i< result.getSiz(); i++)
-        {
+        for (int i = 0; i < result.getSiz(); i++) {
             ret.append(result.toResultString(i));
             ret.append(",");
         }
-        if (ret.charAt(ret.length()-1) == ',')
-            ret.deleteCharAt(ret.length()-1);
+        if (ret.charAt(ret.length() - 1) == ',')
+            ret.deleteCharAt(ret.length() - 1);
         ret.append("]}");
         return ret.toString();
     }

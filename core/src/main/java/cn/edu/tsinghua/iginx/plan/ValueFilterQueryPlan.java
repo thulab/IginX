@@ -18,13 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 //todo
+
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.utils.BooleanExpression;
+import cn.edu.tsinghua.iginx.query.expression.BooleanExpression;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,37 +32,14 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.VALUEFILTER_QUE
 
 public class ValueFilterQueryPlan extends DataPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(ValueFilterQueryPlan.class);
-	BooleanExpression booleanExpression;
+    private static final Logger logger = LoggerFactory.getLogger(ValueFilterQueryPlan.class);
+    BooleanExpression booleanExpression;
 
-    private static String trimPath(String path) {
-        int index = path.indexOf("*");
-        if (index == -1) { // 不含有 *，则不对字符串进行变更
-            return path;
-        }
-        if (index == 0) {
-            return "";
-        }
-        return path.substring(0, index - 1);
-    }
-
-    private static String addEndPrefix(String path, boolean start) {
-        if (path.length() != 0) {
-            path += ".";
-        }
-        if (start) {
-            path += (char)('A' - 1);
-        } else {
-            path += (char)('z' + 1);
-        }
-        return path;
-    }
-
-	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression) {
-		super(true, paths, startTime, endTime);
-		this.booleanExpression = booleanExpression;
-		this.setIginxPlanType(VALUEFILTER_QUERY);
-		paths.addAll(booleanExpression.getTimeseries());
+    public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression) {
+        super(true, paths, startTime, endTime);
+        this.booleanExpression = booleanExpression;
+        this.setIginxPlanType(VALUEFILTER_QUERY);
+        paths.addAll(booleanExpression.getTimeseries());
         Collections.sort(paths);
         boolean isStartPrefix = paths.get(0).contains("*");
         String startTimeSeries = trimPath(paths.get(0));
@@ -87,23 +64,45 @@ public class ValueFilterQueryPlan extends DataPlan {
             endTimeSeries = addEndPrefix(endTimeSeries, false);
         }
         this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
-	}
+    }
 
-	public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, long storageEngineId) {
-		this(paths, startTime, endTime, booleanExpression);
-		this.setStorageEngineId(storageEngineId);
-		this.setSync(true);
-	}
+    public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, long storageEngineId) {
+        this(paths, startTime, endTime, booleanExpression);
+        this.setStorageEngineId(storageEngineId);
+        this.setSync(true);
+    }
 
-	public List<String> getPathsByInterval(TimeSeriesInterval interval)
-    {
+    private static String trimPath(String path) {
+        int index = path.indexOf("*");
+        if (index == -1) { // 不含有 *，则不对字符串进行变更
+            return path;
+        }
+        if (index == 0) {
+            return "";
+        }
+        return path.substring(0, index - 1);
+    }
+
+    private static String addEndPrefix(String path, boolean start) {
+        if (path.length() != 0) {
+            path += ".";
+        }
+        if (start) {
+            path += (char) ('A' - 1);
+        } else {
+            path += (char) ('z' + 1);
+        }
+        return path;
+    }
+
+    public List<String> getPathsByInterval(TimeSeriesInterval interval) {
         List<String> paths = getPaths();
         paths.addAll(booleanExpression.getTimeseries());
         Collections.sort(paths);
-		if (paths.isEmpty()) {
-			logger.error("There are no paths in the plan.");
-			return null;
-		}
+        if (paths.isEmpty()) {
+            logger.error("There are no paths in the plan.");
+            return null;
+        }
         if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
             return paths;
         }
@@ -119,10 +118,9 @@ public class ValueFilterQueryPlan extends DataPlan {
             tempPaths.add(path);
         }
         return tempPaths;
-	}
+    }
 
-	public BooleanExpression getBooleanExpression()
-	{
-		return booleanExpression;
-	}
+    public BooleanExpression getBooleanExpression() {
+        return booleanExpression;
+    }
 }

@@ -56,6 +56,62 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         }
     }
 
+    public static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
+        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        if (fragmentSeriesList.isEmpty()) {
+            return resultList;
+        }
+        int index = 0;
+        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
+            if (fragmentSeriesList.get(index).k.isIntersect(tsInterval)) {
+                resultList.add(fragmentSeriesList.get(index));
+            }
+            index++;
+        }
+        return resultList;
+    }
+
+    public static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
+        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+        if (fragmentSeriesList.isEmpty()) {
+            return resultList;
+        }
+        int index = 0;
+        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
+            if (fragmentSeriesList.get(index).k.isContain(tsName)) {
+                resultList.add(fragmentSeriesList.get(index));
+            }
+            index++;
+        }
+        return resultList;
+    }
+
+    public static List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList, TimeInterval timeInterval) {
+        List<FragmentMeta> resultList = new ArrayList<>();
+        if (fragmentMetaList.isEmpty()) {
+            return resultList;
+        }
+        int index = 0;
+        while (index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
+            if (fragmentMetaList.get(index).getTimeInterval().isIntersect(timeInterval)) {
+                resultList.add(fragmentMetaList.get(index));
+            }
+            index++;
+        }
+        return resultList;
+    }
+
+    public static SortedListAbstractMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (SortedListAbstractMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new SortedListAbstractMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
     @Override
     protected void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
         sortedFragmentMetaLists = new ArrayList<>();
@@ -81,7 +137,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         }
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
-        for (FragmentReplicaMeta fragmentReplicaMeta: fragmentMeta.getReplicaMetas().values()) {
+        for (FragmentReplicaMeta fragmentReplicaMeta : fragmentMeta.getReplicaMetas().values()) {
             storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
         }
     }
@@ -119,7 +175,7 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
         fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
         fragmentLock.writeLock().unlock();
-        for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
+        for (FragmentReplicaMeta replicaMeta : fragmentMeta.getReplicaMetas().values()) {
             long storageEngineId = replicaMeta.getStorageEngineId();
             StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
             storageEngineMeta.endLatestFragmentReplicaMetas(replicaMeta.getTsInterval(), replicaMeta.getTimeInterval().getEndTime());
@@ -196,7 +252,6 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         return result;
     }
 
-
     @Override
     public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
         List<FragmentMeta> resultList;
@@ -213,51 +268,6 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         return !sortedFragmentMetaLists.isEmpty();
     }
 
-    public static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
-        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
-        if (fragmentSeriesList.isEmpty()) {
-            return resultList;
-        }
-        int index = 0;
-        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
-            if (fragmentSeriesList.get(index).k.isIntersect(tsInterval)) {
-                resultList.add(fragmentSeriesList.get(index));
-            }
-            index++;
-        }
-        return resultList;
-    }
-
-    public static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
-        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
-        if (fragmentSeriesList.isEmpty()) {
-            return resultList;
-        }
-        int index = 0;
-        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
-            if (fragmentSeriesList.get(index).k.isContain(tsName)) {
-                resultList.add(fragmentSeriesList.get(index));
-            }
-            index++;
-        }
-        return resultList;
-    }
-
-    public static List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList, TimeInterval timeInterval) {
-        List<FragmentMeta> resultList = new ArrayList<>();
-        if (fragmentMetaList.isEmpty()) {
-            return resultList;
-        }
-        int index = 0;
-        while (index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
-            if (fragmentMetaList.get(index).getTimeInterval().isIntersect(timeInterval)) {
-                resultList.add(fragmentMetaList.get(index));
-            }
-            index++;
-        }
-        return resultList;
-    }
-
     public void shutdown() {
         this.iginxCache.close();
         this.storageEngineCache.close();
@@ -265,16 +275,5 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         synchronized (SortedListAbstractMetaManager.class) {
             SortedListAbstractMetaManager.INSTANCE = null;
         }
-    }
-
-    public static SortedListAbstractMetaManager getInstance() {
-        if (INSTANCE == null) {
-            synchronized (SortedListAbstractMetaManager.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new SortedListAbstractMetaManager();
-                }
-            }
-        }
-        return INSTANCE;
     }
 }

@@ -63,7 +63,6 @@ import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,148 +74,147 @@ import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
 
-	private static final Logger logger = LoggerFactory.getLogger(IginxWorker.class);
+    private static final Logger logger = LoggerFactory.getLogger(IginxWorker.class);
 
-	private static final IginxWorker instance = new IginxWorker();
+    private static final IginxWorker instance = new IginxWorker();
 
-	private final Set<Long> sessions = Collections.synchronizedSet(new HashSet<>());
+    private final Set<Long> sessions = Collections.synchronizedSet(new HashSet<>());
 
-	private final Core core = Core.getInstance();
+    private final Core core = Core.getInstance();
 
-	private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+    private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
 
-	@Override
-	public OpenSessionResp openSession(OpenSessionReq req) {
-		logger.info("received open session request");
-		logger.info("start to generate test id");
-		long id = SnowFlakeUtils.getInstance().nextId();
-		logger.info("generate session id: " + id);
-		sessions.add(id);
-		logger.info("add session " + id + " into set");
-		OpenSessionResp resp = new OpenSessionResp(RpcUtils.SUCCESS);
-		resp.setSessionId(id);
-		logger.info("return request");
-		return resp;
-	}
+    public static IginxWorker getInstance() {
+        return instance;
+    }
 
-	@Override
-	public Status closeSession(CloseSessionReq req) {
-		if (!sessions.contains(req.getSessionId())) {
-			return RpcUtils.INVALID_SESSION;
-		}
-		sessions.remove(req.sessionId);
-		return RpcUtils.SUCCESS;
-	}
+    @Override
+    public OpenSessionResp openSession(OpenSessionReq req) {
+        logger.info("received open session request");
+        logger.info("start to generate test id");
+        long id = SnowFlakeUtils.getInstance().nextId();
+        logger.info("generate session id: " + id);
+        sessions.add(id);
+        logger.info("add session " + id + " into set");
+        OpenSessionResp resp = new OpenSessionResp(RpcUtils.SUCCESS);
+        resp.setSessionId(id);
+        logger.info("return request");
+        return resp;
+    }
 
-	@Override
-	public Status createDatabase(CreateDatabaseReq req) {
-		CreateDatabaseContext context = new CreateDatabaseContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status closeSession(CloseSessionReq req) {
+        if (!sessions.contains(req.getSessionId())) {
+            return RpcUtils.INVALID_SESSION;
+        }
+        sessions.remove(req.sessionId);
+        return RpcUtils.SUCCESS;
+    }
 
-	@Override
-	public Status dropDatabase(DropDatabaseReq req) {
-		DropDatabaseContext context = new DropDatabaseContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status createDatabase(CreateDatabaseReq req) {
+        CreateDatabaseContext context = new CreateDatabaseContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public Status addColumns(AddColumnsReq req) {
-		AddColumnsContext context = new AddColumnsContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status dropDatabase(DropDatabaseReq req) {
+        DropDatabaseContext context = new DropDatabaseContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public Status deleteColumns(DeleteColumnsReq req) {
-		DeleteColumnsContext context = new DeleteColumnsContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status addColumns(AddColumnsReq req) {
+        AddColumnsContext context = new AddColumnsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public Status insertColumnRecords(InsertColumnRecordsReq req) {
-		InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status deleteColumns(DeleteColumnsReq req) {
+        DeleteColumnsContext context = new DeleteColumnsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public Status insertRowRecords(InsertRowRecordsReq req) {
-		InsertRowRecordsContext context = new InsertRowRecordsContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status insertColumnRecords(InsertColumnRecordsReq req) {
+        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public Status deleteDataInColumns(DeleteDataInColumnsReq req) {
-		DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
-		core.processRequest(context);
-		return context.getStatus();
-	}
+    @Override
+    public Status insertRowRecords(InsertRowRecordsReq req) {
+        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public QueryDataResp queryData(QueryDataReq req) {
-		QueryDataContext context = new QueryDataContext(req);
-		core.processRequest(context);
-		return ((QueryDataCombineResult) context.getCombineResult()).getResp();
-	}
+    @Override
+    public Status deleteDataInColumns(DeleteDataInColumnsReq req) {
+        DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
 
-	@Override
-	public Status addStorageEngine(AddStorageEngineReq req) {
-		// 处理扩容
-		StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
-		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine);
-		String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-		for (String part: parts) {
-			String[] kAndV = part.split("=");
-			if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
-				continue;
-			}
-			String className = kAndV[1];
-			try {
-				Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
-						loadClass(className);
-				Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-				if (!((boolean) method.invoke(null, meta))) {
-					return RpcUtils.FAILURE;
-				}
-			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
-				logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
-			}
-		}
-		if (!metaManager.addStorageEngine(meta)) {
-			return RpcUtils.FAILURE;
-		}
-		return RpcUtils.SUCCESS;
-	}
+    @Override
+    public QueryDataResp queryData(QueryDataReq req) {
+        QueryDataContext context = new QueryDataContext(req);
+        core.processRequest(context);
+        return ((QueryDataCombineResult) context.getCombineResult()).getResp();
+    }
 
-	@Override
-	public AggregateQueryResp aggregateQuery(AggregateQueryReq req) {
-		AggregateQueryContext context = new AggregateQueryContext(req);
-		core.processRequest(context);
-		return ((AggregateCombineResult) context.getCombineResult()).getResp();
-	}
+    @Override
+    public Status addStorageEngine(AddStorageEngineReq req) {
+        // 处理扩容
+        StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
+        StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine);
+        String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
+        for (String part : parts) {
+            String[] kAndV = part.split("=");
+            if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
+                continue;
+            }
+            String className = kAndV[1];
+            try {
+                Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
+                        loadClass(className);
+                Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
+                if (!((boolean) method.invoke(null, meta))) {
+                    return RpcUtils.FAILURE;
+                }
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
+            }
+        }
+        if (!metaManager.addStorageEngine(meta)) {
+            return RpcUtils.FAILURE;
+        }
+        return RpcUtils.SUCCESS;
+    }
 
-	@Override
-	public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req)
-	{
-		ValueFilterQueryContext context = new ValueFilterQueryContext(req);
-		core.processRequest(context);
-		return ((ValueFilterCombineResult) context.getCombineResult()).getResp();
-	}
+    @Override
+    public AggregateQueryResp aggregateQuery(AggregateQueryReq req) {
+        AggregateQueryContext context = new AggregateQueryContext(req);
+        core.processRequest(context);
+        return ((AggregateCombineResult) context.getCombineResult()).getResp();
+    }
 
-	@Override
-	public DownsampleQueryResp downsampleQuery(DownsampleQueryReq req) {
-		DownsampleQueryContext context = new DownsampleQueryContext(req);
-		core.processRequest(context);
-		return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
-	}
+    @Override
+    public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) {
+        ValueFilterQueryContext context = new ValueFilterQueryContext(req);
+        core.processRequest(context);
+        return ((ValueFilterCombineResult) context.getCombineResult()).getResp();
+    }
 
-	public static IginxWorker getInstance() {
-		return instance;
-	}
+    @Override
+    public DownsampleQueryResp downsampleQuery(DownsampleQueryReq req) {
+        DownsampleQueryContext context = new DownsampleQueryContext(req);
+        core.processRequest(context);
+        return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
+    }
 
 }
