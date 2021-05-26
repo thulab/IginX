@@ -63,15 +63,32 @@ public class MetricsResource {
 
     @POST
     @Path("query")
-    public Response Grafana_query(final InputStream stream)
+    public Response grafanaQuery(String jsonStr)
     {
+        try
+        {
+            if (jsonStr == null)
+            {
+                throw new Exception("query json must not be null or empty");
+            }
+            QueryParser parser = new QueryParser();
+            Query query = parser.parseGrafanaQueryMetric(jsonStr);
+            QueryExecutor executor = new QueryExecutor(query);
+            QueryResult result = executor.execute(false);
+            String entity = parser.parseResultToGrafanaJson(result);
+            return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
-        return setHeaders(Response.status(Status.OK)).build();
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
     }
 
     @POST
     @Path("{string : .+}")
-    public Response errorPath(@PathParam("string") String str)
+    public Response postErrorPath(@PathParam("string") String str)
     {
         return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
     }
@@ -79,7 +96,7 @@ public class MetricsResource {
 
     @GET
     @Path("{string : .+}")
-    public Response geterrorPath(@PathParam("string") String str)
+    public Response getErrorPath(@PathParam("string") String str)
     {
         return setHeaders(Response.status(Status.NOT_FOUND).entity("Wrong path\n")).build();
     }
@@ -220,4 +237,6 @@ public class MetricsResource {
         restSession.deleteColumns(ins);
         restSession.closeSession();
     }
+
+
 }

@@ -4,9 +4,15 @@ import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 
 public class QueryParser
@@ -18,6 +24,23 @@ public class QueryParser
     {
 
     }
+
+    public Query parseGrafanaQueryMetric(String json) throws Exception
+    {
+        Query ret;
+        try
+        {
+            JsonNode node = mapper.readTree(json);
+            ret = getGrafanaQuery(node);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error occurred during parsing query ", e);
+            throw e;
+        }
+        return ret;
+    }
+
 
     public Query parseQueryMetric(String json) throws Exception
     {
@@ -31,6 +54,67 @@ public class QueryParser
         {
             LOGGER.error("Error occurred during parsing query ", e);
             throw e;
+        }
+        return ret;
+    }
+
+
+    public static Long dealDateFormat(String oldDateStr)
+    {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        try
+        {
+            Date date = df.parse(oldDateStr);
+            return date.getTime() + 28800000l;
+        }
+        catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    private Query getGrafanaQuery(JsonNode node)
+    {
+        Query ret = new Query();
+        JsonNode timerange = node.get("range");
+        if (timerange == null)
+            return null;
+
+        JsonNode start_absolute = timerange.get("from");
+        JsonNode end_absolute = timerange.get("to");
+
+
+        if (start_absolute == null || end_absolute == null)
+            return null;
+
+        Long start = dealDateFormat(start_absolute.asText());
+        Long end = dealDateFormat(end_absolute.asText());
+        ret.setStartAbsolute(start);
+        ret.setEndAbsolute(end);
+
+        JsonNode array = node.get("targets");
+        if (!array.isArray())
+             return null;
+        for (JsonNode jsonNode: array)
+        {
+            QueryMetric queryMetric = new QueryMetric();
+            JsonNode type = jsonNode.get("type");
+            if (type == null)
+                return null;
+            JsonNode target = jsonNode.get("target");
+            if (target == null)
+                return null;
+            if (type.asText().equals("table"))
+            {
+                queryMetric.setName(target.asText());
+            }
+            else
+            {
+                queryMetric.setName(target.asText());
+            }
+            ret.addQueryMetrics(queryMetric);
         }
         return ret;
     }
@@ -402,6 +486,36 @@ public class QueryParser
         if (ret.charAt(ret.length()-1) == ',')
             ret.deleteCharAt(ret.length()-1);
         ret.append("]}");
+        return ret.toString();
+    }
+
+    public String parseResultToGrafanaJson(QueryResult result)
+    {
+        StringBuilder ret = new StringBuilder("[");
+        for (int i=0; i< result.getSiz(); i++)
+        {
+            ret.append("{");
+            ret.append(String.format("\"target\":\"%s\",", result.getQueryMetrics().get(i).getName()));
+            ret.append("\"datapoints\":[");
+            int n = result.getQueryResultDatasets().get(i).getSize();
+            for (int j=0;j<n;j++)
+            {
+                ret.append("[");
+                if (result.getQueryResultDatasets().get(i).getValues().get(j) instanceof byte[])
+                    ret.append(result.getQueryResultDatasets().get(i).getValues().get(j));
+                else
+                    ret.append(result.getQueryResultDatasets().get(i).getValues().get(j).toString());
+
+                ret.append(String.format(",%d", result.getQueryResultDatasets().get(i).getTimestamps().get(j)));
+                ret.append("],");
+            }
+            if (ret.charAt(ret.length()-1) == ',')
+                ret.deleteCharAt(ret.length()-1);
+            ret.append("]},");
+        }
+        if (ret.charAt(ret.length()-1) == ',')
+            ret.deleteCharAt(ret.length()-1);
+        ret.append("]");
         return ret.toString();
     }
 }
