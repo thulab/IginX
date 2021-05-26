@@ -10,14 +10,14 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.MAX;
 
 public class MaxQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(MaxQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(MaxQueryPlan.class);
 
-	public MaxQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-		super(paths, startTime, endTime, storageUnit);
-		this.setIginxPlanType(MAX);
-	}
+    public MaxQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, storageUnit);
+        this.setIginxPlanType(MAX);
+    }
 
-	public MaxQueryPlan(List<String> paths, long startTime, long endTime) {
-		this(paths, startTime, endTime, null);
-	}
+    public MaxQueryPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
+    }
 }

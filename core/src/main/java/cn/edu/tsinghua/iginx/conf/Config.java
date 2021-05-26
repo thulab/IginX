@@ -52,21 +52,19 @@ public class Config {
 
     private int statisticsLogInterval = 1000;
 
-    private String restip = "127.0.0.1";
+    private String restIp = "127.0.0.1";
 
-    private int restport = 6666;
+    private int restPort = 6666;
 
     private int maxTimeseriesLength = 10;
 
     private boolean enableRestService = true;
 
-    public int getMaxTimeseriesLength()
-    {
+    public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
 
-    public void setMaxTimeseriesLength(int maxTimeseriesLength)
-    {
+    public void setMaxTimeseriesLength(int maxTimeseriesLength) {
         this.maxTimeseriesLength = maxTimeseriesLength;
     }
 
@@ -198,33 +196,27 @@ public class Config {
         this.statisticsLogInterval = statisticsLogInterval;
     }
 
-    public String getRestip()
-    {
-        return restip;
+    public String getRestIp() {
+        return restIp;
     }
 
-    public int getRestport()
-    {
-        return restport;
+    public void setRestIp(String restIp) {
+        this.restIp = restIp;
     }
 
-    public void setRestip(String restip)
-    {
-        this.restip = restip;
+    public int getRestPort() {
+        return restPort;
     }
 
-    public void setRestport(int restport)
-    {
-        this.restport = restport;
+    public void setRestPort(int restPort) {
+        this.restPort = restPort;
     }
 
-    public boolean isEnableRestService()
-    {
+    public boolean isEnableRestService() {
         return enableRestService;
     }
 
-    public void setEnableRestService(boolean enableRestService)
-    {
+    public void setEnableRestService(boolean enableRestService) {
         this.enableRestService = enableRestService;
     }
 }

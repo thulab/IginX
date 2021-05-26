@@ -28,16 +28,16 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DELETE_COLUMNS;
 
 public class DeleteColumnsPlan extends ColumnPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DeleteColumnsPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeleteColumnsPlan.class);
 
-	public DeleteColumnsPlan(List<String> paths) {
-		super(false, paths);
-		this.setIginxPlanType(DELETE_COLUMNS);
-	}
+    public DeleteColumnsPlan(List<String> paths) {
+        super(false, paths);
+        this.setIginxPlanType(DELETE_COLUMNS);
+    }
 
-	public DeleteColumnsPlan(List<String> paths, StorageUnitMeta storageUnit) {
-		super(false, paths);
-		this.setIginxPlanType(DELETE_COLUMNS);
-		this.setStorageUnit(storageUnit);
-	}
+    public DeleteColumnsPlan(List<String> paths, StorageUnitMeta storageUnit) {
+        super(false, paths);
+        this.setIginxPlanType(DELETE_COLUMNS);
+        this.setStorageUnit(storageUnit);
+    }
 }

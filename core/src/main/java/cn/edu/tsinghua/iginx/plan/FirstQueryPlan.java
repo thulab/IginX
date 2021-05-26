@@ -10,14 +10,14 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.FIRST;
 
 public class FirstQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(FirstQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(FirstQueryPlan.class);
 
-	public FirstQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-		super(paths, startTime, endTime, storageUnit);
-		this.setIginxPlanType(FIRST);
-	}
+    public FirstQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, storageUnit);
+        this.setIginxPlanType(FIRST);
+    }
 
-	public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
-		this(paths, startTime, endTime, null);
-	}
+    public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
+    }
 }

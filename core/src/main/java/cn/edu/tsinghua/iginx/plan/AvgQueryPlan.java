@@ -10,14 +10,14 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.AVG;
 
 public class AvgQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(AvgQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(AvgQueryPlan.class);
 
-	public AvgQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-		super(paths, startTime, endTime, storageUnit);
-		this.setIginxPlanType(AVG);
-	}
+    public AvgQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, storageUnit);
+        this.setIginxPlanType(AVG);
+    }
 
-	public AvgQueryPlan(List<String> paths, long startTime, long endTime) {
-		this(paths, startTime, endTime, null);
-	}
+    public AvgQueryPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
+    }
 }

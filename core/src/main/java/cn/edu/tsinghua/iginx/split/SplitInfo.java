@@ -25,77 +25,77 @@ import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
 public class SplitInfo {
 
-	private TimeInterval timeInterval;
+    private TimeInterval timeInterval;
 
-	private TimeSeriesInterval timeSeriesInterval;
+    private TimeSeriesInterval timeSeriesInterval;
 
-	private StorageUnitMeta storageUnit;
+    private StorageUnitMeta storageUnit;
 
-	private IginxPlan.IginxPlanType type;
+    private IginxPlan.IginxPlanType type;
 
-	private int combineGroup;
+    private int combineGroup;
 
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit) {
-		this.timeInterval = timeInterval;
-		this.timeSeriesInterval = timeSeriesInterval;
-		this.storageUnit = storageUnit;
-		this.type = IginxPlan.IginxPlanType.UNKNOWN;
-	}
+    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit) {
+        this.timeInterval = timeInterval;
+        this.timeSeriesInterval = timeSeriesInterval;
+        this.storageUnit = storageUnit;
+        this.type = IginxPlan.IginxPlanType.UNKNOWN;
+    }
 
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
-					 IginxPlan.IginxPlanType type) {
-		this.timeInterval = timeInterval;
-		this.timeSeriesInterval = timeSeriesInterval;
-		this.storageUnit = storageUnit;
-		this.type = type;
-	}
+    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
+                     IginxPlan.IginxPlanType type) {
+        this.timeInterval = timeInterval;
+        this.timeSeriesInterval = timeSeriesInterval;
+        this.storageUnit = storageUnit;
+        this.type = type;
+    }
 
-	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
-					 IginxPlan.IginxPlanType type, int combineGroup) {
-		this.timeInterval = timeInterval;
-		this.timeSeriesInterval = timeSeriesInterval;
-		this.storageUnit = storageUnit;
-		this.type = type;
-		this.combineGroup = combineGroup;
-	}
+    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
+                     IginxPlan.IginxPlanType type, int combineGroup) {
+        this.timeInterval = timeInterval;
+        this.timeSeriesInterval = timeSeriesInterval;
+        this.storageUnit = storageUnit;
+        this.type = type;
+        this.combineGroup = combineGroup;
+    }
 
-	public TimeInterval getTimeInterval() {
-		return timeInterval;
-	}
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
+    }
 
-	public void setTimeInterval(TimeInterval timeInterval) {
-		this.timeInterval = timeInterval;
-	}
+    public void setTimeInterval(TimeInterval timeInterval) {
+        this.timeInterval = timeInterval;
+    }
 
-	public TimeSeriesInterval getTimeSeriesInterval() {
-		return timeSeriesInterval;
-	}
+    public TimeSeriesInterval getTimeSeriesInterval() {
+        return timeSeriesInterval;
+    }
 
-	public void setTimeSeriesInterval(TimeSeriesInterval timeSeriesInterval) {
-		this.timeSeriesInterval = timeSeriesInterval;
-	}
+    public void setTimeSeriesInterval(TimeSeriesInterval timeSeriesInterval) {
+        this.timeSeriesInterval = timeSeriesInterval;
+    }
 
-	public StorageUnitMeta getStorageUnit() {
-		return storageUnit;
-	}
+    public StorageUnitMeta getStorageUnit() {
+        return storageUnit;
+    }
 
-	public void setStorageUnit(StorageUnitMeta storageUnit) {
-		this.storageUnit = storageUnit;
-	}
+    public void setStorageUnit(StorageUnitMeta storageUnit) {
+        this.storageUnit = storageUnit;
+    }
 
-	public IginxPlan.IginxPlanType getType() {
-		return type;
-	}
+    public IginxPlan.IginxPlanType getType() {
+        return type;
+    }
 
-	public void setType(IginxPlan.IginxPlanType type) {
-		this.type = type;
-	}
+    public void setType(IginxPlan.IginxPlanType type) {
+        this.type = type;
+    }
 
-	public int getCombineGroup() {
-		return combineGroup;
-	}
+    public int getCombineGroup() {
+        return combineGroup;
+    }
 
-	public void setCombineGroup(int combineGroup) {
-		this.combineGroup = combineGroup;
-	}
+    public void setCombineGroup(int combineGroup) {
+        this.combineGroup = combineGroup;
+    }
 }

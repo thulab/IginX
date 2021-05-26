@@ -30,8 +30,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -60,32 +60,19 @@ import java.util.stream.Collectors;
 public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     private static final Logger logger = LoggerFactory.getLogger(AbstractMetaManager.class);
-
-    private final CuratorFramework zookeeperClient;
-
-    protected TreeCache iginxCache;
-
-    private long iginxId;
-
-    private final Map<Long, IginxMeta> iginxMetaMap = new ConcurrentHashMap<>();
-
-    protected TreeCache storageEngineCache;
-
     protected final Map<Long, StorageEngineMeta> storageEngineMetaMap = new ConcurrentHashMap<>();
-
+    private final CuratorFramework zookeeperClient;
+    private final Map<Long, IginxMeta> iginxMetaMap = new ConcurrentHashMap<>();
     private final List<StorageEngineChangeHook> storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
-
-    protected TreeCache fragmentCache;
-
-    protected TreeCache storageUnitCache;
-
-    protected ReadWriteLock storageUnitLock = new ReentrantReadWriteLock();
-
-    protected Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
-
     private final Map<String, Map<String, Integer>> schemaMappings = new ConcurrentHashMap<>();
-
+    protected TreeCache iginxCache;
+    protected TreeCache storageEngineCache;
+    protected TreeCache storageUnitCache;
+    protected TreeCache fragmentCache;
     protected TreeCache schemaMappingsCache;
+    protected ReadWriteLock storageUnitLock = new ReentrantReadWriteLock();
+    protected Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
+    private long iginxId;
 
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
@@ -125,9 +112,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 // 从 zookeeper 中解析 schema mapping 数据
                 List<String> schemas = this.zookeeperClient.getChildren()
                         .forPath(Constants.SCHEMA_MAPPING_PREFIX);
-                for (String schema: schemas) {
+                for (String schema : schemas) {
                     Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(new String(this.zookeeperClient.getData()
-                            .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {}.getType());
+                            .forPath(Constants.SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {
+                    }.getType());
                     schemaMappings.put(schema, schemaMapping);
                 }
             }
@@ -150,7 +138,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 case NODE_ADDED:
                 case NODE_UPDATED:
                     data = event.getData().getData();
-                    schemaMapping = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<String, Integer>>() {}.getType());
+                    schemaMapping = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<String, Integer>>() {
+                    }.getType());
                     schemaMappings.put(schema, schemaMapping);
                     break;
                 case NODE_REMOVED:
@@ -212,7 +201,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         }
         List<String> children = this.zookeeperClient.getChildren()
                 .forPath(Constants.IGINX_NODE_PREFIX);
-        for (String childName: children) {
+        for (String childName : children) {
             byte[] data = this.zookeeperClient.getData()
                     .forPath(Constants.IGINX_NODE_PREFIX + "/" + childName);
             IginxMeta iginxMeta = JsonUtils.fromJson(data, IginxMeta.class);
@@ -243,7 +232,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         lock.acquire();
         try {
             if (this.zookeeperClient.checkExists().forPath(Constants.STORAGE_ENGINE_NODE_PREFIX) == null) { // 节点不存在，说明还没有别的 iginx 节点写入过元信息
-                for (StorageEngineMeta storageEngineMeta: resolveStorageEngineFromConf()) {
+                for (StorageEngineMeta storageEngineMeta : resolveStorageEngineFromConf()) {
                     String nodeName = this.zookeeperClient.create()
                             .creatingParentsIfNeeded()
                             .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
@@ -361,7 +350,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     break;
             }
             if (storageEngineMeta != null || originalStorageEngineMeta != null) {
-                for (StorageEngineChangeHook hook: storageEngineChangeHooks) {
+                for (StorageEngineChangeHook hook : storageEngineChangeHooks) {
                     hook.onChanged(originalStorageEngineMeta, storageEngineMeta);
                 }
             }
@@ -377,7 +366,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         }
         List<String> children = this.zookeeperClient.getChildren()
                 .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX);
-        for (String childName: children) {
+        for (String childName : children) {
             byte[] data = this.zookeeperClient.getData()
                     .forPath(Constants.STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
             StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
@@ -426,11 +415,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             } else {
                 List<String> tsIntervalNames = this.zookeeperClient.getChildren().forPath(Constants.FRAGMENT_NODE_PREFIX);
                 Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap = new HashMap<>();
-                for (String tsIntervalName: tsIntervalNames) {
+                for (String tsIntervalName : tsIntervalNames) {
                     TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
                     List<FragmentMeta> fragmentMetaList = new ArrayList<>();
                     List<String> timeIntervalNames = this.zookeeperClient.getChildren().forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
-                    for (String timeIntervalName: timeIntervalNames) {
+                    for (String timeIntervalName : timeIntervalNames) {
                         FragmentMeta fragmentMeta = JsonUtils.fromJson(this.zookeeperClient.getData()
                                 .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
                         fragmentMetaList.add(fragmentMeta);
@@ -440,7 +429,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 initFragment(fragmentListMap);
             }
             registerFragmentListener();
-        }  finally {
+        } finally {
             mutex.release();
         }
     }
@@ -476,7 +465,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                                 break;
                             }
                             addFragment(fragmentMeta);
-//                            for (FragmentReplicaMeta replicaMeta: fragmentMeta.getReplicaMetas().values()) {
+//                            for (FragmentReplicaMeta replicaMeta : fragmentMeta.getReplicaMetas().values()) {
 //                                long storageEngineId = replicaMeta.getStorageEngineId();
 //                                StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
 //                                storageEngineMeta.addLatestFragmentReplicaMetas(replicaMeta);
@@ -503,7 +492,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         .forPath(Constants.STORAGE_UNIT_NODE_PREFIX);
             } else {
                 List<String> storageUnitIds = this.zookeeperClient.getChildren().forPath(Constants.STORAGE_UNIT_NODE_PREFIX);
-                for (String storageUnitId: storageUnitIds) {
+                for (String storageUnitId : storageUnitIds) {
                     byte[] data = this.zookeeperClient.getData()
                             .forPath(Constants.STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitId);
                     StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
@@ -545,7 +534,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         } finally {
             try {
                 lock.release();
-            } catch (Exception e ) {
+            } catch (Exception e) {
                 logger.error("release mutex error: ", e);
             }
         }
@@ -575,7 +564,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
         Map<String, StorageUnitMeta> resultMap = new HashMap<>();
         storageUnitLock.readLock().lock();
-        for (String id: ids) {
+        for (String id : ids) {
             StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
             if (storageUnit != null) {
                 resultMap.put(id, storageUnit);
@@ -601,7 +590,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         try {
             mutex.acquire();
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
-            for (FragmentMeta originalFragmentMeta: latestFragments.values()) { // 终结老分片
+            for (FragmentMeta originalFragmentMeta : latestFragments.values()) { // 终结老分片
                 FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
                 // 在更新分片时，先更新本地
                 fragmentMeta.setUpdatedBy(iginxId);
@@ -609,7 +598,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 this.zookeeperClient.setData()
                         .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
             }
-            for (FragmentMeta fragmentMeta: fragments) {
+            for (FragmentMeta fragmentMeta : fragments) {
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
                 addFragment(fragmentMeta);
@@ -650,7 +639,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         try {
             storageUnitLock.writeLock().lock();
             mutex.acquire();
-            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+            for (StorageUnitMeta masterStorageUnit : storageUnits) {
                 masterStorageUnit.setCreatedBy(iginxId);
                 String fakeName = masterStorageUnit.getId();
                 String nodeName = this.zookeeperClient.create()
@@ -662,7 +651,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 this.zookeeperClient.setData()
                         .forPath(nodeName, JsonUtils.toJson(actualMasterStorageUnit));
                 fakeIdToStorageUnit.put(fakeName, actualMasterStorageUnit);
-                for (StorageUnitMeta slaveStorageUnit: masterStorageUnit.getReplicas()) {
+                for (StorageUnitMeta slaveStorageUnit : masterStorageUnit.getReplicas()) {
                     slaveStorageUnit.setCreatedBy(iginxId);
                     String slaveFakeName = slaveStorageUnit.getId();
                     String slaveNodeName = this.zookeeperClient.create()
@@ -687,7 +676,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             storageUnitLock.writeLock().unlock();
             try {
                 mutex.release();
-            } catch (Exception e ) {
+            } catch (Exception e) {
                 logger.error("release mutex error: ", e);
             }
         }
@@ -707,7 +696,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 return false;
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
-            for (FragmentMeta fragmentMeta: initialFragments) {
+            for (FragmentMeta fragmentMeta : initialFragments) {
                 logger.info("create initial fragment: " + new String(JsonUtils.toJson(fragmentMeta)));
                 String tsIntervalName = fragmentMeta.getTsInterval().toString();
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
@@ -796,7 +785,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         } finally {
             try {
                 mutex.release();
-            } catch (Exception e ) {
+            } catch (Exception e) {
                 logger.error("release mutex error: ", e);
             }
         }

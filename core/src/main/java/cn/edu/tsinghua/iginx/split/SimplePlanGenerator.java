@@ -225,7 +225,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                                 downsampleQueryReq.getStartTime(),
                                 downsampleQueryReq.getEndTime(),
                                 downsampleQueryReq.getPrecision()
-                                );
+                        );
                         splitInfoList = planSplitter.getSplitDownsampleMaxQueryPlanResults(downsampleMaxQueryPlan);
                         return splitDownsampleMaxQueryPlan(downsampleMaxQueryPlan, splitInfoList);
                     case MIN:
@@ -291,7 +291,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         valueFilterQueryReq.getPaths(),
                         valueFilterQueryReq.getStartTime(),
                         valueFilterQueryReq.getEndTime(),
-                        ((ValueFilterQueryContext)requestContext).getBooleanExpression()
+                        ((ValueFilterQueryContext) requestContext).getBooleanExpression()
                 );
                 splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
                 return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
@@ -396,8 +396,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
 
     public List<ValueFilterQueryPlan> splitValueFilterQueryPlan(ValueFilterQueryPlan plan, List<SplitInfo> infoList) {
         List<ValueFilterQueryPlan> plans = new ArrayList<>();
-        for (SplitInfo info : infoList)
-        {
+        for (SplitInfo info : infoList) {
             ValueFilterQueryPlan subPlan = new ValueFilterQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
@@ -426,7 +425,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
 
     private List<IginxPlan> splitDownsampleQueryPlan(DownsampleQueryPlan plan, List<SplitInfo> infoList) {
         List<IginxPlan> plans = new ArrayList<>();
-        for (SplitInfo info: infoList) {
+        for (SplitInfo info : infoList) {
             IginxPlan subPlan = null;
             switch (info.getType()) {
                 case MAX:

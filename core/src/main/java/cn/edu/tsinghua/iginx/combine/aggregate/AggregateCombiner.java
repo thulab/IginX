@@ -43,6 +43,10 @@ public class AggregateCombiner {
 
     private static final AggregateCombiner instance = new AggregateCombiner();
 
+    public static AggregateCombiner getInstance() {
+        return instance;
+    }
+
     private int compare(Object o1, Object o2, DataType dataType) {
         switch (dataType) {
             case INTEGER:
@@ -65,7 +69,7 @@ public class AggregateCombiner {
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         Set<String> pathSet = new HashSet<>();
-        for (AggregateQueryPlanExecuteResult planExecuteResult: planExecuteResults) {
+        for (AggregateQueryPlanExecuteResult planExecuteResult : planExecuteResults) {
             List<String> pathSubList = planExecuteResult.getPaths();
             List<DataType> dataTypeSubList = planExecuteResult.getDataTypes();
             for (int i = 0; i < pathSubList.size(); i++) {
@@ -88,12 +92,12 @@ public class AggregateCombiner {
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
         Map<String, List<Object>> pathsRawData = new HashMap<>();
-        for (StatisticsAggregateQueryPlanExecuteResult planExecuteResult: planExecuteResults) {
+        for (StatisticsAggregateQueryPlanExecuteResult planExecuteResult : planExecuteResults) {
             List<String> subPaths = planExecuteResult.getPaths();
             List<Object> subPathsRawData = planExecuteResult.getValues();
             for (int i = 0; i < subPaths.size(); i++) {
                 pathsRawData.computeIfAbsent(subPaths.get(i), e -> new ArrayList<>())
-                    .add(subPathsRawData.get(i));
+                        .add(subPathsRawData.get(i));
             }
         }
         Object[] values = new Object[paths.size()];
@@ -166,7 +170,7 @@ public class AggregateCombiner {
         Long[] times = new Long[paths.size()];
         Object[] values = new Object[paths.size()];
         Map<String, List<Pair<Long, Object>>> pathsRawData = new HashMap<>();
-        for (SingleValueAggregateQueryPlanExecuteResult planExecuteResult: planExecuteResults) {
+        for (SingleValueAggregateQueryPlanExecuteResult planExecuteResult : planExecuteResults) {
             List<Object> subPathsRawData = planExecuteResult.getValues();
             List<Long> subTimes = planExecuteResult.getTimes();
             List<String> subPaths = planExecuteResult.getPaths();
@@ -193,7 +197,7 @@ public class AggregateCombiner {
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
         Map<String, Pair<DataType, List<Pair<Long, Object>>>> pathsRawData = new HashMap<>();
-        for (AvgAggregateQueryPlanExecuteResult planExecuteResult: planExecuteResults) {
+        for (AvgAggregateQueryPlanExecuteResult planExecuteResult : planExecuteResults) {
             List<String> subPaths = planExecuteResult.getPaths();
             List<DataType> subDataTypes = planExecuteResult.getDataTypes();
             List<Long> subCounts = planExecuteResult.getCounts();
@@ -266,10 +270,6 @@ public class AggregateCombiner {
             values[i] = valueList.get(i);
         }
         resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
-    }
-
-    public static AggregateCombiner getInstance() {
-        return instance;
     }
 
 }

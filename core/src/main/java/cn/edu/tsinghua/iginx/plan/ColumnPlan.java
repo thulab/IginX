@@ -27,11 +27,11 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.COLUMN;
 
 public abstract class ColumnPlan extends NonDatabasePlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(ColumnPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(ColumnPlan.class);
 
-	protected ColumnPlan(boolean isQuery, List<String> paths) {
-		super(isQuery, paths);
-		this.setIginxPlanType(COLUMN);
-		this.setSync(true);
-	}
+    protected ColumnPlan(boolean isQuery, List<String> paths) {
+        super(isQuery, paths);
+        this.setIginxPlanType(COLUMN);
+        this.setSync(true);
+    }
 }

@@ -29,30 +29,30 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DATA;
 
 public abstract class DataPlan extends NonDatabasePlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DataPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DataPlan.class);
 
-	private TimeInterval timeInterval;
+    private TimeInterval timeInterval;
 
-	protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-		super(isQuery, paths);
-		this.setIginxPlanType(DATA);
-		this.timeInterval = new TimeInterval(startTime, endTime);
-		this.setStorageUnit(storageUnit);
-	}
+    protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(isQuery, paths);
+        this.setIginxPlanType(DATA);
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.setStorageUnit(storageUnit);
+    }
 
-	public TimeInterval getTimeInterval() {
-		return timeInterval;
-	}
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
+    }
 
-	public void setTimeInterval(TimeInterval timeInterval) {
-		this.timeInterval = timeInterval;
-	}
+    public void setTimeInterval(TimeInterval timeInterval) {
+        this.timeInterval = timeInterval;
+    }
 
-	public long getStartTime() {
-		return timeInterval.getStartTime();
-	}
+    public long getStartTime() {
+        return timeInterval.getStartTime();
+    }
 
-	public long getEndTime() {
-		return timeInterval.getEndTime();
-	}
+    public long getEndTime() {
+        return timeInterval.getEndTime();
+    }
 }

@@ -20,32 +20,21 @@ package cn.edu.tsinghua.iginx.utils;
 
 public class SnowFlakeUtils {
 
-    private static SnowFlakeUtils instance;
-
     // 起始的时间戳
     private final static long START_STAMP = 0L;
-
     // 每一部分占用的位数，就三个
     private final static long SEQUENCE_BIT = 12;// 序列号占用的位数
-
     private final static long MACHINE_BIT = 5; // 机器标识占用的位数
-
     private final static long DATACENTER_BIT = 5;// 数据中心占用的位数
-
     // 每一部分最大值
     private final static long MAX_DATACENTER_NUM = ~(-1L << DATACENTER_BIT);
-
     private final static long MAX_MACHINE_NUM = ~(-1L << MACHINE_BIT);
-
     private final static long MAX_SEQUENCE = ~(-1L << SEQUENCE_BIT);
-
     // 每一部分向左的位移
     private final static long MACHINE_LEFT = SEQUENCE_BIT;
-
     private final static long DATACENTER_LEFT = SEQUENCE_BIT + MACHINE_BIT;
-
     private final static long TIMESTAMP_LEFT = DATACENTER_LEFT + DATACENTER_BIT;
-
+    private static SnowFlakeUtils instance;
     private final long datacenterId; // 数据中心
 
     private final long machineId; // 机器标识
@@ -63,6 +52,17 @@ public class SnowFlakeUtils {
         }
         this.datacenterId = datacenterId;
         this.machineId = machineId;
+    }
+
+    public static void init(long machineId) {
+        if (instance != null) {
+            return;
+        }
+        instance = new SnowFlakeUtils(0, machineId);
+    }
+
+    public static SnowFlakeUtils getInstance() {
+        return instance;
     }
 
     //产生下一个ID
@@ -108,17 +108,6 @@ public class SnowFlakeUtils {
 
     private long getNewTimestamp() {
         return System.currentTimeMillis();
-    }
-
-    public static void init(long machineId) {
-        if (instance != null) {
-            return;
-        }
-        instance = new SnowFlakeUtils(0, machineId);
-    }
-
-    public static SnowFlakeUtils getInstance() {
-        return instance;
     }
 
 }

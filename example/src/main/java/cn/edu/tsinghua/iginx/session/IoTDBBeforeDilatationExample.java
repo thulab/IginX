@@ -32,22 +32,15 @@ import java.util.Map;
 public class IoTDBBeforeDilatationExample {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBBeforeDilatationExample.class);
-
-    private static Session session;
-
     private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
     private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
     private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
     private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
-
     private static final long endTimestamp = 100000000L;
-
     private static final int insertTimes = 10000;
-
     private static final int recordPerInsert = 10;
-
-
     private static final List<String> paths = new ArrayList<>();
+    private static Session session;
 
     static {
         paths.add(COLUMN_D1_S1);
@@ -109,7 +102,6 @@ public class IoTDBBeforeDilatationExample {
                 logger.info("insert progress: " + (insertTimes - i + 1) + "/" + insertTimes + ".");
             }
         }
-
 
 
     }

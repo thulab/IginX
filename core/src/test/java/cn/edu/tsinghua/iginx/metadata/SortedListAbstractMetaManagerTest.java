@@ -81,7 +81,7 @@ public class SortedListAbstractMetaManagerTest {
         assertSame(fragmentMeta3, resultList.get(2));
         // 查询区间 [130, 140]
         resultList = SortedListAbstractMetaManager.searchFragmentList(fragmentMetas, new TimeInterval(130, 140));
-      //  assertEquals(2, resultList.size());
+        //  assertEquals(2, resultList.size());
         assertSame(fragmentMeta2, resultList.get(0));
         assertSame(fragmentMeta4, resultList.get(1));
         // 查询区间 [600, ~]

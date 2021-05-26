@@ -37,18 +37,12 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class QueryStatisticsCollector extends AbstractStageStatisticsCollector implements IQueryStatisticsCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryStatisticsCollector.class);
-
-    private long count = 0;
-
-    private long span = 0;
-
     private final Map<ContextType, Pair<Long, Long>> detailInfos = new HashMap<>();
-
-    private long queryPoints = 0;
-
-    private long insertPoints = 0;
-
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private long count = 0;
+    private long span = 0;
+    private long queryPoints = 0;
+    private long insertPoints = 0;
 
     @Override
     protected String getStageName() {
@@ -83,7 +77,7 @@ public class QueryStatisticsCollector extends AbstractStageStatisticsCollector i
         if (count != 0) {
             logger.info("\taverage-span: " + (1.0 * span) / count + "μs");
         }
-        for (Map.Entry<ContextType, Pair<Long, Long>> entry: detailInfos.entrySet()) {
+        for (Map.Entry<ContextType, Pair<Long, Long>> entry : detailInfos.entrySet()) {
             logger.info("\t\tFor Request: " + entry.getKey() + ", count: " + entry.getValue().k + ", span: " + entry.getValue().v + "μs");
         }
         logger.info("\ttotal insert points: " + insertPoints);

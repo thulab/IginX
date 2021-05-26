@@ -33,7 +33,7 @@ public class AsyncTask {
     private int retryTimes;
 
     public void addRetryTimes() {
-        retryTimes ++;
+        retryTimes++;
     }
 
 }

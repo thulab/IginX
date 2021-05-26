@@ -10,14 +10,14 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.MIN;
 
 public class MinQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(MinQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(MinQueryPlan.class);
 
-	public MinQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-		super(paths, startTime, endTime, storageUnit);
-		this.setIginxPlanType(MIN);
-	}
+    public MinQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, storageUnit);
+        this.setIginxPlanType(MIN);
+    }
 
-	public MinQueryPlan(List<String> paths, long startTime, long endTime) {
-		this(paths, startTime, endTime, null);
-	}
+    public MinQueryPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
+    }
 }

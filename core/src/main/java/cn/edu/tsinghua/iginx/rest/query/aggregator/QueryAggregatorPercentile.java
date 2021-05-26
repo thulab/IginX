@@ -1,52 +1,59 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
-import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.RestUtils;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class QueryAggregatorPercentile extends QueryAggregator
-{
-    public QueryAggregatorPercentile()
-    {
+public class QueryAggregatorPercentile extends QueryAggregator {
+    public QueryAggregatorPercentile() {
         super(QueryAggregatorType.PERSENTILE);
     }
 
     @Override
-    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp)
-    {
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
-        try
-        {
+        try {
             SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
-            switch (type)
-            {
+            switch (type) {
                 case LONG:
                     List<Long> tmp = new ArrayList<>();
-                    for (int i = 0; i < n; i++)
-                    {
+                    for (int i = 0; i < n; i++) {
                         for (int j = 0; j < m; j++)
-                            if (sessionQueryDataSet.getValues().get(i).get(j) != null)
-                            {
+                            if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                                 datapoints += 1;
                                 tmp.add((long) sessionQueryDataSet.getValues().get(i).get(j));
                             }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
-                        {
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmp);
                             queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
                                     tmp.get((int) Math.floor(getPercentile() * (tmp.size() - 1))));
@@ -56,17 +63,14 @@ public class QueryAggregatorPercentile extends QueryAggregator
                     break;
                 case DOUBLE:
                     List<Double> tmpd = new ArrayList<>();
-                    for (int i = 0; i < n; i++)
-                    {
+                    for (int i = 0; i < n; i++) {
                         for (int j = 0; j < m; j++)
-                            if (sessionQueryDataSet.getValues().get(i).get(j) != null)
-                            {
+                            if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                                 datapoints += 1;
                                 tmpd.add((double) sessionQueryDataSet.getValues().get(i).get(j));
                             }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur()))
-                        {
+                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmpd);
                             queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
                                     tmpd.get((int) Math.floor(getPercentile() * (tmpd.size() - 1))));
@@ -78,9 +82,7 @@ public class QueryAggregatorPercentile extends QueryAggregator
                     throw new Exception("Unsupported data type");
             }
             queryResultDataset.setSampleSize(datapoints);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return queryResultDataset;

@@ -10,14 +10,14 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.LAST;
 
 public class LastQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(LastQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(LastQueryPlan.class);
 
-	public LastQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-		super(paths, startTime, endTime, storageUnit);
-		this.setIginxPlanType(LAST);
-	}
+    public LastQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, storageUnit);
+        this.setIginxPlanType(LAST);
+    }
 
-	public LastQueryPlan(List<String> paths, long startTime, long endTime) {
-		this(paths, startTime, endTime, null);
-	}
+    public LastQueryPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
+    }
 }
