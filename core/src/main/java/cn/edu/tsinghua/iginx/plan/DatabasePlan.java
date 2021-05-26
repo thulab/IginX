@@ -25,23 +25,23 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DATABASE;
 
 public abstract class DatabasePlan extends IginxPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DatabasePlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DatabasePlan.class);
 
-	private String databaseName;
+    private String databaseName;
 
-	protected DatabasePlan(boolean isQuery, String databaseName) {
-		super(isQuery);
-		this.setIginxPlanType(DATABASE);
-		this.setCanBeSplit(false);
-		this.databaseName = databaseName;
-		this.setSync(true);
-	}
+    protected DatabasePlan(boolean isQuery, String databaseName) {
+        super(isQuery);
+        this.setIginxPlanType(DATABASE);
+        this.setCanBeSplit(false);
+        this.databaseName = databaseName;
+        this.setSync(true);
+    }
 
-	public String getDatabaseName() {
-		return databaseName;
-	}
+    public String getDatabaseName() {
+        return databaseName;
+    }
 
-	public void setDatabaseName(String databaseName) {
-		this.databaseName = databaseName;
-	}
+    public void setDatabaseName(String databaseName) {
+        this.databaseName = databaseName;
+    }
 }

@@ -27,16 +27,16 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.DELETE_DATA_IN_
 
 public class DeleteDataInColumnsPlan extends DataPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(DeleteDataInColumnsPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DeleteDataInColumnsPlan.class);
 
-	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
-		super(false, paths, startTime, endTime);
-		this.setIginxPlanType(DELETE_DATA_IN_COLUMNS);
-	}
+    public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
+        super(false, paths, startTime, endTime);
+        this.setIginxPlanType(DELETE_DATA_IN_COLUMNS);
+    }
 
-	public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
-		this.setSync(true);
-	}
+    public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+        this(paths, startTime, endTime);
+        this.setStorageEngineId(storageEngineId);
+        this.setSync(true);
+    }
 }

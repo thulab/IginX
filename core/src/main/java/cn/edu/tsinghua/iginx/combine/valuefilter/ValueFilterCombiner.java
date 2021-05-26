@@ -21,10 +21,12 @@ package cn.edu.tsinghua.iginx.combine.valuefilter;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
+import cn.edu.tsinghua.iginx.query.expression.BooleanExpression;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
-import cn.edu.tsinghua.iginx.utils.BooleanExpression;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.CheckedFunction;
 import org.slf4j.Logger;
@@ -41,35 +43,29 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ValueFilterCombiner
-{
+public class ValueFilterCombiner {
 
     private static final Logger logger = LoggerFactory.getLogger(ValueFilterCombiner.class);
 
     private static final ValueFilterCombiner instance = new ValueFilterCombiner();
 
-    private ValueFilterCombiner()
-    {
+    private ValueFilterCombiner() {
     }
 
-    public static ValueFilterCombiner getInstance()
-    {
+    public static ValueFilterCombiner getInstance() {
         return instance;
     }
 
-    public boolean insPath(String path, List<String> queryPaths)
-    {
-        for (String queryPath : queryPaths)
-        {
+    public boolean insPath(String path, List<String> queryPaths) {
+        for (String queryPath : queryPaths) {
             if (path.compareTo(queryPath) == 0)
                 return true;
             String[] tmpPath = path.split("\\.");
             String[] tmpQueryPath = queryPath.split("\\.");
             if (tmpPath.length != tmpQueryPath.length) continue;
             boolean flag = true;
-            for (int i=0; i<tmpPath.length; i++)
-                if (tmpPath[i].compareTo(tmpQueryPath[i]) != 0 && tmpQueryPath[i].compareTo("*") != 0)
-                {
+            for (int i = 0; i < tmpPath.length; i++)
+                if (tmpPath[i].compareTo(tmpQueryPath[i]) != 0 && tmpQueryPath[i].compareTo("*") != 0) {
                     flag = false;
                     break;
                 }
@@ -78,8 +74,7 @@ public class ValueFilterCombiner
         return false;
     }
 
-    public void combineResult(ValueFilterQueryResp resp, List<ValueFilterQueryPlanExecuteResult> planExecuteResults, List<String> queryPaths, BooleanExpression booleanExpression) throws ExecutionException
-    {
+    public void combineResult(ValueFilterQueryResp resp, List<ValueFilterQueryPlanExecuteResult> planExecuteResults, List<String> queryPaths, BooleanExpression booleanExpression) throws ExecutionException {
         Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSets() != null)
                 .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
                 .map(ValueFilterQueryPlanExecuteResult::getQueryExecuteDataSets)
@@ -96,16 +91,13 @@ public class ValueFilterCombiner
         List<ByteBuffer> valuesList = new ArrayList<>();
         List<ByteBuffer> bitmapList = new ArrayList<>();
         Map<String, Integer> columnPositionMap = new HashMap<>();
-        for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers)
-        {
+        for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
             List<String> columnNameSubList = dataSetWrapper.getColumnNames();
             List<DataType> columnTypeSubList = dataSetWrapper.getColumnTypes();
-            for (int i = 0; i < columnNameSubList.size(); i++)
-            {
+            for (int i = 0; i < columnNameSubList.size(); i++) {
                 String columnName = columnNameSubList.get(i);
                 DataType columnType = columnTypeSubList.get(i);
-                if (!columnPositionMap.containsKey(columnName))
-                {
+                if (!columnPositionMap.containsKey(columnName)) {
                     columnPositionMap.put(columnName, columnNameList.size());
                     columnNameList.add(columnName);
                     columnTypeList.add(columnType);
@@ -122,51 +114,39 @@ public class ValueFilterCombiner
         {
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
-                if (dataSetWrapper.hasNext())
-                {
+                if (dataSetWrapper.hasNext()) {
                     dataSetWrapper.next();
-                }
-                else
-                {
+                } else {
                     dataSetWrapper.close();
                     deletedDataSetWrappers.add(dataSetWrapper);
                     it.remove();
                 }
             }
-            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers)
-            {
+            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
                 List<String> columnNames = dataSetWrapper.getColumnNames();
-                for (String columnName : columnNames)
-                {
+                for (String columnName : columnNames) {
                     columnSourcesList.get(columnName).remove(dataSetWrapper);
                 }
             }
         }
 
-        while (!dataSetWrappers.isEmpty())
-        {
+        while (!dataSetWrappers.isEmpty()) {
             long timestamp = Long.MAX_VALUE;
-            for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers)
-            {
+            for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
                 timestamp = Math.min(dataSetWrapper.getTimestamp(), timestamp);
             }
             Map<String, Object> objectMap = new HashMap<>();
             Object[] values = new Object[newColumnTypeList.size()];
             Bitmap bitmap = new Bitmap(newColumnTypeList.size());
-            for (int i = 0; i < newColumnTypeList.size(); i++)
-            {
+            for (int i = 0; i < newColumnTypeList.size(); i++) {
                 String columnName = newColumnNameList.get(i);
                 List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
-                for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources)
-                {
-                    if (dataSetWrapper.getTimestamp() == timestamp)
-                    {
+                for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
+                    if (dataSetWrapper.getTimestamp() == timestamp) {
                         Object value = dataSetWrapper.getValue(columnName);
-                        if (value != null)
-                        {
+                        if (value != null) {
                             values[i] = value;
                             bitmap.mark(i);
                             break;
@@ -175,17 +155,13 @@ public class ValueFilterCombiner
                 }
             }
 
-            for (int i = 0; i < booleanExpression.getTimeseries().size(); i++)
-            {
+            for (int i = 0; i < booleanExpression.getTimeseries().size(); i++) {
                 String columnName = columnNameList.get(i);
                 List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
-                for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources)
-                {
-                    if (dataSetWrapper.getTimestamp() == timestamp)
-                    {
+                for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
+                    if (dataSetWrapper.getTimestamp() == timestamp) {
                         Object value = dataSetWrapper.getValue(columnName);
-                        if (value != null)
-                        {
+                        if (value != null) {
                             objectMap.put(columnName, value);
                             break;
                         }
@@ -193,8 +169,7 @@ public class ValueFilterCombiner
                 }
             }
 
-            if (booleanExpression.getBool(objectMap))
-            {
+            if (booleanExpression.getBool(objectMap)) {
                 timestamps.add(timestamp);
                 ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, newColumnTypeList);
                 valuesList.add(buffer);
@@ -203,28 +178,21 @@ public class ValueFilterCombiner
 
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while (it.hasNext())
-            {
+            while (it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
-                if (dataSetWrapper.getTimestamp() == timestamp)
-                {
-                    if (dataSetWrapper.hasNext())
-                    {
+                if (dataSetWrapper.getTimestamp() == timestamp) {
+                    if (dataSetWrapper.hasNext()) {
                         dataSetWrapper.next();
-                    }
-                    else
-                    {
+                    } else {
                         dataSetWrapper.close();
                         deletedDataSetWrappers.add(dataSetWrapper);
                         it.remove();
                     }
                 }
             }
-            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers)
-            {
+            for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
                 List<String> columnNames = dataSetWrapper.getColumnNames();
-                for (String columnName : columnNames)
-                {
+                for (String columnName : columnNames) {
                     columnSourcesList.get(columnName).remove(dataSetWrapper);
                 }
             }

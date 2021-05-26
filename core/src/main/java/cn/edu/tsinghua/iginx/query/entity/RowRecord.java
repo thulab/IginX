@@ -41,20 +41,20 @@ public class RowRecord {
         fields.add(field);
     }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
-
-    public void setFields(List<Object> fields) {
-        this.fields = fields;
-    }
-
     public long getTimestamp() {
         return timestamp;
     }
 
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public List<Object> getFields() {
         return fields;
+    }
+
+    public void setFields(List<Object> fields) {
+        this.fields = fields;
     }
 
     public void setField(int index, Object field) {

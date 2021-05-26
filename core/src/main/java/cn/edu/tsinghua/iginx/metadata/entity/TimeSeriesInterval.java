@@ -31,16 +31,32 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         this.endTimeSeries = endTimeSeries;
     }
 
+    public static TimeSeriesInterval fromString(String str) {
+        String[] parts = str.split("-");
+        assert parts.length == 2;
+        return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
+    }
+
+    private static int compareTo(String s1, String s2) {
+        if (s1 == null && s2 == null)
+            return 0;
+        if (s1 == null)
+            return -1;
+        if (s2 == null)
+            return 1;
+        return s1.compareTo(s2);
+    }
+
     public String getStartTimeSeries() {
         return startTimeSeries;
     }
 
-    public String getEndTimeSeries() {
-        return endTimeSeries;
-    }
-
     public void setStartTimeSeries(String startTimeSeries) {
         this.startTimeSeries = startTimeSeries;
+    }
+
+    public String getEndTimeSeries() {
+        return endTimeSeries;
     }
 
     public void setEndTimeSeries(String endTimeSeries) {
@@ -88,27 +104,11 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return startTimeSeries != null && startTimeSeries.compareTo(tsName) > 0;
     }
 
-    public static TimeSeriesInterval fromString(String str) {
-        String[] parts = str.split("-");
-        assert parts.length == 2;
-        return new TimeSeriesInterval(parts[0].equals("null") ? null : parts[0], parts[1].equals("null") ? null : parts[1]);
-    }
-
     @Override
     public int compareTo(TimeSeriesInterval o) {
         int value = compareTo(startTimeSeries, o.startTimeSeries);
         if (value != 0)
             return value;
         return compareTo(endTimeSeries, o.endTimeSeries);
-    }
-
-    private static int compareTo(String s1, String s2) {
-        if (s1 == null && s2 == null)
-            return 0;
-        if (s1 == null)
-            return -1;
-        if (s2 == null)
-            return 1;
-        return s1.compareTo(s2);
     }
 }

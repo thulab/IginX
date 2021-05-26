@@ -68,7 +68,7 @@ public class QueryExecuteDataSetWrapperTest {
     @Test
     public void testGetColumnTypes() throws Exception {
         List<DataType> columnTypes = wrapper.getColumnTypes();
-        for (DataType dataType: columnTypes) {
+        for (DataType dataType : columnTypes) {
             assertEquals(DataType.LONG, dataType);
         }
     }

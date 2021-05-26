@@ -19,10 +19,37 @@
 package cn.edu.tsinghua.iginx.split;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.core.context.*;
+import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
+import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
+import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
+import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.plan.*;
+import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
+import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
+import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
+import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
+import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
+import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
+import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
+import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
@@ -33,14 +60,23 @@ import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -191,7 +227,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                                 downsampleQueryReq.getStartTime(),
                                 downsampleQueryReq.getEndTime(),
                                 downsampleQueryReq.getPrecision()
-                                );
+                        );
                         splitInfoList = planSplitter.getSplitDownsampleMaxQueryPlanResults(downsampleMaxQueryPlan);
                         return splitDownsampleMaxQueryPlan(downsampleMaxQueryPlan, splitInfoList);
                     case MIN:
@@ -251,14 +287,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     default:
                         throw new UnsupportedOperationException(downsampleQueryReq.getAggregateType().toString());
                 }
-            case ValueFilterQuery:
-            {
+            case ValueFilterQuery: {
                 ValueFilterQueryReq valueFilterQueryReq = ((ValueFilterQueryContext) requestContext).getReq();
                 ValueFilterQueryPlan valueFilterQueryPlan = new ValueFilterQueryPlan(
                         valueFilterQueryReq.getPaths(),
                         valueFilterQueryReq.getStartTime(),
                         valueFilterQueryReq.getEndTime(),
-                        ((ValueFilterQueryContext)requestContext).getBooleanExpression()
+                        ((ValueFilterQueryContext) requestContext).getBooleanExpression()
                 );
                 splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
                 return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
@@ -359,8 +394,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
 
     public List<ValueFilterQueryPlan> splitValueFilterQueryPlan(ValueFilterQueryPlan plan, List<SplitInfo> infoList) {
         List<ValueFilterQueryPlan> plans = new ArrayList<>();
-        for (SplitInfo info : infoList)
-        {
+        for (SplitInfo info : infoList) {
             ValueFilterQueryPlan subPlan = new ValueFilterQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
@@ -389,7 +423,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
 
     private List<IginxPlan> splitDownsampleQueryPlan(DownsampleQueryPlan plan, List<SplitInfo> infoList) {
         List<IginxPlan> plans = new ArrayList<>();
-        for (SplitInfo info: infoList) {
+        for (SplitInfo info : infoList) {
             IginxPlan subPlan = null;
             switch (info.getType()) {
                 case MAX:

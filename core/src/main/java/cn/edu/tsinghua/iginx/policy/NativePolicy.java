@@ -30,9 +30,8 @@ import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 
 public class NativePolicy implements IPolicy {
 
-    private IPlanSplitter iPlanSplitter;
-
     protected boolean needReAllocate = false;
+    private IPlanSplitter iPlanSplitter;
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {

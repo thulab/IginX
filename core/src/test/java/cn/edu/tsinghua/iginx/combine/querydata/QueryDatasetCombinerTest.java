@@ -121,36 +121,36 @@ public class QueryDatasetCombinerTest {
 
         Map<String, Integer> tsOrders = new HashMap<>();
 
-        for (String path: paths) {
+        for (String path : paths) {
             assertTrue(tsNames.contains(path));
             tsOrders.put(path, tsOrders.size());
         }
 
         List<List<Object>> valuesList = sessionQueryDataSet.getValues();
 
-        assertEquals(1L, (long)valuesList.get(0).get(tsOrders.get("root.sg1.d1.s1")));
-        assertEquals(1.0, (double)valuesList.get(0).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertEquals(1L, (long) valuesList.get(0).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(1.0, (double) valuesList.get(0).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
         assertTrue((boolean) valuesList.get(0).get(tsOrders.get("root.sg2.d1.s1")));
-        assertEquals("OK1", new String((byte[])valuesList.get(0).get(tsOrders.get("root.sg2.d1.s2"))));
+        assertEquals("OK1", new String((byte[]) valuesList.get(0).get(tsOrders.get("root.sg2.d1.s2"))));
 
-        assertEquals(2L, (long)valuesList.get(1).get(tsOrders.get("root.sg1.d1.s1")));
-        assertEquals(2.0, (double)valuesList.get(1).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertEquals(2L, (long) valuesList.get(1).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(2.0, (double) valuesList.get(1).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
         assertTrue((boolean) valuesList.get(1).get(tsOrders.get("root.sg2.d1.s1")));
-        assertEquals("OK2", new String((byte[])valuesList.get(1).get(tsOrders.get("root.sg2.d1.s2"))));
+        assertEquals("OK2", new String((byte[]) valuesList.get(1).get(tsOrders.get("root.sg2.d1.s2"))));
 
-        assertEquals(1L, (long)valuesList.get(2).get(tsOrders.get("root.sg1.d1.s1")));
-        assertEquals(1.0, (double)valuesList.get(2).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertEquals(1L, (long) valuesList.get(2).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(1.0, (double) valuesList.get(2).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
         assertFalse((boolean) valuesList.get(2).get(tsOrders.get("root.sg2.d1.s1")));
-        assertEquals("OK3", new String((byte[])valuesList.get(2).get(tsOrders.get("root.sg2.d1.s2"))));
+        assertEquals("OK3", new String((byte[]) valuesList.get(2).get(tsOrders.get("root.sg2.d1.s2"))));
 
-        assertEquals(2L, (long)valuesList.get(3).get(tsOrders.get("root.sg1.d1.s1")));
-        assertEquals(2.0, (double)valuesList.get(3).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
+        assertEquals(2L, (long) valuesList.get(3).get(tsOrders.get("root.sg1.d1.s1")));
+        assertEquals(2.0, (double) valuesList.get(3).get(tsOrders.get("root.sg1.d1.s2")), 0.01);
         assertNull(valuesList.get(3).get(tsOrders.get("root.sg2.d1.s1")));
         assertNull(valuesList.get(3).get(tsOrders.get("root.sg2.d1.s2")));
 
         assertNull(valuesList.get(4).get(tsOrders.get("root.sg1.d1.s1")));
         assertNull(valuesList.get(4).get(tsOrders.get("root.sg1.d1.s2")));
         assertFalse((boolean) valuesList.get(4).get(tsOrders.get("root.sg2.d1.s1")));
-        assertEquals("OK4", new String((byte[])valuesList.get(4).get(tsOrders.get("root.sg2.d1.s2"))));
+        assertEquals("OK4", new String((byte[]) valuesList.get(4).get(tsOrders.get("root.sg2.d1.s2"))));
     }
 }

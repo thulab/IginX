@@ -59,6 +59,17 @@ public final class StorageEngineMeta {
 
     private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList = new ArrayList<>();
 
+    public StorageEngineMeta() {
+    }
+
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
+        this.id = id;
+        this.ip = ip;
+        this.port = port;
+        this.extraParams = extraParams;
+        this.storageEngine = storageEngine;
+    }
+
     public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
         this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
     }
@@ -72,17 +83,6 @@ public final class StorageEngineMeta {
 
     public void addLatestFragmentReplicaMetas(FragmentReplicaMeta fragmentReplicaMeta) {
         latestFragmentReplicaMetaList.add(fragmentReplicaMeta);
-    }
-
-    public StorageEngineMeta() {
-    }
-
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
-        this.id = id;
-        this.ip = ip;
-        this.port = port;
-        this.extraParams = extraParams;
-        this.storageEngine = storageEngine;
     }
 
     public long getId() {

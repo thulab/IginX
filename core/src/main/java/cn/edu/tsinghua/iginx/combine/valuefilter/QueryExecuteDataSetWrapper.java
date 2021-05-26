@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.combine.valuefilter;
 //todo
+
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.entity.RowRecord;
@@ -27,8 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QueryExecuteDataSetWrapper
-{
+public class QueryExecuteDataSetWrapper {
 
     private final QueryExecuteDataSet dataSet;
 

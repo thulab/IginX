@@ -37,12 +37,9 @@ import java.util.stream.Collectors;
 public class SortedListMetaManager extends AbstractMetaManager {
 
     private static SortedListMetaManager INSTANCE = null;
-
-    private List<Pair<Long, List<FragmentMeta>>> sortedFragmentMetaLists;
-
-    private Map<Long, List<FragmentMeta>> fragmentMetaListMap;
-
     private final ReadWriteLock fragmentLock = new ReentrantReadWriteLock();
+    private List<Pair<Long, List<FragmentMeta>>> sortedFragmentMetaLists;
+    private Map<Long, List<FragmentMeta>> fragmentMetaListMap;
 
     private SortedListMetaManager() {
         if (sortedFragmentMetaLists == null) {
@@ -51,6 +48,95 @@ public class SortedListMetaManager extends AbstractMetaManager {
         if (fragmentMetaListMap == null) {
             fragmentMetaListMap = new HashMap<>();
         }
+    }
+
+    // 找到最后一个小于等于 timestamp 的位置
+    private static int searchSortedFragmentMetaLists(List<Pair<Long, List<FragmentMeta>>> sortedFragmentMetaLists, long timestamp) {
+        if (sortedFragmentMetaLists.size() == 0) {
+            return -1;
+        }
+        int left = 0, right = sortedFragmentMetaLists.size() - 1;
+        while (left < right) {
+            int mid = (left + right + 1) / 2;
+            if (sortedFragmentMetaLists.get(mid).k <= timestamp) {
+                left = mid;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (sortedFragmentMetaLists.get(left).k <= timestamp) {
+            return left;
+        }
+        return -1;
+    }
+
+    // 在排好序的分片列表中插入一个分片
+    private static void insertIntoSortedFragmentMetaList(List<FragmentMeta> sortedFragmentList, FragmentMeta fragment) {
+        if (sortedFragmentList.size() == 0 ||
+                sortedFragmentList.get(sortedFragmentList.size() - 1).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+            sortedFragmentList.add(fragment);
+            return;
+        }
+        int left = 0, right = sortedFragmentList.size() - 1;
+        while (left < right) {
+            int mid = (left + right) / 2;
+            if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        sortedFragmentList.add(left, fragment);
+    }
+
+    // 在排好序的分片列表中删除一个分片
+    private static void deleteFromSortedFragmentMetaList(List<FragmentMeta> sortedFragmentList, FragmentMeta fragment) {
+        if (sortedFragmentList.size() == 0 ||
+                sortedFragmentList.get(sortedFragmentList.size() - 1).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+            return;
+        }
+        int left = 0, right = sortedFragmentList.size() - 1;
+        while (left <= right) {
+            int mid = (left + right) / 2;
+            if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) == 0) {
+                sortedFragmentList.remove(mid);
+                return;
+            } else if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+    }
+
+    // 在排好序的分片列表中搜索与给定分片相交的所有分片
+    private static List<FragmentMeta> searchSortedFragmentMetaList(List<FragmentMeta> fragmentMetaList, TimeSeriesInterval tsInterval) {
+        List<FragmentMeta> resultList = new ArrayList<>();
+        for (FragmentMeta fragmentMeta : fragmentMetaList) {
+            if (fragmentMeta.getTsInterval().isIntersect(tsInterval))
+                resultList.add(fragmentMeta);
+        }
+        return resultList;
+    }
+
+    // 在排好序的分片列表中搜索包含某个时间序列的分片
+    private static FragmentMeta searchSortedFragmentMetaList(List<FragmentMeta> fragmentMetaList, String tsName) {
+        for (FragmentMeta fragmentMeta : fragmentMetaList) {
+            if (fragmentMeta.getTsInterval().isContain(tsName))
+                return fragmentMeta;
+        }
+        return null;
+    }
+
+    public static SortedListMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (SortedListMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new SortedListMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
     }
 
     @Override
@@ -153,7 +239,6 @@ public class SortedListMetaManager extends AbstractMetaManager {
         return resultSet.stream().collect(Collectors.groupingBy(FragmentMeta::getTsInterval));
     }
 
-
     @Override
     public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
         List<FragmentMeta> resultList = new ArrayList<>();
@@ -205,95 +290,6 @@ public class SortedListMetaManager extends AbstractMetaManager {
     @Override
     public boolean hasFragment() {
         return sortedFragmentMetaLists.size() != 0;
-    }
-
-    // 找到最后一个小于等于 timestamp 的位置
-    private static int searchSortedFragmentMetaLists(List<Pair<Long, List<FragmentMeta>>> sortedFragmentMetaLists, long timestamp) {
-        if (sortedFragmentMetaLists.size() == 0) {
-            return -1;
-        }
-        int left = 0, right = sortedFragmentMetaLists.size() - 1;
-        while (left < right) {
-            int mid = (left + right + 1) / 2;
-            if (sortedFragmentMetaLists.get(mid).k <= timestamp) {
-                left = mid;
-            } else {
-                right = mid - 1;
-            }
-        }
-        if (sortedFragmentMetaLists.get(left).k <= timestamp) {
-            return left;
-        }
-        return -1;
-    }
-
-    // 在排好序的分片列表中插入一个分片
-    private static void insertIntoSortedFragmentMetaList(List<FragmentMeta> sortedFragmentList, FragmentMeta fragment) {
-        if (sortedFragmentList.size() == 0 ||
-                sortedFragmentList.get(sortedFragmentList.size() - 1).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
-            sortedFragmentList.add(fragment);
-            return;
-        }
-        int left = 0, right = sortedFragmentList.size() - 1;
-        while (left < right) {
-            int mid = (left + right) / 2;
-            if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
-                left = mid + 1;
-            } else {
-                right = mid;
-            }
-        }
-        sortedFragmentList.add(left, fragment);
-    }
-
-    // 在排好序的分片列表中删除一个分片
-    private static void deleteFromSortedFragmentMetaList(List<FragmentMeta> sortedFragmentList, FragmentMeta fragment) {
-        if (sortedFragmentList.size() == 0 ||
-                sortedFragmentList.get(sortedFragmentList.size() - 1).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
-            return;
-        }
-        int left = 0, right = sortedFragmentList.size() - 1;
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) == 0) {
-                sortedFragmentList.remove(mid);
-                return;
-            } else if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
-                left = mid + 1;
-            } else {
-                right = mid;
-            }
-        }
-    }
-
-    // 在排好序的分片列表中搜索与给定分片相交的所有分片
-    private static List<FragmentMeta> searchSortedFragmentMetaList(List<FragmentMeta> fragmentMetaList, TimeSeriesInterval tsInterval) {
-        List<FragmentMeta> resultList = new ArrayList<>();
-        for (FragmentMeta fragmentMeta: fragmentMetaList) {
-            if (fragmentMeta.getTsInterval().isIntersect(tsInterval))
-                resultList.add(fragmentMeta);
-        }
-        return resultList;
-    }
-
-    // 在排好序的分片列表中搜索包含某个时间序列的分片
-    private static FragmentMeta searchSortedFragmentMetaList(List<FragmentMeta> fragmentMetaList, String tsName) {
-        for (FragmentMeta fragmentMeta: fragmentMetaList) {
-            if (fragmentMeta.getTsInterval().isContain(tsName))
-                return fragmentMeta;
-        }
-        return null;
-    }
-
-    public static SortedListMetaManager getInstance() {
-        if (INSTANCE == null) {
-            synchronized (SortedListMetaManager.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new SortedListMetaManager();
-                }
-            }
-        }
-        return INSTANCE;
     }
 
 }

@@ -59,30 +59,18 @@ public final class Core {
     private static final Logger logger = LoggerFactory.getLogger(Core.class);
 
     private static final Core instance = new Core();
-
-    private IPlanGenerator planGenerator;
-
-    private IPlanExecutor queryExecutor;
-
-    private ICombineExecutor combineExecutor;
-
     private final List<PreQueryPlanProcessor> preQueryPlanProcessors = new ArrayList<>();
-
     private final List<PostQueryPlanProcessor> postQueryPlanProcessors = new ArrayList<>();
-
     private final List<PreQueryExecuteProcessor> preQueryExecuteProcessors = new ArrayList<>();
-
     private final List<PostQueryExecuteProcessor> postQueryExecuteProcessors = new ArrayList<>();
-
     private final List<PreQueryResultCombineProcessor> preQueryResultCombineProcessors = new ArrayList<>();
-
     private final List<PostQueryResultCombineProcessor> postQueryResultCombineProcessors = new ArrayList<>();
-
     private final List<PostQueryProcessor> postQueryProcessors = new ArrayList<>();
-
     private final List<PreQueryProcessor> preQueryProcessors = new ArrayList<>();
-
     private final ExecutorService postQueryProcessThreadPool;
+    private IPlanGenerator planGenerator;
+    private IPlanExecutor queryExecutor;
+    private ICombineExecutor combineExecutor;
 
     private Core() {
         IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
@@ -128,6 +116,10 @@ public final class Core {
         registerPostQueryResultCombineProcessor(policy.getPostQueryResultCombineProcessor());
 
         postQueryProcessThreadPool = Executors.newCachedThreadPool();
+    }
+
+    public static Core getInstance() {
+        return instance;
     }
 
     public void registerPreQueryPlanProcessor(PreQueryPlanProcessor preQueryPlanProcessor) {
@@ -184,7 +176,7 @@ public final class Core {
 
     public void processRequest(RequestContext requestContext) {
         // 请求前处理器
-        for (PreQueryProcessor processor: preQueryProcessors) {
+        for (PreQueryProcessor processor : preQueryProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -192,7 +184,7 @@ public final class Core {
             }
         }
         // 计划前处理器
-        for (PreQueryPlanProcessor processor: preQueryPlanProcessors) {
+        for (PreQueryPlanProcessor processor : preQueryPlanProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -203,7 +195,7 @@ public final class Core {
         List<? extends IginxPlan> iginxPlans = planGenerator.generateSubPlans(requestContext);
         requestContext.setIginxPlans(iginxPlans);
         // 计划后处理器
-        for (PostQueryPlanProcessor processor: postQueryPlanProcessors) {
+        for (PostQueryPlanProcessor processor : postQueryPlanProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -212,7 +204,7 @@ public final class Core {
         }
 
         // 请求执行前处理器
-        for (PreQueryExecuteProcessor processor: preQueryExecuteProcessors) {
+        for (PreQueryExecuteProcessor processor : preQueryExecuteProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -223,7 +215,7 @@ public final class Core {
         List<PlanExecuteResult> planExecuteResults = queryExecutor.executeIginxPlans(requestContext);
         requestContext.setPlanExecuteResults(planExecuteResults);
         // 请求执行后处理器
-        for (PostQueryExecuteProcessor processor: postQueryExecuteProcessors) {
+        for (PostQueryExecuteProcessor processor : postQueryExecuteProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -232,7 +224,7 @@ public final class Core {
         }
 
         // 结果合并前处理器
-        for (PreQueryResultCombineProcessor processor: preQueryResultCombineProcessors) {
+        for (PreQueryResultCombineProcessor processor : preQueryResultCombineProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -244,7 +236,7 @@ public final class Core {
         requestContext.setCombineResult(combineResult);
         requestContext.setStatus(combineResult.getStatus());
         // 结果合并后处理器
-        for (PostQueryResultCombineProcessor processor: postQueryResultCombineProcessors) {
+        for (PostQueryResultCombineProcessor processor : postQueryResultCombineProcessors) {
             Status status = processor.process(requestContext);
             if (status != null) {
                 requestContext.setStatus(status);
@@ -252,15 +244,11 @@ public final class Core {
             }
         }
         postQueryProcessThreadPool.submit((Callable<Void>) () -> {
-            for (PostQueryProcessor processor: postQueryProcessors) {
+            for (PostQueryProcessor processor : postQueryProcessors) {
                 processor.process(requestContext);
             }
             return null;
         });
-    }
-
-    public static Core getInstance() {
-        return instance;
     }
 
 }

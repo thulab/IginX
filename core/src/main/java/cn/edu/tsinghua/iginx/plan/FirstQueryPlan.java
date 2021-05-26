@@ -9,15 +9,15 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.FIRST;
 
 public class FirstQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(FirstQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(FirstQueryPlan.class);
 
-	public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
-		super(paths, startTime, endTime);
-		this.setIginxPlanType(FIRST);
-	}
+    public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
+        super(paths, startTime, endTime);
+        this.setIginxPlanType(FIRST);
+    }
 
-	public FirstQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
-	}
+    public FirstQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+        this(paths, startTime, endTime);
+        this.setStorageEngineId(storageEngineId);
+    }
 }
