@@ -47,8 +47,8 @@ jobs:
       run: cp "${GITHUB_WORKSPACE}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar" "${GITHUB_WORKSPACE}/core/lib/iotdb-0.1.0-SNAPSHOT.jar"
     - name: Start IginX
       run: |
-           chmod +x "${GITHUB_WORKSPACE}/start.sh"
-           nohup "${GITHUB_WORKSPACE}/start.sh" &
+           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
+           nohup "${GITHUB_WORKSPACE}/startIginX.sh" &
     - name: A Lame Integration Test with Maven
       run: mvn -B install
     - name: Coverage report
