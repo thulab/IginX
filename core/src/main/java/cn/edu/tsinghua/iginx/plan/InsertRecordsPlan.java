@@ -36,7 +36,7 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_RECORDS;
 
 @Getter
 @Setter
-public abstract class InsertRecordsPlan extends DataPlan{
+public abstract class InsertRecordsPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(InsertRecordsPlan.class);
 
@@ -157,7 +157,7 @@ public abstract class InsertRecordsPlan extends DataPlan{
 
 	public Map<String, String> getAttributes(int index) {
 		if (attributesList == null || attributesList.isEmpty()) {
-	//		logger.info("There are no attributes in the InsertRecordsPlan.");
+			//		logger.info("There are no attributes in the InsertRecordsPlan.");
 			return null;
 		}
 		if (index < 0 || index >= attributesList.size()) {

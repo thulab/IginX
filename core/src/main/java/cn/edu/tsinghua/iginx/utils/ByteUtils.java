@@ -184,7 +184,7 @@ public class ByteUtils {
 
 	public static ByteBuffer getByteBufferFromLongArray(Long[] array) {
 		ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
-		for (long value: array) {
+		for (long value : array) {
 			buffer.putLong(value);
 		}
 		buffer.flip();

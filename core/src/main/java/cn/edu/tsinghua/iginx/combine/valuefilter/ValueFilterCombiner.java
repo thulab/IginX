@@ -18,11 +18,14 @@
  */
 package cn.edu.tsinghua.iginx.combine.valuefilter;
 //todo
+
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.expression.BooleanExpression;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.CheckedFunction;
@@ -53,7 +56,25 @@ public class ValueFilterCombiner {
 		return instance;
 	}
 
-	public void combineResult(ValueFilterQueryResp resp, List<ValueFilterQueryPlanExecuteResult> planExecuteResults) throws ExecutionException {
+	public boolean insPath(String path, List<String> queryPaths) {
+		for (String queryPath : queryPaths) {
+			if (path.compareTo(queryPath) == 0)
+				return true;
+			String[] tmpPath = path.split("\\.");
+			String[] tmpQueryPath = queryPath.split("\\.");
+			if (tmpPath.length != tmpQueryPath.length) continue;
+			boolean flag = true;
+			for (int i = 0; i < tmpPath.length; i++)
+				if (tmpPath[i].compareTo(tmpQueryPath[i]) != 0 && tmpQueryPath[i].compareTo("*") != 0) {
+					flag = false;
+					break;
+				}
+			if (flag) return true;
+		}
+		return false;
+	}
+
+	public void combineResult(ValueFilterQueryResp resp, List<ValueFilterQueryPlanExecuteResult> planExecuteResults, List<String> queryPaths, BooleanExpression booleanExpression) throws ExecutionException {
 		Set<QueryExecuteDataSetWrapper> dataSetWrappers = planExecuteResults.stream().filter(e -> e.getQueryExecuteDataSets() != null)
 				.filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
 				.map(ValueFilterQueryPlanExecuteResult::getQueryExecuteDataSets)
@@ -63,13 +84,13 @@ public class ValueFilterCombiner {
 
 		List<String> columnNameList = new ArrayList<>();
 		List<DataType> columnTypeList = new ArrayList<>();
-		List<List<QueryExecuteDataSetWrapper>> columnSourcesList = new ArrayList<>();
+		List<String> newColumnNameList = new ArrayList<>();
+		List<DataType> newColumnTypeList = new ArrayList<>();
+		Map<String, List<QueryExecuteDataSetWrapper>> columnSourcesList = new HashMap<>();
 		List<Long> timestamps = new ArrayList<>();
 		List<ByteBuffer> valuesList = new ArrayList<>();
 		List<ByteBuffer> bitmapList = new ArrayList<>();
-		// 从序列名到 column 列表位置的映射，同时也负责检测某个列是否已经加入到列表中
 		Map<String, Integer> columnPositionMap = new HashMap<>();
-		// 初始化列集合
 		for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
 			List<String> columnNameSubList = dataSetWrapper.getColumnNames();
 			List<DataType> columnTypeSubList = dataSetWrapper.getColumnTypes();
@@ -80,55 +101,52 @@ public class ValueFilterCombiner {
 					columnPositionMap.put(columnName, columnNameList.size());
 					columnNameList.add(columnName);
 					columnTypeList.add(columnType);
-					columnSourcesList.add(new ArrayList<>());
+					columnSourcesList.put(columnName, new ArrayList<>());
+					if (insPath(columnName, queryPaths))//
+					{
+						newColumnNameList.add(columnName);
+						newColumnTypeList.add(columnType);
+					}
 				}
-				columnSourcesList.get(columnPositionMap.get(columnName)).add(dataSetWrapper);
+				columnSourcesList.get(columnName).add(dataSetWrapper);
 			}
 		}
-		// 初始化各个数据源
-		// 在加载完一轮数据之后，把更新加载过数据的时间
 		{
 			Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
 			Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				QueryExecuteDataSetWrapper dataSetWrapper = it.next();
 				if (dataSetWrapper.hasNext()) {
 					dataSetWrapper.next();
-				} else { // 如果没有下一行，应该把当前数据集给移除掉
+				} else {
 					dataSetWrapper.close();
 					deletedDataSetWrappers.add(dataSetWrapper);
 					it.remove();
 				}
 			}
-			// 删除掉已经空的 data source
 			for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
 				List<String> columnNames = dataSetWrapper.getColumnNames();
 				for (String columnName : columnNames) {
-					int index = columnPositionMap.get(columnName);
-					columnSourcesList.get(index).remove(dataSetWrapper);
+					columnSourcesList.get(columnName).remove(dataSetWrapper);
 				}
 			}
 		}
 
-		while(!dataSetWrappers.isEmpty()) {
+		while (!dataSetWrappers.isEmpty()) {
 			long timestamp = Long.MAX_VALUE;
-			// 顺序访问所有的还有数据数据的 timestamp，获取当前的时间戳
 			for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
 				timestamp = Math.min(dataSetWrapper.getTimestamp(), timestamp);
 			}
-			timestamps.add(timestamp);
-			// 当前的行对应的数据
-			Object[] values = new Object[columnTypeList.size()];
-			Bitmap bitmap = new Bitmap(columnTypeList.size());
-			for (int i = 0; i < columnTypeList.size(); i++) {
-				String columnName = columnNameList.get(i);
-				List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(i);
+			Map<String, Object> objectMap = new HashMap<>();
+			Object[] values = new Object[newColumnTypeList.size()];
+			Bitmap bitmap = new Bitmap(newColumnTypeList.size());
+			for (int i = 0; i < newColumnTypeList.size(); i++) {
+				String columnName = newColumnNameList.get(i);
+				List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
 				for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
 					if (dataSetWrapper.getTimestamp() == timestamp) {
-						// 在检查某个字段时候，发现了时间戳符合的数据
 						Object value = dataSetWrapper.getValue(columnName);
 						if (value != null) {
-							// 时间戳符合更新 bitmap
 							values[i] = value;
 							bitmap.mark(i);
 							break;
@@ -136,37 +154,53 @@ public class ValueFilterCombiner {
 					}
 				}
 			}
-			ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, columnTypeList);
-			valuesList.add(buffer);
-			bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
-			// 在加载完一轮数据之后，把更新加载过数据的时间
+
+			for (int i = 0; i < booleanExpression.getTimeseries().size(); i++) {
+				String columnName = columnNameList.get(i);
+				List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
+				for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
+					if (dataSetWrapper.getTimestamp() == timestamp) {
+						Object value = dataSetWrapper.getValue(columnName);
+						if (value != null) {
+							objectMap.put(columnName, value);
+							break;
+						}
+					}
+				}
+			}
+
+			if (booleanExpression.getBool(objectMap)) {
+				timestamps.add(timestamp);
+				ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, newColumnTypeList);
+				valuesList.add(buffer);
+				bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
+			}
+
 			Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
 			Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-			while(it.hasNext()) {
+			while (it.hasNext()) {
 				QueryExecuteDataSetWrapper dataSetWrapper = it.next();
-				if (dataSetWrapper.getTimestamp() == timestamp) { // 如果时间戳是当前的时间戳，则意味着本行读完了，加载下一行
+				if (dataSetWrapper.getTimestamp() == timestamp) {
 					if (dataSetWrapper.hasNext()) {
 						dataSetWrapper.next();
-					} else { // 如果没有下一行，应该把当前数据集给移除掉
+					} else {
 						dataSetWrapper.close();
 						deletedDataSetWrappers.add(dataSetWrapper);
 						it.remove();
 					}
 				}
 			}
-			// 删除掉已经空的 data source
 			for (QueryExecuteDataSetWrapper dataSetWrapper : deletedDataSetWrappers) {
 				List<String> columnNames = dataSetWrapper.getColumnNames();
 				for (String columnName : columnNames) {
-					int index = columnPositionMap.get(columnName);
-					columnSourcesList.get(index).remove(dataSetWrapper);
+					columnSourcesList.get(columnName).remove(dataSetWrapper);
 				}
 			}
 		}
+
 		resp.setPaths(columnNameList);
 		resp.setDataTypeList(columnTypeList);
 		resp.setQueryDataSet(new QueryDataSet(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG),
 				valuesList, bitmapList));
 	}
-
 }

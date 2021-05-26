@@ -23,8 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
@@ -32,29 +30,6 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
 public class QueryDataPlan extends DataPlan {
 
 	private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
-
-	private static String trimPath(String path) {
-		int index = path.indexOf("*");
-		if (index == -1) { // 不含有 *，则不对字符串进行变更
-			return path;
-		}
-		if (index == 0) {
-			return "";
-		}
-		return path.substring(0, index - 1);
-	}
-
-	private static String addEndPrefix(String path, boolean start) {
-		if (path.length() != 0) {
-			path += ".";
-		}
-		if (start) {
-			path += (char)('A' - 1);
-		} else {
-			path += (char)('z' + 1);
-		}
-		return path;
-	}
 
 	public QueryDataPlan(List<String> paths, long startTime, long endTime) {
 		super(true, paths, startTime, endTime);
@@ -88,6 +63,29 @@ public class QueryDataPlan extends DataPlan {
 		this(paths, startTime, endTime);
 		this.setStorageEngineId(storageEngineId);
 		this.setSync(true);
+	}
+
+	private static String trimPath(String path) {
+		int index = path.indexOf("*");
+		if (index == -1) { // 不含有 *，则不对字符串进行变更
+			return path;
+		}
+		if (index == 0) {
+			return "";
+		}
+		return path.substring(0, index - 1);
+	}
+
+	private static String addEndPrefix(String path, boolean start) {
+		if (path.length() != 0) {
+			path += ".";
+		}
+		if (start) {
+			path += (char) ('A' - 1);
+		} else {
+			path += (char) ('z' + 1);
+		}
+		return path;
 	}
 
 	public List<String> getPathsByInterval(TimeSeriesInterval interval) {

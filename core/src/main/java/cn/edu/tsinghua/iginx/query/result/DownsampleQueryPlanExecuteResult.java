@@ -25,15 +25,15 @@ import java.util.List;
 
 public class DownsampleQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private final List<QueryExecuteDataSet> queryExecuteDataSets;
+	private final List<QueryExecuteDataSet> queryExecuteDataSets;
 
-    public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
-        super(statusCode, plan);
-        this.queryExecuteDataSets = queryExecuteDataSets;
-    }
+	public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
+		super(statusCode, plan);
+		this.queryExecuteDataSets = queryExecuteDataSets;
+	}
 
-    public List<QueryExecuteDataSet> getQueryExecuteDataSets() {
-        return queryExecuteDataSets;
-    }
+	public List<QueryExecuteDataSet> getQueryExecuteDataSets() {
+		return queryExecuteDataSets;
+	}
 
 }

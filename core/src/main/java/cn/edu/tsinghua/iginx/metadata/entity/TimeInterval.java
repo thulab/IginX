@@ -22,64 +22,64 @@ import java.util.Objects;
 
 public final class TimeInterval {
 
-    private long startTime;
+	private long startTime;
 
-    private long endTime;
+	private long endTime;
 
-    public TimeInterval(long startTime, long endTime) {
-        this.startTime = startTime;
-        this.endTime = endTime;
-    }
+	public TimeInterval(long startTime, long endTime) {
+		this.startTime = startTime;
+		this.endTime = endTime;
+	}
 
-    public long getStartTime() {
-        return startTime;
-    }
+	public long getStartTime() {
+		return startTime;
+	}
 
-    public long getSpan() {
-        return endTime - startTime;
-    }
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
 
-    public long getEndTime() {
-        return endTime;
-    }
+	public long getSpan() {
+		return endTime - startTime;
+	}
 
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
-    }
+	public long getEndTime() {
+		return endTime;
+	}
 
-    public void setEndTime(long endTime) {
-        this.endTime = endTime;
-    }
+	public void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
 
-    @Override
-    public String toString() {
-        return "" + startTime;
-    }
+	@Override
+	public String toString() {
+		return "" + startTime;
+	}
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        TimeInterval that = (TimeInterval) o;
-        return startTime == that.startTime && endTime == that.endTime;
-    }
+	@Override
+	public boolean equals(Object o) {
+		if (this == o) return true;
+		if (o == null || getClass() != o.getClass()) return false;
+		TimeInterval that = (TimeInterval) o;
+		return startTime == that.startTime && endTime == that.endTime;
+	}
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(startTime, endTime);
-    }
+	@Override
+	public int hashCode() {
+		return Objects.hash(startTime, endTime);
+	}
 
-    // 这里以及下面两个函数传入的都是闭区间
-    public boolean isIntersect(TimeInterval timeInterval) {
-        return (timeInterval.startTime < endTime) && (timeInterval.endTime >= startTime);
-    }
+	// 这里以及下面两个函数传入的都是闭区间
+	public boolean isIntersect(TimeInterval timeInterval) {
+		return (timeInterval.startTime < endTime) && (timeInterval.endTime >= startTime);
+	}
 
-    public boolean isBefore(TimeInterval timeInterval) {
-        return endTime <= timeInterval.startTime;
-    }
+	public boolean isBefore(TimeInterval timeInterval) {
+		return endTime <= timeInterval.startTime;
+	}
 
-    public boolean isAfter(TimeInterval timeInterval) {
-        return startTime > timeInterval.endTime;
-    }
+	public boolean isAfter(TimeInterval timeInterval) {
+		return startTime > timeInterval.endTime;
+	}
 
 }

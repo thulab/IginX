@@ -22,17 +22,17 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public abstract class CombineResult {
 
-    private Status status;
+	private Status status;
 
-    public CombineResult(Status status) {
-        this.status = status;
-    }
+	public CombineResult(Status status) {
+		this.status = status;
+	}
 
-    public Status getStatus() {
-        return status;
-    }
+	public Status getStatus() {
+		return status;
+	}
 
-    public void setStatus(Status status) {
-        this.status = status;
-    }
+	public void setStatus(Status status) {
+		this.status = status;
+	}
 }

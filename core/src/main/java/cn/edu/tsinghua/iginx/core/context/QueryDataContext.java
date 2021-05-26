@@ -26,14 +26,14 @@ import lombok.EqualsAndHashCode;
 @Data
 public class QueryDataContext extends RequestContext {
 
-    private QueryDataReq req;
+	private QueryDataReq req;
 
-    public QueryDataContext(QueryDataReq req) {
-        super(req.sessionId, ContextType.QueryData);
-        this.req = req;
-    }
+	public QueryDataContext(QueryDataReq req) {
+		super(req.sessionId, ContextType.QueryData);
+		this.req = req;
+	}
 
-    public QueryDataReq getReq() {
-        return req;
-    }
+	public QueryDataReq getReq() {
+		return req;
+	}
 }

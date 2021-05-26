@@ -63,7 +63,6 @@ import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +83,10 @@ public class IginxWorker implements IService.Iface {
 	private final Core core = Core.getInstance();
 
 	private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+
+	public static IginxWorker getInstance() {
+		return instance;
+	}
 
 	@Override
 	public OpenSessionResp openSession(OpenSessionReq req) {
@@ -170,7 +173,7 @@ public class IginxWorker implements IService.Iface {
 		StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
 		StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine);
 		String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-		for (String part: parts) {
+		for (String part : parts) {
 			String[] kAndV = part.split("=");
 			if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
 				continue;
@@ -183,7 +186,7 @@ public class IginxWorker implements IService.Iface {
 				if (!((boolean) method.invoke(null, meta))) {
 					return RpcUtils.FAILURE;
 				}
-			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException| IllegalArgumentException | InvocationTargetException e) {
+			} catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
 			}
 		}
@@ -201,8 +204,7 @@ public class IginxWorker implements IService.Iface {
 	}
 
 	@Override
-	public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req)
-	{
+	public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) {
 		ValueFilterQueryContext context = new ValueFilterQueryContext(req);
 		core.processRequest(context);
 		return ((ValueFilterCombineResult) context.getCombineResult()).getResp();
@@ -213,10 +215,6 @@ public class IginxWorker implements IService.Iface {
 		DownsampleQueryContext context = new DownsampleQueryContext(req);
 		core.processRequest(context);
 		return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
-	}
-
-	public static IginxWorker getInstance() {
-		return instance;
 	}
 
 }

@@ -28,12 +28,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AsyncTask {
 
-    private IginxPlan iginxPlan;
+	private IginxPlan iginxPlan;
 
-    private int retryTimes;
+	private int retryTimes;
 
-    public void addRetryTimes() {
-        retryTimes ++;
-    }
+	public void addRetryTimes() {
+		retryTimes++;
+	}
 
 }

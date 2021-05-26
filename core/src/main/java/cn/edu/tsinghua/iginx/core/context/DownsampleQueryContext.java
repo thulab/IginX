@@ -26,10 +26,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class DownsampleQueryContext extends RequestContext {
 
-    private DownsampleQueryReq req;
+	private DownsampleQueryReq req;
 
-    public DownsampleQueryContext(DownsampleQueryReq req) {
-        super(req.sessionId, ContextType.DownsampleQuery);
-        this.req = req;
-    }
+	public DownsampleQueryContext(DownsampleQueryReq req) {
+		super(req.sessionId, ContextType.DownsampleQuery);
+		this.req = req;
+	}
 }

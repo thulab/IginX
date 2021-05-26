@@ -22,50 +22,50 @@ import cn.edu.tsinghua.iginx.core.context.RequestContext;
 
 public class Statistics {
 
-    private long id;
+	private long id;
 
-    private long beginTime;
+	private long beginTime;
 
-    private long endTime;
+	private long endTime;
 
-    private RequestContext requestContext;
+	private RequestContext requestContext;
 
-    public Statistics(long id, long beginTime, long endTime, RequestContext requestContext) {
-        this.id = id;
-        this.beginTime = beginTime;
-        this.endTime = endTime;
-        this.requestContext = requestContext;
-    }
+	public Statistics(long id, long beginTime, long endTime, RequestContext requestContext) {
+		this.id = id;
+		this.beginTime = beginTime;
+		this.endTime = endTime;
+		this.requestContext = requestContext;
+	}
 
-    public long getBeginTime() {
-        return beginTime;
-    }
+	public long getBeginTime() {
+		return beginTime;
+	}
 
-    public void setBeginTime(long beginTime) {
-        this.beginTime = beginTime;
-    }
+	public void setBeginTime(long beginTime) {
+		this.beginTime = beginTime;
+	}
 
-    public long getEndTime() {
-        return endTime;
-    }
+	public long getEndTime() {
+		return endTime;
+	}
 
-    public void setEndTime(long endTime) {
-        this.endTime = endTime;
-    }
+	public void setEndTime(long endTime) {
+		this.endTime = endTime;
+	}
 
-    public long getId() {
-        return id;
-    }
+	public long getId() {
+		return id;
+	}
 
-    public void setId(long id) {
-        this.id = id;
-    }
+	public void setId(long id) {
+		this.id = id;
+	}
 
-    public RequestContext getRequestContext() {
-        return requestContext;
-    }
+	public RequestContext getRequestContext() {
+		return requestContext;
+	}
 
-    public void setRequestContext(RequestContext requestContext) {
-        this.requestContext = requestContext;
-    }
+	public void setRequestContext(RequestContext requestContext) {
+		this.requestContext = requestContext;
+	}
 }

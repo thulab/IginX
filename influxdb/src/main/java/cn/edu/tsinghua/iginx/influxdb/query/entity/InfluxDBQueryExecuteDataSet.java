@@ -15,7 +15,7 @@ import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInflu
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
 import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
 
-public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet  {
+public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
 	private String bucketName;
 

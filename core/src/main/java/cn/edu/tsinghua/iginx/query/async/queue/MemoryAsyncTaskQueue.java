@@ -26,22 +26,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
 
-    private static final Logger logger = LoggerFactory.getLogger(MemoryAsyncTaskQueue.class);
+	private static final Logger logger = LoggerFactory.getLogger(MemoryAsyncTaskQueue.class);
 
-    private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
+	private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
 
-    @Override
-    public boolean addAsyncTask(AsyncTask asyncTask) {
-        return asyncTasks.add(asyncTask);
-    }
+	@Override
+	public boolean addAsyncTask(AsyncTask asyncTask) {
+		return asyncTasks.add(asyncTask);
+	}
 
-    @Override
-    public AsyncTask getAsyncTask() {
-        try {
-            return asyncTasks.take();
-        } catch (Exception e) {
-            logger.error("encounter error when get async task: ", e);
-        }
-        return null;
-    }
+	@Override
+	public AsyncTask getAsyncTask() {
+		try {
+			return asyncTasks.take();
+		} catch (Exception e) {
+			logger.error("encounter error when get async task: ", e);
+		}
+		return null;
+	}
 }

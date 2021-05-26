@@ -20,10 +20,10 @@ package cn.edu.tsinghua.iginx.utils;
 
 public class TimeUtils {
 
-    public static long getMicrosecond() {
-        long currentTime = System.currentTimeMillis() * 1000;
-        long nanoTime = System.nanoTime();
-        return currentTime + (nanoTime - nanoTime / 1000000 * 1000000) / 1000;
-    }
+	public static long getMicrosecond() {
+		long currentTime = System.currentTimeMillis() * 1000;
+		long nanoTime = System.nanoTime();
+		return currentTime + (nanoTime - nanoTime / 1000000 * 1000000) / 1000;
+	}
 
 }

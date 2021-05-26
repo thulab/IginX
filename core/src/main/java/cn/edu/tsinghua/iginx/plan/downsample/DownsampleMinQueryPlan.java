@@ -25,16 +25,16 @@ import java.util.List;
 
 public class DownsampleMinQueryPlan extends DownsampleQueryPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(DownsampleMinQueryPlan.class);
+	private static final Logger logger = LoggerFactory.getLogger(DownsampleMinQueryPlan.class);
 
-    public DownsampleMinQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        super(paths, startTime, endTime, precision);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MIN);
-    }
+	public DownsampleMinQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+		super(paths, startTime, endTime, precision);
+		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MIN);
+	}
 
-    public DownsampleMinQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-        super(paths, startTime, endTime, precision, storageEngineId);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MIN);
-    }
+	public DownsampleMinQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+		super(paths, startTime, endTime, precision, storageEngineId);
+		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_MIN);
+	}
 
 }

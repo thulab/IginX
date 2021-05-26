@@ -20,200 +20,203 @@ package cn.edu.tsinghua.iginx.conf;
 
 public class Config {
 
-    private String ip = "0.0.0.0";
+	private String ip = "0.0.0.0";
 
-    private int port = 6324;
+	private int port = 6888;
 
-    private String username = "root";
+	private String username = "root";
 
-    private String password = "root";
+	private String password = "root";
 
-    private String zookeeperConnectionString = "127.0.0.1:2181";
+	private String zookeeperConnectionString = "127.0.0.1:2181";
 
-    private String storageEngineList = "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5";
+	private String storageEngineList = "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5";
 
-    private int maxAsyncRetryTimes = 2;
+	private int maxAsyncRetryTimes = 2;
 
-    private int syncExecuteThreadPool = 60;
+	private int syncExecuteThreadPool = 60;
 
-    private int asyncExecuteThreadPool = 20;
+	private int asyncExecuteThreadPool = 20;
 
-    private int replicaNum = 1;
+	private int replicaNum = 1;
 
-    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
+	private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
 
-    private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
+	private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
 
-    private String influxDBToken = "token";
+	private String influxDBToken = "token";
 
-    private String influxDBOrganizationName = "organization";
+	private String influxDBOrganizationName = "organization";
 
-    private String statisticsCollectorClassName = "";
+	private String statisticsCollectorClassName = "";
 
-    private int statisticsLogInterval = 1000;
+	private int statisticsLogInterval = 1000;
 
-    private String restip = "127.0.0.1";
+	private String restIp = "127.0.0.1";
 
-    private int restport = 6666;
+	private int restPort = 6666;
 
-    private int maxTimeseriesLength = 10;
+	private int maxTimeseriesLength = 10;
 
-    public int getMaxTimeseriesLength()
-    {
-        return maxTimeseriesLength;
-    }
+	private boolean enableRestService = true;
 
-    public void setMaxTimeseriesLength(int maxTimeseriesLength)
-    {
-        this.maxTimeseriesLength = maxTimeseriesLength;
-    }
+	public int getMaxTimeseriesLength() {
+		return maxTimeseriesLength;
+	}
 
-    public String getIp() {
-        return ip;
-    }
+	public void setMaxTimeseriesLength(int maxTimeseriesLength) {
+		this.maxTimeseriesLength = maxTimeseriesLength;
+	}
 
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
+	public String getIp() {
+		return ip;
+	}
 
-    public int getPort() {
-        return port;
-    }
+	public void setIp(String ip) {
+		this.ip = ip;
+	}
 
-    public void setPort(int port) {
-        this.port = port;
-    }
+	public int getPort() {
+		return port;
+	}
 
-    public String getUsername() {
-        return username;
-    }
+	public void setPort(int port) {
+		this.port = port;
+	}
 
-    public void setUsername(String username) {
-        this.username = username;
-    }
+	public String getUsername() {
+		return username;
+	}
 
-    public String getPassword() {
-        return password;
-    }
+	public void setUsername(String username) {
+		this.username = username;
+	}
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+	public String getPassword() {
+		return password;
+	}
 
-    public String getZookeeperConnectionString() {
-        return zookeeperConnectionString;
-    }
+	public void setPassword(String password) {
+		this.password = password;
+	}
 
-    public void setZookeeperConnectionString(String zookeeperConnectionString) {
-        this.zookeeperConnectionString = zookeeperConnectionString;
-    }
+	public String getZookeeperConnectionString() {
+		return zookeeperConnectionString;
+	}
 
-    public String getStorageEngineList() {
-        return storageEngineList;
-    }
+	public void setZookeeperConnectionString(String zookeeperConnectionString) {
+		this.zookeeperConnectionString = zookeeperConnectionString;
+	}
 
-    public void setStorageEngineList(String storageEngineList) {
-        this.storageEngineList = storageEngineList;
-    }
+	public String getStorageEngineList() {
+		return storageEngineList;
+	}
 
-    public int getMaxAsyncRetryTimes() {
-        return maxAsyncRetryTimes;
-    }
+	public void setStorageEngineList(String storageEngineList) {
+		this.storageEngineList = storageEngineList;
+	}
 
-    public void setMaxAsyncRetryTimes(int maxAsyncRetryTimes) {
-        this.maxAsyncRetryTimes = maxAsyncRetryTimes;
-    }
+	public int getMaxAsyncRetryTimes() {
+		return maxAsyncRetryTimes;
+	}
 
-    public int getSyncExecuteThreadPool() {
-        return syncExecuteThreadPool;
-    }
+	public void setMaxAsyncRetryTimes(int maxAsyncRetryTimes) {
+		this.maxAsyncRetryTimes = maxAsyncRetryTimes;
+	}
 
-    public void setSyncExecuteThreadPool(int syncExecuteThreadPool) {
-        this.syncExecuteThreadPool = syncExecuteThreadPool;
-    }
+	public int getSyncExecuteThreadPool() {
+		return syncExecuteThreadPool;
+	}
 
-    public int getAsyncExecuteThreadPool() {
-        return asyncExecuteThreadPool;
-    }
+	public void setSyncExecuteThreadPool(int syncExecuteThreadPool) {
+		this.syncExecuteThreadPool = syncExecuteThreadPool;
+	}
 
-    public void setAsyncExecuteThreadPool(int asyncExecuteThreadPool) {
-        this.asyncExecuteThreadPool = asyncExecuteThreadPool;
-    }
+	public int getAsyncExecuteThreadPool() {
+		return asyncExecuteThreadPool;
+	}
 
-    public int getReplicaNum() {
-        return replicaNum;
-    }
+	public void setAsyncExecuteThreadPool(int asyncExecuteThreadPool) {
+		this.asyncExecuteThreadPool = asyncExecuteThreadPool;
+	}
 
-    public void setReplicaNum(int replicaNum) {
-        this.replicaNum = replicaNum;
-    }
+	public int getReplicaNum() {
+		return replicaNum;
+	}
 
-    public String getDatabaseClassNames() {
-        return databaseClassNames;
-    }
+	public void setReplicaNum(int replicaNum) {
+		this.replicaNum = replicaNum;
+	}
 
-    public void setDatabaseClassNames(String databaseClassNames) {
-        this.databaseClassNames = databaseClassNames;
-    }
+	public String getDatabaseClassNames() {
+		return databaseClassNames;
+	}
 
-    public String getPolicyClassName() {
-        return policyClassName;
-    }
+	public void setDatabaseClassNames(String databaseClassNames) {
+		this.databaseClassNames = databaseClassNames;
+	}
 
-    public void setPolicyClassName(String policyClassName) {
-        this.policyClassName = policyClassName;
-    }
+	public String getPolicyClassName() {
+		return policyClassName;
+	}
 
-    public String getInfluxDBToken() {
-        return influxDBToken;
-    }
+	public void setPolicyClassName(String policyClassName) {
+		this.policyClassName = policyClassName;
+	}
 
-    public void setInfluxDBToken(String influxDBToken) {
-        this.influxDBToken = influxDBToken;
-    }
+	public String getInfluxDBToken() {
+		return influxDBToken;
+	}
 
-    public String getInfluxDBOrganizationName() {
-        return influxDBOrganizationName;
-    }
+	public void setInfluxDBToken(String influxDBToken) {
+		this.influxDBToken = influxDBToken;
+	}
 
-    public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
-        this.influxDBOrganizationName = influxDBOrganizationName;
-    }
+	public String getInfluxDBOrganizationName() {
+		return influxDBOrganizationName;
+	}
 
-    public String getStatisticsCollectorClassName() {
-        return statisticsCollectorClassName;
-    }
+	public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
+		this.influxDBOrganizationName = influxDBOrganizationName;
+	}
 
-    public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
-        this.statisticsCollectorClassName = statisticsCollectorClassName;
-    }
+	public String getStatisticsCollectorClassName() {
+		return statisticsCollectorClassName;
+	}
 
-    public int getStatisticsLogInterval() {
-        return statisticsLogInterval;
-    }
+	public void setStatisticsCollectorClassName(String statisticsCollectorClassName) {
+		this.statisticsCollectorClassName = statisticsCollectorClassName;
+	}
 
-    public void setStatisticsLogInterval(int statisticsLogInterval) {
-        this.statisticsLogInterval = statisticsLogInterval;
-    }
+	public int getStatisticsLogInterval() {
+		return statisticsLogInterval;
+	}
 
-    public String getRestip()
-    {
-        return restip;
-    }
+	public void setStatisticsLogInterval(int statisticsLogInterval) {
+		this.statisticsLogInterval = statisticsLogInterval;
+	}
 
-    public int getRestport()
-    {
-        return restport;
-    }
+	public String getRestIp() {
+		return restIp;
+	}
 
-    public void setRestip(String restip)
-    {
-        this.restip = restip;
-    }
+	public void setRestIp(String restIp) {
+		this.restIp = restIp;
+	}
 
-    public void setRestport(int restport)
-    {
-        this.restport = restport;
-    }
+	public int getRestPort() {
+		return restPort;
+	}
 
+	public void setRestPort(int restPort) {
+		this.restPort = restPort;
+	}
+
+	public boolean isEnableRestService() {
+		return enableRestService;
+	}
+
+	public void setEnableRestService(boolean enableRestService) {
+		this.enableRestService = enableRestService;
+	}
 }

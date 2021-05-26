@@ -18,8 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
+import cn.edu.tsinghua.iginx.query.expression.BooleanExpression;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.utils.BooleanExpression;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -38,5 +38,17 @@ public class ValueFilterQueryContext extends RequestContext {
 
 	public ValueFilterQueryReq getReq() {
 		return req;
+	}
+
+	public void setReq(ValueFilterQueryReq req) {
+		this.req = req;
+	}
+
+	public BooleanExpression getBooleanExpression() {
+		return booleanExpression;
+	}
+
+	public void setBooleanExpression(BooleanExpression booleanExpression) {
+		this.booleanExpression = booleanExpression;
 	}
 }

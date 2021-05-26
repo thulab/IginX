@@ -25,14 +25,14 @@ import java.util.List;
 
 public interface QueryExecuteDataSet {
 
-    List<String> getColumnNames() throws ExecutionException;
+	List<String> getColumnNames() throws ExecutionException;
 
-    List<DataType> getColumnTypes() throws ExecutionException;
+	List<DataType> getColumnTypes() throws ExecutionException;
 
-    boolean hasNext() throws ExecutionException;
+	boolean hasNext() throws ExecutionException;
 
-    RowRecord next() throws ExecutionException;
+	RowRecord next() throws ExecutionException;
 
-    void close() throws ExecutionException;
+	void close() throws ExecutionException;
 
 }

@@ -23,8 +23,8 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 
 public interface IPlanExecuteStatisticsCollector {
 
-    PostQueryExecuteProcessor getPostQueryExecuteProcessor();
+	PostQueryExecuteProcessor getPostQueryExecuteProcessor();
 
-    PreQueryExecuteProcessor getPreQueryExecuteProcessor();
+	PreQueryExecuteProcessor getPreQueryExecuteProcessor();
 
 }

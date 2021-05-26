@@ -29,62 +29,63 @@ import java.util.Properties;
 
 public class ConfigDescriptor {
 
-    private static final Logger logger = LoggerFactory.getLogger(ConfigDescriptor.class);
+	private static final Logger logger = LoggerFactory.getLogger(ConfigDescriptor.class);
 
-    private final Config config;
+	private final Config config;
 
-    private ConfigDescriptor() {
-        config = new Config();
-        loadProps();
-    }
+	private ConfigDescriptor() {
+		config = new Config();
+		loadProps();
+	}
 
-    private void loadProps() {
-        File file = new File(Constants.CONFIG_FILE);
-        logger.info(file.getAbsolutePath());
-        try (InputStream in = new FileInputStream(Constants.CONFIG_FILE)) {
-            Properties properties = new Properties();
-            properties.load(in);
+	public static ConfigDescriptor getInstance() {
+		return ConfigDescriptorHolder.INSTANCE;
+	}
 
-            config.setIp(properties.getProperty("ip", "0.0.0.0"));
-            config.setPort(Integer.parseInt(properties.getProperty("port", "6324")));
-            config.setUsername(properties.getProperty("username", "root"));
-            config.setPassword(properties.getProperty("password", "root"));
-            config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
-                    "127.0.0.1:2181"));
-            config.setStorageEngineList(properties.getProperty("storageEngineList",
-                    "127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5"));
-            config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
-            config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
-            config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
-            config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
-            config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
-            config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
-            config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
-            config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
+	private void loadProps() {
+		File file = new File(Constants.CONFIG_FILE);
+		logger.info(file.getAbsolutePath());
+		try (InputStream in = new FileInputStream(Constants.CONFIG_FILE)) {
+			Properties properties = new Properties();
+			properties.load(in);
 
-            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
-            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
+			config.setIp(properties.getProperty("ip", "0.0.0.0"));
+			config.setPort(Integer.parseInt(properties.getProperty("port", "6888")));
+			config.setUsername(properties.getProperty("username", "root"));
+			config.setPassword(properties.getProperty("password", "root"));
+			config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
+					"127.0.0.1:2181"));
+			config.setStorageEngineList(properties.getProperty("storageEngineList",
+					"127.0.0.1:8888:iotdb:username=root:password=root:readSessions=2:writeSessions=5,127.0.0.1:8889:iotdb:username=root:password=root:readSessions=2:writeSessions=5"));
+			config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
+			config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
+			config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
+			config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
+			config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
+			config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
+			config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
+			config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
 
-            config.setRestip(properties.getProperty("restip", "127.0.0.1"));
-            config.setRestport(Integer.parseInt(properties.getProperty("restport", "6666")));
+			config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
+			config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
 
-            config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
+			config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
+			config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
 
-        } catch (IOException e) {
-            logger.error("Fail to load properties: ", e);
-        }
-    }
+			config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
+			config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
-    public static ConfigDescriptor getInstance() {
-        return ConfigDescriptorHolder.INSTANCE;
-    }
+		} catch (IOException e) {
+			logger.error("Fail to load properties: ", e);
+		}
+	}
 
-    public Config getConfig() {
-        return config;
-    }
+	public Config getConfig() {
+		return config;
+	}
 
-    private static class ConfigDescriptorHolder {
-        private static final ConfigDescriptor INSTANCE = new ConfigDescriptor();
-    }
+	private static class ConfigDescriptorHolder {
+		private static final ConfigDescriptor INSTANCE = new ConfigDescriptor();
+	}
 
 }

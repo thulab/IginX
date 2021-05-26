@@ -26,10 +26,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class InsertRowRecordsContext extends RequestContext {
 
-    private InsertRowRecordsReq req;
+	private InsertRowRecordsReq req;
 
-    public InsertRowRecordsContext(InsertRowRecordsReq req) {
-        super(req.sessionId, ContextType.InsertRowRecords);
-        this.req = req;
-    }
+	public InsertRowRecordsContext(InsertRowRecordsReq req) {
+		super(req.sessionId, ContextType.InsertRowRecords);
+		this.req = req;
+	}
 }

@@ -24,17 +24,17 @@ import java.util.List;
 
 public class StatisticsAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
 
-    private List<Object> values;
+	private List<Object> values;
 
-    public StatisticsAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
-        super(statusCode, plan);
-    }
+	public StatisticsAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+		super(statusCode, plan);
+	}
 
-    public List<Object> getValues() {
-        return values;
-    }
+	public List<Object> getValues() {
+		return values;
+	}
 
-    public void setValues(List<Object> values) {
-        this.values = values;
-    }
+	public void setValues(List<Object> values) {
+		this.values = values;
+	}
 }

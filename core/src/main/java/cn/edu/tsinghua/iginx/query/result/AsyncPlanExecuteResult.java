@@ -20,43 +20,43 @@ package cn.edu.tsinghua.iginx.query.result;
 
 public class AsyncPlanExecuteResult extends PlanExecuteResult {
 
-    private static AsyncPlanExecuteResult successInstance;
+	private static AsyncPlanExecuteResult successInstance;
 
-    private static AsyncPlanExecuteResult failureInstance;
+	private static AsyncPlanExecuteResult failureInstance;
 
-    /**
-     * 如果加入异步执行队列失败，则为 false，反之则为 true
-     */
-    private final boolean success;
+	/**
+	 * 如果加入异步执行队列失败，则为 false，反之则为 true
+	 */
+	private final boolean success;
 
-    private AsyncPlanExecuteResult(boolean success) {
-        super(200, null);
-        this.success = success;
-    }
+	private AsyncPlanExecuteResult(boolean success) {
+		super(200, null);
+		this.success = success;
+	}
 
-    public static AsyncPlanExecuteResult getInstance(boolean success) {
-        if (success) {
-            if (successInstance == null) {
-                synchronized (AsyncPlanExecuteResult.class) {
-                    if (successInstance == null) {
-                        successInstance = new AsyncPlanExecuteResult(true);
-                    }
-                }
-            }
-            return successInstance;
-        } else {
-            if (failureInstance == null) {
-                synchronized (AsyncPlanExecuteResult.class) {
-                    if (failureInstance == null) {
-                        failureInstance = new AsyncPlanExecuteResult(false);
-                    }
-                }
-            }
-            return failureInstance;
-        }
-    }
+	public static AsyncPlanExecuteResult getInstance(boolean success) {
+		if (success) {
+			if (successInstance == null) {
+				synchronized (AsyncPlanExecuteResult.class) {
+					if (successInstance == null) {
+						successInstance = new AsyncPlanExecuteResult(true);
+					}
+				}
+			}
+			return successInstance;
+		} else {
+			if (failureInstance == null) {
+				synchronized (AsyncPlanExecuteResult.class) {
+					if (failureInstance == null) {
+						failureInstance = new AsyncPlanExecuteResult(false);
+					}
+				}
+			}
+			return failureInstance;
+		}
+	}
 
-    public boolean isSuccess() {
-        return success;
-    }
+	public boolean isSuccess() {
+		return success;
+	}
 }

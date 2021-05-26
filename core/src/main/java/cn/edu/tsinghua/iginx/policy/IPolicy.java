@@ -30,24 +30,24 @@ import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 
 public interface IPolicy {
 
-    PostQueryExecuteProcessor getPostQueryExecuteProcessor();
+	PostQueryExecuteProcessor getPostQueryExecuteProcessor();
 
-    PostQueryPlanProcessor getPostQueryPlanProcessor();
+	PostQueryPlanProcessor getPostQueryPlanProcessor();
 
-    PostQueryProcessor getPostQueryProcessor();
+	PostQueryProcessor getPostQueryProcessor();
 
-    PostQueryResultCombineProcessor getPostQueryResultCombineProcessor();
+	PostQueryResultCombineProcessor getPostQueryResultCombineProcessor();
 
-    PreQueryExecuteProcessor getPreQueryExecuteProcessor();
+	PreQueryExecuteProcessor getPreQueryExecuteProcessor();
 
-    PreQueryPlanProcessor getPreQueryPlanProcessor();
+	PreQueryPlanProcessor getPreQueryPlanProcessor();
 
-    PreQueryResultCombineProcessor getPreQueryResultCombineProcessor();
+	PreQueryResultCombineProcessor getPreQueryResultCombineProcessor();
 
-    IPlanSplitter getIPlanSplitter();
+	IPlanSplitter getIPlanSplitter();
 
-    void init(IMetaManager iMetaManager);
+	void init(IMetaManager iMetaManager);
 
-    StorageEngineChangeHook getStorageEngineChangeHook();
+	StorageEngineChangeHook getStorageEngineChangeHook();
 
 }

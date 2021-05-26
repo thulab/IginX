@@ -43,7 +43,7 @@ public class SplitInfo {
 	}
 
 	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica,
-					 IginxPlan.IginxPlanType type) {
+	                 IginxPlan.IginxPlanType type) {
 		this.timeInterval = timeInterval;
 		this.timeSeriesInterval = timeSeriesInterval;
 		this.replica = replica;
@@ -51,7 +51,7 @@ public class SplitInfo {
 	}
 
 	public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica,
-					 IginxPlan.IginxPlanType type, int combineGroup) {
+	                 IginxPlan.IginxPlanType type, int combineGroup) {
 		this.timeInterval = timeInterval;
 		this.timeSeriesInterval = timeSeriesInterval;
 		this.replica = replica;

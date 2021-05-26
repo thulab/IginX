@@ -33,10 +33,8 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByData
 
 public class SessionQueryDataSet {
 
-	private List<String> paths;
-
 	private final long[] timestamps;
-
+	private List<String> paths;
 	private List<List<Object>> values;
 
 	public SessionQueryDataSet(QueryDataResp resp) {
@@ -76,7 +74,7 @@ public class SessionQueryDataSet {
 			for (int j = 0; j < dataTypeList.size(); j++) {
 				if (bitmap.get(j)) {
 					tempValues.add(getValueFromByteBufferByDataType(valuesBuffer, dataTypeList.get(j)));
-				} else{
+				} else {
 					tempValues.add(null);
 				}
 			}

@@ -23,8 +23,8 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
 
 public interface IQueryStatisticsCollector {
 
-    PostQueryProcessor getPostQueryProcessor();
+	PostQueryProcessor getPostQueryProcessor();
 
-    PreQueryProcessor getPreQueryProcessor();
+	PreQueryProcessor getPreQueryProcessor();
 
 }

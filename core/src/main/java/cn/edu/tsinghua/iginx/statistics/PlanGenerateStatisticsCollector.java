@@ -28,45 +28,42 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PlanGenerateStatisticsCollector extends AbstractStageStatisticsCollector implements IPlanGenerateStatisticsCollector {
 
-    private static final Logger logger = LoggerFactory.getLogger(PlanGenerateStatisticsCollector.class);
+	private static final Logger logger = LoggerFactory.getLogger(PlanGenerateStatisticsCollector.class);
+	private final ReadWriteLock lock = new ReentrantReadWriteLock();
+	private long count = 0;
+	private long span = 0;
 
-    private long count = 0;
+	@Override
+	protected String getStageName() {
+		return "PlanGenerate";
+	}
 
-    private long span = 0;
+	@Override
+	protected void processStatistics(Statistics statistics) {
+		lock.writeLock().lock();
+		count += 1;
+		span += statistics.getEndTime() - statistics.getBeginTime();
+		lock.writeLock().unlock();
+	}
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+	@Override
+	public void broadcastStatistics() {
+		lock.readLock().lock();
+		logger.info("Plan Generate statisticsInfo: ");
+		logger.info("\tcount: " + count + ", span: " + span + "μs");
+		if (count != 0) {
+			logger.info("\taverage-span: " + (1.0 * span) / count + "μs");
+		}
+		lock.readLock().unlock();
+	}
 
-    @Override
-    protected String getStageName() {
-        return "PlanGenerate";
-    }
+	@Override
+	public PostQueryPlanProcessor getPostQueryPlanProcessor() {
+		return after::apply;
+	}
 
-    @Override
-    protected void processStatistics(Statistics statistics) {
-        lock.writeLock().lock();
-        count += 1;
-        span += statistics.getEndTime() - statistics.getBeginTime();
-        lock.writeLock().unlock();
-    }
-
-    @Override
-    public void broadcastStatistics() {
-        lock.readLock().lock();
-        logger.info("Plan Generate statisticsInfo: ");
-        logger.info("\tcount: " + count + ", span: " + span + "μs");
-        if (count != 0) {
-            logger.info("\taverage-span: " + (1.0 * span) / count + "μs");
-        }
-        lock.readLock().unlock();
-    }
-
-    @Override
-    public PostQueryPlanProcessor getPostQueryPlanProcessor() {
-        return after::apply;
-    }
-
-    @Override
-    public PreQueryPlanProcessor getPreQueryPlanProcessor() {
-        return before::apply;
-    }
+	@Override
+	public PreQueryPlanProcessor getPreQueryPlanProcessor() {
+		return before::apply;
+	}
 }

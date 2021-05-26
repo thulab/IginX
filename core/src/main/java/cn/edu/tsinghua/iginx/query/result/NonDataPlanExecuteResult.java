@@ -22,8 +22,8 @@ import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
 public class NonDataPlanExecuteResult extends SyncPlanExecuteResult {
 
-    public NonDataPlanExecuteResult(int statusCode, IginxPlan plan) {
-        super(statusCode, plan);
-    }
+	public NonDataPlanExecuteResult(int statusCode, IginxPlan plan) {
+		super(statusCode, plan);
+	}
 
 }

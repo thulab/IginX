@@ -26,8 +26,8 @@ import java.util.List;
 
 public interface IPlanExecutor {
 
-    List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext);
+	List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext);
 
-    StorageEngineChangeHook getStorageEngineChangeHook();
+	StorageEngineChangeHook getStorageEngineChangeHook();
 
 }

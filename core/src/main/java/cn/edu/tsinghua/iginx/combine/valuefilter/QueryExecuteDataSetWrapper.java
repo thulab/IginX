@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.combine.valuefilter;
 //todo
+
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.entity.RowRecord;
@@ -27,50 +28,49 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class QueryExecuteDataSetWrapper
-{
+public class QueryExecuteDataSetWrapper {
 
-    private final QueryExecuteDataSet dataSet;
+	private final QueryExecuteDataSet dataSet;
 
-    private final Map<String, Integer> columnPositionMap;
+	private final Map<String, Integer> columnPositionMap;
 
-    private RowRecord rowRecord;
+	private RowRecord rowRecord;
 
-    public QueryExecuteDataSetWrapper(QueryExecuteDataSet dataSet) throws ExecutionException {
-        this.dataSet = dataSet;
-        this.columnPositionMap = new HashMap<>();
-        List<String> columnNames = dataSet.getColumnNames().subList(1, dataSet.getColumnNames().size());
-        for (int i = 0; i < columnNames.size(); i++) {
-            columnPositionMap.put(columnNames.get(i), i);
-        }
-    }
+	public QueryExecuteDataSetWrapper(QueryExecuteDataSet dataSet) throws ExecutionException {
+		this.dataSet = dataSet;
+		this.columnPositionMap = new HashMap<>();
+		List<String> columnNames = dataSet.getColumnNames().subList(1, dataSet.getColumnNames().size());
+		for (int i = 0; i < columnNames.size(); i++) {
+			columnPositionMap.put(columnNames.get(i), i);
+		}
+	}
 
-    public List<String> getColumnNames() throws ExecutionException {
-        return dataSet.getColumnNames().subList(1, dataSet.getColumnNames().size());
-    }
+	public List<String> getColumnNames() throws ExecutionException {
+		return dataSet.getColumnNames().subList(1, dataSet.getColumnNames().size());
+	}
 
-    public List<DataType> getColumnTypes() throws ExecutionException {
-        return dataSet.getColumnTypes().subList(1, dataSet.getColumnTypes().size());
-    }
+	public List<DataType> getColumnTypes() throws ExecutionException {
+		return dataSet.getColumnTypes().subList(1, dataSet.getColumnTypes().size());
+	}
 
-    public void next() throws ExecutionException {
-        rowRecord = dataSet.next();
-    }
+	public void next() throws ExecutionException {
+		rowRecord = dataSet.next();
+	}
 
-    public void close() throws ExecutionException {
-        dataSet.close();
-    }
+	public void close() throws ExecutionException {
+		dataSet.close();
+	}
 
-    public Object getValue(String columnName) {
-        return rowRecord.getFields().get(columnPositionMap.get(columnName));
-    }
+	public Object getValue(String columnName) {
+		return rowRecord.getFields().get(columnPositionMap.get(columnName));
+	}
 
-    public long getTimestamp() {
-        return rowRecord.getTimestamp();
-    }
+	public long getTimestamp() {
+		return rowRecord.getTimestamp();
+	}
 
-    public boolean hasNext() throws ExecutionException {
-        return dataSet.hasNext();
-    }
+	public boolean hasNext() throws ExecutionException {
+		return dataSet.hasNext();
+	}
 
 }

@@ -10,6 +10,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
  */
 public interface StorageEngineChangeHook {
 
-    void onChanged(StorageEngineMeta before, StorageEngineMeta after);
+	void onChanged(StorageEngineMeta before, StorageEngineMeta after);
 
 }

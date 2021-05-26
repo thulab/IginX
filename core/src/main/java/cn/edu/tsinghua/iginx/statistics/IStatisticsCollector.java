@@ -19,10 +19,10 @@
 package cn.edu.tsinghua.iginx.statistics;
 
 public interface IStatisticsCollector extends IPlanExecuteStatisticsCollector, IPlanGenerateStatisticsCollector,
-        IPlanResultCombineStatisticsCollector, IQueryStatisticsCollector {
+		IPlanResultCombineStatisticsCollector, IQueryStatisticsCollector {
 
-    void startBroadcasting();
+	void startBroadcasting();
 
-    void endBroadcasting();
+	void endBroadcasting();
 
 }

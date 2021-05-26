@@ -53,8 +53,16 @@ public abstract class IginxPlan {
 		return iginxPlanType;
 	}
 
+	public void setIginxPlanType(IginxPlanType iginxPlanType) {
+		this.iginxPlanType = iginxPlanType;
+	}
+
 	public boolean isQuery() {
 		return isQuery;
+	}
+
+	public void setQuery(boolean isQuery) {
+		this.isQuery = isQuery;
 	}
 
 	public boolean canBeSplit() {
@@ -65,28 +73,20 @@ public abstract class IginxPlan {
 		return isSync;
 	}
 
-	public long getStorageEngineId() {
-		return storageEngineId;
-	}
-
-	public void setIginxPlanType(IginxPlanType iginxPlanType) {
-		this.iginxPlanType = iginxPlanType;
-	}
-
-	public void setQuery(boolean isQuery) {
-		this.isQuery = isQuery;
-	}
-
-	public void setCanBeSplit(boolean canBeSplit) {
-		this.canBeSplit = canBeSplit;
-	}
-
 	public void setSync(boolean isSync) {
 		this.isSync = isSync;
 	}
 
+	public long getStorageEngineId() {
+		return storageEngineId;
+	}
+
 	public void setStorageEngineId(long storageEngineId) {
 		this.storageEngineId = storageEngineId;
+	}
+
+	public void setCanBeSplit(boolean canBeSplit) {
+		this.canBeSplit = canBeSplit;
 	}
 
 	public int getCombineGroup() {

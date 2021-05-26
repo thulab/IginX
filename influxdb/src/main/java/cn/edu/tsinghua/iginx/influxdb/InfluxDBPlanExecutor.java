@@ -41,10 +41,6 @@ import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteRes
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
-import cn.edu.tsinghua.iginx.utils.Element;
-import cn.edu.tsinghua.iginx.utils.OperatorType;
-import cn.edu.tsinghua.iginx.utils.TreeNode;
-import cn.edu.tsinghua.iginx.utils.Type;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.domain.Bucket;
@@ -64,7 +60,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Stack;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -91,19 +86,13 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
 	private Map<Long, InfluxDBClient> storageEngineIdToClient;
 
-	private void createConnection(StorageEngineMeta storageEngineMeta) {
-		if (storageEngineMeta.getDbType() != StorageEngine.InfluxDB) {
-			logger.warn("unexpected database: " + storageEngineMeta.getDbType());
-			return;
+	public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
+		storageEngineIdToClient = new ConcurrentHashMap<>();
+		for (StorageEngineMeta storageEngineMeta : storageEngineMetaList) {
+			if (!createConnection(storageEngineMeta)) {
+				System.exit(1);
+			}
 		}
-		if (!testConnection(storageEngineMeta)) {
-			logger.error("cannot connect to " + storageEngineMeta.toString());
-			return;
-		}
-		Map<String, String> extraParams = storageEngineMeta.getExtraParams();
-		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
-		InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
-		storageEngineIdToClient.put(storageEngineMeta.getId(), client);
 	}
 
 	public static boolean testConnection(StorageEngineMeta storageEngineMeta) {
@@ -119,11 +108,20 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 		return true;
 	}
 
-	public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
-		storageEngineIdToClient = new ConcurrentHashMap<>();
-		for (StorageEngineMeta storageEngineMeta : storageEngineMetaList) {
-			createConnection(storageEngineMeta);
+	private boolean createConnection(StorageEngineMeta storageEngineMeta) {
+		if (storageEngineMeta.getDbType() != StorageEngine.InfluxDB) {
+			logger.warn("unexpected database: " + storageEngineMeta.getDbType());
+			return false;
 		}
+		if (!testConnection(storageEngineMeta)) {
+			logger.error("cannot connect to " + storageEngineMeta.toString());
+			return false;
+		}
+		Map<String, String> extraParams = storageEngineMeta.getExtraParams();
+		String url = extraParams.getOrDefault("url", "http://localhost:8086/");
+		InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
+		storageEngineIdToClient.put(storageEngineMeta.getId(), client);
+		return true;
 	}
 
 	@Override
@@ -930,59 +928,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 				.findFirst()
 				.orElseThrow(IllegalStateException::new);
 
-		String valueFilter = "";
-		int cnt = 0;
-		OperatorType prevOp = null;
-		for (Element element : plan.getBooleanExpression().getPostfixExpression()) {
-			if (element.getType() == Type.OPERATOR && (element.getOperator().getOperatorType() == OperatorType.AND || element.getOperator().getOperatorType() == OperatorType.OR)) {
-				if (prevOp != null && prevOp != element.getOperator().getOperatorType()) {
-					cnt++;
-				}
-				prevOp = element.getOperator().getOperatorType();
-			}
-		}
-		for (int i = 0; i < cnt; i++) {
-			valueFilter += "( ";
-		}
-		Stack<TreeNode> stack = new Stack<>();
-		TreeNode node = plan.getBooleanExpression().getRoot();
-
-		prevOp = null;
-		boolean needBracket = false;
-		while (node != null || !stack.isEmpty()) {
-			while (node != null) {
-				stack.push(node);
-				node = node.getLeft();
-			}
-			if (!stack.isEmpty()) {
-				node = stack.pop();
-				if (node.getData().getType() == Type.OPERATOR && (node.getData().getOperator().getOperatorType() == OperatorType.AND || node.getData().getOperator().getOperatorType() == OperatorType.OR)) {
-					if (prevOp == null) {
-						prevOp = node.getData().getOperator().getOperatorType();
-					} else {
-						if (node.getData().getOperator().getOperatorType() != prevOp) {
-							needBracket = true;
-							valueFilter += " ) ";
-						}
-						prevOp = node.getData().getOperator().getOperatorType();
-					}
-				}
-				if (node.getData().getType() == Type.OPERATOR) {
-					valueFilter += node.getData().getOperator().getOperatorType() + " ";
-				} else {
-					valueFilter += node.getData().getValue() + " ";
-				}
-				if (needBracket) {
-					valueFilter += " ( ";
-					needBracket = false;
-				}
-				node = node.getRight();
-			}
-		}
-		for (int i = 0; i < cnt; i++) {
-			valueFilter += " )";
-		}
-
 		List<QueryExecuteDataSet> dataSets = new ArrayList<>();
 		for (String path : plan.getPaths()) {
 			String[] elements = path.split("\\.");
@@ -1020,8 +965,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 			dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
 		}
 
-//		return new QueryDataPlanExecuteResult(SUCCESS, plan, dataSets);
-		return null;
+		return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, dataSets);
 	}
 
 	@Override

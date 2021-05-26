@@ -25,16 +25,16 @@ import java.util.List;
 
 public class DownsampleSumQueryPlan extends DownsampleQueryPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(DownsampleSumQueryPlan.class);
+	private static final Logger logger = LoggerFactory.getLogger(DownsampleSumQueryPlan.class);
 
-    public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        super(paths, startTime, endTime, precision);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
-    }
+	public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+		super(paths, startTime, endTime, precision);
+		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
+	}
 
-    public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-        super(paths, startTime, endTime, precision, storageEngineId);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
-    }
+	public DownsampleSumQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
+		super(paths, startTime, endTime, precision, storageEngineId);
+		this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_SUM);
+	}
 
 }

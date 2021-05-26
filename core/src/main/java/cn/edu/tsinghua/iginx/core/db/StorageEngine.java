@@ -26,40 +26,40 @@ import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.INFLUXDB;
 import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.IOTDB;
 
 public enum StorageEngine {
-    IoTDB,
-    InfluxDB;
+	IoTDB,
+	InfluxDB;
 
-    public static StorageEngine fromString(String s) {
-        switch (s.toLowerCase(Locale.ROOT)) {
-            case "iotdb":
-                return IoTDB;
-            case "influxdb":
-                return InfluxDB;
-            default:
-                return null;
-        }
-    }
+	public static StorageEngine fromString(String s) {
+		switch (s.toLowerCase(Locale.ROOT)) {
+			case "iotdb":
+				return IoTDB;
+			case "influxdb":
+				return InfluxDB;
+			default:
+				return null;
+		}
+	}
 
-    public static StorageEngine fromThrift(StorageEngineType s) {
-        switch (s) {
-            case IOTDB:
-                return IoTDB;
-            case INFLUXDB:
-                return InfluxDB;
-            default:
-                return null;
-        }
-    }
+	public static StorageEngine fromThrift(StorageEngineType s) {
+		switch (s) {
+			case IOTDB:
+				return IoTDB;
+			case INFLUXDB:
+				return InfluxDB;
+			default:
+				return null;
+		}
+	}
 
-    public static StorageEngineType toThrift(StorageEngine s) {
-        switch (s) {
-            case IoTDB:
-                return IOTDB;
-            case InfluxDB:
-                return INFLUXDB;
-            default:
-                return null;
-        }
-    }
+	public static StorageEngineType toThrift(StorageEngine s) {
+		switch (s) {
+			case IoTDB:
+				return IOTDB;
+			case InfluxDB:
+				return INFLUXDB;
+			default:
+				return null;
+		}
+	}
 
 }

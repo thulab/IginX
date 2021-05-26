@@ -29,10 +29,10 @@ import java.util.List;
 @Setter
 public class QueryDataPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private List<QueryExecuteDataSet> queryExecuteDataSets;
+	private List<QueryExecuteDataSet> queryExecuteDataSets;
 
-    public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
-        super(statusCode, plan);
-        this.queryExecuteDataSets = queryExecuteDataSets;
-    }
+	public QueryDataPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
+		super(statusCode, plan);
+		this.queryExecuteDataSets = queryExecuteDataSets;
+	}
 }

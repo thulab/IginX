@@ -56,211 +56,199 @@ import java.util.concurrent.Executors;
 
 public final class Core {
 
-    private static final Logger logger = LoggerFactory.getLogger(Core.class);
+	private static final Logger logger = LoggerFactory.getLogger(Core.class);
 
-    private static final Core instance = new Core();
+	private static final Core instance = new Core();
+	private final List<PreQueryPlanProcessor> preQueryPlanProcessors = new ArrayList<>();
+	private final List<PostQueryPlanProcessor> postQueryPlanProcessors = new ArrayList<>();
+	private final List<PreQueryExecuteProcessor> preQueryExecuteProcessors = new ArrayList<>();
+	private final List<PostQueryExecuteProcessor> postQueryExecuteProcessors = new ArrayList<>();
+	private final List<PreQueryResultCombineProcessor> preQueryResultCombineProcessors = new ArrayList<>();
+	private final List<PostQueryResultCombineProcessor> postQueryResultCombineProcessors = new ArrayList<>();
+	private final List<PostQueryProcessor> postQueryProcessors = new ArrayList<>();
+	private final List<PreQueryProcessor> preQueryProcessors = new ArrayList<>();
+	private final ExecutorService postQueryProcessThreadPool;
+	private IPlanGenerator planGenerator;
+	private IPlanExecutor queryExecutor;
+	private ICombineExecutor combineExecutor;
 
-    private IPlanGenerator planGenerator;
+	private Core() {
+		IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+		registerPlanGenerator(new SimplePlanGenerator());
+		registerCombineExecutor(new CombineExecutor());
 
-    private IPlanExecutor queryExecutor;
+		IPlanExecutor planExecutor = new MixIStorageEnginePlanExecutor(metaManager.getStorageEngineList());
+		registerQueryExecutor(planExecutor);
+		StorageEngineChangeHook hook = planExecutor.getStorageEngineChangeHook();
+		if (hook != null) {
+			metaManager.registerStorageEngineChangeHook(hook);
+		}
 
-    private ICombineExecutor combineExecutor;
+		try {
+			String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
+			if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
+				Class<?> statisticsCollectorClass = Core.class.getClassLoader().
+						loadClass(statisticsCollectorClassName);
+				IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
+						.getConstructor().newInstance();
+				registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
+				registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
+				registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
+				registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
+				registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
+				registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
+				registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
+				registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
+				statisticsCollector.startBroadcasting();
+			}
+		} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+			logger.error("initial statistics collector error: ", e);
+		}
 
-    private final List<PreQueryPlanProcessor> preQueryPlanProcessors = new ArrayList<>();
+		IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
-    private final List<PostQueryPlanProcessor> postQueryPlanProcessors = new ArrayList<>();
+		registerPreQueryPlanProcessor(policy.getPreQueryPlanProcessor());
+		registerPreQueryExecuteProcessor(policy.getPreQueryExecuteProcessor());
+		registerPreQueryResultCombineProcessor(policy.getPreQueryResultCombineProcessor());
+		registerPostQueryProcessor(policy.getPostQueryProcessor());
+		registerPostQueryPlanProcessor(policy.getPostQueryPlanProcessor());
+		registerPostQueryExecuteProcessor(policy.getPostQueryExecuteProcessor());
+		registerPostQueryResultCombineProcessor(policy.getPostQueryResultCombineProcessor());
 
-    private final List<PreQueryExecuteProcessor> preQueryExecuteProcessors = new ArrayList<>();
+		postQueryProcessThreadPool = Executors.newCachedThreadPool();
+	}
 
-    private final List<PostQueryExecuteProcessor> postQueryExecuteProcessors = new ArrayList<>();
+	public static Core getInstance() {
+		return instance;
+	}
 
-    private final List<PreQueryResultCombineProcessor> preQueryResultCombineProcessors = new ArrayList<>();
+	public void registerPreQueryPlanProcessor(PreQueryPlanProcessor preQueryPlanProcessor) {
+		if (preQueryPlanProcessor != null)
+			preQueryPlanProcessors.add(preQueryPlanProcessor);
+	}
 
-    private final List<PostQueryResultCombineProcessor> postQueryResultCombineProcessors = new ArrayList<>();
+	public void registerPostQueryPlanProcessor(PostQueryPlanProcessor postQueryPlanProcessor) {
+		if (postQueryPlanProcessor != null)
+			postQueryPlanProcessors.add(postQueryPlanProcessor);
+	}
 
-    private final List<PostQueryProcessor> postQueryProcessors = new ArrayList<>();
+	public void registerPreQueryExecuteProcessor(PreQueryExecuteProcessor preQueryExecuteProcessor) {
+		if (preQueryExecuteProcessor != null)
+			preQueryExecuteProcessors.add(preQueryExecuteProcessor);
+	}
 
-    private final List<PreQueryProcessor> preQueryProcessors = new ArrayList<>();
+	public void registerPostQueryExecuteProcessor(PostQueryExecuteProcessor postQueryExecuteProcessor) {
+		if (postQueryExecuteProcessor != null)
+			postQueryExecuteProcessors.add(postQueryExecuteProcessor);
+	}
 
-    private final ExecutorService postQueryProcessThreadPool;
+	public void registerPreQueryResultCombineProcessor(PreQueryResultCombineProcessor preQueryResultCombineProcessor) {
+		if (preQueryResultCombineProcessor != null)
+			preQueryResultCombineProcessors.add(preQueryResultCombineProcessor);
+	}
 
-    private Core() {
-        IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
-        registerPlanGenerator(new SimplePlanGenerator());
-        registerCombineExecutor(new CombineExecutor());
+	public void registerPreQueryProcessor(PreQueryProcessor preQueryProcessor) {
+		if (preQueryProcessor != null)
+			preQueryProcessors.add(preQueryProcessor);
+	}
 
-        IPlanExecutor planExecutor = new MixIStorageEnginePlanExecutor(metaManager.getStorageEngineList());
-        registerQueryExecutor(planExecutor);
-        StorageEngineChangeHook hook = planExecutor.getStorageEngineChangeHook();
-        if (hook != null) {
-            metaManager.registerStorageEngineChangeHook(hook);
-        }
+	public void registerPostQueryResultCombineProcessor(PostQueryResultCombineProcessor postQueryResultCombineProcessor) {
+		if (postQueryResultCombineProcessor != null)
+			postQueryResultCombineProcessors.add(postQueryResultCombineProcessor);
+	}
 
-        try {
-            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
-            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
-                Class<?> statisticsCollectorClass = Core.class.getClassLoader().
-                        loadClass(statisticsCollectorClassName);
-                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
-                        .getConstructor().newInstance();
-                registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
-                registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
-                registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
-                registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
-                registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
-                registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
-                registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
-                registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
-                statisticsCollector.startBroadcasting();
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            logger.error("initial statistics collector error: ", e);
-        }
+	public void registerPostQueryProcessor(PostQueryProcessor postQueryProcessor) {
+		if (postQueryProcessor != null)
+			postQueryProcessors.add(postQueryProcessor);
+	}
 
-        IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+	public void registerPlanGenerator(IPlanGenerator planGenerator) {
+		this.planGenerator = planGenerator;
+	}
 
-        registerPreQueryPlanProcessor(policy.getPreQueryPlanProcessor());
-        registerPreQueryExecuteProcessor(policy.getPreQueryExecuteProcessor());
-        registerPreQueryResultCombineProcessor(policy.getPreQueryResultCombineProcessor());
-        registerPostQueryProcessor(policy.getPostQueryProcessor());
-        registerPostQueryPlanProcessor(policy.getPostQueryPlanProcessor());
-        registerPostQueryExecuteProcessor(policy.getPostQueryExecuteProcessor());
-        registerPostQueryResultCombineProcessor(policy.getPostQueryResultCombineProcessor());
+	public void registerQueryExecutor(IPlanExecutor queryExecutor) {
+		this.queryExecutor = queryExecutor;
+	}
 
-        postQueryProcessThreadPool = Executors.newCachedThreadPool();
-    }
+	public void registerCombineExecutor(ICombineExecutor combineExecutor) {
+		this.combineExecutor = combineExecutor;
+	}
 
-    public void registerPreQueryPlanProcessor(PreQueryPlanProcessor preQueryPlanProcessor) {
-        if (preQueryPlanProcessor != null)
-            preQueryPlanProcessors.add(preQueryPlanProcessor);
-    }
+	public void processRequest(RequestContext requestContext) {
+		// 请求前处理器
+		for (PreQueryProcessor processor : preQueryProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
+		// 计划前处理器
+		for (PreQueryPlanProcessor processor : preQueryPlanProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
+		// 生成计划
+		List<? extends IginxPlan> iginxPlans = planGenerator.generateSubPlans(requestContext);
+		requestContext.setIginxPlans(iginxPlans);
+		// 计划后处理器
+		for (PostQueryPlanProcessor processor : postQueryPlanProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
 
-    public void registerPostQueryPlanProcessor(PostQueryPlanProcessor postQueryPlanProcessor) {
-        if (postQueryPlanProcessor != null)
-            postQueryPlanProcessors.add(postQueryPlanProcessor);
-    }
+		// 请求执行前处理器
+		for (PreQueryExecuteProcessor processor : preQueryExecuteProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
+		// 执行计划
+		List<PlanExecuteResult> planExecuteResults = queryExecutor.executeIginxPlans(requestContext);
+		requestContext.setPlanExecuteResults(planExecuteResults);
+		// 请求执行后处理器
+		for (PostQueryExecuteProcessor processor : postQueryExecuteProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
 
-    public void registerPreQueryExecuteProcessor(PreQueryExecuteProcessor preQueryExecuteProcessor) {
-        if (preQueryExecuteProcessor != null)
-            preQueryExecuteProcessors.add(preQueryExecuteProcessor);
-    }
-
-    public void registerPostQueryExecuteProcessor(PostQueryExecuteProcessor postQueryExecuteProcessor) {
-        if (postQueryExecuteProcessor != null)
-            postQueryExecuteProcessors.add(postQueryExecuteProcessor);
-    }
-
-    public void registerPreQueryResultCombineProcessor(PreQueryResultCombineProcessor preQueryResultCombineProcessor) {
-        if (preQueryResultCombineProcessor != null)
-            preQueryResultCombineProcessors.add(preQueryResultCombineProcessor);
-    }
-
-    public void registerPreQueryProcessor(PreQueryProcessor preQueryProcessor) {
-        if (preQueryProcessor != null)
-            preQueryProcessors.add(preQueryProcessor);
-    }
-
-    public void registerPostQueryResultCombineProcessor(PostQueryResultCombineProcessor postQueryResultCombineProcessor) {
-        if (postQueryResultCombineProcessor != null)
-            postQueryResultCombineProcessors.add(postQueryResultCombineProcessor);
-    }
-
-    public void registerPostQueryProcessor(PostQueryProcessor postQueryProcessor) {
-        if (postQueryProcessor != null)
-            postQueryProcessors.add(postQueryProcessor);
-    }
-
-    public void registerPlanGenerator(IPlanGenerator planGenerator) {
-        this.planGenerator = planGenerator;
-    }
-
-    public void registerQueryExecutor(IPlanExecutor queryExecutor) {
-        this.queryExecutor = queryExecutor;
-    }
-
-    public void registerCombineExecutor(ICombineExecutor combineExecutor) {
-        this.combineExecutor = combineExecutor;
-    }
-
-    public void processRequest(RequestContext requestContext) {
-        // 请求前处理器
-        for (PreQueryProcessor processor: preQueryProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-        // 计划前处理器
-        for (PreQueryPlanProcessor processor: preQueryPlanProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-        // 生成计划
-        List<? extends IginxPlan> iginxPlans = planGenerator.generateSubPlans(requestContext);
-        requestContext.setIginxPlans(iginxPlans);
-        // 计划后处理器
-        for (PostQueryPlanProcessor processor: postQueryPlanProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-
-        // 请求执行前处理器
-        for (PreQueryExecuteProcessor processor: preQueryExecuteProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-        // 执行计划
-        List<PlanExecuteResult> planExecuteResults = queryExecutor.executeIginxPlans(requestContext);
-        requestContext.setPlanExecuteResults(planExecuteResults);
-        // 请求执行后处理器
-        for (PostQueryExecuteProcessor processor: postQueryExecuteProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-
-        // 结果合并前处理器
-        for (PreQueryResultCombineProcessor processor: preQueryResultCombineProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-        // 合并结果
-        CombineResult combineResult = combineExecutor.combineResult(requestContext);
-        requestContext.setCombineResult(combineResult);
-        requestContext.setStatus(combineResult.getStatus());
-        // 结果合并后处理器
-        for (PostQueryResultCombineProcessor processor: postQueryResultCombineProcessors) {
-            Status status = processor.process(requestContext);
-            if (status != null) {
-                requestContext.setStatus(status);
-                return;
-            }
-        }
-        postQueryProcessThreadPool.submit((Callable<Void>) () -> {
-            for (PostQueryProcessor processor: postQueryProcessors) {
-                processor.process(requestContext);
-            }
-            return null;
-        });
-    }
-
-    public static Core getInstance() {
-        return instance;
-    }
+		// 结果合并前处理器
+		for (PreQueryResultCombineProcessor processor : preQueryResultCombineProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
+		// 合并结果
+		CombineResult combineResult = combineExecutor.combineResult(requestContext);
+		requestContext.setCombineResult(combineResult);
+		requestContext.setStatus(combineResult.getStatus());
+		// 结果合并后处理器
+		for (PostQueryResultCombineProcessor processor : postQueryResultCombineProcessors) {
+			Status status = processor.process(requestContext);
+			if (status != null) {
+				requestContext.setStatus(status);
+				return;
+			}
+		}
+		postQueryProcessThreadPool.submit((Callable<Void>) () -> {
+			for (PostQueryProcessor processor : postQueryProcessors) {
+				processor.process(requestContext);
+			}
+			return null;
+		});
+	}
 
 }

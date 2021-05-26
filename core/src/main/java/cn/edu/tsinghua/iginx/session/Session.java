@@ -21,7 +21,30 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
+import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -48,26 +71,16 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 public class Session {
 
 	private static final Logger logger = LoggerFactory.getLogger(Session.class);
-
-	private String host;
-
-	private int port;
-
 	private final String username;
-
 	private final String password;
-
-	private IService.Iface client;
-
-	private long sessionId;
-
-	private TTransport transport;
-
-	private boolean isClosed;
-
-	private int redirectTimes;
-
 	private final ReadWriteLock lock;
+	private String host;
+	private int port;
+	private IService.Iface client;
+	private long sessionId;
+	private TTransport transport;
+	private boolean isClosed;
+	private int redirectTimes;
 
 	public Session(String host, int port) {
 		this(host, port, Constants.DEFAULT_USERNAME, Constants.DEFAULT_PASSWORD);
@@ -172,7 +185,7 @@ public class Session {
 	}
 
 	public synchronized void openSession() throws SessionException {
-		if (!isClosed)  {
+		if (!isClosed) {
 			return;
 		}
 
@@ -197,7 +210,7 @@ public class Session {
 				this.port = Integer.parseInt(targetAddress[1]);
 				redirectTimes += 1;
 
-			} while(redirectTimes <= Constants.MAX_REDIRECT_TIME);
+			} while (redirectTimes <= Constants.MAX_REDIRECT_TIME);
 
 			if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
 				throw new SessionException("重定向次数过多！");
@@ -218,7 +231,7 @@ public class Session {
 		}
 		try {
 			tryCloseSession();
-		}  finally {
+		} finally {
 			isClosed = true;
 		}
 	}
@@ -236,7 +249,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -256,7 +269,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -275,7 +288,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -300,7 +313,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -320,7 +333,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -346,7 +359,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -354,7 +367,7 @@ public class Session {
 	}
 
 	public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-									List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+	                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
 		if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
 			logger.error("Invalid insert request!");
 			return;
@@ -418,7 +431,7 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
@@ -426,7 +439,7 @@ public class Session {
 	}
 
 	public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-								 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+	                             List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
 		if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
 			logger.error("Invalid insert request!");
 			return;
@@ -491,20 +504,20 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
 			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
 	}
 
-	public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException {
+	public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException, ExecutionException {
 		List<String> paths = new ArrayList<>();
 		paths.add(path);
 		deleteDataInColumns(paths, startTime, endTime);
 	}
 
-	public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException {
+	public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException, ExecutionException {
 		DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
 
 		try {
@@ -516,14 +529,15 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(status));
+			} while (checkRedirect(status));
+			RpcUtils.verifySuccess(status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
 	}
 
 	public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
-			throws SessionException {
+			throws SessionException, ExecutionException {
 		if (paths.isEmpty() || startTime > endTime) {
 			logger.error("Invalid query request!");
 			return null;
@@ -540,7 +554,8 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(resp.status));
+			} while (checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -549,7 +564,7 @@ public class Session {
 	}
 
 	public SessionQueryDataSet valueFilterQuery(List<String> paths, long startTime, long endTime, String booleanExpression)
-			throws SessionException {
+			throws SessionException, ExecutionException {
 		if (paths.isEmpty() || startTime > endTime) {
 			logger.error("Invalid query request!");
 			return null;
@@ -558,22 +573,17 @@ public class Session {
 
 		ValueFilterQueryResp resp;
 
-		try
-		{
+		try {
 			do {
-					lock.readLock().lock();
-					try
-					{
-						resp = client.valueFilterQuery(req);
-					}
-					finally
-					{
-						lock.readLock().unlock();
-					}
-				} while(checkRedirect(resp.status));
-		}
-		catch (TException e)
-		{
+				lock.readLock().lock();
+				try {
+					resp = client.valueFilterQuery(req);
+				} finally {
+					lock.readLock().unlock();
+				}
+			} while (checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
+		} catch (TException e) {
 			throw new SessionException(e);
 		}
 
@@ -581,7 +591,7 @@ public class Session {
 	}
 
 	public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
-			throws SessionException {
+			throws SessionException, ExecutionException {
 		AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
 
 		AggregateQueryResp resp;
@@ -593,7 +603,8 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(resp.status));
+			} while (checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}
@@ -601,7 +612,7 @@ public class Session {
 		return new SessionAggregateQueryDataSet(resp, aggregateType);
 	}
 
-	public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException {
+	public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
 		DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
 				aggregateType, precision);
 
@@ -615,7 +626,8 @@ public class Session {
 				} finally {
 					lock.readLock().unlock();
 				}
-			} while(checkRedirect(resp.status));
+			} while (checkRedirect(resp.status));
+			RpcUtils.verifySuccess(resp.status);
 		} catch (TException e) {
 			throw new SessionException(e);
 		}

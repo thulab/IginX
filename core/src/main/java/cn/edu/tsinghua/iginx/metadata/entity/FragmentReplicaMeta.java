@@ -20,48 +20,48 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 
 public final class FragmentReplicaMeta {
 
-    private final TimeInterval timeInterval;
+	private final TimeInterval timeInterval;
 
-    private final TimeSeriesInterval tsInterval;
+	private final TimeSeriesInterval tsInterval;
 
-    /**
-     * 分片副本的序号，如果该值为 0，则意味其为主分片
-     */
-    private final int replicaIndex;
+	/**
+	 * 分片副本的序号，如果该值为 0，则意味其为主分片
+	 */
+	private final int replicaIndex;
 
-    /**
-     * 当前分片副本所在的数据库
-     */
-    private final long storageEngineId;
+	/**
+	 * 当前分片副本所在的数据库
+	 */
+	private final long storageEngineId;
 
-    public FragmentReplicaMeta(TimeInterval timeInterval, TimeSeriesInterval tsInterval, int replicaIndex, long storageEngineId) {
-        this.timeInterval = timeInterval;
-        this.tsInterval = tsInterval;
-        this.replicaIndex = replicaIndex;
-        this.storageEngineId = storageEngineId;
-    }
+	public FragmentReplicaMeta(TimeInterval timeInterval, TimeSeriesInterval tsInterval, int replicaIndex, long storageEngineId) {
+		this.timeInterval = timeInterval;
+		this.tsInterval = tsInterval;
+		this.replicaIndex = replicaIndex;
+		this.storageEngineId = storageEngineId;
+	}
 
-    public int getReplicaIndex() {
-        return replicaIndex;
-    }
+	public int getReplicaIndex() {
+		return replicaIndex;
+	}
 
-    public long getStorageEngineId() {
-        return storageEngineId;
-    }
+	public long getStorageEngineId() {
+		return storageEngineId;
+	}
 
-    public TimeInterval getTimeInterval() {
-        return timeInterval;
-    }
+	public TimeInterval getTimeInterval() {
+		return timeInterval;
+	}
 
-    public TimeSeriesInterval getTsInterval() {
-        return tsInterval;
-    }
+	public TimeSeriesInterval getTsInterval() {
+		return tsInterval;
+	}
 
-    public long getStartTime() {
-        return timeInterval.getStartTime();
-    }
+	public long getStartTime() {
+		return timeInterval.getStartTime();
+	}
 
-    public long getEndTime() {
-        return timeInterval.getEndTime();
-    }
+	public long getEndTime() {
+		return timeInterval.getEndTime();
+	}
 }

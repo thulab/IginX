@@ -26,10 +26,10 @@ import lombok.EqualsAndHashCode;
 @Data
 public class CreateDatabaseContext extends RequestContext {
 
-    private CreateDatabaseReq req;
+	private CreateDatabaseReq req;
 
-    public CreateDatabaseContext(CreateDatabaseReq req) {
-        super(req.getSessionId(), ContextType.CreateDatabase);
-        this.req = req;
-    }
+	public CreateDatabaseContext(CreateDatabaseReq req) {
+		super(req.getSessionId(), ContextType.CreateDatabase);
+		this.req = req;
+	}
 }
