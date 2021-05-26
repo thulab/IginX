@@ -29,12 +29,9 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class PlanGenerateStatisticsCollector extends AbstractStageStatisticsCollector implements IPlanGenerateStatisticsCollector {
 
     private static final Logger logger = LoggerFactory.getLogger(PlanGenerateStatisticsCollector.class);
-
-    private long count = 0;
-
-    private long span = 0;
-
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    private long count = 0;
+    private long span = 0;
 
     @Override
     protected String getStageName() {

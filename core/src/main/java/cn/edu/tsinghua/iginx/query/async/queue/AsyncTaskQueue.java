@@ -26,6 +26,7 @@ public interface AsyncTaskQueue {
 
     /**
      * 如果当前队列中不含未执行的计划，则该方法会阻塞。
+     *
      * @return 距今最久的未执行的计划
      */
     AsyncTask getAsyncTask();

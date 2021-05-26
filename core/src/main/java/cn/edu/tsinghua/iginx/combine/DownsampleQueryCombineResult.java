@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 
 public class DownsampleQueryCombineResult extends DataCombineResult {

@@ -1,6 +1,10 @@
-package cn.edu.tsinghua.iginx.session;/**
+package cn.edu.tsinghua.iginx.session;
+
+/**
  * Created on 27/04/2021.
- * Description: 
+ * Description:
+ *
  * @author iznauy
- */public class IoTDBDownsampleExample {
+ */
+public class IoTDBDownsampleExample {
 }

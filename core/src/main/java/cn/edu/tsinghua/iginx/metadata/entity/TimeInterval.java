@@ -35,16 +35,16 @@ public final class TimeInterval {
         return startTime;
     }
 
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
     public long getSpan() {
         return endTime - startTime;
     }
 
     public long getEndTime() {
         return endTime;
-    }
-
-    public void setStartTime(long startTime) {
-        this.startTime = startTime;
     }
 
     public void setEndTime(long endTime) {

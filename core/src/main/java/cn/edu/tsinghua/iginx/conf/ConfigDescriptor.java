@@ -38,6 +38,10 @@ public class ConfigDescriptor {
         loadProps();
     }
 
+    public static ConfigDescriptor getInstance() {
+        return ConfigDescriptorHolder.INSTANCE;
+    }
+
     private void loadProps() {
         File file = new File(Constants.CONFIG_FILE);
         logger.info(file.getAbsolutePath());
@@ -46,7 +50,7 @@ public class ConfigDescriptor {
             properties.load(in);
 
             config.setIp(properties.getProperty("ip", "0.0.0.0"));
-            config.setPort(Integer.parseInt(properties.getProperty("port", "6324")));
+            config.setPort(Integer.parseInt(properties.getProperty("port", "6888")));
             config.setUsername(properties.getProperty("username", "root"));
             config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
@@ -65,8 +69,8 @@ public class ConfigDescriptor {
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
             config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
 
-            config.setRestip(properties.getProperty("restip", "127.0.0.1"));
-            config.setRestport(Integer.parseInt(properties.getProperty("restport", "6666")));
+            config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
+            config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
@@ -74,10 +78,6 @@ public class ConfigDescriptor {
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
-    }
-
-    public static ConfigDescriptor getInstance() {
-        return ConfigDescriptorHolder.INSTANCE;
     }
 
     public Config getConfig() {

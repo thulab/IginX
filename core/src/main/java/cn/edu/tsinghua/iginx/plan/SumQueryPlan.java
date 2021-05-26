@@ -9,15 +9,15 @@ import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.SUM;
 
 public class SumQueryPlan extends AggregateQueryPlan {
 
-	private static final Logger logger = LoggerFactory.getLogger(SumQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(SumQueryPlan.class);
 
-	public SumQueryPlan(List<String> paths, long startTime, long endTime) {
-		super(paths, startTime, endTime);
-		this.setIginxPlanType(SUM);
-	}
+    public SumQueryPlan(List<String> paths, long startTime, long endTime) {
+        super(paths, startTime, endTime);
+        this.setIginxPlanType(SUM);
+    }
 
-	public SumQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-		this(paths, startTime, endTime);
-		this.setStorageEngineId(storageEngineId);
-	}
+    public SumQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
+        this(paths, startTime, endTime);
+        this.setStorageEngineId(storageEngineId);
+    }
 }

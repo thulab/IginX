@@ -26,7 +26,7 @@ public class Bitmap {
 
     public Bitmap(int size) {
         this.size = size;
-        this.bitmap = new byte[(int)Math.ceil(this.size * 1.0 / 8)];
+        this.bitmap = new byte[(int) Math.ceil(this.size * 1.0 / 8)];
     }
 
     public Bitmap(int size, byte[] bitmap) {

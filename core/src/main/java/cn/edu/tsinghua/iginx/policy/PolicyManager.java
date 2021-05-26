@@ -38,6 +38,10 @@ public class PolicyManager {
         this.policies = new HashMap<>();
     }
 
+    public static PolicyManager getInstance() {
+        return instance;
+    }
+
     public IPolicy getPolicy(String policyClassName) {
         IPolicy policy;
         synchronized (policies) {
@@ -54,10 +58,6 @@ public class PolicyManager {
             }
         }
         return policy;
-    }
-
-    public static PolicyManager getInstance() {
-        return instance;
     }
 
 }
