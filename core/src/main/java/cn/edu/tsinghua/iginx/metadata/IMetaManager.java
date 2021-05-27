@@ -121,19 +121,12 @@ public interface IMetaManager {
     List<Long> selectStorageEngineIdList();
 
     /**
-     * 移动存储单元
      * 选择迁移的存储单元
      */
     Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList);
 
     /**
-<<<<<<< HEAD
      * 迁移存储单元
-=======
-     * 为 DatabasePlan 选择存储引擎实例
-     *
-     * @return 选出的存储引擎实例 Id
->>>>>>> main
      */
     boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId);
 
