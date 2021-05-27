@@ -57,7 +57,9 @@ public class DataPointsParser {
         this.inputStream = stream;
     }
 
-    public void parse() throws SessionException, IOException {
+    public void parse() throws Exception
+    {
+
         try {
             session.openSession();
         } catch (SessionException e) {
@@ -118,10 +120,12 @@ public class DataPointsParser {
     public void sendData() {
         try {
             session.openSession();
-        } catch (SessionException e) {
-            LOGGER.error("Error occurred during opening session ", e);
+            sendMetricsData();
         }
-        sendMetricsData();
+        catch (Exception e)
+        {
+            LOGGER.error("Error occurred during sending data ", e);
+        }
         session.closeSession();
     }
 
@@ -133,8 +137,10 @@ public class DataPointsParser {
         this.metricList = metricList;
     }
 
-    private void sendMetricsData() {
-        for (Metric metric : metricList) {
+    private void sendMetricsData() throws Exception
+    {
+        for (Metric metric: metricList)
+        {
             boolean needUpdate = false;
             Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
             if (metricschema == null) {
@@ -181,6 +187,7 @@ public class DataPointsParser {
                 session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
+                throw e;
             }
         }
     }
