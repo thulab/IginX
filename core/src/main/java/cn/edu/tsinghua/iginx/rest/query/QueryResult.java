@@ -147,7 +147,7 @@ public class QueryResult {
         for (int i = 0; i < n; i++) {
             ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[])
-                ret.append(queryResultDatasets.get(num).getValues().get(i));
+                ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
             else
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             ret.append("],");

@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
@@ -51,6 +53,7 @@ import java.util.concurrent.Executors;
 @Path("/")
 public class MetricsResource {
 
+    private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
     private static final String INSERT_URL = "api/v1/datapoints";
     private static final String QUERY_URL = "api/v1/datapoints/query";
     private static final String DELETE_URL = "api/v1/datapoints/delete";
@@ -219,6 +222,7 @@ public class MetricsResource {
             stringBuilder.append(metricName);
             ins.add(stringBuilder.toString());
         }
+        metaManager.addOrUpdateSchemaMapping(metricName, null);
         restSession.deleteColumns(ins);
         restSession.closeSession();
     }
