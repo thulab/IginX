@@ -354,6 +354,7 @@ public class Session {
             valuesList[i] = values;
         }
 
+        // TODO sort dataTypeList and attributesList
         index = new Integer[paths.size()];
         for (int i = 0; i < paths.size(); i++) {
             index[i] = i;
@@ -438,6 +439,7 @@ public class Session {
             sortedValuesList[i] = valuesList[index[i]];
         }
 
+        // TODO sort dataTypeList and attributesList
         index = new Integer[paths.size()];
         for (int i = 0; i < paths.size(); i++) {
             index[i] = i;
