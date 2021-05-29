@@ -40,6 +40,8 @@ public class BooleanExpression {
     }
 
     public boolean getBool(Map<String, Object> values) {
+        //System.out.println(values);
+          //      System.out.println(getAnswer(root, values));
         return getAnswer(root, values);
     }
 
@@ -70,7 +72,7 @@ public class BooleanExpression {
             }
         } else {
             Boolean leftAns = getAnswer(now.getLeft(), values);
-            Boolean rightAns = getAnswer(now.getLeft(), values);
+            Boolean rightAns = getAnswer(now.getRight(), values);
             if (now.getData().getOperator().getOperatorType() == OperatorType.AND)
                 return leftAns && rightAns;
             else

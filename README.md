@@ -50,7 +50,9 @@ experience.
 
 ## Quick start
 
-Please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is
+[Quick Start in Chinese](./docs/quick%20start.md)
+
+Or, please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is
 still being written.
 
 ### To understand technological designs in IginX
