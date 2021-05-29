@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -353,10 +354,21 @@ public class Session {
             valuesList[i] = values;
         }
 
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+        }
+
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < valuesList.length; i++) {
-            Object[] values = (Object[]) valuesList[i];
+            Object[] values = (Object[]) sortedValuesList[i];
             if (values.length != timestamps.length) {
                 logger.error("The sizes of timestamps and the element of valuesList should be equal.");
                 return;
@@ -424,6 +436,20 @@ public class Session {
         Object[] sortedValuesList = new Object[valuesList.length];
         for (int i = 0; i < valuesList.length; i++) {
             sortedValuesList[i] = valuesList[index[i]];
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
+            }
+            sortedValuesList[i] = values;
         }
 
         List<ByteBuffer> valueBufferList = new ArrayList<>();

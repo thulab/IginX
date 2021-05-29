@@ -813,16 +813,16 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        // TODO middlePath
+        // TODO split evenly
 
-        // [startTime, +∞) & [middlePath, +∞)
-        List<FragmentMeta> upperRightFragmentList = new ArrayList<>();
-        StorageUnitMeta upperRightStorageUnit;
-        // [startTime, +∞) & (-∞, middlePath)
-        List<FragmentMeta> lowerRightFragmentList = new ArrayList<>();
-        StorageUnitMeta lowerRightStorageUnit;
         // [0, startTime) & (-∞, +∞)
-        List<FragmentMeta> leftFragmentList = new ArrayList<>();
+        List<FragmentMeta> firstFragmentList = new ArrayList<>();
+        StorageUnitMeta firstStorageUnit;
+        // [startTime, +∞) & [endPath, +∞)
+        List<FragmentMeta> secondFragmentList = new ArrayList<>();
+        StorageUnitMeta secondStorageUnit;
+        // [startTime, +∞) & (-∞, startPath)
+        List<FragmentMeta> thirdFragmentList = new ArrayList<>();
         StorageUnitMeta leftStorageUnit;
 
         List<Long> storageEngineIdList;
@@ -830,23 +830,23 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
         storageEngineIdList = selectStorageEngineIdList();
         id = RandomStringUtils.randomAlphanumeric(16);
-        upperRightStorageUnit = new StorageUnitMeta(id, storageEngineIdList.get(0), id, true);
+        firstStorageUnit = new StorageUnitMeta(id, storageEngineIdList.get(0), id, true);
         for (int i = 1; i < storageEngineIdList.size(); i++) {
-            upperRightStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), id, false));
+            firstStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), id, false));
         }
-        storageUnitList.add(upperRightStorageUnit);
-        upperRightFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, id));
-        fragmentMap.put(new TimeSeriesInterval(startPath, null), upperRightFragmentList);
+        storageUnitList.add(firstStorageUnit);
+        firstFragmentList.add(new FragmentMeta(null, null, 0, startTime, id));
+        fragmentMap.put(new TimeSeriesInterval(null, null), firstFragmentList);
 
         storageEngineIdList = selectStorageEngineIdList();
         id = RandomStringUtils.randomAlphanumeric(16);
-        lowerRightStorageUnit = new StorageUnitMeta(id, storageEngineIdList.get(0), id, true);
+        secondStorageUnit = new StorageUnitMeta(id, storageEngineIdList.get(0), id, true);
         for (int i = 1; i < storageEngineIdList.size(); i++) {
-            lowerRightStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), id, false));
+            secondStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), id, false));
         }
-        storageUnitList.add(lowerRightStorageUnit);
-        lowerRightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, id));
-        fragmentMap.put(new TimeSeriesInterval(null, startPath), lowerRightFragmentList);
+        storageUnitList.add(secondStorageUnit);
+        secondFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, id));
+        fragmentMap.put(new TimeSeriesInterval(null, startPath), secondFragmentList);
 
         if (startTime != 0) {
             storageEngineIdList = selectStorageEngineIdList();
@@ -856,8 +856,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 leftStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), id, false));
             }
             storageUnitList.add(leftStorageUnit);
-            leftFragmentList.add(new FragmentMeta(null, null, startTime, Long.MAX_VALUE, id));
-            fragmentMap.put(new TimeSeriesInterval(null, null), leftFragmentList);
+            thirdFragmentList.add(new FragmentMeta(null, null, startTime, Long.MAX_VALUE, id));
+            fragmentMap.put(new TimeSeriesInterval(null, null), thirdFragmentList);
         }
 
         return new Pair<>(fragmentMap, storageUnitList);
