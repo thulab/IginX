@@ -40,7 +40,9 @@ public class ValueFilterQueryPlan extends DataPlan {
         super(true, paths, startTime, endTime, null);
         this.booleanExpression = booleanExpression;
         this.setIginxPlanType(VALUE_FILTER_QUERY);
-        paths.addAll(booleanExpression.getTimeseries());
+        List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
+        timeseries.removeAll(paths);
+        paths.addAll(timeseries);
         Collections.sort(paths);
         boolean isStartPrefix = paths.get(0).contains("*");
         String startTimeSeries = trimPath(paths.get(0));
@@ -98,7 +100,9 @@ public class ValueFilterQueryPlan extends DataPlan {
 
     public List<String> getPathsByInterval(TimeSeriesInterval interval) {
         List<String> paths = getPaths();
-        paths.addAll(booleanExpression.getTimeseries());
+        List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
+        timeseries.removeAll(paths);
+        paths.addAll(timeseries);
         Collections.sort(paths);
         if (paths.isEmpty()) {
             logger.error("There are no paths in the plan.");
