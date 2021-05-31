@@ -357,7 +357,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
+            sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> PREFIX + plan.getStorageUnit().getId() + '.' + x).collect(Collectors.toList()));
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
             return new NonDataPlanExecuteResult(FAILURE, plan);
@@ -381,7 +381,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
         SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.setStorageGroup(PREFIX + plan.getDatabaseName());
+            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnit().getId() + "." + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
             return new NonDataPlanExecuteResult(FAILURE, plan);
