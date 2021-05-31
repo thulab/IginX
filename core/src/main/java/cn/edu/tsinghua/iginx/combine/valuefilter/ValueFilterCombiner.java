@@ -102,8 +102,7 @@ public class ValueFilterCombiner {
                     columnNameList.add(columnName);
                     columnTypeList.add(columnType);
                     columnSourcesList.put(columnName, new ArrayList<>());
-                    if (insPath(columnName, queryPaths))//
-                    {
+                    if (insPath(columnName, queryPaths)) {
                         newColumnNameList.add(columnName);
                         newColumnTypeList.add(columnType);
                     }
