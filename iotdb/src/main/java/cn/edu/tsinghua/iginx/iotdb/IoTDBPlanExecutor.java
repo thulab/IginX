@@ -706,7 +706,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(AVG_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(AVG_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -722,7 +724,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(COUNT_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(COUNT_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -738,7 +742,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(SUM_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(SUM_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -754,7 +760,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(MAX_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(MAX_VALUE_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -770,7 +778,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(MIN_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(MIN_VALUE_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -786,7 +796,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(FIRST_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(FIRST_VALUE_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -802,7 +814,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(LAST_VALUE_DOWNSAMPLE, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(LAST_VALUE_DOWNSAMPLE, deviceId, measurement, plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -819,7 +833,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
-                String statement = String.format(QUERY_DATA, path.substring(path.lastIndexOf(".") + 1), path.substring(0, path.lastIndexOf(".")), plan.getStartTime(), plan.getEndTime());
+                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                String statement = String.format(QUERY_DATA, measurement, deviceId, plan.getStartTime(), plan.getEndTime());
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
