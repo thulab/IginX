@@ -109,7 +109,6 @@ public class IoTDBSessionIT {
 
     @After
     public void tearDown() throws ExecutionException, SessionException {
-        session.dropDatabase(DATABASE_NAME);
         session.closeSession();
     }
 
