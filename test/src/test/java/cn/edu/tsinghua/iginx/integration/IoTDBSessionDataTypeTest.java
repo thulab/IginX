@@ -148,7 +148,7 @@ public class IoTDBSessionDataTypeTest {
             paths.add(COLUMN_D5_S5);
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
-            addColumns();
+//            addColumns();
             insertRecords();
             //TODO remove this line when the new iotdb release version fix this bug
             Thread.sleep(10000);

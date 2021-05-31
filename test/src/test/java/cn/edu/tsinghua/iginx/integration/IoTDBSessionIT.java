@@ -97,7 +97,7 @@ public class IoTDBSessionIT {
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
             //      session.createDatabase(DATABASE_NAME);
-            addColumns();
+//            addColumns();
             insertRecords();
             //TODO remove this line when the new iotdb release version fix this bug
             Thread.sleep(10000);
