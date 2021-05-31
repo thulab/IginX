@@ -23,7 +23,6 @@ import static org.junit.Assert.fail;
 
 public class IoTDBSessionIT {
 
-    private static final String DATABASE_NAME = "sg1";
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";

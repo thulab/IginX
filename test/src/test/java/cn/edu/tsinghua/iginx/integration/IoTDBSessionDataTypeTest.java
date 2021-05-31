@@ -24,7 +24,6 @@ import static org.junit.Assert.fail;
 
 public class IoTDBSessionDataTypeTest {
 
-    private static final String DATABASE_NAME = "sg1";
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";
@@ -149,7 +148,6 @@ public class IoTDBSessionDataTypeTest {
             paths.add(COLUMN_D5_S5);
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
-            session.createDatabase(DATABASE_NAME);
             addColumns();
             insertRecords();
             //TODO remove this line when the new iotdb release version fix this bug
@@ -161,7 +159,6 @@ public class IoTDBSessionDataTypeTest {
 
     @After
     public void tearDown() throws ExecutionException, SessionException {
-        session.dropDatabase(DATABASE_NAME);
         session.closeSession();
     }
 
