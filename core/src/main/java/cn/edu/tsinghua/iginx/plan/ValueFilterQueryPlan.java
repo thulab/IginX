@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.VALUEFILTER_QUERY;
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.VALUE_FILTER_QUERY;
 
 public class ValueFilterQueryPlan extends DataPlan {
 
@@ -39,7 +39,7 @@ public class ValueFilterQueryPlan extends DataPlan {
     public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression) {
         super(true, paths, startTime, endTime, null);
         this.booleanExpression = booleanExpression;
-        this.setIginxPlanType(VALUEFILTER_QUERY);
+        this.setIginxPlanType(VALUE_FILTER_QUERY);
         paths.addAll(booleanExpression.getTimeseries());
         Collections.sort(paths);
         boolean isStartPrefix = paths.get(0).contains("*");
@@ -124,4 +124,5 @@ public class ValueFilterQueryPlan extends DataPlan {
     public BooleanExpression getBooleanExpression() {
         return booleanExpression;
     }
+
 }

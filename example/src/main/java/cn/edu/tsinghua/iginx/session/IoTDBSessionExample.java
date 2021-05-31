@@ -68,10 +68,10 @@ public class IoTDBSessionExample {
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
-        paths.add(S2);
         paths.add(S1);
-        paths.add(S4);
+        paths.add(S2);
         paths.add(S3);
+        paths.add(S4);
 
         int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP);
         long[] timestamps = new long[size];

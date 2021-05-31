@@ -20,4 +20,5 @@ public class SumQueryPlan extends AggregateQueryPlan {
     public SumQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

@@ -36,4 +36,5 @@ public class CreateDatabasePlan extends DatabasePlan {
     public CreateDatabasePlan(String databaseName) {
         this(databaseName, null);
     }
+
 }

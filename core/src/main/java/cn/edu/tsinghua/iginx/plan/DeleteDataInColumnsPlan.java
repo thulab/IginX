@@ -39,4 +39,5 @@ public class DeleteDataInColumnsPlan extends DataPlan {
     public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

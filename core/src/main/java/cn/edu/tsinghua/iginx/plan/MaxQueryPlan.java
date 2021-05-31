@@ -20,4 +20,5 @@ public class MaxQueryPlan extends AggregateQueryPlan {
     public MaxQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

@@ -84,4 +84,5 @@ public class AddColumnsPlan extends ColumnPlan {
         }
         return attributesList.subList(startIndex, endIndex + 1);
     }
+
 }

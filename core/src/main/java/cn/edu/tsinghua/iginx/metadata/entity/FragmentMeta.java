@@ -95,20 +95,12 @@ public final class FragmentMeta {
         this.updatedBy = updatedBy;
     }
 
-    @Override
-    public String toString() {
-        return "FragmentMeta{" +
-                "timeInterval=" + timeInterval +
-                ", tsInterval=" + tsInterval +
-                '}';
+    public StorageUnitMeta getMasterStorageUnit() {
+        return masterStorageUnit;
     }
 
     public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
         this.masterStorageUnit = masterStorageUnit;
-    }
-
-    public StorageUnitMeta getMasterStorageUnit() {
-        return masterStorageUnit;
     }
 
     public String getFakeStorageUnitId() {
@@ -117,5 +109,13 @@ public final class FragmentMeta {
 
     public void setFakeStorageUnitId(String fakeStorageUnitId) {
         this.fakeStorageUnitId = fakeStorageUnitId;
+    }
+
+    @Override
+    public String toString() {
+        return "FragmentMeta{" +
+                "timeInterval=" + timeInterval +
+                ", tsInterval=" + tsInterval +
+                '}';
     }
 }

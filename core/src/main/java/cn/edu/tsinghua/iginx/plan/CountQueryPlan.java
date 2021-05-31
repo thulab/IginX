@@ -20,4 +20,5 @@ public class CountQueryPlan extends AggregateQueryPlan {
     public CountQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

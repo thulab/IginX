@@ -20,4 +20,5 @@ public class MinQueryPlan extends AggregateQueryPlan {
     public MinQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

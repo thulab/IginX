@@ -29,7 +29,7 @@ public class DownsampleCountQueryPlan extends DownsampleQueryPlan {
     private static final Logger logger = LoggerFactory.getLogger(DownsampleCountQueryPlan.class);
 
     public DownsampleCountQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        super(paths, startTime, endTime, precision, null);
+        this(paths, startTime, endTime, precision, null);
     }
 
     public DownsampleCountQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {

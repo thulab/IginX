@@ -103,4 +103,5 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
         }
         return new Pair<>(tempValues, tempBitmaps);
     }
+
 }

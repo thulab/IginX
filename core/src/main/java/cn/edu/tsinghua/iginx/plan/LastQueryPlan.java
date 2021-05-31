@@ -20,4 +20,5 @@ public class LastQueryPlan extends AggregateQueryPlan {
     public LastQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

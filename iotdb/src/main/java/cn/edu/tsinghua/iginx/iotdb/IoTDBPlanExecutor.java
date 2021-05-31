@@ -435,7 +435,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     return new AvgAggregateQueryPlanExecuteResult(FAILURE, plan);
                 }
             }
-            if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+            if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                 paths.add(path);
                 dataTypeList.add(fromIoTDB(rowRecord.getFields().get(1).getDataType()));
                 counts.add(rowRecord.getFields().get(0).getLongV());
@@ -464,7 +464,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(COUNT, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                     Field field = rowRecord.getFields().get(0);
                     paths.add(path);
                     dataTypeList.add(fromIoTDB(field.getDataType()));
@@ -509,7 +509,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, null);
                 }
             }
-            if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+            if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                 Field field = rowRecord.getFields().get(0);
                 paths.add(path);
                 dataTypeList.add(fromIoTDB(field.getDataType()));
@@ -543,7 +543,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(FIRST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                     Field field = rowRecord.getFields().get(0);
                     if (field.getStringValue().equals("null")) {
                         continue;
@@ -586,7 +586,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(LAST_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                     Field field = rowRecord.getFields().get(0);
                     if (field.getStringValue().equals("null")) {
                         continue;
@@ -629,7 +629,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(MAX_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                     Field field = rowRecord.getFields().get(0);
                     if (field.getStringValue().equals("null")) {
                         continue;
@@ -672,7 +672,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(MIN_VALUE, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && rowRecord.getFields().size() != 0 && rowRecord.getFields().get(0) != null) {
+                if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
                     Field field = rowRecord.getFields().get(0);
                     if (field.getStringValue().equals("null")) {
                         continue;

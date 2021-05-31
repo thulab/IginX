@@ -21,4 +21,5 @@ public abstract class AggregateQueryPlan extends DataPlan {
     protected AggregateQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

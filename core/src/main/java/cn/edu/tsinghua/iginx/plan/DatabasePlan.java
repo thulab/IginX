@@ -46,4 +46,5 @@ public abstract class DatabasePlan extends IginxPlan {
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
     }
+
 }

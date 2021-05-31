@@ -55,4 +55,5 @@ public abstract class DataPlan extends NonDatabasePlan {
     public long getEndTime() {
         return timeInterval.getEndTime();
     }
+
 }

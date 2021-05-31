@@ -102,8 +102,6 @@ public class IoTDBBeforeDilatationExample {
                 logger.info("insert progress: " + (insertTimes - i + 1) + "/" + insertTimes + ".");
             }
         }
-
-
     }
 
 }

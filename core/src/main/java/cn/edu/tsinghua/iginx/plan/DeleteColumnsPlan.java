@@ -40,4 +40,5 @@ public class DeleteColumnsPlan extends ColumnPlan {
         this.setIginxPlanType(DELETE_COLUMNS);
         this.setStorageUnit(storageUnit);
     }
+
 }

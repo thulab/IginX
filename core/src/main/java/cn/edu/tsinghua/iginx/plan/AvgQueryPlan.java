@@ -20,4 +20,5 @@ public class AvgQueryPlan extends AggregateQueryPlan {
     public AvgQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

@@ -20,4 +20,5 @@ public class FirstQueryPlan extends AggregateQueryPlan {
     public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
         this(paths, startTime, endTime, null);
     }
+
 }

@@ -36,4 +36,5 @@ public class DropDatabasePlan extends DatabasePlan {
     public DropDatabasePlan(String databaseName) {
         this(databaseName, null);
     }
+
 }
