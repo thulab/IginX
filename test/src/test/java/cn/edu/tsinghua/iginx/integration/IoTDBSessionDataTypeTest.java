@@ -7,10 +7,18 @@ import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import org.apache.iotdb.rpc.IoTDBConnectionException;
+import org.apache.iotdb.rpc.StatementExecutionException;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZKUtil;
+import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +31,8 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
 public class IoTDBSessionDataTypeTest {
+
+    private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionDataTypeTest.class);
 
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
@@ -148,10 +158,7 @@ public class IoTDBSessionDataTypeTest {
             paths.add(COLUMN_D5_S5);
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
-//            addColumns();
             insertRecords();
-            //TODO remove this line when the new iotdb release version fix this bug
-            Thread.sleep(10000);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -159,7 +166,39 @@ public class IoTDBSessionDataTypeTest {
 
     @After
     public void tearDown() throws ExecutionException, SessionException {
-        session.closeSession();
+        // delete metadata from ZooKeeper
+        ZooKeeper zk = null;
+        try {
+            zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
+            ZKUtil.deleteRecursive(zk, "/iginx");
+            ZKUtil.deleteRecursive(zk, "/storage");
+            ZKUtil.deleteRecursive(zk, "/unit");
+            ZKUtil.deleteRecursive(zk, "/lock");
+            ZKUtil.deleteRecursive(zk, "/fragment");
+        } catch (IOException | InterruptedException | KeeperException e) {
+            logger.error(e.getMessage());
+        }
+
+        // delete data from IoTDB
+        org.apache.iotdb.session.Session iotdbSession = null;
+        try {
+            iotdbSession = new org.apache.iotdb.session.Session("127.0.0.1", 6667, "root", "root");
+            iotdbSession.open(false);
+            iotdbSession.executeNonQueryStatement("DELETE TIMESERIES root.*");
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+
+        // close session
+        try {
+            iotdbSession.close();
+            if (zk != null) {
+                zk.close();
+            }
+            session.closeSession();
+        } catch (InterruptedException | IoTDBConnectionException e) {
+            logger.error(e.getMessage());
+        }
     }
 
     @Test
