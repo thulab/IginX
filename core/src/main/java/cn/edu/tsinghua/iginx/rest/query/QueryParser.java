@@ -311,7 +311,8 @@ public class QueryParser {
         JsonNode tags = metric.get("query");
         if (tags != null)
         {
-            tags = mapper.readTree(tags.asText());
+            if (tags.get("tags") == null)
+                tags = mapper.readTree(tags.asText());
             tags = tags.get("tags");
             Iterator<String> fieldNames = tags.fieldNames();
             while (fieldNames.hasNext())

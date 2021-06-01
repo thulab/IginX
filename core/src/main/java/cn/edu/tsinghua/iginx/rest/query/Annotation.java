@@ -30,7 +30,7 @@ public class Annotation
             JsonNode node = mapper.readTree(str);
             if (node == null)
                 return;
-            JsonNode text = node.get("text");
+            JsonNode text = node.get("description");
             if (text != null)
             {
                 this.text = text.asText();
@@ -40,7 +40,7 @@ public class Annotation
             {
                 this.title = title.asText();
             }
-            JsonNode tags = node.get("tags");
+            JsonNode tags = node.get("category");
             if (tags != null && tags.isArray())
             {
                 for (JsonNode tagsnode : tags)
