@@ -102,8 +102,7 @@ public class ValueFilterCombiner {
                     columnNameList.add(columnName);
                     columnTypeList.add(columnType);
                     columnSourcesList.put(columnName, new ArrayList<>());
-                    if (insPath(columnName, queryPaths))//
-                    {
+                    if (insPath(columnName, queryPaths)) {
                         newColumnNameList.add(columnName);
                         newColumnTypeList.add(columnType);
                     }
@@ -156,7 +155,7 @@ public class ValueFilterCombiner {
             }
 
             for (int i = 0; i < booleanExpression.getTimeseries().size(); i++) {
-                String columnName = columnNameList.get(i);
+                String columnName = booleanExpression.getTimeseries().get(i);
                 List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
                 for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
                     if (dataSetWrapper.getTimestamp() == timestamp) {
