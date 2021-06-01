@@ -310,3 +310,145 @@ $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1
 
 除了 RESTful 接口外，IginX 还提供了 RPC 的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX 还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了 RPC 接口最常见的用法。
 
+下面是一个简短的使用教程。
+
+由于目前 IginX 0.2 版本还未发布到 maven 中央仓库，因此如需使用的话，需要手动安装到本地的 maven 仓库。具体安装方式如下：
+
+```shell
+# 下载 iginx 0.2 rc 版本源码包
+$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz 
+# 解压源码包
+$ tar -zxvf v0.2.0.tar.gz
+# 进入项目主目录
+$ cd IginX-rc-v0.2.0
+# 安装到本地 maven 仓库
+$ mvn clean install -DskipTests
+```
+
+具体在使用时，只需要在相应的项目的 pom 文件中引入如下的依赖：
+
+```xml
+<dependency>
+  	<groupId>cn.edu.tsinghua</groupId>
+  	<artifactId>iginx-core</artifactId>
+  	<version>0.1.0-SNAPSHOT</version>
+</dependency>
+```
+
+在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端 IginX 的账户名和密码直接填写 root 即可：
+
+```Java
+Session session = new Session("127.0.0.1", 6888, "root", "root");
+session.openSession();
+```
+
+随后可以尝试向 IginX 中插入数据。由于 IginX 支持在数据首次写入时创建时间序列，因此并不需要提前调用相关的序列创建接口。IginX 提供了行式和列式的数据写入接口，以下是列式数据写入接口的使用样例：
+
+```java
+private static void insertColumnRecords(Session session) throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add("sg.d1.s1");
+        paths.add("sg.d2.s2");
+        paths.add("sg.d3.s3");
+        paths.add("sg.d4.s4");
+
+        int size = 1500;
+        long[] timestamps = new long[size];
+        for (long i = 0; i < size; i++) {
+            timestamps[(int) i] = i;
+        }
+
+        Object[] valuesList = new Object[4];
+        for (long i = 0; i < 4; i++) {
+            Object[] values = new Object[size];
+            for (long j = 0; j < size; j++) {
+                if (i < 2) {
+                  values[(int) j] = i + j;
+                } else {
+                  values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+                }
+            }
+            valuesList[(int) i] = values;
+        }
+
+        List<DataType> dataTypeList = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.LONG);
+        }
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.BINARY);
+        }
+
+        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+}
+```
+
+在完成数据写入后，可以使用数据查询接口查询刚刚写入的数据：
+
+```java
+private static void queryData(Session session) throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add("sg.d1.s1");
+        paths.add("sg.d2.s2");
+        paths.add("sg.d3.s3");
+        paths.add("sg.d4.s4");
+
+        long startTime = 100L;
+        long endTime = 200L;
+
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+        dataSet.print();
+}
+```
+
+还可以使用降采样聚合查询接口来查询数据的区间统计值：
+
+```java
+private static void downsampleQuery(Session session) throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add("sg.d1.s1");
+        paths.add("sg.d2.s2");
+
+        long startTime = 100L;
+        long endTime = 1101L;
+
+        // MAX
+        SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, 100);
+        dataSet.print();
+
+        // MIN
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 100);
+        dataSet.print();
+
+        // FIRST
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
+        dataSet.print();
+
+        // LAST
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
+        dataSet.print();
+
+        // COUNT
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 100);
+        dataSet.print();
+
+        // SUM
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 100);
+        dataSet.print();
+
+        // AVG
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 100);
+        dataSet.print();
+
+}
+
+```
+
+最终使用完 session 后需要手动关闭，释放连接：
+
+```shell
+session.closeSession();
+```
+
+完整版使用代码可以参考：https://github.com/thulab/IginX/blob/main/example/src/main/java/cn/edu/tsinghua/iginx/session/IoTDBSessionExample.java
+

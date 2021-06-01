@@ -33,7 +33,6 @@ import static org.junit.Assert.fail;
 public class IoTDBSessionDataTypeTest {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionDataTypeTest.class);
-
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";
@@ -206,32 +205,32 @@ public class IoTDBSessionDataTypeTest {
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
-        assertEquals(resPaths.size(), 6);
-        assertEquals(len, TIME_PERIOD);
-        assertEquals(dataSet.getValues().size(), TIME_PERIOD);
+        assertEquals(6, resPaths.size());
+        assertEquals(TIME_PERIOD, len);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());
         for (int i = 0; i < len; i++) {
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i);
+            assertEquals(i, timestamp);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 6; j++) {
                 switch (resPaths.get(j)) {
                     case "sg1.d1.s1":
-                        assertEquals(result.get(j), (int) ((END_TIME - i) + 1 + START_TIME));
+                        assertEquals((int) ((END_TIME - i) + 1 + START_TIME), result.get(j));
                         break;
                     case "sg1.d2.s2":
-                        assertEquals(result.get(j), (i + 2 + START_TIME) * 1000);
+                        assertEquals((i + 2 + START_TIME) * 1000, result.get(j));
                         break;
                     case "sg1.d3.s3":
-                        assertEquals((float) result.get(j), (float) (i + 3 + START_TIME + 0.01), (float) delta);
+                        assertEquals((float) (i + 3 + START_TIME + 0.01), (float) result.get(j), (float) delta);
                         break;
                     case "sg1.d4.s4":
-                        assertEquals((double) result.get(j), ((END_TIME - i) + 4 + START_TIME + 0.01) * 999, delta);
+                        assertEquals(((END_TIME - i) + 4 + START_TIME + 0.01) * 999, (double) result.get(j), delta);
                         break;
                     case "sg1.d5.s5":
-                        assertArrayEquals((byte[]) (result.get(j)), getRandomStr(i, STRING_LEN).getBytes());
+                        assertArrayEquals(getRandomStr(i, STRING_LEN).getBytes(), (byte[]) (result.get(j)));
                         break;
                     case "sg1.d0.s0":
-                        assertEquals(result.get(j), i % 2 == 0);
+                        assertEquals(i % 2 == 0, result.get(j));
                         break;
                     default:
                         fail();
@@ -254,21 +253,21 @@ public class IoTDBSessionDataTypeTest {
         SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(aggrPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> maxResPaths = maxDataSet.getPaths();
         Object[] maxResult = maxDataSet.getValues();
-        assertEquals(maxResPaths.size(), aggrPaths.size());
-        assertEquals(maxDataSet.getValues().length, aggrPaths.size());
+        assertEquals(aggrPaths.size(), maxResPaths.size());
+        assertEquals(aggrPaths.size(), maxDataSet.getValues().length);
         for (int i = 0; i < 4; i++) {
             switch (maxResPaths.get(i)) {
                 case "sg1.d1.s1":
-                    assertEquals(maxResult[i], (int) (END_TIME + 1));
+                    assertEquals((int) (END_TIME + 1), maxResult[i]);
                     break;
                 case "sg1.d2.s2":
-                    assertEquals(maxResult[i], (END_TIME + 2) * 1000);
+                    assertEquals((END_TIME + 2) * 1000, maxResult[i]);
                     break;
                 case "sg1.d3.s3":
-                    assertEquals((float) maxResult[i], (float) (END_TIME + 3 + 0.01), delta);
+                    assertEquals((float) (END_TIME + 3 + 0.01), (float) maxResult[i], delta);
                     break;
                 case "sg1.d4.s4":
-                    assertEquals((double) maxResult[i], (END_TIME + 4 + 0.01) * 999, delta);
+                    assertEquals((END_TIME + 4 + 0.01) * 999, (double) maxResult[i], delta);
                     break;
                 default:
                     fail();
@@ -280,21 +279,21 @@ public class IoTDBSessionDataTypeTest {
         SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(aggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> avgResPaths = avgDataSet.getPaths();
         Object[] avgResult = avgDataSet.getValues();
-        assertEquals(avgResPaths.size(), aggrPaths.size());
-        assertEquals(avgDataSet.getValues().length, aggrPaths.size());
+        assertEquals(aggrPaths.size(), avgResPaths.size());
+        assertEquals(aggrPaths.size(), avgDataSet.getValues().length);
         for (int i = 0; i < 4; i++) {
             switch (avgResPaths.get(i)) {
                 case "sg1.d1.s1":
-                    assertEquals((double) avgResult[i], (START_TIME + END_TIME) / 2.0 + 1, delta);
+                    assertEquals((START_TIME + END_TIME) / 2.0 + 1, (double) avgResult[i], delta);
                     break;
                 case "sg1.d2.s2":
-                    assertEquals(avgResult[i], (START_TIME + END_TIME) * 500.0 + 2000);
+                    assertEquals((START_TIME + END_TIME) * 500.0 + 2000, avgResult[i]);
                     break;
                 case "sg1.d3.s3":
-                    assertEquals((double) avgResult[i], (START_TIME + END_TIME) / 2.0 + 3 + 0.01, delta * 1000);
+                    assertEquals((START_TIME + END_TIME) / 2.0 + 3 + 0.01, (double) avgResult[i], delta * 1000);
                     break;
                 case "sg1.d4.s4":
-                    assertEquals((double) avgResult[i], (START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, delta * 1000);
+                    assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, (double) avgResult[i], delta * 1000);
                     break;
                 default:
                     fail();
@@ -304,7 +303,7 @@ public class IoTDBSessionDataTypeTest {
     }
 
     @Test
-    public void deletePartDataTest() throws SessionException, ExecutionException {
+    public void deletePartialDataTest() throws SessionException, ExecutionException {
         List<String> delPaths = new ArrayList<>();
         delPaths.add(COLUMN_D1_S1);
         delPaths.add(COLUMN_D3_S3);
@@ -322,42 +321,42 @@ public class IoTDBSessionDataTypeTest {
 
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
-        assertEquals(dataSet.getTimestamps().length, TIME_PERIOD);
-        assertEquals(dataSet.getValues().size(), TIME_PERIOD);
+        assertEquals(TIME_PERIOD, dataSet.getTimestamps().length);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());
         for (int i = 0; i < len; i++) {
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i + START_TIME);
+            assertEquals(i + START_TIME, timestamp);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 6; j++) {
                 switch (resPaths.get(j)) {
                     case "sg1.d0.s0":
-                        assertEquals(result.get(j), timestamp % 2 == 0);
+                        assertEquals(timestamp % 2 == 0, result.get(j));
                         break;
                     case "sg1.d2.s2":
-                        assertEquals(result.get(j), (timestamp + 2) * 1000);
+                        assertEquals((timestamp + 2) * 1000, result.get(j));
                         break;
                     case "sg1.d4.s4":
-                        assertEquals((double) result.get(j), (4 + (END_TIME - timestamp) + 0.01) * 999, delta);
+                        assertEquals((4 + (END_TIME - timestamp) + 0.01) * 999, (double) result.get(j), delta);
                         break;
                     case "sg1.d1.s1":
                         if (delStartTime <= timestamp && timestamp <= delEndTime) {
                             assertNull(result.get(j));
                         } else {
-                            assertEquals(result.get(j), (int) ((END_TIME - i) + 1 + START_TIME));
+                            assertEquals((int) ((END_TIME - i) + 1 + START_TIME), result.get(j));
                         }
                         break;
                     case "sg1.d3.s3":
                         if (delStartTime <= timestamp && timestamp <= delEndTime) {
                             assertNull(result.get(j));
                         } else {
-                            assertEquals((float) result.get(j), (float) (i + 3 + START_TIME + 0.01), (float) delta);
+                            assertEquals((float) (i + 3 + START_TIME + 0.01), (float) result.get(j), (float) delta);
                         }
                         break;
                     case "sg1.d5.s5":
                         if (delStartTime <= timestamp && timestamp <= delEndTime) {
                             assertNull(result.get(j));
                         } else {
-                            assertArrayEquals((byte[]) (result.get(j)), getRandomStr(i, STRING_LEN).getBytes());
+                            assertArrayEquals(getRandomStr(i, STRING_LEN).getBytes(), (byte[]) (result.get(j)));
                         }
                         break;
                     default:
@@ -378,23 +377,23 @@ public class IoTDBSessionDataTypeTest {
         SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(aggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> avgResPaths = avgDataSet.getPaths();
         Object[] avgResult = avgDataSet.getValues();
-        assertEquals(avgResPaths.size(), aggrPaths.size());
-        assertEquals(avgDataSet.getValues().length, aggrPaths.size());
+        assertEquals(aggrPaths.size(), avgResPaths.size());
+        assertEquals(aggrPaths.size(), avgDataSet.getValues().length);
         for (int i = 0; i < 4; i++) {
             switch (avgResPaths.get(i)) {
                 case "sg1.d2.s2":
-                    assertEquals(avgResult[i], (START_TIME + END_TIME) * 500.0 + 2000);
+                    assertEquals((START_TIME + END_TIME) * 500.0 + 2000, avgResult[i]);
                     break;
                 case "sg1.d4.s4":
-                    assertEquals((double) avgResult[i], (START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, delta * 1000);
+                    assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, (double) avgResult[i], delta * 1000);
                     break;
                 case "sg1.d1.s1":
-                    assertEquals((double) avgResult[i], ((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
-                            (END_TIME - delStartTime + END_TIME - delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod) + 1.0, delta * 1000);
+                    assertEquals(((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
+                            (END_TIME - delStartTime + END_TIME - delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod) + 1.0, (double) avgResult[i], delta * 1000);
                     break;
                 case "sg1.d3.s3":
-                    assertEquals((double) avgResult[i], ((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
-                            (delStartTime + delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod) + 3.01, delta * 1000);
+                    assertEquals(((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
+                            (delStartTime + delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod) + 3.01, (double) avgResult[i], delta * 1000);
                     break;
                 default:
                     fail();
@@ -414,22 +413,22 @@ public class IoTDBSessionDataTypeTest {
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
         int len = dataSet.getTimestamps().length;
         List<String> resPaths = dataSet.getPaths();
-        assertEquals(dataSet.getTimestamps().length, TIME_PERIOD);
-        assertEquals(dataSet.getValues().size(), TIME_PERIOD);
+        assertEquals(TIME_PERIOD, dataSet.getTimestamps().length);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());
         for (int i = 0; i < len; i++) {
             long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(timestamp, i + START_TIME);
+            assertEquals(i + START_TIME, timestamp);
             List<Object> result = dataSet.getValues().get(i);
             for (int j = 0; j < 6; j++) {
                 switch (resPaths.get(j)) {
                     case "sg1.d0.s0":
-                        assertEquals(result.get(j), timestamp % 2 == 0);
+                        assertEquals(timestamp % 2 == 0, result.get(j));
                         break;
                     case "sg1.d2.s2":
-                        assertEquals(result.get(j), (timestamp + 2) * 1000);
+                        assertEquals((timestamp + 2) * 1000, result.get(j));
                         break;
                     case "sg1.d4.s4":
-                        assertEquals((double) result.get(j), (4 + (END_TIME - timestamp) + 0.01) * 999, delta);
+                        assertEquals((4 + (END_TIME - timestamp) + 0.01) * 999, (double) result.get(j), delta);
                         break;
                     case "sg1.d1.s1":
                     case "sg1.d3.s3":
@@ -453,19 +452,19 @@ public class IoTDBSessionDataTypeTest {
         SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(aggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> avgResPaths = avgDataSet.getPaths();
         Object[] avgResult = avgDataSet.getValues();
-        assertEquals(avgResPaths.size(), aggrPaths.size());
-        assertEquals(avgDataSet.getValues().length, aggrPaths.size());
+        assertEquals(aggrPaths.size(), avgResPaths.size());
+        assertEquals(aggrPaths.size(), avgDataSet.getValues().length);
         for (int i = 0; i < 4; i++) {
             switch (avgResPaths.get(i)) {
                 case "sg1.d2.s2":
-                    assertEquals(avgResult[i], (START_TIME + END_TIME) * 500.0 + 2000);
+                    assertEquals((START_TIME + END_TIME) * 500.0 + 2000, avgResult[i]);
                     break;
                 case "sg1.d4.s4":
-                    assertEquals((double) avgResult[i], (START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, delta * 1000);
+                    assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, (double) avgResult[i], delta * 1000);
                     break;
                 case "sg1.d1.s1":
                 case "sg1.d3.s3":
-                    assertEquals(new String((byte[]) avgResult[i]), "null");
+                    assertEquals("null", new String((byte[]) avgResult[i]));
                     break;
                 default:
                     fail();
