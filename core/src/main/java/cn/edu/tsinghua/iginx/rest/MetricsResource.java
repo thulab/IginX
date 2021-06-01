@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.rest.insert.InsertAnnotationWorker;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
@@ -60,6 +61,7 @@ public class MetricsResource {
 
     private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
     private static final String INSERT_URL = "api/v1/datapoints";
+    private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotation";
     private static final String QUERY_URL = "api/v1/datapoints/query";
     private static final String DELETE_URL = "api/v1/datapoints/delete";
     private static final String DELETE_METRIC_URL = "api/v1/metric/{metricName}";
@@ -126,6 +128,12 @@ public class MetricsResource {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
+    }
+
+    @POST
+    @Path(INSERT_ANNOTATION_URL)
+    public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+        threadPool.execute(new InsertAnnotationWorker(asyncResponse, httpheaders, stream));
     }
 
     @POST
