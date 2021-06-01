@@ -31,7 +31,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -41,6 +40,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataPointsParser {
+    public static final String ANNOTATION_SPLIT_STRING = "@@annotation";
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
     private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
@@ -114,6 +114,12 @@ public class DataPointsParser {
                 }
             }
         }
+        JsonNode anno = node.get("annotation");
+        if (anno != null)
+        {
+            ret.setAnnotation(anno.toString().replace("\n", "")
+                    .replace("\t", "").replace(" ", ""));
+        }
         return ret;
     }
 
@@ -185,6 +191,17 @@ public class DataPointsParser {
             valuesList[0] = values;
             try {
                 session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                if (metric.getAnnotation() != null)
+                {
+                    for (int i = 0; i < size; i++) {
+                        values[i] = metric.getAnnotation().getBytes();
+                    }
+                    valuesList[0] = values;
+                    path.append(ANNOTATION_SPLIT_STRING);
+                    paths.set(0, path.toString());
+                    type.set(0, DataType.BINARY);
+                    session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                }
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
                 throw e;

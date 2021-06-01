@@ -30,7 +30,7 @@ public class QueryMetric {
     private Long limit;
     private Map<String, List<String>> tags = new TreeMap();
     private List<QueryAggregator> aggregators = new ArrayList<>();
-
+    private Boolean annotation = false;
 
     public String getName() {
         return name;
@@ -73,5 +73,16 @@ public class QueryMetric {
 
     public void addAggregator(QueryAggregator qa) {
         aggregators.add(qa);
+    }
+
+
+    public void setAnnotation(Boolean annotation)
+    {
+        this.annotation = annotation;
+    }
+
+    public Boolean getAnnotation()
+    {
+        return annotation;
     }
 }

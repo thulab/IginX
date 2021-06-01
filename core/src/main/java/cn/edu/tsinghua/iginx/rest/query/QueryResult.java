@@ -106,6 +106,25 @@ public class QueryResult {
         return ret.toString();
     }
 
+
+
+
+    /*
+String entity = "[{\"text\": \"text shown in body\",\"title\": \"Annotation Title\",\"isRegion\": true,\"time\": \"1400000013000\",\"timeEnd\": \"1400000015000\",\"tags\": [\"tag1\"]}]";
+*/
+
+    public String toAnnotationResultString() {
+        StringBuilder ret = new StringBuilder("{");
+        List<Annotation> values = new ArrayList<>();
+        int siz = queryResultDatasets.get(0).getValues().size();
+        for (int i = 0 ;i < siz; i++)
+            values.add(new Annotation(new String((byte[]) queryResultDatasets.get(0).getValues().get(i)),
+                    queryResultDatasets.get(0).getTimestamps().get(i)));
+
+        ret.append("}");
+        return ret.toString();
+    }
+
     private String nameToString(int num) {
         if (queryAggregators.get(num).getType() == QueryAggregatorType.SAVE_AS) {
             return String.format("\"name\": \"%s\"", queryAggregators.get(num).getMetric_name());

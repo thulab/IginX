@@ -35,6 +35,7 @@ import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorRate;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSampler;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSaveAs;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSum;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.JsonArray;
@@ -84,6 +85,17 @@ public class QueryParser {
         return ret;
     }
 
+    public Query parseAnnotationQueryMetric(String json) throws Exception {
+        Query ret;
+        try {
+            JsonNode node = mapper.readTree(json);
+            ret = getAnnotationQuery(node);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during parsing query ", e);
+            throw e;
+        }
+        return ret;
+    }
     public static Long dealDateFormat(String oldDateStr)
     {
         DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
@@ -270,6 +282,51 @@ public class QueryParser {
         }
         return ret;
     }
+
+    private Query getAnnotationQuery(JsonNode node) throws JsonProcessingException
+    {
+        Query ret = new Query();
+        JsonNode range = node.get("range");
+        if (range == null)
+            return null;
+        JsonNode start_absolute = range.get("from");
+        JsonNode end_absolute = range.get("to");
+        if (start_absolute == null || end_absolute == null)
+            return null;
+        else
+        {
+            Long start = dealDateFormat(start_absolute.asText());
+            Long end = dealDateFormat(end_absolute.asText());
+            ret.setStartAbsolute(start);
+            ret.setEndAbsolute(end);
+        }
+
+        JsonNode metric = node.get("annotation");
+        if (metric == null)
+            return null;
+        QueryMetric ins = new QueryMetric();
+        JsonNode name = metric.get("name");
+        if (name != null)
+            ins.setName(name.asText());
+        JsonNode tags = metric.get("query");
+        if (tags != null)
+        {
+            tags = mapper.readTree(tags.asText());
+            tags = tags.get("tags");
+            Iterator<String> fieldNames = tags.fieldNames();
+            while (fieldNames.hasNext())
+            {
+                String key = fieldNames.next();
+                JsonNode valuenode = tags.get(key);
+                ins.addTag(key, valuenode.asText());
+            }
+        }
+        ins.setAnnotation(true);
+        ret.addQueryMetrics(ins);
+
+        return ret;
+    }
+
 
     public void addAggregators(QueryMetric q, JsonNode node) {
         JsonNode aggregators = node.get("aggregators");
@@ -487,6 +544,14 @@ public class QueryParser {
         if (ret.charAt(ret.length() - 1) == ',')
             ret.deleteCharAt(ret.length() - 1);
         ret.append("]}");
+        return ret.toString();
+    }
+
+    public String parseResultToGrafanaAnnotationJson(QueryResult result)
+    {
+        StringBuilder ret = new StringBuilder("[");
+        ret.append(result.toAnnotationResultString());
+        ret.append("]");
         return ret.toString();
     }
 
