@@ -121,6 +121,8 @@ String entity = "[{\"text\": \"text shown in body\",\"title\": \"Annotation Titl
             values.add(new Annotation(new String((byte[]) queryResultDatasets.get(0).getValues().get(i)),
                     queryResultDatasets.get(0).getTimestamps().get(i)));
         int now = 0;
+        if (siz == 0)
+            return "{}";
         for (int i = 1; i < siz; i++)
         if (!values.get(i).isEqual(values.get(i-1)))
         {
