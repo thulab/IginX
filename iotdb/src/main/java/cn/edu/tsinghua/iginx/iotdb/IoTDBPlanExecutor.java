@@ -132,17 +132,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String SUM_DOWNSAMPLE = "SELECT SUM(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
 
-    // TODO 升级到0.11.3后删除
-    private final Map<Long, StorageEngineMeta> storageEngineMetas;
-
-    private final Map<Long, SessionPool> readSessionPools;
-
-    private final Map<Long, SessionPool> writeSessionPools;
+    private final Map<Long, SessionPool> sessionPools;
 
     public IoTDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
-        readSessionPools = new ConcurrentHashMap<>();
-        writeSessionPools = new ConcurrentHashMap<>();
-        storageEngineMetas = new ConcurrentHashMap<>();
+        sessionPools = new ConcurrentHashMap<>();
         for (StorageEngineMeta storageEngineMeta : storageEngineMetaList) {
             if (!createSessionPool(storageEngineMeta)) {
                 System.exit(1);
@@ -179,13 +172,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String username = extraParams.getOrDefault("username", "root");
         String password = extraParams.getOrDefault("password", "root");
-        int readSessions = Integer.parseInt(extraParams.getOrDefault("readSessions", "100"));
-        int writeSessions = Integer.parseInt(extraParams.getOrDefault("writeSessions", "100"));
-        SessionPool readSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, readSessions);
-        SessionPool writeSessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, writeSessions);
-        readSessionPools.put(storageEngineMeta.getId(), readSessionPool);
-        writeSessionPools.put(storageEngineMeta.getId(), writeSessionPool);
-        storageEngineMetas.put(storageEngineMeta.getId(), storageEngineMeta);
+        int sessionPoolSize = Integer.parseInt(extraParams.getOrDefault("sessionPoolSize", "100"));
+        SessionPool sessionPool = new SessionPool(storageEngineMeta.getIp(), storageEngineMeta.getPort(), username, password, sessionPoolSize);
+        sessionPools.put(storageEngineMeta.getId(), sessionPool);
         return true;
     }
 
@@ -193,7 +182,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
         // TODO 目前 IoTDB 的 insertTablets 不支持空值，因此要求 plan 的 path 属于不同 device
         logger.info("write " + plan.getPaths().size() * plan.getTimestamps().length + " points to storage engine: " + plan.getStorageEngineId() + ".");
-        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
 
         Map<String, Tablet> tablets = new HashMap<>();
 
@@ -247,7 +236,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
         // TODO 目前 IoTDB 的 insertTablets 不支持空值，因此要求 plan 的 path 属于不同 device
-        SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
 
         Map<String, Tablet> tablets = new HashMap<>();
 
@@ -299,7 +288,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     public QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -315,7 +304,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         for (int i = 0; i < plan.getPathsNum(); i++) {
             try {
                 if (!sessionPool.checkTimeseriesExists(PREFIX + plan.getPath(i))) {
@@ -334,7 +323,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()));
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -346,7 +335,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteData(plan.getPaths().stream().map(x -> PREFIX + x).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -358,7 +347,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.setStorageGroup(PREFIX + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -370,7 +359,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             sessionPool.deleteStorageGroup(PREFIX + plan.getDatabaseName());
         } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -393,7 +382,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Long> counts = new ArrayList<>();
@@ -432,7 +421,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public StatisticsAggregateQueryPlanExecuteResult syncExecuteCountQueryPlan(CountQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
@@ -468,7 +457,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public StatisticsAggregateQueryPlanExecuteResult syncExecuteSumQueryPlan(SumQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Object> values = new ArrayList<>();
@@ -509,7 +498,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
@@ -552,7 +541,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
@@ -595,7 +584,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteMaxQueryPlan(MaxQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
@@ -638,7 +627,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public SingleValueAggregateQueryPlanExecuteResult syncExecuteMinQueryPlan(MinQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
             List<DataType> dataTypeList = new ArrayList<>();
@@ -681,7 +670,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleAvgQueryPlan(DownsampleAvgQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -697,7 +686,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleCountQueryPlan(DownsampleCountQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -713,7 +702,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleSumQueryPlan(DownsampleSumQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -729,7 +718,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMaxQueryPlan(DownsampleMaxQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -745,7 +734,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleMinQueryPlan(DownsampleMinQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -761,7 +750,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -777,7 +766,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
@@ -794,7 +783,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan) {
-        SessionPool sessionPool = readSessionPools.get(plan.getStorageEngineId());
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
