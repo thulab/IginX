@@ -195,11 +195,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         logger.info("write " + plan.getPaths().size() * plan.getTimestamps().length + " points to storage engine: " + plan.getStorageEngineId() + ".");
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
-        try {
-            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnit().getId());
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
-        }
+//        try {
+//            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnit().getId());
+//        } catch (IoTDBConnectionException | StatementExecutionException e) {
+//            logger.error(e.getMessage());
+//        }
 
         Map<String, Tablet> tablets = new HashMap<>();
 
@@ -255,11 +255,11 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         // TODO 目前 IoTDB 的 insertTablets 不支持空值，因此要求 plan 的 path 属于不同 device
         SessionPool sessionPool = writeSessionPools.get(plan.getStorageEngineId());
 
-        try {
-            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnit().getId());
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
-        }
+//        try {
+//            sessionPool.setStorageGroup(PREFIX + plan.getStorageUnit().getId());
+//        } catch (IoTDBConnectionException | StatementExecutionException e) {
+//            logger.error(e.getMessage());
+//        }
 
         Map<String, Tablet> tablets = new HashMap<>();
 

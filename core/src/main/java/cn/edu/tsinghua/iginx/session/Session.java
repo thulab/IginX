@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -260,6 +261,7 @@ public class Session {
     }
 
     public void addColumns(List<String> paths) throws SessionException, ExecutionException {
+        Collections.sort(paths);
         AddColumnsReq req = new AddColumnsReq(sessionId, paths);
 
         try {
@@ -278,9 +280,22 @@ public class Session {
         }
     }
 
-    public void addColumns(List<String> paths, List<Map<String, String>> attributes) throws SessionException, ExecutionException {
+    public void addColumns(List<String> paths, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+        Integer[] index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
         AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-        req.setAttributesList(attributes);
+        req.setAttributesList(sortedAttributesList);
 
         try {
             Status status;
@@ -306,6 +321,7 @@ public class Session {
     }
 
     public void deleteColumns(List<String> paths) throws SessionException, ExecutionException {
+        Collections.sort(paths);
         DeleteColumnsReq req = new DeleteColumnsReq(sessionId, paths);
 
         try {
@@ -353,27 +369,34 @@ public class Session {
             valuesList[i] = values;
         }
 
-        // TODO sort dataTypeList and attributesList
-//        index = new Integer[paths.size()];
-//        for (int i = 0; i < paths.size(); i++) {
-//            index[i] = i;
-//        }
-//        Arrays.sort(index, Comparator.comparing(paths::get));
-//        Collections.sort(paths);
-//        Object[] sortedValuesList = new Object[valuesList.length];
-//        for (int i = 0; i < valuesList.length; i++) {
-//            sortedValuesList[i] = valuesList[index[i]];
-//        }
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+            sortedDataTypeList.add(dataTypeList.get(index[i]));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
 
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
-        for (int i = 0; i < valuesList.length; i++) {
-            Object[] values = (Object[]) valuesList[i];
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
             if (values.length != timestamps.length) {
                 logger.error("The sizes of timestamps and the element of valuesList should be equal.");
                 return;
             }
-            valueBufferList.add(ByteUtils.getColumnByteBuffer(values, dataTypeList.get(i)));
+            valueBufferList.add(ByteUtils.getColumnByteBuffer(values, sortedDataTypeList.get(i)));
             Bitmap bitmap = new Bitmap(timestamps.length);
             for (int j = 0; j < timestamps.length; j++) {
                 if (values[j] != null) {
@@ -389,8 +412,8 @@ public class Session {
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
-        req.setDataTypeList(dataTypeList);
-        req.setAttributesList(attributesList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
 
         try {
             Status status;
@@ -438,20 +461,29 @@ public class Session {
             sortedValuesList[i] = valuesList[index[i]];
         }
 
-        // TODO sort dataTypeList and attributesList
-//        index = new Integer[paths.size()];
-//        for (int i = 0; i < paths.size(); i++) {
-//            index[i] = i;
-//        }
-//        Arrays.sort(index, Comparator.comparing(paths::get));
-//        Collections.sort(paths);
-//        for (int i = 0; i < sortedValuesList.length; i++) {
-//            Object[] values = new Object[index.length];
-//            for (int j = 0; j < index.length; j++) {
-//                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
-//            }
-//            sortedValuesList[i] = values;
-//        }
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
+            }
+            sortedValuesList[i] = values;
+        }
+        for (Integer i : index) {
+            sortedDataTypeList.add(dataTypeList.get(i));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
 
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
@@ -461,7 +493,7 @@ public class Session {
                 logger.error("The sizes of paths and the element of valuesList should be equal.");
                 return;
             }
-            valueBufferList.add(ByteUtils.getRowByteBuffer(values, dataTypeList));
+            valueBufferList.add(ByteUtils.getRowByteBuffer(values, sortedDataTypeList));
             Bitmap bitmap = new Bitmap(values.length);
             for (int j = 0; j < values.length; j++) {
                 if (values[j] != null) {
@@ -477,8 +509,8 @@ public class Session {
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
-        req.setDataTypeList(dataTypeList);
-        req.setAttributesList(attributesList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
 
         try {
             Status status;
@@ -503,6 +535,7 @@ public class Session {
     }
 
     public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException, ExecutionException {
+        Collections.sort(paths);
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
 
         try {
@@ -527,6 +560,7 @@ public class Session {
             logger.error("Invalid query request!");
             return null;
         }
+        Collections.sort(paths);
         QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
 
         QueryDataResp resp;
@@ -554,6 +588,7 @@ public class Session {
             logger.error("Invalid query request!");
             return null;
         }
+        Collections.sort(paths);
         ValueFilterQueryReq req = new ValueFilterQueryReq(sessionId, paths, startTime, endTime, booleanExpression);
 
         ValueFilterQueryResp resp;
@@ -577,6 +612,7 @@ public class Session {
 
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
             throws SessionException, ExecutionException {
+        Collections.sort(paths);
         AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
 
         AggregateQueryResp resp;
@@ -598,6 +634,7 @@ public class Session {
     }
 
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
+        Collections.sort(paths);
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
                 aggregateType, precision);
 

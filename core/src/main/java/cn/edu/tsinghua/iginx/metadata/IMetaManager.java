@@ -130,9 +130,12 @@ public interface IMetaManager {
      */
     boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId);
 
-    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(String startPath, long startTime);
+    /**
+     * 初始时创建分片和存储单元
+     */
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> initializeFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
 
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime);
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> initializeFragmentsAndStorageUnits(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 
