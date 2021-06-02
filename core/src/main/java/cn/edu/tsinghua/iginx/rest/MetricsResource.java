@@ -61,8 +61,9 @@ public class MetricsResource {
 
     private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
     private static final String INSERT_URL = "api/v1/datapoints";
-    private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotation";
+    private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotations";
     private static final String QUERY_URL = "api/v1/datapoints/query";
+    private static final String QUERY_ANNOTATION_URL = "api/v1/datapoints/query/annotations";
     private static final String DELETE_URL = "api/v1/datapoints/delete";
     private static final String DELETE_METRIC_URL = "api/v1/metric/{metricName}";
     private static final String NO_CACHE = "no-cache";
@@ -141,7 +142,19 @@ public class MetricsResource {
     public Response grafanaAnnotation(String jsonStr) {
 
         try {
-            return postAnnotationQuery(jsonStr);
+            return postAnnotationQuery(jsonStr, true);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
+    }
+
+    @POST
+    @Path(QUERY_ANNOTATION_URL)
+    public Response queryAnnotation(String jsonStr) {
+
+        try {
+            return postAnnotationQuery(jsonStr, false);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
@@ -198,16 +211,16 @@ public class MetricsResource {
     }
 
 
-    public Response postAnnotationQuery(String jsonStr) {
+    public Response postAnnotationQuery(String jsonStr, boolean isGrafana) {
         try {
             if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");
             }
             QueryParser parser = new QueryParser();
-            Query query = parser.parseAnnotationQueryMetric(jsonStr);
+            Query query = parser.parseAnnotationQueryMetric(jsonStr, isGrafana);
             QueryExecutor executor = new QueryExecutor(query);
             QueryResult result = executor.execute(false);
-            String entity = parser.parseResultToGrafanaAnnotationJson(result);
+            String entity = parser.parseResultToAnnotationJson(result, isGrafana);
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
         } catch (Exception e) {

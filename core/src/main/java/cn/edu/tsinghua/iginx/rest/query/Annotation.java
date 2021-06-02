@@ -1,17 +1,11 @@
 package cn.edu.tsinghua.iginx.rest.query;
 
-import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
-
+import java.util.regex.Pattern;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
-
-import static java.lang.Thread.sleep;
 
 public class Annotation
 {
@@ -71,5 +65,16 @@ public class Annotation
             return false;
         }
         return true;
+    }
+
+    boolean match(AnnotationLimit annotationLimit)
+    {
+        if (!Pattern.matches(annotationLimit.getText(), text)) return false;
+        if (!Pattern.matches(annotationLimit.getTitle(), title)) return false;
+        for (String tag: tags)
+        {
+            if (Pattern.matches(annotationLimit.getTag(), tag)) return true;
+        }
+        return false;
     }
 }

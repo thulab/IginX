@@ -31,6 +31,7 @@ public class QueryMetric {
     private Map<String, List<String>> tags = new TreeMap();
     private List<QueryAggregator> aggregators = new ArrayList<>();
     private Boolean annotation = false;
+    private AnnotationLimit annotationLimit;
 
     public String getName() {
         return name;
@@ -84,5 +85,15 @@ public class QueryMetric {
     public Boolean getAnnotation()
     {
         return annotation;
+    }
+
+    public AnnotationLimit getAnnotationLimit()
+    {
+        return annotationLimit;
+    }
+
+    public void setAnnotationLimit(AnnotationLimit annotationLimit)
+    {
+        this.annotationLimit = annotationLimit;
     }
 }
