@@ -34,19 +34,9 @@ public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet {
         List<String> columnNames = new ArrayList<>();
         columnNames.add("Time");
         if (table.getRecords().get(0).getValueByKey("t") == null) {
-            columnNames.add(bucketName +
-                    "." +
-                    table.getRecords().get(0).getMeasurement() +
-                    "." +
-                    table.getRecords().get(0).getField());
+            columnNames.add(table.getRecords().get(0).getMeasurement() + "." + table.getRecords().get(0).getField());
         } else {
-            columnNames.add(bucketName +
-                    "." +
-                    table.getRecords().get(0).getMeasurement() +
-                    "." +
-                    table.getRecords().get(0).getValueByKey("t") +
-                    "." +
-                    table.getRecords().get(0).getField());
+            columnNames.add(table.getRecords().get(0).getMeasurement() + "." + table.getRecords().get(0).getValueByKey("t") + "." + table.getRecords().get(0).getField());
         }
         return columnNames;
     }

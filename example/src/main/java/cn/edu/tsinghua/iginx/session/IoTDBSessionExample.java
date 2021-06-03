@@ -46,21 +46,21 @@ public class IoTDBSessionExample {
         session.openSession();
 
         // 列式插入数据
-//        insertColumnRecords();
+        insertColumnRecords();
         // 行式插入数据
-//        insertRowRecords();
+        insertRowRecords();
         // 值过滤查询
-//        valueFilterQuery();
-//        // 查询数据
+        valueFilterQuery();
+        // 查询数据
         queryData();
-//        // 聚合查询数据
-//        aggregateQuery();
-//        // 降采样聚合查询
-//        downsampleQuery();
-//        // 删除数据
-//        deleteDataInColumns();
-//        // 再次查询数据
-//        queryData();
+        // 聚合查询数据
+        aggregateQuery();
+        // 降采样聚合查询
+        downsampleQuery();
+        // 删除数据
+        deleteDataInColumns();
+        // 再次查询数据
+        queryData();
 
         // 关闭 Session
         session.closeSession();

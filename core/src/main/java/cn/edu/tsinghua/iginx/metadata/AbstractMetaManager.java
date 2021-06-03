@@ -770,7 +770,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             }
             String sourceDir = storageEngineMetaMap.get(storageUnit.getStorageEngineId()).getExtraParams().getOrDefault("dataDir", "/");
             String targetDir = storageEngineMetaMap.get(targetStorageEngineId).getExtraParams().getOrDefault("dataDir", "/");
-            String cmd = String.format("/Users/anyanzhe/workspace/projects/IginX/migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
+            String cmd = String.format("migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
             Process process = Runtime.getRuntime().exec(cmd);
             if (process.waitFor() != 0) {
                 logger.error("migrate error: {} from {} to {}", storageUnitId, sourceDir, targetDir);
