@@ -55,11 +55,15 @@ public interface IMetaCache {
     boolean hasFragment();
 
     // 数据单元相关的缓存读写接口
+    boolean hasStorageUnit();
+
     StorageUnitMeta getStorageUnit(String id);
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
 
     void addStorageUnit(StorageUnitMeta storageUnitMeta);
+
+    void updateStorageUnit(StorageUnitMeta storageUnitMeta);
 
     // iginx 相关的缓存读写接口
     List<IginxMeta> getIginxList();
@@ -79,6 +83,10 @@ public interface IMetaCache {
     Map<String, Integer> getSchemaMapping(String schema);
 
     int getSchemaMappingItem(String schema, String key);
+
+    void removeSchemaMapping(String schema);
+
+    void removeSchemaMappingItem(String schema, String key);
 
     void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping);
 

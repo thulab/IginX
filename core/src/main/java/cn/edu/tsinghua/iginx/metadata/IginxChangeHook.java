@@ -18,10 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 
-public interface StorageEngineChangeHook {
+public interface IginxChangeHook {
 
-    void onChanged(StorageEngineMeta before, StorageEngineMeta after);
+    void onChange(long id, IginxMeta iginx);
 
 }

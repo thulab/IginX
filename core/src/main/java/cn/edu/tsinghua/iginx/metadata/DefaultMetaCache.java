@@ -27,11 +27,13 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -40,16 +42,52 @@ public class DefaultMetaCache implements IMetaCache {
 
     private static DefaultMetaCache INSTANCE = null;
 
-    private List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
+    // 分片列表的缓存
+    private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
 
-    private Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
+    private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
-    private ReadWriteLock fragmentLock;
+    private final ReadWriteLock fragmentLock;
+
+    // 数据单元的缓存
+    private final Map<String, StorageUnitMeta> storageUnitMetaMap;
+
+    private final ReadWriteLock storageUnitLock;
+
+    // iginx 的缓存
+    private final Map<Long, IginxMeta> iginxMetaMap;
+
+    // 数据后端的缓存
+    private final Map<Long, StorageEngineMeta> storageEngineMetaMap;
+
+    // schemaMapping 的缓存
+    private final Map<String, Map<String, Integer>> schemaMappings;
+
+    public static DefaultMetaCache getInstance() {
+        if (INSTANCE == null) {
+            synchronized (DefaultMetaCache.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultMetaCache();
+                }
+            }
+        }
+        return INSTANCE;
+    }
 
     private DefaultMetaCache() {
+        // 分片相关
         sortedFragmentMetaLists = new ArrayList<>();
         fragmentMetaListMap = new HashMap<>();
         fragmentLock = new ReentrantReadWriteLock();
+        // 数据单元相关
+        storageUnitMetaMap = new HashMap<>();
+        storageUnitLock = new ReentrantReadWriteLock();
+        // iginx 相关
+        iginxMetaMap = new ConcurrentHashMap<>();
+        // 数据后端相关
+        storageEngineMetaMap = new ConcurrentHashMap<>();
+        // schemaMapping 相关
+        schemaMappings = new ConcurrentHashMap<>();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -97,24 +135,8 @@ public class DefaultMetaCache implements IMetaCache {
         return resultList;
     }
 
-    public static DefaultMetaCache getInstance() {
-        if (INSTANCE == null) {
-            synchronized (DefaultMetaCache.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DefaultMetaCache();
-                }
-            }
-        }
-        return INSTANCE;
-    }
-
     @Override
     public void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
-        sortedFragmentMetaLists = new ArrayList<>();
-        fragmentMetaListMap = new HashMap<>();
-        if (fragmentLock == null) {
-            fragmentLock = new ReentrantReadWriteLock();
-        }
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
@@ -257,67 +279,115 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public boolean hasStorageUnit() {
+        return !storageUnitMetaMap.isEmpty();
+    }
+
+    @Override
     public StorageUnitMeta getStorageUnit(String id) {
-        return null;
+        StorageUnitMeta storageUnit;
+        storageUnitLock.readLock().lock();
+        storageUnit = storageUnitMetaMap.get(id);
+        storageUnitLock.readLock().unlock();
+        return storageUnit;
     }
 
     @Override
     public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
-        return null;
+        Map<String, StorageUnitMeta> resultMap = new HashMap<>();
+        storageUnitLock.readLock().lock();
+        for (String id : ids) {
+            StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
+            if (storageUnit != null) {
+                resultMap.put(id, storageUnit);
+            }
+        }
+        storageUnitLock.readLock().unlock();
+        return resultMap;
     }
 
     @Override
     public void addStorageUnit(StorageUnitMeta storageUnitMeta) {
+        storageUnitLock.writeLock().lock();
+        storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+        storageUnitLock.writeLock().unlock();
+    }
 
+    @Override
+    public void updateStorageUnit(StorageUnitMeta storageUnitMeta) {
+        storageUnitLock.writeLock().lock();
+        storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+        storageUnitLock.writeLock().unlock();
     }
 
     @Override
     public List<IginxMeta> getIginxList() {
-        return null;
+        return new ArrayList<>(iginxMetaMap.values());
     }
 
     @Override
     public void addIginx(IginxMeta iginxMeta) {
-
+        iginxMetaMap.put(iginxMeta.getId(), iginxMeta);
     }
 
     @Override
     public void removeIginx(long id) {
-
+        iginxMetaMap.remove(id);
     }
 
     @Override
     public void addStorageEngine(StorageEngineMeta storageEngineMeta) {
-
+        storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
     }
 
     @Override
     public List<StorageEngineMeta> getStorageEngineList() {
-        return null;
+        return new ArrayList<>(this.storageEngineMetaMap.values());
     }
 
     @Override
     public StorageEngineMeta getStorageEngine(long id) {
-        return null;
+        return this.storageEngineMetaMap.get(id);
     }
 
     @Override
     public Map<String, Integer> getSchemaMapping(String schema) {
-        return null;
+        if (this.schemaMappings.get(schema) == null)
+            return null;
+        return Collections.unmodifiableMap(this.schemaMappings.get(schema));
     }
 
     @Override
     public int getSchemaMappingItem(String schema, String key) {
-        return 0;
+        Map<String, Integer> schemaMapping = schemaMappings.get(schema);
+        if (schemaMapping == null) {
+            return -1;
+        }
+        return schemaMapping.getOrDefault(key, -1);
+    }
+
+    @Override
+    public void removeSchemaMapping(String schema) {
+        schemaMappings.remove(schema);
+    }
+
+    @Override
+    public void removeSchemaMappingItem(String schema, String key) {
+        Map<String, Integer> schemaMapping = schemaMappings.get(schema);
+        if (schemaMapping != null) {
+            schemaMapping.remove(key);
+        }
     }
 
     @Override
     public void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping) {
-
+        Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
+        mapping.putAll(schemaMapping);
     }
 
     @Override
     public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
-
+        Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
+        mapping.put(key, value);
     }
 }

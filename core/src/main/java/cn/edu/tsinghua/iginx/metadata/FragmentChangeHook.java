@@ -18,10 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
-public interface StorageEngineChangeHook {
+public interface FragmentChangeHook {
 
-    void onChanged(StorageEngineMeta before, StorageEngineMeta after);
+    void onChange(boolean create, FragmentMeta fragment);
 
 }
