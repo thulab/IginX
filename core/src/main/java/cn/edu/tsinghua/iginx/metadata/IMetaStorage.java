@@ -18,5 +18,58 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+
+import java.util.List;
+import java.util.Map;
+
 public interface IMetaStorage {
+
+    Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException;
+
+    void registerSchemaMappingChangeHook(SchemaMappingChangeHook hook);
+
+    void updateSchemaMapping(String schema, Map<String, Integer> schemaMapping) throws MetaStorageException;
+
+    Map<Long, IginxMeta> loadIginx() throws MetaStorageException;
+
+    long registerIginx(IginxMeta iginx) throws MetaStorageException;
+
+    void registerIginxChangeHook(IginxChangeHook hook);
+
+    Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines) throws MetaStorageException;
+
+    long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException;
+
+    void registerStorageChangeHook(StorageChangeHook hook);
+
+    Map<String, StorageUnitMeta> loadStorageUnit() throws MetaStorageException;
+
+    void lockStorageUnit() throws MetaStorageException;
+
+    String addStorageUnit() throws MetaStorageException;
+
+    void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException;
+
+    void releaseStorageUnit() throws MetaStorageException;
+
+    void registerStorageUnitChangeHook(StorageUnitChangeHook hook);
+
+    Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException;
+
+    void lockFragment() throws MetaStorageException;
+
+    void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
+
+    void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
+
+    void releaseFragment() throws MetaStorageException;
+
+    void registerFragmentChangeHook(FragmentChangeHook hook);
+
 }

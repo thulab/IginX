@@ -18,10 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import java.util.Map;
 
-public interface StorageEngineChangeHook {
+public interface SchemaMappingChangeHook {
 
-    void onChanged(StorageEngineMeta before, StorageEngineMeta after);
+    void onChange(String schema, Map<String, Integer> schemaMapping);
 
 }

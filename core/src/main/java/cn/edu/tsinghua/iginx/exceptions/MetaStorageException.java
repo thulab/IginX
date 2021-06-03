@@ -16,12 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.exceptions;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+public class MetaStorageException extends Exception {
 
-public interface StorageEngineChangeHook {
+    private static final long serialVersionUID = -8128973325398925370L;
 
-    void onChanged(StorageEngineMeta before, StorageEngineMeta after);
+    public MetaStorageException(String message) {
+        super(message);
+    }
 
+    public MetaStorageException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public MetaStorageException(Throwable cause) {
+        super(cause);
+    }
 }
