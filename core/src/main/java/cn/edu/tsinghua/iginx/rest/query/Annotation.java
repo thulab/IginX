@@ -67,7 +67,7 @@ public class Annotation
         return true;
     }
 
-    boolean match(AnnotationLimit annotationLimit)
+    boolean match(AnnotationLimit annotationLimit) throws Exception
     {
         if (!Pattern.matches(annotationLimit.getText(), text)) return false;
         if (!Pattern.matches(annotationLimit.getTitle(), title)) return false;

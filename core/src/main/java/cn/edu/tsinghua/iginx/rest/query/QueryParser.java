@@ -310,20 +310,35 @@ public class QueryParser {
             JsonNode name = metric.get("name");
             if (name != null)
                 ins.setName(name.asText());
-            JsonNode tags = metric.get("query");
+            JsonNode query = metric.get("query");
+            if (query.get("tags") == null)
+                query = mapper.readTree(query.asText());
+            JsonNode tags = query.get("tags");
             if (tags != null)
             {
-                if (tags.get("tags") == null)
-                    tags = mapper.readTree(tags.asText());
                 tags = tags.get("tags");
-                Iterator<String> fieldNames = tags.fieldNames();
-                while (fieldNames.hasNext())
+                if (tags != null)
                 {
-                    String key = fieldNames.next();
-                    JsonNode valuenode = tags.get(key);
-                    ins.addTag(key, valuenode.asText());
+                    Iterator<String> fieldNames = tags.fieldNames();
+                    while (fieldNames.hasNext())
+                    {
+                        String key = fieldNames.next();
+                        JsonNode valuenode = tags.get(key);
+                        ins.addTag(key, valuenode.asText());
+                    }
                 }
             }
+            AnnotationLimit annotationLimit = new AnnotationLimit();
+            JsonNode category = query.get("category");
+            if (category != null)
+                annotationLimit.setTag(category.asText());
+            JsonNode text = query.get("text");
+            if (text != null)
+                annotationLimit.setText(text.asText());
+            JsonNode description = query.get("description");
+            if (description != null)
+                annotationLimit.setTitle(description.asText());
+            ins.setAnnotationLimit(annotationLimit);
             ins.setAnnotation(true);
             ret.addQueryMetrics(ins);
         }
@@ -453,6 +468,7 @@ public class QueryParser {
                     if (description != null)
                         annotationLimit.setTitle(description.asText());
                     ins.setAnnotationLimit(annotationLimit);
+                    ins.setAnnotation(true);
                     ret.addQueryMetrics(ins);
                 }
             }
@@ -680,7 +696,7 @@ public class QueryParser {
         return ret.toString();
     }
 
-    public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana)
+    public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana) throws Exception
     {
         StringBuilder ret = new StringBuilder("[");
         ret.append(result.toAnnotationResultString(isGrafana));
