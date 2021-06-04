@@ -649,6 +649,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 String actualName = nodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
                 StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
                 fakeIdToStorageUnit.put(fakeName, actualMasterStorageUnit);
+                this.zookeeperClient.setData()
+                        .forPath(nodeName, JsonUtils.toJson(actualMasterStorageUnit));
                 for (StorageUnitMeta slaveStorageUnit : masterStorageUnit.getReplicas()) {
                     slaveStorageUnit.setCreatedBy(iginxId);
                     String slaveFakeName = slaveStorageUnit.getId();
@@ -666,8 +668,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
                 }
                 storageUnitMetaMap.put(actualMasterStorageUnit.getId(), actualMasterStorageUnit);
-                this.zookeeperClient.setData()
-                        .forPath(nodeName, JsonUtils.toJson(actualMasterStorageUnit));
             }
         } catch (Exception e) {
             logger.error("try init storageUnits error: ", e);
@@ -1033,7 +1033,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     private List<TimeSeriesInterval> splitTimeSeriesSpace(List<String> paths, int multiple) {
         List<TimeSeriesInterval> tsIntervalList = new ArrayList<>();
         int num = Math.min(Math.max(1, multiple * getStorageEngineList().size() - 2), paths.size() - 1);
-        logger.error("abcdefg " + num);
         for (int i = 0; i < num; i++) {
             tsIntervalList.add(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / num), paths.get((i + 1) * (paths.size() - 1) / num)));
         }
