@@ -63,6 +63,9 @@ public class ConfigDescriptor {
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
             config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
+
+            config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
+
             config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
             config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
 

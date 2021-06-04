@@ -106,6 +106,28 @@ public final class StorageUnitMeta {
         return Objects.hash(id);
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("StorageUnitMeta: { id = ");
+        builder.append(id);
+        builder.append(", storageEngineId = ");
+        builder.append(storageEngineId);
+        builder.append(", masterId = ");
+        builder.append(masterId);
+        builder.append(", isMaster = ");
+        builder.append(isMaster);
+        builder.append(", createdBy = ");
+        builder.append(createdBy);
+        builder.append(", replica id list = ");
+        for (StorageUnitMeta storageUnit : replicas) {
+            builder.append(" ");
+            builder.append(storageUnit.getId());
+        }
+        builder.append("}");
+        return builder.toString();
+    }
+
     public long getCreatedBy() {
         return createdBy;
     }

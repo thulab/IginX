@@ -109,9 +109,9 @@ public interface IMetaManager {
     boolean hasFragment();
 
     /**
-     * 尝试创建初始分片和初始存储单元
+     * 创建初始分片和初始存储单元
      */
-    boolean tryInitFragments(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
+    boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
 
     /**
      * 为新创建的分片选择存储引擎实例
@@ -133,9 +133,9 @@ public interface IMetaManager {
     /**
      * 初始时创建分片和存储单元
      */
-    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> initializeFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
 
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> initializeFragmentsAndStorageUnits(List<String> prefixList, long startTime);
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 

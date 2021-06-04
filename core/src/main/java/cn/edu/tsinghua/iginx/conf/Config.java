@@ -44,6 +44,8 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
 
+    private int storageUnitNum = 30;
+
     private String influxDBToken = "token";
 
     private String influxDBOrganizationName = "organization";
@@ -162,6 +164,14 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
+    }
+
+    public int getStorageUnitNum() {
+        return storageUnitNum;
+    }
+
+    public void setStorageUnitNum(int storageUnitNum) {
+        this.storageUnitNum = storageUnitNum;
     }
 
     public String getInfluxDBToken() {
