@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import org.slf4j.Logger;
@@ -109,7 +110,10 @@ public class QueryExecutor {
                     path.append("*.");
                 now++;
             }
-            path.append(queryMetric.getName());
+            if (queryMetric.getAnnotation())
+                path.append(queryMetric.getName() + DataPointsParser.ANNOTATION_SPLIT_STRING);
+            else
+                path.append(queryMetric.getName());
             Paths.add(path.toString());
             return;
         }

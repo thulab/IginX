@@ -106,6 +106,101 @@ public class QueryResult {
         return ret.toString();
     }
 
+
+
+
+    public String toAnnotationResultString(boolean isGrafana) throws Exception{
+        StringBuilder ret = new StringBuilder("");
+        List<Annotation> values = new ArrayList<>();
+        int siz = queryResultDatasets.get(0).getValues().size();
+        for (int i = 0; i < siz; i++)
+        {
+            Annotation ins = new Annotation(new String((byte[]) queryResultDatasets.get(0).getValues().get(i)), queryResultDatasets.get(0).getTimestamps().get(i));
+            values.add(ins);
+        }
+        int now = 0;
+        if (siz == 0)
+            return "{}";
+        if (isGrafana)
+        {
+            for (int i = 1; i < siz; i++)
+                if (!values.get(i).isEqual(values.get(i - 1)))
+                {
+                    if (values.get(i-1).match(queryMetrics.get(0).getAnnotationLimit()))
+                    {
+                        ret.append("{");
+                        ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).text));
+                        ret.append(String.format("\"title\": \"%s\",", values.get(i - 1).title));
+                        ret.append("\"isRegion\": true,");
+                        ret.append(String.format("\"time\": \"%d\",", values.get(now).timestamp));
+                        ret.append(String.format("\"timeEnd\": \"%d\",", values.get(i - 1).timestamp));
+                        ret.append("\"tags\": [");
+                        for (String tag : values.get(i - 1).tags)
+                            ret.append(String.format("\"%s\",", tag));
+                        if (ret.charAt(ret.length() - 1) == ',')
+                            ret.deleteCharAt(ret.length() - 1);
+                        ret.append("]},");
+                    }
+                    now = i;
+                }
+            if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit()))
+            {
+                ret.append("{");
+                ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).text));
+                ret.append(String.format("\"title\": \"%s\",", values.get(siz - 1).title));
+                ret.append("\"isRegion\": true,");
+                ret.append(String.format("\"time\": \"%d\",", values.get(now).timestamp));
+                ret.append(String.format("\"timeEnd\": \"%d\",", values.get(siz - 1).timestamp));
+                ret.append("\"tags\": [");
+                for (String tag : values.get(siz - 1).tags)
+                    ret.append(String.format("\"%s\",", tag));
+                if (ret.charAt(ret.length() - 1) == ',')
+                    ret.deleteCharAt(ret.length() - 1);
+                ret.append("]}");
+            }
+            if (ret.charAt(ret.length() - 1) == ',')
+                ret.deleteCharAt(ret.length() - 1);
+        }
+        else {
+            for (int i = 1; i < siz; i++)
+                if (!values.get(i).isEqual(values.get(i - 1)))
+                {
+                    if (values.get(i-1).match(queryMetrics.get(0).getAnnotationLimit()))
+                    {
+                        ret.append("{");
+                        ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).text));
+                        ret.append(String.format("\"description\": \"%s\",", values.get(i - 1).title));
+                        ret.append(String.format("\"time\": \"%d\",", values.get(now).timestamp));
+                        ret.append(String.format("\"timeEnd\": \"%d\",", values.get(i - 1).timestamp));
+                        ret.append("\"category\": [");
+                        for (String tag : values.get(i - 1).tags)
+                            ret.append(String.format("\"%s\",", tag));
+                        if (ret.charAt(ret.length() - 1) == ',')
+                            ret.deleteCharAt(ret.length() - 1);
+                        ret.append("]},");
+                    }
+                    now = i;
+                }
+            if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit()))
+            {
+                ret.append("{");
+                ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).text));
+                ret.append(String.format("\"description\": \"%s\",", values.get(siz - 1).title));
+                ret.append(String.format("\"time\": \"%d\",", values.get(now).timestamp));
+                ret.append(String.format("\"timeEnd\": \"%d\",", values.get(siz - 1).timestamp));
+                ret.append("\"category\": [");
+                for (String tag : values.get(siz - 1).tags)
+                    ret.append(String.format("\"%s\",", tag));
+                if (ret.charAt(ret.length() - 1) == ',')
+                    ret.deleteCharAt(ret.length() - 1);
+                ret.append("]}");
+            }
+            if (ret.charAt(ret.length() - 1) == ',')
+                ret.deleteCharAt(ret.length() - 1);
+        }
+        return ret.toString();
+    }
+
     private String nameToString(int num) {
         if (queryAggregators.get(num).getType() == QueryAggregatorType.SAVE_AS) {
             return String.format("\"name\": \"%s\"", queryAggregators.get(num).getMetric_name());
