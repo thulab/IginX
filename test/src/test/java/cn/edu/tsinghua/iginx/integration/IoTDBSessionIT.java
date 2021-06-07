@@ -122,6 +122,7 @@ public class IoTDBSessionIT {
             zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
             ZKUtil.deleteRecursive(zk, "/iginx");
             ZKUtil.deleteRecursive(zk, "/storage");
+            ZKUtil.deleteRecursive(zk, "/schema");
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");

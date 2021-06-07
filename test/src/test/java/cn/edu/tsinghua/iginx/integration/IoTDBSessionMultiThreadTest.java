@@ -7,7 +7,6 @@ import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import org.apache.commons.lang.RandomStringUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.zookeeper.KeeperException;
@@ -68,6 +67,7 @@ public class IoTDBSessionMultiThreadTest {
             zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
             ZKUtil.deleteRecursive(zk, "/iginx");
             ZKUtil.deleteRecursive(zk, "/storage");
+            ZKUtil.deleteRecursive(zk, "/schema");
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
@@ -223,7 +223,7 @@ public class IoTDBSessionMultiThreadTest {
         long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
         long delTimePeriod = delEndTime - delStartTime + 1;
 
-        int threadNum = 1;
+        int threadNum = 4;
         Task[] tasks = new Task[threadNum];
         Thread[] threads = new Thread[threadNum];
 
@@ -303,7 +303,7 @@ public class IoTDBSessionMultiThreadTest {
         delPath.add(COLUMN_D3_S3);
         delPath.add(COLUMN_D4_S4);
 
-        int threadNum = 1;
+        int threadNum = 5;
         long delStartTime = START_TIME + TIME_PERIOD / 5;
         long delStep = TIME_PERIOD / 10;
         long delTimePeriod = delStep * threadNum;
@@ -380,7 +380,7 @@ public class IoTDBSessionMultiThreadTest {
         long delTimePeriod = delEndTime - delStartTime + 1;
 
         // threadNum must < 5
-        int threadNum = 1;
+        int threadNum = 4;
         Task[] tasks = new Task[threadNum];
         Thread[] threads = new Thread[threadNum];
 
@@ -447,7 +447,7 @@ public class IoTDBSessionMultiThreadTest {
         delPath.add(COLUMN_D3_S3);
         delPath.add(COLUMN_D4_S4);
 
-        int threadNum = 1;
+        int threadNum = 5;
         long delStartTime = START_TIME;
         long delStep = TIME_PERIOD / threadNum;
 
@@ -558,7 +558,7 @@ public class IoTDBSessionMultiThreadTest {
                 // delete
                 case 2:
                     try {
-                        session.deleteDataInColumns(path, startTime, endTime);
+                        localSession.deleteDataInColumns(path, startTime, endTime);
                     } catch(SessionException | ExecutionException e) {
                         e.printStackTrace();
                     }
