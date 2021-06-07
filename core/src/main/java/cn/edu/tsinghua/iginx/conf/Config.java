@@ -60,6 +60,10 @@ public class Config {
 
     private boolean enableRestService = true;
 
+    private String newPolicyRestIp = "127.0.0.1";
+
+    private int newPolicyRestPort = 6666;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -218,5 +222,25 @@ public class Config {
 
     public void setEnableRestService(boolean enableRestService) {
         this.enableRestService = enableRestService;
+    }
+
+    public int getNewPolicyRestPort()
+    {
+        return newPolicyRestPort;
+    }
+
+    public void setNewPolicyRestIp(String newPolicyRestIp)
+    {
+        this.newPolicyRestIp = newPolicyRestIp;
+    }
+
+    public String getNewPolicyRestIp()
+    {
+        return newPolicyRestIp;
+    }
+
+    public void setNewPolicyRestPort(int newPolicyRestPort)
+    {
+        this.newPolicyRestPort = newPolicyRestPort;
     }
 }
