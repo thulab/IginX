@@ -22,11 +22,14 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
+import cn.edu.tsinghua.iginx.rest.insert.InsertAnnotationWorker;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.rest.query.QueryResult;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +48,11 @@ import javax.ws.rs.core.Response.Status;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -55,7 +61,9 @@ public class MetricsResource {
 
     private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
     private static final String INSERT_URL = "api/v1/datapoints";
+    private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotations";
     private static final String QUERY_URL = "api/v1/datapoints/query";
+    private static final String QUERY_ANNOTATION_URL = "api/v1/datapoints/query/annotations";
     private static final String DELETE_URL = "api/v1/datapoints/delete";
     private static final String DELETE_METRIC_URL = "api/v1/metric/{metricName}";
     private static final String NO_CACHE = "no-cache";
@@ -71,6 +79,8 @@ public class MetricsResource {
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
         responseBuilder.header("Access-Control-Allow-Origin", "*");
+        responseBuilder.header("Access-Control-Allow-Methods", "POST");
+        responseBuilder.header("Access-Control-Allow-Headers", "accept, content-type");
         responseBuilder.header("Pragma", NO_CACHE);
         responseBuilder.header("Cache-Control", NO_CACHE);
         responseBuilder.header("Expires", 0);
@@ -99,10 +109,58 @@ public class MetricsResource {
 
     @POST
     @Path("query")
-    public Response Grafana_query(final InputStream stream) {
+    public Response grafanaQuery(String jsonStr) {
+        try
+        {
+            if (jsonStr == null)
+            {
+                throw new Exception("query json must not be null or empty");
+            }
+            QueryParser parser = new QueryParser();
+            Query query = parser.parseGrafanaQueryMetric(jsonStr);
+            QueryExecutor executor = new QueryExecutor(query);
+            QueryResult result = executor.execute(false);
+            String entity = parser.parseResultToGrafanaJson(result);
+            return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
-        return setHeaders(Response.status(Status.OK)).build();
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
     }
+
+    @POST
+    @Path(INSERT_ANNOTATION_URL)
+    public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+        threadPool.execute(new InsertAnnotationWorker(asyncResponse, httpheaders, stream));
+    }
+
+    @POST
+    @Path("annotations")
+    public Response grafanaAnnotation(String jsonStr) {
+
+        try {
+            return postAnnotationQuery(jsonStr, true);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
+    }
+
+    @POST
+    @Path(QUERY_ANNOTATION_URL)
+    public Response queryAnnotation(String jsonStr) {
+
+        try {
+            return postAnnotationQuery(jsonStr, false);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
+    }
+
 
     @POST
     @Path("{string : .+}")
@@ -144,6 +202,25 @@ public class MetricsResource {
             QueryExecutor executor = new QueryExecutor(query);
             QueryResult result = executor.execute(false);
             String entity = parser.parseResultToJson(result, false);
+            return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
+
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
+    }
+
+
+    public Response postAnnotationQuery(String jsonStr, boolean isGrafana) {
+        try {
+            if (jsonStr == null) {
+                throw new Exception("query json must not be null or empty");
+            }
+            QueryParser parser = new QueryParser();
+            Query query = parser.parseAnnotationQueryMetric(jsonStr, isGrafana);
+            QueryExecutor executor = new QueryExecutor(query);
+            QueryResult result = executor.execute(false);
+            String entity = parser.parseResultToAnnotationJson(result, isGrafana);
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
         } catch (Exception e) {
@@ -209,4 +286,6 @@ public class MetricsResource {
         restSession.deleteColumns(ins);
         restSession.closeSession();
     }
+
+
 }

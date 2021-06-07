@@ -28,6 +28,7 @@ public class Metric {
     private Map<String, String> tags = new TreeMap<>();
     private List<Long> timestamps = new ArrayList<>();
     private List<String> values = new ArrayList<>();
+    private String annotation = null;
 
     public String getName() {
         return name;
@@ -71,5 +72,15 @@ public class Metric {
 
     public void addValue(String value) {
         values.add(value);
+    }
+
+    public String getAnnotation()
+    {
+        return annotation;
+    }
+
+    public void setAnnotation(String annotation)
+    {
+        this.annotation = annotation;
     }
 }

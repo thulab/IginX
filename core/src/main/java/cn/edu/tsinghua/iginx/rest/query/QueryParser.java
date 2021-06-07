@@ -35,11 +35,18 @@ import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorRate;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSampler;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSaveAs;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSum;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 
 public class QueryParser {
@@ -50,6 +57,22 @@ public class QueryParser {
 
     }
 
+    public Query parseGrafanaQueryMetric(String json) throws Exception
+    {
+        Query ret;
+        try
+        {
+            JsonNode node = mapper.readTree(json);
+            ret = getGrafanaQuery(node);
+        }
+        catch (Exception e)
+        {
+            LOGGER.error("Error occurred during parsing query ", e);
+            throw e;
+        }
+        return ret;
+    }
+
     public Query parseQueryMetric(String json) throws Exception {
         Query ret;
         try {
@@ -58,6 +81,77 @@ public class QueryParser {
         } catch (Exception e) {
             LOGGER.error("Error occurred during parsing query ", e);
             throw e;
+        }
+        return ret;
+    }
+
+    public Query parseAnnotationQueryMetric(String json, boolean isGrafana) throws Exception {
+        Query ret;
+        try {
+            JsonNode node = mapper.readTree(json);
+            ret = getAnnotationQuery(node, isGrafana);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during parsing query ", e);
+            throw e;
+        }
+        return ret;
+    }
+    public static Long dealDateFormat(String oldDateStr)
+    {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        try
+        {
+            Date date = df.parse(oldDateStr);
+            return date.getTime() + 28800000l;
+        }
+        catch (ParseException e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    private Query getGrafanaQuery(JsonNode node)
+    {
+        Query ret = new Query();
+        JsonNode timerange = node.get("range");
+        if (timerange == null)
+            return null;
+
+        JsonNode start_absolute = timerange.get("from");
+        JsonNode end_absolute = timerange.get("to");
+
+
+        if (start_absolute == null || end_absolute == null)
+            return null;
+
+        Long start = dealDateFormat(start_absolute.asText());
+        Long end = dealDateFormat(end_absolute.asText());
+        ret.setStartAbsolute(start);
+        ret.setEndAbsolute(end);
+
+        JsonNode array = node.get("targets");
+        if (!array.isArray())
+             return null;
+        for (JsonNode jsonNode: array)
+        {
+            QueryMetric queryMetric = new QueryMetric();
+            JsonNode type = jsonNode.get("type");
+            if (type == null)
+                return null;
+            JsonNode target = jsonNode.get("target");
+            if (target == null)
+                return null;
+            if (type.asText().equals("table"))
+            {
+                queryMetric.setName(target.asText());
+            }
+            else
+            {
+                queryMetric.setName(target.asText());
+            }
+            ret.addQueryMetrics(queryMetric);
         }
         return ret;
     }
@@ -188,6 +282,200 @@ public class QueryParser {
         }
         return ret;
     }
+
+    private Query getAnnotationQuery(JsonNode node, boolean isGrafana) throws JsonProcessingException
+    {
+        Query ret = new Query();
+        if (isGrafana)
+        {
+            JsonNode range = node.get("range");
+            if (range == null)
+                return null;
+            JsonNode start_absolute = range.get("from");
+            JsonNode end_absolute = range.get("to");
+            if (start_absolute == null || end_absolute == null)
+                return null;
+            else
+            {
+                Long start = dealDateFormat(start_absolute.asText());
+                Long end = dealDateFormat(end_absolute.asText());
+                ret.setStartAbsolute(start);
+                ret.setEndAbsolute(end);
+            }
+
+            JsonNode metric = node.get("annotation");
+            if (metric == null)
+                return null;
+            QueryMetric ins = new QueryMetric();
+            JsonNode name = metric.get("name");
+            if (name != null)
+                ins.setName(name.asText());
+            JsonNode query = metric.get("query");
+            if (query.get("tags") == null)
+                query = mapper.readTree(query.asText());
+            JsonNode tags = query.get("tags");
+            if (tags != null)
+            {
+                tags = tags.get("tags");
+                if (tags != null)
+                {
+                    Iterator<String> fieldNames = tags.fieldNames();
+                    while (fieldNames.hasNext())
+                    {
+                        String key = fieldNames.next();
+                        JsonNode valuenode = tags.get(key);
+                        ins.addTag(key, valuenode.asText());
+                    }
+                }
+            }
+            AnnotationLimit annotationLimit = new AnnotationLimit();
+            JsonNode category = query.get("category");
+            if (category != null)
+                annotationLimit.setTag(category.asText());
+            JsonNode text = query.get("text");
+            if (text != null)
+                annotationLimit.setText(text.asText());
+            JsonNode description = query.get("description");
+            if (description != null)
+                annotationLimit.setTitle(description.asText());
+            ins.setAnnotationLimit(annotationLimit);
+            ins.setAnnotation(true);
+            ret.addQueryMetrics(ins);
+        }
+        else
+        {
+            JsonNode start_absolute = node.get("start_absolute");
+            JsonNode end_absolute = node.get("end_absolute");
+            Long now = System.currentTimeMillis();
+            if (start_absolute == null && end_absolute == null)
+            {
+                ret.setStartAbsolute(0l);
+                ret.setEndAbsolute(now);
+            }
+            else if (start_absolute != null && end_absolute != null) {
+                ret.setStartAbsolute(start_absolute.asLong());
+                ret.setEndAbsolute(end_absolute.asLong());
+            } else if (start_absolute != null) {
+                ret.setStartAbsolute(start_absolute.asLong());
+                JsonNode end_relative = node.get("end_relative");
+                if (end_relative == null)
+                    ret.setEndAbsolute(now);
+                else {
+                    JsonNode value = end_relative.get("value");
+                    if (value == null) return null;
+                    long v = value.asLong();
+                    JsonNode unit = end_relative.get("unit");
+                    if (unit == null) return null;
+                    String u = unit.asText();
+                    switch (u) {
+                        case "millis":
+                            ret.setEndAbsolute(now - v * 1L);
+                            break;
+                        case "seconds":
+                            ret.setEndAbsolute(now - v * 1000L);
+                            break;
+                        case "minutes":
+                            ret.setEndAbsolute(now - v * 60000L);
+                            break;
+                        case "hours":
+                            ret.setEndAbsolute(now - v * 3600000L);
+                            break;
+                        case "days":
+                            ret.setEndAbsolute(now - v * 86400000L);
+                            break;
+                        case "weeks":
+                            ret.setEndAbsolute(now - v * 604800000L);
+                            break;
+                        case "months":
+                            ret.setEndAbsolute(now - v * 2419200000L);
+                            break;
+                        case "years":
+                            ret.setEndAbsolute(now - v * 29030400000L);
+                            break;
+                        default:
+                            ret.setEndAbsolute(now);
+                            break;
+                    }
+                }
+            } else {
+                ret.setEndAbsolute(end_absolute.asLong());
+                JsonNode start_relative = node.get("start_relative");
+                if (start_relative == null)
+                    ret.setStartAbsolute(0l);
+                else {
+                    JsonNode value = start_relative.get("value");
+                    if (value == null) return null;
+                    long v = value.asLong();
+                    JsonNode unit = start_relative.get("unit");
+                    if (unit == null) return null;
+                    String u = value.asText();
+                    switch (u) {
+                        case "millis":
+                            ret.setStartAbsolute(now - v * 1L);
+                            break;
+                        case "seconds":
+                            ret.setStartAbsolute(now - v * 1000L);
+                            break;
+                        case "minutes":
+                            ret.setStartAbsolute(now - v * 60000L);
+                            break;
+                        case "hours":
+                            ret.setStartAbsolute(now - v * 3600000L);
+                            break;
+                        case "days":
+                            ret.setStartAbsolute(now - v * 86400000L);
+                            break;
+                        case "weeks":
+                            ret.setStartAbsolute(now - v * 604800000L);
+                            break;
+                        case "months":
+                            ret.setStartAbsolute(now - v * 2419200000L);
+                            break;
+                        case "years":
+                            ret.setStartAbsolute(now - v * 29030400000L);
+                            break;
+                        default:
+                            ret.setStartAbsolute(now);
+                            break;
+                    }
+                }
+            }
+            JsonNode metrics = node.get("metrics");
+            if (metrics != null && metrics.isArray()) {
+                for (JsonNode dpnode : metrics) {
+                    QueryMetric ins = new QueryMetric();
+                    JsonNode name = dpnode.get("name");
+                    if (name != null)
+                        ins.setName(name.asText());
+                    JsonNode tags = dpnode.get("tags");
+                    if (tags != null) {
+                        Iterator<String> fieldNames = tags.fieldNames();
+                        Iterator<JsonNode> elements = tags.elements();
+                        while (elements.hasNext() && fieldNames.hasNext()) {
+                            String key = fieldNames.next();
+                            for (JsonNode valuenode : elements.next())
+                                ins.addTag(key, valuenode.asText());
+                        }
+                    }
+                    AnnotationLimit annotationLimit = new AnnotationLimit();
+                    JsonNode category = dpnode.get("category");
+                    if (category != null)
+                        annotationLimit.setTag(category.asText());
+                    JsonNode text = dpnode.get("text");
+                    if (text != null)
+                        annotationLimit.setText(text.asText());
+                    JsonNode description = dpnode.get("description");
+                    if (description != null)
+                        annotationLimit.setTitle(description.asText());
+                    ins.setAnnotationLimit(annotationLimit);
+                    ins.setAnnotation(true);
+                    ret.addQueryMetrics(ins);
+                }
+            }
+        }
+        return ret;
+    }
+
 
     public void addAggregators(QueryMetric q, JsonNode node) {
         JsonNode aggregators = node.get("aggregators");
@@ -405,6 +693,44 @@ public class QueryParser {
         if (ret.charAt(ret.length() - 1) == ',')
             ret.deleteCharAt(ret.length() - 1);
         ret.append("]}");
+        return ret.toString();
+    }
+
+    public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana) throws Exception
+    {
+        StringBuilder ret = new StringBuilder("[");
+        ret.append(result.toAnnotationResultString(isGrafana));
+        ret.append("]");
+        return ret.toString();
+    }
+
+    public String parseResultToGrafanaJson(QueryResult result)
+    {
+        StringBuilder ret = new StringBuilder("[");
+        for (int i=0; i< result.getSiz(); i++)
+        {
+            ret.append("{");
+            ret.append(String.format("\"target\":\"%s\",", result.getQueryMetrics().get(i).getName()));
+            ret.append("\"datapoints\":[");
+            int n = result.getQueryResultDatasets().get(i).getSize();
+            for (int j=0;j<n;j++)
+            {
+                ret.append("[");
+                if (result.getQueryResultDatasets().get(i).getValues().get(j) instanceof byte[])
+                    ret.append(result.getQueryResultDatasets().get(i).getValues().get(j));
+                else
+                    ret.append(result.getQueryResultDatasets().get(i).getValues().get(j).toString());
+
+                ret.append(String.format(",%d", result.getQueryResultDatasets().get(i).getTimestamps().get(j)));
+                ret.append("],");
+            }
+            if (ret.charAt(ret.length()-1) == ',')
+                ret.deleteCharAt(ret.length()-1);
+            ret.append("]},");
+        }
+        if (ret.charAt(ret.length()-1) == ',')
+            ret.deleteCharAt(ret.length()-1);
+        ret.append("]");
         return ret.toString();
     }
 }
