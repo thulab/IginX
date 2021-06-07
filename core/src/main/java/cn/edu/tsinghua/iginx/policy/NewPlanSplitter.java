@@ -72,7 +72,7 @@ public class NewPlanSplitter implements IPlanSplitter {
     public NewPlanSplitter(NewPolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
-        this.prefixMaxSize = 1024;
+        this.prefixMaxSize = 1;
         this.k = 1;
     }
 
