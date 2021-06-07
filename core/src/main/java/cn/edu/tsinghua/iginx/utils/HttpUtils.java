@@ -86,8 +86,6 @@ public class HttpUtils
         }
         try {
             httpResponse = httpClient.execute(httpPost);
-            HttpEntity entity = httpResponse.getEntity();
-            result = EntityUtils.toString(entity);
         } catch (ClientProtocolException e) {
             e.printStackTrace();
         } catch (IOException e) {

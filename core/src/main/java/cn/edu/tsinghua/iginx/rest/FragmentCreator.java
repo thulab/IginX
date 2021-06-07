@@ -36,9 +36,9 @@ public class FragmentCreator
         return INSTANCE;
     }
 
-    public void updatePrefix(List<String> prefixList) {
+    public void updatePrefix(List<String> ins) {
         lock.writeLock().lock();
-        for (String prefix : prefixList)
+        for (String prefix : ins)
         {
             if (!prefixSet.contains(prefix))
             {
@@ -99,10 +99,8 @@ public class FragmentCreator
     }
 
     public List<String> samplePrefix(int count) {
-        lock.readLock().lock();
         String[] prefixArray = new String[prefixList.size()];
         prefixList.toArray(prefixArray);
-        lock.readLock().unlock();
         Collections.sort(prefixList, String::compareTo);
         List<String> resultList = new ArrayList<>();
         if (prefixArray.length <= count) {
