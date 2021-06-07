@@ -46,9 +46,11 @@ public final class FragmentMeta {
 
     private long updatedBy;
 
-    private StorageUnitMeta masterStorageUnit;
+    private String masterStorageUnitId;
 
-    private String fakeStorageUnitId;
+    private transient StorageUnitMeta masterStorageUnit;
+
+    private transient String fakeStorageUnitId;
 
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
@@ -65,6 +67,7 @@ public final class FragmentMeta {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
     public TimeInterval getTimeInterval() {
@@ -101,6 +104,7 @@ public final class FragmentMeta {
 
     public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
         this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
     public String getFakeStorageUnitId() {
@@ -109,6 +113,14 @@ public final class FragmentMeta {
 
     public void setFakeStorageUnitId(String fakeStorageUnitId) {
         this.fakeStorageUnitId = fakeStorageUnitId;
+    }
+
+    public String getMasterStorageUnitId() {
+        return masterStorageUnitId;
+    }
+
+    public void setMasterStorageUnitId(String masterStorageUnitId) {
+        this.masterStorageUnitId = masterStorageUnitId;
     }
 
     @Override

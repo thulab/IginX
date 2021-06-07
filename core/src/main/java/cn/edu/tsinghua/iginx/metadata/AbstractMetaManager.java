@@ -254,7 +254,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         this.storageUnitCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_UNIT_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
             switch (event.getType()) {
-                // case NODE_ADDED:
+                case NODE_ADDED:
                 case NODE_UPDATED:
                     byte[] data = event.getData().getData();
                     logger.info("storage unit: " + new String(data));
@@ -424,6 +424,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     for (String timeIntervalName : timeIntervalNames) {
                         FragmentMeta fragmentMeta = JsonUtils.fromJson(this.zookeeperClient.getData()
                                 .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        fragmentMeta.setMasterStorageUnit(storageUnitMetaMap.get(fragmentMeta.getMasterStorageUnitId()));
                         fragmentMetaList.add(fragmentMeta);
                     }
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
@@ -450,8 +451,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         if (fragmentMeta.getUpdatedBy() == iginxId) {
                             break;
                         }
+                        storageUnitLock.readLock().lock();
+                        fragmentMeta.setMasterStorageUnit(storageUnitMetaMap.get(fragmentMeta.getMasterStorageUnitId()));
                         updateFragment(fragmentMeta);
-
+                        storageUnitLock.readLock().unlock();
                     } else {
                         logger.error("resolve fragment from zookeeper error");
                     }
@@ -466,7 +469,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                             if (fragmentMeta.getCreatedBy() == iginxId) {
                                 break;
                             }
+                            storageUnitLock.readLock().lock();
+                            fragmentMeta.setMasterStorageUnit(storageUnitMetaMap.get(fragmentMeta.getMasterStorageUnitId()));
                             addFragment(fragmentMeta);
+                            storageUnitLock.readLock().unlock();
                         }
                     }
                     break;
