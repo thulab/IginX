@@ -506,9 +506,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         // TODO 暂时设置为只查主
         storageUnitList.add(fragment.getMasterStorageUnit());
         if (!isQuery) {
-            StorageUnitMeta masterStorageUnit = iMetaManager.getStorageUnit(fragment.getMasterStorageUnit().getMasterId());
-            logger.error(masterStorageUnit.toString());
-            storageUnitList.addAll(masterStorageUnit.getReplicas());
+            storageUnitList.addAll(fragment.getMasterStorageUnit().getReplicas());
         }
         return storageUnitList;
     }
