@@ -290,6 +290,7 @@ public class MetricsResource {
     @Path("receive_meta")
     public void receiveMeta(String meta) {
         List<String> ins = Arrays.asList(meta.split("\1").clone());
+        LOGGER.info("receive meta, size : {}", ins.size());
         fragmentCreator.updatePrefix(ins);
     }
 
@@ -297,6 +298,7 @@ public class MetricsResource {
     @Path("fragment")
     public void updateFragment(String fragment) {
         List<String> ins = Arrays.asList(fragment.split("\1").clone());
+        LOGGER.info("receive fragment require, size : {}, time : {}",ins.get(0), ins.get(1));
         fragmentCreator.CreateFragment(Integer.getInteger(ins.get(0)), Integer.getInteger(ins.get(1)));
     }
 }

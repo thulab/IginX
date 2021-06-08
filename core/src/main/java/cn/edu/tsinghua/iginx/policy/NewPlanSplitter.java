@@ -72,7 +72,7 @@ public class NewPlanSplitter implements IPlanSplitter {
     public NewPlanSplitter(NewPolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
-        this.prefixMaxSize = 1;
+        this.prefixMaxSize = 1024;
         this.k = 1;
     }
 
@@ -82,7 +82,7 @@ public class NewPlanSplitter implements IPlanSplitter {
             String url = "http://" + config.getNewPolicyRestIp() + ":" + config.getNewPolicyRestPort()
                     + UPDATE_META_URL;
             HttpUtils.doPost(url, prefixList);
-            prefixMaxSize *= 2;
+            prefixMaxSize *= 1024;
             if (isFirst) {
                 isFirst = false;
                 policy.setNeedReAllocate(true);
@@ -108,11 +108,6 @@ public class NewPlanSplitter implements IPlanSplitter {
             prefixList.add(tsInterval.getEndTimeSeries());
         }
         lock.writeLock().unlock();
-    }
-
-    public void sendUpdatePrefix()
-    {
-
     }
 
     public List<SplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan) {
@@ -175,6 +170,7 @@ public class NewPlanSplitter implements IPlanSplitter {
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
+            lock.writeLock().lock();
             String url = "http://" + config.getNewPolicyRestIp() + ":" + config.getNewPolicyRestPort()
                     + FRAGMENT_URL;
             List<String> ins = new ArrayList<>();
@@ -182,6 +178,7 @@ public class NewPlanSplitter implements IPlanSplitter {
             ins.add(String.valueOf(plan.getEndTime() + 1));
             HttpUtils.doPost(url, ins);
             policy.setNeedReAllocate(false);
+            lock.writeLock().unlock();
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
@@ -425,13 +422,19 @@ public class NewPlanSplitter implements IPlanSplitter {
 
     @Override
     public List<FragmentReplicaMeta> selectFragmentReplicas(FragmentMeta fragment, boolean isQuery) {
-        return null;
+        List<FragmentReplicaMeta> replicas = new ArrayList<>();
+        if (isQuery) {
+            replicas.add(fragment.getReplicaMetas().get(0));
+        } else {
+            replicas.addAll(fragment.getReplicaMetas().values());
+        }
+        return replicas;
     }
 
     public List<FragmentReplicaMeta> chooseFragmentReplicas(FragmentMeta fragment, boolean isQuery) {
         List<FragmentReplicaMeta> replicas = new ArrayList<>();
         if (isQuery) {
-            replicas.add(fragment.getReplicaMetas().get(new Random().nextInt(fragment.getReplicaMetasNum())));
+            replicas.add(fragment.getReplicaMetas().get(0));
         } else {
             replicas.addAll(fragment.getReplicaMetas().values());
         }
