@@ -5,8 +5,8 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.plan.NonDatabasePlan;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 
 public class FragmentCreator
 {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FragmentCreator.class);
     private final Set<String> prefixSet = new HashSet<>();
     private final List<String> prefixList = new LinkedList<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -89,9 +90,11 @@ public class FragmentCreator
     {
         lock.writeLock().lock();
         updateRequireNum += 1;
-        if (updateRequireNum == iMetaManager.getIginxList().size())
+        LOGGER.info("create fragment  , size : {}", prefixList.size());
+        if (updateRequireNum == 4)
         {
             List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), timestamp);
+            LOGGER.info("create fragment  , size : {}", prefixList.size());
             iMetaManager.createFragments(fragments);
             updateRequireNum = 0;
         }
