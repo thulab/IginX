@@ -20,9 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -32,7 +30,6 @@ import static org.junit.Assert.fail;
 public class IoTDBSessionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionIT.class);
-    private static final String DATABASE_NAME = "sg1";
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";
@@ -44,29 +41,6 @@ public class IoTDBSessionIT {
     private static final double delta = 1e-7;
     private static Session session;
     private List<String> paths = new ArrayList<>();
-
-    private static void addColumns() throws SessionException, ExecutionException {
-        List<String> addPaths = new ArrayList<>();
-        addPaths.add(COLUMN_D1_S1);
-        addPaths.add(COLUMN_D2_S2);
-        addPaths.add(COLUMN_D3_S3);
-        addPaths.add(COLUMN_D4_S4);
-
-        Map<String, String> attributesForOnePath = new HashMap<>();
-        // INT64
-        attributesForOnePath.put("DataType", "2");
-        // RLE
-        attributesForOnePath.put("Encoding", "2");
-        // SNAPPY
-        attributesForOnePath.put("Compression", "1");
-
-        List<Map<String, String>> attributes = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            attributes.add(attributesForOnePath);
-        }
-
-        session.addColumns(addPaths, attributes);
-    }
 
     private static void insertRecords() throws SessionException, ExecutionException {
         List<String> insertPaths = new ArrayList<>();
@@ -106,16 +80,14 @@ public class IoTDBSessionIT {
             paths.add(COLUMN_D4_S4);
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
-            //      session.createDatabase(DATABASE_NAME);
-            addColumns();
             insertRecords();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 
     @After
-    public void tearDown() throws ExecutionException, SessionException {
+    public void tearDown() throws SessionException {
         // delete metadata from ZooKeeper
         ZooKeeper zk = null;
         try {
@@ -125,6 +97,7 @@ public class IoTDBSessionIT {
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
+            ZKUtil.deleteRecursive(zk, "/schema");
         } catch (IOException | InterruptedException | KeeperException e) {
             logger.error(e.getMessage());
         }

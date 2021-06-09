@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.plan;
 //todo
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.query.expression.BooleanExpression;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class ValueFilterQueryPlan extends DataPlan {
     BooleanExpression booleanExpression;
 
     public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression) {
-        super(true, paths, startTime, endTime);
+        super(true, paths, startTime, endTime, null);
         this.booleanExpression = booleanExpression;
         this.setIginxPlanType(VALUE_FILTER_QUERY);
         List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
@@ -68,9 +69,9 @@ public class ValueFilterQueryPlan extends DataPlan {
         this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
     }
 
-    public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, long storageEngineId) {
+    public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, StorageUnitMeta storageUnit) {
         this(paths, startTime, endTime, booleanExpression);
-        this.setStorageEngineId(storageEngineId);
+        this.setStorageUnit(storageUnit);
         this.setSync(true);
     }
 
@@ -127,4 +128,5 @@ public class ValueFilterQueryPlan extends DataPlan {
     public BooleanExpression getBooleanExpression() {
         return booleanExpression;
     }
+
 }

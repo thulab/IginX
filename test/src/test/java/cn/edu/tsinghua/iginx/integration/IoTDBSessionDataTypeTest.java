@@ -20,9 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -33,7 +31,6 @@ import static org.junit.Assert.fail;
 public class IoTDBSessionDataTypeTest {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionDataTypeTest.class);
-    private static final String DATABASE_NAME = "sg1";
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";
@@ -48,30 +45,6 @@ public class IoTDBSessionDataTypeTest {
     private static final double delta = 1e-6;
     private static Session session;
     private List<String> paths = new ArrayList<>();
-
-    private static void addColumns() throws SessionException, ExecutionException {
-        List<String> addPaths = new ArrayList<>();
-        addPaths.add(COLUMN_D0_S0);
-        addPaths.add(COLUMN_D1_S1);
-        addPaths.add(COLUMN_D2_S2);
-        addPaths.add(COLUMN_D3_S3);
-        addPaths.add(COLUMN_D4_S4);
-        addPaths.add(COLUMN_D5_S5);
-
-        List<Map<String, String>> attributes = new ArrayList<>();
-        for (int i = 0; i < 6; i++) {
-            Map<String, String> attributesForOnePath = new HashMap<>();
-            attributesForOnePath.put("DataType", String.valueOf(i));
-            if (i != 5) {
-                attributesForOnePath.put("Encoding", "2");
-            } else {
-                attributesForOnePath.put("Encoding", "0");
-            }
-            attributesForOnePath.put("Compression", "1");
-            attributes.add(attributesForOnePath);
-        }
-        session.addColumns(addPaths, attributes);
-    }
 
     private static void insertRecords() throws SessionException, ExecutionException {
         List<String> insertPaths = new ArrayList<>();
@@ -158,8 +131,6 @@ public class IoTDBSessionDataTypeTest {
             paths.add(COLUMN_D5_S5);
             session = new Session("127.0.0.1", 6888, "root", "root");
             session.openSession();
-            session.createDatabase(DATABASE_NAME);
-            addColumns();
             insertRecords();
         } catch (Exception e) {
             e.printStackTrace();
@@ -177,6 +148,7 @@ public class IoTDBSessionDataTypeTest {
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
+            ZKUtil.deleteRecursive(zk, "/schema");
         } catch (IOException | InterruptedException | KeeperException e) {
             logger.error(e.getMessage());
         }

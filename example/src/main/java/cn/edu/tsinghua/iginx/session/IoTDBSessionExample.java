@@ -25,17 +25,14 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class IoTDBSessionExample {
 
-    private static final String DATABASE_NAME = "sg1";
-    private static final String S1 = "sg1.d1.s1";
-    private static final String S2 = "sg1.d2.s2";
-    private static final String S3 = "sg1.d3.s3";
-    private static final String S4 = "sg1.d4.s4";
+    private static final String S1 = "sg.d1.s1";
+    private static final String S2 = "sg.d2.s2";
+    private static final String S3 = "sg.d3.s3";
+    private static final String S4 = "sg.d4.s4";
     private static final long COLUMN_START_TIMESTAMP = 0L;
     private static final long COLUMN_END_TIMESTAMP = 10500L;
     private static final long ROW_START_TIMESTAMP = 10501L;
@@ -48,11 +45,6 @@ public class IoTDBSessionExample {
         // 打开 Session
         session.openSession();
 
-        // 创建数据库
-        session.createDatabase(DATABASE_NAME);
-
-        // 添加列
-        addColumns();
         // 列式插入数据
         insertColumnRecords();
         // 行式插入数据
@@ -69,58 +61,9 @@ public class IoTDBSessionExample {
         deleteDataInColumns();
         // 再次查询数据
         queryData();
-        // 删除列
-        deleteColumns();
-
-        // 删除数据库
-        session.dropDatabase(DATABASE_NAME);
 
         // 关闭 Session
         session.closeSession();
-    }
-
-    private static void addColumns() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        List<Map<String, String>> attributes = new ArrayList<>();
-        Map<String, String> attributesForOnePath = new HashMap<>();
-
-        // 先添加两条数据类型为 Long 的时间序列
-        paths.add(S1);
-        paths.add(S2);
-
-        // INT64
-        attributesForOnePath.put("DataType", "2");
-        // RLE
-        attributesForOnePath.put("Encoding", "2");
-        // SNAPPY
-        attributesForOnePath.put("Compression", "1");
-
-        for (int i = 0; i < 2; i++) {
-            attributes.add(attributesForOnePath);
-        }
-
-        session.addColumns(paths, attributes);
-
-        // 再添加两条数据类型为 Long 的时间序列
-        paths.clear();
-        attributes.clear();
-        attributesForOnePath.clear();
-
-        paths.add(S3);
-        paths.add(S4);
-
-        // TEXT
-        attributesForOnePath.put("DataType", "5");
-        // PLAIN
-        attributesForOnePath.put("Encoding", "0");
-        // SNAPPY
-        attributesForOnePath.put("Compression", "1");
-
-        for (int i = 0; i < 2; i++) {
-            attributes.add(attributesForOnePath);
-        }
-
-        session.addColumns(paths, attributes);
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
@@ -319,15 +262,5 @@ public class IoTDBSessionExample {
         long endTime = ROW_START_TIMESTAMP + 50L;
 
         session.deleteDataInColumns(paths, startTime, endTime);
-    }
-
-    private static void deleteColumns() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
-
-        session.deleteColumns(paths);
     }
 }

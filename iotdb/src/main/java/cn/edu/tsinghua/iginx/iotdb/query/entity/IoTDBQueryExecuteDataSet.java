@@ -31,7 +31,7 @@ public class IoTDBQueryExecuteDataSet implements QueryExecuteDataSet {
             columnName = columnName.substring(columnName.indexOf('(') + 1, columnName.length() - 1);
         }
         if (columnName.startsWith(PREFIX)) {
-            columnName = columnName.substring(5);
+            columnName = columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1);
         }
         return columnName;
     }

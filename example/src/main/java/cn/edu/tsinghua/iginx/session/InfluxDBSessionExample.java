@@ -29,11 +29,10 @@ import java.util.List;
 
 public class InfluxDBSessionExample {
 
-    private static final String DATABASE_NAME = "sg1";
-    private static final String S1 = "sg1.d1.s1";
-    private static final String S2 = "sg1.d2.s2";
-    private static final String S3 = "sg1.d3.s3";
-    private static final String S4 = "sg1.d4.s4";
+    private static final String S1 = "sg.d1.s1";
+    private static final String S2 = "sg.d2.s2";
+    private static final String S3 = "sg.d3.s3";
+    private static final String S4 = "sg.d4.s4";
     private static final long COLUMN_START_TIMESTAMP = 0L;
     private static final long COLUMN_END_TIMESTAMP = 10500L;
     private static final long ROW_START_TIMESTAMP = 10501L;
@@ -46,9 +45,6 @@ public class InfluxDBSessionExample {
         // 打开 Session
         session.openSession();
 
-        // 创建数据库
-        session.createDatabase(DATABASE_NAME);
-
         // 列式插入数据
         insertColumnRecords();
         // 行式插入数据
@@ -56,19 +52,16 @@ public class InfluxDBSessionExample {
         // 值过滤查询
         valueFilterQuery();
         // 查询数据
-//		queryData();
+		queryData();
         // 聚合查询数据
-//		aggregateQuery();
+		aggregateQuery();
         // 降采样聚合查询
-//		downsampleQuery();
+		downsampleQuery();
         // 删除数据
         // TODO 不能做，InfluxDB 删除语句中不能指定 _field
 //		deleteDataInColumns();
         // 再次查询数据
 //		queryData();
-
-        // 删除数据库
-        session.dropDatabase(DATABASE_NAME);
 
         // 关闭 Session
         session.closeSession();
