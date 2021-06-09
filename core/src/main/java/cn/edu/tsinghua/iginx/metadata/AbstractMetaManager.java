@@ -854,7 +854,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             fragmentMap.put(new TimeSeriesInterval(null, paths.get(paths.size() / 2)), rightFragmentList);
         } else {
             // 处理[startTime, +∞) & (-∞, +∞)
-            List<TimeSeriesInterval> tsIntervalList = splitTimeSeriesSpace(paths, 7);
+            List<TimeSeriesInterval> tsIntervalList = splitTimeSeriesSpace(paths, 1);
             int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
             List<FragmentMeta> fragmentMetaList;
             String masterId;
@@ -881,16 +881,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             storageUnitList.add(storageUnit);
             fragmentMetaList.add(new FragmentMeta(null, null, 0, timeInterval.getStartTime(), masterId));
             fragmentMap.put(new TimeSeriesInterval(null, null), fragmentMetaList);
-        }
-
-        for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
-            logger.error(entry.getKey().toString());
-            for (FragmentMeta fragment : entry.getValue()) {
-                logger.error(fragment.toString());
-                for (StorageUnitMeta storageUnit : fragment.getMasterStorageUnit().getReplicas()) {
-                    logger.error(storageUnit.toString());
-                }
-            }
         }
 
         return new Pair<>(fragmentMap, storageUnitList);
