@@ -62,6 +62,10 @@ public class Config {
 
     private boolean enableRestService = true;
 
+    private String clients = "tpc5,tpc6,tpc7,tpc8";
+
+    private int instancesNumPerClient = 12;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -228,5 +232,21 @@ public class Config {
 
     public void setEnableRestService(boolean enableRestService) {
         this.enableRestService = enableRestService;
+    }
+
+    public String getClients() {
+        return clients;
+    }
+
+    public void setClients(String clients) {
+        this.clients = clients;
+    }
+
+    public int getInstancesNumPerClient() {
+        return instancesNumPerClient;
+    }
+
+    public void setInstancesNumPerClient(int instancesNumPerClient) {
+        this.instancesNumPerClient = instancesNumPerClient;
     }
 }

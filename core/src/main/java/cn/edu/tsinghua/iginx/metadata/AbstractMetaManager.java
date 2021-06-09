@@ -822,13 +822,13 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        int storageEngineNum = 4;
-        int clientNum = 19;
+        String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
+        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
-        String[] prefixes = new String[storageEngineNum * clientNum];
-        for (int i = 0; i < storageEngineNum; i++) {
-            for (int j = 0; j < clientNum; j++) {
-                prefixes[i * clientNum + j] = "tpc" + (i + 1) + (j + 2);
+        String[] prefixes = new String[clients.length * instancesNumPerClient];
+        for (int i = 0; i < clients.length; i++) {
+            for (int j = 0; j < instancesNumPerClient; j++) {
+                prefixes[i * instancesNumPerClient + j] = clients[i] + (j + 2);
             }
         }
         Arrays.sort(prefixes);
@@ -836,7 +836,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         List<FragmentMeta> fragmentMetaList;
         String masterId;
         StorageUnitMeta storageUnit;
-        for (int i = 0; i < storageEngineNum * clientNum - 1; i++) {
+        for (int i = 0; i < clients.length * instancesNumPerClient - 1; i++) {
             fragmentMetaList = new ArrayList<>();
             masterId = RandomStringUtils.randomAlphanumeric(16);
             storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(i % getStorageEngineList().size()).getId(), masterId, true);
@@ -857,7 +857,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(i).getId(), masterId, false));
         }
         storageUnitList.add(storageUnit);
-        fragmentMetaList.add(new FragmentMeta(null, prefixes[0], 0, timeInterval.getStartTime(), masterId));
+        fragmentMetaList.add(new FragmentMeta(null, prefixes[0], 0, Long.MAX_VALUE, masterId));
         fragmentMap.put(new TimeSeriesInterval(null, prefixes[0]), fragmentMetaList);
 
         fragmentMetaList = new ArrayList<>();
@@ -867,81 +867,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(getStorageEngineList().size() - 1 - i).getId(), masterId, false));
         }
         storageUnitList.add(storageUnit);
-        fragmentMetaList.add(new FragmentMeta(prefixes[storageEngineNum * clientNum - 1], null, 0, timeInterval.getStartTime(), masterId));
-        fragmentMap.put(new TimeSeriesInterval(prefixes[storageEngineNum * clientNum - 1], null), fragmentMetaList);
+        fragmentMetaList.add(new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, masterId));
+        fragmentMap.put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null), fragmentMetaList);
 
-//        if (paths.size() + 1 < getStorageEngineList().size()) {
-//            // TODO 请求中 paths 数量很少，例如：只有 1 条
-//            List<FragmentMeta> leftFragmentList = new ArrayList<>();
-//            StorageUnitMeta topStorageUnit;
-//            List<FragmentMeta> rightFragmentList = new ArrayList<>();
-//            StorageUnitMeta bottomStorageUnit;
-//
-//            List<Long> storageEngineIdList = selectStorageEngineIdList();
-//            String topId = RandomStringUtils.randomAlphanumeric(16);
-//            topStorageUnit = new StorageUnitMeta(topId, storageEngineIdList.get(0), topId, true);
-//            for (int i = 1; i < storageEngineIdList.size(); i++) {
-//                topStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), topId, false));
-//            }
-//            storageUnitList.add(topStorageUnit);
-//            leftFragmentList.add(new FragmentMeta(paths.get(paths.size() / 2), null, timeInterval.getStartTime(), Long.MAX_VALUE, topId));
-//
-//            storageEngineIdList = selectStorageEngineIdList();
-//            String bottomId = RandomStringUtils.randomAlphanumeric(16);
-//            bottomStorageUnit = new StorageUnitMeta(bottomId, storageEngineIdList.get(0), bottomId, true);
-//            for (int i = 1; i < storageEngineIdList.size(); i++) {
-//                bottomStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), bottomId, false));
-//            }
-//            storageUnitList.add(bottomStorageUnit);
-//            rightFragmentList.add(new FragmentMeta(null, paths.get(paths.size() / 2), timeInterval.getStartTime(), Long.MAX_VALUE, bottomId));
-//
-//            if (timeInterval.getStartTime() != 0) {
-//                leftFragmentList.add(new FragmentMeta(paths.get(paths.size() / 2), null, 0, timeInterval.getStartTime(), topId));
-//                rightFragmentList.add(new FragmentMeta(null, paths.get(paths.size() / 2), 0, timeInterval.getStartTime(), bottomId));
-//            }
-//            fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() / 2), null), leftFragmentList);
-//            fragmentMap.put(new TimeSeriesInterval(null, paths.get(paths.size() / 2)), rightFragmentList);
-//        } else {
-//            // TODO 为 TPCx-IoT 负载设计
-//            // 处理[startTime, +∞) & (-∞, +∞)
-//            List<TimeSeriesInterval> tsIntervalList = splitTimeSeriesSpace(paths, 7);
-//            int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
-//            List<FragmentMeta> fragmentMetaList;
-//            String masterId;
-//            StorageUnitMeta storageUnit;
-//            for (int i = 0; i < tsIntervalList.size(); i++) {
-//                fragmentMetaList = new ArrayList<>();
-//                masterId = RandomStringUtils.randomAlphanumeric(16);
-//                storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get((i * replicaNum) % getStorageEngineList().size()).getId(), masterId, true);
-//                for (int j = i * replicaNum + 1; j < (i + 1) * replicaNum; j++) {
-//                    storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(j % getStorageEngineList().size()).getId(), masterId, false));
-//                }
-//                storageUnitList.add(storageUnit);
-//                fragmentMetaList.add(new FragmentMeta(tsIntervalList.get(i).getStartTimeSeries(), tsIntervalList.get(i).getEndTimeSeries(), timeInterval.getStartTime(), Long.MAX_VALUE, masterId));
-//                fragmentMap.put(tsIntervalList.get(i), fragmentMetaList);
-//            }
-//
-//            // [0, startTime) & (-∞, +∞) 几乎无数据，作为一个分片处理即可
-//            fragmentMetaList = new ArrayList<>();
-//            masterId = RandomStringUtils.randomAlphanumeric(16);
-//            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(0).getId(), masterId, true);
-//            for (int i = 1; i < replicaNum; i++) {
-//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(i).getId(), masterId, false));
-//            }
-//            storageUnitList.add(storageUnit);
-//            fragmentMetaList.add(new FragmentMeta(null, null, 0, timeInterval.getStartTime(), masterId));
-//            fragmentMap.put(new TimeSeriesInterval(null, null), fragmentMetaList);
-//        }
-
-//        for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
-//            logger.error(entry.getKey().toString());
-//            for (FragmentMeta fragment : entry.getValue()) {
-//                logger.error(fragment.toString());
-//                for (StorageUnitMeta storageUnit : fragment.getMasterStorageUnit().getReplicas()) {
-//                    logger.error(storageUnit.toString());
-//                }
-//            }
-//        }
         return new Pair<>(fragmentMap, storageUnitList);
     }
 
