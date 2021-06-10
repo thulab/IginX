@@ -270,6 +270,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public long registerIginx(IginxMeta iginx) throws MetaStorageException {
         InterProcessMutex mutex = new InterProcessMutex(client, IGINX_LOCK_NODE);
         try {
+            mutex.acquire();
             String nodeName = this.client.create()
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
