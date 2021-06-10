@@ -93,6 +93,17 @@ public class FragmentCreator
         LOGGER.info("create fragment  , list size : {}", prefixList.size());
         if (updateRequireNum == 4)
         {
+            while (prefixList.size() < 3500)
+            {
+                try
+                {
+                    Thread.sleep(1000);
+                }
+                catch (InterruptedException e)
+                {
+                    e.printStackTrace();
+                }
+            }
             List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), timestamp);
             LOGGER.info("create fragment  , size : {}", prefixList.size());
             iMetaManager.createFragments(fragments);
