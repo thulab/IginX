@@ -143,8 +143,6 @@ public class IoTDBSessionDataTypeTest {
         ZooKeeper zk = null;
         try {
             zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
-            ZKUtil.deleteRecursive(zk, "/iginx");
-            ZKUtil.deleteRecursive(zk, "/storage");
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
