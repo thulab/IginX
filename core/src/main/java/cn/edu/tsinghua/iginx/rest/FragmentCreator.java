@@ -90,7 +90,7 @@ public class FragmentCreator
     {
         lock.writeLock().lock();
         updateRequireNum += 1;
-        LOGGER.info("create fragment  , size : {}", prefixList.size());
+        LOGGER.info("create fragment  , list size : {}", prefixList.size());
         if (updateRequireNum == 4)
         {
             List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), timestamp);
