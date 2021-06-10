@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -108,6 +109,7 @@ public class DefaultMetaManager implements IMetaManager {
         IginxMeta iginx = new IginxMeta(0L, ConfigDescriptor.getInstance().getConfig().getIp(),
                 ConfigDescriptor.getInstance().getConfig().getPort(), null);
         id = storage.registerIginx(iginx);
+        SnowFlakeUtils.init(id);
     }
 
     private void initStorageEngine() throws MetaStorageException {
@@ -180,6 +182,7 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
+            fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
             if (create) {
                 cache.addFragment(fragment);
             } else {
@@ -316,11 +319,14 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     protected Map<String, StorageUnitMeta> tryInitStorageUnits(List<StorageUnitMeta> storageUnits) {
+        if (cache.hasStorageUnit()) {
+            return null;
+        }
         try {
+            storage.lockStorageUnit();
             if (cache.hasStorageUnit()) {
                 return null;
             }
-            storage.lockStorageUnit();
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
             for (StorageUnitMeta masterStorageUnit: storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
@@ -367,8 +373,6 @@ public class DefaultMetaManager implements IMetaManager {
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta : initialFragments) {
-                String tsIntervalName = fragmentMeta.getTsInterval().toString();
-                String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(id);
                 StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
