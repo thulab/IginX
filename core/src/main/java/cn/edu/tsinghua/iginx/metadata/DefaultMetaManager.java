@@ -45,6 +45,8 @@ import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
 
+    private static DefaultMetaManager INSTANCE;
+
     private static final Logger logger = LoggerFactory.getLogger(DefaultMetaManager.class);
 
     private final IMetaCache cache;
@@ -55,9 +57,29 @@ public class DefaultMetaManager implements IMetaManager {
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
 
-    public DefaultMetaManager() {
+    public static DefaultMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (DefaultMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
+    private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
-        storage = ZooKeeperMetaStorage.getInstance();
+
+        switch (ConfigDescriptor.getInstance().getConfig().getMetaStorage()) {
+            case "zookeeper":
+                logger.info("use zookeeper as meta storage.");
+                storage = ZooKeeperMetaStorage.getInstance();
+                break;
+            default:
+                storage = ZooKeeperMetaStorage.getInstance();
+        }
+
         storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
 
         try {
