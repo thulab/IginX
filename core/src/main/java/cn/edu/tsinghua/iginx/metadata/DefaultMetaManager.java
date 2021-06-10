@@ -333,7 +333,7 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean tryInitFragments(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
+    public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
         Map<String, StorageUnitMeta> fakeIdToStorageUnit = tryInitStorageUnits(storageUnits);
         if (fakeIdToStorageUnit == null) {
             return false;
@@ -447,6 +447,75 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+        if (paths.size() + 1 < getStorageEngineList().size()) {
+            // TODO 请求中 paths 数量很少，例如：只有 1 条
+            List<FragmentMeta> leftFragmentList = new ArrayList<>();
+            StorageUnitMeta topStorageUnit;
+            List<FragmentMeta> rightFragmentList = new ArrayList<>();
+            StorageUnitMeta bottomStorageUnit;
+
+            List<Long> storageEngineIdList = selectStorageEngineIdList();
+            String topId = RandomStringUtils.randomAlphanumeric(16);
+            topStorageUnit = new StorageUnitMeta(topId, storageEngineIdList.get(0), topId, true);
+            for (int i = 1; i < storageEngineIdList.size(); i++) {
+                topStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), topId, false));
+            }
+            storageUnitList.add(topStorageUnit);
+            leftFragmentList.add(new FragmentMeta(paths.get(paths.size() / 2), null, timeInterval.getStartTime(), Long.MAX_VALUE, topId));
+
+            storageEngineIdList = selectStorageEngineIdList();
+            String bottomId = RandomStringUtils.randomAlphanumeric(16);
+            bottomStorageUnit = new StorageUnitMeta(bottomId, storageEngineIdList.get(0), bottomId, true);
+            for (int i = 1; i < storageEngineIdList.size(); i++) {
+                bottomStorageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineIdList.get(i), bottomId, false));
+            }
+            storageUnitList.add(bottomStorageUnit);
+            rightFragmentList.add(new FragmentMeta(null, paths.get(paths.size() / 2), timeInterval.getStartTime(), Long.MAX_VALUE, bottomId));
+
+            if (timeInterval.getStartTime() != 0) {
+                leftFragmentList.add(new FragmentMeta(paths.get(paths.size() / 2), null, 0, timeInterval.getStartTime(), topId));
+                rightFragmentList.add(new FragmentMeta(null, paths.get(paths.size() / 2), 0, timeInterval.getStartTime(), bottomId));
+            }
+            fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() / 2), null), leftFragmentList);
+            fragmentMap.put(new TimeSeriesInterval(null, paths.get(paths.size() / 2)), rightFragmentList);
+        } else {
+            // 处理[startTime, +∞) & (-∞, +∞)
+            List<TimeSeriesInterval> tsIntervalList = splitTimeSeriesSpace(paths, 1);
+            int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
+            List<FragmentMeta> fragmentMetaList;
+            String masterId;
+            StorageUnitMeta storageUnit;
+            for (int i = 0; i < tsIntervalList.size(); i++) {
+                fragmentMetaList = new ArrayList<>();
+                masterId = RandomStringUtils.randomAlphanumeric(16);
+                storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get((i * replicaNum) % getStorageEngineList().size()).getId(), masterId, true);
+                for (int j = i * replicaNum + 1; j < (i + 1) * replicaNum; j++) {
+                    storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(j % getStorageEngineList().size()).getId(), masterId, false));
+                }
+                storageUnitList.add(storageUnit);
+                fragmentMetaList.add(new FragmentMeta(tsIntervalList.get(i).getStartTimeSeries(), tsIntervalList.get(i).getEndTimeSeries(), timeInterval.getStartTime(), Long.MAX_VALUE, masterId));
+                fragmentMap.put(tsIntervalList.get(i), fragmentMetaList);
+            }
+
+            // [0, startTime) & (-∞, +∞) 几乎无数据，作为一个分片处理即可
+            fragmentMetaList = new ArrayList<>();
+            masterId = RandomStringUtils.randomAlphanumeric(16);
+            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(0).getId(), masterId, true);
+            for (int i = 1; i < replicaNum; i++) {
+                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(i).getId(), masterId, false));
+            }
+            storageUnitList.add(storageUnit);
+            fragmentMetaList.add(new FragmentMeta(null, null, 0, timeInterval.getStartTime(), masterId));
+            fragmentMap.put(new TimeSeriesInterval(null, null), fragmentMetaList);
+        }
+
+        return new Pair<>(fragmentMap, storageUnitList);
+    }
+
     public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(String startPath, long startTime) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
@@ -484,7 +553,7 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
         List<FragmentMeta> fragmentMetaList = new ArrayList<>();
         // TODO 新建 StorageUnit
         List<StorageUnitMeta> storageUnitMetaList = new ArrayList<>();
@@ -571,5 +640,20 @@ public class DefaultMetaManager implements IMetaManager {
             storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine));
         }
         return storageEngineMetaList;
+    }
+
+    /**
+     * TODO 目前假设 paths 数量足够多
+     * 根据给定的 paths 将时间序列空间分割为 multiple * storageEngineNum 个子空间
+     */
+    private List<TimeSeriesInterval> splitTimeSeriesSpace(List<String> paths, int multiple) {
+        List<TimeSeriesInterval> tsIntervalList = new ArrayList<>();
+        int num = Math.min(Math.max(1, multiple * getStorageEngineList().size() - 2), paths.size() - 1);
+        for (int i = 0; i < num; i++) {
+            tsIntervalList.add(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / num), paths.get((i + 1) * (paths.size() - 1) / num)));
+        }
+        tsIntervalList.add(new TimeSeriesInterval(null, paths.get(0)));
+        tsIntervalList.add(new TimeSeriesInterval(paths.get(paths.size() - 1), null));
+        return tsIntervalList;
     }
 }
