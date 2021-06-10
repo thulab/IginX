@@ -971,42 +971,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         return schemaMapping.getOrDefault(key, -1);
     }
 
-    @Override
-    public boolean reshard() {
-        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
-        try {
-            mutex.acquire();
-            Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
-//            for (Map.Entry<TimeSeriesInterval, FragmentMeta> entry : latestFragments.entrySet()) { // 终结老分片
-//                FragmentMeta fragmentMeta = entry.getValue().endFragmentMeta();
-//                // 在更新分片时，先更新本地
-//                fragmentMeta.setUpdatedBy(iginxId);
-//                updateFragment(fragmentMeta);
-//                this.zookeeperClient.setData()
-//                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
-//            }
-//            for (FragmentMeta fragmentMeta : fragments) {
-//                // 针对本机创建的分片，直接将其加入到本地
-//                fragmentMeta.setCreatedBy(iginxId);
-//                addFragment(fragmentMeta);
-//                this.zookeeperClient.create()
-//                        .creatingParentsIfNeeded()
-//                        .withMode(CreateMode.PERSISTENT)
-//                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
-//            }
-            return true;
-        } catch (Exception e) {
-            logger.error("create fragment error: ", e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                logger.error("release mutex error: ", e);
-            }
-        }
-        return false;
-    }
-
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {
         List<Long> storageEngineIdList = new ArrayList<>();
         for (int i = startIndex; i < startIndex + num; i++) {

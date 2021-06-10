@@ -53,8 +53,6 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public final class Core {
 
@@ -105,11 +103,6 @@ public final class Core {
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             logger.error("initial statistics collector error: ", e);
-        }
-
-        if (ConfigDescriptor.getInstance().getConfig().isEnableReshardPeriodically()) {
-            ScheduledThreadPoolExecutor reshardExecutor = (ScheduledThreadPoolExecutor)Executors.newScheduledThreadPool(1);
-            reshardExecutor.scheduleAtFixedRate(metaManager::reshard, ConfigDescriptor.getInstance().getConfig().getReshardInterval(), ConfigDescriptor.getInstance().getConfig().getReshardInterval(), TimeUnit.SECONDS);
         }
 
         IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());

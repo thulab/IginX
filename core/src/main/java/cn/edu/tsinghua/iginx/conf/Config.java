@@ -62,10 +62,6 @@ public class Config {
 
     private boolean enableRestService = true;
 
-    private boolean enableReshardPeriodically = true;
-
-    private int reshardInterval = 60;
-
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -232,21 +228,5 @@ public class Config {
 
     public void setEnableRestService(boolean enableRestService) {
         this.enableRestService = enableRestService;
-    }
-
-    public boolean isEnableReshardPeriodically() {
-        return enableReshardPeriodically;
-    }
-
-    public void setEnableReshardPeriodically(boolean enableReshardPeriodically) {
-        this.enableReshardPeriodically = enableReshardPeriodically;
-    }
-
-    public int getReshardInterval() {
-        return reshardInterval;
-    }
-
-    public void setReshardInterval(int reshardInterval) {
-        this.reshardInterval = reshardInterval;
     }
 }
