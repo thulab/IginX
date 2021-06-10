@@ -43,6 +43,11 @@ public interface IMetaManager {
     List<StorageEngineMeta> getStorageEngineList();
 
     /**
+     * 获取存储引擎实例的数量
+     */
+    int getStorageEngineNum();
+
+    /**
      * 获取某个存储引擎实例的原信息（包括存储引擎的存储单元列表）
      */
     StorageEngineMeta getStorageEngine(long id);
@@ -172,5 +177,10 @@ public interface IMetaManager {
      * @return 数据项的值。如果不存在则返回 -1
      */
     int getSchemaMappingItem(String schema, String key);
+
+    /**
+     * 重分片
+     */
+    boolean reshard();
 
 }
