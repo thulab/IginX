@@ -77,8 +77,20 @@ public class DefaultMetaManager implements IMetaManager {
                 logger.info("use zookeeper as meta storage.");
                 storage = ZooKeeperMetaStorage.getInstance();
                 break;
+            case "memory":
+                logger.info("use memory as meta storage");
+                storage = MemoryMetaStorage.getInstance();
+                break;
+            case "file":
+                logger.info("use file as meta storage");
+                storage = null;
+                break;
+            case "":
+                logger.info("");
             default:
+                logger.info("use zookeeper as meta storage.");
                 storage = ZooKeeperMetaStorage.getInstance();
+                break;
         }
 
         storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
