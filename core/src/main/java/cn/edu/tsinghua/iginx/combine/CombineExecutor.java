@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
 import cn.edu.tsinghua.iginx.combine.downsample.DownsampleCombiner;
+import cn.edu.tsinghua.iginx.combine.meta.ShowColumnsCombiner;
 import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
 import cn.edu.tsinghua.iginx.combine.valuefilter.ValueFilterCombiner;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
@@ -31,6 +32,7 @@ import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
@@ -39,6 +41,7 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.slf4j.Logger;
@@ -148,6 +151,14 @@ public class CombineExecutor implements ICombineExecutor {
                     statusMessage = "Combine execute results failed: " + e.getMessage();
                 }
                 combineResult = new ValueFilterCombineResult(RpcUtils.status(statusCode, statusMessage), valueFilterQueryResp);
+                break;
+            case ShowColumns:
+                ShowColumnsResp showColumnsResp = new ShowColumnsResp();
+                showColumnsResp.setStatus(RpcUtils.SUCCESS);
+                ShowColumnsCombiner.getInstance().combineResult(showColumnsResp, planExecuteResults.stream()
+                        .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
+                        .map(ShowColumnsPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                combineResult = new ShowColumnsCombineResult(RpcUtils.status(statusCode, statusMessage), showColumnsResp);
                 break;
             default:
                 combineResult = new NonDataCombineResult(RpcUtils.status(statusCode, statusMessage));

@@ -41,6 +41,8 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
@@ -338,6 +340,30 @@ public class Session {
         } catch (TException e) {
             throw new SessionException(e);
         }
+    }
+
+    public List<Column> showColumns() throws SessionException, ExecutionException {
+        ShowColumnsReq req = new ShowColumnsReq(sessionId);
+
+        ShowColumnsResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.showColumns(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+        List<Column> columns = new ArrayList<>();
+        for (int i = 0; i < resp.paths.size(); i++) {
+            columns.add(new Column(resp.paths.get(i), resp.dataTypeList.get(i)));
+        }
+        return columns;
     }
 
     public void deleteColumn(String path) throws SessionException,

@@ -223,4 +223,5 @@ public interface IPlanSplitter {
      * @return 选出的分片副本
      */
     List<FragmentReplicaMeta> selectFragmentReplicas(FragmentMeta fragment, boolean isQuery);
+    List<Long> getSplitShowColumnsPlanResult();
 }

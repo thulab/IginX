@@ -37,6 +37,7 @@ import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -52,6 +53,7 @@ import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
@@ -59,6 +61,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
+import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
@@ -69,6 +72,7 @@ import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.utils.Binary;
 import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,6 +89,9 @@ import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
+import static cn.edu.tsinghua.iginx.thrift.DataType.DOUBLE;
+import static cn.edu.tsinghua.iginx.thrift.DataType.INTEGER;
+import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
 
 public class IoTDBPlanExecutor implements IStorageEngine {
 
@@ -131,6 +138,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     private static final String COUNT_DOWNSAMPLE = "SELECT COUNT(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
 
     private static final String SUM_DOWNSAMPLE = "SELECT SUM(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
+
+    private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
 
     private final Map<Long, SessionPool> sessionPools;
 
@@ -795,5 +804,56 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             return new ValueFilterQueryPlanExecuteResult(FAILURE, plan, null);
         }
         return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
+    }
+
+    @Override
+    public ShowColumnsPlanExecuteResult syncExecuteShowColumnsPlan(ShowColumnsPlan plan) {
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
+        List<String> paths = new ArrayList<>();
+        List<DataType> dataTypes = new ArrayList<>();
+        try {
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
+            while (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                if (record == null || record.getFields().size() < 4) {
+                    continue;
+                }
+                String path = record.getFields().get(0).getStringValue();
+                path = path.substring(5);
+                path = path.substring(path.indexOf('.') + 1);
+                String dataTypeName = record.getFields().get(3).getStringValue();
+                switch (dataTypeName) {
+                    case "BOOLEAN":
+                        paths.add(path);
+                        dataTypes.add(DataType.BOOLEAN);
+                        break;
+                    case "FLOAT":
+                        paths.add(path);
+                        dataTypes.add(DataType.FLOAT);
+                        break;
+                    case "TEXT":
+                        paths.add(path);
+                        dataTypes.add(BINARY);
+                        break;
+                    case "DOUBLE":
+                        paths.add(path);
+                        dataTypes.add(DOUBLE);
+                        break;
+                    case "INT32":
+                        paths.add(path);
+                        dataTypes.add(INTEGER);
+                        break;
+                    case "INT64":
+                        paths.add(path);
+                        dataTypes.add(LONG);
+                        break;
+                }
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+            return new ShowColumnsPlanExecuteResult(FAILURE, plan);
+        }
+        return new ShowColumnsPlanExecuteResult(SUCCESS, plan, paths, dataTypes);
     }
 }

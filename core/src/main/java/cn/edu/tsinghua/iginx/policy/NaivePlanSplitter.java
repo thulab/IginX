@@ -21,6 +21,8 @@ package cn.edu.tsinghua.iginx.policy;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
@@ -518,6 +520,17 @@ public class NaivePlanSplitter implements IPlanSplitter {
 //            replicas.add(fragment.getReplicaMetas().get(new Random().nextInt(fragment.getReplicaMetasNum())));
         } else {
             replicas.addAll(fragment.getReplicaMetas().values());
+    public List<Long> getSplitShowColumnsPlanResult() {
+        return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<StorageUnitMeta> selectStorageUnitList(FragmentMeta fragment, boolean isQuery) {
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+        // TODO 暂时设置为只查主
+        storageUnitList.add(fragment.getMasterStorageUnit());
+        if (!isQuery) {
+            storageUnitList.addAll(fragment.getMasterStorageUnit().getReplicas());
         }
         return replicas;
     }

@@ -169,6 +169,15 @@ struct DownsampleQueryResp {
     4: optional QueryDataSet queryDataSet
 }
 
+struct ShowColumnsReq {
+    1: required i64 sessionId
+}
+
+struct ShowColumnsResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+}
 
 service IService {
 
@@ -199,5 +208,7 @@ service IService {
     ValueFilterQueryResp valueFilterQuery(1:ValueFilterQueryReq req);
 
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
+
+    ShowColumnsResp showColumns(ShowColumnsReq req);
 
 }
