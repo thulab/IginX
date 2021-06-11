@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -23,7 +24,9 @@ public class FragmentCreator
     private final Random random = new Random();
     private final int prefixMaxSize = 1048576;
     private int updateRequireNum = 0;
-
+    private static int LIMIT = -1;
+    private static int ts = 1760;
+    final Semaphore semp = new Semaphore(0);
     private static FragmentCreator INSTANCE = null;
 
     public static FragmentCreator getInstance() {
@@ -40,6 +43,8 @@ public class FragmentCreator
     public void updatePrefix(List<String> ins) {
         LOGGER.info("insert updatePrefix");
         lock.writeLock().lock();
+        if (LIMIT == -1)
+            LIMIT = ts * iMetaManager.getIginxList().size();
         LOGGER.info("update prefix  , list size : {}", prefixList.size());
         for (String prefix : ins)
         {
@@ -54,6 +59,12 @@ public class FragmentCreator
                 prefixSet.add(prefix);
                 prefixList.add(prefix);
             }
+        }
+        if (prefixList.size() >= LIMIT)
+        {
+            semp.release();
+            LIMIT *= 2;
+            LOGGER.info("semp release");
         }
         LOGGER.info("update prefix  end, list size : {}", prefixList.size());
         lock.writeLock().unlock();
@@ -92,21 +103,20 @@ public class FragmentCreator
     public void CreateFragment(int fragmentNum, long timestamp)
     {
         LOGGER.info("insert CreateFragment");
+        LOGGER.info("iginx size: {}", iMetaManager.getIginxList().size());
         lock.writeLock().lock();
         updateRequireNum += 1;
         LOGGER.info("create fragment  , list size : {}", prefixList.size());
-        if (updateRequireNum == 4)
+        if (updateRequireNum == iMetaManager.getIginxList().size())
         {
-            while (prefixList.size() < 3500)
+            try
             {
-                try
-                {
-                    Thread.sleep(1000);
-                }
-                catch (InterruptedException e)
-                {
-                    e.printStackTrace();
-                }
+                semp.acquire();
+                LOGGER.info("semp acquire");
+            }
+            catch (InterruptedException e)
+            {
+                e.printStackTrace();
             }
             List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), timestamp);
             LOGGER.info("create fragment  , size : {}", prefixList.size());
@@ -117,9 +127,8 @@ public class FragmentCreator
     }
 
     public List<String> samplePrefix(int count) {
-        String[] prefixArray = new String[prefixList.size()];
-        prefixList.toArray(prefixArray);
-        Collections.sort(prefixList, String::compareTo);
+        String[] prefixArray = prefixList.toArray(new String[prefixList.size()]);
+        Arrays.sort(prefixArray, String::compareTo);
         List<String> resultList = new ArrayList<>();
         if (prefixArray.length <= count) {
             for (int i = 0; i < prefixArray.length; i++) {

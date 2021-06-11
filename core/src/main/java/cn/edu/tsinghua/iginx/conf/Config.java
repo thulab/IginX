@@ -70,6 +70,8 @@ public class Config {
 
     private String etcdEndpoints = "http://localhost:2379";
 
+    private int fragmentSplitPerEngine = 1;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -268,6 +270,16 @@ public class Config {
 
     public void setEtcdEndpoints(String etcdEndpoints) {
         this.etcdEndpoints = etcdEndpoints;
+    }
+
+    public void setFragmentSplitPerEngine(int fragmentSplitPerEngine)
+    {
+        this.fragmentSplitPerEngine = fragmentSplitPerEngine;
+    }
+
+    public int getFragmentSplitPerEngine()
+    {
+        return fragmentSplitPerEngine;
     }
 
 }
