@@ -298,8 +298,7 @@ public class MetricsResource {
     @Path("fragment")
     public void updateFragment(String fragment) {
         List<String> ins = Arrays.asList(fragment.split("\1").clone());
-        LOGGER.info("receive fragment require, size : {}, time : {}",Integer.getInteger(ins.get(0)), Long.getLong(ins.get(1)));
-        fragmentCreator.CreateFragment(Integer.getInteger(ins.get(0)), Long.getLong(ins.get(1)));
-        LOGGER.info("receive fragment require end, size : {}, time : {}",Integer.getInteger(ins.get(0)), Long.getLong(ins.get(1)));
+        LOGGER.info("receive fragment require, size : {}, time : {}",Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
+        fragmentCreator.CreateFragment(Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
     }
 }

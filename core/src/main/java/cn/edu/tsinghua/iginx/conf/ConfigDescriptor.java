@@ -78,6 +78,7 @@ public class ConfigDescriptor {
 
             config.setNewPolicyRestIp(properties.getProperty("newPolicyRestIp", "127.0.0.1"));
             config.setNewPolicyRestPort(Integer.parseInt(properties.getProperty("newPolicyRestPort", "6666")));
+            config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);

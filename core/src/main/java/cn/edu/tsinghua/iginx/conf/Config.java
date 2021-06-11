@@ -64,6 +64,8 @@ public class Config {
 
     private int newPolicyRestPort = 6666;
 
+    private int fragmentSplitPerEngine = 1;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -242,5 +244,15 @@ public class Config {
     public void setNewPolicyRestPort(int newPolicyRestPort)
     {
         this.newPolicyRestPort = newPolicyRestPort;
+    }
+
+    public void setFragmentSplitPerEngine(int fragmentSplitPerEngine)
+    {
+        this.fragmentSplitPerEngine = fragmentSplitPerEngine;
+    }
+
+    public int getFragmentSplitPerEngine()
+    {
+        return fragmentSplitPerEngine;
     }
 }

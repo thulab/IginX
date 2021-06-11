@@ -56,15 +56,15 @@ public class NewPlanSplitter implements IPlanSplitter {
     private final IMetaManager iMetaManager;
     private final NewPolicy policy;
     private final Set<String> prefixSet = new HashSet<>();
-    private final List<String> prefixList = new LinkedList<>();
+    private List<String> prefixList = new LinkedList<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private int prefixMaxSize;
     private static final String UPDATE_META_URL = "/receive_meta";
     private static final String FRAGMENT_URL = "/fragment";
+    private int k;
 
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
-    private final int k;
 
     private final Random random = new Random();
 
@@ -72,8 +72,8 @@ public class NewPlanSplitter implements IPlanSplitter {
     public NewPlanSplitter(NewPolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
-        this.prefixMaxSize = 1024;
-        this.k = 1;
+        this.prefixMaxSize = 1760;
+        this.k = config.getFragmentSplitPerEngine();
     }
 
     private void updatePrefix(NonDatabasePlan plan) {
@@ -83,30 +83,26 @@ public class NewPlanSplitter implements IPlanSplitter {
             String url = "http://" + config.getNewPolicyRestIp() + ":" + config.getNewPolicyRestPort()
                     + UPDATE_META_URL;
             HttpUtils.doPost(url, prefixList);
-            prefixMaxSize *= 1024;
+            prefixMaxSize *= 2;
+            prefixList = new ArrayList<>();
             if (isFirst) {
                 isFirst = false;
                 policy.setNeedReAllocate(true);
             }
         }
-        TimeSeriesInterval tsInterval = plan.getTsInterval();
-        if (tsInterval.getStartTimeSeries() != null && !prefixSet.contains(tsInterval.getStartTimeSeries())) {
-            if (prefixSet.size() == prefixMaxSize) {
-                int tmp = random.nextInt(prefixMaxSize);
-                prefixSet.remove(prefixList.get(tmp));
-                prefixList.remove(tmp);
+        for (String path: plan.getPaths())
+        {
+            if (!prefixSet.contains(path))
+            {
+                if (prefixSet.size() == prefixMaxSize)
+                {
+                    int tmp = random.nextInt(prefixMaxSize);
+                    prefixSet.remove(prefixList.get(tmp));
+                    prefixList.remove(tmp);
+                }
+                prefixSet.add(path);
+                prefixList.add(path);
             }
-            prefixSet.add(tsInterval.getStartTimeSeries());
-            prefixList.add(tsInterval.getStartTimeSeries());
-        }
-        if (tsInterval.getEndTimeSeries() != null && !prefixSet.contains(tsInterval.getEndTimeSeries())) {
-            if (prefixSet.size() == prefixMaxSize) {
-                int tmp = random.nextInt(prefixMaxSize);
-                prefixSet.remove(prefixList.get(tmp));
-                prefixList.remove(tmp);
-            }
-            prefixSet.add(tsInterval.getEndTimeSeries());
-            prefixList.add(tsInterval.getEndTimeSeries());
         }
         lock.writeLock().unlock();
     }
