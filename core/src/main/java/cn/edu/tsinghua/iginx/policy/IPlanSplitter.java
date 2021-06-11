@@ -223,4 +223,6 @@ public interface IPlanSplitter {
      * @return 拆分方式
      */
     List<SplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan);
+
+    List<Long> getSplitShowColumnsPlanResult();
 }
