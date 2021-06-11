@@ -78,6 +78,7 @@ public class ConfigDescriptor {
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
+            config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

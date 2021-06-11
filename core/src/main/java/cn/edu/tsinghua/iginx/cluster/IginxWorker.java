@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -79,7 +80,7 @@ public class IginxWorker implements IService.Iface {
 
     private final Core core = Core.getInstance();
 
-    private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
     public static IginxWorker getInstance() {
         return instance;

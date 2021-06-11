@@ -28,6 +28,8 @@ public class Config {
 
     private String password = "root";
 
+    private String metaStorage = "zookeeper";
+
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
     private String storageEngineList = "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100";
@@ -228,5 +230,13 @@ public class Config {
 
     public void setEnableRestService(boolean enableRestService) {
         this.enableRestService = enableRestService;
+    }
+
+    public String getMetaStorage() {
+        return metaStorage;
+    }
+
+    public void setMetaStorage(String metaStorage) {
+        this.metaStorage = metaStorage;
     }
 }
