@@ -79,6 +79,9 @@ public class ConfigDescriptor {
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
+
+            config.setEnableReshardPeriodically(Boolean.parseBoolean(properties.getProperty("enableReshardPeriodically", "true")));
+            config.setReshardInterval(Integer.parseInt(properties.getProperty("reshardInterval", "60")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

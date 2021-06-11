@@ -33,7 +33,6 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
@@ -54,6 +53,8 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public final class Core {
 
@@ -104,6 +105,11 @@ public final class Core {
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             logger.error("initial statistics collector error: ", e);
+        }
+
+        if (ConfigDescriptor.getInstance().getConfig().isEnableReshardPeriodically()) {
+            ScheduledThreadPoolExecutor reshardExecutor = (ScheduledThreadPoolExecutor)Executors.newScheduledThreadPool(1);
+            reshardExecutor.scheduleAtFixedRate(metaManager::reshard, ConfigDescriptor.getInstance().getConfig().getReshardInterval(), ConfigDescriptor.getInstance().getConfig().getReshardInterval(), TimeUnit.SECONDS);
         }
 
         IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());

@@ -687,4 +687,9 @@ public class DefaultMetaManager implements IMetaManager {
         tsIntervalList.add(new TimeSeriesInterval(paths.get(paths.size() - 1), null));
         return tsIntervalList;
     }
+
+    @Override
+    public boolean reshard() {
+        return true;
+    }
 }
