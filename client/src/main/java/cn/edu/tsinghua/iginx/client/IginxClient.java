@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.client;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.session.Column;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
@@ -177,6 +178,14 @@ public class IginxClient {
         if (!(commandParts.length < 3 || !commandParts[0].equals("count") || !commandParts[1].equals("lines"))) {
             flag = 2;
         }
+        if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("replica")))
+        {
+            flag = 3;
+        }
+        if (!(commandParts.length < 2 || !commandParts[0].equals("delete") || !commandParts[1].equals("data")))
+        {
+            flag = 4;
+        }
         if (flag == 0)
         {
             System.out.println("unsupported command");
@@ -223,6 +232,40 @@ public class IginxClient {
             {
                 SessionQueryDataSet sessionQueryDataSet = session.queryData(paths,0,System.currentTimeMillis() + 1000000L);
                 System.out.println(sessionQueryDataSet.getTimestamps().length);
+            try
+            {
+                List<String> paths = getTimeseries();
+                Set<Long> timestamps = new HashSet();
+                for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM)
+                {
+                    List<String> ins = new ArrayList<>();
+                    for (int j = i ; j < i + MAX_GETDATA_NUM && j < paths.size(); j++)
+                        ins.add(paths.get(j));
+                    SessionQueryDataSet sessionQueryDataSet = session.queryData(ins, 0L, Long.MAX_VALUE);
+                    for (int j = 0; j < sessionQueryDataSet.getTimestamps().length; j++)
+                        timestamps.add(sessionQueryDataSet.getTimestamps()[j]);
+
+                }
+                System.out.println(timestamps.size());
+            }
+            catch (Exception e)
+            {
+                System.out.println("encounter error when count lines, please check the status of storage engine.");
+            }
+        }
+        if (flag == 3)
+        {
+            int ret = session.getReplicaNum();
+            System.out.println(ret);
+        }
+        if (flag == 4)
+        {
+            try
+            {
+                List<String> paths = getTimeseries();
+                if (paths.size() != 0)
+                    session.deleteColumns(paths);
+                System.out.println("success");
             }
             catch (SessionException e)
             {
@@ -235,5 +278,14 @@ public class IginxClient {
         }
     }
 
-
+    public static List<String> getTimeseries() throws ExecutionException, SessionException
+    {
+        List<String> ret = new ArrayList<>();
+        List<Column> columns = session.showColumns();
+        for (Column column: columns)
+        {
+            ret.add(column.getPath());
+        }
+        return ret;
+    }
 }
