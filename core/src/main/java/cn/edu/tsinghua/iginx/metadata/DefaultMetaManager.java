@@ -224,6 +224,11 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public int getStorageEngineNum() {
+        return cache.getStorageEngineList().size();
+    }
+
+    @Override
     public StorageEngineMeta getStorageEngine(long id) {
         return cache.getStorageEngine(id);
     }
