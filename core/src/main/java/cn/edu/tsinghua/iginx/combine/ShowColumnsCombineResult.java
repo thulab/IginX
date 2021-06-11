@@ -16,22 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.combine;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    ShowColumns,
-    Unknown;
+public class ShowColumnsCombineResult extends DataCombineResult {
 
+    private final ShowColumnsResp resp;
+
+    public ShowColumnsCombineResult(Status status, ShowColumnsResp resp) {
+        super(status);
+        this.resp = resp;
+    }
+
+    public ShowColumnsResp getResp() {
+        return resp;
+    }
 }

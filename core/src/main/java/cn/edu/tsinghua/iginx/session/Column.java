@@ -16,22 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.session;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    ShowColumns,
-    Unknown;
+public class Column {
 
+    private final String path;
+
+    private final DataType dataType;
+
+    public Column(String path, DataType dataType) {
+        this.path = path;
+        this.dataType = dataType;
+    }
+
+    public String getPath() {
+        return path;
+    }
+
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    @Override
+    public String toString() {
+        return "Column{" +
+                "path='" + path + '\'' +
+                ", dataType=" + dataType +
+                '}';
+    }
 }

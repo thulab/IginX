@@ -16,22 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.plan;
 
-public enum ContextType {
+public class ShowColumnsPlan extends IginxPlan {
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    ShowColumns,
-    Unknown;
+    private final long storageEngineId;
 
+    public ShowColumnsPlan(long storageEngineId) {
+        super(true);
+        this.setIginxPlanType(IginxPlanType.SHOW_COLUMNS);
+        this.setSync(true);
+        this.storageEngineId = storageEngineId;
+    }
+
+    @Override
+    public long getStorageEngineId() {
+        return storageEngineId;
+    }
 }
