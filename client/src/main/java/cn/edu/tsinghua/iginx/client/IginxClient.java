@@ -33,10 +33,10 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
@@ -62,6 +62,8 @@ public class IginxClient {
     private static final int MAX_HELP_CONSOLE_WIDTH = 88;
 
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
+
+    private static int MAX_GETDATA_NUM = 100;
 
     static String host = "127.0.0.1";
 
@@ -174,8 +176,16 @@ public class IginxClient {
         if (!(commandParts.length < 3 || !commandParts[0].equals("add") || !commandParts[1].equals("storageEngine"))) {
             flag = 1;
         }
-        if (!(commandParts.length < 3 || !commandParts[0].equals("count") || !commandParts[1].equals("lines"))) {
+        if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("lines"))) {
             flag = 2;
+        }
+        if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("replica")))
+        {
+            flag = 3;
+        }
+        if (!(commandParts.length < 2 || !commandParts[0].equals("delete") || !commandParts[1].equals("data")))
+        {
+            flag = 3;
         }
         if (flag == 0)
         {
@@ -211,29 +221,48 @@ public class IginxClient {
         }
         if (flag == 2)
         {
-            //session.downsampleQuery();
-            List<String> paths = new ArrayList<>();
-            StringBuilder ins = new StringBuilder("*");
-            for (int i = 0; i < 10; i++)
+            List<String> paths = getTimeseries();
+            Set<Long> timestamps = new HashSet();
+            for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM)
             {
-                ins.append(".*");
-                paths.add(ins.toString());
+                List<String> ins = new ArrayList<>();
+                for (int j = i ; j < i + MAX_GETDATA_NUM && j < paths.size(); j++)
+                    ins.add(paths.get(j));
+                try
+                {
+                    SessionQueryDataSet sessionQueryDataSet = session.queryData(ins, 0L, Long.MAX_VALUE);
+                    for (int j = 0; j < sessionQueryDataSet.getTimestamps().length; j++)
+                        timestamps.add(sessionQueryDataSet.getTimestamps()[j]);
+                }
+                catch (Exception e)
+                {
+                    System.out.println("encounter error when count lines, please check the status of storage engine.");
+                }
             }
+            System.out.println(timestamps.size());
+        }
+        if (flag == 3)
+        {
+            int ret = session.getReplicaNum();
+            System.out.println(ret);
+        }
+        if (flag == 4)
+        {
+            List<String> paths = getTimeseries();
             try
             {
-                SessionQueryDataSet sessionQueryDataSet = session.queryData(paths,0,System.currentTimeMillis() + 1000000L);
-                System.out.println(sessionQueryDataSet.getTimestamps().length);
+                session.deleteColumns(paths);
+                System.out.println("success");
             }
-            catch (SessionException e)
+            catch (Exception e)
             {
-                e.printStackTrace();
-            }
-            catch (ExecutionException e)
-            {
-                e.printStackTrace();
+                System.out.println("encounter error when delete data, please check the status of storage engine.");
             }
         }
     }
 
-
+    public static List<String> getTimeseries()
+    {
+        return new ArrayList<>();
+    }
 }
