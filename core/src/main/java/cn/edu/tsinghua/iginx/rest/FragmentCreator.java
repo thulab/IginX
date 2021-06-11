@@ -38,7 +38,9 @@ public class FragmentCreator
     }
 
     public void updatePrefix(List<String> ins) {
+        LOGGER.info("insert updatePrefix");
         lock.writeLock().lock();
+        LOGGER.info("update prefix  , list size : {}", prefixList.size());
         for (String prefix : ins)
         {
             if (!prefixSet.contains(prefix))
@@ -53,6 +55,7 @@ public class FragmentCreator
                 prefixList.add(prefix);
             }
         }
+        LOGGER.info("update prefix  end, list size : {}", prefixList.size());
         lock.writeLock().unlock();
     }
 
@@ -86,8 +89,9 @@ public class FragmentCreator
         return storageEngineIdList.subList(0, 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum());
     }
 
-    public void CreateFragment(int fragmentNum, int timestamp)
+    public void CreateFragment(int fragmentNum, long timestamp)
     {
+        LOGGER.info("insert CreateFragment");
         lock.writeLock().lock();
         updateRequireNum += 1;
         LOGGER.info("create fragment  , list size : {}", prefixList.size());
