@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.rest.query;
 
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
@@ -33,7 +34,7 @@ import java.util.TreeMap;
 
 public class QueryResult {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryResult.class);
-    private static final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+    private static final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private List<QueryMetric> queryMetrics = new ArrayList<>();
     private List<QueryResultDataset> queryResultDatasets = new ArrayList<>();
     private List<QueryAggregator> queryAggregators = new ArrayList<>();

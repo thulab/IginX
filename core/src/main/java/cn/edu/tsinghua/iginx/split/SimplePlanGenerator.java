@@ -21,25 +21,20 @@ package cn.edu.tsinghua.iginx.split;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
-import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
@@ -48,6 +43,7 @@ import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -62,11 +58,9 @@ import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -96,13 +90,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<SplitInfo> splitInfoList;
         switch (requestContext.getType()) {
             case CreateDatabase:
-                CreateDatabaseReq createDatabaseReq = ((CreateDatabaseContext) requestContext).getReq();
-                return SortedListAbstractMetaManager.getInstance().getStorageEngineList().stream().map(StorageEngineMeta::getId)
-                        .map(e -> new CreateDatabasePlan(createDatabaseReq.getDatabaseName(), e)).collect(Collectors.toList());
             case DropDatabase:
-                DropDatabaseReq dropDatabaseReq = ((DropDatabaseContext) requestContext).getReq();
-                return SortedListAbstractMetaManager.getInstance().getStorageEngineList().stream().map(StorageEngineMeta::getId)
-                        .map(e -> new DropDatabasePlan(dropDatabaseReq.getDatabaseName(), e)).collect(Collectors.toList());
+                return null;
             case AddColumns:
                 AddColumnsReq addColumnsReq = ((AddColumnsContext) requestContext).getReq();
                 AddColumnsPlan addColumnsPlan = new AddColumnsPlan(addColumnsReq.getPaths(), addColumnsReq.getAttributesList());
@@ -298,6 +287,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
                 return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
             }
+            case ShowColumns:
+                return planSplitter.getSplitShowColumnsPlanResult().stream().map(ShowColumnsPlan::new).collect(Collectors.toList());
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }
@@ -306,9 +297,11 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<AddColumnsPlan> splitAddColumnsPlan(AddColumnsPlan plan, List<SplitInfo> infoList) {
         List<AddColumnsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
-            AddColumnsPlan subPlan = new AddColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    plan.getAttributesByInterval(info.getTimeSeriesInterval()));
-            subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
+            AddColumnsPlan subPlan = new AddColumnsPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
             plans.add(subPlan);
         }
         return plans;
@@ -317,8 +310,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<DeleteColumnsPlan> splitDeleteColumnsPlan(DeleteColumnsPlan plan, List<SplitInfo> infoList) {
         List<DeleteColumnsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
-            DeleteColumnsPlan subPlan = new DeleteColumnsPlan(plan.getPathsByInterval(info.getTimeSeriesInterval()));
-            subPlan.setStorageEngineId(info.getReplica().getStorageEngineId());
+            DeleteColumnsPlan subPlan = new DeleteColumnsPlan(
+                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
             plans.add(subPlan);
         }
         return plans;
@@ -336,9 +331,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
-                    info.getReplica().getStorageEngineId()
+                    info.getStorageUnit()
             );
-            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
         return plans;
@@ -356,9 +351,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
-                    info.getReplica().getStorageEngineId()
+                    info.getStorageUnit()
             );
-            subPlan.setSync(info.getReplica().getReplicaIndex() == 0);
+            subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
         return plans;
@@ -369,9 +364,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             DeleteDataInColumnsPlan subPlan = new DeleteDataInColumnsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -383,9 +378,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             QueryDataPlan subPlan = new QueryDataPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -397,10 +392,10 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             ValueFilterQueryPlan subPlan = new ValueFilterQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     plan.getBooleanExpression(),
-                    info.getReplica().getStorageEngineId()
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -412,9 +407,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             MaxQueryPlan subPlan = new MaxQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -431,7 +426,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case MIN:
@@ -439,7 +434,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case FIRST:
@@ -447,7 +442,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case LAST:
@@ -455,7 +450,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case AVG:
@@ -463,7 +458,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case SUM:
@@ -471,7 +466,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case COUNT:
@@ -479,7 +474,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             plan.getPathsByInterval(info.getTimeSeriesInterval()),
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_MAX:
@@ -488,7 +483,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_MIN:
@@ -497,7 +492,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_FIRST:
@@ -506,7 +501,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_LAST:
@@ -515,7 +510,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_AVG:
@@ -524,7 +519,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_SUM:
@@ -533,7 +528,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
                 case DOWNSAMPLE_COUNT:
@@ -542,7 +537,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
-                            info.getReplica().getStorageEngineId()
+                            info.getStorageUnit()
                     );
                     break;
             }
@@ -563,9 +558,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             MinQueryPlan subPlan = new MinQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -581,9 +576,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             FirstQueryPlan subPlan = new FirstQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -599,9 +594,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             LastQueryPlan subPlan = new LastQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -617,9 +612,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             CountQueryPlan subPlan = new CountQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -635,9 +630,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             SumQueryPlan subPlan = new SumQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }
@@ -653,9 +648,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             AvgQueryPlan subPlan = new AvgQueryPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
-                    Math.max(plan.getStartTime(), info.getReplica().getStartTime()),
-                    Math.min(plan.getEndTime(), info.getReplica().getEndTime()),
-                    info.getReplica().getStorageEngineId()
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
+                    info.getStorageUnit()
             );
             plans.add(subPlan);
         }

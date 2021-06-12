@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan.downsample;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.plan.DataPlan;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,21 +31,16 @@ public class DownsampleQueryPlan extends DataPlan {
 
     private final long precision;
 
-    public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        super(true, paths, startTime, endTime);
+    protected DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        this(paths, startTime, endTime, precision, null);
+    }
+
+    protected DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(true, paths, startTime, endTime, storageUnit);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
         this.setSync(true);
         this.precision = precision;
     }
-
-    public DownsampleQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-        super(true, paths, startTime, endTime);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_QUERY);
-        this.setSync(true);
-        this.precision = precision;
-        this.setStorageEngineId(storageEngineId);
-    }
-
 
     public long getPrecision() {
         return precision;

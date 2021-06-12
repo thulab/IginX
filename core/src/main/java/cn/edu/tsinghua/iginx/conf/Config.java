@@ -28,6 +28,8 @@ public class Config {
 
     private String password = "root";
 
+    private String metaStorage = "zookeeper";
+
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
     private String storageEngineList = "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100";
@@ -43,6 +45,8 @@ public class Config {
     private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
+
+    private int storageUnitNum = 30;
 
     private String influxDBToken = "token";
 
@@ -170,6 +174,14 @@ public class Config {
         this.policyClassName = policyClassName;
     }
 
+    public int getStorageUnitNum() {
+        return storageUnitNum;
+    }
+
+    public void setStorageUnitNum(int storageUnitNum) {
+        this.storageUnitNum = storageUnitNum;
+    }
+
     public String getInfluxDBToken() {
         return influxDBToken;
     }
@@ -254,5 +266,13 @@ public class Config {
     public int getFragmentSplitPerEngine()
     {
         return fragmentSplitPerEngine;
+    }
+  
+    public String getMetaStorage() {
+        return metaStorage;
+    }
+
+    public void setMetaStorage(String metaStorage) {
+        this.metaStorage = metaStorage;
     }
 }

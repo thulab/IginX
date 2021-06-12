@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,14 +30,14 @@ public class DeleteDataInColumnsPlan extends DataPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(DeleteDataInColumnsPlan.class);
 
-    public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
-        super(false, paths, startTime, endTime);
+    public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(false, paths, startTime, endTime, storageUnit);
         this.setIginxPlanType(DELETE_DATA_IN_COLUMNS);
-    }
-
-    public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-        this(paths, startTime, endTime);
-        this.setStorageEngineId(storageEngineId);
         this.setSync(true);
     }
+
+    public DeleteDataInColumnsPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
+    }
+
 }

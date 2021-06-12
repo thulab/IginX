@@ -21,21 +21,22 @@ package cn.edu.tsinghua.iginx.cluster;
 import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
+import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.CreateDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.DropDatabaseContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -45,12 +46,10 @@ import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -58,11 +57,14 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,6 +72,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
@@ -82,7 +85,7 @@ public class IginxWorker implements IService.Iface {
 
     private final Core core = Core.getInstance();
 
-    private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -109,20 +112,6 @@ public class IginxWorker implements IService.Iface {
         }
         sessions.remove(req.sessionId);
         return RpcUtils.SUCCESS;
-    }
-
-    @Override
-    public Status createDatabase(CreateDatabaseReq req) {
-        CreateDatabaseContext context = new CreateDatabaseContext(req);
-        core.processRequest(context);
-        return context.getStatus();
-    }
-
-    @Override
-    public Status dropDatabase(DropDatabaseReq req) {
-        DropDatabaseContext context = new DropDatabaseContext(req);
-        core.processRequest(context);
-        return context.getStatus();
     }
 
     @Override
@@ -190,10 +179,13 @@ public class IginxWorker implements IService.Iface {
                 logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
             }
         }
-        if (!metaManager.addStorageEngine(meta)) {
-            return RpcUtils.FAILURE;
+        metaManager.addStorageEngine(meta);
+        Map<String, Long> migrationMap = metaManager.selectStorageUnitsToMigrate(Collections.singletonList(meta.getId()));
+        boolean success = true;
+        for (Map.Entry<String, Long> entry : migrationMap.entrySet()) {
+            success &= metaManager.migrateStorageUnit(entry.getKey(), entry.getValue());
         }
-        return RpcUtils.SUCCESS;
+        return success ? RpcUtils.SUCCESS : RpcUtils.FAILURE;
     }
 
     @Override
@@ -217,4 +209,10 @@ public class IginxWorker implements IService.Iface {
         return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
     }
 
+    @Override
+    public ShowColumnsResp showColumns(ShowColumnsReq req) {
+        ShowColumnsContext context = new ShowColumnsContext(req);
+        core.processRequest(context);
+        return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
+    }
 }

@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
@@ -29,32 +29,32 @@ public class SplitInfo {
 
     private TimeSeriesInterval timeSeriesInterval;
 
-    private FragmentReplicaMeta replica;
+    private StorageUnitMeta storageUnit;
 
     private IginxPlan.IginxPlanType type;
 
     private int combineGroup;
 
-    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica) {
+    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit) {
         this.timeInterval = timeInterval;
         this.timeSeriesInterval = timeSeriesInterval;
-        this.replica = replica;
+        this.storageUnit = storageUnit;
         this.type = IginxPlan.IginxPlanType.UNKNOWN;
     }
 
-    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica,
+    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
                      IginxPlan.IginxPlanType type) {
         this.timeInterval = timeInterval;
         this.timeSeriesInterval = timeSeriesInterval;
-        this.replica = replica;
+        this.storageUnit = storageUnit;
         this.type = type;
     }
 
-    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, FragmentReplicaMeta replica,
+    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
                      IginxPlan.IginxPlanType type, int combineGroup) {
         this.timeInterval = timeInterval;
         this.timeSeriesInterval = timeSeriesInterval;
-        this.replica = replica;
+        this.storageUnit = storageUnit;
         this.type = type;
         this.combineGroup = combineGroup;
     }
@@ -75,12 +75,12 @@ public class SplitInfo {
         this.timeSeriesInterval = timeSeriesInterval;
     }
 
-    public FragmentReplicaMeta getReplica() {
-        return replica;
+    public StorageUnitMeta getStorageUnit() {
+        return storageUnit;
     }
 
-    public void setReplica(FragmentReplicaMeta replica) {
-        this.replica = replica;
+    public void setStorageUnit(StorageUnitMeta storageUnit) {
+        this.storageUnit = storageUnit;
     }
 
     public IginxPlan.IginxPlanType getType() {

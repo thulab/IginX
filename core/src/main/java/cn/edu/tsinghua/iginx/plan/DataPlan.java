@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,10 +33,11 @@ public abstract class DataPlan extends NonDatabasePlan {
 
     private TimeInterval timeInterval;
 
-    protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime) {
+    protected DataPlan(boolean isQuery, List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
         super(isQuery, paths);
         this.setIginxPlanType(DATA);
         this.timeInterval = new TimeInterval(startTime, endTime);
+        this.setStorageUnit(storageUnit);
     }
 
     public TimeInterval getTimeInterval() {
@@ -53,4 +55,5 @@ public abstract class DataPlan extends NonDatabasePlan {
     public long getEndTime() {
         return timeInterval.getEndTime();
     }
+
 }

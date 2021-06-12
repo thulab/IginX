@@ -40,17 +40,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
         this.setIginxPlanType(NON_DATABASE);
         this.setCanBeSplit(true);
         this.paths = paths;
-        String startTimeSeries = paths.get(0);
-        String endTimeSeries = paths.get(paths.size() - 1);
-        for (String path : paths) {
-            if (startTimeSeries.compareTo(path) >= 0) {
-                startTimeSeries = path;
-            }
-            if (endTimeSeries.compareTo(path) <= 0) {
-                endTimeSeries = path;
-            }
-        }
-        this.tsInterval = new TimeSeriesInterval(startTimeSeries, endTimeSeries);
+        this.tsInterval = new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1));
     }
 
     public List<String> getPaths() {

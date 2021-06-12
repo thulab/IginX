@@ -19,8 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -137,9 +135,6 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         }
         fragmentMetaList.add(fragmentMeta);
         fragmentLock.writeLock().unlock();
-        for (FragmentReplicaMeta fragmentReplicaMeta : fragmentMeta.getReplicaMetas().values()) {
-            storageEngineMetaMap.get(fragmentReplicaMeta.getStorageEngineId()).addFragmentReplicaMeta(fragmentReplicaMeta);
-        }
     }
 
     public void updateSortedFragmentsList(TimeSeriesInterval tsInterval, List<FragmentMeta> fragmentMetas) {
@@ -175,11 +170,6 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
         fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
         fragmentLock.writeLock().unlock();
-        for (FragmentReplicaMeta replicaMeta : fragmentMeta.getReplicaMetas().values()) {
-            long storageEngineId = replicaMeta.getStorageEngineId();
-            StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
-            storageEngineMeta.endLatestFragmentReplicaMetas(replicaMeta.getTsInterval(), replicaMeta.getTimeInterval().getEndTime());
-        }
     }
 
     @Override

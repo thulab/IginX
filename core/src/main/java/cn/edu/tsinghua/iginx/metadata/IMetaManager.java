@@ -19,14 +19,16 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface IMetaManager {
 
@@ -36,14 +38,23 @@ public interface IMetaManager {
     boolean addStorageEngine(StorageEngineMeta storageEngineMeta);
 
     /**
-     * 获取所有的存储引擎实例的原信息（不包括每个存储引擎的分片列表）
+     * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
      */
     List<StorageEngineMeta> getStorageEngineList();
 
     /**
-     * 获取某个存储引擎的所有分片的元信息
+     * 获取存储引擎实例的数量
      */
-    List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long storageEngineId);
+    int getStorageEngineNum();
+
+    /**
+     * 获取某个存储引擎实例的原信息（包括存储引擎的存储单元列表）
+     */
+    StorageEngineMeta getStorageEngine(long id);
+
+    StorageUnitMeta getStorageUnit(String id);
+
+    Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
 
     /**
      * 获取所有活跃的 iginx 节点的元信息
@@ -103,27 +114,33 @@ public interface IMetaManager {
     boolean hasFragment();
 
     /**
-     * 尝试创建初始分片
+     * 创建初始分片和初始存储单元
      */
-    boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments);
+    boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
 
     /**
      * 为新创建的分片选择存储引擎实例
      *
      * @return 选出的存储引擎实例 Id 列表
      */
-    List<Long> chooseStorageEngineIdListForNewFragment();
+    List<Long> selectStorageEngineIdList();
 
     /**
-     * 为 DatabasePlan 选择存储引擎实例
-     *
-     * @return 选出的存储引擎实例 Id
+     * 选择迁移的存储单元
      */
-    long chooseStorageEngineIdForDatabasePlan();
+    Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime);
+    /**
+     * 迁移存储单元
+     */
+    boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId);
 
-    List<FragmentMeta> generateFragments(List<String> prefixList, long startTime);
+    /**
+     * 初始时创建分片和存储单元
+     */
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
+
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 

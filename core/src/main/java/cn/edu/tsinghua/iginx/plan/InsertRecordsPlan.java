@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -51,20 +52,14 @@ public abstract class InsertRecordsPlan extends DataPlan {
     private List<Map<String, String>> attributesList;
 
     protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-        super(false, paths, timestamps[0], timestamps[timestamps.length - 1]);
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+        super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageUnit);
         this.setIginxPlanType(INSERT_RECORDS);
         this.timestamps = timestamps;
         this.valuesList = valuesList;
         this.bitmapList = bitmapList;
         this.dataTypeList = dataTypeList;
         this.attributesList = attributesList;
-    }
-
-    protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, long storageEngineId) {
-        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList);
-        this.setStorageEngineId(storageEngineId);
     }
 
     public long getTimestamp(int index) {
@@ -157,7 +152,7 @@ public abstract class InsertRecordsPlan extends DataPlan {
 
     public Map<String, String> getAttributes(int index) {
         if (attributesList == null || attributesList.isEmpty()) {
-            //		logger.info("There are no attributes in the InsertRecordsPlan.");
+            logger.info("There are no attributes in the InsertRecordsPlan.");
             return null;
         }
         if (index < 0 || index >= attributesList.size()) {
@@ -184,4 +179,5 @@ public abstract class InsertRecordsPlan extends DataPlan {
         }
         return attributesList.subList(startIndex, endIndex + 1);
     }
+
 }

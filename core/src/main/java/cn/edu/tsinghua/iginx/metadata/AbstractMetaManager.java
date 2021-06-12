@@ -23,13 +23,16 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.framework.recipes.cache.TreeCache;
@@ -49,7 +52,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public abstract class AbstractMetaManager implements IMetaManager, IService {
@@ -62,8 +68,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     private final Map<String, Map<String, Integer>> schemaMappings = new ConcurrentHashMap<>();
     protected TreeCache iginxCache;
     protected TreeCache storageEngineCache;
+    protected TreeCache storageUnitCache;
     protected TreeCache fragmentCache;
     protected TreeCache schemaMappingsCache;
+    protected ReadWriteLock storageUnitLock = new ReentrantReadWriteLock();
+    protected Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
     private long iginxId;
 
     public AbstractMetaManager() {
@@ -82,9 +91,8 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             registerStorageEngineMeta();
             registerStorageEngineListener();
             resolveStorageEngineFromZooKeeper();
-
             resolveFragmentFromZooKeeper();
-
+            resolveStorageUnitFromZookeeper();
             resolveSchemaMappingsFromZooKeeper();
         } catch (Exception e) {
             logger.error("get error when init meta manager: ", e);
@@ -241,6 +249,65 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         }
     }
 
+    private void registerStorageUnitListener() throws Exception {
+        this.storageUnitCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_UNIT_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    byte[] data = event.getData().getData();
+                    logger.info("storage unit: " + new String(data));
+                    logger.info("storage unit event:" + event.getType());
+                    logger.info("storage unit meta updated " + event.getData().getPath());
+                    if (event.getData().getPath().equals(Constants.STORAGE_UNIT_NODE_PREFIX)) {
+                        break;
+                    }
+                    StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
+                    if (storageUnitMeta != null) {
+                        logger.info("new storage unit comes to cluster: id = " + storageUnitMeta.getId());
+                        if (storageUnitMeta.getCreatedBy() == iginxId) {
+                            break;
+                        }
+                        storageUnitLock.writeLock().lock();
+                        StorageUnitMeta originStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getId());
+                        if (originStorageUnitMeta == null) {
+                            // 原本没有这个东西，是新加的
+                            if (!storageUnitMeta.isMaster()) { // 需要加入到主节点的子节点列表中
+                                StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
+                                if (masterStorageUnitMeta == null) { // 子节点先于主节点加入系统中，不应该发生，报错
+                                    logger.error("unexpected storage unit " + new String(data) + ", because it does not has a master storage unit");
+                                } else {
+                                    masterStorageUnitMeta.addReplica(storageUnitMeta);
+                                }
+                            }
+                        } else {
+                            if (storageUnitMeta.isMaster()) {
+                                storageUnitMeta.setReplicas(originStorageUnitMeta.getReplicas());
+                            } else {
+                                StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
+                                if (masterStorageUnitMeta == null) { // 子节点先于主节点加入系统中，不应该发生，报错
+                                    logger.error("unexpected storage unit " + new String(data) + ", because it does not has a master storage unit");
+                                } else {
+                                    masterStorageUnitMeta.removeReplica(originStorageUnitMeta);
+                                    masterStorageUnitMeta.addReplica(storageUnitMeta);
+                                }
+                            }
+                        }
+                        storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+                        storageUnitLock.writeLock().unlock();
+
+                        if (originStorageUnitMeta != null) {
+                            storageEngineMetaMap.get(originStorageUnitMeta.getStorageEngineId()).removeStorageUnit(originStorageUnitMeta.getId());
+                        }
+                        storageEngineMetaMap.get(storageUnitMeta.getStorageEngineId()).addStorageUnit(storageUnitMeta);
+                    }
+                    break;
+            }
+        };
+        this.storageUnitCache.getListenable().addListener(listener);
+        this.storageUnitCache.start();
+    }
+
     private void registerStorageEngineListener() throws Exception {
         this.storageEngineCache = new TreeCache(this.zookeeperClient, Constants.STORAGE_ENGINE_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
@@ -356,6 +423,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                     for (String timeIntervalName : timeIntervalNames) {
                         FragmentMeta fragmentMeta = JsonUtils.fromJson(this.zookeeperClient.getData()
                                 .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        fragmentMeta.setMasterStorageUnit(storageUnitMetaMap.get(fragmentMeta.getMasterStorageUnitId()));
                         fragmentMetaList.add(fragmentMeta);
                     }
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
@@ -382,8 +450,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                         if (fragmentMeta.getUpdatedBy() == iginxId) {
                             break;
                         }
+                        storageUnitLock.readLock().lock();
+                        fragmentMeta.setMasterStorageUnit(storageUnitMetaMap.get(fragmentMeta.getMasterStorageUnitId()));
                         updateFragment(fragmentMeta);
-
+                        storageUnitLock.readLock().unlock();
                     } else {
                         logger.error("resolve fragment from zookeeper error");
                     }
@@ -398,12 +468,10 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                             if (fragmentMeta.getCreatedBy() == iginxId) {
                                 break;
                             }
+                            storageUnitLock.readLock().lock();
+                            fragmentMeta.setMasterStorageUnit(storageUnitMetaMap.get(fragmentMeta.getMasterStorageUnitId()));
                             addFragment(fragmentMeta);
-                            for (FragmentReplicaMeta replicaMeta : fragmentMeta.getReplicaMetas().values()) {
-                                long storageEngineId = replicaMeta.getStorageEngineId();
-                                StorageEngineMeta storageEngineMeta = storageEngineMetaMap.get(storageEngineId);
-                                storageEngineMeta.addLatestFragmentReplicaMetas(replicaMeta);
-                            }
+                            storageUnitLock.readLock().unlock();
                         }
                     }
                     break;
@@ -415,6 +483,38 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         this.fragmentCache.start();
     }
 
+    private void resolveStorageUnitFromZookeeper() throws Exception {
+        InterProcessMutex mutex = new InterProcessMutex(zookeeperClient, Constants.STORAGE_UNIT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.zookeeperClient.checkExists().forPath(Constants.STORAGE_UNIT_NODE_PREFIX) == null) {
+                // 当前还没有数据，创建父节点，然后不需要解析数据
+                this.zookeeperClient.create()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(Constants.STORAGE_UNIT_NODE_PREFIX);
+            } else {
+                List<String> storageUnitIds = this.zookeeperClient.getChildren().forPath(Constants.STORAGE_UNIT_NODE_PREFIX);
+                for (String storageUnitId : storageUnitIds) {
+                    byte[] data = this.zookeeperClient.getData()
+                            .forPath(Constants.STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitId);
+                    StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
+                    if (!storageUnitMeta.isMaster()) { // 需要加入到主节点的子节点列表中
+                        StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
+                        if (masterStorageUnitMeta == null) { // 子节点先于主节点加入系统中，不应该发生，报错
+                            logger.error("unexpected storage unit " + new String(data) + ", because it does not has a master storage unit");
+                        } else {
+                            masterStorageUnitMeta.addReplica(storageUnitMeta);
+                        }
+                    }
+                    storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+                    storageEngineMetaMap.get(storageUnitMeta.getStorageEngineId()).addStorageUnit(storageUnitMeta);
+                }
+            }
+            registerStorageUnitListener();
+        } finally {
+            mutex.release();
+        }
+    }
 
     @Override
     public boolean addStorageEngine(StorageEngineMeta storageEngineMeta) {
@@ -440,7 +540,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 logger.error("release mutex error: ", e);
             }
         }
-
         return false;
     }
 
@@ -450,8 +549,36 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<FragmentReplicaMeta> getFragmentListByStorageEngineId(long StorageEngineId) {
-        return null;
+    public int getStorageEngineNum() {
+        return this.storageEngineMetaMap.values().size();
+    }
+
+    @Override
+    public StorageEngineMeta getStorageEngine(long id) {
+        return this.storageEngineMetaMap.get(id);
+    }
+
+    @Override
+    public StorageUnitMeta getStorageUnit(String id) {
+        StorageUnitMeta storageUnit;
+        storageUnitLock.readLock().lock();
+        storageUnit = storageUnitMetaMap.get(id);
+        storageUnitLock.readLock().unlock();
+        return storageUnit;
+    }
+
+    @Override
+    public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
+        Map<String, StorageUnitMeta> resultMap = new HashMap<>();
+        storageUnitLock.readLock().lock();
+        for (String id : ids) {
+            StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
+            if (storageUnit != null) {
+                resultMap.put(id, storageUnit);
+            }
+        }
+        storageUnitLock.readLock().unlock();
+        return resultMap;
     }
 
     @Override
@@ -513,8 +640,68 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     protected abstract void updateFragment(FragmentMeta fragmentMeta);
 
+    protected Map<String, StorageUnitMeta> createInitialStorageUnits(List<StorageUnitMeta> storageUnits) {
+        if (!storageUnitMetaMap.isEmpty()) {
+            return null;
+        }
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.STORAGE_UNIT_LOCK_NODE);
+        Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>();
+        try {
+            mutex.acquire();
+            storageUnitLock.writeLock().lock();
+            if (!storageUnitMetaMap.isEmpty()) {
+                return null;
+            }
+            for (StorageUnitMeta masterStorageUnit : storageUnits) {
+                masterStorageUnit.setCreatedBy(iginxId);
+                String fakeName = masterStorageUnit.getId();
+                String nodeName = this.zookeeperClient.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                        .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
+                String actualName = nodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
+                StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
+                fakeIdToStorageUnit.put(fakeName, actualMasterStorageUnit);
+                this.zookeeperClient.setData()
+                        .forPath(nodeName, JsonUtils.toJson(actualMasterStorageUnit));
+                for (StorageUnitMeta slaveStorageUnit : masterStorageUnit.getReplicas()) {
+                    slaveStorageUnit.setCreatedBy(iginxId);
+                    String slaveFakeName = slaveStorageUnit.getId();
+                    String slaveNodeName = this.zookeeperClient.create()
+                            .creatingParentsIfNeeded()
+                            .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                            .forPath(Constants.STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
+                    String slaveActualName = slaveNodeName.substring(Constants.STORAGE_UNIT_NODE_PREFIX.length() + 1);
+
+                    StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
+                    actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+                    storageUnitMetaMap.put(actualSlaveStorageUnit.getId(), actualSlaveStorageUnit);
+                    this.zookeeperClient.setData()
+                            .forPath(slaveNodeName, JsonUtils.toJson(actualSlaveStorageUnit));
+                    fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
+                }
+                storageUnitMetaMap.put(actualMasterStorageUnit.getId(), actualMasterStorageUnit);
+            }
+        } catch (Exception e) {
+            logger.error("try init storageUnits error: ", e);
+            return null;
+        } finally {
+            storageUnitLock.writeLock().unlock();
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+        return fakeIdToStorageUnit;
+    }
+
     @Override
-    public boolean tryCreateInitialFragments(List<FragmentMeta> initialFragments) {
+    public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
+        Map<String, StorageUnitMeta> fakeIdToStorageUnit = createInitialStorageUnits(storageUnits);
+        if (fakeIdToStorageUnit == null) {
+            return false;
+        }
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -528,6 +715,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
+                StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
+                if (storageUnit.isMaster()) {
+                    fragmentMeta.setMasterStorageUnit(storageUnit);
+                } else {
+                    fragmentMeta.setMasterStorageUnit(getStorageUnit(storageUnit.getMasterId()));
+                }
                 addFragment(fragmentMeta);
                 this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
@@ -549,7 +742,71 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<Long> chooseStorageEngineIdListForNewFragment() {
+    public Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList) {
+        // TODO 目前先假设每个存储单元大小相同
+        // storageUnitId targetStorageEngineId
+        Map<String, Long> migrationMap = new HashMap<>();
+        // 新加存储引擎已有的存储单元
+        Map<Long, List<String>> storageEngineIdToCoveredStorageUnitIdList = new HashMap<>();
+        int avg = (int) Math.ceil((double) (int) storageEngineMetaMap.values().stream().map(StorageEngineMeta::getStorageUnitList).count()
+                / (storageEngineMetaMap.size() + addedStorageEngineIdList.size()));
+        for (StorageEngineMeta storageEngineMeta : storageEngineMetaMap.values()) {
+            int cnt = storageEngineMeta.getStorageUnitList().size() - avg;
+            for (int i = 0; i < cnt; i++) {
+                for (Long addedStorageEngineId : addedStorageEngineIdList) {
+                    if (storageEngineIdToCoveredStorageUnitIdList.containsKey(addedStorageEngineId) &&
+                            storageEngineIdToCoveredStorageUnitIdList.get(addedStorageEngineId).contains(storageEngineMeta.getStorageUnitList().get(i).getMasterId())) {
+                        continue;
+                    }
+                    List<String> coveredStorageUnitIdList = storageEngineIdToCoveredStorageUnitIdList.computeIfAbsent(addedStorageEngineId, v -> new ArrayList<>());
+                    if (coveredStorageUnitIdList.size() >= avg) {
+                        continue;
+                    }
+                    storageEngineIdToCoveredStorageUnitIdList.get(addedStorageEngineId).add(storageEngineMeta.getStorageUnitList().get(i).getMasterId());
+                    migrationMap.put(storageEngineMeta.getStorageUnitList().get(i).getId(), addedStorageEngineId);
+                }
+            }
+        }
+        return migrationMap;
+    }
+
+    @Override
+    public boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId) {
+        InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            StorageUnitMeta storageUnit;
+            storageUnitLock.readLock().lock();
+            storageUnit = storageUnitMetaMap.get(storageUnitId);
+            storageUnitLock.readLock().unlock();
+            if (storageUnit == null) {
+                return false;
+            }
+            String sourceDir = storageEngineMetaMap.get(storageUnit.getStorageEngineId()).getExtraParams().getOrDefault("dataDir", "/");
+            String targetDir = storageEngineMetaMap.get(targetStorageEngineId).getExtraParams().getOrDefault("dataDir", "/");
+            String cmd = String.format("migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
+            Process process = Runtime.getRuntime().exec(cmd);
+            if (process.waitFor() != 0) {
+                logger.error("migrate error: {} from {} to {}", storageUnitId, sourceDir, targetDir);
+            }
+            storageUnit = storageUnit.migrateStorageUnitMeta(targetStorageEngineId);
+            this.zookeeperClient.setData()
+                    .forPath(Constants.STORAGE_UNIT_NODE_PREFIX + "/" + storageUnit.getId(), JsonUtils.toJson(storageUnit));
+        } catch (Exception e) {
+            logger.error("migrate fragment error: ", e);
+            return false;
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public List<Long> selectStorageEngineIdList() {
         List<Long> storageEngineIdList = getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
         if (storageEngineIdList.size() <= 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum()) {
             return storageEngineIdList;
@@ -565,28 +822,45 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public long chooseStorageEngineIdForDatabasePlan() {
-        List<StorageEngineMeta> storageEngineMetaList = getStorageEngineList().stream().
-                sorted(Comparator.comparing(StorageEngineMeta::getFragmentReplicaMetaNum)).collect(Collectors.toList());
-        return storageEngineMetaList.get(0).getId();
-    }
-
-    @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime) {
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
-        List<FragmentMeta> leftFragmentList = new ArrayList<>();
-        List<FragmentMeta> rightFragmentList = new ArrayList<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        if (startTime != 0) {
-            leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, chooseStorageEngineIdListForNewFragment()));
-            rightFragmentList.add(new FragmentMeta(null, startPath, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
+        List<Long> storageEngineIdList;
+        Pair<List<FragmentMeta>, StorageUnitMeta> pair;
+        int index = 0;
+
+        // [startTime, +∞) & [startPath, endPath)
+        int splitNum = paths.size() == 1 ? 0 : Math.min(getStorageEngineNum(), paths.size());
+        for (int i = 0; i < splitNum; i++) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            fragmentMap.put(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum)), pair.k);
+            storageUnitList.add(pair.v);
         }
-        fragmentMap.put(new TimeSeriesInterval(startPath, null), leftFragmentList);
-        fragmentMap.put(new TimeSeriesInterval(null, startPath), rightFragmentList);
 
-        return fragmentMap;
+        // [startTime, +∞) & [endPath, null)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() - 1), null), pair.k);
+        storageUnitList.add(pair.v);
+
+        // [0, startTime) & (-∞, +∞)
+        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
+        // TODO 考虑大规模插入历史数据的情况
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
+        storageUnitList.add(pair.v);
+
+        // [startTime, +∞) & (null, startPath)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(null, paths.get(0)), pair.k);
+        storageUnitList.add(pair.v);
+
+        return new Pair<>(fragmentMap, storageUnitList);
     }
 
     @Override
@@ -597,18 +871,20 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public List<FragmentMeta> generateFragments(List<String> prefixList, long startTime) {
-        List<FragmentMeta> resultList = new ArrayList<>();
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+        List<FragmentMeta> fragmentMetaList = new ArrayList<>();
+        // TODO 新建 StorageUnit
+        List<StorageUnitMeta> storageUnitMetaList = new ArrayList<>();
         prefixList = prefixList.stream().filter(Objects::nonNull).sorted(String::compareTo).collect(Collectors.toList());
         String previousPrefix;
         String prefix = null;
         for (String s : prefixList) {
             previousPrefix = prefix;
             prefix = s;
-            resultList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+            fragmentMetaList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE));
         }
-        resultList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        return resultList;
+        fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE));
+        return new Pair<>(fragmentMetaList, storageUnitMetaList);
     }
 
     @Override
@@ -693,5 +969,24 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             return -1;
         }
         return schemaMapping.getOrDefault(key, -1);
+    }
+
+    private List<Long> generateStorageEngineIdList(int startIndex, int num) {
+        List<Long> storageEngineIdList = new ArrayList<>();
+        for (int i = startIndex; i < startIndex + num; i++) {
+            storageEngineIdList.add(getStorageEngineList().get(i % getStorageEngineNum()).getId());
+        }
+        return storageEngineIdList;
+    }
+
+    private Pair<List<FragmentMeta>, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+        String masterId = RandomStringUtils.randomAlphanumeric(16);
+        List<FragmentMeta> fragmentList = new ArrayList<>();
+        StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true);
+        fragmentList.add(new FragmentMeta(startPath, endPath, startTime, endTime, masterId));
+        for (int i = 1; i < storageEngineList.size(); i++) {
+            storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
+        }
+        return new Pair<>(fragmentList, storageUnit);
     }
 }

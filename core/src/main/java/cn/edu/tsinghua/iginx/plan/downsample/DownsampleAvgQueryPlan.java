@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan.downsample;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +29,12 @@ public class DownsampleAvgQueryPlan extends DownsampleQueryPlan {
     private static final Logger logger = LoggerFactory.getLogger(DownsampleAvgQueryPlan.class);
 
     public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        super(paths, startTime, endTime, precision);
+        this(paths, startTime, endTime, precision, null);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
     }
 
-    public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-        super(paths, startTime, endTime, precision, storageEngineId);
+    public DownsampleAvgQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, precision, storageUnit);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_AVG);
     }
 }

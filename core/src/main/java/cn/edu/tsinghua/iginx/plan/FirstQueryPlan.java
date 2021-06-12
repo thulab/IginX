@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,13 +12,13 @@ public class FirstQueryPlan extends AggregateQueryPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(FirstQueryPlan.class);
 
-    public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
-        super(paths, startTime, endTime);
+    public FirstQueryPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, storageUnit);
         this.setIginxPlanType(FIRST);
     }
 
-    public FirstQueryPlan(List<String> paths, long startTime, long endTime, long storageEngineId) {
-        this(paths, startTime, endTime);
-        this.setStorageEngineId(storageEngineId);
+    public FirstQueryPlan(List<String> paths, long startTime, long endTime) {
+        this(paths, startTime, endTime, null);
     }
+
 }

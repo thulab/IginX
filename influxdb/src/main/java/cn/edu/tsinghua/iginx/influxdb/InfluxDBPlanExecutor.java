@@ -20,6 +20,7 @@ import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
+import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -36,6 +37,7 @@ import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
@@ -84,7 +86,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
     private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\" AND t=\"%s\"";
 
-    private Map<Long, InfluxDBClient> storageEngineIdToClient;
+    private final Map<Long, InfluxDBClient> storageEngineIdToClient;
 
     public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
         storageEngineIdToClient = new ConcurrentHashMap<>();
@@ -136,19 +138,24 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         Map<Bucket, List<Point>> bucketToPoints = new HashMap<>();
         for (int i = 0; i < plan.getPathsNum(); i++) {
             String[] elements = plan.getPath(i).split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             Map<String, String> tags = new HashMap<>();
-            if (elements.length > 3) {
-                tags.put("t", plan.getPath(i).substring(plan.getPath(i).indexOf(".", plan.getPath(i).indexOf(".") + 1) + 1, plan.getPath(i).lastIndexOf(".")));
+            if (elements.length > 2) {
+                tags.put("t", plan.getPath(i).substring(plan.getPath(i).indexOf(".") + 1, plan.getPath(i).lastIndexOf(".")));
             }
 
-            Bucket bucket = client.getBucketsApi()
+            List<Bucket> bucketList = client.getBucketsApi()
                     .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
                     .filter(b -> b.getName().equals(bucketName))
-                    .findFirst()
-                    .orElseThrow(IllegalStateException::new);
+                    .collect(Collectors.toList());
+            Bucket bucket;
+            if (bucketList.isEmpty()) {
+                bucket = client.getBucketsApi().createBucket(bucketName, organization);
+            } else {
+                bucket = bucketList.get(0);
+            }
             bucketToPoints.putIfAbsent(bucket, new ArrayList<>());
 
             Object[] values = (Object[]) (plan.getValuesList()[i]);
@@ -206,13 +213,17 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         Map<String, Bucket> pathToBucket = new HashMap<>();
         Map<Bucket, List<Point>> bucketToPoints = new HashMap<>();
         for (int i = 0; i < plan.getPathsNum(); i++) {
-            String[] elements = plan.getPath(i).split("\\.");
-            String bucketName = elements[0];
-            Bucket bucket = client.getBucketsApi()
+            String bucketName = plan.getStorageUnit().getId();
+            List<Bucket> bucketList = client.getBucketsApi()
                     .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
                     .filter(b -> b.getName().equals(bucketName))
-                    .findFirst()
-                    .orElseThrow(IllegalStateException::new);
+                    .collect(Collectors.toList());
+            Bucket bucket;
+            if (bucketList.isEmpty()) {
+                bucket = client.getBucketsApi().createBucket(bucketName, organization);
+            } else {
+                bucket = bucketList.get(0);
+            }
             pathToBucket.put(plan.getPath(i), bucket);
             bucketToPoints.putIfAbsent(bucket, new ArrayList<>());
         }
@@ -224,11 +235,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
             for (int j = 0; j < plan.getPathsNum(); j++) {
                 if (bitmap.get(j)) {
                     String[] elements = plan.getPath(j).split("\\.");
-                    String measurement = elements[1];
+                    String measurement = elements[0];
                     String field = elements[elements.length - 1];
                     Map<String, String> tags = new HashMap<>();
-                    if (elements.length > 3) {
-                        tags.put("t", plan.getPath(j).substring(plan.getPath(j).indexOf(".", plan.getPath(j).indexOf(".") + 1) + 1, plan.getPath(j).lastIndexOf(".")));
+                    if (elements.length > 2) {
+                        tags.put("t", plan.getPath(j).substring(plan.getPath(j).indexOf(".") + 1, plan.getPath(j).lastIndexOf(".")));
                     }
 
                     Bucket bucket = pathToBucket.get(plan.getPath(j));
@@ -281,12 +292,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> dataSets = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             // TODO 处理时区
@@ -339,10 +350,13 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
         for (int i = 0; i < plan.getPathsNum(); i++) {
             String[] elements = plan.getPath(i).split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
-            String value = plan.getPath(i).substring(plan.getPath(i).indexOf(".", plan.getPath(i).indexOf(".") + 1) + 1, plan.getPath(i).lastIndexOf("."));
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
+            String value = null;
+            if (elements.length > 2) {
+                value = plan.getPath(i).substring(plan.getPath(i).indexOf(".") + 1, plan.getPath(i).lastIndexOf("."));
+            }
 
             Bucket bucket = client.getBucketsApi()
                     .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
@@ -402,12 +416,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> sums = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> countTables;
@@ -492,12 +506,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> tables;
@@ -553,12 +567,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> tables;
@@ -624,12 +638,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> tables;
@@ -691,12 +705,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> tables;
@@ -758,12 +772,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> tables;
@@ -829,12 +843,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             List<FluxTable> tables;
@@ -931,12 +945,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> dataSets = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             // TODO 处理时区
@@ -969,6 +983,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
+    public ShowColumnsPlanExecuteResult syncExecuteShowColumnsPlan(ShowColumnsPlan plan) {
+        return null;
+    }
+
+    @Override
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             if (before == null && after != null) {
@@ -990,12 +1009,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         List<QueryExecuteDataSet> dataSets = new ArrayList<>();
         for (String path : plan.getPaths()) {
             String[] elements = path.split("\\.");
-            String bucketName = elements[0];
-            String measurement = elements[1];
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
             String field = elements[elements.length - 1];
             String value = null;
-            if (elements.length > 3) {
-                value = path.substring(path.indexOf(".", path.indexOf(".") + 1) + 1, path.lastIndexOf("."));
+            if (elements.length > 2) {
+                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
             }
 
             // TODO 处理时区

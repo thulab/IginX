@@ -142,6 +142,9 @@ public class ValueFilterCombiner {
             for (int i = 0; i < newColumnTypeList.size(); i++) {
                 String columnName = newColumnNameList.get(i);
                 List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
+                if (columnSources == null) {
+                    continue;
+                }
                 for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
                     if (dataSetWrapper.getTimestamp() == timestamp) {
                         Object value = dataSetWrapper.getValue(columnName);
@@ -157,6 +160,9 @@ public class ValueFilterCombiner {
             for (int i = 0; i < booleanExpression.getTimeseries().size(); i++) {
                 String columnName = booleanExpression.getTimeseries().get(i);
                 List<QueryExecuteDataSetWrapper> columnSources = columnSourcesList.get(columnName);
+                if (columnSources == null) {
+                    continue;
+                }
                 for (QueryExecuteDataSetWrapper dataSetWrapper : columnSources) {
                     if (dataSetWrapper.getTimestamp() == timestamp) {
                         Object value = dataSetWrapper.getValue(columnName);

@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public final class StorageEngineMeta {
 
@@ -53,14 +52,9 @@ public final class StorageEngineMeta {
     private StorageEngine storageEngine;
 
     /**
-     * 时序数据库存储的数据分片，不进行序列化。
+     * 实例上管理的存储单元列表
      */
-    private transient List<FragmentReplicaMeta> fragmentReplicaMetaList = new ArrayList<>();
-
-    private transient List<FragmentReplicaMeta> latestFragmentReplicaMetaList = new ArrayList<>();
-
-    public StorageEngineMeta() {
-    }
+    private transient List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
         this.id = id;
@@ -68,21 +62,6 @@ public final class StorageEngineMeta {
         this.port = port;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
-    }
-
-    public void addFragmentReplicaMeta(FragmentReplicaMeta fragmentReplicaMeta) {
-        this.fragmentReplicaMetaList.add(fragmentReplicaMeta);
-    }
-
-    public void endLatestFragmentReplicaMetas(TimeSeriesInterval tsInterval, long endTime) {
-        fragmentReplicaMetaList.addAll(latestFragmentReplicaMetaList.stream().filter(e -> e.getTsInterval().equals(tsInterval)).map(
-                e -> new FragmentReplicaMeta(new TimeInterval(e.getTimeInterval().getStartTime(), endTime), e.getTsInterval(), e.getReplicaIndex(),
-                        e.getStorageEngineId())).collect(Collectors.toList()));
-        latestFragmentReplicaMetaList.removeIf(e -> e.getTsInterval().equals(tsInterval));
-    }
-
-    public void addLatestFragmentReplicaMetas(FragmentReplicaMeta fragmentReplicaMeta) {
-        latestFragmentReplicaMetaList.add(fragmentReplicaMeta);
     }
 
     public long getId() {
@@ -125,18 +104,24 @@ public final class StorageEngineMeta {
         this.storageEngine = storageEngine;
     }
 
-    public List<FragmentReplicaMeta> getFragmentReplicaMetaList() {
-        List<FragmentReplicaMeta> replicaMetas = new ArrayList<>();
-        replicaMetas.addAll(fragmentReplicaMetaList);
-        replicaMetas.addAll(latestFragmentReplicaMetaList);
-        return replicaMetas;
+    public List<StorageUnitMeta> getStorageUnitList() {
+        if (storageUnitList == null) {
+            storageUnitList = new ArrayList<>();
+        }
+        return storageUnitList;
     }
 
-    public StorageEngineMeta basicInfo() {
-        return new StorageEngineMeta(id, ip, port, extraParams, storageEngine);
+    public void removeStorageUnit(String id) {
+        if (storageUnitList == null) {
+            storageUnitList = new ArrayList<>();
+        }
+        storageUnitList.removeIf(e -> e.getId().equals(id));
     }
 
-    public int getFragmentReplicaMetaNum() {
-        return fragmentReplicaMetaList.size() + latestFragmentReplicaMetaList.size();
+    public void addStorageUnit(StorageUnitMeta storageUnit) {
+        if (storageUnitList == null) {
+            storageUnitList = new ArrayList<>();
+        }
+        storageUnitList.add(storageUnit);
     }
 }
