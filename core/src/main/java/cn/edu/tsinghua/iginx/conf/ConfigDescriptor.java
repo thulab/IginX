@@ -81,6 +81,7 @@ public class ConfigDescriptor {
             config.setClients(properties.getProperty("clients", "tpc5,tpc6,tpc7,tpc8"));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "12")));
 
+            config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

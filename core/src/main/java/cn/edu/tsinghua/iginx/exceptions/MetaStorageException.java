@@ -16,22 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.exceptions;
 
-public enum ContextType {
+public class MetaStorageException extends Exception {
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    ShowColumns,
-    Unknown;
+    private static final long serialVersionUID = -8128973325398925370L;
 
+    public MetaStorageException(String message) {
+        super(message);
+    }
+
+    public MetaStorageException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public MetaStorageException(Throwable cause) {
+        super(cause);
+    }
 }

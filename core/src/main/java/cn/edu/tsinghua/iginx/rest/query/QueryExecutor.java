@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
@@ -38,7 +39,7 @@ import java.util.TreeMap;
 public class QueryExecutor {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryExecutor.class);
     private static Config config = ConfigDescriptor.getInstance().getConfig();
-    private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private Query query;
 
     private RestSession session = new RestSession();

@@ -550,6 +550,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
+    public int getStorageEngineNum() {
+        return this.storageEngineMetaMap.values().size();
+    }
+
+    @Override
     public StorageEngineMeta getStorageEngine(long id) {
         return this.storageEngineMetaMap.get(id);
     }
@@ -979,20 +984,5 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             return -1;
         }
         return schemaMapping.getOrDefault(key, -1);
-    }
-
-    /**
-     * TODO 目前假设 paths 数量足够多
-     * 根据给定的 paths 将时间序列空间分割为 multiple * storageEngineNum 个子空间
-     */
-    private List<TimeSeriesInterval> splitTimeSeriesSpace(List<String> paths, int multiple) {
-        List<TimeSeriesInterval> tsIntervalList = new ArrayList<>();
-        int num = Math.min(Math.max(1, multiple * getStorageEngineList().size() - 2), paths.size() - 1);
-        for (int i = 0; i < num; i++) {
-            tsIntervalList.add(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / num), paths.get((i + 1) * (paths.size() - 1) / num)));
-        }
-        tsIntervalList.add(new TimeSeriesInterval(null, paths.get(0)));
-        tsIntervalList.add(new TimeSeriesInterval(paths.get(paths.size() - 1), null));
-        return tsIntervalList;
     }
 }

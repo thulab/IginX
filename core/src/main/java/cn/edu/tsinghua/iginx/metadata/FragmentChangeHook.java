@@ -16,22 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.metadata;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    AddColumns,
-    DeleteColumns,
-    DeleteDataInColumns,
-    CreateDatabase,
-    DropDatabase,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    ShowColumns,
-    Unknown;
+public interface FragmentChangeHook {
+
+    void onChange(boolean create, FragmentMeta fragment);
 
 }
