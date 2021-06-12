@@ -47,7 +47,8 @@ import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
-import cn.edu.tsinghua.iginx.split.SplitInfo;
+import cn.edu.tsinghua.iginx.split.InsertSplitInfo;
+import cn.edu.tsinghua.iginx.split.NonInsertSplitInfo;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,9 +155,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
         return resultList;
     }
 
-    public List<SplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan) {
+    public List<NonInsertSplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         if (fragmentMap.isEmpty()) {
             Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(plan.getPaths(), new TimeInterval(0, Long.MAX_VALUE));
@@ -168,32 +169,32 @@ public class NaivePlanSplitter implements IPlanSplitter {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
                     logger.info("add storage unit id {} to duplicate remove set.", storageUnit.getId());
-                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit));
                 }
             }
         }
         return infoList;
     }
 
-    public List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
                     logger.info("add storage unit id {} to duplicate remove set.", storageUnit.getId());
-                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit));
                 }
             }
         }
         return infoList;
     }
 
-    public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
+    public List<InsertSplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<InsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
@@ -210,7 +211,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new InsertSplitInfo(fragment, storageUnit));
                 }
             }
         }
@@ -218,9 +219,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
+    public List<InsertSplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<InsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
@@ -237,7 +238,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new InsertSplitInfo(fragment, storageUnit));
                 }
             }
         }
@@ -245,59 +246,59 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitDeleteDataInColumnsPlanResults(DeleteDataInColumnsPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDeleteDataInColumnsPlanResults(DeleteDataInColumnsPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
         return infoList;
     }
 
-    public List<SplitInfo> getSplitQueryDataPlanResults(QueryDataPlan plan) {
+    public List<NonInsertSplitInfo> getSplitQueryDataPlanResults(QueryDataPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
         return infoList;
     }
 
-    private List<SplitInfo> getSplitResultsForDownsamplePlan(DownsampleQueryPlan plan, IginxPlan.IginxPlanType intervalQueryPlan) {
+    private List<NonInsertSplitInfo> getSplitResultsForDownsamplePlan(DownsampleQueryPlan plan, IginxPlan.IginxPlanType intervalQueryPlan) {
         updatePrefix(plan);
         // 初始化结果集
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         // 对查出来的分片结果按照开始时间进行排序、分组
         List<List<FragmentMeta>> fragmentMetasList = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval()).values().stream().flatMap(List::stream)
-                .sorted(Comparator.comparingLong(e -> e.getTimeInterval().getStartTime()))
-                .collect(Collectors.groupingBy(e -> e.getTimeInterval().getStartTime())).entrySet().stream()
+                .sorted(Comparator.comparingLong(e -> e.getIdealTimeInterval().getStartTime()))
+                .collect(Collectors.groupingBy(e -> e.getIdealTimeInterval().getStartTime())).entrySet().stream()
                 .sorted(Comparator.comparingLong(Map.Entry::getKey)).map(Map.Entry::getValue).collect(Collectors.toList());
         // 聚合精度，后续会多次用到
         long precision = plan.getPrecision();
         // 计算子查询时间片列表
         List<TimeInterval> planTimeIntervals = splitTimeIntervalForDownsampleQuery(fragmentMetasList.stream()
-                .map(e -> e.get(0).getTimeInterval()).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+                .map(e -> e.get(0).getIdealTimeInterval()).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
         // 所属的合并组的组号
         int combineGroup = 0;
         int index = 0;
         long timespan = 0L;
         for (List<FragmentMeta> fragmentMetas : fragmentMetasList) {
-            long endTime = fragmentMetas.get(0).getTimeInterval().getEndTime();
+            long endTime = fragmentMetas.get(0).getIdealTimeInterval().getEndTime();
             while (index < planTimeIntervals.size() && planTimeIntervals.get(index).getEndTime() <= endTime) {
                 TimeInterval timeInterval = planTimeIntervals.get(index++);
                 if (timeInterval.getSpan() >= precision) {
@@ -305,7 +306,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                     for (FragmentMeta fragment : fragmentMetas) {
                         List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                         for (StorageUnitMeta storageUnit : storageUnitList) {
-                            infoList.add(new SplitInfo(timeInterval, fragment.getTsInterval(), storageUnit, plan.getIginxPlanType(), combineGroup));
+                            infoList.add(new NonInsertSplitInfo(timeInterval, fragment.getIdealTsInterval(), storageUnit, plan.getIginxPlanType(), combineGroup));
                         }
                     }
                     timespan = 0L;
@@ -314,7 +315,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
                     for (FragmentMeta fragment : fragmentMetas) {
                         List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                         for (StorageUnitMeta storageUnit : storageUnitList) {
-                            infoList.add(new SplitInfo(timeInterval, fragment.getTsInterval(), storageUnit, intervalQueryPlan, combineGroup));
+                            infoList.add(new NonInsertSplitInfo(timeInterval, fragment.getIdealTsInterval(), storageUnit, intervalQueryPlan, combineGroup));
                         }
                     }
                     timespan += timeInterval.getSpan();
@@ -329,50 +330,50 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleMaxQueryPlanResults(DownsampleMaxQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.MAX);
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleMinQueryPlanResults(DownsampleMinQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleMinQueryPlanResults(DownsampleMinQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.MIN);
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleSumQueryPlanResults(DownsampleSumQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleSumQueryPlanResults(DownsampleSumQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.SUM);
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleCountQueryPlanResults(DownsampleCountQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleCountQueryPlanResults(DownsampleCountQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.COUNT);
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleAvgQueryPlanResults(DownsampleAvgQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleAvgQueryPlanResults(DownsampleAvgQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.AVG);
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleFirstQueryPlanResults(DownsampleFirstQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleFirstQueryPlanResults(DownsampleFirstQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.FIRST);
     }
 
     @Override
-    public List<SplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitDownsampleLastQueryPlanResults(DownsampleLastQueryPlan plan) {
         return getSplitResultsForDownsamplePlan(plan, IginxPlan.IginxPlanType.LAST);
     }
 
     @Override
-    public List<SplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan) {
+    public List<NonInsertSplitInfo> getValueFilterQueryPlanResults(ValueFilterQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
@@ -380,16 +381,16 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitMaxQueryPlanResults(MaxQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitMaxQueryPlanResults(MaxQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
@@ -397,16 +398,16 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitMinQueryPlanResults(MinQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitMinQueryPlanResults(MinQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
@@ -414,16 +415,16 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitSumQueryPlanResults(SumQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitSumQueryPlanResults(SumQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
@@ -431,16 +432,16 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitCountQueryPlanResults(CountQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitCountQueryPlanResults(CountQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
@@ -448,16 +449,16 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitAvgQueryPlanResults(AvgQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitAvgQueryPlanResults(AvgQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), entry.getKey(), storageUnit));
                 }
             }
         }
@@ -465,9 +466,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitFirstQueryPlanResults(FirstQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitFirstQueryPlanResults(FirstQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
             if (fragmentList.isEmpty()) {
@@ -476,16 +477,16 @@ public class NaivePlanSplitter implements IPlanSplitter {
             FragmentMeta fragment = fragmentList.get(0);
             List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
             for (StorageUnitMeta storageUnit : storageUnitList) {
-                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+                infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
             }
         }
         return infoList;
     }
 
     @Override
-    public List<SplitInfo> getSplitLastQueryPlanResults(LastQueryPlan plan) {
+    public List<NonInsertSplitInfo> getSplitLastQueryPlanResults(LastQueryPlan plan) {
         updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
+        List<NonInsertSplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
             if (fragmentList.isEmpty()) {
@@ -494,7 +495,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
             FragmentMeta fragment = fragmentList.get(fragmentList.size() - 1);
             List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
             for (StorageUnitMeta storageUnit : storageUnitList) {
-                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+                infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
             }
         }
         return infoList;

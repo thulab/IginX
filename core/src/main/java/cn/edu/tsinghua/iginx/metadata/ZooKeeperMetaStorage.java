@@ -666,7 +666,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.setData()
-                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getIdealTsInterval().toString() + "/" + fragmentMeta.getIdealTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
             throw new MetaStorageException("get error when update fragment", e);
         }
@@ -676,7 +676,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getIdealTsInterval().toString() + "/" + fragmentMeta.getIdealTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
             throw new MetaStorageException("get error when add fragment", e);
         }

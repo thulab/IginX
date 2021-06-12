@@ -73,14 +73,14 @@ public class SortedListMetaManager extends AbstractMetaManager {
     // 在排好序的分片列表中插入一个分片
     private static void insertIntoSortedFragmentMetaList(List<FragmentMeta> sortedFragmentList, FragmentMeta fragment) {
         if (sortedFragmentList.size() == 0 ||
-                sortedFragmentList.get(sortedFragmentList.size() - 1).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+                sortedFragmentList.get(sortedFragmentList.size() - 1).getIdealTsInterval().compareTo(fragment.getIdealTsInterval()) < 0) {
             sortedFragmentList.add(fragment);
             return;
         }
         int left = 0, right = sortedFragmentList.size() - 1;
         while (left < right) {
             int mid = (left + right) / 2;
-            if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+            if (sortedFragmentList.get(mid).getIdealTsInterval().compareTo(fragment.getIdealTsInterval()) < 0) {
                 left = mid + 1;
             } else {
                 right = mid;
@@ -92,16 +92,16 @@ public class SortedListMetaManager extends AbstractMetaManager {
     // 在排好序的分片列表中删除一个分片
     private static void deleteFromSortedFragmentMetaList(List<FragmentMeta> sortedFragmentList, FragmentMeta fragment) {
         if (sortedFragmentList.size() == 0 ||
-                sortedFragmentList.get(sortedFragmentList.size() - 1).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+                sortedFragmentList.get(sortedFragmentList.size() - 1).getIdealTsInterval().compareTo(fragment.getIdealTsInterval()) < 0) {
             return;
         }
         int left = 0, right = sortedFragmentList.size() - 1;
         while (left <= right) {
             int mid = (left + right) / 2;
-            if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) == 0) {
+            if (sortedFragmentList.get(mid).getIdealTsInterval().compareTo(fragment.getIdealTsInterval()) == 0) {
                 sortedFragmentList.remove(mid);
                 return;
-            } else if (sortedFragmentList.get(mid).getTsInterval().compareTo(fragment.getTsInterval()) < 0) {
+            } else if (sortedFragmentList.get(mid).getIdealTsInterval().compareTo(fragment.getIdealTsInterval()) < 0) {
                 left = mid + 1;
             } else {
                 right = mid;
@@ -113,7 +113,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
     private static List<FragmentMeta> searchSortedFragmentMetaList(List<FragmentMeta> fragmentMetaList, TimeSeriesInterval tsInterval) {
         List<FragmentMeta> resultList = new ArrayList<>();
         for (FragmentMeta fragmentMeta : fragmentMetaList) {
-            if (fragmentMeta.getTsInterval().isIntersect(tsInterval))
+            if (fragmentMeta.getIdealTsInterval().isIntersect(tsInterval))
                 resultList.add(fragmentMeta);
         }
         return resultList;
@@ -122,7 +122,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
     // 在排好序的分片列表中搜索包含某个时间序列的分片
     private static FragmentMeta searchSortedFragmentMetaList(List<FragmentMeta> fragmentMetaList, String tsName) {
         for (FragmentMeta fragmentMeta : fragmentMetaList) {
-            if (fragmentMeta.getTsInterval().isContain(tsName))
+            if (fragmentMeta.getIdealTsInterval().isContain(tsName))
                 return fragmentMeta;
         }
         return null;
@@ -144,7 +144,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
         fragmentMetaListMap = new HashMap<>();
 
         sortedFragmentMetaLists = fragmentListMap.values().stream().flatMap(List::stream)
-                .collect(Collectors.groupingBy(e -> e.getTimeInterval().getStartTime()))
+                .collect(Collectors.groupingBy(e -> e.getIdealTimeInterval().getStartTime()))
                 .entrySet().stream().map(e -> new Pair<>(e.getKey(), e.getValue()))
                 .sorted(Comparator.comparingLong(o -> o.k)).collect(Collectors.toList());
 
@@ -152,9 +152,9 @@ public class SortedListMetaManager extends AbstractMetaManager {
             Pair<Long, List<FragmentMeta>> pair = sortedFragmentMetaLists.get(i);
             if (i != 0) {
                 pair.v.addAll(sortedFragmentMetaLists.get(i - 1).v.stream()
-                        .filter(e -> e.getTimeInterval().getEndTime() > pair.k).collect(Collectors.toList()));
+                        .filter(e -> e.getIdealTimeInterval().getEndTime() > pair.k).collect(Collectors.toList()));
             }
-            pair.v.sort(Comparator.comparing(FragmentMeta::getTsInterval));
+            pair.v.sort(Comparator.comparing(FragmentMeta::getIdealTsInterval));
 
             fragmentMetaListMap.put(pair.k, pair.v);
         }
@@ -163,7 +163,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
     @Override
     protected void addFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
-        long timestamp = fragmentMeta.getTimeInterval().getStartTime();
+        long timestamp = fragmentMeta.getIdealTimeInterval().getStartTime();
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(timestamp, k -> new ArrayList<>());
         if (fragmentMetaList.size() == 0) { // 之前没有
             sortedFragmentMetaLists.add(searchSortedFragmentMetaLists(sortedFragmentMetaLists, timestamp) + 1, new Pair<>(timestamp, fragmentMetaList));
@@ -175,7 +175,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
     @Override
     protected void updateFragment(FragmentMeta fragmentMeta) {
         fragmentLock.writeLock().lock();
-        long timestamp = fragmentMeta.getTimeInterval().getStartTime();
+        long timestamp = fragmentMeta.getIdealTimeInterval().getStartTime();
         if (fragmentMetaListMap.get(timestamp) == null) {
             fragmentLock.writeLock().unlock();
             return; // 更新不存在的分片
@@ -198,7 +198,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap;
         fragmentLock.readLock().lock();
         resultMap = sortedFragmentMetaLists.stream().map(e -> e.v).map(e -> searchSortedFragmentMetaList(e, tsInterval)).flatMap(List::stream)
-                .distinct().collect(Collectors.groupingBy(FragmentMeta::getTsInterval));
+                .distinct().collect(Collectors.groupingBy(FragmentMeta::getIdealTsInterval));
         fragmentLock.readLock().unlock();
         return resultMap;
     }
@@ -209,7 +209,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
         fragmentLock.readLock().lock();
         if (sortedFragmentMetaLists.size() != 0) {
             searchSortedFragmentMetaList(sortedFragmentMetaLists.get(sortedFragmentMetaLists.size() - 1).v, tsInterval)
-                    .forEach(e -> resultMap.put(e.getTsInterval(), e));
+                    .forEach(e -> resultMap.put(e.getIdealTsInterval(), e));
         }
         fragmentLock.readLock().unlock();
         return resultMap;
@@ -221,7 +221,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
         fragmentLock.readLock().lock();
         if (sortedFragmentMetaLists.size() != 0) {
             sortedFragmentMetaLists.get(sortedFragmentMetaLists.size() - 1).v
-                    .forEach(e -> resultMap.put(e.getTsInterval(), e));
+                    .forEach(e -> resultMap.put(e.getIdealTsInterval(), e));
         }
         fragmentLock.readLock().unlock();
         return resultMap;
@@ -236,7 +236,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
             resultSet.addAll(searchSortedFragmentMetaList(sortedFragmentMetaLists.get(i).v, tsInterval));
         }
         fragmentLock.readLock().unlock();
-        return resultSet.stream().collect(Collectors.groupingBy(FragmentMeta::getTsInterval));
+        return resultSet.stream().collect(Collectors.groupingBy(FragmentMeta::getIdealTsInterval));
     }
 
     @Override
@@ -250,7 +250,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
                 continue;
             FragmentMeta fragmentMeta = searchSortedFragmentMetaList(sortedFragmentMetaLists.get(i).v, tsName);
             if (fragmentMeta != null) {
-                nextTimestamp = fragmentMeta.getTimeInterval().getEndTime();
+                nextTimestamp = fragmentMeta.getIdealTimeInterval().getEndTime();
                 resultList.add(fragmentMeta);
             }
         }
@@ -268,7 +268,7 @@ public class SortedListMetaManager extends AbstractMetaManager {
                 continue;
             FragmentMeta fragmentMeta = searchSortedFragmentMetaList(sortedFragmentMetaList.v, tsName);
             if (fragmentMeta != null) {
-                nextTimestamp = fragmentMeta.getTimeInterval().getEndTime();
+                nextTimestamp = fragmentMeta.getIdealTimeInterval().getEndTime();
                 resultList.add(fragmentMeta);
             }
         }

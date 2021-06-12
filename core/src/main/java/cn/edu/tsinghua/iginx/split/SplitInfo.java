@@ -19,15 +19,9 @@
 package cn.edu.tsinghua.iginx.split;
 
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
-public class SplitInfo {
-
-    private TimeInterval timeInterval;
-
-    private TimeSeriesInterval timeSeriesInterval;
+public abstract class SplitInfo {
 
     private StorageUnitMeta storageUnit;
 
@@ -35,44 +29,15 @@ public class SplitInfo {
 
     private int combineGroup;
 
-    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit) {
-        this.timeInterval = timeInterval;
-        this.timeSeriesInterval = timeSeriesInterval;
+    public SplitInfo(StorageUnitMeta storageUnit) {
         this.storageUnit = storageUnit;
         this.type = IginxPlan.IginxPlanType.UNKNOWN;
     }
 
-    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
-                     IginxPlan.IginxPlanType type) {
-        this.timeInterval = timeInterval;
-        this.timeSeriesInterval = timeSeriesInterval;
-        this.storageUnit = storageUnit;
-        this.type = type;
-    }
-
-    public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
-                     IginxPlan.IginxPlanType type, int combineGroup) {
-        this.timeInterval = timeInterval;
-        this.timeSeriesInterval = timeSeriesInterval;
+    public SplitInfo(StorageUnitMeta storageUnit, IginxPlan.IginxPlanType type, int combineGroup) {
         this.storageUnit = storageUnit;
         this.type = type;
         this.combineGroup = combineGroup;
-    }
-
-    public TimeInterval getTimeInterval() {
-        return timeInterval;
-    }
-
-    public void setTimeInterval(TimeInterval timeInterval) {
-        this.timeInterval = timeInterval;
-    }
-
-    public TimeSeriesInterval getTimeSeriesInterval() {
-        return timeSeriesInterval;
-    }
-
-    public void setTimeSeriesInterval(TimeSeriesInterval timeSeriesInterval) {
-        this.timeSeriesInterval = timeSeriesInterval;
     }
 
     public StorageUnitMeta getStorageUnit() {

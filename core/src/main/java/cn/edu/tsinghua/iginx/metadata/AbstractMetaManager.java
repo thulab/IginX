@@ -598,12 +598,12 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             mutex.acquire();
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta : latestFragments.values()) { // 终结老分片
-                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
+                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getIdealTimeInterval().getStartTime());
                 // 在更新分片时，先更新本地
                 fragmentMeta.setUpdatedBy(iginxId);
                 updateFragment(fragmentMeta);
                 this.zookeeperClient.setData()
-                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getIdealTsInterval().toString() + "/" + fragmentMeta.getIdealTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
             }
             for (FragmentMeta fragmentMeta : fragments) {
                 // 针对本机创建的分片，直接将其加入到本地
@@ -612,7 +612,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
                         .withMode(CreateMode.PERSISTENT)
-                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getIdealTsInterval().toString() + "/" + fragmentMeta.getIdealTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
             }
             return true;
         } catch (Exception e) {
@@ -708,11 +708,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             if (hasFragment()) {
                 return false;
             }
-            initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
+            initialFragments.sort(Comparator.comparingLong(o -> o.getIdealTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta : initialFragments) {
                 logger.info("create initial fragment: " + new String(JsonUtils.toJson(fragmentMeta)));
-                String tsIntervalName = fragmentMeta.getTsInterval().toString();
-                String timeIntervalName = fragmentMeta.getTimeInterval().toString();
+                String tsIntervalName = fragmentMeta.getIdealTsInterval().toString();
+                String timeIntervalName = fragmentMeta.getIdealTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
                 StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
@@ -835,14 +835,18 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         int splitNum = paths.size() == 1 ? 0 : Math.min(getStorageEngineNum(), paths.size());
         for (int i = 0; i < splitNum; i++) {
             storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+                    paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE,
+                    paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum - 1), timeInterval.getStartTime(), timeInterval.getEndTime(), storageEngineIdList);
             fragmentMap.put(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum)), pair.k);
             storageUnitList.add(pair.v);
         }
 
         // [startTime, +∞) & [endPath, null)
         storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+                paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE,
+                paths.get(paths.size() - 1), paths.get(paths.size() - 1), timeInterval.getStartTime(), timeInterval.getEndTime(), storageEngineIdList);
         fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() - 1), null), pair.k);
         storageUnitList.add(pair.v);
 
@@ -850,13 +854,17 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         // 一般情况下该范围内几乎无数据，因此作为一个分片处理
         // TODO 考虑大规模插入历史数据的情况
         storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+                null, null, 0, timeInterval.getStartTime(),
+                null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
         fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
         storageUnitList.add(pair.v);
 
         // [startTime, +∞) & (null, startPath)
         storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+                null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE,
+                null, null, timeInterval.getStartTime(), timeInterval.getEndTime(), storageEngineIdList);
         fragmentMap.put(new TimeSeriesInterval(null, paths.get(0)), pair.k);
         storageUnitList.add(pair.v);
 
@@ -1015,11 +1023,15 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         return storageEngineIdList;
     }
 
-    private Pair<List<FragmentMeta>, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    private Pair<List<FragmentMeta>, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+            String idealStartPath, String idealEndPath, long idealStartTime, long idealEndTime,
+            String actualStartPath, String actualEndPath, long actualStartTime, long actualEndTime,
+            List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         List<FragmentMeta> fragmentList = new ArrayList<>();
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true);
-        fragmentList.add(new FragmentMeta(startPath, endPath, startTime, endTime, masterId));
+        fragmentList.add(new FragmentMeta(idealStartPath, idealEndPath, idealStartTime, idealEndTime,
+                actualStartPath, actualEndPath, actualStartTime, actualEndTime, masterId));
         for (int i = 1; i < storageEngineList.size(); i++) {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
         }

@@ -38,9 +38,15 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 
 public final class FragmentMeta {
 
-    private final TimeInterval timeInterval;
+    // 理论边界 左闭右开
+    private TimeInterval idealTimeInterval;
 
-    private final TimeSeriesInterval tsInterval;
+    private TimeSeriesInterval idealTsInterval;
+
+    // 实际边界 左闭右闭
+    private TimeInterval actualTimeInterval;
+
+    private TimeSeriesInterval actualTsInterval;
 
     private long createdBy;
 
@@ -53,33 +59,78 @@ public final class FragmentMeta {
     private transient String fakeStorageUnitId;
 
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        this.idealTimeInterval = new TimeInterval(startTime, endTime);
+        this.idealTsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
     }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String fakeStorageUnitId) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+    public FragmentMeta(String idealStartPrefix, String idealEndPrefix, long idealStartTime, long idealEndTime,
+                        String actualStartPrefix, String actualEndPrefix, long actualStartTime, long actualEndTime,
+                        String fakeStorageUnitId) {
+        this.idealTsInterval = new TimeSeriesInterval(idealStartPrefix, idealEndPrefix);
+        this.idealTimeInterval = new TimeInterval(idealStartTime, idealEndTime);
+        this.actualTsInterval = new TimeSeriesInterval(actualStartPrefix, actualEndPrefix);
+        this.actualTimeInterval = new TimeInterval(actualStartTime, actualEndTime);
+        this.fakeStorageUnitId = fakeStorageUnitId;
+    }
+
+    public FragmentMeta(TimeSeriesInterval idealTsInterval, TimeInterval idealTimeInterval, TimeSeriesInterval actualTsInterval, TimeInterval actualTimeInterval, String fakeStorageUnitId) {
+        this.idealTsInterval = idealTsInterval;
+        this.idealTimeInterval = idealTimeInterval;
+        this.actualTsInterval = actualTsInterval;
+        this.actualTimeInterval = actualTimeInterval;
         this.fakeStorageUnitId = fakeStorageUnitId;
     }
 
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, StorageUnitMeta masterStorageUnit) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        this.idealTimeInterval = new TimeInterval(startTime, endTime);
+        this.idealTsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
         this.masterStorageUnit = masterStorageUnit;
         this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
-    public TimeInterval getTimeInterval() {
-        return timeInterval;
+    public FragmentMeta(TimeSeriesInterval idealTsInterval, TimeInterval idealTimeInterval, TimeSeriesInterval actualTsInterval, TimeInterval actualTimeInterval, StorageUnitMeta masterStorageUnit) {
+        this.idealTsInterval = idealTsInterval;
+        this.idealTimeInterval = idealTimeInterval;
+        this.actualTsInterval = actualTsInterval;
+        this.actualTimeInterval = actualTimeInterval;
+        this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
-    public TimeSeriesInterval getTsInterval() {
-        return tsInterval;
+    public TimeInterval getIdealTimeInterval() {
+        return idealTimeInterval;
+    }
+
+    public void setIdealTimeInterval(TimeInterval idealTimeInterval) {
+        this.idealTimeInterval = idealTimeInterval;
+    }
+
+    public TimeSeriesInterval getIdealTsInterval() {
+        return idealTsInterval;
+    }
+
+    public void setIdealTsInterval(TimeSeriesInterval idealTsInterval) {
+        this.idealTsInterval = idealTsInterval;
+    }
+
+    public TimeInterval getActualTimeInterval() {
+        return actualTimeInterval;
+    }
+
+    public void setActualTimeInterval(TimeInterval actualTimeInterval) {
+        this.actualTimeInterval = actualTimeInterval;
+    }
+
+    public TimeSeriesInterval getActualTsInterval() {
+        return actualTsInterval;
+    }
+
+    public void setActualTsInterval(TimeSeriesInterval actualTsInterval) {
+        this.actualTsInterval = actualTsInterval;
     }
 
     public FragmentMeta endFragmentMeta(long endTime) {
-        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
+        return new FragmentMeta(idealTsInterval.getStartTimeSeries(), idealTsInterval.getEndTimeSeries(), idealTimeInterval.getStartTime(), endTime);
     }
 
     public long getCreatedBy() {
@@ -125,9 +176,11 @@ public final class FragmentMeta {
 
     @Override
     public String toString() {
-        return "FragmentMeta{" +
-                "timeInterval=" + timeInterval +
-                ", tsInterval=" + tsInterval +
-                '}';
+        return "FragmentMeta{"
+                + "idealTimeInterval=" + idealTimeInterval
+                + ", idealTimeSeriesInterval=" + idealTsInterval
+                + ", actualTimeInterval=" + actualTimeInterval
+                + ", actualTimeSeriesInterval=" + actualTsInterval
+                + "}";
     }
 }
