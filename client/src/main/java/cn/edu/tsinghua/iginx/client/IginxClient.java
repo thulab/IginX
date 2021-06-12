@@ -19,11 +19,7 @@
 package cn.edu.tsinghua.iginx.client;
 
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.session.Column;
 import cn.edu.tsinghua.iginx.session.Session;
-import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -34,10 +30,8 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.*;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
@@ -63,8 +57,6 @@ public class IginxClient {
     private static final int MAX_HELP_CONSOLE_WIDTH = 88;
 
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
-
-    private static int MAX_GETDATA_NUM = 100;
 
     static String host = "127.0.0.1";
 
@@ -173,105 +165,30 @@ public class IginxClient {
 
     private static void processCommand(String command) {
         String[] commandParts = command.split(" ");
-        int flag = 0;
-        if (!(commandParts.length < 3 || !commandParts[0].equals("add") || !commandParts[1].equals("storageEngine"))) {
-            flag = 1;
-        }
-        if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("lines"))) {
-            flag = 2;
-        }
-        if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("replica")))
-        {
-            flag = 3;
-        }
-        if (!(commandParts.length < 2 || !commandParts[0].equals("delete") || !commandParts[1].equals("data")))
-        {
-            flag = 4;
-        }
-        if (flag == 0)
-        {
+        if (commandParts.length < 3 || !commandParts[0].equals("add") || !commandParts[1].equals("storageEngine")) {
             System.out.println("unsupported command");
             return;
         }
-        if (flag == 1)
-        {
-            String[] storageEngineParts = commandParts[2].split("#");
-            String ip = storageEngineParts[0];
-            int port = Integer.parseInt(storageEngineParts[1]);
-            StorageEngineType storageEngineType = StorageEngine.toThrift(StorageEngine.fromString(storageEngineParts[2]));
-            Map<String, String> extraParams = new HashMap<>();
-            for (int i = 3; i < storageEngineParts.length; i++)
-            {
-                String[] KAndV = storageEngineParts[i].split("=");
-                if (KAndV.length != 2)
-                {
-                    System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
-                    continue;
-                }
-                extraParams.put(KAndV[0], KAndV[1]);
+        String[] storageEngineParts = commandParts[2].split("#");
+        String ip = storageEngineParts[0];
+        int port = Integer.parseInt(storageEngineParts[1]);
+        StorageEngineType storageEngineType = StorageEngine.toThrift(StorageEngine.fromString(storageEngineParts[2]));
+        Map<String, String> extraParams = new HashMap<>();
+        for (int i = 3; i < storageEngineParts.length; i++) {
+            String[] KAndV = storageEngineParts[i].split("=");
+            if (KAndV.length != 2) {
+                System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
+                continue;
             }
-            try
-            {
-                session.addStorageEngine(ip, port, storageEngineType, extraParams);
-                System.out.println("success");
-            }
-            catch (Exception e)
-            {
-                System.out.println("encounter error when add storage engine, please check the status of storage engine.");
-            }
+            extraParams.put(KAndV[0], KAndV[1]);
         }
-        if (flag == 2)
-        {
-            try
-            {
-                List<String> paths = getTimeseries();
-                Set<Long> timestamps = new HashSet();
-                for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM)
-                {
-                    List<String> ins = new ArrayList<>();
-                    for (int j = i ; j < i + MAX_GETDATA_NUM && j < paths.size(); j++)
-                        ins.add(paths.get(j));
-                    SessionQueryDataSet sessionQueryDataSet = session.queryData(ins, 0L, Long.MAX_VALUE);
-                    for (int j = 0; j < sessionQueryDataSet.getTimestamps().length; j++)
-                        timestamps.add(sessionQueryDataSet.getTimestamps()[j]);
-
-                }
-                System.out.println(timestamps.size());
-            }
-            catch (Exception e)
-            {
-                System.out.println("encounter error when count lines, please check the status of storage engine.");
-            }
-        }
-        if (flag == 3)
-        {
-            int ret = session.getReplicaNum();
-            System.out.println(ret);
-        }
-        if (flag == 4)
-        {
-            try
-            {
-                List<String> paths = getTimeseries();
-                if (paths.size() != 0)
-                    session.deleteColumns(paths);
-                System.out.println("success");
-            }
-            catch (Exception e)
-            {
-                System.out.println("encounter error when delete data, please check the status of storage engine.");
-            }
+        try {
+            session.addStorageEngine(ip, port, storageEngineType, extraParams);
+            System.out.println("success");
+        } catch (Exception e) {
+            System.out.println("encounter error when add storage engine, please check the status of storage engine.");
         }
     }
 
-    public static List<String> getTimeseries() throws ExecutionException, SessionException
-    {
-        List<String> ret = new ArrayList<>();
-        List<Column> columns = session.showColumns();
-        for (Column column: columns)
-        {
-            ret.add(column.getPath());
-        }
-        return ret;
-    }
+
 }
