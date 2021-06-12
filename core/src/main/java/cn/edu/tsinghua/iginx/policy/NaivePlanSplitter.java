@@ -22,7 +22,6 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
@@ -90,7 +89,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
     }
 
     public static List<TimeInterval> splitTimeIntervalForDownsampleQuery(List<TimeInterval> timeIntervals,
-                                                                         long beginTime, long endTime, long precision) {
+        long beginTime, long endTime, long precision) {
         List<TimeInterval> resultList = new ArrayList<>();
         for (TimeInterval timeInterval : timeIntervals) {
             long midIntervalBeginTime = Math.max(timeInterval.getStartTime(), beginTime);
@@ -208,7 +207,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
             iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
@@ -235,7 +234,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
             iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
@@ -262,7 +261,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, false);
@@ -278,7 +277,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
@@ -296,15 +295,15 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<SplitInfo> infoList = new ArrayList<>();
         // 对查出来的分片结果按照开始时间进行排序、分组
         List<List<FragmentMeta>> fragmentMetasList = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval()).values().stream().flatMap(List::stream)
-                .sorted(Comparator.comparingLong(e -> e.getTimeInterval().getStartTime()))
-                .collect(Collectors.groupingBy(e -> e.getTimeInterval().getStartTime())).entrySet().stream()
-                .sorted(Comparator.comparingLong(Map.Entry::getKey)).map(Map.Entry::getValue).collect(Collectors.toList());
+            plan.getTsInterval(), plan.getTimeInterval()).values().stream().flatMap(List::stream)
+            .sorted(Comparator.comparingLong(e -> e.getTimeInterval().getStartTime()))
+            .collect(Collectors.groupingBy(e -> e.getTimeInterval().getStartTime())).entrySet().stream()
+            .sorted(Comparator.comparingLong(Map.Entry::getKey)).map(Map.Entry::getValue).collect(Collectors.toList());
         // 聚合精度，后续会多次用到
         long precision = plan.getPrecision();
         // 计算子查询时间片列表
         List<TimeInterval> planTimeIntervals = splitTimeIntervalForDownsampleQuery(fragmentMetasList.stream()
-                .map(e -> e.get(0).getTimeInterval()).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
+            .map(e -> e.get(0).getTimeInterval()).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime(), plan.getPrecision());
         // 所属的合并组的组号
         int combineGroup = 0;
         int index = 0;
@@ -397,7 +396,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
@@ -414,7 +413,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
@@ -431,7 +430,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
@@ -448,7 +447,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
@@ -465,7 +464,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
-                plan.getTsInterval(), plan.getTimeInterval());
+            plan.getTsInterval(), plan.getTimeInterval());
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<FragmentReplicaMeta> replicas = selectFragmentReplicas(fragment, true);
@@ -520,18 +519,12 @@ public class NaivePlanSplitter implements IPlanSplitter {
 //            replicas.add(fragment.getReplicaMetas().get(new Random().nextInt(fragment.getReplicaMetasNum())));
         } else {
             replicas.addAll(fragment.getReplicaMetas().values());
-    public List<Long> getSplitShowColumnsPlanResult() {
-        return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+        }
+        return replicas;
     }
 
     @Override
-    public List<StorageUnitMeta> selectStorageUnitList(FragmentMeta fragment, boolean isQuery) {
-        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-        // TODO 暂时设置为只查主
-        storageUnitList.add(fragment.getMasterStorageUnit());
-        if (!isQuery) {
-            storageUnitList.addAll(fragment.getMasterStorageUnit().getReplicas());
-        }
-        return replicas;
+    public List<Long> getSplitShowColumnsPlanResult() {
+        return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
     }
 }

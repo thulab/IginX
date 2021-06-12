@@ -60,6 +60,10 @@ public class Config {
 
     private boolean enableRestService = true;
 
+    private String[] hostNames = {"localhost"};
+
+    private int instancesNumPerClient = 12;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -218,5 +222,21 @@ public class Config {
 
     public void setEnableRestService(boolean enableRestService) {
         this.enableRestService = enableRestService;
+    }
+
+    public String[] getHostNames() {
+        return hostNames;
+    }
+
+    public void setHostNames(String hostNames) {
+        this.hostNames = hostNames.split(",");
+    }
+
+    public int getInstancesNumPerClient() {
+        return instancesNumPerClient;
+    }
+
+    public void setInstancesNumPerClient(int instancesNumPerClient) {
+        this.instancesNumPerClient = instancesNumPerClient;
     }
 }

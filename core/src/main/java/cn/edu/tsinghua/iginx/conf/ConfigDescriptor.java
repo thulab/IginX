@@ -75,6 +75,9 @@ public class ConfigDescriptor {
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
+            config.setHostNames(properties.getProperty("hostnames", "localhost"));
+            config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "12")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

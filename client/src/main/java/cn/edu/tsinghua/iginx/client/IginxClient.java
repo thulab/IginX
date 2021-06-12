@@ -34,10 +34,10 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
@@ -63,6 +63,8 @@ public class IginxClient {
     private static final int MAX_HELP_CONSOLE_WIDTH = 88;
 
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
+
+    private static int MAX_GETDATA_NUM = 100;
 
     static String host = "127.0.0.1";
 
@@ -98,8 +100,8 @@ public class IginxClient {
             }
         } catch (ParseException e) {
             System.out.println(
-                    "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
-                            + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
+                "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
+                    + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
             System.out.println("For more information, please check the following hint.");
             hf.printHelp(SCRIPT_HINT, options, true);
             return false;
@@ -115,8 +117,8 @@ public class IginxClient {
 
         if (args == null || args.length == 0) {
             System.out.println(
-                    "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
-                            + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
+                "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
+                    + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
             System.out.println("For more information, please check the following hint.");
             hf.printHelp(SCRIPT_HINT, options, true);
             return;
@@ -133,8 +135,8 @@ public class IginxClient {
         if (str == null) {
             if (isRequired && defaultValue == null) {
                 String msg =
-                        String.format(
-                                "%s> Required values for option '%s' not provided", IGINX_CLI_PREFIX, name);
+                    String.format(
+                        "%s> Required values for option '%s' not provided", IGINX_CLI_PREFIX, name);
                 System.out.println(msg);
                 System.out.println("Use -help for more information");
                 throw new RuntimeException();
@@ -175,7 +177,7 @@ public class IginxClient {
         if (!(commandParts.length < 3 || !commandParts[0].equals("add") || !commandParts[1].equals("storageEngine"))) {
             flag = 1;
         }
-        if (!(commandParts.length < 3 || !commandParts[0].equals("count") || !commandParts[1].equals("lines"))) {
+        if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("lines"))) {
             flag = 2;
         }
         if (!(commandParts.length < 2 || !commandParts[0].equals("count") || !commandParts[1].equals("replica")))
@@ -220,18 +222,6 @@ public class IginxClient {
         }
         if (flag == 2)
         {
-            //session.downsampleQuery();
-            List<String> paths = new ArrayList<>();
-            StringBuilder ins = new StringBuilder("*");
-            for (int i = 0; i < 10; i++)
-            {
-                ins.append(".*");
-                paths.add(ins.toString());
-            }
-            try
-            {
-                SessionQueryDataSet sessionQueryDataSet = session.queryData(paths,0,System.currentTimeMillis() + 1000000L);
-                System.out.println(sessionQueryDataSet.getTimestamps().length);
             try
             {
                 List<String> paths = getTimeseries();
@@ -267,13 +257,9 @@ public class IginxClient {
                     session.deleteColumns(paths);
                 System.out.println("success");
             }
-            catch (SessionException e)
+            catch (Exception e)
             {
-                e.printStackTrace();
-            }
-            catch (ExecutionException e)
-            {
-                e.printStackTrace();
+                System.out.println("encounter error when delete data, please check the status of storage engine.");
             }
         }
     }

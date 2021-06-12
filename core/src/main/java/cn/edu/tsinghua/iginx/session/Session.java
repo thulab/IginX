@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
@@ -83,6 +85,7 @@ public class Session {
     private TTransport transport;
     private boolean isClosed;
     private int redirectTimes;
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
     public Session(String host, int port) {
         this(host, port, Constants.DEFAULT_USERNAME, Constants.DEFAULT_PASSWORD);
@@ -659,6 +662,11 @@ public class Session {
         }
 
         return new SessionQueryDataSet(resp);
+    }
+
+    public int getReplicaNum()
+    {
+        return config.getReplicaNum();
     }
 
 }

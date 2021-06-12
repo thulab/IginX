@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -574,17 +575,58 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> generateFragments(String startPath, long startTime) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
-        List<FragmentMeta> leftFragmentList = new ArrayList<>();
-        List<FragmentMeta> rightFragmentList = new ArrayList<>();
 
-        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
-        if (startTime != 0) {
-            leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, chooseStorageEngineIdListForNewFragment()));
-            rightFragmentList.add(new FragmentMeta(null, startPath, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+        String[] hostNames = ConfigDescriptor.getInstance().getConfig().getHostNames();
+        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
+        String[] prefixes = new String[hostNames.length * instancesNumPerClient];
+        for (int i = 0; i < hostNames.length; i++) {
+            for (int j = 0; j < instancesNumPerClient; j++) {
+                prefixes[i * instancesNumPerClient + j] = hostNames[i] + (j + 2);
+            }
         }
-        fragmentMap.put(new TimeSeriesInterval(startPath, null), leftFragmentList);
-        fragmentMap.put(new TimeSeriesInterval(null, startPath), rightFragmentList);
+        Arrays.sort(prefixes);
+
+        List<FragmentMeta> fragmentList;
+        List<Long> storageEngineList;
+        for (int i = 0; i < hostNames.length * instancesNumPerClient - 1; i++) {
+            fragmentList = new ArrayList<>();
+            storageEngineList = new ArrayList<>();
+            for (int j = i; j < i + replicaNum; j++) {
+                storageEngineList.add(getStorageEngineList().get(j % getStorageEngineList().size()).getId());
+            }
+            fragmentList.add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, storageEngineList));
+            fragmentMap.put(new TimeSeriesInterval(prefixes[i], prefixes[i + 1]), fragmentList);
+        }
+
+        fragmentList = new ArrayList<>();
+        storageEngineList = new ArrayList<>();
+        for (int i = 0; i < replicaNum; i++) {
+            storageEngineList.add(getStorageEngineList().get(i).getId());
+        }
+        fragmentList.add(new FragmentMeta(null, prefixes[0], 0, Long.MAX_VALUE, storageEngineList));
+        fragmentMap.put(new TimeSeriesInterval(null, prefixes[0]), fragmentList);
+
+        fragmentList = new ArrayList<>();
+        storageEngineList = new ArrayList<>();
+        for (int i = 0; i < replicaNum; i++) {
+            storageEngineList.add(getStorageEngineList().get(getStorageEngineList().size() - 1 - i).getId());
+        }
+        fragmentList.add(new FragmentMeta(prefixes[hostNames.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, storageEngineList));
+        fragmentMap.put(new TimeSeriesInterval(prefixes[hostNames.length * instancesNumPerClient - 1], null), fragmentList);
+
+//        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+//        List<FragmentMeta> leftFragmentList = new ArrayList<>();
+//        List<FragmentMeta> rightFragmentList = new ArrayList<>();
+//
+//        leftFragmentList.add(new FragmentMeta(startPath, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+//        rightFragmentList.add(new FragmentMeta(null, startPath, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+//        if (startTime != 0) {
+//            leftFragmentList.add(new FragmentMeta(startPath, null, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+//            rightFragmentList.add(new FragmentMeta(null, startPath, 0, startTime, chooseStorageEngineIdListForNewFragment()));
+//        }
+//        fragmentMap.put(new TimeSeriesInterval(startPath, null), leftFragmentList);
+//        fragmentMap.put(new TimeSeriesInterval(null, startPath), rightFragmentList);
 
         return fragmentMap;
     }
