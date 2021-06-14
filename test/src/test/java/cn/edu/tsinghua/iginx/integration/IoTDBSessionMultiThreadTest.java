@@ -132,7 +132,7 @@ public class IoTDBSessionMultiThreadTest {
             assertEquals(5, resPaths.size());
             assertEquals(TIME_PERIOD, len);
             assertEquals(TIME_PERIOD, dataSet.getValues().size());
-            for (int j = 0; j < len; i++) {
+            for (int j = 0; j < len; j++) {
                 long timestamp = dataSet.getTimestamps()[j];
                 assertEquals(j + START_TIME, timestamp);
                 List<Object> result = dataSet.getValues().get(j);
@@ -143,7 +143,6 @@ public class IoTDBSessionMultiThreadTest {
         }
 
         //Thread.sleep(1000);
-
         // Test max function
         SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> maxResPaths = maxDataSet.getPaths();
@@ -243,7 +242,7 @@ public class IoTDBSessionMultiThreadTest {
 
         for (int i = 0; i < threadNum; i++) {
             tasks[i] = new Task(2, getSinglePathList(i), delStartTime,
-                    delEndTime, delTimePeriod, 1, null, 6668);
+                    delEndTime, delTimePeriod, 1, null, 6888);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -401,7 +400,7 @@ public class IoTDBSessionMultiThreadTest {
 
         for (int i = 0; i < threadNum; i++) {
             tasks[i] = new Task(2, getSinglePathList(i), delStartTime, delEndTime, delTimePeriod,
-                    1, null, 6668);
+                    1, null, 6888);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -494,7 +493,7 @@ public class IoTDBSessionMultiThreadTest {
 
         for (int i = 0; i < threadNum; i++) {
             tasks[i] = new Task(2, delPath, delStartTime + delStep * i,
-                    delStartTime + delStep * (i + 1) - 1, delStep, 1, null, 6668);
+                    delStartTime + delStep * (i + 1) - 1, delStep, 1, null, 6888);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -559,7 +558,7 @@ public class IoTDBSessionMultiThreadTest {
         public Task(int type, List<String> path, long startTime, long endTime,
                     long pointNum, int step, AggregateType aggrType, int portNum) throws SessionException {
             this.type = type;
-            this.path = path;
+            this.path = new ArrayList(path);
             this.startTime = startTime;
             this.endTime = endTime;
             this.pointNum = pointNum;
