@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,4 +34,11 @@ public class DeleteColumnsPlan extends ColumnPlan {
         super(false, paths);
         this.setIginxPlanType(DELETE_COLUMNS);
     }
+
+    public DeleteColumnsPlan(List<String> paths, StorageUnitMeta storageUnit) {
+        super(false, paths);
+        this.setIginxPlanType(DELETE_COLUMNS);
+        this.setStorageUnit(storageUnit);
+    }
+
 }

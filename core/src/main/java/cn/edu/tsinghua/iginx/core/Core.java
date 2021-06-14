@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
@@ -73,7 +74,7 @@ public final class Core {
     private ICombineExecutor combineExecutor;
 
     private Core() {
-        IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+        IMetaManager metaManager = DefaultMetaManager.getInstance();
         registerPlanGenerator(new SimplePlanGenerator());
         registerCombineExecutor(new CombineExecutor());
 

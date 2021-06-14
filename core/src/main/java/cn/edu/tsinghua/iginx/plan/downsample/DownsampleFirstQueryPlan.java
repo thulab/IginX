@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan.downsample;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,12 +29,11 @@ public class DownsampleFirstQueryPlan extends DownsampleQueryPlan {
     private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstQueryPlan.class);
 
     public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        super(paths, startTime, endTime, precision);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
+        this(paths, startTime, endTime, precision, null);
     }
 
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision, long storageEngineId) {
-        super(paths, startTime, endTime, precision, storageEngineId);
+    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, precision, storageUnit);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
     }
 }

@@ -63,6 +63,9 @@ public class ConfigDescriptor {
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
             config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.NativePolicy"));
+
+            config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
+
             config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
             config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
 
@@ -75,6 +78,7 @@ public class ConfigDescriptor {
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
+            config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

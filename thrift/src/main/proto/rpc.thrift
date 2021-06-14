@@ -136,7 +136,6 @@ struct AggregateQueryResp {
     5: optional binary valuesList
 }
 
-
 struct ValueFilterQueryReq {
     1: required i64 sessionId
     2: required list<string> paths
@@ -161,7 +160,6 @@ struct DownsampleQueryReq {
     6: required i64 precision
 }
 
-
 struct DownsampleQueryResp {
     1: required Status status
     2: optional list<string> paths
@@ -169,16 +167,11 @@ struct DownsampleQueryResp {
     4: optional QueryDataSet queryDataSet
 }
 
-
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
 
     Status closeSession(1:CloseSessionReq req);
-
-    Status createDatabase(1:CreateDatabaseReq req);
-
-    Status dropDatabase(1:DropDatabaseReq req);
 
     Status addColumns(1:AddColumnsReq req);
 

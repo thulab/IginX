@@ -25,18 +25,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class IoTDBBeforeDilatationExample {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBBeforeDilatationExample.class);
-    private static final String DATABASE_NAME = "root.sg1";
-    private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
-    private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
-    private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
-    private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
+    private static final String COLUMN_D1_S1 = "sg.d1.s1";
+    private static final String COLUMN_D1_S2 = "sg.d2.s2";
+    private static final String COLUMN_D2_S1 = "sg.d2.s2";
+    private static final String COLUMN_D3_S1 = "sg.d3.s3";
     private static final long endTimestamp = 100000000L;
     private static final int insertTimes = 10000;
     private static final int recordPerInsert = 10;
@@ -53,30 +50,10 @@ public class IoTDBBeforeDilatationExample {
     public static void main(String[] args) throws Exception {
         session = new Session("127.0.0.1", 6888, "root", "root");
         session.openSession();
-        // 创建数据库
-        session.createDatabase(DATABASE_NAME);
-        // 增加时序列
-        addColumns();
         // 插入数据
         insertRecords();
         // 关闭 session
         session.closeSession();
-    }
-
-    private static void addColumns() throws SessionException, ExecutionException {
-        Map<String, String> attributesForOnePath = new HashMap<>();
-        // INT64
-        attributesForOnePath.put("DataType", "2");
-        // RLE
-        attributesForOnePath.put("Encoding", "2");
-        // SNAPPY
-        attributesForOnePath.put("Compression", "1");
-
-        List<Map<String, String>> attributes = new ArrayList<>();
-        for (int i = 0; i < paths.size(); i++) {
-            attributes.add(attributesForOnePath);
-        }
-        session.addColumns(paths, attributes);
     }
 
     private static void insertRecords() throws SessionException, ExecutionException, InterruptedException {
@@ -105,8 +82,6 @@ public class IoTDBBeforeDilatationExample {
                 logger.info("insert progress: " + (insertTimes - i + 1) + "/" + insertTimes + ".");
             }
         }
-
-
     }
 
 }

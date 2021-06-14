@@ -7,6 +7,7 @@ import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.zookeeper.KeeperException;
@@ -26,8 +27,7 @@ import static org.junit.Assert.*;
 public class IoTDBSessionMultiThreadTest {
 
 
-    private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionIT.class);
-    private static final String DATABASE_NAME = "sg1";
+    private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionMultiThreadTest.class);
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";
@@ -49,9 +49,7 @@ public class IoTDBSessionMultiThreadTest {
             paths.add(COLUMN_D4_S4);
             paths.add(COLUMN_D5_S5);
             session = new Session("127.0.0.1", 6888, "root", "root");
-            session.openSession();
-            session.createDatabase(DATABASE_NAME);
-            addColumns();
+             session.openSession();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,9 +63,7 @@ public class IoTDBSessionMultiThreadTest {
         ZooKeeper zk = null;
         try {
             zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
-            ZKUtil.deleteRecursive(zk, "/iginx");
             ZKUtil.deleteRecursive(zk, "/storage");
-            ZKUtil.deleteRecursive(zk, "/schema");
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
@@ -102,7 +98,8 @@ public class IoTDBSessionMultiThreadTest {
         Task[] tasks = new Task[5];
         Thread[] threads = new Thread[5];
         for (int i = 0; i < 5; i++) {
-            tasks[i] = new Task(1, getSinglePathList(i), START_TIME, END_TIME, TIME_PERIOD, 1);
+            tasks[i] = new Task(1, getSinglePathList(i), START_TIME, END_TIME,
+                    TIME_PERIOD, 1, null, 6888);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < 5; i++) {
@@ -112,24 +109,40 @@ public class IoTDBSessionMultiThreadTest {
             threads[i].join();
         }
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
-        Thread.sleep(10000);
+        //Thread.sleep(1000);
         //query
-        SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
-        int len = dataSet.getTimestamps().length;
-        List<String> resPaths = dataSet.getPaths();
-        assertEquals(5, resPaths.size());
-        assertEquals(TIME_PERIOD, len);
-        assertEquals(TIME_PERIOD, dataSet.getValues().size());
-        for (int i = 0; i < len; i++) {
-            long timestamp = dataSet.getTimestamps()[i];
-            assertEquals(i + START_TIME, timestamp);
-            List<Object> result = dataSet.getValues().get(i);
-            for (int j = 0; j < 5; j++) {
-                assertEquals(getPathNum(resPaths.get(j)) + timestamp, result.get(j));
+
+        Task[] queryTasks = new Task[5];
+        Thread[] queryThreads = new Thread[5];
+        for (int i = 0; i < 5; i++) {
+            queryTasks[i] = new Task(3, paths, START_TIME, END_TIME + 1,
+                    0, 0, null, 6888);
+            queryThreads[i] = new Thread(queryTasks[i]);
+        }
+        for (int i = 0; i < 5; i++) {
+            queryThreads[i].start();
+        }
+        for (int i = 0; i < 5; i++) {
+            queryThreads[i].join();
+        }
+        for (int i = 0; i < 5; i++) {
+            SessionQueryDataSet dataSet = (SessionQueryDataSet) queryTasks[i].getQueryDataSet();
+            int len = dataSet.getTimestamps().length;
+            List<String> resPaths = dataSet.getPaths();
+            assertEquals(5, resPaths.size());
+            assertEquals(TIME_PERIOD, len);
+            assertEquals(TIME_PERIOD, dataSet.getValues().size());
+            for (int j = 0; j < len; i++) {
+                long timestamp = dataSet.getTimestamps()[j];
+                assertEquals(j + START_TIME, timestamp);
+                List<Object> result = dataSet.getValues().get(j);
+                for (int k = 0; k < 5; k++) {
+                    assertEquals(getPathNum(resPaths.get(k)) + timestamp, result.get(k));
+                }
             }
         }
 
-        Thread.sleep(5000);
+        //Thread.sleep(1000);
 
         // Test max function
         SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.MAX);
@@ -157,7 +170,8 @@ public class IoTDBSessionMultiThreadTest {
         Task[] tasks = new Task[5];
         Thread[] threads = new Thread[5];
         for (int i = 0; i < 5; i++) {
-            tasks[i] = new Task(1, paths, START_TIME + i, END_TIME - (4 - i), TIME_PERIOD / 5, 5);
+            tasks[i] = new Task(1, paths, START_TIME + i, END_TIME - (4 - i),
+                    TIME_PERIOD / 5, 5, null, 6888);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < 5; i++) {
@@ -167,7 +181,7 @@ public class IoTDBSessionMultiThreadTest {
             threads[i].join();
         }
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
-        Thread.sleep(10000);
+        //Thread.sleep(1000);
         //query
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
         int len = dataSet.getTimestamps().length;
@@ -210,7 +224,7 @@ public class IoTDBSessionMultiThreadTest {
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
-        Thread.sleep(10000);
+        //Thread.sleep(1000);
 
         SessionQueryDataSet dataSet1 = session.queryData(paths, START_TIME, END_TIME + 1);
         int len1 = dataSet1.getTimestamps().length;
@@ -229,7 +243,7 @@ public class IoTDBSessionMultiThreadTest {
 
         for (int i = 0; i < threadNum; i++) {
             tasks[i] = new Task(2, getSinglePathList(i), delStartTime,
-                    delEndTime, delTimePeriod, 1);
+                    delEndTime, delTimePeriod, 1, null, 6668);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -239,7 +253,7 @@ public class IoTDBSessionMultiThreadTest {
             threads[i].join();
         }
 
-        Thread.sleep(5000);
+        //Thread.sleep(1000);
 
         //query
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
@@ -288,7 +302,7 @@ public class IoTDBSessionMultiThreadTest {
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
-        Thread.sleep(10000);
+        //Thread.sleep(1000);
 
         SessionQueryDataSet dataSet1 = session.queryData(paths, START_TIME, END_TIME + 1);
         int len1 = dataSet1.getTimestamps().length;
@@ -314,7 +328,7 @@ public class IoTDBSessionMultiThreadTest {
 
         for (int i = 0; i < threadNum; i++) {
             tasks[i] = new Task(2, delPath, delStartTime + delStep * i,
-                    delStartTime + delStep * (i + 1) - 1, delStep, 1);
+                    delStartTime + delStep * (i + 1) - 1, delStep, 1, null, 6888);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -324,7 +338,7 @@ public class IoTDBSessionMultiThreadTest {
             threads[i].join();
         }
 
-        Thread.sleep(5000);
+        //Thread.sleep(1000);
 
         //query
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
@@ -373,7 +387,7 @@ public class IoTDBSessionMultiThreadTest {
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
-        Thread.sleep(10000);
+        //Thread.sleep(1000);
 
         long delStartTime = START_TIME;
         long delEndTime = END_TIME;
@@ -386,7 +400,8 @@ public class IoTDBSessionMultiThreadTest {
 
 
         for (int i = 0; i < threadNum; i++) {
-            tasks[i] = new Task(2, getSinglePathList(i), delStartTime, delEndTime, delTimePeriod, 1);
+            tasks[i] = new Task(2, getSinglePathList(i), delStartTime, delEndTime, delTimePeriod,
+                    1, null, 6668);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -396,7 +411,7 @@ public class IoTDBSessionMultiThreadTest {
             threads[i].join();
         }
 
-        Thread.sleep(5000);
+        //Thread.sleep(1000);
 
         //query
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
@@ -435,11 +450,34 @@ public class IoTDBSessionMultiThreadTest {
     }
 
     @Test
+    public void exampleTest() throws ExecutionException, SessionException {
+        insertRecords();
+
+        //query
+        SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
+        int len = dataSet.getTimestamps().length;
+        List<String> resPaths = dataSet.getPaths();
+        assertEquals(5, resPaths.size());
+        assertEquals(TIME_PERIOD, len);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());
+
+        deleteDataInColumns();
+
+        //query
+        dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
+        len = dataSet.getTimestamps().length;
+        resPaths = dataSet.getPaths();
+        assertEquals(5, resPaths.size());
+        assertEquals(TIME_PERIOD, len);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());
+    }
+
+    @Test
     public void sessionForTimeAllDeleteTest() throws ExecutionException, SessionException, InterruptedException {
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
-        Thread.sleep(10000);
+        //Thread.sleep(1000);
 
         List<String> delPath = new LinkedList<>();
         delPath.add(COLUMN_D1_S1);
@@ -456,7 +494,7 @@ public class IoTDBSessionMultiThreadTest {
 
         for (int i = 0; i < threadNum; i++) {
             tasks[i] = new Task(2, delPath, delStartTime + delStep * i,
-                    delStartTime + delStep * (i + 1) - 1, delStep, 1);
+                    delStartTime + delStep * (i + 1) - 1, delStep, 1, null, 6668);
             threads[i] = new Thread(tasks[i]);
         }
         for (int i = 0; i < threadNum; i++) {
@@ -466,7 +504,7 @@ public class IoTDBSessionMultiThreadTest {
             threads[i].join();
         }
 
-        Thread.sleep(5000);
+        //Thread.sleep(1000);
 
         //query
         SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
@@ -506,24 +544,30 @@ public class IoTDBSessionMultiThreadTest {
 
     private static class Task implements Runnable {
 
-        //1:insert 2:delete
+        //1:insert 2:delete 3:query
         private int type;
         private long startTime;
         private long endTime;
         private long pointNum;
         private int step;
         private List<String> path;
+        private Object queryDataSet;
+        private AggregateType aggregateType;
 
         private Session localSession;
 
-        public Task(int type, List<String> path, long startTime, long endTime, long pointNum, int step) throws SessionException {
+        public Task(int type, List<String> path, long startTime, long endTime,
+                    long pointNum, int step, AggregateType aggrType, int portNum) throws SessionException {
             this.type = type;
             this.path = path;
-            this.pointNum = pointNum;
-            this.step = step;
             this.startTime = startTime;
             this.endTime = endTime;
-            this.localSession = new Session("127.0.0.1", 6888, "root", "root");
+            this.pointNum = pointNum;
+            this.step = step;
+            this.queryDataSet = null;
+            this.aggregateType = aggrType;
+            this.localSession = new Session("127.0.0.1", portNum,
+                    "root", "root");
             this.localSession.openSession();
         }
 
@@ -552,7 +596,7 @@ public class IoTDBSessionMultiThreadTest {
                     try {
                         localSession.insertColumnRecords(path, timestamps, valuesList, dataTypeList, null);
                     } catch (SessionException | ExecutionException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage());
                     }
                     break;
                 // delete
@@ -560,37 +604,34 @@ public class IoTDBSessionMultiThreadTest {
                     try {
                         localSession.deleteDataInColumns(path, startTime, endTime);
                     } catch(SessionException | ExecutionException e) {
-                        e.printStackTrace();
+                        logger.error(e.getMessage());
+                    }
+                    break;
+                //query
+                case 3:
+                    try {
+                        if (aggregateType == null) {
+                            queryDataSet = localSession.queryData(path, startTime, endTime);
+                        } else {
+                            queryDataSet = localSession.aggregateQuery(path, startTime, endTime, aggregateType);
+                        }
+                    } catch(SessionException | ExecutionException e) {
+                        logger.error(e.getMessage());
                     }
                     break;
                 default:
                     break;
             }
-        }
-    }
-
-    private static void addColumns() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(COLUMN_D1_S1);
-        paths.add(COLUMN_D2_S2);
-        paths.add(COLUMN_D3_S3);
-        paths.add(COLUMN_D4_S4);
-        paths.add(COLUMN_D5_S5);
-
-        Map<String, String> attributesForOnePath = new HashMap<>();
-        // INT64
-        attributesForOnePath.put("DataType", "2");
-        // RLE
-        attributesForOnePath.put("Encoding", "2");
-        // SNAPPY
-        attributesForOnePath.put("Compression", "1");
-
-        List<Map<String, String>> attributes = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            attributes.add(attributesForOnePath);
+            try {
+                this.localSession.closeSession();
+            } catch (SessionException e){
+                logger.error(e.getMessage());
+            }
         }
 
-        session.addColumns(paths, attributes);
+        public Object getQueryDataSet() {
+            return queryDataSet;
+        }
     }
 
     private static int getPathNum(String sg){

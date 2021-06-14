@@ -36,40 +36,38 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public final class FragmentMeta {
 
     private final TimeInterval timeInterval;
 
     private final TimeSeriesInterval tsInterval;
 
-    /**
-     * 所有的分片的信息
-     */
-    private final Map<Integer, FragmentReplicaMeta> replicaMetas;
-
     private long createdBy;
 
     private long updatedBy;
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, Map<Integer, FragmentReplicaMeta> replicaMetas) {
+    private String masterStorageUnitId;
+
+    private transient StorageUnitMeta masterStorageUnit;
+
+    private transient String fakeStorageUnitId;
+
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        this.replicaMetas = replicaMetas;
     }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, List<Long> storageEngineIdList) {
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String fakeStorageUnitId) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        Map<Integer, FragmentReplicaMeta> replicaMetas = new HashMap<>();
-        for (int i = 0; i < storageEngineIdList.size(); i++) {
-            replicaMetas.put(i, new FragmentReplicaMeta(this.timeInterval, this.tsInterval, i, storageEngineIdList.get(i)));
-        }
-        this.replicaMetas = Collections.unmodifiableMap(replicaMetas);
+        this.fakeStorageUnitId = fakeStorageUnitId;
+    }
+
+    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, StorageUnitMeta masterStorageUnit) {
+        this.timeInterval = new TimeInterval(startTime, endTime);
+        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+        this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
     public TimeInterval getTimeInterval() {
@@ -80,16 +78,8 @@ public final class FragmentMeta {
         return tsInterval;
     }
 
-    public Map<Integer, FragmentReplicaMeta> getReplicaMetas() {
-        return new HashMap<>(replicaMetas);
-    }
-
-    public int getReplicaMetasNum() {
-        return replicaMetas.size();
-    }
-
     public FragmentMeta endFragmentMeta(long endTime) {
-        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime, replicaMetas);
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
     }
 
     public long getCreatedBy() {
@@ -106,6 +96,31 @@ public final class FragmentMeta {
 
     public void setUpdatedBy(long updatedBy) {
         this.updatedBy = updatedBy;
+    }
+
+    public StorageUnitMeta getMasterStorageUnit() {
+        return masterStorageUnit;
+    }
+
+    public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
+        this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
+    }
+
+    public String getFakeStorageUnitId() {
+        return fakeStorageUnitId;
+    }
+
+    public void setFakeStorageUnitId(String fakeStorageUnitId) {
+        this.fakeStorageUnitId = fakeStorageUnitId;
+    }
+
+    public String getMasterStorageUnitId() {
+        return masterStorageUnitId;
+    }
+
+    public void setMasterStorageUnitId(String masterStorageUnitId) {
+        this.masterStorageUnitId = masterStorageUnitId;
     }
 
     @Override

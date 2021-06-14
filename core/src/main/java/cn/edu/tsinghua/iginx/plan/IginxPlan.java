@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
 
 public abstract class IginxPlan {
@@ -32,7 +34,7 @@ public abstract class IginxPlan {
 
     private boolean isSync;
 
-    private long storageEngineId;
+	private StorageUnitMeta storageUnit;
 
     private int combineGroup;
 
@@ -69,6 +71,10 @@ public abstract class IginxPlan {
         return canBeSplit;
     }
 
+    public void setCanBeSplit(boolean canBeSplit) {
+        this.canBeSplit = canBeSplit;
+    }
+
     public boolean isSync() {
         return isSync;
     }
@@ -77,16 +83,16 @@ public abstract class IginxPlan {
         this.isSync = isSync;
     }
 
+	public void setStorageUnit(StorageUnitMeta storageUnit) {
+		this.storageUnit = storageUnit;
+	}
+
+	public StorageUnitMeta getStorageUnit() {
+        return this.storageUnit;
+    }
+
     public long getStorageEngineId() {
-        return storageEngineId;
-    }
-
-    public void setStorageEngineId(long storageEngineId) {
-        this.storageEngineId = storageEngineId;
-    }
-
-    public void setCanBeSplit(boolean canBeSplit) {
-        this.canBeSplit = canBeSplit;
+        return this.storageUnit.getStorageEngineId();
     }
 
     public int getCombineGroup() {

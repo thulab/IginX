@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.rest.insert.InsertAnnotationWorker;
@@ -59,7 +60,7 @@ import java.util.concurrent.Executors;
 @Path("/")
 public class MetricsResource {
 
-    private final IMetaManager metaManager = SortedListAbstractMetaManager.getInstance();
+    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private static final String INSERT_URL = "api/v1/datapoints";
     private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotations";
     private static final String QUERY_URL = "api/v1/datapoints/query";

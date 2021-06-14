@@ -32,9 +32,13 @@ public class Constants {
 
     public static final String STORAGE_ENGINE_NODE = "/storage/node";
 
+    public static final String STORAGE_UNIT_NODE = "/unit/unit";
+
     public static final String STORAGE_ENGINE_LOCK_NODE = "/lock/storage";
 
     public static final String FRAGMENT_LOCK_NODE = "/lock/fragment";
+
+    public static final String STORAGE_UNIT_LOCK_NODE = "/lock/unit";
 
     public static final String SCHEMA_MAPPING_LOCK_NODE = "/lock/schema";
 
@@ -43,6 +47,8 @@ public class Constants {
     public static final String IGINX_NODE_PREFIX = "/iginx";
 
     public static final String FRAGMENT_NODE_PREFIX = "/fragment";
+
+    public static final String STORAGE_UNIT_NODE_PREFIX = "/unit";
 
     public static final String SCHEMA_MAPPING_PREFIX = "/schema";
 

@@ -30,13 +30,11 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CreateDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.DropDatabaseReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
@@ -137,38 +135,6 @@ public class RestSession {
 
     private synchronized boolean checkRedirect(Status status) {
         return false;
-    }
-
-
-    public void createDatabase(String databaseName) throws ExecutionException {
-        CreateDatabaseReq req = new CreateDatabaseReq(sessionId, databaseName);
-
-        Status status;
-        do {
-            lock.readLock().lock();
-            try {
-                status = client.createDatabase(req);
-            } finally {
-                lock.readLock().unlock();
-            }
-        } while (checkRedirect(status));
-        RpcUtils.verifySuccess(status);
-
-    }
-
-    public void dropDatabase(String databaseName) throws ExecutionException {
-        DropDatabaseReq req = new DropDatabaseReq(sessionId, databaseName);
-
-        Status status;
-        do {
-            lock.readLock().lock();
-            try {
-                status = client.dropDatabase(req);
-            } finally {
-                lock.readLock().unlock();
-            }
-        } while (checkRedirect(status));
-        RpcUtils.verifySuccess(status);
     }
 
     public void addStorageEngine(String ip, int port, StorageEngineType type, Map<String, String> extraParams) throws ExecutionException {

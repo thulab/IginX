@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,14 +28,13 @@ public class CreateDatabasePlan extends DatabasePlan {
 
     private static final Logger logger = LoggerFactory.getLogger(CreateDatabasePlan.class);
 
-    public CreateDatabasePlan(String databaseName) {
-        super(false, databaseName);
+    public CreateDatabasePlan(String databaseName, StorageUnitMeta storageUnit) {
+        super(databaseName, storageUnit);
         this.setIginxPlanType(CREATE_DATABASE);
     }
 
-    public CreateDatabasePlan(String databaseName, long storageEngineId) {
-        this(databaseName);
-        setStorageEngineId(storageEngineId);
+    public CreateDatabasePlan(String databaseName) {
+        this(databaseName, null);
     }
 
 }
