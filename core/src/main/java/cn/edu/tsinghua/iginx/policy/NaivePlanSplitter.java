@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -498,6 +499,11 @@ public class NaivePlanSplitter implements IPlanSplitter {
             }
         }
         return infoList;
+    }
+
+    @Override
+    public List<Long> getSplitShowColumnsPlanResult() {
+        return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
     }
 
     @Override
