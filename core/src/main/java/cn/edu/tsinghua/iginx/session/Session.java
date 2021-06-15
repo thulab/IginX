@@ -34,6 +34,8 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -686,9 +688,23 @@ public class Session {
         return new SessionQueryDataSet(resp);
     }
 
+    public int getReplicaNum() throws SessionException, ExecutionException {
+        GetReplicaNumReq req = new GetReplicaNumReq(sessionId);
+        GetReplicaNumResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.getReplicaNum(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
 
-    public int getReplicaNum()
-    {
-        return config.getReplicaNum() + 1;
+        return resp.getReplicaNum();
     }
 }

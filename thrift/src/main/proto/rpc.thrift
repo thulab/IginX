@@ -177,6 +177,15 @@ struct ShowColumnsResp {
     3: optional list<DataType> dataTypeList
 }
 
+struct GetReplicaNumReq {
+    1: required i64 sessionId
+}
+
+struct GetReplicaNumResp {
+    1: required Status status
+    2: required i32 replicaNum
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -204,5 +213,7 @@ service IService {
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 
     ShowColumnsResp showColumns(ShowColumnsReq req);
+
+    GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 
 }
