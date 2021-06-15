@@ -689,6 +689,6 @@ public class Session {
 
     public int getReplicaNum()
     {
-        return config.getReplicaNum();
+        return config.getReplicaNum() + 1;
     }
 }
