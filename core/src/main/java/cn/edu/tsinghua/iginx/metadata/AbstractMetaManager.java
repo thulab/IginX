@@ -37,6 +37,7 @@ import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.RetryForever;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,6 +66,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     protected TreeCache fragmentCache;
     protected TreeCache schemaMappingsCache;
     private long iginxId;
+    private boolean isMaster = false;
 
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
@@ -86,6 +88,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             resolveFragmentFromZooKeeper();
 
             resolveSchemaMappingsFromZooKeeper();
+
+            registerMaster();
+
         } catch (Exception e) {
             logger.error("get error when init meta manager: ", e);
             System.exit(1);
@@ -693,5 +698,48 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             return -1;
         }
         return schemaMapping.getOrDefault(key, -1);
+    }
+
+
+    private void registerMaster() throws Exception {
+        this.zookeeperClient.create()
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT)
+                .forPath(Constants.FRAGMENT_CREATOR);
+
+        this.iginxCache = new TreeCache(this.zookeeperClient, Constants.FRAGMENT_CREATOR_LEADER);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            switch (event.getType()) {
+                case NODE_REMOVED:
+                    selection();
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.iginxCache.getListenable().addListener(listener);
+        this.iginxCache.start();
+
+    }
+
+    @Override
+    public boolean selection() throws Exception {
+        if (isMaster)
+            return true;
+        try {
+            this.zookeeperClient.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(Constants.FRAGMENT_CREATOR_LEADER);
+            logger.info("成功");
+            isMaster = true;
+        } catch (KeeperException.NodeExistsException e) {
+            logger.info("失败");
+            isMaster = false;
+        }
+        finally
+        {
+            return isMaster;
+        }
     }
 }

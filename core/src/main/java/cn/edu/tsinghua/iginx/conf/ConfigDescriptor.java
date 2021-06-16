@@ -76,10 +76,9 @@ public class ConfigDescriptor {
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
 
-            config.setNewPolicyRestIp(properties.getProperty("newPolicyRestIp", "127.0.0.1"));
-            config.setNewPolicyRestPort(Integer.parseInt(properties.getProperty("newPolicyRestPort", "6666")));
             config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
-
+            config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "60000")));
+            config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "100")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

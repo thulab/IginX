@@ -46,5 +46,9 @@ public class Constants {
 
     public static final String SCHEMA_MAPPING_PREFIX = "/schema";
 
+    public static final String FRAGMENT_CREATOR = "/creator";
+
+    public static final String FRAGMENT_CREATOR_LEADER = "/creator/leader";
+
 }
 

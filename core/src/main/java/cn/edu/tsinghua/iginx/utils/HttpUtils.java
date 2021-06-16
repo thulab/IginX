@@ -26,31 +26,41 @@ import org.apache.http.util.EntityUtils;
 public class HttpUtils
 {
 
-    public static String doGet(String url) {
+    public static String doPost(String url, Map<String, Double> map) {
         CloseableHttpClient httpClient = null;
-        CloseableHttpResponse response = null;
+        CloseableHttpResponse httpResponse = null;
         String result = "";
+        httpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(35000)// 设置连接主机服务超时时间
+                .setConnectionRequestTimeout(35000)// 设置连接请求超时时间
+                .setSocketTimeout(60000)// 设置读取数据连接超时时间
+                .build();
+        httpPost.setConfig(requestConfig);
+        httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        if (null != map && map.size() > 0) {
+            StringBuilder ins = new StringBuilder();
+            for (Map.Entry<String, Double> entry: map.entrySet())
+            {
+                ins.append(entry.getKey());
+                ins.append("\2");
+                ins.append(entry.getValue().toString());
+                ins.append("\1");
+            }
+            if (ins.charAt(ins.length() - 1) == '\1')
+                ins.deleteCharAt(ins.length() - 1);
+            httpPost.setEntity(new StringEntity(ins.toString(), "UTF-8"));
+        }
         try {
-            httpClient = HttpClients.createDefault();
-            HttpGet httpGet = new HttpGet(url);
-            httpGet.setHeader("Authorization", "Bearer da3efcbf-0845-4fe3-8aba-ee040be542c0");
-            RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(10000)// 连接主机服务超时时间
-                    .setConnectionRequestTimeout(1000000)// 请求超时时间
-                    .setSocketTimeout(1000000)// 数据读取超时时间
-                    .build();
-            httpGet.setConfig(requestConfig);
-            response = httpClient.execute(httpGet);
-            HttpEntity entity = response.getEntity();
-            result = EntityUtils.toString(entity);
+            httpResponse = httpClient.execute(httpPost);
         } catch (ClientProtocolException e) {
             e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         } finally {
-            // 关闭资源
-            if (null != response) {
+            if (null != httpResponse) {
                 try {
-                    response.close();
+                    httpResponse.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
