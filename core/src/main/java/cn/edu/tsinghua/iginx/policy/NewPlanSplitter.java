@@ -3,11 +3,7 @@ package cn.edu.tsinghua.iginx.policy;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentReplicaMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
@@ -44,6 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -55,8 +52,7 @@ public class NewPlanSplitter implements IPlanSplitter {
     static boolean isFirst = true;
     private final IMetaManager iMetaManager;
     private final NewPolicy policy;
-    private final Set<String> prefixSet = new HashSet<>();
-    private List<String> prefixList = new LinkedList<>();
+    private Map<String, Double> prefixList = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private int prefixMaxSize;
     private static final String UPDATE_META_URL = "/receive_meta";
@@ -72,39 +68,40 @@ public class NewPlanSplitter implements IPlanSplitter {
     public NewPlanSplitter(NewPolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
-        this.prefixMaxSize = 1760;
+        this.prefixMaxSize = config.getPathSendSize();
         this.k = config.getFragmentSplitPerEngine();
     }
 
     private void updatePrefix(NonDatabasePlan plan) {
+        logger.info("update prefix, now size = {}", prefixList.size());
         lock.writeLock().lock();
-        logger.info("update prefix, now size = {}", prefixSet.size());
-        if (prefixMaxSize <= prefixSet.size()) {
-            String url = "http://" + config.getNewPolicyRestIp() + ":" + config.getNewPolicyRestPort()
-                    + UPDATE_META_URL;
-            HttpUtils.doPost(url, prefixList);
-            prefixMaxSize *= 2;
-            prefixList = new ArrayList<>();
+        if (prefixMaxSize <= prefixList.size()) {
+
+            List<String> ips = new ArrayList<>();
+            for (IginxMeta iginxMeta: iMetaManager.getIginxList())
+                ips.add(iginxMeta.getIp());
+            for (String ip : ips)
+            {
+                String url = "http://" + ip + ":" + config.getRestPort()
+                        + UPDATE_META_URL;
+                HttpUtils.doPost(url, prefixList);
+            }
+            prefixMaxSize += config.getPathSendSize();
             if (isFirst) {
                 isFirst = false;
                 policy.setNeedReAllocate(true);
             }
         }
+        lock.writeLock().unlock();
         for (String path: plan.getPaths())
         {
-            if (!prefixSet.contains(path))
+            double value = 1.0 / plan.getPathsNum();
+            if (prefixList.containsKey(path))
             {
-                if (prefixSet.size() == prefixMaxSize)
-                {
-                    int tmp = random.nextInt(prefixMaxSize);
-                    prefixSet.remove(prefixList.get(tmp));
-                    prefixList.remove(tmp);
-                }
-                prefixSet.add(path);
-                prefixList.add(path);
+                value += prefixList.get(path);
             }
+            prefixList.put(path, value);
         }
-        lock.writeLock().unlock();
     }
 
     public List<SplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan) {
@@ -167,17 +164,24 @@ public class NewPlanSplitter implements IPlanSplitter {
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
-            logger.info("ReAllocate, now size = {}", prefixSet.size());
+            logger.info("ReAllocate, now size = {}", prefixList.size());
             lock.writeLock().lock();
             if (policy.isNeedReAllocate())
             {
-                logger.info("real ReAllocate, now size = {}", prefixSet.size());
-                String url = "http://" + config.getNewPolicyRestIp() + ":" + config.getNewPolicyRestPort()
-                        + FRAGMENT_URL;
+                logger.info("real ReAllocate, now size = {}", prefixList.size());
+                List<String> ips = new ArrayList<>();
+                for (IginxMeta iginxMeta: iMetaManager.getIginxList())
+                    ips.add(iginxMeta.getIp());
+
                 List<String> ins = new ArrayList<>();
                 ins.add(String.valueOf(iMetaManager.getStorageEngineList().size() * k));
                 ins.add(String.valueOf(plan.getEndTime() + 1));
-                HttpUtils.doPost(url, ins);
+                for (String ip: ips)
+                {
+                    String url = "http://" + ips + ":" + config.getRestPort()
+                            + FRAGMENT_URL;
+                    HttpUtils.doPost(url, ins);
+                }
                 policy.setNeedReAllocate(false);
             }
             lock.writeLock().unlock();
@@ -205,17 +209,24 @@ public class NewPlanSplitter implements IPlanSplitter {
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
             policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
-            logger.info("ReAllocate, now size = {}", prefixSet.size());
+            logger.info("ReAllocate, now size = {}", prefixList.size());
             lock.writeLock().lock();
             if (policy.isNeedReAllocate())
             {
-                logger.info("real ReAllocate, now size = {}", prefixSet.size());
-                String url = "http://" + config.getNewPolicyRestIp() + ":" + config.getNewPolicyRestPort()
-                        + FRAGMENT_URL;
+                logger.info("real ReAllocate, now size = {}", prefixList.size());
+                List<String> ips = new ArrayList<>();
+                for (IginxMeta iginxMeta: iMetaManager.getIginxList())
+                    ips.add(iginxMeta.getIp());
+
                 List<String> ins = new ArrayList<>();
                 ins.add(String.valueOf(iMetaManager.getStorageEngineList().size() * k));
                 ins.add(String.valueOf(plan.getEndTime() + 1));
-                HttpUtils.doPost(url, ins);
+                for (String ip: ips)
+                {
+                    String url = "http://" + ips + ":" + config.getRestPort()
+                            + FRAGMENT_URL;
+                    HttpUtils.doPost(url, ins);
+                }
                 policy.setNeedReAllocate(false);
             }
             lock.writeLock().unlock();

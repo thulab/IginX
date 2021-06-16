@@ -161,4 +161,5 @@ public interface IMetaManager {
      */
     int getSchemaMappingItem(String schema, String key);
 
+    boolean selection() throws Exception;
 }

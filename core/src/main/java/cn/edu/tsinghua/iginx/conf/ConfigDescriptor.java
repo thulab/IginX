@@ -85,6 +85,8 @@ public class ConfigDescriptor {
             config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
 
             config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
+            config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "60000")));
+            config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "100")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

@@ -72,6 +72,10 @@ public class Config {
 
     private int fragmentSplitPerEngine = 1;
 
+    private int reallocateTime = 60000;
+
+    private int pathSendSize = 100;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -280,6 +284,26 @@ public class Config {
     public int getFragmentSplitPerEngine()
     {
         return fragmentSplitPerEngine;
+    }
+
+    public int getReallocateTime()
+    {
+        return reallocateTime;
+    }
+
+    public void setReallocateTime(int reallocateTime)
+    {
+        this.reallocateTime = reallocateTime;
+    }
+
+    public void setPathSendSize(int pathSendSize)
+    {
+        this.pathSendSize = pathSendSize;
+    }
+
+    public int getPathSendSize()
+    {
+        return pathSendSize;
     }
 
 }
