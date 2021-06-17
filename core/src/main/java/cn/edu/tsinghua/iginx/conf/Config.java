@@ -72,9 +72,9 @@ public class Config {
 
     private int fragmentSplitPerEngine = 1;
 
-    private int reallocateTime = 60000;
+    private int reallocateTime = 600000;
 
-    private int pathSendSize = 100;
+    private int pathSendSize = 1000;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;

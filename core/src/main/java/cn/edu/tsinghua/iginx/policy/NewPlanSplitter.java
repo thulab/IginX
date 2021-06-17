@@ -178,7 +178,7 @@ public class NewPlanSplitter implements IPlanSplitter {
                 ins.add(String.valueOf(plan.getEndTime() + 1));
                 for (String ip: ips)
                 {
-                    String url = "http://" + ips + ":" + config.getRestPort()
+                    String url = "http://" + ip + ":" + config.getRestPort()
                             + FRAGMENT_URL;
                     HttpUtils.doPost(url, ins);
                 }
@@ -223,7 +223,7 @@ public class NewPlanSplitter implements IPlanSplitter {
                 ins.add(String.valueOf(plan.getEndTime() + 1));
                 for (String ip: ips)
                 {
-                    String url = "http://" + ips + ":" + config.getRestPort()
+                    String url = "http://" + ip + ":" + config.getRestPort()
                             + FRAGMENT_URL;
                     HttpUtils.doPost(url, ins);
                 }
