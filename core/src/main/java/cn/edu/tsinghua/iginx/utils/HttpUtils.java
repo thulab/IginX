@@ -32,9 +32,9 @@ public class HttpUtils
         String result = "";
         httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(35000)// 设置连接主机服务超时时间
-                .setConnectionRequestTimeout(35000)// 设置连接请求超时时间
-                .setSocketTimeout(60000)// 设置读取数据连接超时时间
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(350000)// 设置连接主机服务超时时间
+                .setConnectionRequestTimeout(350000)// 设置连接请求超时时间
+                .setSocketTimeout(600000)// 设置读取数据连接超时时间
                 .build();
         httpPost.setConfig(requestConfig);
         httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");
@@ -82,9 +82,9 @@ public class HttpUtils
         String result = "";
         httpClient = HttpClients.createDefault();
         HttpPost httpPost = new HttpPost(url);
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(35000)// 设置连接主机服务超时时间
-                .setConnectionRequestTimeout(35000)// 设置连接请求超时时间
-                .setSocketTimeout(60000)// 设置读取数据连接超时时间
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(350000)// 设置连接主机服务超时时间
+                .setConnectionRequestTimeout(350000)// 设置连接请求超时时间
+                .setSocketTimeout(600000)// 设置读取数据连接超时时间
                 .build();
         httpPost.setConfig(requestConfig);
         httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded");

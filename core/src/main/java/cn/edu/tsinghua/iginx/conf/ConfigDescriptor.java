@@ -77,8 +77,8 @@ public class ConfigDescriptor {
 
 
             config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
-            config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "60000")));
-            config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "100")));
+            config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "600000")));
+            config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "1000")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

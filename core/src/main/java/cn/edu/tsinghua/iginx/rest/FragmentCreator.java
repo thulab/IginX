@@ -27,8 +27,10 @@ public class FragmentCreator
     private final int prefixMaxSize = 1048576;
     private int updateRequireNum = 0;
     private static int LIMIT = -1;
-    private static int ts = 100;
+    private static int ts = -1;
+    private static int cntRequire = 0;
     final Semaphore semp = new Semaphore(0);
+    final Semaphore semp2 = new Semaphore(0);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static FragmentCreator INSTANCE = null;
     private int fragmentNum;
@@ -39,6 +41,7 @@ public class FragmentCreator
         init(config.getReallocateTime());
         fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getIginxList().size();
         fragmentTime = System.currentTimeMillis();
+        ts = config.getPathSendSize();
     }
 
     public static FragmentCreator getInstance() {
@@ -112,30 +115,38 @@ public class FragmentCreator
     {
         fragmentTime = timestamp;
         fragmentNum = fragment;
+
+        lock.writeLock().lock();
+        cntRequire += 1;
+        if (cntRequire >= 1)
+        {
+            semp2.release();
+            cntRequire = 0;
+        }
+        lock.writeLock().unlock();
     }
 
-    public void CreateFragment(int fragmentNum, long timestamp) throws Exception
+    public void CreateFragment() throws Exception
     {
         LOGGER.info("insert CreateFragment");
-        lock.writeLock().lock();
         LOGGER.info("create fragment  , list size : {}", prefixList.size());
         if (iMetaManager.selection())
         {
             try
             {
                 semp.acquire();
+                semp2.acquire();
                 LOGGER.info("semp acquire");
             }
             catch (InterruptedException e)
             {
                 e.printStackTrace();
             }
-            List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), timestamp);
+            List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), fragmentTime);
             LOGGER.info("create fragment  , size : {}", prefixList.size());
             iMetaManager.createFragments(fragments);
             updateRequireNum = 0;
         }
-        lock.writeLock().unlock();
     }
 
     public List<String> samplePrefix(int count) {
@@ -164,7 +175,7 @@ public class FragmentCreator
                 {
                     try
                     {
-                        CreateFragment(fragmentNum, fragmentTime);
+                        CreateFragment();
                     }
                     catch (Exception e)
                     {
@@ -172,7 +183,7 @@ public class FragmentCreator
                         e.printStackTrace();
                     }
                 }
-        }, new Date(System.currentTimeMillis()), length);
+        }, 0, length);
     }
 }
 

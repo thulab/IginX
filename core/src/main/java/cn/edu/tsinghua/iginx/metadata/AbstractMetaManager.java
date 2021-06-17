@@ -702,10 +702,18 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
 
     private void registerMaster() throws Exception {
-        this.zookeeperClient.create()
-                .creatingParentsIfNeeded()
-                .withMode(CreateMode.PERSISTENT)
-                .forPath(Constants.FRAGMENT_CREATOR);
+        try
+        {
+
+            this.zookeeperClient.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(Constants.FRAGMENT_CREATOR);
+        }
+        catch (Exception e)
+        {
+
+        }
 
         this.iginxCache = new TreeCache(this.zookeeperClient, Constants.FRAGMENT_CREATOR_LEADER);
         TreeCacheListener listener = (curatorFramework, event) -> {
