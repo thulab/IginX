@@ -78,7 +78,14 @@ public class ConfigDescriptor {
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
+
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
+
+
+            config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
+            config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "600000")));
+            config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "1000")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

@@ -64,6 +64,12 @@ public class Config {
 
     private boolean enableRestService = true;
 
+    private int fragmentSplitPerEngine = 1;
+
+    private int reallocateTime = 600000;
+
+    private int pathSendSize = 1000;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -236,7 +242,38 @@ public class Config {
         return metaStorage;
     }
 
-    public void setMetaStorage(String metaStorage) {
+    public void setMetaStorage(String metaStorage)
+    {
         this.metaStorage = metaStorage;
+    }
+
+    public void setFragmentSplitPerEngine(int fragmentSplitPerEngine)
+    {
+        this.fragmentSplitPerEngine = fragmentSplitPerEngine;
+    }
+
+    public int getFragmentSplitPerEngine()
+    {
+        return fragmentSplitPerEngine;
+    }
+
+    public int getReallocateTime()
+    {
+        return reallocateTime;
+    }
+
+    public void setReallocateTime(int reallocateTime)
+    {
+        this.reallocateTime = reallocateTime;
+    }
+
+    public void setPathSendSize(int pathSendSize)
+    {
+        this.pathSendSize = pathSendSize;
+    }
+
+    public int getPathSendSize()
+    {
+        return pathSendSize;
     }
 }

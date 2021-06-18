@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.rest.query.QueryResult;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cn.edu.tsinghua.iginx.rest.FragmentCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,10 +51,7 @@ import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -71,6 +69,7 @@ public class MetricsResource {
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(100);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
+    private static final FragmentCreator fragmentCreator = FragmentCreator.getInstance();
 
 
     @Inject
@@ -288,5 +287,19 @@ public class MetricsResource {
         restSession.closeSession();
     }
 
+    @POST
+    @Path("receive_meta")
+    public void receiveMeta(String meta) {
+        List<String> ins = Arrays.asList(meta.split("\1").clone());
+        LOGGER.info("receive meta, size : {}", ins.size());
+        fragmentCreator.updatePrefix(ins);
+    }
 
+    @POST
+    @Path("fragment")
+    public void updateFragment(String fragment) {
+        List<String> ins = Arrays.asList(fragment.split("\1").clone());
+        LOGGER.info("receive fragment require, size : {}, time : {}",Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
+        fragmentCreator.setFragmentData(Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
+    }
 }

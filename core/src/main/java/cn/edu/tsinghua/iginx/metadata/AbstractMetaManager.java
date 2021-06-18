@@ -40,6 +40,7 @@ import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.RetryForever;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,6 +75,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     protected ReadWriteLock storageUnitLock = new ReentrantReadWriteLock();
     protected Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
     private long iginxId;
+    private boolean isMaster = false;
 
     public AbstractMetaManager() {
         zookeeperClient = CuratorFrameworkFactory.builder()
@@ -94,6 +96,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             resolveFragmentFromZooKeeper();
             resolveStorageUnitFromZookeeper();
             resolveSchemaMappingsFromZooKeeper();
+
+            registerMaster();
+
         } catch (Exception e) {
             logger.error("get error when init meta manager: ", e);
             System.exit(1);
@@ -917,14 +922,68 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         return storageEngineIdList;
     }
 
-    private Pair<List<FragmentMeta>, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    private Pair<List<FragmentMeta>, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList)
+    {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         List<FragmentMeta> fragmentList = new ArrayList<>();
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true);
         fragmentList.add(new FragmentMeta(startPath, endPath, startTime, endTime, masterId));
-        for (int i = 1; i < storageEngineList.size(); i++) {
+        for (int i = 1; i < storageEngineList.size(); i++)
+        {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
         }
         return new Pair<>(fragmentList, storageUnit);
+    }
+
+
+    private void registerMaster() throws Exception {
+        try
+        {
+
+            this.zookeeperClient.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(Constants.FRAGMENT_CREATOR);
+        }
+        catch (Exception e)
+        {
+
+        }
+
+        this.iginxCache = new TreeCache(this.zookeeperClient, Constants.FRAGMENT_CREATOR_LEADER);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            switch (event.getType()) {
+                case NODE_REMOVED:
+                    selection();
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.iginxCache.getListenable().addListener(listener);
+        this.iginxCache.start();
+
+    }
+
+    @Override
+    public boolean selection() throws Exception {
+        if (isMaster)
+            return true;
+        try {
+            this.zookeeperClient.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(Constants.FRAGMENT_CREATOR_LEADER);
+            logger.info("成功");
+            isMaster = true;
+        } catch (KeeperException.NodeExistsException e) {
+            logger.info("失败");
+            isMaster = false;
+        }
+        finally
+        {
+            return isMaster;
+        }
+
     }
 }
