@@ -72,7 +72,7 @@ struct InsertColumnRecordsReq {
     4: required list<binary> valuesList
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
-    7: optional list<map<string, string>> attributesList
+    7: optional list<map<string, string>> tagsList
 }
 
 struct InsertRowRecordsReq {
@@ -82,7 +82,7 @@ struct InsertRowRecordsReq {
     4: required list<binary> valuesList
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
-    7: optional list<map<string, string>> attributesList
+    7: optional list<map<string, string>> tagsList
 }
 
 struct DeleteDataInColumnsReq {
@@ -103,6 +103,7 @@ struct QueryDataReq {
     2: required list<string> paths
     3: required i64 startTime
     4: required i64 endTime
+    5: optional list<map<string, string>> tagsList
 }
 
 struct QueryDataResp {
@@ -110,6 +111,7 @@ struct QueryDataResp {
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
     4: optional QueryDataSet queryDataSet
+    5: optional list<map<string, string>> tagsList
 }
 
 struct AddStorageEngineReq {
