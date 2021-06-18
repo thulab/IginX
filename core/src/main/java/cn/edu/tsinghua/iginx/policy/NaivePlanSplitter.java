@@ -477,7 +477,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
             FragmentMeta fragment = fragmentList.get(0);
             List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
             for (StorageUnitMeta storageUnit : storageUnitList) {
-                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path, true), storageUnit));
             }
         }
         return infoList;
@@ -495,7 +495,7 @@ public class NaivePlanSplitter implements IPlanSplitter {
             FragmentMeta fragment = fragmentList.get(fragmentList.size() - 1);
             List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
             for (StorageUnitMeta storageUnit : storageUnitList) {
-                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+                infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path, true), storageUnit));
             }
         }
         return infoList;

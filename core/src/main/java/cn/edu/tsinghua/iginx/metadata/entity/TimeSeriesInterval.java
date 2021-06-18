@@ -28,9 +28,17 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     private String endTimeSeries;
 
-    public TimeSeriesInterval(String startTimeSeries, String endTimeSeries) {
+    // 右边界是否为闭
+    private boolean isClosed;
+
+    public TimeSeriesInterval(String startTimeSeries, String endTimeSeries, boolean isClosed) {
         this.startTimeSeries = startTimeSeries;
         this.endTimeSeries = endTimeSeries;
+        this.isClosed = isClosed;
+    }
+
+    public TimeSeriesInterval(String startTimeSeries, String endTimeSeries) {
+        this(startTimeSeries, endTimeSeries, false);
     }
 
     public static TimeSeriesInterval fromString(String str) {
@@ -59,6 +67,14 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     public String getEndTimeSeries() {
         return endTimeSeries;
+    }
+
+    public boolean isClosed() {
+        return isClosed;
+    }
+
+    public void setClosed(boolean closed) {
+        isClosed = closed;
     }
 
     public void setEndTimeSeries(String endTimeSeries) {

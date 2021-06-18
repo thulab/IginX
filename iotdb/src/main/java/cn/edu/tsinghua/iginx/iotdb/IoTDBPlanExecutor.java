@@ -108,6 +108,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String DELETE_CLAUSE = "DELETE FROM " + PREFIX + "%s";
 
+    private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
+
     private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
@@ -341,7 +343,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, plan.getStorageUnit().getId()));
             } else {
                 for (String path : plan.getPaths()) {
-                    sessionPool.executeNonQueryStatement(String.format(DELETE_CLAUSE, plan.getStorageUnit().getId() + "." + path));
+                    sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, plan.getStorageUnit().getId() + "." + path));
                 }
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {

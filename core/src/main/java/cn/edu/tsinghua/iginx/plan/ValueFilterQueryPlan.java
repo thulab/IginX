@@ -67,7 +67,7 @@ public class ValueFilterQueryPlan extends DataPlan {
         if (isEndPrefix) {
             endTimeSeries = addEndPrefix(endTimeSeries, false);
         }
-        this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
+        this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries, true));
     }
 
     public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, StorageUnitMeta storageUnit) {
