@@ -83,12 +83,14 @@ public class DefaultMetaManager implements IMetaManager {
                 break;
             case "file":
                 logger.info("use file as meta storage");
-                storage = null;
+                storage = FileMetaStorage.getInstance();
                 break;
             case "":
-                logger.info("");
+                logger.info("doesn't specify meta storage, use zookeeper as default.");
+                storage = ZooKeeperMetaStorage.getInstance();
+                break;
             default:
-                logger.info("use zookeeper as meta storage.");
+                logger.info("unknown meta storage, use zookeeper as default.");
                 storage = ZooKeeperMetaStorage.getInstance();
                 break;
         }
