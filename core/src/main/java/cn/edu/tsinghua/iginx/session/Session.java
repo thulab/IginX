@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
@@ -70,6 +68,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 
@@ -86,7 +85,6 @@ public class Session {
     private TTransport transport;
     private boolean isClosed;
     private int redirectTimes;
-    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
     public Session(String host, int port) {
         this(host, port, Constants.DEFAULT_USERNAME, Constants.DEFAULT_PASSWORD);
@@ -352,8 +350,7 @@ public class Session {
     }
 
     public void deleteColumns(List<String> paths) throws SessionException, ExecutionException {
-        Collections.sort(paths);
-        DeleteColumnsReq req = new DeleteColumnsReq(sessionId, paths);
+        DeleteColumnsReq req = new DeleteColumnsReq(sessionId, mergeAndSortPaths(paths));
 
         try {
             Status status;
@@ -566,8 +563,7 @@ public class Session {
     }
 
     public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException, ExecutionException {
-        Collections.sort(paths);
-        DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
+        DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, mergeAndSortPaths(paths), startTime, endTime);
 
         try {
             Status status;
@@ -591,8 +587,7 @@ public class Session {
             logger.error("Invalid query request!");
             return null;
         }
-        Collections.sort(paths);
-        QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
+        QueryDataReq req = new QueryDataReq(sessionId, mergeAndSortPaths(paths), startTime, endTime);
 
         QueryDataResp resp;
 
@@ -619,8 +614,7 @@ public class Session {
             logger.error("Invalid query request!");
             return null;
         }
-        Collections.sort(paths);
-        ValueFilterQueryReq req = new ValueFilterQueryReq(sessionId, paths, startTime, endTime, booleanExpression);
+        ValueFilterQueryReq req = new ValueFilterQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, booleanExpression);
 
         ValueFilterQueryResp resp;
 
@@ -643,8 +637,7 @@ public class Session {
 
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
             throws SessionException, ExecutionException {
-        Collections.sort(paths);
-        AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
+        AggregateQueryReq req = new AggregateQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, aggregateType);
 
         AggregateQueryResp resp;
         try {
@@ -665,8 +658,7 @@ public class Session {
     }
 
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
-        Collections.sort(paths);
-        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
+        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime,
                 aggregateType, precision);
 
         DownsampleQueryResp resp;
@@ -691,6 +683,7 @@ public class Session {
     public int getReplicaNum() throws SessionException, ExecutionException {
         GetReplicaNumReq req = new GetReplicaNumReq(sessionId);
         GetReplicaNumResp resp;
+
         try {
             do {
                 lock.readLock().lock();
@@ -706,5 +699,39 @@ public class Session {
         }
 
         return resp.getReplicaNum();
+    }
+
+    // 适用于查询类请求和删除类请求，因为其 paths 可能带有 *
+    private List<String> mergeAndSortPaths(List<String> paths) {
+        if (paths.stream().anyMatch(x -> x.equals("*"))) {
+            List<String> tempPaths = new ArrayList<>();
+            tempPaths.add("*");
+            return tempPaths;
+        }
+        List<String> prefixes = paths.stream().filter(x -> x.contains("*")).map(x -> x.substring(0, x.indexOf("*"))).collect(Collectors.toList());
+        if (prefixes.isEmpty()) {
+            Collections.sort(paths);
+            return paths;
+        }
+        List<String> mergedPaths = new ArrayList<>();
+        for (String path : paths) {
+            if (path.contains("*")) {
+                mergedPaths.add(path);
+            } else {
+                boolean skip = false;
+                for (String prefix : prefixes) {
+                    if (path.startsWith(prefix)) {
+                        skip = true;
+                        break;
+                    }
+                }
+                if (skip) {
+                    continue;
+                }
+                mergedPaths.add(path);
+            }
+        }
+        mergedPaths.sort(Comparator.comparing(o -> o.substring(0, o.indexOf("*"))));
+        return mergedPaths;
     }
 }

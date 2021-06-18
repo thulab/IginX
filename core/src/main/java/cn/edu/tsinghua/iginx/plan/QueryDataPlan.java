@@ -19,11 +19,9 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
@@ -35,29 +33,29 @@ public class QueryDataPlan extends DataPlan {
     public QueryDataPlan(List<String> paths, long startTime, long endTime) {
         super(true, paths, startTime, endTime, null);
         this.setIginxPlanType(QUERY_DATA);
-        boolean isStartPrefix = paths.get(0).contains("*");
-        String startTimeSeries = trimPath(paths.get(0));
-        boolean isEndPrefix = paths.get(getPathsNum() - 1).contains("*");
-        String endTimeSeries = trimPath(paths.get(getPathsNum() - 1));
-        for (String path : paths) {
-            boolean isPrefix = path.contains("*");
-            String prefix = trimPath(path);
-            if (startTimeSeries.compareTo(prefix) >= 0) {
-                startTimeSeries = prefix;
-                isStartPrefix = isPrefix;
-            }
-            if (endTimeSeries.compareTo(prefix) <= 0) {
-                endTimeSeries = prefix;
-                isEndPrefix = isPrefix;
-            }
-        }
-        if (isStartPrefix) {
-            startTimeSeries = addEndPrefix(startTimeSeries, true);
-        }
-        if (isEndPrefix) {
-            endTimeSeries = addEndPrefix(endTimeSeries, false);
-        }
-        this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
+//        boolean isStartPrefix = paths.get(0).contains("*");
+//        String startTimeSeries = trimPath(paths.get(0));
+//        boolean isEndPrefix = paths.get(getPathsNum() - 1).contains("*");
+//        String endTimeSeries = trimPath(paths.get(getPathsNum() - 1));
+//        for (String path : paths) {
+//            boolean isPrefix = path.contains("*");
+//            String prefix = trimPath(path);
+//            if (startTimeSeries.compareTo(prefix) >= 0) {
+//                startTimeSeries = prefix;
+//                isStartPrefix = isPrefix;
+//            }
+//            if (endTimeSeries.compareTo(prefix) <= 0) {
+//                endTimeSeries = prefix;
+//                isEndPrefix = isPrefix;
+//            }
+//        }
+//        if (isStartPrefix) {
+//            startTimeSeries = addEndPrefix(startTimeSeries, true);
+//        }
+//        if (isEndPrefix) {
+//            endTimeSeries = addEndPrefix(endTimeSeries, false);
+//        }
+//        this.setTsInterval(new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1)));
     }
 
     public QueryDataPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
@@ -89,26 +87,26 @@ public class QueryDataPlan extends DataPlan {
         return path;
     }
 
-    public List<String> getPathsByInterval(TimeSeriesInterval interval) {
-        if (getPaths().isEmpty()) {
-            logger.error("There are no paths in the plan.");
-            return null;
-        }
-        if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
-            return getPaths();
-        }
-        List<String> tempPaths = new ArrayList<>();
-        for (String path : getPaths()) {
-            String prefix = trimPath(path).contains("*") ? path.substring(0, path.indexOf("*") - 1) : trimPath(path);
-            if (interval.getStartTimeSeries() != null && prefix.compareTo(interval.getStartTimeSeries()) < 0 && !interval.getStartTimeSeries().startsWith(prefix)) {
-                continue;
-            }
-            if (interval.getEndTimeSeries() != null && prefix.compareTo(interval.getEndTimeSeries()) > 0) {
-                continue;
-            }
-            tempPaths.add(path);
-        }
-        return tempPaths;
-    }
+//    public List<String> getPathsByInterval(TimeSeriesInterval interval) {
+//        if (getPaths().isEmpty()) {
+//            logger.error("There are no paths in the plan.");
+//            return null;
+//        }
+//        if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
+//            return getPaths();
+//        }
+//        List<String> tempPaths = new ArrayList<>();
+//        for (String path : getPaths()) {
+//            String prefix = trimPath(path).contains("*") ? path.substring(0, path.indexOf("*") - 1) : trimPath(path);
+//            if (interval.getStartTimeSeries() != null && prefix.compareTo(interval.getStartTimeSeries()) < 0 && !interval.getStartTimeSeries().startsWith(prefix)) {
+//                continue;
+//            }
+//            if (interval.getEndTimeSeries() != null && prefix.compareTo(interval.getEndTimeSeries()) > 0) {
+//                continue;
+//            }
+//            tempPaths.add(path);
+//        }
+//        return tempPaths;
+//    }
 
 }

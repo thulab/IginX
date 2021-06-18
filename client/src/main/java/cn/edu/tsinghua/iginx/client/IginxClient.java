@@ -19,11 +19,9 @@
 package cn.edu.tsinghua.iginx.client;
 
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.session.Column;
 import cn.edu.tsinghua.iginx.session.Session;
-import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
+import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -36,10 +34,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
@@ -60,6 +56,9 @@ public class IginxClient {
     private static final String PASSWORD_ARGS = "pw";
     private static final String PASSWORD_NAME = "password";
 
+    private static final String EXECUTE_ARGS = "e";
+    private static final String EXECUTE_NAME = "execute";
+
     private static final String HELP_ARGS = "help";
 
     private static final int MAX_HELP_CONSOLE_WIDTH = 88;
@@ -76,6 +75,8 @@ public class IginxClient {
 
     static String password = "root";
 
+    static String execute = "";
+
     private static CommandLine commandLine;
 
     private static Session session;
@@ -88,6 +89,7 @@ public class IginxClient {
         options.addOption(PORT_ARGS, PORT_NAME, true, "Port (optional, default 6667)");
         options.addOption(USERNAME_ARGS, USERNAME_NAME, true, "User name (optional, default \"root\")");
         options.addOption(PASSWORD_ARGS, PASSWORD_NAME, true, "Password (optional, default \"root\")");
+        options.addOption(EXECUTE_ARGS, EXECUTE_NAME, true, "Execute (optional)");
 
         return options;
     }
@@ -103,7 +105,7 @@ public class IginxClient {
         } catch (ParseException e) {
             System.out.println(
                     "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
-                            + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
+                            + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -pw xxx.");
             System.out.println("For more information, please check the following hint.");
             hf.printHelp(SCRIPT_HINT, options, true);
             return false;
@@ -129,7 +131,7 @@ public class IginxClient {
         if (!parseCommandLine(options, args, hf)) {
             return;
         }
-        serve();
+        serve(args);
     }
 
     private static String parseArg(String arg, String name, boolean isRequired, String defaultValue) {
@@ -148,23 +150,27 @@ public class IginxClient {
         return str;
     }
 
-    private static void serve() {
+    private static void serve(String[] args) {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
             host = parseArg(HOST_ARGS, HOST_NAME, false, "127.0.0.1");
             port = parseArg(PORT_ARGS, PORT_NAME, false, "6888");
             username = parseArg(USERNAME_ARGS, USERNAME_NAME, false, "root");
             password = parseArg(PASSWORD_ARGS, PASSWORD_NAME, false, "root");
+            execute = parseArg(EXECUTE_ARGS, EXECUTE_NAME, false, "");
 
             session = new Session(host, port, username, password);
             session.openSession();
-
-            System.out.print(IGINX_CLI_PREFIX + "> ");
-            String command;
-            while (!(command = reader.readLine()).equals("quit")) {
-                processCommand(command);
+            if (execute.equals("")) {
                 System.out.print(IGINX_CLI_PREFIX + "> ");
+                String command;
+                while (!(command = reader.readLine()).equals("quit")) {
+                    processCommand(command);
+                    System.out.print(IGINX_CLI_PREFIX + "> ");
+                }
+                System.out.println("Goodbye");
+            } else {
+                processCommand(parseExecuteCommand(args));
             }
-            System.out.println("Goodbye");
         } catch (RuntimeException e) {
             System.out.println(IGINX_CLI_PREFIX + "> Parse Parameter error.");
             System.out.println(IGINX_CLI_PREFIX + "> Use -help for more information");
@@ -197,21 +203,31 @@ public class IginxClient {
             }
         } else if (commandParts.length == 2 && commandParts[0].equals("count") && commandParts[1].equals("points")) {
             try {
-                List<String> paths = getTimeseries();
-                Set<Long> timestamps = new HashSet();
-                for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM) {
-                    List<String> ins = new ArrayList<>();
-                    for (int j = i; j < i + MAX_GETDATA_NUM && j < paths.size(); j++) {
-                        ins.add(paths.get(j));
-                    }
-                    SessionQueryDataSet sessionQueryDataSet = session.queryData(ins, 0L, Long.MAX_VALUE);
-                    for (int j = 0; j < sessionQueryDataSet.getTimestamps().length; j++) {
-                        timestamps.add(sessionQueryDataSet.getTimestamps()[j]);
-                    }
+//                List<String> paths = session.showColumns().stream().map(Column::getPath).collect(Collectors.toList());
+//                Set<Long> timestamps = new HashSet();
+//                for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM) {
+//                    List<String> ins = new ArrayList<>();
+//                    for (int j = i; j < i + MAX_GETDATA_NUM && j < paths.size(); j++) {
+//                        ins.add(paths.get(j));
+//                    }
+//                    SessionQueryDataSet sessionQueryDataSet = session.queryData(ins, 0L, Long.MAX_VALUE);
+//                    for (int j = 0; j < sessionQueryDataSet.getTimestamps().length; j++) {
+//                        timestamps.add(sessionQueryDataSet.getTimestamps()[j]);
+//                    }
+//                }
+//                System.out.println(timestamps.size());
+//                List<String> paths = session.showColumns().stream().map(Column::getPath).collect(Collectors.toList());
+                List<String> paths = new ArrayList<>();
+                paths.add("*");
+                SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, 0, Long.MAX_VALUE, AggregateType.COUNT);
+                long count = 0;
+                for (Object value : dataSet.getValues()) {
+                    count += (long) value;
                 }
-                System.out.println(timestamps.size());
+                System.out.println(count);
                 System.out.println("success");
             } catch (Exception e) {
+                e.printStackTrace();
                 System.out.println("encounter error when executing count points");
             }
         } else if (commandParts.length == 3 && commandParts[0].equals("show") && commandParts[1].equals("replication") && commandParts[2].equals("factor")) {
@@ -223,10 +239,12 @@ public class IginxClient {
             }
         } else if (commandParts.length == 2 && commandParts[0].equals("delete") && commandParts[1].equals("data")) {
             try {
-                List<String> paths = getTimeseries();
-                if (paths.size() != 0) {
-                    session.deleteColumns(paths);
-                }
+//                List<String> paths = session.showColumns().stream().map(Column::getPath).collect(Collectors.toList());
+//                if (!paths.isEmpty()) {
+                List<String> paths = new ArrayList<>();
+                paths.add("*");
+                session.deleteColumns(paths);
+//                }
                 System.out.println("success");
             } catch (Exception e) {
                 System.out.println("encounter error when executing delete data");
@@ -237,12 +255,22 @@ public class IginxClient {
         }
     }
 
-    public static List<String> getTimeseries() throws ExecutionException, SessionException {
-        List<String> ret = new ArrayList<>();
-        List<Column> columns = session.showColumns();
-        for (Column column : columns) {
-            ret.add(column.getPath());
+    private static String parseExecuteCommand(String[] args) {
+        StringBuilder command = new StringBuilder();
+        int index = 0;
+        for (String arg : args) {
+            index++;
+            if (arg.equals("-" + EXECUTE_ARGS) || arg.equals("-" + EXECUTE_NAME)) {
+                break;
+            }
         }
-        return ret;
+        for (int i = index; i < args.length; i++) {
+            if (args[i].startsWith("-")) {
+                break;
+            }
+            command.append(args[i]);
+            command.append(" ");
+        }
+        return command.substring(0, command.toString().length() - 1);
     }
 }

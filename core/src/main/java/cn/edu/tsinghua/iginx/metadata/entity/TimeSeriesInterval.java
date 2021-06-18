@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import cn.edu.tsinghua.iginx.utils.StringUtils;
+
 import java.util.Objects;
 
 public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> {
@@ -82,26 +84,25 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     }
 
     public boolean isContain(String tsName) {
-        return (startTimeSeries == null || (tsName != null && startTimeSeries.compareTo(tsName) <= 0))
-                && (endTimeSeries == null || (tsName != null && endTimeSeries.compareTo(tsName) > 0));
+        return (startTimeSeries == null || (tsName != null && StringUtils.compare(tsName, startTimeSeries, true) >= 0))
+                && (endTimeSeries == null || (tsName != null && StringUtils.compare(tsName, endTimeSeries, false) < 0));
     }
 
     public boolean isCompletelyBefore(String tsName) {
         return endTimeSeries != null && tsName != null && endTimeSeries.compareTo(tsName) <= 0;
     }
 
-    // 输入参数是一个闭区间，下同
     public boolean isIntersect(TimeSeriesInterval tsInterval) {
-        return (tsInterval.startTimeSeries == null || endTimeSeries == null || tsInterval.startTimeSeries.compareTo(endTimeSeries) < 0)
-                && (tsInterval.endTimeSeries == null || startTimeSeries == null || tsInterval.endTimeSeries.compareTo(startTimeSeries) >= 0);
+        return (tsInterval.startTimeSeries == null || endTimeSeries == null || StringUtils.compare(tsInterval.startTimeSeries, endTimeSeries, false) < 0)
+                && (tsInterval.endTimeSeries == null || startTimeSeries == null || StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) >= 0);
     }
 
     public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {
-        return tsInterval.endTimeSeries != null && startTimeSeries != null && startTimeSeries.compareTo(tsInterval.endTimeSeries) > 0;
+        return tsInterval.endTimeSeries != null && startTimeSeries != null && StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) < 0;
     }
 
     public boolean isAfter(String tsName) {
-        return startTimeSeries != null && startTimeSeries.compareTo(tsName) > 0;
+        return startTimeSeries != null && StringUtils.compare(tsName, startTimeSeries, true) < 0;
     }
 
     @Override

@@ -49,18 +49,18 @@ public class IoTDBSessionExample {
         insertColumnRecords();
         // 行式插入数据
         insertRowRecords();
-        // 值过滤查询
-        valueFilterQuery();
-        // 查询数据
-        queryData();
-        // 聚合查询数据
+//        // 值过滤查询
+//        valueFilterQuery();
+//        // 查询数据
+//        queryData();
+//        // 聚合查询数据
         aggregateQuery();
-        // 降采样聚合查询
-        downsampleQuery();
-        // 删除数据
-        deleteDataInColumns();
-        // 再次查询数据
-        queryData();
+//        // 降采样聚合查询
+//        downsampleQuery();
+//        // 删除数据
+//        deleteDataInColumns();
+//        // 再次查询数据
+//        queryData();
 
         // 关闭 Session
         session.closeSession();
@@ -217,38 +217,39 @@ public class IoTDBSessionExample {
 
     private static void aggregateQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
+//        paths.add(S1);
+//        paths.add(S2);
+        paths.add("*");
 
         long startTime = COLUMN_END_TIMESTAMP - 100L;
         long endTime = ROW_START_TIMESTAMP + 100L;
 
         // MAX
-        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
-        dataSet.print();
-
-        // MIN
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
-        dataSet.print();
-
-        // FIRST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
-        dataSet.print();
-
-        // LAST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
-        dataSet.print();
-
-        // COUNT
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
-        dataSet.print();
-
-        // SUM
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
-        dataSet.print();
+//        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
+//        dataSet.print();
+//
+//        // MIN
+//        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
+//        dataSet.print();
+//
+//        // FIRST
+//        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+//        dataSet.print();
+//
+//        // LAST
+//        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+//        dataSet.print();
+//
+//        // COUNT
+//        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
+//        dataSet.print();
+//
+//        // SUM
+//        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.SUM);
+//        dataSet.print();
 
         // AVG
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
+        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
         dataSet.print();
     }
 

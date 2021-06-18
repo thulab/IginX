@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,16 +73,17 @@ public abstract class NonDatabasePlan extends IginxPlan {
             logger.error("There are no paths in the plan.");
             return null;
         }
-        if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
-            // TODO 时间序列区间左闭右开，存在左右端点相等的情况
-            return paths.stream().filter(x -> x.equals(interval.getStartTimeSeries()) || (x.compareTo(interval.getStartTimeSeries()) > 0 && x.compareTo(interval.getEndTimeSeries()) < 0)).collect(Collectors.toList());
-        } else if (interval.getStartTimeSeries() != null) {
-            return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
-        } else if (interval.getEndTimeSeries() != null) {
-            return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
-        } else {
-            return paths;
-        }
+        return paths.stream().filter(x -> StringUtils.compare(x, interval.getStartTimeSeries(), true) >= 0 && StringUtils.compare(x, interval.getEndTimeSeries(), false) < 0).collect(Collectors.toList());
+//        if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
+//            // TODO 时间序列区间左闭右开，存在左右端点相等的情况
+//            return paths.stream().filter(x -> x.equals(interval.getStartTimeSeries()) || (x.compareTo(interval.getStartTimeSeries()) > 0 && x.compareTo(interval.getEndTimeSeries()) < 0)).collect(Collectors.toList());
+//        } else if (interval.getStartTimeSeries() != null) {
+//            return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
+//        } else if (interval.getEndTimeSeries() != null) {
+//            return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
+//        } else {
+//            return paths;
+//        }
     }
 
     public String getStartPath() {
