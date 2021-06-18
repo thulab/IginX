@@ -529,6 +529,12 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.getSchemaMappingItem(schema, key);
     }
 
+    @Override
+    public boolean selection() throws Exception
+    {
+        return false;
+    }
+
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
         List<StorageEngineMeta> storageEngineMetaList = new ArrayList<>();
         String[] storageEngineStrings = ConfigDescriptor.getInstance().getConfig().getStorageEngineList().split(",");

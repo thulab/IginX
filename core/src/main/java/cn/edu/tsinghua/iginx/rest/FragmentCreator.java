@@ -6,6 +6,8 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,36 +83,6 @@ public class FragmentCreator
         lock.writeLock().unlock();
     }
 
-    public List<FragmentMeta> generateFragments(List<String> prefixList, long startTime) {
-        List<FragmentMeta> resultList = new ArrayList<>();
-        prefixList = prefixList.stream().filter(Objects::nonNull).sorted(String::compareTo).collect(Collectors.toList());
-        String previousPrefix;
-        String prefix = null;
-        int from = 0;
-        for (String s : prefixList) {
-            previousPrefix = prefix;
-            prefix = s;
-            resultList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment(from)));
-            from++;
-        }
-        resultList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment(from)));
-        return resultList;
-    }
-
-    public List<Long> chooseStorageEngineIdListForNewFragment(int from) {
-        List<Long> storageEngineIdList = iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
-        if (storageEngineIdList.size() <= 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum()) {
-            return storageEngineIdList;
-        }
-        Collections.sort(storageEngineIdList);
-        for (int i = 0; i < from; i++) {
-            Long next = storageEngineIdList.get(0);
-            storageEngineIdList.remove(0);
-            storageEngineIdList.add(next);
-        }
-        return storageEngineIdList.subList(0, 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum());
-    }
-
     public void setFragmentData(int fragment, long timestamp)
     {
         fragmentTime = timestamp;
@@ -125,6 +97,8 @@ public class FragmentCreator
         }
         lock.writeLock().unlock();
     }
+
+
 
     public void CreateFragment() throws Exception
     {
@@ -142,9 +116,10 @@ public class FragmentCreator
             {
                 e.printStackTrace();
             }
-            List<FragmentMeta> fragments = generateFragments(samplePrefix(fragmentNum - 1), fragmentTime);
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), fragmentTime);
+            iMetaManager.createFragments(fragmentsAndStorageUnits.k);
+
             LOGGER.info("create fragment  , size : {}", prefixList.size());
-            iMetaManager.createFragments(fragments);
             updateRequireNum = 0;
         }
     }
