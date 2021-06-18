@@ -48,7 +48,7 @@ public class IoTDBSessionMultiThreadTest {
             paths.add(COLUMN_D4_S4);
             paths.add(COLUMN_D5_S5);
             session = new Session("127.0.0.1", 6888, "root", "root");
-             session.openSession();
+            session.openSession();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -62,7 +62,7 @@ public class IoTDBSessionMultiThreadTest {
         ZooKeeper zk = null;
         try {
             zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
-            ZKUtil.deleteRecursive(zk, "/storage");
+            ZKUtil.deleteRecursive(zk, "/schema");
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
@@ -81,15 +81,14 @@ public class IoTDBSessionMultiThreadTest {
         }
         // close session
         try {
-            session.closeSession();
             iotdbSession.close();
             if (zk != null) {
                 zk.close();
             }
+            session.closeSession();
         } catch (InterruptedException | IoTDBConnectionException e) {
             logger.error(e.getMessage());
-        }/*
-        session.closeSession();*/
+        }
     }
 
     @Test

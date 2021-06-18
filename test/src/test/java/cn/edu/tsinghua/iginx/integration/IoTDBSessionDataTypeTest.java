@@ -146,7 +146,7 @@ public class IoTDBSessionDataTypeTest {
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
-            ZKUtil.deleteRecursive(zk, "/storage");
+            ZKUtil.deleteRecursive(zk, "/schema");
         } catch (IOException | InterruptedException | KeeperException e) {
             logger.error(e.getMessage());
         }
@@ -163,11 +163,11 @@ public class IoTDBSessionDataTypeTest {
 
         // close session
         try {
-            session.closeSession();
             iotdbSession.close();
             if (zk != null) {
                 zk.close();
             }
+            session.closeSession();
         } catch (InterruptedException | IoTDBConnectionException e) {
             logger.error(e.getMessage());
         }
