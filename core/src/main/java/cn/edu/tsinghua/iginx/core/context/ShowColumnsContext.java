@@ -16,28 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan;
+package cn.edu.tsinghua.iginx.core.context;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.List;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class ShowColumnsContext extends RequestContext {
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
-
-public class QueryDataPlan extends DataPlan {
-
-    private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
-
-    public QueryDataPlan(List<String> paths, long startTime, long endTime) {
-        super(true, paths, startTime, endTime, null);
-        this.setIginxPlanType(QUERY_DATA);
+    public ShowColumnsContext(ShowColumnsReq req) {
+        super(req.sessionId, ContextType.ShowColumns);
     }
 
-    public QueryDataPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-        this(paths, startTime, endTime);
-        this.setStorageUnit(storageUnit);
-        this.setSync(true);
-    }
 }

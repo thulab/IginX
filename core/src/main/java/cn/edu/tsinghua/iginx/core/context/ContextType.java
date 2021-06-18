@@ -31,6 +31,7 @@ public enum ContextType {
     AggregateQuery,
     DownsampleQuery,
     ValueFilterQuery,
+    ShowColumns,
     Unknown;
 
 }

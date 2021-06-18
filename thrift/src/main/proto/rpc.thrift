@@ -167,6 +167,25 @@ struct DownsampleQueryResp {
     4: optional QueryDataSet queryDataSet
 }
 
+struct ShowColumnsReq {
+    1: required i64 sessionId
+}
+
+struct ShowColumnsResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+}
+
+struct GetReplicaNumReq {
+    1: required i64 sessionId
+}
+
+struct GetReplicaNumResp {
+    1: required Status status
+    2: required i32 replicaNum
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -192,5 +211,9 @@ service IService {
     ValueFilterQueryResp valueFilterQuery(1:ValueFilterQueryReq req);
 
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
+
+    ShowColumnsResp showColumns(ShowColumnsReq req);
+
+    GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 
 }

@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -471,13 +472,10 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<NonInsertSplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
-            if (fragmentList.isEmpty()) {
-                continue;
-            }
-            FragmentMeta fragment = fragmentList.get(0);
-            List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
-            for (StorageUnitMeta storageUnit : storageUnitList) {
-                infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+            for (FragmentMeta fragment : fragmentList) {
+                List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
+                for (StorageUnitMeta storageUnit : storageUnitList) {
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));}
             }
         }
         return infoList;
@@ -489,16 +487,19 @@ public class NaivePlanSplitter implements IPlanSplitter {
         List<NonInsertSplitInfo> infoList = new ArrayList<>();
         for (String path : plan.getPaths()) {
             List<FragmentMeta> fragmentList = iMetaManager.getFragmentListByTimeSeriesNameAndTimeInterval(path, plan.getTimeInterval());
-            if (fragmentList.isEmpty()) {
-                continue;
-            }
-            FragmentMeta fragment = fragmentList.get(fragmentList.size() - 1);
-            List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
-            for (StorageUnitMeta storageUnit : storageUnitList) {
-                infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+            for (FragmentMeta fragment : fragmentList) {
+                List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
+                for (StorageUnitMeta storageUnit : storageUnitList) {
+                    infoList.add(new NonInsertSplitInfo(fragment.getIdealTimeInterval(), new TimeSeriesInterval(path, path), storageUnit));
+                }
             }
         }
         return infoList;
+    }
+
+    @Override
+    public List<Long> getSplitShowColumnsPlanResult() {
+        return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
     }
 
     @Override

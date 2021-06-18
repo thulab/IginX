@@ -16,28 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan;
+package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-import java.util.List;
+public class Column {
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
+    private final String path;
 
-public class QueryDataPlan extends DataPlan {
+    private final DataType dataType;
 
-    private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
-
-    public QueryDataPlan(List<String> paths, long startTime, long endTime) {
-        super(true, paths, startTime, endTime, null);
-        this.setIginxPlanType(QUERY_DATA);
+    public Column(String path, DataType dataType) {
+        this.path = path;
+        this.dataType = dataType;
     }
 
-    public QueryDataPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-        this(paths, startTime, endTime);
-        this.setStorageUnit(storageUnit);
-        this.setSync(true);
+    public String getPath() {
+        return path;
+    }
+
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    @Override
+    public String toString() {
+        return "Column{" +
+                "path='" + path + '\'' +
+                ", dataType=" + dataType +
+                '}';
     }
 }

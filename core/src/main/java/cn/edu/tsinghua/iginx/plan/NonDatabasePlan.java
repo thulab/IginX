@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public abstract class NonDatabasePlan extends IginxPlan {
         this.setIginxPlanType(NON_DATABASE);
         this.setCanBeSplit(true);
         this.paths = paths;
-        this.tsInterval = new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1));
+        this.tsInterval = new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1), true);
     }
 
     public List<String> getPaths() {
@@ -72,16 +73,10 @@ public abstract class NonDatabasePlan extends IginxPlan {
             logger.error("There are no paths in the plan.");
             return null;
         }
-        if (interval.getStartTimeSeries() != null && interval.getEndTimeSeries() != null) {
-            // TODO 时间序列区间左闭右开，存在左右端点相等的情况
-            return paths.stream().filter(x -> x.equals(interval.getStartTimeSeries()) || (x.compareTo(interval.getStartTimeSeries()) > 0 && x.compareTo(interval.getEndTimeSeries()) < 0)).collect(Collectors.toList());
-        } else if (interval.getStartTimeSeries() != null) {
-            return paths.stream().filter(x -> x.compareTo(interval.getStartTimeSeries()) >= 0).collect(Collectors.toList());
-        } else if (interval.getEndTimeSeries() != null) {
-            return paths.stream().filter(x -> x.compareTo(interval.getEndTimeSeries()) < 0).collect(Collectors.toList());
-        } else {
-            return paths;
+        if (interval.isClosed()) {
+            return paths.stream().filter(x -> StringUtils.compare(x, interval.getStartTimeSeries(), true) >= 0 && StringUtils.compare(x, interval.getEndTimeSeries(), false) <= 0).collect(Collectors.toList());
         }
+        return paths.stream().filter(x -> StringUtils.compare(x, interval.getStartTimeSeries(), true) >= 0 && StringUtils.compare(x, interval.getEndTimeSeries(), false) < 0).collect(Collectors.toList());
     }
 
     public String getStartPath() {

@@ -40,6 +40,7 @@ public class ValueFilterQueryPlan extends DataPlan {
         super(true, paths, startTime, endTime, null);
         this.booleanExpression = booleanExpression;
         this.setIginxPlanType(VALUE_FILTER_QUERY);
+        // TODO 不确定是否能删除
         List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
         timeseries.removeAll(paths);
         paths.addAll(timeseries);
@@ -66,7 +67,7 @@ public class ValueFilterQueryPlan extends DataPlan {
         if (isEndPrefix) {
             endTimeSeries = addEndPrefix(endTimeSeries, false);
         }
-        this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries));
+        this.setTsInterval(new TimeSeriesInterval(startTimeSeries, endTimeSeries, true));
     }
 
     public ValueFilterQueryPlan(List<String> paths, long startTime, long endTime, BooleanExpression booleanExpression, StorageUnitMeta storageUnit) {
@@ -98,6 +99,7 @@ public class ValueFilterQueryPlan extends DataPlan {
         return path;
     }
 
+    // TODO 不确定是否能删除
     public List<String> getPathsByInterval(TimeSeriesInterval interval) {
         List<String> paths = getPaths();
         List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());

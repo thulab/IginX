@@ -853,12 +853,14 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         // [0, startTime) & (-∞, +∞)
         // 一般情况下该范围内几乎无数据，因此作为一个分片处理
         // TODO 考虑大规模插入历史数据的情况
-        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
-                null, null, 0, timeInterval.getStartTime(),
-                null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
-        fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
-        storageUnitList.add(pair.v);
+        if (timeInterval.getStartTime() != 0) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+                    null, null, 0, timeInterval.getStartTime(),
+                    null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+            fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
+            storageUnitList.add(pair.v);
+        }
 
         // [startTime, +∞) & (null, startPath)
         storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);

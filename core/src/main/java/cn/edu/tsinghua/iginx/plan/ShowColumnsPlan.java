@@ -18,26 +18,19 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+public class ShowColumnsPlan extends IginxPlan {
 
-import java.util.List;
+    private final long storageEngineId;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.QUERY_DATA;
-
-public class QueryDataPlan extends DataPlan {
-
-    private static final Logger logger = LoggerFactory.getLogger(QueryDataPlan.class);
-
-    public QueryDataPlan(List<String> paths, long startTime, long endTime) {
-        super(true, paths, startTime, endTime, null);
-        this.setIginxPlanType(QUERY_DATA);
+    public ShowColumnsPlan(long storageEngineId) {
+        super(true);
+        this.setIginxPlanType(IginxPlanType.SHOW_COLUMNS);
+        this.setSync(true);
+        this.storageEngineId = storageEngineId;
     }
 
-    public QueryDataPlan(List<String> paths, long startTime, long endTime, StorageUnitMeta storageUnit) {
-        this(paths, startTime, endTime);
-        this.setStorageUnit(storageUnit);
-        this.setSync(true);
+    @Override
+    public long getStorageEngineId() {
+        return storageEngineId;
     }
 }
