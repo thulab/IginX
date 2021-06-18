@@ -72,7 +72,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
@@ -180,12 +179,7 @@ public class IginxWorker implements IService.Iface {
             }
         }
         metaManager.addStorageEngine(meta);
-        Map<String, Long> migrationMap = metaManager.selectStorageUnitsToMigrate(Collections.singletonList(meta.getId()));
-        boolean success = true;
-        for (Map.Entry<String, Long> entry : migrationMap.entrySet()) {
-            success &= metaManager.migrateStorageUnit(entry.getKey(), entry.getValue());
-        }
-        return success ? RpcUtils.SUCCESS : RpcUtils.FAILURE;
+        return RpcUtils.SUCCESS;
     }
 
     @Override

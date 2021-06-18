@@ -419,65 +419,6 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList) {
-        Map<String, Long> migrationMap = new HashMap<>();
-        Map<Long, List<String>> storageEngineIdToCoveredStorageUnitIdList = new HashMap<>();
-        List<StorageEngineMeta> storageEngineList = cache.getStorageEngineList();
-        int avg = (int) Math.ceil((double) (int) storageEngineList.stream().map(StorageEngineMeta::getStorageUnitList).count()
-                / (storageEngineList.size() + addedStorageEngineIdList.size()));
-        for (StorageEngineMeta storageEngineMeta : storageEngineList) {
-            int cnt = storageEngineMeta.getStorageUnitList().size() - avg;
-            for (int i = 0; i < cnt; i++) {
-                for (Long addedStorageEngineId : addedStorageEngineIdList) {
-                    if (storageEngineIdToCoveredStorageUnitIdList.containsKey(addedStorageEngineId) &&
-                            storageEngineIdToCoveredStorageUnitIdList.get(addedStorageEngineId).contains(storageEngineMeta.getStorageUnitList().get(i).getMasterId())) {
-                        continue;
-                    }
-                    List<String> coveredStorageUnitIdList = storageEngineIdToCoveredStorageUnitIdList.computeIfAbsent(addedStorageEngineId, v -> new ArrayList<>());
-                    if (coveredStorageUnitIdList.size() >= avg) {
-                        continue;
-                    }
-                    storageEngineIdToCoveredStorageUnitIdList.get(addedStorageEngineId).add(storageEngineMeta.getStorageUnitList().get(i).getMasterId());
-                    migrationMap.put(storageEngineMeta.getStorageUnitList().get(i).getId(), addedStorageEngineId);
-                }
-            }
-        }
-        return migrationMap;
-    }
-
-    @Override
-    public boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId) {
-        try {
-            storage.lockStorageUnit();
-            StorageUnitMeta storageUnit = cache.getStorageUnit(storageUnitId);
-            if (storageUnit == null) {
-                return false;
-            }
-            String sourceDir = cache.getStorageEngine(storageUnit.getStorageEngineId()).getExtraParams().getOrDefault("dataDir", "/");
-            String targetDir = cache.getStorageEngine(targetStorageEngineId).getExtraParams().getOrDefault("dataDir", "/");
-            String cmd = String.format("migrate.sh %s %s %s", sourceDir, storageUnitId, targetDir);
-            Process process = Runtime.getRuntime().exec(cmd);
-            if (process.waitFor() != 0) {
-                logger.error("migrate error: {} from {} to {}", storageUnitId, sourceDir, targetDir);
-                return false;
-            }
-            storageUnit = storageUnit.migrateStorageUnitMeta(targetStorageEngineId);
-            storage.updateStorageUnit(storageUnit);
-            cache.updateStorageUnit(storageUnit);
-            return true;
-        } catch (Exception e) {
-            logger.error("encounter error when migrate storage unit: ", e);
-        } finally {
-            try {
-                storage.releaseStorageUnit();
-            } catch (MetaStorageException e) {
-                logger.error("encounter error when release storage unit lock: ", e);
-            }
-        }
-        return false;
-    }
-
-    @Override
     public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
