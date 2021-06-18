@@ -602,7 +602,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
                         if (rowRecord.getFields().get(i) != null && !rowRecord.getFields().get(i).getStringValue().equals("null")) {
-                            timestamps.add(plan.getEndTime());
+                            timestamps.add(plan.getStartTime());
                             String columnName = dataSet.getColumnNames().get(i);
                             String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
