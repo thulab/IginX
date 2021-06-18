@@ -213,7 +213,6 @@ public class IginxClient {
                 System.out.println(count);
                 System.out.println("success");
             } catch (Exception e) {
-                e.printStackTrace();
                 System.out.println("encounter error when executing count points");
             }
         } else if (commandParts.length == 3 && commandParts[0].equals("show") && commandParts[1].equals("replication") && commandParts[2].equals("factor")) {
