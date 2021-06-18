@@ -93,7 +93,32 @@ public class IoTDBSessionMultiThreadTest {
     }
 
     @Test
+    public void emptyTest() throws ExecutionException, SessionException {
+        logger.info("Empty");
+        insertRecords();
+        /*
+        //query
+        SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
+        int len = dataSet.getTimestamps().length;
+        List<String> resPaths = dataSet.getPaths();
+        assertEquals(5, resPaths.size());
+        assertEquals(TIME_PERIOD, len);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());
+
+        deleteDataInColumns();
+
+        //query
+        dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
+        len = dataSet.getTimestamps().length;
+        resPaths = dataSet.getPaths();
+        assertEquals(5, resPaths.size());
+        assertEquals(TIME_PERIOD, len);
+        assertEquals(TIME_PERIOD, dataSet.getValues().size());*/
+    }
+
+    @Test
     public void sessionForStorageQueryTest() throws SessionException, InterruptedException, ExecutionException {
+        logger.info("storageQuery");
         Task[] tasks = new Task[5];
         Thread[] threads = new Thread[5];
         for (int i = 0; i < 5; i++) {
@@ -165,6 +190,7 @@ public class IoTDBSessionMultiThreadTest {
 
     @Test
     public void sessionForTimeQueryTest() throws SessionException, InterruptedException, ExecutionException {
+        logger.info("sessionForPartTimeQuery");
         Task[] tasks = new Task[5];
         Thread[] threads = new Thread[5];
         for (int i = 0; i < 5; i++) {
@@ -219,6 +245,7 @@ public class IoTDBSessionMultiThreadTest {
 
     @Test
     public void sessionForStoragePartDeleteTest() throws ExecutionException, SessionException, InterruptedException {
+        logger.info("sessionForStoragePartDelete");
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
@@ -297,6 +324,7 @@ public class IoTDBSessionMultiThreadTest {
 
     @Test
     public void sessionForTimePartDeleteTest() throws ExecutionException, SessionException, InterruptedException {
+        logger.info("sessionForPartTimeDelete");
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
@@ -335,6 +363,7 @@ public class IoTDBSessionMultiThreadTest {
         for (int i = 0; i < threadNum; i++) {
             threads[i].join();
         }
+
 
         Thread.sleep(1000);
 
@@ -384,6 +413,7 @@ public class IoTDBSessionMultiThreadTest {
 
     @Test
     public void sessionForStorageAllDeleteTest() throws ExecutionException, SessionException, InterruptedException {
+        logger.info("sessionForStorageAllDelete");
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
@@ -450,31 +480,8 @@ public class IoTDBSessionMultiThreadTest {
     }
 
     @Test
-    public void emptyTest() throws ExecutionException, SessionException {
-
-        insertRecords();
-        /*
-        //query
-        SessionQueryDataSet dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
-        int len = dataSet.getTimestamps().length;
-        List<String> resPaths = dataSet.getPaths();
-        assertEquals(5, resPaths.size());
-        assertEquals(TIME_PERIOD, len);
-        assertEquals(TIME_PERIOD, dataSet.getValues().size());
-
-        deleteDataInColumns();
-
-        //query
-        dataSet = session.queryData(paths, START_TIME, END_TIME + 1);
-        len = dataSet.getTimestamps().length;
-        resPaths = dataSet.getPaths();
-        assertEquals(5, resPaths.size());
-        assertEquals(TIME_PERIOD, len);
-        assertEquals(TIME_PERIOD, dataSet.getValues().size());*/
-    }
-
-    @Test
     public void sessionForTimeAllDeleteTest() throws ExecutionException, SessionException, InterruptedException {
+        logger.info("sessionForTimeAllDelete");
         insertRecords();
 
         //TODO 观察数据是否已经被插入完毕,和去掉这个sleep之后是否有区别
