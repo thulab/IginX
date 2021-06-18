@@ -146,7 +146,7 @@ public class IoTDBSessionDataTypeTest {
             ZKUtil.deleteRecursive(zk, "/unit");
             ZKUtil.deleteRecursive(zk, "/lock");
             ZKUtil.deleteRecursive(zk, "/fragment");
-            ZKUtil.deleteRecursive(zk, "/schema");
+            ZKUtil.deleteRecursive(zk, "/storage");
         } catch (IOException | InterruptedException | KeeperException e) {
             logger.error(e.getMessage());
         }
