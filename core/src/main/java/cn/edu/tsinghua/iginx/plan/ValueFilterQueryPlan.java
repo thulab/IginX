@@ -40,6 +40,7 @@ public class ValueFilterQueryPlan extends DataPlan {
         super(true, paths, startTime, endTime, null);
         this.booleanExpression = booleanExpression;
         this.setIginxPlanType(VALUE_FILTER_QUERY);
+        // TODO 不确定是否能删除
         List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
         timeseries.removeAll(paths);
         paths.addAll(timeseries);
@@ -98,32 +99,33 @@ public class ValueFilterQueryPlan extends DataPlan {
         return path;
     }
 
-//    public List<String> getPathsByInterval(TimeSeriesInterval interval) {
-//        List<String> paths = getPaths();
-//        List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
-//        timeseries.removeAll(paths);
-//        paths.addAll(timeseries);
-//        Collections.sort(paths);
-//        if (paths.isEmpty()) {
-//            logger.error("There are no paths in the plan.");
-//            return null;
-//        }
-//        if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
-//            return paths;
-//        }
-//        List<String> tempPaths = new ArrayList<>();
-//        for (String path : paths) {
-//            String prefix = trimPath(path).contains("*") ? path.substring(0, path.indexOf("*") - 1) : trimPath(path);
-//            if (interval.getStartTimeSeries() != null && prefix.compareTo(interval.getStartTimeSeries()) < 0 && !interval.getStartTimeSeries().startsWith(prefix)) {
-//                continue;
-//            }
-//            if (interval.getEndTimeSeries() != null && prefix.compareTo(interval.getEndTimeSeries()) > 0) {
-//                continue;
-//            }
-//            tempPaths.add(path);
-//        }
-//        return tempPaths;
-//    }
+    // TODO 不确定是否能删除
+    public List<String> getPathsByInterval(TimeSeriesInterval interval) {
+        List<String> paths = getPaths();
+        List<String> timeseries = new ArrayList<>(booleanExpression.getTimeseries());
+        timeseries.removeAll(paths);
+        paths.addAll(timeseries);
+        Collections.sort(paths);
+        if (paths.isEmpty()) {
+            logger.error("There are no paths in the plan.");
+            return null;
+        }
+        if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
+            return paths;
+        }
+        List<String> tempPaths = new ArrayList<>();
+        for (String path : paths) {
+            String prefix = trimPath(path).contains("*") ? path.substring(0, path.indexOf("*") - 1) : trimPath(path);
+            if (interval.getStartTimeSeries() != null && prefix.compareTo(interval.getStartTimeSeries()) < 0 && !interval.getStartTimeSeries().startsWith(prefix)) {
+                continue;
+            }
+            if (interval.getEndTimeSeries() != null && prefix.compareTo(interval.getEndTimeSeries()) > 0) {
+                continue;
+            }
+            tempPaths.add(path);
+        }
+        return tempPaths;
+    }
 
     public BooleanExpression getBooleanExpression() {
         return booleanExpression;

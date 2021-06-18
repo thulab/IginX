@@ -106,6 +106,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String GROUP_BY_CLAUSE = "GROUP BY ([%s, %s), %sms)";
 
+    private static final String DELETE_CLAUSE = "DELETE FROM " + PREFIX + "%s";
+
+    private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
+
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
     private static final String VALUE_FILTER_QUERY = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE + VALUE_FILTER_WHERE_CLAUSE;
@@ -139,10 +143,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     private static final String SUM_DOWNSAMPLE = "SELECT SUM(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
 
     private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
-
-    private static final String DELETE_CLAUSE = "DELETE FROM " + PREFIX + "%s";
-
-    private static final String DELETE_STORAGE_GROUP = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
     private final Map<Long, SessionPool> sessionPools;
 
@@ -338,7 +338,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             if (plan.getPaths().size() == 1 && plan.getPaths().get(0).equals("*")) {
-                sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP, plan.getStorageUnit().getId()));
+                sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, plan.getStorageUnit().getId()));
             } else {
                 for (String path : plan.getPaths()) {
                     sessionPool.executeNonQueryStatement(String.format(DELETE_CLAUSE, plan.getStorageUnit().getId() + "." + path));

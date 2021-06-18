@@ -203,20 +203,6 @@ public class IginxClient {
             }
         } else if (commandParts.length == 2 && commandParts[0].equals("count") && commandParts[1].equals("points")) {
             try {
-//                List<String> paths = session.showColumns().stream().map(Column::getPath).collect(Collectors.toList());
-//                Set<Long> timestamps = new HashSet();
-//                for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM) {
-//                    List<String> ins = new ArrayList<>();
-//                    for (int j = i; j < i + MAX_GETDATA_NUM && j < paths.size(); j++) {
-//                        ins.add(paths.get(j));
-//                    }
-//                    SessionQueryDataSet sessionQueryDataSet = session.queryData(ins, 0L, Long.MAX_VALUE);
-//                    for (int j = 0; j < sessionQueryDataSet.getTimestamps().length; j++) {
-//                        timestamps.add(sessionQueryDataSet.getTimestamps()[j]);
-//                    }
-//                }
-//                System.out.println(timestamps.size());
-//                List<String> paths = session.showColumns().stream().map(Column::getPath).collect(Collectors.toList());
                 List<String> paths = new ArrayList<>();
                 paths.add("*");
                 SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, 0, Long.MAX_VALUE, AggregateType.COUNT);
@@ -239,12 +225,9 @@ public class IginxClient {
             }
         } else if (commandParts.length == 2 && commandParts[0].equals("delete") && commandParts[1].equals("data")) {
             try {
-//                List<String> paths = session.showColumns().stream().map(Column::getPath).collect(Collectors.toList());
-//                if (!paths.isEmpty()) {
                 List<String> paths = new ArrayList<>();
                 paths.add("*");
                 session.deleteColumns(paths);
-//                }
                 System.out.println("success");
             } catch (Exception e) {
                 System.out.println("encounter error when executing delete data");
