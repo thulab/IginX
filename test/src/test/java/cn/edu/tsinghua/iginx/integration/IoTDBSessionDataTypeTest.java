@@ -134,7 +134,6 @@ public class IoTDBSessionDataTypeTest {
             insertRecords();
         } catch (Exception e) {
             logger.error(e.getMessage());
-            fail(e.getMessage());
         }
     }
 
@@ -150,7 +149,6 @@ public class IoTDBSessionDataTypeTest {
             ZKUtil.deleteRecursive(zk, "/schema");
         } catch (IOException | InterruptedException | KeeperException e) {
             logger.error(e.getMessage());
-            fail(e.getMessage());
         }
 
         // delete data from IoTDB
@@ -161,7 +159,6 @@ public class IoTDBSessionDataTypeTest {
             iotdbSession.executeNonQueryStatement("DELETE TIMESERIES root.*");
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
-            fail(e.getMessage());
         }
 
         // close session
@@ -173,7 +170,6 @@ public class IoTDBSessionDataTypeTest {
             }
         } catch (InterruptedException | IoTDBConnectionException e) {
             logger.error(e.getMessage());
-            fail(e.getMessage());
         }
     }
 
