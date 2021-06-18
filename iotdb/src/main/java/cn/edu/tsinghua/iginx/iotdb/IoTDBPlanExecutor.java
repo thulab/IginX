@@ -58,10 +58,10 @@ import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteRe
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
-import org.apache.iotdb.session.SessionDataSet;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
 import org.apache.iotdb.tsfile.file.metadata.enums.CompressionType;
@@ -72,7 +72,6 @@ import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.utils.Binary;
 import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
-import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +105,12 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     private static final String VALUE_FILTER_WHERE_CLAUSE = " and (%s)";
 
     private static final String GROUP_BY_CLAUSE = "GROUP BY ([%s, %s), %sms)";
+
+    private static final String DELETE_CLAUSE = "DELETE FROM " + PREFIX + "%s";
+
+    private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
+
+    private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
@@ -334,7 +339,13 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
-            sessionPool.deleteTimeseries(plan.getPaths().stream().map(x -> PREFIX + plan.getStorageUnit().getId() + '.' + x).collect(Collectors.toList()));
+            if (plan.getPaths().size() == 1 && plan.getPaths().get(0).equals("*")) {
+                sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, plan.getStorageUnit().getId()));
+            } else {
+                for (String path : plan.getPaths()) {
+                    sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, plan.getStorageUnit().getId() + "." + path));
+                }
+            }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
             return new NonDataPlanExecuteResult(FAILURE, plan);
@@ -436,19 +447,23 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             List<DataType> dataTypeList = new ArrayList<>();
             List<Object> values = new ArrayList<>();
             for (String path : plan.getPaths()) {
-                String deviceId = plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
-                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(COUNT, measurement, deviceId, plan.getStartTime(), plan.getEndTime()));
+                        sessionPool.executeQueryStatement(String.format(COUNT, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && !rowRecord.getFields().isEmpty() && rowRecord.getFields().get(0) != null) {
-                    Field field = rowRecord.getFields().get(0);
-                    paths.add(path);
-                    dataTypeList.add(fromIoTDB(field.getDataType()));
-                    if (field.getDataType() != TSDataType.TEXT) {
-                        values.add(field.getObjectValue(field.getDataType()));
-                    } else {
-                        values.add(field.getBinaryV().getValues());
+                if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
+                    for (int i = 0; i < rowRecord.getFields().size(); i++) {
+                        if (rowRecord.getFields().get(i) != null) {
+                            String columnName = dataSet.getColumnNames().get(i);
+                            String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
+                            paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
+                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
+                            if (rowRecord.getFields().get(i).getDataType() != TSDataType.TEXT) {
+                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            } else {
+                                values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
+                            }
+                        }
                     }
                 }
                 dataSet.close();
@@ -871,5 +886,21 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             return new ShowColumnsPlanExecuteResult(FAILURE, plan);
         }
         return new ShowColumnsPlanExecuteResult(SUCCESS, plan, paths, dataTypes);
+    }
+
+    private Pair<String, String> generateDeviceAndMeasurement(String path, String storageUnitId) {
+        String deviceId = storageUnitId;
+        String measurement;
+        if (path.equals("*")) {
+            measurement = "*";
+        } else {
+            if (!path.contains(".")) {
+                measurement = path;
+            } else {
+                deviceId += "." + path.substring(0, path.lastIndexOf('.'));
+                measurement = path.substring(path.lastIndexOf('.') + 1);
+            }
+        }
+        return new Pair<>(deviceId, measurement);
     }
 }
