@@ -28,7 +28,6 @@ import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
@@ -111,7 +110,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         getColumnValuesByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList(), insertColumnRecordsReq.getBitmapList(), timestamps.length),
                         insertColumnRecordsReq.getBitmapList().stream().map(x -> new Bitmap(timestamps.length, x.array())).collect(Collectors.toList()),
                         insertColumnRecordsReq.getDataTypeList(),
-                        insertColumnRecordsReq.getAttributesList()
+                        insertColumnRecordsReq.getTagsList()
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
@@ -123,7 +122,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         getRowValuesByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList(), insertRowRecordsReq.getBitmapList()),
                         insertRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
                         insertRowRecordsReq.getDataTypeList(),
-                        insertRowRecordsReq.getAttributesList()
+                        insertRowRecordsReq.getTagsList()
                 );
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
@@ -140,6 +139,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 QueryDataReq queryDataReq = ((QueryDataContext) requestContext).getReq();
                 QueryDataPlan queryDataPlan = new QueryDataPlan(
                         queryDataReq.getPaths(),
+                        queryDataReq.getTagsList(),
                         queryDataReq.getStartTime(),
                         queryDataReq.getEndTime()
                 );
@@ -330,7 +330,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.k,
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
-                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    null,
                     info.getStorageUnit()
             );
             subPlan.setSync(info.getStorageUnit().isMaster());
@@ -350,7 +350,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.k,
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
-                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    null,
                     info.getStorageUnit()
             );
             subPlan.setSync(info.getStorageUnit().isMaster());
@@ -378,6 +378,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             QueryDataPlan subPlan = new QueryDataPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    null,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()

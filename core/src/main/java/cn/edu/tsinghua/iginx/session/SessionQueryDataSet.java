@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
+import cn.edu.tsinghua.iginx.metadata.TagTools;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
@@ -27,6 +28,7 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -36,10 +38,12 @@ public class SessionQueryDataSet {
     private final long[] timestamps;
     private List<String> paths;
     private List<List<Object>> values;
+    private List<Map<String, String>> tagsList;
 
     public SessionQueryDataSet(QueryDataResp resp) {
         this.paths = resp.getPaths();
         this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+        this.tagsList = resp.getTagsList();
         parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
     }
 
@@ -97,8 +101,13 @@ public class SessionQueryDataSet {
     public void print() {
         System.out.println("Start to Print ResultSets:");
         System.out.print("Time\t");
-        for (String path : paths) {
-            System.out.print(path + "\t");
+        for (int i = 0; i < paths.size(); i++) {
+            String path = paths.get(i);
+            if (tagsList != null && !tagsList.isEmpty()) {
+                System.out.print(TagTools.toString(path, tagsList.get(i)) + "\t");
+            } else {
+                System.out.print(path + "\t");
+            }
         }
         System.out.println();
 
@@ -115,4 +124,5 @@ public class SessionQueryDataSet {
         }
         System.out.println("Printing ResultSets Finished.");
     }
+
 }

@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.TagTools;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -49,17 +50,17 @@ public abstract class InsertRecordsPlan extends DataPlan {
 
     private List<DataType> dataTypeList;
 
-    private List<Map<String, String>> attributesList;
+    private List<Map<String, String>> tagsList;
 
     protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageUnit);
+                                List<DataType> dataTypeList, List<Map<String, String>> tagsList, StorageUnitMeta storageUnit) {
+        super(false, TagTools.concatTags(paths, tagsList), timestamps[0], timestamps[timestamps.length - 1], storageUnit);
         this.setIginxPlanType(INSERT_RECORDS);
         this.timestamps = timestamps;
         this.valuesList = valuesList;
         this.bitmapList = bitmapList;
         this.dataTypeList = dataTypeList;
-        this.attributesList = attributesList;
+        this.tagsList = tagsList;
     }
 
     public long getTimestamp(int index) {
@@ -151,19 +152,19 @@ public abstract class InsertRecordsPlan extends DataPlan {
     }
 
     public Map<String, String> getAttributes(int index) {
-        if (attributesList == null || attributesList.isEmpty()) {
+        if (tagsList == null || tagsList.isEmpty()) {
             logger.info("There are no attributes in the InsertRecordsPlan.");
             return null;
         }
-        if (index < 0 || index >= attributesList.size()) {
+        if (index < 0 || index >= tagsList.size()) {
             logger.error("The given index {} is out of bounds.", index);
             return null;
         }
-        return attributesList.get(index);
+        return tagsList.get(index);
     }
 
-    public List<Map<String, String>> getAttributesByInterval(TimeSeriesInterval interval) {
-        if (attributesList == null || attributesList.isEmpty()) {
+    public List<Map<String, String>> getTagsByInterval(TimeSeriesInterval interval) {
+        if (tagsList == null || tagsList.isEmpty()) {
             logger.info("There are no attributes in the InsertRecordsPlan.");
             return null;
         }
@@ -177,7 +178,7 @@ public abstract class InsertRecordsPlan extends DataPlan {
                 endIndex = i;
             }
         }
-        return attributesList.subList(startIndex, endIndex + 1);
+        return tagsList.subList(startIndex, endIndex + 1);
     }
 
 }

@@ -225,7 +225,7 @@ public class IginxClient {
             try
             {
                 List<String> paths = getTimeseries();
-                Set<Long> timestamps = new HashSet();
+                Set<Long> timestamps = new HashSet<>();
                 for (int i = 0; i < paths.size(); i += MAX_GETDATA_NUM)
                 {
                     List<String> ins = new ArrayList<>();

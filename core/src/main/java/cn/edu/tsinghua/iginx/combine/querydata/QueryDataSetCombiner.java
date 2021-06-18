@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.combine.querydata;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
+import cn.edu.tsinghua.iginx.metadata.TagTools;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
@@ -27,6 +28,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.CheckedFunction;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -164,7 +166,9 @@ public class QueryDataSetCombiner {
                 }
             }
         }
-        resp.setPaths(columnNameList);
+        List<Pair<String, Map<String, String>>> pathAndTagsList = TagTools.splitTags(columnNameList);
+        resp.setPaths(pathAndTagsList.stream().map(e -> e.k).collect(Collectors.toList()));
+        resp.setTagsList(pathAndTagsList.stream().map(e -> e.v).collect(Collectors.toList()));
         resp.setDataTypeList(columnTypeList);
         resp.setQueryDataSet(new QueryDataSet(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG),
                 valuesList, bitmapList));

@@ -52,5 +52,11 @@ public class Constants {
 
     public static final String SCHEMA_MAPPING_PREFIX = "/schema";
 
+    public static final String TAG_PREFIX = "@";
+
+    public static final String VALUE_PREFIX = "$";
+
+    public static final String DOT = ".";
+
 }
 

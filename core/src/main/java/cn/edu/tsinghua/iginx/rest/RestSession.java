@@ -264,7 +264,7 @@ public class RestSession {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setAttributesList(attributesList);
+        req.setTagsList(attributesList);
 
         Status status;
         do {
@@ -333,7 +333,7 @@ public class RestSession {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setAttributesList(attributesList);
+        req.setTagsList(attributesList);
 
         Status status;
         do {

@@ -39,14 +39,14 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
     private static final Logger logger = LoggerFactory.getLogger(InsertColumnRecordsPlan.class);
 
     public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
+                                   List<DataType> dataTypeList, List<Map<String, String>> tagsList, StorageUnitMeta storageUnit) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, tagsList, storageUnit);
         this.setIginxPlanType(INSERT_COLUMN_RECORDS);
     }
 
     public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, null);
+                                   List<DataType> dataTypeList, List<Map<String, String>> tagsList) {
+        this(paths, timestamps, valuesList, bitmapList, dataTypeList, tagsList, null);
     }
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
