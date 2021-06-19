@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -30,6 +31,10 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.curator.framework.recipes.cache.TreeCache;
+import org.apache.curator.framework.recipes.cache.TreeCacheListener;
+import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,12 +57,11 @@ public class DefaultMetaManager implements IMetaManager {
 
     private final IMetaCache cache;
 
-    private final IMetaStorage storage;
+    public final IMetaStorage storage;
 
     private long id;
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
-
     public static DefaultMetaManager getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaManager.class) {
@@ -530,11 +534,7 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.getSchemaMappingItem(schema, key);
     }
 
-    @Override
-    public boolean selection() throws Exception
-    {
-        return false;
-    }
+
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
         List<StorageEngineMeta> storageEngineMetaList = new ArrayList<>();

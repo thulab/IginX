@@ -965,7 +965,6 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
 
     }
 
-    @Override
     public boolean selection() throws Exception {
         if (isMaster)
             return true;

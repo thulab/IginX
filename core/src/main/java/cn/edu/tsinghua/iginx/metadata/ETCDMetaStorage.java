@@ -134,4 +134,10 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
 
     }
+
+    @Override
+    public boolean selection() throws Exception
+    {
+        return false;
+    }
 }

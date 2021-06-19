@@ -181,4 +181,10 @@ public class MemoryMetaStorage implements IMetaStorage {
             fragmentChangeHook = hook;
         }
     }
+
+    @Override
+    public boolean selection() throws Exception
+    {
+        return false;
+    }
 }
