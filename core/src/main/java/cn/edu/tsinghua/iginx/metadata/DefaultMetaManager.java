@@ -56,12 +56,11 @@ public class DefaultMetaManager implements IMetaManager {
 
     private final IMetaCache cache;
 
-    private final IMetaStorage storage;
+    public final IMetaStorage storage;
 
     private long id;
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
-
     public static DefaultMetaManager getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaManager.class) {
@@ -529,11 +528,7 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.getSchemaMappingItem(schema, key);
     }
 
-    @Override
-    public boolean selection() throws Exception
-    {
-        return false;
-    }
+
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
         List<StorageEngineMeta> storageEngineMetaList = new ArrayList<>();

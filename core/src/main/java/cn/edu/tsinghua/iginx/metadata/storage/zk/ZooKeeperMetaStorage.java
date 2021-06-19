@@ -41,6 +41,7 @@ import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.RetryForever;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -113,6 +114,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final Lock fragmentMutexLock = new ReentrantLock();
 
     private final InterProcessMutex fragmentMutex;
+
+    private boolean isMaster = false;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -692,5 +695,55 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
         this.fragmentChangeHook = hook;
+    }
+
+    private void registerMaster() throws Exception {
+        try
+        {
+
+            this.client.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(Constants.FRAGMENT_CREATOR);
+        }
+        catch (Exception e)
+        {
+
+        }
+
+        this.iginxCache = new TreeCache(this.client, Constants.FRAGMENT_CREATOR_LEADER);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            switch (event.getType()) {
+                case NODE_REMOVED:
+                    selection();
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.iginxCache.getListenable().addListener(listener);
+        this.iginxCache.start();
+    }
+
+    @Override
+    public boolean selection() throws Exception {
+        if (isMaster)
+            return true;
+        try {
+            this.client.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(Constants.FRAGMENT_CREATOR_LEADER);
+            logger.info("成功");
+            isMaster = true;
+        } catch (KeeperException.NodeExistsException e) {
+            logger.info("失败");
+            isMaster = false;
+        }
+        finally
+        {
+            return isMaster;
+        }
+
     }
 }

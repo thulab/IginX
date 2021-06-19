@@ -2,11 +2,9 @@ package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,7 @@ public class FragmentCreator
     private static final Logger LOGGER = LoggerFactory.getLogger(FragmentCreator.class);
     private final Map<String, Double> prefixList = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
-    private final IMetaManager iMetaManager = SortedListAbstractMetaManager.getInstance();
+    private final IMetaManager iMetaManager = DefaultMetaManager.getInstance();
     private final Random random = new Random();
     private final int prefixMaxSize = 1048576;
     private int updateRequireNum = 0;
@@ -104,7 +102,7 @@ public class FragmentCreator
     {
         LOGGER.info("insert CreateFragment");
         LOGGER.info("create fragment  , list size : {}", prefixList.size());
-        if (iMetaManager.selection())
+        if (((DefaultMetaManager)iMetaManager).storage.selection())
         {
             try
             {
@@ -116,8 +114,11 @@ public class FragmentCreator
             {
                 e.printStackTrace();
             }
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), fragmentTime);
-            iMetaManager.createFragments(fragmentsAndStorageUnits.k);
+
+
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), new TimeInterval(fragmentTime, Long.MAX_VALUE));
+            iMetaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+
 
             LOGGER.info("create fragment  , size : {}", prefixList.size());
             updateRequireNum = 0;
