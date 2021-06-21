@@ -32,11 +32,11 @@ import java.util.Map;
 public class IoTDBBeforeDilatationExample {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBBeforeDilatationExample.class);
-    private static final String DATABASE_NAME = "root.sg1";
-    private static final String COLUMN_D1_S1 = "root.sg1.d1.s1";
-    private static final String COLUMN_D1_S2 = "root.sg1.d1.s2";
-    private static final String COLUMN_D2_S1 = "root.sg1.d2.s1";
-    private static final String COLUMN_D3_S1 = "root.sg1.d3.s1";
+    private static final String DATABASE_NAME = "sg";
+    private static final String COLUMN_D1_S1 = "sg.d1.s1";
+    private static final String COLUMN_D2_S2 = "sg.d2.s2";
+    private static final String COLUMN_D3_S3 = "sg.d3.s3";
+    private static final String COLUMN_D4_S4 = "sg.d4.s4";
     private static final long endTimestamp = 100000000L;
     private static final int insertTimes = 10000;
     private static final int recordPerInsert = 10;
@@ -45,9 +45,9 @@ public class IoTDBBeforeDilatationExample {
 
     static {
         paths.add(COLUMN_D1_S1);
-        paths.add(COLUMN_D1_S2);
-        paths.add(COLUMN_D2_S1);
-        paths.add(COLUMN_D3_S1);
+        paths.add(COLUMN_D2_S2);
+        paths.add(COLUMN_D3_S3);
+        paths.add(COLUMN_D4_S4);
     }
 
     public static void main(String[] args) throws Exception {

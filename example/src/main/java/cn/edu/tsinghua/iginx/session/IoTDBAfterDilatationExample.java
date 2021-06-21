@@ -32,11 +32,10 @@ import java.util.Map;
 public class IoTDBAfterDilatationExample {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBAfterDilatationExample.class);
-    private static final String COLUMN_C1_S1 = "root.sg1.c1.s1";
-    private static final String COLUMN_C1_S2 = "root.sg1.c1.s2";
-    private static final String COLUMN_E2_S1 = "root.sg1.e2.s1";
-    private static final String COLUMN_E3_S1 = "root.sg1.e3.s1";
-    private static final String DATABASE_NAME = "root.sg1";
+    private static final String COLUMN_C1_S1 = "sg.c1.s1";
+    private static final String COLUMN_C2_S2 = "sg.c2.s2";
+    private static final String COLUMN_E2_S1 = "sg.e2.s1";
+    private static final String COLUMN_E3_S1 = "sg.e3.s1";
     private static final long beginTimestamp = 1000000L;
     private static final int insertTimes = 1000;
     private static final int recordPerInsert = 100;
@@ -45,7 +44,7 @@ public class IoTDBAfterDilatationExample {
 
     static {
         paths.add(COLUMN_C1_S1);
-        paths.add(COLUMN_C1_S2);
+        paths.add(COLUMN_C2_S2);
         paths.add(COLUMN_E2_S1);
         paths.add(COLUMN_E3_S1);
     }
@@ -53,8 +52,6 @@ public class IoTDBAfterDilatationExample {
     public static void main(String[] args) throws Exception {
         session = new Session("127.0.0.1", 6888, "root", "root");
         session.openSession();
-        // 创建数据库
-        //session.createDatabase(DATABASE_NAME);
         // 增加一些新的时间序列
         addColumns();
         // 插入数据
