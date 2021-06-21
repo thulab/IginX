@@ -1,13 +1,17 @@
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.Iginx;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
+import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,10 +20,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 /*
@@ -63,7 +71,9 @@ public class FileMetaStorage implements IMetaStorage {
 
     private static final String STORAGE_UNIT_META_FILE = "storage_unit.log";
 
-    private static final String CREATE = "create";
+    private static final String ID_FILE = "id.log";
+
+    private static final long ID_INTERVAL = 100000;
 
     private static final String UPDATE = "update";
 
@@ -85,8 +95,6 @@ public class FileMetaStorage implements IMetaStorage {
 
     private AtomicLong idGenerator = null; // 加载完数据之后赋值
 
-    private Map<String, Map<String, Integer>> schemaMapping;
-
     public static FileMetaStorage getInstance() {
         if (INSTANCE == null) {
             synchronized (FileMetaStorage.class) {
@@ -99,8 +107,8 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     public FileMetaStorage() {
-        // 初始化文件
         try {
+            // 初始化文件
             if (Files.notExists(Paths.get(PATH, IGINX_META_FILE))) {
                 Files.createFile(Paths.get(PATH, IGINX_META_FILE));
             }
@@ -117,57 +125,69 @@ public class FileMetaStorage implements IMetaStorage {
                 Files.createFile(Paths.get(PATH, STORAGE_UNIT_META_FILE));
             }
         } catch (IOException e) {
-            logger.error("encounter error when create file: ", e);
+            logger.error("encounter error when create log file: ", e);
             System.exit(10);
         }
-        preloadSchemaMapping();
+        // 加载 id
+        try {
+            if (Files.notExists(Paths.get(PATH, ID_FILE))) {
+                Files.createFile(Paths.get(PATH, ID_FILE));
+                try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ID_FILE).toFile(), false))) {
+                    writer.write(ID_INTERVAL + "\n");
+                }
+                idGenerator = new AtomicLong(0L);
+            } else {
+                long id = ID_INTERVAL;
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, ID_FILE).toFile())))) {
+                    String line = reader.readLine().trim();
+                    id += Long.parseLong(line);
+                    idGenerator = new AtomicLong(Long.parseLong(line));
+                }
+                try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ID_FILE).toFile(), false))) {
+                    writer.write(id + "\n");
+                }
+            }
+        } catch (IOException e) {
+            logger.error("encounter error when process id file: ", e);
+            System.exit(10);
+        }
     }
 
-    private void preloadStorageUnit() {
-
+    private long nextId() {
+        long id = idGenerator.incrementAndGet();
+        if (id % ID_INTERVAL == 0) {
+            try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ID_FILE).toFile(), false))) {
+                writer.write((id + ID_INTERVAL) + "\n");
+            } catch (IOException e) {
+                logger.error("encounter error when rewrite id file: ", e);
+            }
+        }
+        return id;
     }
 
-    private void preloadFragment() {
-
-    }
-
-    private void preloadStorageEngine() {
-
-    }
-
-    private void preloadIginx() {
-
-    }
-
-    private void preloadSchemaMapping() {
-        schemaMapping = new HashMap<>();
+    @Override
+    public Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException {
+        Map<String, Map<String, Integer>> schemaMappings = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, SCHEMA_MAPPING_FILE).toFile())))) {
-            String line, params;
+            String line;
+            String[] params;
             while ((line = reader.readLine()) != null) {
-                if (line.startsWith(CREATE)) {
-                    params = line.substring(CREATE.length() + 1);
-
-                } else if (line.startsWith(UPDATE)) {
-                    params = line.substring(UPDATE.length() + 1);
-                } else if (line.startsWith(REMOVE)) {
-                    params = line.substring(REMOVE.length() + 1);
-
+                params = line.split(" ");
+                String schema = params[1];
+                if (params[0].equals(UPDATE)) {
+                    Map<String, Integer> schemeMapping = JsonUtils.getGson().fromJson(params[2], new TypeToken<Map<String, Integer>>() {}.getType());
+                    schemaMappings.put(schema, schemeMapping);
+                } else if (params[0].equals(REMOVE)) {
+                    schemaMappings.remove(schema);
                 } else {
                     logger.error("unknown log content: " + line);
                 }
             }
         } catch (IOException e) {
             logger.error("encounter error when read schema mapping log file: ", e);
-            System.exit(10);
+            throw new MetaStorageException(e);
         }
-    }
-
-    @Override
-    public Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException {
-        if (schemaMapping == null) { // schemaMapping 此前已经加载过了
-            schemaMapping = new HashMap<>();
-        }
-        return schemaMapping;
+        return schemaMappings;
     }
 
     @Override
@@ -179,6 +199,16 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void updateSchemaMapping(String schema, Map<String, Integer> schemaMapping) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, SCHEMA_MAPPING_FILE).toFile(), true))) {
+            if (schemaMapping == null || schemaMapping.isEmpty()) {
+                writer.write(String.format("%s %s\n", REMOVE, schema));
+            } else {
+                writer.write(String.format("%s %s %s\n", UPDATE, schema, JsonUtils.getGson().toJson(schemaMapping)));
+            }
+        } catch (IOException e) {
+            logger.error("write schema mapping file error: ", e);
+            throw new MetaStorageException(e);
+        }
         if (schemaMappingChangeHook != null) {
             schemaMappingChangeHook.onChange(schema, schemaMapping);
         }
@@ -186,13 +216,13 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<Long, IginxMeta> loadIginx() throws MetaStorageException {
-        return null;
+    public Map<Long, IginxMeta> loadIginx() throws MetaStorageException { // 实际上不需要有数据，因为本地文件只支持单个文件
+        return new HashMap<>();
     }
 
     @Override
-    public long registerIginx(IginxMeta iginx) throws MetaStorageException {
-        return idGenerator.incrementAndGet();
+    public long registerIginx(IginxMeta iginx) throws MetaStorageException { // 唯一的一个 iginx 的 id 始终都为 0
+        return 0L;
     }
 
     @Override
@@ -205,16 +235,47 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines) throws MetaStorageException {
         Map<Long, StorageEngineMeta> storageEngineMap = new HashMap<>();
-        for (StorageEngineMeta storageEngine: storageEngines) {
-            storageEngineMap.put(storageEngine.getId(), storageEngine);
+
+        File storageEngineLogFile = Paths.get(PATH, STORAGE_META_FILE).toFile();
+        if (storageEngineLogFile.length() == 0L) { // 是第一次启动
+            for (StorageEngineMeta storageEngine: storageEngines) {
+                storageEngine.setId(addStorageEngine(storageEngine));
+                storageEngineMap.put(storageEngine.getId(), storageEngine);
+            }
+        } else { // 并非第一次启动
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_META_FILE).toFile())))) {
+                String line;
+                String[] params;
+                while ((line = reader.readLine()) != null) {
+                    params = line.split(" ");
+                    if (params[0].equals(UPDATE)) {
+                        StorageEngineMeta storageEngine = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), StorageEngineMeta.class);
+                        storageEngineMap.put(storageEngine.getId(), storageEngine);
+                    } else {
+                        logger.error("unknown log content: " + line);
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("encounter error when read schema mapping log file: ", e);
+                throw new MetaStorageException(e);
+            }
         }
+
         return storageEngineMap;
     }
 
     @Override
     public long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
-        long id = idGenerator.incrementAndGet();
+        long id = nextId();
         storageEngine.setId(id);
+
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, STORAGE_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(storageEngine)));
+        } catch (IOException e) {
+            logger.error("write storage engine file error: ", e);
+            throw new MetaStorageException(e);
+        }
+
         if (storageChangeHook != null) {
             storageChangeHook.onChange(id, storageEngine);
         }
@@ -230,7 +291,24 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public Map<String, StorageUnitMeta> loadStorageUnit() throws MetaStorageException {
-        return null;
+        Map<String, StorageUnitMeta> storageUnitMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_UNIT_META_FILE).toFile())))) {
+            String line;
+            String[] params;
+            while ((line = reader.readLine()) != null) {
+                params = line.split(" ");
+                if (params[0].equals(UPDATE)) {
+                    StorageUnitMeta storageUnit = JsonUtils.getGson().fromJson(params[1], StorageUnitMeta.class);
+                    storageUnitMap.put(storageUnit.getId(), storageUnit);
+                }  else {
+                    logger.error("unknown log content: " + line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("encounter error when read storage unit log file: ", e);
+            throw new MetaStorageException(e);
+        }
+        return storageUnitMap;
     }
 
     @Override
@@ -240,11 +318,17 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public String addStorageUnit() throws MetaStorageException {
-        return Long.toString(idGenerator.incrementAndGet());
+        return "unit" + String.format("%064d", nextId());
     }
 
     @Override
     public void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, STORAGE_UNIT_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(storageUnitMeta)));
+        } catch (IOException e) {
+            logger.error("write storage unit file error: ", e);
+            throw new MetaStorageException(e);
+        }
         if (storageUnitChangeHook != null) {
             storageUnitChangeHook.onChange(storageUnitMeta.getId(), storageUnitMeta);
         }
@@ -264,7 +348,26 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
-        return null;
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, FRAGMENT_META_FILE).toFile())))) {
+            String line;
+            String[] params;
+            while ((line = reader.readLine()) != null) {
+                params = line.split(" ");
+                if (params[0].equals(UPDATE)) {
+                    FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
+                    List<FragmentMeta> fragmentList = fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>());
+                    fragmentList.remove(fragment);
+                    fragmentList.add(fragment);
+                }  else {
+                    logger.error("unknown log content: " + line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("encounter error when read storage unit log file: ", e);
+            throw new MetaStorageException(e);
+        }
+        return fragmentsMap;
     }
 
     @Override
@@ -274,6 +377,12 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, FRAGMENT_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
+        } catch (IOException e) {
+            logger.error("write fragment file error: ", e);
+            throw new MetaStorageException(e);
+        }
         if (fragmentChangeHook != null) {
             fragmentChangeHook.onChange(false, fragmentMeta);
         }
@@ -281,6 +390,12 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, FRAGMENT_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
+        } catch (IOException e) {
+            logger.error("write fragment file error: ", e);
+            throw new MetaStorageException(e);
+        }
         if (fragmentChangeHook != null) {
             fragmentChangeHook.onChange(true, fragmentMeta);
         }
