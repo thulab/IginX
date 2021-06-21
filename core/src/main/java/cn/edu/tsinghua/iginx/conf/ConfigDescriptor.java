@@ -79,6 +79,7 @@ public class ConfigDescriptor {
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
+            config.setFileDataDir(properties.getProperty("fileDataDir", ""));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
