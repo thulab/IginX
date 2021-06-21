@@ -349,7 +349,6 @@ public class IoTDBSessionIT {
         assertEquals(4, len);
         assertEquals(4, firstDataSet.getValues().length);
         for (int i = 0; i < 4; i++) {
-            assertEquals(-1, firstDataSet.getTimestamps()[i]);
             switch (resPaths.get(i)) {
                 case "sg1.d1.s1":
                     assertEquals(START_TIME, result[i]);
@@ -415,7 +414,6 @@ public class IoTDBSessionIT {
         assertEquals(4, len);
         assertEquals(4, lastDataSet.getValues().length);
         for (int i = 0; i < 4; i++) {
-            assertEquals(-1, lastDataSet.getTimestamps()[i]);
             switch (resPaths.get(i)) {
                 case "sg1.d1.s1":
                     assertEquals(END_TIME, result[i]);

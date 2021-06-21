@@ -38,7 +38,6 @@ import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.SortedListAbstractMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
@@ -50,6 +49,8 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
@@ -64,7 +65,6 @@ import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,7 +72,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
@@ -180,12 +179,7 @@ public class IginxWorker implements IService.Iface {
             }
         }
         metaManager.addStorageEngine(meta);
-        Map<String, Long> migrationMap = metaManager.selectStorageUnitsToMigrate(Collections.singletonList(meta.getId()));
-        boolean success = true;
-        for (Map.Entry<String, Long> entry : migrationMap.entrySet()) {
-            success &= metaManager.migrateStorageUnit(entry.getKey(), entry.getValue());
-        }
-        return success ? RpcUtils.SUCCESS : RpcUtils.FAILURE;
+        return RpcUtils.SUCCESS;
     }
 
     @Override
@@ -214,5 +208,10 @@ public class IginxWorker implements IService.Iface {
         ShowColumnsContext context = new ShowColumnsContext(req);
         core.processRequest(context);
         return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
+    }
+
+    @Override
+    public GetReplicaNumResp getReplicaNum(GetReplicaNumReq req) {
+        return new GetReplicaNumResp(RpcUtils.SUCCESS, ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
     }
 }

@@ -64,6 +64,8 @@ public class Config {
 
     private boolean enableRestService = true;
 
+    private String fileDataDir = "";
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -238,5 +240,13 @@ public class Config {
 
     public void setMetaStorage(String metaStorage) {
         this.metaStorage = metaStorage;
+    }
+
+    public String getFileDataDir() {
+        return fileDataDir;
+    }
+
+    public void setFileDataDir(String fileDataDir) {
+        this.fileDataDir = fileDataDir;
     }
 }

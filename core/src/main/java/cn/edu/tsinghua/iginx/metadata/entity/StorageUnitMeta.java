@@ -81,12 +81,6 @@ public final class StorageUnitMeta {
         return replicas;
     }
 
-    public StorageUnitMeta migrateStorageUnitMeta(long targetStorageEngineId) {
-        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, targetStorageEngineId, masterId, isMaster);
-        storageUnitMeta.setCreatedBy(createdBy);
-        return storageUnitMeta;
-    }
-
     public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
         StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
         storageUnitMeta.setCreatedBy(createdBy);
