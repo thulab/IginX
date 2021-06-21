@@ -33,10 +33,10 @@ public class IoTDBSessionExample {
     private static final String S2 = "sg.d2.s2";
     private static final String S3 = "sg.d3.s3";
     private static final String S4 = "sg.d4.s4";
-    private static final long COLUMN_START_TIMESTAMP = 300000L;
-    private static final long COLUMN_END_TIMESTAMP = 310500L;
-    private static final long ROW_START_TIMESTAMP = 310501L;
-    private static final long ROW_END_TIMESTAMP = 321000L;
+    private static final long COLUMN_START_TIMESTAMP = 0L;
+    private static final long COLUMN_END_TIMESTAMP = 10500L;
+    private static final long ROW_START_TIMESTAMP = 10501L;
+    private static final long ROW_END_TIMESTAMP = 21000L;
     private static final int ROW_INTERVAL = 10;
     private static Session session;
 
