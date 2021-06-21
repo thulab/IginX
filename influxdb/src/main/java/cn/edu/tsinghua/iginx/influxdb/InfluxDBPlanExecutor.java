@@ -1084,4 +1084,26 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
     }
+
+    private String[] generateMeasurementAndTagValueAndField(String path) {
+        String[] parts = new String[3];
+        if (path.equals("*")) {
+            parts[0] = "/.*/";
+            parts[1] = null;
+            parts[2] = null;
+        } else {
+            parts[0] = path.substring(0, path.indexOf('.'));
+            parts[0] = parts[0].equals("*") ? "/.*/" : parts[0];
+            parts[2] = path.substring(path.lastIndexOf('.') + 1);
+            parts[2] = parts[1].equals("*") ? "/.*/" : parts[1];
+            parts[1] = null;
+            if (path.split("\\.").length > 2) {
+                parts[1] = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
+                if (parts[1].contains("*")) {
+                    parts[1] = "/" + parts[1].replace("*", ".") + "/";
+                }
+            }
+        }
+        return parts;
+    }
 }
