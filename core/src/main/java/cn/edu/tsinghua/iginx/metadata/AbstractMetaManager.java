@@ -605,9 +605,9 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
         for (String s : prefixList) {
             previousPrefix = prefix;
             prefix = s;
-            resultList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+            resultList.add(new FragmentMeta(previousPrefix, prefix, startTime + 5 * 60 * 1000, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
         }
-        resultList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
+        resultList.add(new FragmentMeta(prefix, null, startTime + 5 * 60 * 1000, Long.MAX_VALUE, chooseStorageEngineIdListForNewFragment()));
         return resultList;
     }
 
