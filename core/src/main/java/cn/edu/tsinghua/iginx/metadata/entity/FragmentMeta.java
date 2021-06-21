@@ -79,7 +79,7 @@ public final class FragmentMeta {
     }
 
     public FragmentMeta endFragmentMeta(long endTime) {
-        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
+        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime, masterStorageUnit);
     }
 
     public long getCreatedBy() {

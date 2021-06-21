@@ -592,7 +592,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public boolean createFragments(List<FragmentMeta> fragments) {
+    public boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> fragments) {
         InterProcessMutex mutex = new InterProcessMutex(this.zookeeperClient, Constants.FRAGMENT_LOCK_NODE);
         try {
             mutex.acquire();
@@ -809,7 +809,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
     }
 
     @Override
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
         List<FragmentMeta> fragmentMetaList = new ArrayList<>();
         // TODO 新建 StorageUnit
         List<StorageUnitMeta> storageUnitMetaList = new ArrayList<>();
