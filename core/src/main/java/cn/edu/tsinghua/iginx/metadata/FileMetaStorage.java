@@ -1,9 +1,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.Iginx;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.conf.Constants;
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -15,11 +12,9 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -30,24 +25,6 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
@@ -60,8 +37,6 @@ public class FileMetaStorage implements IMetaStorage {
     private static FileMetaStorage INSTANCE = null;
 
     private static final String PATH = ConfigDescriptor.getInstance().getConfig().getFileDataDir();
-
-    private static final String IGINX_META_FILE = "iginx.log";
 
     private static final String STORAGE_META_FILE = "storage.log";
 
@@ -85,8 +60,6 @@ public class FileMetaStorage implements IMetaStorage {
 
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
 
-    private IginxChangeHook iginxChangeHook = null;
-
     private StorageChangeHook storageChangeHook = null;
 
     private StorageUnitChangeHook storageUnitChangeHook = null;
@@ -108,10 +81,11 @@ public class FileMetaStorage implements IMetaStorage {
 
     public FileMetaStorage() {
         try {
-            // 初始化文件
-            if (Files.notExists(Paths.get(PATH, IGINX_META_FILE))) {
-                Files.createFile(Paths.get(PATH, IGINX_META_FILE));
+            // 创建目录
+            if (Files.notExists(Paths.get(PATH))) {
+                Files.createDirectories(Paths.get(PATH));
             }
+            // 初始化文件
             if (Files.notExists(Paths.get(PATH, STORAGE_META_FILE))) {
                 Files.createFile(Paths.get(PATH, STORAGE_META_FILE));
             }
@@ -226,11 +200,7 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerIginxChangeHook(IginxChangeHook hook) {
-        if (hook != null) {
-            iginxChangeHook = hook;
-        }
-    }
+    public void registerIginxChangeHook(IginxChangeHook hook) { }
 
     @Override
     public Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines) throws MetaStorageException {
@@ -318,7 +288,7 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public String addStorageUnit() throws MetaStorageException {
-        return "unit" + String.format("%064d", nextId());
+        return "unit" + String.format("%024d", nextId());
     }
 
     @Override
