@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.query.result;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AggregateQueryPlanExecuteResult extends SyncPlanExecuteResult {
@@ -31,6 +32,8 @@ public abstract class AggregateQueryPlanExecuteResult extends SyncPlanExecuteRes
 
     public AggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
+        this.paths = new ArrayList<>();
+        this.dataTypes = new ArrayList<>();
     }
 
     public List<String> getPaths() {

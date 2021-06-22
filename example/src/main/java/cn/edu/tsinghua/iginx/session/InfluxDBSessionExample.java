@@ -22,7 +22,6 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,11 +49,11 @@ public class InfluxDBSessionExample {
         // 行式插入数据
         insertRowRecords();
         // 值过滤查询
-        valueFilterQuery();
+//        valueFilterQuery();
         // 查询数据
-		queryData();
+//		queryData();
         // 聚合查询数据
-		aggregateQuery();
+//		aggregateQuery();
         // 降采样聚合查询
 		downsampleQuery();
         // 删除数据
@@ -87,23 +86,23 @@ public class InfluxDBSessionExample {
                 if (j >= size - 50) {
                     values[(int) j] = null;
                 } else {
-                    if (i < 2) {
+//                    if (i < 2) {
                         values[(int) j] = i + j;
-                    } else {
-                        values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
-                    }
+//                    } else {
+//                        values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+//                    }
                 }
             }
             valuesList[(int) i] = values;
         }
 
         List<DataType> dataTypeList = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 4; i++) {
             dataTypeList.add(DataType.LONG);
         }
-        for (int i = 0; i < 2; i++) {
-            dataTypeList.add(DataType.BINARY);
-        }
+//        for (int i = 0; i < 2; i++) {
+//            dataTypeList.add(DataType.BINARY);
+//        }
 
         session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
@@ -125,33 +124,34 @@ public class InfluxDBSessionExample {
                 if ((i + j) % 2 == 0) {
                     values[(int) j] = null;
                 } else {
-                    if (j < 2) {
+//                    if (j < 2) {
                         values[(int) j] = i + j;
-                    } else {
-                        values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
-                    }
+//                    } else {
+//                        values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+//                    }
                 }
             }
             valuesList[(int) i] = values;
         }
 
         List<DataType> dataTypeList = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 4; i++) {
             dataTypeList.add(DataType.LONG);
         }
-        for (int i = 0; i < 2; i++) {
-            dataTypeList.add(DataType.BINARY);
-        }
+//        for (int i = 0; i < 2; i++) {
+//            dataTypeList.add(DataType.BINARY);
+//        }
 
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void queryData() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add("sg.*");
+//        paths.add(S1);
+//        paths.add(S2);
+//        paths.add(S3);
+//        paths.add(S4);
 
         long startTime = COLUMN_END_TIMESTAMP - 100L;
         long endTime = ROW_START_TIMESTAMP + 100L;
@@ -162,10 +162,11 @@ public class InfluxDBSessionExample {
 
     private static void aggregateQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add("sg.*");
+//        paths.add(S1);
+//        paths.add(S2);
+//        paths.add(S3);
+//        paths.add(S4);
 
         long startTime = COLUMN_END_TIMESTAMP - 100L;
         long endTime = ROW_START_TIMESTAMP + 100L;
@@ -201,10 +202,11 @@ public class InfluxDBSessionExample {
 
     private static void downsampleQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add("*");
+//        paths.add(S1);
+//        paths.add(S2);
+//        paths.add(S3);
+//        paths.add(S4);
 
         long startTime = ROW_START_TIMESTAMP;
         long endTime = ROW_END_TIMESTAMP + 1;
@@ -257,10 +259,11 @@ public class InfluxDBSessionExample {
 
     private static void valueFilterQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add("*");
+//        paths.add(S1);
+//        paths.add(S2);
+//        paths.add(S3);
+//        paths.add(S4);
 
         long startTime = COLUMN_END_TIMESTAMP - 100L;
         long endTime = ROW_START_TIMESTAMP + 100L;

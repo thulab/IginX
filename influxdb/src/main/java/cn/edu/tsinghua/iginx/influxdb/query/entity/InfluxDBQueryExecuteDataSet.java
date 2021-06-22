@@ -17,14 +17,11 @@ import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
 
 public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
-    private String bucketName;
-
     private FluxTable table;
 
     private int index;
 
-    public InfluxDBQueryExecuteDataSet(String bucketName, FluxTable table) {
-        this.bucketName = bucketName;
+    public InfluxDBQueryExecuteDataSet(FluxTable table) {
         this.table = table;
         this.index = 0;
     }
