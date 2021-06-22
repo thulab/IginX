@@ -75,8 +75,8 @@ public class IoTDBSessionMultiThreadTest {
         try {
             iotdbSession = new org.apache.iotdb.session.Session("127.0.0.1", 6667, "root", "root");
             iotdbSession.open(false);
-            iotdbSession.executeNonQueryStatement("DELETE TIMESERIES root.*");
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            /*iotdbSession.executeNonQueryStatement("DELETE TIMESERIES root.*");*/
+        } catch (IoTDBConnectionException /*| StatementExecutionException*/ e) {
             logger.error(e.getMessage());
         }
         // close session
@@ -692,28 +692,26 @@ public class IoTDBSessionMultiThreadTest {
         paths.add(COLUMN_D4_S4);
         paths.add(COLUMN_D5_S5);
 
-        for (int k = 0; k < 10; k++) {
-            long[] timestamps = new long[(int)TIME_PERIOD];
-            for (long i = 0; i < TIME_PERIOD; i++) {
-                timestamps[(int) i] = i;
-            }
-
-            Object[] valuesList = new Object[5];
-            for (int i = 0; i < 5; i++) {
-                Object[] values = new Object[(int)TIME_PERIOD];
-                for (long j = 0; j < TIME_PERIOD; j++) {
-                    values[(int)j] = j + i;
-                }
-                valuesList[i] = values;
-            }
-
-            List<DataType> dataTypeList = new ArrayList<>();
-            for (int i = 0; i < 5; i++) {
-                dataTypeList.add(DataType.LONG);
-            }
-
-            session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        long[] timestamps = new long[(int)TIME_PERIOD];
+        for (long i = 0; i < TIME_PERIOD; i++) {
+            timestamps[(int) i] = i;
         }
+
+        Object[] valuesList = new Object[5];
+        for (int i = 0; i < 5; i++) {
+            Object[] values = new Object[(int)TIME_PERIOD];
+            for (long j = 0; j < TIME_PERIOD; j++) {
+                values[(int)j] = j + i;
+            }
+            valuesList[i] = values;
+        }
+
+        List<DataType> dataTypeList = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            dataTypeList.add(DataType.LONG);
+        }
+
+        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
 
     }
 
