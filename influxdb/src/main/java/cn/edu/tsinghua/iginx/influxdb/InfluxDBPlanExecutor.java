@@ -81,10 +81,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
     private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: %s, stop: %s)";
 
-    private static final String QUERY_DATA_WITH_TAG = "from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => r._measurement == \"%s\" and r._field == \"%s\" and r.t == \"%s\")";
-
-    private static final String QUERY_DATA_WITHOUT_TAG = "from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => r._measurement == \"%s\" and r._field == \"%s\")";
-
     private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\" AND t=\"%s\"";
 
     private final Map<Long, InfluxDBClient> storageEngineIdToClient;
