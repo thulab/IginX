@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.query.result;
 
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SingleValueAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
@@ -30,6 +31,8 @@ public class SingleValueAggregateQueryPlanExecuteResult extends AggregateQueryPl
 
     public SingleValueAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
+        this.times = new ArrayList<>();
+        this.values = new ArrayList<>();
     }
 
     public List<Long> getTimes() {

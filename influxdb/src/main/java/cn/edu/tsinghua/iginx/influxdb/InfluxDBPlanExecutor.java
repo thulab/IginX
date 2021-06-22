@@ -69,7 +69,6 @@ import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInflu
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
-import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
 import static com.influxdb.client.domain.WritePrecision.MS;
 
 public class InfluxDBPlanExecutor implements IStorageEngine {
@@ -80,9 +79,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-    private static final String QUERY_DATA_WITH_TAG = "from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => r._measurement == \"%s\" and r._field == \"%s\" and r.t == \"%s\")";
-
-    private static final String QUERY_DATA_WITHOUT_TAG = "from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => r._measurement == \"%s\" and r._field == \"%s\")";
+    private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: %s, stop: %s)";
 
     private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\" AND t=\"%s\"";
 
@@ -289,41 +286,17 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new QueryDataPlanExecuteResult(SUCCESS, plan, null);
+        }
+
         List<QueryExecuteDataSet> dataSets = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
             // TODO 处理时区
-            List<FluxTable> tables;
-            if (value != null) {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITH_TAG,
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field,
-                        value
-                ), organization.getId());
-            } else {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITHOUT_TAG,
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field
-                ), organization.getId());
-            }
-
-            dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
+            List<FluxTable> tables = client.getQueryApi().query(statement, organization.getId());
+            dataSets.addAll(tables.stream().map(InfluxDBQueryExecuteDataSet::new).collect(Collectors.toList()));
         }
 
         return new QueryDataPlanExecuteResult(SUCCESS, plan, dataSets);
@@ -410,77 +383,45 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Long> counts = new ArrayList<>();
         List<Object> sums = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
             List<FluxTable> countTables;
             List<FluxTable> sumTables;
             try {
-                if (value != null) {
-                    countTables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITH_TAG + " |> count()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field,
-                            value
-                    ), organization.getId());
-                    sumTables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITH_TAG + " |> sum()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field,
-                            value
-                    ), organization.getId());
-                } else {
-                    countTables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITHOUT_TAG + " |> count()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field
-                    ), organization.getId());
-                    sumTables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITHOUT_TAG + " |> sum()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field
-                    ), organization.getId());
-                }
+                countTables = client.getQueryApi().query(
+                        generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime()) + " |> count()",
+                        organization.getId()
+                );
+                sumTables = client.getQueryApi().query(
+                        generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime()) + " |> sum()",
+                        organization.getId()
+                );
             } catch (Exception e) {
                 if (e.getMessage().contains("unsupported input type for sum aggregate")) {
+                    logger.error("unsupported input type for sum aggregate");
                     continue;
                 } else {
                     return new AvgAggregateQueryPlanExecuteResult(FAILURE, plan);
                 }
             }
 
-            paths.add(path);
-            if (!countTables.isEmpty() && !sumTables.isEmpty()) {
-                dataTypeList.add(fromInfluxDB(sumTables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
-                counts.add((Long) countTables.get(0).getRecords().get(0).getValue());
-                sums.add(sumTables.get(0).getRecords().get(0).getValue());
-            } else {
-                dataTypeList.add(LONG);
-                counts.add(0L);
-                sums.add(0L);
+            for (int i = 0; i < countTables.size(); i++) {
+                paths.add(String.format("%s.%s.%s",
+                        countTables.get(i).getRecords().get(0).getMeasurement(),
+                        countTables.get(i).getRecords().get(0).getValueByKey("t"),
+                        countTables.get(i).getRecords().get(0).getField()
+                ));
+                dataTypeList.add(fromInfluxDB(sumTables.get(i).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+                counts.add((Long) countTables.get(i).getRecords().get(0).getValue());
+                sums.add(sumTables.get(i).getRecords().get(0).getValue());
             }
         }
 
@@ -502,51 +443,30 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
+        List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
-            List<FluxTable> tables;
-            if (value != null) {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITH_TAG + " |> count()",
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field,
-                        value
-                ), organization.getId());
-            } else {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITHOUT_TAG + " |> count()",
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field
-                ), organization.getId());
-            }
-
-            if (!tables.isEmpty()) {
-                dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
-                values.add(tables.get(0).getRecords().get(0).getValue());
-            } else {
-                dataTypeList.add(LONG);
-                values.add(0L);
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
+            List<FluxTable> tables = client.getQueryApi().query(statement + " |> count()", organization.getId());
+            for (FluxTable table : tables) {
+                paths.add(String.format("%s.%s.%s",
+                        table.getRecords().get(0).getMeasurement(),
+                        table.getRecords().get(0).getValueByKey("t"),
+                        table.getRecords().get(0).getField()
+                ));
+                dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+                values.add(table.getRecords().get(0).getValue());
             }
         }
 
         StatisticsAggregateQueryPlanExecuteResult result = new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
-        result.setPaths(plan.getPaths());
+        result.setPaths(paths);
         result.setDataTypes(dataTypeList);
         result.setValues(values);
 
@@ -562,41 +482,19 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new StatisticsAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
             List<FluxTable> tables;
             try {
-                if (value != null) {
-                    tables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITH_TAG + " |> sum()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field,
-                            value
-                    ), organization.getId());
-                } else {
-                    tables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITHOUT_TAG + " |> sum()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field
-                    ), organization.getId());
-                }
+                tables = client.getQueryApi().query(statement + " |> sum()", organization.getId());
             } catch (Exception e) {
                 if (e.getMessage().contains("unsupported input type for sum aggregate")) {
                     continue;
@@ -605,13 +503,14 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 }
             }
 
-            paths.add(path);
-            if (!tables.isEmpty()) {
-                dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
-                values.add(tables.get(0).getRecords().get(0).getValue());
-            } else {
-                dataTypeList.add(LONG);
-                values.add(0L);
+            for (FluxTable table : tables) {
+                paths.add(String.format("%s.%s.%s",
+                        table.getRecords().get(0).getMeasurement(),
+                        table.getRecords().get(0).getValueByKey("t"),
+                        table.getRecords().get(0).getField()
+                ));
+                dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+                values.add(table.getRecords().get(0).getValue());
             }
         }
 
@@ -632,51 +531,31 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Long> timestamps = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
-            List<FluxTable> tables;
-            if (value != null) {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITH_TAG + " |> first()",
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field,
-                        value
-                ), organization.getId());
-            } else {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITHOUT_TAG + " |> first()",
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field
-                ), organization.getId());
-            }
-
-            if (!tables.isEmpty()) {
-                paths.add(path);
-                DataType dataType = fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
+            List<FluxTable> tables = client.getQueryApi().query(statement + " |> first()", organization.getId());
+            for (FluxTable table : tables) {
+                paths.add(String.format("%s.%s.%s",
+                        table.getRecords().get(0).getMeasurement(),
+                        table.getRecords().get(0).getValueByKey("t"),
+                        table.getRecords().get(0).getField()
+                ));
+                DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
                 dataTypeList.add(dataType);
-                timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
+                timestamps.add(table.getRecords().get(0).getTime().toEpochMilli());
                 if (dataType != BINARY) {
-                    values.add(tables.get(0).getRecords().get(0).getValue());
+                    values.add(table.getRecords().get(0).getValue());
                 } else {
-                    values.add(((String) tables.get(0).getRecords().get(0).getValue()).getBytes());
+                    values.add(((String) table.getRecords().get(0).getValue()).getBytes());
                 }
             }
         }
@@ -699,51 +578,31 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Long> timestamps = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
-            List<FluxTable> tables;
-            if (value != null) {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITH_TAG + " |> last()",
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field,
-                        value
-                ), organization.getId());
-            } else {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITHOUT_TAG + " |> last()",
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field
-                ), organization.getId());
-            }
-
-            if (!tables.isEmpty()) {
-                paths.add(path);
-                DataType dataType = fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
+            List<FluxTable> tables = client.getQueryApi().query(statement + " |> last()", organization.getId());
+            for (FluxTable table : tables) {
+                paths.add(String.format("%s.%s.%s",
+                        table.getRecords().get(0).getMeasurement(),
+                        table.getRecords().get(0).getValueByKey("t"),
+                        table.getRecords().get(0).getField()
+                ));
+                DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
                 dataTypeList.add(dataType);
-                timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
+                timestamps.add(table.getRecords().get(0).getTime().toEpochMilli());
                 if (dataType != BINARY) {
-                    values.add(tables.get(0).getRecords().get(0).getValue());
+                    values.add(table.getRecords().get(0).getValue());
                 } else {
-                    values.add(((String) tables.get(0).getRecords().get(0).getValue()).getBytes());
+                    values.add(((String) table.getRecords().get(0).getValue()).getBytes());
                 }
             }
         }
@@ -766,42 +625,20 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Long> timestamps = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
             List<FluxTable> tables;
             try {
-                if (value != null) {
-                    tables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITH_TAG + " |> max()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field,
-                            value
-                    ), organization.getId());
-                } else {
-                    tables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITHOUT_TAG + " |> max()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field
-                    ), organization.getId());
-                }
+                tables = client.getQueryApi().query(statement + " |> max()", organization.getId());
             } catch (Exception e) {
                 // TODO 字符串类型不支持 Max 和 Min
                 if (e.getMessage().contains("panic: unsupported for aggregate max")) {
@@ -811,11 +648,16 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 }
             }
 
-            if (!tables.isEmpty()) {
-                paths.add(path);
-                dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
-                timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
-                values.add(tables.get(0).getRecords().get(0).getValue());
+            for (FluxTable table : tables) {
+                paths.add(String.format("%s.%s.%s",
+                        table.getRecords().get(0).getMeasurement(),
+                        table.getRecords().get(0).getValueByKey("t"),
+                        table.getRecords().get(0).getField()
+                ));
+                dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+                values.add(table.getRecords().get(0).getValue());
+                timestamps.add(table.getRecords().get(0).getTime().toEpochMilli());
+                values.add(table.getRecords().get(0).getValue());
             }
         }
 
@@ -837,42 +679,20 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new SingleValueAggregateQueryPlanExecuteResult(SUCCESS, plan);
+        }
+
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypeList = new ArrayList<>();
         List<Long> timestamps = new ArrayList<>();
         List<Object> values = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
             List<FluxTable> tables;
             try {
-                if (value != null) {
-                    tables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITH_TAG + " |> min()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field,
-                            value
-                    ), organization.getId());
-                } else {
-                    tables = client.getQueryApi().query(String.format(
-                            QUERY_DATA_WITHOUT_TAG + " |> min()",
-                            bucketName,
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                            measurement,
-                            field
-                    ), organization.getId());
-                }
+                tables = client.getQueryApi().query(statement + " |> min()", organization.getId());
             } catch (Exception e) {
                 if (e.getMessage().contains("panic: unsupported for aggregate min")) {
                     continue;
@@ -881,11 +701,16 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 }
             }
 
-            if (!tables.isEmpty()) {
-                paths.add(path);
-                dataTypeList.add(fromInfluxDB(tables.get(0).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
-                timestamps.add(tables.get(0).getRecords().get(0).getTime().toEpochMilli());
-                values.add(tables.get(0).getRecords().get(0).getValue());
+            for (FluxTable table : tables) {
+                paths.add(String.format("%s.%s.%s",
+                        table.getRecords().get(0).getMeasurement(),
+                        table.getRecords().get(0).getValueByKey("t"),
+                        table.getRecords().get(0).getField()
+                ));
+                dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+                values.add(table.getRecords().get(0).getValue());
+                timestamps.add(table.getRecords().get(0).getTime().toEpochMilli());
+                values.add(table.getRecords().get(0).getValue());
             }
         }
 
@@ -942,41 +767,17 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, new ArrayList<>());
+        }
+
         List<QueryExecuteDataSet> dataSets = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
             // TODO 处理时区
-            List<FluxTable> tables;
-            if (value != null) {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITH_TAG,
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field,
-                        value
-                ), organization.getId());
-            } else {
-                tables = client.getQueryApi().query(String.format(
-                        QUERY_DATA_WITHOUT_TAG,
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field
-                ), organization.getId());
-            }
-
-            dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
+            List<FluxTable> tables = client.getQueryApi().query(statement, organization.getId());
+            dataSets.addAll(tables.stream().map(InfluxDBQueryExecuteDataSet::new).collect(Collectors.toList()));
         }
 
         return new ValueFilterQueryPlanExecuteResult(SUCCESS, plan, dataSets);
@@ -1006,40 +807,14 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
+        if (client.getBucketsApi().findBucketByName(plan.getStorageUnit().getId()) == null) {
+            logger.error("storage engine {} doesn't exist", plan.getStorageUnit().getId());
+            return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, new ArrayList<>());
+        }
+
         List<QueryExecuteDataSet> dataSets = new ArrayList<>();
         for (String path : plan.getPaths()) {
-            String[] elements = path.split("\\.");
-            String bucketName = plan.getStorageUnit().getId();
-            String measurement = elements[0];
-            String field = elements[elements.length - 1];
-            String value = null;
-            if (elements.length > 2) {
-                value = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
-            }
-
-            // TODO 处理时区
-            List<FluxTable> tables;
-            String statement;
-            if (value != null) {
-                statement = String.format(
-                        QUERY_DATA_WITH_TAG,
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field,
-                        value
-                );
-            } else {
-                statement = String.format(
-                        QUERY_DATA_WITHOUT_TAG,
-                        bucketName,
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getStartTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        ZonedDateTime.ofInstant(Instant.ofEpochMilli(plan.getEndTime()), ZoneId.of("UTC")).format(FORMATTER),
-                        measurement,
-                        field
-                );
-            }
+            String statement = generateQueryStatement(plan.getStorageUnit().getId(), path, plan.getStartTime(), plan.getEndTime());
             switch (plan.getIginxPlanType()) {
                 case DOWNSAMPLE_AVG:
                     statement += String.format(" |> aggregateWindow(every: %sms, fn: mean, timeSrc: \"_start\")", plan.getPrecision());
@@ -1066,6 +841,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                     throw new UnsupportedOperationException(plan.getIginxPlanType().toString());
             }
 
+            List<FluxTable> tables;
             try {
                 tables = client.getQueryApi().query(statement, organization.getId());
             } catch (Exception e) {
@@ -1079,9 +855,52 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 }
             }
 
-            dataSets.addAll(tables.stream().map(x -> new InfluxDBQueryExecuteDataSet(bucketName, x)).collect(Collectors.toList()));
+            dataSets.addAll(tables.stream().map(InfluxDBQueryExecuteDataSet::new).collect(Collectors.toList()));
         }
 
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
+    }
+
+    private String generateQueryStatement(String bucketName, String path, long startTime, long endTime) {
+        String statement = String.format(
+                QUERY_DATA,
+                bucketName,
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of("UTC")).format(FORMATTER),
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER)
+        );
+        if (!path.equals("*")) {
+            StringBuilder filterStr = new StringBuilder(" |> filter(fn: (r) => ");
+            filterStr.append(path.substring(0, path.indexOf('.')).equals("*") ? "r._measurement =~ /.*/" : "r._measurement == \"" + path.substring(0, path.indexOf('.')) + "\"");
+            filterStr.append(" and ");
+            filterStr.append(path.substring(path.lastIndexOf('.') + 1).equals("*") ? "r._field =~ /.*/" : "r._field == \"" + path.substring(path.lastIndexOf('.') + 1) + "\"");
+            if (path.split("\\.").length > 2) {
+                filterStr.append(" and ");
+                String tagString = path.substring(path.indexOf(".") + 1, path.lastIndexOf("."));
+                if (tagString.contains("*")) {
+                    StringBuilder value = new StringBuilder("/");
+                    for (Character character : tagString.toCharArray()) {
+                        if (character.equals('.')) {
+                            value.append("\\\\.");
+                        } else if (character.equals('*')) {
+                            value.append(".*");
+                        } else {
+                            value.append(character);
+                        }
+                    }
+                    value.append("/");
+                    tagString = value.toString();
+                    filterStr.append("r.t =~ /");
+                    filterStr.append(tagString);
+                    filterStr.append("/");
+                } else {
+                    filterStr.append("r.t == \"");
+                    filterStr.append(tagString);
+                    filterStr.append("\"");
+                }
+            }
+            filterStr.append(")");
+            statement += filterStr;
+        }
+        return statement;
     }
 }
