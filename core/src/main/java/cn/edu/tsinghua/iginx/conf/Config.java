@@ -68,6 +68,8 @@ public class Config {
 
     private int reshardInterval = 60;
 
+    private String fileDataDir = "";
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -258,5 +260,13 @@ public class Config {
 
     public void setReshardInterval(int reshardInterval) {
         this.reshardInterval = reshardInterval;
+    }
+
+    public String getFileDataDir() {
+        return fileDataDir;
+    }
+
+    public void setFileDataDir(String fileDataDir) {
+        this.fileDataDir = fileDataDir;
     }
 }

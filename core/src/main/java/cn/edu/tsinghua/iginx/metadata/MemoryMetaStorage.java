@@ -50,6 +50,19 @@ public class MemoryMetaStorage implements IMetaStorage {
 
     private final AtomicLong idGenerator = new AtomicLong(0L);
 
+    private static MemoryMetaStorage INSTANCE;
+
+    public static MemoryMetaStorage getInstance() {
+        if (INSTANCE == null) {
+            synchronized (MemoryMetaStorage.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new MemoryMetaStorage();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
     @Override
     public Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException {
         return new HashMap<>();

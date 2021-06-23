@@ -126,16 +126,6 @@ public interface IMetaManager {
     List<Long> selectStorageEngineIdList();
 
     /**
-     * 选择迁移的存储单元
-     */
-    Map<String, Long> selectStorageUnitsToMigrate(List<Long> addedStorageEngineIdList);
-
-    /**
-     * 迁移存储单元
-     */
-    boolean migrateStorageUnit(String storageUnitId, long targetStorageEngineId);
-
-    /**
      * 初始时创建分片和存储单元
      */
     Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);

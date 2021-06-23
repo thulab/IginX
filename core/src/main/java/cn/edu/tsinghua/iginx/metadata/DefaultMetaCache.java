@@ -137,6 +137,9 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
+        storageUnitLock.readLock().lock();
+        fragmentListMap.values().forEach(e -> e.forEach(f -> f.setMasterStorageUnit(storageUnitMetaMap.get(f.getMasterStorageUnitId()))));
+        storageUnitLock.readLock().unlock();
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));

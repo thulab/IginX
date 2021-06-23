@@ -82,6 +82,8 @@ public class ConfigDescriptor {
 
             config.setEnableReshardPeriodically(Boolean.parseBoolean(properties.getProperty("enableReshardPeriodically", "true")));
             config.setReshardInterval(Integer.parseInt(properties.getProperty("reshardInterval", "60")));
+
+            config.setFileDataDir(properties.getProperty("fileDataDir", ""));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
