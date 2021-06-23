@@ -326,7 +326,7 @@ public class FileMetaStorage implements IMetaStorage {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
-                    List<FragmentMeta> fragmentList = fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>());
+                    List<FragmentMeta> fragmentList = fragmentsMap.computeIfAbsent(fragment.getIdealTsInterval(), e -> new ArrayList<>());
                     fragmentList.remove(fragment);
                     fragmentList.add(fragment);
                 }  else {

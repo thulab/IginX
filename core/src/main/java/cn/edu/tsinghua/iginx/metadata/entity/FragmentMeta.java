@@ -191,11 +191,14 @@ public final class FragmentMeta {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         FragmentMeta that = (FragmentMeta) o;
-        return Objects.equals(timeInterval, that.timeInterval) && Objects.equals(tsInterval, that.tsInterval);
+        return Objects.equals(idealTimeInterval, that.idealTimeInterval)
+                && Objects.equals(idealTsInterval, that.idealTsInterval)
+                && Objects.equals(actualTimeInterval, that.actualTimeInterval)
+                && Objects.equals(actualTsInterval, that.actualTsInterval);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(timeInterval, tsInterval);
+        return Objects.hash(idealTimeInterval, idealTsInterval, actualTimeInterval, actualTsInterval);
     }
 }
