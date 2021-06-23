@@ -44,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -383,6 +384,8 @@ public class ETCDMetaStorage implements IMetaStorage {
                             GetOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).build())
                     .get();
             response.getKvs().forEach(e -> {
+                String info = new String(e.getValue().getBytes());
+                System.out.println(info);
                 IginxMeta iginx = JsonUtils.fromJson(e.getValue().getBytes(), IginxMeta.class);
                 iginxMap.put(iginx.getId(), iginx);
             });
@@ -598,7 +601,27 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
-        return null;
+        try {
+            lockFragment();
+            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+            GetResponse response = this.client.getKVClient()
+                    .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
+                            GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
+                    .get();
+            for (KeyValue kv: response.getKvs()) {
+                FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
+                fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>())
+                        .add(fragment);
+            }
+            return fragmentsMap;
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when load fragments: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (fragmentLease != -1L) {
+                releaseFragment();
+            }
+        }
     }
 
     @Override
