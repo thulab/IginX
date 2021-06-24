@@ -212,15 +212,14 @@ public class NaivePlanSplitter implements IPlanSplitter {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
+            policy.setNeedReAllocate(false);
             fragmentMap = iMetaManager.generateFragments(plan.getStartPath(), plan.getStartTime());
             iMetaManager.tryCreateInitialFragments(fragmentMap.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
-            policy.setNeedReAllocate(false);
         } else if (policy.isNeedReAllocate()) {
             List<FragmentMeta> fragments = iMetaManager.generateFragments(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime());
             iMetaManager.createFragments(fragments);
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
-            policy.setNeedReAllocate(false);
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
@@ -530,5 +529,9 @@ public class NaivePlanSplitter implements IPlanSplitter {
 	
 	public List<Long> getSplitShowColumnsPlanResult() {
         return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+    }
+
+    public IMetaManager getiMetaManager() {
+        return iMetaManager;
     }
 }
