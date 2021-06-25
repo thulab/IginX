@@ -561,7 +561,7 @@ public class DefaultMetaManager implements IMetaManager {
                 }
                 extraParams.put(KAndV[0], KAndV[1]);
             }
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine));
+            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, id));
         }
         return storageEngineMetaList;
     }

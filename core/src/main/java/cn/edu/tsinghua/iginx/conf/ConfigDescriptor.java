@@ -75,6 +75,8 @@ public class ConfigDescriptor {
             config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
             config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
 
+            config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
+
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 

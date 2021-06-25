@@ -62,6 +62,8 @@ public class Config {
 
     private int maxTimeseriesLength = 10;
 
+    private long disorderMargin = 10;
+
     private boolean enableRestService = true;
 
     private String fileDataDir = "";
@@ -248,5 +250,13 @@ public class Config {
 
     public void setFileDataDir(String fileDataDir) {
         this.fileDataDir = fileDataDir;
+    }
+
+    public long getDisorderMargin() {
+        return disorderMargin;
+    }
+
+    public void setDisorderMargin(long disorderMargin) {
+        this.disorderMargin = disorderMargin;
     }
 }

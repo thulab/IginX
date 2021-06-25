@@ -27,11 +27,15 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
+import org.checkerframework.checker.units.qual.A;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class NativePolicy implements IPolicy {
 
-    protected boolean needReAllocate = false;
+    protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IPlanSplitter iPlanSplitter;
+    private IMetaManager iMetaManager;
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
@@ -75,7 +79,8 @@ public class NativePolicy implements IPolicy {
 
     @Override
     public void init(IMetaManager iMetaManager) {
-        this.iPlanSplitter = new NaivePlanSplitter(this, iMetaManager);
+        this.iMetaManager = iMetaManager;
+        this.iPlanSplitter = new NaivePlanSplitter(this, this.iMetaManager);
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);
@@ -85,18 +90,18 @@ public class NativePolicy implements IPolicy {
     @Override
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
-            if (before == null && after != null) {
-                needReAllocate = true;
+            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId()) { // 哪台机器加了分片，哪台机器初始化
+                needReAllocate.set(true);
             }
             // TODO: 针对节点退出的情况缩容
         };
     }
 
     public boolean isNeedReAllocate() {
-        return needReAllocate;
+        return needReAllocate.getAndSet(false);
     }
 
     public void setNeedReAllocate(boolean needReAllocate) {
-        this.needReAllocate = needReAllocate;
+        this.needReAllocate.set(needReAllocate);
     }
 }
