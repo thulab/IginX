@@ -399,7 +399,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 }
                 extraParams.put(KAndV[0], KAndV[1]);
             }
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine));
+            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, iginxId));
         }
         return storageEngineMetaList;
     }
