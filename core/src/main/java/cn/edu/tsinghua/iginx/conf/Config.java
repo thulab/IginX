@@ -68,6 +68,8 @@ public class Config {
 
     private String fileDataDir = "";
 
+    private String etcdEndpoints = "http://localhost:2379";
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -259,4 +261,13 @@ public class Config {
     public void setDisorderMargin(long disorderMargin) {
         this.disorderMargin = disorderMargin;
     }
+
+    public String getEtcdEndpoints() {
+        return etcdEndpoints;
+    }
+
+    public void setEtcdEndpoints(String etcdEndpoints) {
+        this.etcdEndpoints = etcdEndpoints;
+    }
+
 }
