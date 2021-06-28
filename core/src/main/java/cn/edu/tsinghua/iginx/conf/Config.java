@@ -70,6 +70,10 @@ public class Config {
 
     private String etcdEndpoints = "http://localhost:2379";
 
+    private boolean enableGlobalStatistics = false;
+
+    private long globalStatisticsCollectInterval = 60;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -270,4 +274,19 @@ public class Config {
         this.etcdEndpoints = etcdEndpoints;
     }
 
+    public boolean isEnableGlobalStatistics() {
+        return enableGlobalStatistics;
+    }
+
+    public void setEnableGlobalStatistics(boolean enableGlobalStatistics) {
+        this.enableGlobalStatistics = enableGlobalStatistics;
+    }
+
+    public long getGlobalStatisticsCollectInterval() {
+        return globalStatisticsCollectInterval;
+    }
+
+    public void setGlobalStatisticsCollectInterval(long globalStatisticsCollectInterval) {
+        this.globalStatisticsCollectInterval = globalStatisticsCollectInterval;
+    }
 }
