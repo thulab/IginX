@@ -386,12 +386,9 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
         Map<String, StorageUnitMeta> fakeIdToStorageUnit = tryInitStorageUnits(storageUnits);
-        if (fakeIdToStorageUnit == null) {
-            return false;
-        }
         try {
             storage.lockFragment();
-            if (cache.hasFragment()) {
+            if (fakeIdToStorageUnit == null || cache.hasFragment()) {
                 return false;
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
