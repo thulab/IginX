@@ -168,4 +168,6 @@ public interface IMetaManager {
      */
     int getSchemaMappingItem(String schema, String key);
 
+    void updateFragmentStatistics();
+
 }
