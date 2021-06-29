@@ -22,6 +22,8 @@ sh -c "sudo dpkg -i influxdb2-2.0.7-amd64.deb"
 
 sh -c "sudo service influxdb start"
 
+sh -c "sudo service influxdb status"
+
 sh -c "influx setup --org testOrg --bucket testBucket --username user --password 12345678 --force"
 
 sh -c "influx auth list --json > token.json"
