@@ -84,11 +84,15 @@ public class InfluxDBSessionExample {
         for (long i = 0; i < 4; i++) {
             Object[] values = new Object[size];
             for (long j = 0; j < size; j++) {
+                if (j >= size - 50) {
+                    values[(int) j] = null;
+                } else {
                     if (i < 2) {
                         values[(int) j] = i + j;
                     } else {
                         values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
                     }
+                }
             }
             valuesList[(int) i] = values;
         }
@@ -118,11 +122,15 @@ public class InfluxDBSessionExample {
             timestamps[(int) i] = ROW_START_TIMESTAMP + i * ROW_INTERVAL;
             Object[] values = new Object[4];
             for (long j = 0; j < 4; j++) {
+                if ((i + j) % 2 == 0) {
+                    values[(int) j] = null;
+                } else {
                     if (j < 2) {
                         values[(int) j] = i + j;
                     } else {
                         values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
                     }
+                }
             }
             valuesList[(int) i] = values;
         }
@@ -163,7 +171,7 @@ public class InfluxDBSessionExample {
         long endTime = ROW_START_TIMESTAMP + 100L;
 
         // MAX
-        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths,  COLUMN_START_TIMESTAMP, ROW_END_TIMESTAMP + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
         dataSet.print();
 
         // MIN
@@ -175,11 +183,11 @@ public class InfluxDBSessionExample {
         dataSet.print();
 
         // LAST
-        dataSet = session.aggregateQuery(paths, COLUMN_START_TIMESTAMP, ROW_END_TIMESTAMP, AggregateType.LAST);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
         dataSet.print();
 
         // COUNT
-        dataSet = session.aggregateQuery(paths, COLUMN_START_TIMESTAMP, ROW_END_TIMESTAMP, AggregateType.COUNT);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
         dataSet.print();
 
         // SUM
