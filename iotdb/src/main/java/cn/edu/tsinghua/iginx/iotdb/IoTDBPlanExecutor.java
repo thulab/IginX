@@ -80,6 +80,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
@@ -251,6 +252,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
 
+        AtomicLong counter = new AtomicLong(0);
+
         // 创建 Tablet
         for (int i = 0; i < plan.getPathsNum(); i++) {
             String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
@@ -273,6 +276,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         int row = tablet.rowSize++;
                         tablet.addTimestamp(row, plan.getTimestamp(i));
                         if (plan.getDataType(j) == BINARY) {
+                            counter.addAndGet(1);
                             tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[k]));
                         } else {
                             tablet.addValue(measurement, row, plan.getValues(i)[k]);
@@ -294,6 +298,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
             cnt += size;
         } while (cnt < plan.getTimestamps().length);
+
+        logger.error("abcdefg {}", counter.get());
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }

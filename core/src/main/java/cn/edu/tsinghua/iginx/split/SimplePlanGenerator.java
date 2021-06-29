@@ -323,6 +323,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
             Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (valuesAndBitmaps.k.length == 0) {
+                continue;
+            }
             InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     timestampsAndIndexes.k,
@@ -343,6 +346,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
             Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (valuesAndBitmaps.k.length == 0) {
+                continue;
+            }
             InsertRowRecordsPlan subPlan = new InsertRowRecordsPlan(
                     plan.getPathsByInterval(info.getTimeSeriesInterval()),
                     timestampsAndIndexes.k,
@@ -355,6 +361,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
+        logger.error("0987654321 {}", plans.size());
         return plans;
     }
 

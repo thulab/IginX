@@ -83,6 +83,7 @@ struct InsertRowRecordsReq {
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> attributesList
+    8: optional i64 num
 }
 
 struct DeleteDataInColumnsReq {

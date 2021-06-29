@@ -83,6 +83,9 @@ public class ConfigDescriptor {
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
             config.setFileDataDir(properties.getProperty("fileDataDir", ""));
             config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
+
+            config.setClients(properties.getProperty("clients", "tpc5,tpc6,tpc7,tpc8"));
+            config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "12")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

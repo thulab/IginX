@@ -66,6 +66,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -513,6 +514,7 @@ public class Session {
             }
         }
 
+        AtomicLong cnt = new AtomicLong(0);
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < timestamps.length; i++) {
@@ -525,6 +527,7 @@ public class Session {
             Bitmap bitmap = new Bitmap(values.length);
             for (int j = 0; j < values.length; j++) {
                 if (values[j] != null) {
+                    cnt.addAndGet(1);
                     bitmap.mark(j);
                 }
             }
@@ -539,6 +542,8 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setAttributesList(sortedAttributesList);
+
+        req.setNum(cnt.get());
 
         try {
             Status status;
