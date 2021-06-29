@@ -8,8 +8,6 @@ sh -c "tar -zxvf influxdb2-2.0.7-linux-amd64.tar.gz"
 
 sh -c "ls influxdb2-2.0.7-linux-amd64"
 
-sh -c "sudo ls /usr/local/bin/"
-
 sh -c "sudo cp influxdb2-2.0.7-linux-amd64/influx /usr/local/bin/"
 
 sh -c "sudo cp influxdb2-2.0.7-linux-amd64/influxd /usr/local/bin/"
@@ -19,6 +17,10 @@ sh -c "wget https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.7-amd64.de
 sh -c "sudo dpkg -i influxdb2-2.0.7-amd64.deb"
 
 sh -c "sudo service influxdb start"
+
+sh -c "sudo service influxdb status"
+
+sh -c "sleep 20"
 
 sh -c "influx setup --org testOrg --bucket testBucket --username user --password 12345678 --force"
 
