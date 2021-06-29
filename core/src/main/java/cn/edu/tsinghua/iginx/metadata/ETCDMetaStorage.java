@@ -140,4 +140,16 @@ public class ETCDMetaStorage implements IMetaStorage {
     {
         return false;
     }
+
+    @Override
+    public void updatePrefix() throws Exception
+    {
+
+    }
+
+    @Override
+    public void updateMeta() throws Exception
+    {
+
+    }
 }

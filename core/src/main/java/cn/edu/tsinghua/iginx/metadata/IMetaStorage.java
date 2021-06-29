@@ -71,5 +71,10 @@ public interface IMetaStorage {
     void releaseFragment() throws MetaStorageException;
 
     void registerFragmentChangeHook(FragmentChangeHook hook);
+
     boolean selection() throws Exception;
+
+    void updatePrefix() throws Exception;
+
+    void updateMeta() throws Exception;
 }
