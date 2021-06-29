@@ -12,6 +12,8 @@ sh -c "ls"
 
 sh -c "ls influxdb2-2.0.7-linux-amd64"
 
+sh -c "sudo ls /usr/local/bin/"
+
 sh -c "sudo cp influxdb2-2.0.7-linux-amd64/{influx,influxd} /usr/local/bin/"
 
 sh -c "wget https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.7-amd64.deb"
