@@ -393,4 +393,24 @@ public class DefaultMetaCache implements IMetaCache {
         Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
         mapping.put(key, value);
     }
+
+    @Override
+    public void lockFragment() {
+        fragmentLock.writeLock().lock();
+    }
+
+    @Override
+    public void unlockFragment() {
+        fragmentLock.writeLock().unlock();
+    }
+
+    @Override
+    public void lockStorageUnit() {
+        storageUnitLock.writeLock().lock();
+    }
+
+    @Override
+    public void unlockStorageUnit() {
+        storageUnitLock.writeLock().unlock();
+    }
 }

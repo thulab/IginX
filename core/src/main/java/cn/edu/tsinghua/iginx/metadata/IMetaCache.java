@@ -92,4 +92,12 @@ public interface IMetaCache {
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
+    void lockFragment();
+
+    void unlockFragment();
+
+    void lockStorageUnit();
+
+    void unlockStorageUnit();
+
 }

@@ -289,7 +289,22 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
-        return cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
+        Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
+        try {
+            storage.lockFragment();
+            storage.lockStorageUnit();
+            resultMap = cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
+        } catch (MetaStorageException e) {
+            logger.error("lock error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+                storage.releaseStorageUnit();
+            } catch (MetaStorageException e) {
+                logger.error("release lock error: ", e);
+            }
+        }
+        return resultMap;
     }
 
     @Override
@@ -348,6 +363,7 @@ public class DefaultMetaManager implements IMetaManager {
         }
         try {
             storage.lockStorageUnit();
+            cache.lockStorageUnit();
             if (cache.hasStorageUnit()) {
                 return null;
             }
@@ -377,6 +393,7 @@ public class DefaultMetaManager implements IMetaManager {
         } finally {
             try {
                 storage.releaseStorageUnit();
+                cache.unlockStorageUnit();
             } catch (MetaStorageException e) {
                 logger.error("encounter error when release storage unit lock: ", e);
             }
@@ -387,12 +404,10 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
         Map<String, StorageUnitMeta> fakeIdToStorageUnit = tryInitStorageUnits(storageUnits);
-        if (fakeIdToStorageUnit == null) {
-            return false;
-        }
         try {
             storage.lockFragment();
-            if (cache.hasFragment()) {
+            cache.lockFragment();
+            if (fakeIdToStorageUnit == null || cache.hasFragment()) {
                 return false;
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
@@ -414,6 +429,7 @@ public class DefaultMetaManager implements IMetaManager {
         } finally {
             try {
                 storage.releaseFragment();
+                cache.unlockFragment();
             } catch (MetaStorageException e) {
                 logger.error("encounter error when release fragment lock: ", e);
             }
