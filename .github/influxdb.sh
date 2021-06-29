@@ -10,7 +10,7 @@ sh -c "tar -zxvf influxdb2-2.0.7-linux-amd64.tar.gz"
 
 sh -c "ls"
 
-sh -c "ls influxdb2-2.0.7-linux-amd64.tar.gz"
+sh -c "ls influxdb2-2.0.7-linux-amd64"
 
 sh -c "sudo cp influxdb2-2.0.7-linux-amd64/{influx,influxd} /usr/local/bin/"
 
