@@ -744,6 +744,19 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         {
             return isMaster;
         }
+    }
+
+    @Override
+    public void updatePrefix() throws Exception
+    {
 
     }
+
+    @Override
+    public void updateMeta() throws Exception
+    {
+
+    }
+
+
 }

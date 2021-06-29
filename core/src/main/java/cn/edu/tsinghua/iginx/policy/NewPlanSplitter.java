@@ -32,6 +32,7 @@ public class NewPlanSplitter implements IPlanSplitter {
     private static final String FRAGMENT_URL = "/fragment";
     private int k;
 
+    private static final FragmentCreator fragmentCreator = FragmentCreator.getInstance();
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
 
@@ -493,5 +494,17 @@ public class NewPlanSplitter implements IPlanSplitter {
             }
         }
         return resultList;
+    }
+
+    public void receiveMeta(String meta) {
+        List<String> ins = Arrays.asList(meta.split("\1").clone());
+        logger.info("receive meta, size : {}", ins.size());
+        fragmentCreator.updatePrefix(ins);
+    }
+
+    public void updateFragment(String fragment) {
+        List<String> ins = Arrays.asList(fragment.split("\1").clone());
+        logger.info("receive fragment require, size : {}, time : {}",Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
+        fragmentCreator.setFragmentData(Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
     }
 }

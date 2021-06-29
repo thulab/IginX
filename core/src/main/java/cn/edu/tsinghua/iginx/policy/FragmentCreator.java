@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.rest;
+package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
