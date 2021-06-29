@@ -28,9 +28,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.fail;
 
-public class IoTDBSessionDataTypeTest {
+public class IoTDBSessionDataTypeIT {
 
-    private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionDataTypeTest.class);
+    private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionDataTypeIT.class);
     private static final String COLUMN_D1_S1 = "sg1.d1.s1";
     private static final String COLUMN_D2_S2 = "sg1.d2.s2";
     private static final String COLUMN_D3_S3 = "sg1.d3.s3";

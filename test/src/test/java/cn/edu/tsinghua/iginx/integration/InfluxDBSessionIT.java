@@ -1,70 +1,141 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-package cn.edu.tsinghua.iginx.session;
+package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.session.Session;
+import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
+import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.iotdb.rpc.IoTDBConnectionException;
+import org.apache.iotdb.rpc.StatementExecutionException;
+import org.apache.zookeeper.KeeperException;
+import org.apache.zookeeper.ZKUtil;
+import org.apache.zookeeper.ZooKeeper;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InfluxDBSessionExample {
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-    private static final String S1 = "sg.d1.s1";
-    private static final String S2 = "sg.d2.s2";
-    private static final String S3 = "sg.d3.s3";
-    private static final String S4 = "sg.d4.s4";
+public class InfluxDBSessionIT {
+
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDBSessionIT.class);
+    private static final String S1 = "sg.d1.s5";
+    private static final String S2 = "sg.d2.s6";
+    private static final String S3 = "sg.d3.s7";
+    private static final String S4 = "sg.d4.s8";
     private static final long COLUMN_START_TIMESTAMP = 0L;
     private static final long COLUMN_END_TIMESTAMP = 10500L;
+    private static final long COLUMN_SIZE = COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP;
     private static final long ROW_START_TIMESTAMP = 10501L;
     private static final long ROW_END_TIMESTAMP = 21000L;
     private static final int ROW_INTERVAL = 10;
+    private static final long ROW_SIZE = (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP) / 10 + 1;
     private static Session session;
+    private List<String> paths = new ArrayList<>();
 
-    public static void main(String[] args) throws SessionException, ExecutionException {
+    @Before
+    public void setUp() {
+        try {
+            paths.add(S1);
+            paths.add(S2);
+            paths.add(S3);
+            paths.add(S4);
+            session = new Session("127.0.0.1", 6888, "root", "root");
+            session.openSession();
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    @After
+    public void tearDown() throws SessionException {
+        // delete metadata from ZooKeeper
+        ZooKeeper zk = null;
+        try {
+            zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
+            ZKUtil.deleteRecursive(zk, "/unit");
+            ZKUtil.deleteRecursive(zk, "/lock");
+            ZKUtil.deleteRecursive(zk, "/fragment");
+            ZKUtil.deleteRecursive(zk, "/schema");
+        } catch (IOException | InterruptedException | KeeperException e) {
+            logger.error(e.getMessage());
+        }
+
+        // TODO :Is there no delete in influxDB?
+
+        // close session
+        try {
+            if (zk != null) {
+                zk.close();
+            }
+            session.closeSession();
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    @Test
+    public void InfluxDBTest() throws Exception {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
 
         // 列式插入数据
         insertColumnRecords();
+
         // 行式插入数据
         insertRowRecords();
+
+        // 查询数据
+        long startTime = COLUMN_START_TIMESTAMP;
+        long endTime = ROW_END_TIMESTAMP;
+
+        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+
+        int len = dataSet.getTimestamps().length;
+        List<String> resPaths = dataSet.getPaths();
+        assertEquals(4, resPaths.size());
+        assertEquals(COLUMN_SIZE + ROW_SIZE, len);
+        assertEquals(COLUMN_SIZE + ROW_SIZE, dataSet.getValues().size());
+        for (int i = 0; i < len; i++) {
+            long timestamp = dataSet.getTimestamps()[i];
+            if (i < COLUMN_SIZE) {
+                assertEquals(i, timestamp);
+                List<Object> result = dataSet.getValues().get(i);
+                for (int j = 0; j < 4; j++) {
+                    assertEquals(timestamp + getPathNum(resPaths.get(j)), (long)result.get(j));
+                }
+            } else {
+                assertEquals(ROW_START_TIMESTAMP + (i - COLUMN_SIZE) * ROW_INTERVAL, timestamp);
+                List<Object> result = dataSet.getValues().get(i);
+                for (int j = 0; j < 4; j++) {
+                    assertEquals(timestamp + getPathNum(resPaths.get(j)), (long)result.get(j));
+                }
+            }
+        }
+
+        /*
         // 值过滤查询
         valueFilterQuery();
-        // 查询数据
-		queryData();
-        // 聚合查询数据
-		aggregateQuery();
-        // 降采样聚合查询
-		downsampleQuery();
-        // 删除数据
-        // TODO 不能做，InfluxDB 删除语句中不能指定 _field
-//		deleteDataInColumns();
-        // 再次查询数据
-//		queryData();
 
-        // 关闭 Session
-        session.closeSession();
+        // 聚合查询数据
+        aggregateQuery();
+
+        // 降采样聚合查询
+        downsampleQuery();*/
+
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
@@ -77,28 +148,21 @@ public class InfluxDBSessionExample {
         int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP);
         long[] timestamps = new long[size];
         for (long i = 0; i < size; i++) {
-            timestamps[(int) i] = i;
+            timestamps[(int) i] = i + COLUMN_START_TIMESTAMP;
         }
 
         Object[] valuesList = new Object[4];
         for (long i = 0; i < 4; i++) {
             Object[] values = new Object[size];
             for (long j = 0; j < size; j++) {
-                    if (i < 2) {
-                        values[(int) j] = i + j;
-                    } else {
-                        values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
-                    }
+                values[(int) j] = i + j;
             }
             valuesList[(int) i] = values;
         }
 
         List<DataType> dataTypeList = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 4; i++) {
             dataTypeList.add(DataType.LONG);
-        }
-        for (int i = 0; i < 2; i++) {
-            dataTypeList.add(DataType.BINARY);
         }
 
         session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
@@ -111,46 +175,66 @@ public class InfluxDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP) / ROW_INTERVAL;
+        //TODO there is a problem here
+        int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP) / ROW_INTERVAL + 1;
         long[] timestamps = new long[size];
         Object[] valuesList = new Object[size];
         for (long i = 0; i < size; i++) {
-            timestamps[(int) i] = ROW_START_TIMESTAMP + i * ROW_INTERVAL;
+            long timestamp = ROW_START_TIMESTAMP + i * ROW_INTERVAL;
+            timestamps[(int) i] = timestamp;
             Object[] values = new Object[4];
             for (long j = 0; j < 4; j++) {
-                    if (j < 2) {
-                        values[(int) j] = i + j;
-                    } else {
-                        values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
-                    }
+                values[(int) j] = timestamp + j;
             }
             valuesList[(int) i] = values;
         }
 
         List<DataType> dataTypeList = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 4; i++) {
             dataTypeList.add(DataType.LONG);
-        }
-        for (int i = 0; i < 2; i++) {
-            dataTypeList.add(DataType.BINARY);
         }
 
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
-    private static void queryData() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
 
-        long startTime = COLUMN_END_TIMESTAMP - 100L;
-        long endTime = ROW_START_TIMESTAMP + 100L;
-
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
-        dataSet.print();
+    private static int getPathNum(String sg){
+        switch (sg){
+            case S1:
+                return 0;
+            case S2:
+                return 1;
+            case S3:
+                return 2;
+            case S4:
+                return 3;
+            default:
+                return -1;
+        }
     }
+
+    /*
+    private static List<String> getSinglePathList(int num){
+        List<String> path = new ArrayList<>();
+        switch(num){
+            case 0:
+                path.add(S1);
+                break;
+            case 1:
+                path.add(S2);
+                break;
+            case 2:
+                path.add(S3);
+                break;
+            case 3:
+                path.add(S4);
+                break;
+            default:
+                break;
+        }
+        return path;
+    }*/
+
 
     private static void aggregateQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
@@ -163,7 +247,7 @@ public class InfluxDBSessionExample {
         long endTime = ROW_START_TIMESTAMP + 100L;
 
         // MAX
-        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths,  COLUMN_START_TIMESTAMP, ROW_END_TIMESTAMP + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
         dataSet.print();
 
         // MIN
@@ -175,11 +259,11 @@ public class InfluxDBSessionExample {
         dataSet.print();
 
         // LAST
-        dataSet = session.aggregateQuery(paths, COLUMN_START_TIMESTAMP, ROW_END_TIMESTAMP, AggregateType.LAST);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
         dataSet.print();
 
         // COUNT
-        dataSet = session.aggregateQuery(paths, COLUMN_START_TIMESTAMP, ROW_END_TIMESTAMP, AggregateType.COUNT);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.COUNT);
         dataSet.print();
 
         // SUM

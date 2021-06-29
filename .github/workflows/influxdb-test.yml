@@ -37,10 +37,10 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run InfluxDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          "${GITHUB_WORKSPACE}/.github/influxdb.sh"
       - name: Install with Maven
         run: mvn -B clean install -DskipTests
       - name: Add dependencies
@@ -49,8 +49,8 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
           nohup "${GITHUB_WORKSPACE}/startIginX.sh" &
-      - name: A Lame Integration Test with Maven and Coverage report
-        run: mvn -B verify -P coverage --no-transfer-progress
+      - name: A Lame Integration Test with Maven for InfluxDB
+        run: mvn test -q -Dtest=*Test,InfluxDB*IT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
