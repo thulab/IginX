@@ -292,4 +292,16 @@ public class SortedListMetaManager extends AbstractMetaManager {
         return sortedFragmentMetaLists.size() != 0;
     }
 
+    @Override
+    public void updatePrefix(Map<String, Double> prefix) throws Exception
+    {
+
+    }
+
+    @Override
+    public Map<String, Double> getPrefix() throws Exception
+    {
+        return null;
+    }
+
 }
