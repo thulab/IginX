@@ -44,7 +44,6 @@ public class NewPlanSplitter implements IPlanSplitter {
         this.iMetaManager = iMetaManager;
         this.prefixMaxSize = config.getPathSendSize();
         this.k = config.getFragmentSplitPerEngine();
-        fragmentCreator.init(config.getReallocateTime());
     }
 
     private void updatePrefix(NonDatabasePlan plan) {
