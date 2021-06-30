@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 public class FragmentCreator
 {
     private static Timer timer = new Timer();
+    private static Timer timer2 = new Timer();
     private static final Logger LOGGER = LoggerFactory.getLogger(FragmentCreator.class);
     private Map<String, Double> prefixList = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -81,10 +82,12 @@ public class FragmentCreator
         lock.writeLock().unlock();
     }
 
-    public void tryCreate()
+    public void tryGet()
     {
-        LOGGER.info("insert tryCreate");
-        lock.writeLock().lock();
+        LOGGER.info("insert tryGet");
+        lock.writeLock().lock();;
+        if (LIMIT == -1)
+            LIMIT = ts * iMetaManager.getIginxList().size();
         try
         {
             prefixList = iMetaManager.getPrefix();
@@ -99,7 +102,7 @@ public class FragmentCreator
             LIMIT += ts * iMetaManager.getIginxList().size();
             LOGGER.info("semp release");
         }
-        LOGGER.info("tryCreate end, list size : {}", prefixList.size());
+        LOGGER.info("tryGet end, list size : {}", prefixList.size());
         lock.writeLock().unlock();
     }
 
@@ -139,9 +142,23 @@ public class FragmentCreator
             }
 
 
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), new TimeInterval(fragmentTime, Long.MAX_VALUE));
-            iMetaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
-
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(samplePrefix2(), new TimeInterval(fragmentTime, Long.MAX_VALUE));
+            List<FragmentMeta> tmp = fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList());
+            List<FragmentMeta> ins = new ArrayList<>();
+            for (int i=0;i<tmp.size();i++)
+            {
+                LOGGER.info("??????: {}", tmp.get(i).getTsInterval().getStartTimeSeries());
+                LOGGER.info("??????: {}", tmp.get(i).getTsInterval().getEndTimeSeries());
+                if (tmp.get(i).getTsInterval().getStartTimeSeries() == null && tmp.get(i).getTsInterval().getEndTimeSeries() == null)
+                    continue;
+                else if (tmp.get(i).getTsInterval().getStartTimeSeries() == null || tmp.get(i).getTsInterval().getEndTimeSeries() == null)
+                    ins.add(tmp.get(i));
+                else if (tmp.get(i).getTsInterval().getStartTimeSeries() == tmp.get(i).getTsInterval().getEndTimeSeries())
+                    continue;
+                else
+                    ins.add(tmp.get(i));
+            }
+            iMetaManager.createFragments(ins);
 
             LOGGER.info("create fragment  , size : {}", prefixList.size());
             updateRequireNum = 0;
@@ -165,6 +182,22 @@ public class FragmentCreator
         return resultList;
     }
 
+    public List<String> samplePrefix2() {
+
+        lock.writeLock().lock();
+        String[] prefixArray = prefixList.keySet().toArray(new String[prefixList.size()]);
+        Arrays.sort(prefixArray, String::compareTo);
+        List<String> resultList = new ArrayList<>();
+        resultList.add(prefixArray[prefixList.size()/4]);
+        resultList.add(prefixArray[prefixList.size()/4*2]);
+        resultList.add(prefixArray[prefixList.size()/4*3]);
+        LOGGER.info("???>?: {}",resultList.get(0));
+        LOGGER.info("???>?: {}",resultList.get(1));
+        LOGGER.info("???>?: {}",resultList.get(2));
+        lock.writeLock().unlock();
+        return resultList;
+    }
+
     public void init(int length)
     {
         timer.schedule(new TimerTask()
@@ -184,14 +217,14 @@ public class FragmentCreator
                 }
         }, 0, length);
 
-        timer.schedule(new TimerTask()
+        timer2.schedule(new TimerTask()
         {
             @Override
             public void run()
             {
                 try
                 {
-                    tryCreate();
+                    tryGet();
                 }
                 catch (Exception e)
                 {
@@ -199,7 +232,7 @@ public class FragmentCreator
                     e.printStackTrace();
                 }
             }
-        }, 0, length/10);
+        }, 0, length / 10);
     }
 
 }
