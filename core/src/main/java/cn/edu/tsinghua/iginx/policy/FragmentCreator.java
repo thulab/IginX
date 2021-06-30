@@ -147,8 +147,6 @@ public class FragmentCreator
             List<FragmentMeta> ins = new ArrayList<>();
             for (int i=0;i<tmp.size();i++)
             {
-                LOGGER.info("??????: {}", tmp.get(i).getTsInterval().getStartTimeSeries());
-                LOGGER.info("??????: {}", tmp.get(i).getTsInterval().getEndTimeSeries());
                 if (tmp.get(i).getTsInterval().getStartTimeSeries() == null && tmp.get(i).getTsInterval().getEndTimeSeries() == null)
                     continue;
                 else if (tmp.get(i).getTsInterval().getStartTimeSeries() == null || tmp.get(i).getTsInterval().getEndTimeSeries() == null)
@@ -191,9 +189,6 @@ public class FragmentCreator
         resultList.add(prefixArray[prefixList.size()/4]);
         resultList.add(prefixArray[prefixList.size()/4*2]);
         resultList.add(prefixArray[prefixList.size()/4*3]);
-        LOGGER.info("???>?: {}",resultList.get(0));
-        LOGGER.info("???>?: {}",resultList.get(1));
-        LOGGER.info("???>?: {}",resultList.get(2));
         lock.writeLock().unlock();
         return resultList;
     }
