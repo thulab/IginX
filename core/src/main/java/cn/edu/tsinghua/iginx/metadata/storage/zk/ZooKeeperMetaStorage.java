@@ -797,7 +797,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             if (this.client.checkExists().forPath(PREFIX_NODE + "/" + iginxid) == null) {
-                this.client.create().forPath(PREFIX_NODE + "/" + iginxid, tobytes(prefix));
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT). forPath(PREFIX_NODE + "/" + iginxid, tobytes(prefix));
             } else {
                 this.client.setData().forPath(PREFIX_NODE + "/" + iginxid, tobytes(prefix));
             }
@@ -825,25 +825,36 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         for (Map.Entry<String, Double> entry: prefix.entrySet())
         {
             ret.append(entry.getKey());
-            ret.append("\2");
+            ret.append("~");
             ret.append(entry.getValue());
-            ret.append("\1");
+            ret.append("^");
         }
-        if (ret.charAt(ret.length() - 1) == '\1')
+        if (ret.charAt(ret.length() - 1) == '^')
             ret.deleteCharAt(ret.length() - 1);
+        logger.info(ret.toString());
         return ret.toString().getBytes();
     }
 
 
     public Map<String, Double> toMap(byte[] prefix)
     {
+        logger.info(new String(prefix));
         Map<String, Double> ret = new HashMap<>();
         String str = new String(prefix);
-        String[] tmp = str.split("\1");
+        String[] tmp = str.split("\\^");
         for (String entry: Arrays.asList(tmp))
         {
-            String[] tmp2 = entry.split("\2");
-            ret.put(tmp2[0], Double.parseDouble(tmp2[1]));
+            String[] tmp2 = entry.split("~");
+            try
+            {
+
+                ret.put(tmp2[0], Double.parseDouble(tmp2[1]));
+            }
+            catch (Exception e)
+            {
+
+                logger.error(entry);
+            }
         }
         return ret;
     }
