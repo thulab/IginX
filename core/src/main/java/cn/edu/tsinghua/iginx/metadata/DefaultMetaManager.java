@@ -93,6 +93,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initPrefix();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -483,6 +484,12 @@ public class DefaultMetaManager implements IMetaManager {
         return new Pair<>(fragmentMetaList, storageUnitMetaList);
     }
 
+    private void initPrefix() throws MetaStorageException {
+        storage.registerPrefixChangeHook((create, prefix) -> {
+            cache.updatePrefix(prefix);
+        });
+    }
+
     @Override
     public void registerStorageEngineChangeHook(StorageEngineChangeHook hook) {
         if (hook != null) {
@@ -532,6 +539,23 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public int getSchemaMappingItem(String schema, String key) {
         return cache.getSchemaMappingItem(schema, key);
+    }
+
+    @Override
+    public void updatePrefix(Map<String, Double> prefix) throws Exception
+    {
+        try {
+            storage.updatePrefix(prefix, getIginxId());
+            cache.updatePrefix(prefix);
+        } catch (MetaStorageException e) {
+            logger.error("update prefix error: ", e);
+        }
+    }
+
+    @Override
+    public Map<String, Double> getPrefix() throws Exception
+    {
+        return cache.getPrefixs();
     }
 
 

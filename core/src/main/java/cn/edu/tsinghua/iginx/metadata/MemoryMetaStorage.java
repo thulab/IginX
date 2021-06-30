@@ -183,13 +183,19 @@ public class MemoryMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void registerPrefixChangeHook(PrefixChangeHook hook)
+    {
+
+    }
+
+    @Override
     public boolean selection() throws Exception
     {
         return false;
     }
 
     @Override
-    public void updatePrefix() throws Exception
+    public void updatePrefix(Map<String, Double> prefix, long id) throws Exception
     {
 
     }

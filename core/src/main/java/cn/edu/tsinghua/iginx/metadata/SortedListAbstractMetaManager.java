@@ -258,6 +258,18 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         return !sortedFragmentMetaLists.isEmpty();
     }
 
+    @Override
+    public void updatePrefix(Map<String, Double> prefix) throws Exception
+    {
+
+    }
+
+    @Override
+    public Map<String, Double> getPrefix() throws Exception
+    {
+        return null;
+    }
+
     public void shutdown() {
         this.iginxCache.close();
         this.storageEngineCache.close();
