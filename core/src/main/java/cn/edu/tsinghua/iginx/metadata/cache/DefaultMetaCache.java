@@ -62,6 +62,8 @@ public class DefaultMetaCache implements IMetaCache {
     // schemaMapping 的缓存
     private final Map<String, Map<String, Integer>> schemaMappings;
 
+    private final Map<String, Double> cachedprefixs;
+
     public static DefaultMetaCache getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaCache.class) {
@@ -87,6 +89,7 @@ public class DefaultMetaCache implements IMetaCache {
         storageEngineMetaMap = new ConcurrentHashMap<>();
         // schemaMapping 相关
         schemaMappings = new ConcurrentHashMap<>();
+        cachedprefixs = new ConcurrentHashMap<>();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -401,5 +404,25 @@ public class DefaultMetaCache implements IMetaCache {
     public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
         Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
         mapping.put(key, value);
+    }
+
+    @Override
+    public void updatePrefix(Map<String, Double> prefix)
+    {
+        for (Map.Entry<String, Double> entry: prefix.entrySet())
+        {
+            double tmp = entry.getValue();
+            if (cachedprefixs.containsKey(entry.getKey()))
+            {
+                tmp += cachedprefixs.get(entry.getKey());
+            }
+            cachedprefixs.put(entry.getKey(), tmp);
+        }
+    }
+
+    @Override
+    public Map<String, Double> getPrefixs()
+    {
+        return cachedprefixs;
     }
 }

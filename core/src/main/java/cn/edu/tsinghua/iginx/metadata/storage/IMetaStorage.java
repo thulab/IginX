@@ -77,9 +77,11 @@ public interface IMetaStorage {
 
     void registerFragmentChangeHook(FragmentChangeHook hook);
 
+    void registerPrefixChangeHook(PrefixChangeHook hook);
+
     boolean selection() throws Exception;
 
-    void updatePrefix() throws Exception;
+    void updatePrefix(Map<String, Double> prefix, long iginxid) throws Exception;
 
     void updateMeta() throws Exception;
 }

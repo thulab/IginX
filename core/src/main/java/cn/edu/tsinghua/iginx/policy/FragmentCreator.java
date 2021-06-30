@@ -20,7 +20,7 @@ public class FragmentCreator
 {
     private static Timer timer = new Timer();
     private static final Logger LOGGER = LoggerFactory.getLogger(FragmentCreator.class);
-    private final Map<String, Double> prefixList = new ConcurrentHashMap<>();
+    private Map<String, Double> prefixList = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final IMetaManager iMetaManager = DefaultMetaManager.getInstance();
     private final Random random = new Random();
@@ -81,6 +81,29 @@ public class FragmentCreator
         lock.writeLock().unlock();
     }
 
+    public void tryCreate()
+    {
+        LOGGER.info("insert tryCreate");
+        lock.writeLock().lock();
+        try
+        {
+            prefixList = iMetaManager.getPrefix();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        if (prefixList.size() >= LIMIT)
+        {
+            semp.release();
+            LIMIT += ts * iMetaManager.getIginxList().size();
+            LOGGER.info("semp release");
+        }
+        LOGGER.info("tryCreate end, list size : {}", prefixList.size());
+        lock.writeLock().unlock();
+    }
+
+
     public void setFragmentData(int fragment, long timestamp)
     {
         fragmentTime = timestamp;
@@ -107,7 +130,7 @@ public class FragmentCreator
             try
             {
                 semp.acquire();
-                semp2.acquire();
+                //semp2.acquire();
                 LOGGER.info("semp acquire");
             }
             catch (InterruptedException e)
@@ -160,7 +183,25 @@ public class FragmentCreator
                     }
                 }
         }, 0, length);
+
+        timer.schedule(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                try
+                {
+                    tryCreate();
+                }
+                catch (Exception e)
+                {
+                    LOGGER.error("Error occurs when create fragment : {}", e);
+                    e.printStackTrace();
+                }
+            }
+        }, 0, length/10);
     }
+
 }
 
 

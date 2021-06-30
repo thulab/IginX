@@ -108,6 +108,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initPrefix();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -475,6 +476,73 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
+        List<Long> storageEngineIdList;
+        Pair<List<FragmentMeta>, StorageUnitMeta> pair;
+        int index = 0;
+
+        // [startTime, +∞) & [startPath, endPath)
+        int splitNum = paths.size() == 1 ? 0 : Math.min(getStorageEngineNum(), paths.size());
+        for (int i = 0; i < splitNum; i++) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            fragmentMap.put(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum)), pair.k);
+            storageUnitList.add(pair.v);
+        }
+
+        // [startTime, +∞) & [endPath, null)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() - 1), null), pair.k);
+        storageUnitList.add(pair.v);
+
+        // [0, startTime) & (-∞, +∞)
+        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
+        // TODO 考虑大规模插入历史数据的情况
+        if (timeInterval.getStartTime() != 0) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+            fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
+            storageUnitList.add(pair.v);
+        }
+
+        // [startTime, +∞) & (null, startPath)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(null, paths.get(0)), pair.k);
+        storageUnitList.add(pair.v);
+
+        return new Pair<>(fragmentMap, storageUnitList);
+    }
+
+    @Override
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+        List<FragmentMeta> fragmentMetaList = new ArrayList<>();
+        // TODO 新建 StorageUnit
+        List<StorageUnitMeta> storageUnitMetaList = new ArrayList<>();
+        prefixList = prefixList.stream().filter(Objects::nonNull).sorted(String::compareTo).collect(Collectors.toList());
+        String previousPrefix;
+        String prefix = null;
+        for (String s : prefixList) {
+            previousPrefix = prefix;
+            prefix = s;
+            fragmentMetaList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE));
+        }
+        fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE));
+        return new Pair<>(fragmentMetaList, storageUnitMetaList);
+    }
+
+    private void initPrefix() throws MetaStorageException {
+        storage.registerPrefixChangeHook((create, prefix) -> {
+            cache.updatePrefix(prefix);
+        });
+    }
+
+    @Override
     public void registerStorageEngineChangeHook(StorageEngineChangeHook hook) {
         if (hook != null) {
             this.storageEngineChangeHooks.add(hook);
@@ -526,6 +594,23 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public int getSchemaMappingItem(String schema, String key) {
         return cache.getSchemaMappingItem(schema, key);
+    }
+
+    @Override
+    public void updatePrefix(Map<String, Double> prefix) throws Exception
+    {
+        try {
+            storage.updatePrefix(prefix, getIginxId());
+            cache.updatePrefix(prefix);
+        } catch (MetaStorageException e) {
+            logger.error("update prefix error: ", e);
+        }
+    }
+
+    @Override
+    public Map<String, Double> getPrefix() throws Exception
+    {
+        return cache.getPrefixs();
     }
 
 

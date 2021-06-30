@@ -46,10 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -73,6 +70,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String SCHEMA_MAPPING_LOCK_NODE = "/lock/schema";
 
+    private static final String PREFIX_LOCK_NODE = "/lock/prefix";
+
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
     private static final String IGINX_NODE_PREFIX = "/iginx";
@@ -82,6 +81,16 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String STORAGE_UNIT_NODE_PREFIX = "/unit";
 
     private static final String SCHEMA_MAPPING_PREFIX = "/schema";
+
+
+
+    public static final String FRAGMENT_CREATOR = "/creator";
+
+    public static final String FRAGMENT_CREATOR_LEADER = "/creator/leader";
+
+
+    public static final String PREFIX_NODE = "/prefix";
+
 
     private static ZooKeeperMetaStorage INSTANCE = null;
 
@@ -94,6 +103,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private IginxChangeHook iginxChangeHook = null;
 
     protected TreeCache iginxCache;
+
+
+    protected TreeCache iginxCache2;
+    protected TreeCache iginxCache3;
+    private PrefixChangeHook prefixChangeHook = null;
 
     private StorageChangeHook storageChangeHook = null;
 
@@ -263,6 +277,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 }
             }
             registerIginxListener();
+            registerMaster();
             return iginxMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("get error when load iginx", e);
@@ -697,6 +712,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.fragmentChangeHook = hook;
     }
 
+    @Override
+    public void registerPrefixChangeHook(PrefixChangeHook hook)
+    {
+        this.prefixChangeHook = hook;
+    }
+
     private void registerMaster() throws Exception {
         try
         {
@@ -704,14 +725,14 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             this.client.create()
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.PERSISTENT)
-                    .forPath(Constants.FRAGMENT_CREATOR);
+                    .forPath(FRAGMENT_CREATOR);
         }
         catch (Exception e)
         {
 
         }
 
-        this.iginxCache = new TreeCache(this.client, Constants.FRAGMENT_CREATOR_LEADER);
+        this.iginxCache2 = new TreeCache(this.client, FRAGMENT_CREATOR_LEADER);
         TreeCacheListener listener = (curatorFramework, event) -> {
             switch (event.getType()) {
                 case NODE_REMOVED:
@@ -721,8 +742,31 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     break;
             }
         };
-        this.iginxCache.getListenable().addListener(listener);
-        this.iginxCache.start();
+        this.iginxCache2.getListenable().addListener(listener);
+        this.iginxCache2.start();
+
+        this.iginxCache3 = new TreeCache(this.client, PREFIX_NODE);
+        TreeCacheListener listener2 = (curatorFramework, event) -> {
+            byte[] data;
+            Map<String, Double> prefixs;
+            switch (event.getType())
+            {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    prefixs = toMap(data);
+                    if (prefixs != null) {
+                        prefixChangeHook.onChange(false, prefixs);
+                    } else {
+                        logger.error("resolve prefix from zookeeper error");
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.iginxCache3.getListenable().addListener(listener2);
+        this.iginxCache3.start();
     }
 
     @Override
@@ -733,7 +777,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             this.client.create()
                     .creatingParentsIfNeeded()
                     .withMode(CreateMode.EPHEMERAL)
-                    .forPath(Constants.FRAGMENT_CREATOR_LEADER);
+                    .forPath(FRAGMENT_CREATOR_LEADER);
             logger.info("成功");
             isMaster = true;
         } catch (KeeperException.NodeExistsException e) {
@@ -747,10 +791,27 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updatePrefix() throws Exception
+    public void updatePrefix(Map<String, Double> prefix, long iginxid) throws Exception
     {
-
+        InterProcessMutex mutex = new InterProcessMutex(this.client, PREFIX_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.client.checkExists().forPath(PREFIX_NODE + "/" + iginxid) == null) {
+                this.client.create().forPath(PREFIX_NODE + "/" + iginxid, tobytes(prefix));
+            } else {
+                this.client.setData().forPath(PREFIX_NODE + "/" + iginxid, tobytes(prefix));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when update prefix", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + PREFIX_LOCK_NODE, e);
+            }
+        }
     }
+
 
     @Override
     public void updateMeta() throws Exception
@@ -758,5 +819,32 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     }
 
+    public byte[] tobytes(Map<String, Double> prefix)
+    {
+        StringBuilder ret = new StringBuilder();
+        for (Map.Entry<String, Double> entry: prefix.entrySet())
+        {
+            ret.append(entry.getKey());
+            ret.append("\2");
+            ret.append(entry.getValue());
+            ret.append("\1");
+        }
+        if (ret.charAt(ret.length() - 1) == '\1')
+            ret.deleteCharAt(ret.length() - 1);
+        return ret.toString().getBytes();
+    }
 
+
+    public Map<String, Double> toMap(byte[] prefix)
+    {
+        Map<String, Double> ret = new HashMap<>();
+        String str = new String(prefix);
+        String[] tmp = str.split("\1");
+        for (String entry: Arrays.asList(tmp))
+        {
+            String[] tmp2 = entry.split("\2");
+            ret.put(tmp2[0], Double.parseDouble(tmp2[1]));
+        }
+        return ret;
+    }
 }

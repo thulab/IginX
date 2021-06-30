@@ -44,6 +44,7 @@ public class NewPlanSplitter implements IPlanSplitter {
         this.iMetaManager = iMetaManager;
         this.prefixMaxSize = config.getPathSendSize();
         this.k = config.getFragmentSplitPerEngine();
+        fragmentCreator.init(config.getReallocateTime());
     }
 
     private void updatePrefix(NonDatabasePlan plan) {
@@ -51,14 +52,13 @@ public class NewPlanSplitter implements IPlanSplitter {
         lock.writeLock().lock();
         if (prefixMaxSize <= prefixList.size()) {
 
-            List<String> ips = new ArrayList<>();
-            for (IginxMeta iginxMeta: iMetaManager.getIginxList())
-                ips.add(iginxMeta.getIp());
-            for (String ip : ips)
+            try
             {
-                String url = "http://" + ip + ":" + config.getRestPort()
-                        + UPDATE_META_URL;
-                HttpUtils.doPost(url, prefixList);
+                iMetaManager.updatePrefix(prefixList);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
             }
             prefixMaxSize += config.getPathSendSize();
             if (isFirst) {
@@ -128,6 +128,7 @@ public class NewPlanSplitter implements IPlanSplitter {
         } else if (policy.isNeedReAllocate()) {
             logger.info("ReAllocate, now size = {}", prefixList.size());
             lock.writeLock().lock();
+            /*
             if (policy.isNeedReAllocate())
             {
                 logger.info("real ReAllocate, now size = {}", prefixList.size());
@@ -144,8 +145,8 @@ public class NewPlanSplitter implements IPlanSplitter {
                             + FRAGMENT_URL;
                     HttpUtils.doPost(url, ins);
                 }
-                policy.setNeedReAllocate(false);
-            }
+            }*/
+            policy.setNeedReAllocate(false);
             lock.writeLock().unlock();
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
@@ -173,6 +174,7 @@ public class NewPlanSplitter implements IPlanSplitter {
         } else if (policy.isNeedReAllocate()) {
             logger.info("ReAllocate, now size = {}", prefixList.size());
             lock.writeLock().lock();
+            /*
             if (policy.isNeedReAllocate())
             {
                 logger.info("real ReAllocate, now size = {}", prefixList.size());
@@ -189,8 +191,8 @@ public class NewPlanSplitter implements IPlanSplitter {
                             + FRAGMENT_URL;
                     HttpUtils.doPost(url, ins);
                 }
-                policy.setNeedReAllocate(false);
-            }
+            }*/
+            policy.setNeedReAllocate(false);
             lock.writeLock().unlock();
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
@@ -494,17 +496,5 @@ public class NewPlanSplitter implements IPlanSplitter {
             }
         }
         return resultList;
-    }
-
-    public void receiveMeta(String meta) {
-        List<String> ins = Arrays.asList(meta.split("\1").clone());
-        logger.info("receive meta, size : {}", ins.size());
-        fragmentCreator.updatePrefix(ins);
-    }
-
-    public void updateFragment(String fragment) {
-        List<String> ins = Arrays.asList(fragment.split("\1").clone());
-        logger.info("receive fragment require, size : {}, time : {}",Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
-        fragmentCreator.setFragmentData(Integer.parseInt(ins.get(0)), Long.parseLong(ins.get(1)));
     }
 }

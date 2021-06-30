@@ -161,4 +161,9 @@ public interface IMetaManager {
      */
     int getSchemaMappingItem(String schema, String key);
 
+
+    void updatePrefix(Map<String, Double> prefix) throws Exception;
+
+
+    Map<String, Double> getPrefix() throws Exception;
 }
