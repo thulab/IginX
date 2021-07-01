@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -91,5 +93,14 @@ public interface IMetaCache {
     void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping);
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
+
+    // 更新最新分片本机统计的的缓存信息
+    void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap);
+
+    // 获取本地统计的缓存信息
+    Map<FragmentMeta, ActiveFragmentStatistics> getActiveFragmentStatistics();
+
+    // 清空本地缓存的统计信息
+    void clearActiveFragmentStatistics();
 
 }

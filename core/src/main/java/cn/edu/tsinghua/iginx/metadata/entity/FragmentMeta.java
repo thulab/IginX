@@ -84,7 +84,7 @@ public final class FragmentMeta {
         return tsInterval;
     }
 
-    public FragmentMeta endFragmentMeta(long endTime) {
+    public FragmentMeta endFragmentMeta(long endTime) { // TODO: 修改
         return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
     }
 

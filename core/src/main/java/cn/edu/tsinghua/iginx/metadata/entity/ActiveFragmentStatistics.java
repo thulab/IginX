@@ -62,7 +62,7 @@ public final class ActiveFragmentStatistics {
         return count;
     }
 
-    public void updateByItem(ActiveFragmentStatisticsItem item) {
+    public synchronized void updateByItem(ActiveFragmentStatisticsItem item) {
         updateTsInterval(item.getTsInterval());
         updateTimeInterval(item.getTimeInterval());
         updateCount(item.getCount());

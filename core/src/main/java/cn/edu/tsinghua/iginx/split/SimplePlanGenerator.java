@@ -29,6 +29,9 @@ import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
@@ -70,7 +73,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getColumnValuesByDataType;
@@ -113,7 +118,16 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertColumnRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
-                return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+                List<InsertColumnRecordsPlan> insertColumnRecordsPlans = splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+                Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap = new HashMap<>();
+                for (InsertColumnRecordsPlan plan: insertColumnRecordsPlans) {
+                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
+                    if (statisticsItem != null) {
+                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    }
+                }
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                return insertColumnRecordsPlans;
             case InsertRowRecords:
                 InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
@@ -125,7 +139,16 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertRowRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
-                return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
+                List<InsertRowRecordsPlan> insertRowRecordsPlans = splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
+                statisticsMap = new HashMap<>();
+                for (InsertRowRecordsPlan plan: insertRowRecordsPlans) {
+                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
+                    if (statisticsItem != null) {
+                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    }
+                }
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                return insertRowRecordsPlans;
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -330,7 +353,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
-                    info.getStorageUnit()
+                    info.getStorageUnit(),
+                    info.getFragment()
             );
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
@@ -350,7 +374,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
-                    info.getStorageUnit()
+                    info.getStorageUnit(),
+                    info.getFragment()
             );
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
