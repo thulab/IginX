@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -608,6 +609,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             for (FragmentMeta fragmentMeta : fragments) {
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
+                fragmentMeta.setCreatedAt(System.currentTimeMillis());
                 addFragment(fragmentMeta);
                 this.zookeeperClient.create()
                         .creatingParentsIfNeeded()
@@ -715,6 +717,7 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
                 String timeIntervalName = fragmentMeta.getTimeInterval().toString();
                 // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(iginxId);
+                fragmentMeta.setCreatedAt(System.currentTimeMillis());
                 StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
                 if (storageUnit.isMaster()) {
                     fragmentMeta.setMasterStorageUnit(storageUnit);
@@ -907,6 +910,11 @@ public abstract class AbstractMetaManager implements IMetaManager, IService {
             return -1;
         }
         return schemaMapping.getOrDefault(key, -1);
+    }
+
+    @Override
+    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap) {
+
     }
 
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {

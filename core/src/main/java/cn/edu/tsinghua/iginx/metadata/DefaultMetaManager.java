@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.metadata;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -58,6 +59,8 @@ public class DefaultMetaManager implements IMetaManager {
     private long id;
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
+
+    private long fragmentLatestUpdateTime = 0L;
 
     public static DefaultMetaManager getInstance() {
         if (INSTANCE == null) {
@@ -552,6 +555,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public int getSchemaMappingItem(String schema, String key) {
         return cache.getSchemaMappingItem(schema, key);
+    }
+
+    @Override
+    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
+        cache.updateActiveFragmentStatistics(statisticsItemMap);
     }
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
