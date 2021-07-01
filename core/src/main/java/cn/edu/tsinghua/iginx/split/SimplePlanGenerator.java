@@ -361,7 +361,6 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
-        logger.error("0987654321 {}", plans.size());
         return plans;
     }
 

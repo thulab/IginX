@@ -136,7 +136,6 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status insertRowRecords(InsertRowRecordsReq req) {
-        logger.error("zxcvb {}", req.getNum());
         InsertRowRecordsContext context = new InsertRowRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
