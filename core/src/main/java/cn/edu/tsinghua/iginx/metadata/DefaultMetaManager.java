@@ -505,6 +505,14 @@ public class DefaultMetaManager implements IMetaManager {
         }
         try {
             storage.lockFragment();
+            Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
+            for (FragmentMeta originalFragmentMeta : latestFragments.values()) {
+                FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(initialFragments.get(0).getTimeInterval().getStartTime());
+                // 在更新分片时，先更新本地
+                fragmentMeta.setUpdatedBy(id);
+                cache.updateFragment(fragmentMeta);
+                storage.updateFragment(fragmentMeta);
+            }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta : initialFragments) {
                 // 针对本机创建的分片，直接将其加入到本地
@@ -596,6 +604,9 @@ public class DefaultMetaManager implements IMetaManager {
     public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+        logger.info("2234234: {}", paths.size());
+
 
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
         List<Long> storageEngineIdList;
