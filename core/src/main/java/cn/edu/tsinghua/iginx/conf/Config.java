@@ -70,7 +70,7 @@ public class Config {
 
     private String etcdEndpoints = "http://localhost:2379";
 
-    private int fragmentSplitPerEngine = 1;
+    private int fragmentSplitPerEngine = 10;
 
     private int reallocateTime = 60000;
 

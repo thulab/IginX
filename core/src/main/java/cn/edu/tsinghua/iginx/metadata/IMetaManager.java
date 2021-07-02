@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
 import java.util.Map;
@@ -124,6 +125,15 @@ public interface IMetaManager {
      * @return 选出的存储引擎实例 Id 列表
      */
     List<Long> selectStorageEngineIdList();
+
+    /**
+     * 初始时创建分片和存储单元
+     */
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
+
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
+
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime);
 
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 

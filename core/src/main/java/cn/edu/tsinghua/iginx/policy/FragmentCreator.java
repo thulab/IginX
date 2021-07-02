@@ -88,6 +88,8 @@ public class FragmentCreator
         lock.writeLock().lock();;
         if (LIMIT == -1)
             LIMIT = ts * iMetaManager.getIginxList().size();
+        fragmentTime = System.currentTimeMillis();
+        fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getIginxList().size();
         try
         {
             prefixList = iMetaManager.getPrefix();
@@ -142,22 +144,8 @@ public class FragmentCreator
             }
 
 
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(samplePrefix2(), new TimeInterval(fragmentTime, Long.MAX_VALUE));
-            List<FragmentMeta> tmp = fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList());
-            List<FragmentMeta> ins = new ArrayList<>();
-            for (int i=0;i<tmp.size();i++)
-            {
-                if (tmp.get(i).getTsInterval().getStartTimeSeries() == null && tmp.get(i).getTsInterval().getEndTimeSeries() == null)
-                    continue;
-                else if (tmp.get(i).getTsInterval().getStartTimeSeries() == null || tmp.get(i).getTsInterval().getEndTimeSeries() == null)
-                    ins.add(tmp.get(i));
-                else if (tmp.get(i).getTsInterval().getStartTimeSeries() == tmp.get(i).getTsInterval().getEndTimeSeries())
-                    continue;
-                else
-                    ins.add(tmp.get(i));
-            }
-            iMetaManager.createFragments(ins);
-
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(fragmentNum - 1), new TimeInterval(fragmentTime, Long.MAX_VALUE));
+            iMetaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
             LOGGER.info("create fragment  , size : {}", prefixList.size());
             updateRequireNum = 0;
         }
@@ -177,19 +165,6 @@ public class FragmentCreator
                 resultList.add(prefixArray[tmp]);
             }
         }
-        return resultList;
-    }
-
-    public List<String> samplePrefix2() {
-
-        lock.writeLock().lock();
-        String[] prefixArray = prefixList.keySet().toArray(new String[prefixList.size()]);
-        Arrays.sort(prefixArray, String::compareTo);
-        List<String> resultList = new ArrayList<>();
-        resultList.add(prefixArray[prefixList.size()/4]);
-        resultList.add(prefixArray[prefixList.size()/4*2]);
-        resultList.add(prefixArray[prefixList.size()/4*3]);
-        lock.writeLock().unlock();
         return resultList;
     }
 
@@ -227,7 +202,7 @@ public class FragmentCreator
                     e.printStackTrace();
                 }
             }
-        }, 0, length / 10);
+        }, length, length / 10);
     }
 
 }
