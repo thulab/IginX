@@ -40,7 +40,7 @@ public class FragmentCreator
     private FragmentCreator()
     {
         init(config.getReallocateTime());
-        fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getIginxList().size();
+        fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getStorageEngineNum();
         fragmentTime = System.currentTimeMillis();
         ts = config.getPathSendSize();
     }
@@ -89,7 +89,7 @@ public class FragmentCreator
         if (LIMIT == -1)
             LIMIT = ts * iMetaManager.getIginxList().size();
         fragmentTime = System.currentTimeMillis();
-        fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getIginxList().size();
+        fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getStorageEngineNum();
         try
         {
             prefixList = iMetaManager.getPrefix();
@@ -202,7 +202,7 @@ public class FragmentCreator
                     e.printStackTrace();
                 }
             }
-        }, length, length / 10);
+        }, length / 5, length / 10);
     }
 
 }

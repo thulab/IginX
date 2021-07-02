@@ -82,7 +82,7 @@ public class ConfigDescriptor {
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
 
 
-            config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "10")));
+            config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
             config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "60000")));
             config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "1000")));
 
