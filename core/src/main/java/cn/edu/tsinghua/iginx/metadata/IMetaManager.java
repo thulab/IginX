@@ -118,6 +118,8 @@ public interface IMetaManager {
      */
     boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
 
+    boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
+
     /**
      * 为新创建的分片选择存储引擎实例
      *
@@ -129,6 +131,8 @@ public interface IMetaManager {
      * 初始时创建分片和存储单元
      */
     Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
+
+    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
 
     Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime);
 

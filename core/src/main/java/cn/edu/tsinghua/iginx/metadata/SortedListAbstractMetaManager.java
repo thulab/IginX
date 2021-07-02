@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -256,6 +257,18 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
     @Override
     public boolean hasFragment() {
         return !sortedFragmentMetaLists.isEmpty();
+    }
+
+    @Override
+    public boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments)
+    {
+        return false;
+    }
+
+    @Override
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval)
+    {
+        return null;
     }
 
     @Override

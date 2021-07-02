@@ -64,7 +64,7 @@ public class Config {
 
     private boolean enableRestService = true;
 
-    private int fragmentSplitPerEngine = 1;
+    private int fragmentSplitPerEngine = 10;
 
     private int reallocateTime = 60000;
 
