@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
@@ -153,6 +154,9 @@ public class DefaultMetaManager implements IMetaManager {
             if (storageUnit.getCreatedBy() == DefaultMetaManager.this.id) { // 不存在
                 return;
             }
+            if (!cache.hasStorageUnit()) {
+                return;
+            }
             StorageUnitMeta originStorageUnitMeta = cache.getStorageUnit(id);
             if (originStorageUnitMeta == null) {
                 if (!storageUnit.isMaster()) { // 需要加入到主节点的子节点列表中
@@ -184,10 +188,10 @@ public class DefaultMetaManager implements IMetaManager {
             }
             cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
         });
-        for (StorageUnitMeta storageUnit: storage.loadStorageUnit().values()) {
-            cache.addStorageUnit(storageUnit);
-            cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
-        }
+        storage.lockStorageUnit();
+        Map<String, StorageUnitMeta> storageUnits = storage.loadStorageUnit();
+        storage.releaseStorageUnit();
+        cache.initStorageUnit(storageUnits);
     }
 
     private void initFragment() throws MetaStorageException {
@@ -200,6 +204,9 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
+            if (!cache.hasFragment()) {
+                return;
+            }
             fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
             if (create) {
                 cache.addFragment(fragment);
@@ -208,7 +215,10 @@ public class DefaultMetaManager implements IMetaManager {
             }
             cache.updateFragment(fragment);
         });
-        cache.initFragment(storage.loadFragment());
+        storage.lockFragment();
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = storage.loadFragment();
+        storage.releaseFragment();
+        cache.initFragment(fragmentMap);
     }
 
     private void initSchemaMapping() throws MetaStorageException {
@@ -341,15 +351,29 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.hasFragment();
     }
 
-    protected Map<String, StorageUnitMeta> tryInitStorageUnits(List<StorageUnitMeta> storageUnits) {
-        if (cache.hasStorageUnit()) {
-            return null;
+    @Override
+    public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) { // 必须同时初始化 fragment 和 cache，并且这个方法的主体部分在任意时刻只能由某个 iginx 的某个线程执行
+        if (cache.hasFragment() && cache.hasStorageUnit()) {
+            return false;
         }
         try {
+            storage.lockFragment();
             storage.lockStorageUnit();
-            if (cache.hasStorageUnit()) {
-                return null;
+
+            // 接下来的部分只有一个 iginx 的一个线程执行
+            if (cache.hasFragment() && cache.hasStorageUnit()) {
+                return false;
             }
+            // 查看一下服务器上是不是已经有了
+            Map<String, StorageUnitMeta> globalStorageUnits = storage.loadStorageUnit();
+            if (globalStorageUnits != null && !globalStorageUnits.isEmpty()) { // 服务器上已经有人创建过了，本地只需要加载
+                Map<TimeSeriesInterval, List<FragmentMeta>> globalFragmentMap = storage.loadFragment();
+                cache.initStorageUnit(globalStorageUnits);
+                cache.initFragment(globalFragmentMap);
+                return false;
+            }
+
+            // 确实没有人创建过，以我为准
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
             for (StorageUnitMeta masterStorageUnit: storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
@@ -365,38 +389,11 @@ public class DefaultMetaManager implements IMetaManager {
                     StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
                     actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
                     storage.updateStorageUnit(actualSlaveStorageUnit);
-                    cache.addStorageUnit(actualSlaveStorageUnit);
                     fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
                 }
-                cache.addStorageUnit(actualMasterStorageUnit);
-            }
-            return fakeIdToStorageUnit;
-        } catch (MetaStorageException e) {
-            logger.error("encounter error when init storage units: ", e);
-        } finally {
-            try {
-                storage.releaseStorageUnit();
-            } catch (MetaStorageException e) {
-                logger.error("encounter error when release storage unit lock: ", e);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
-        Map<String, StorageUnitMeta> fakeIdToStorageUnit = tryInitStorageUnits(storageUnits);
-        if (fakeIdToStorageUnit == null) {
-            return false;
-        }
-        try {
-            storage.lockFragment();
-            if (cache.hasFragment()) {
-                return false;
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta : initialFragments) {
-                // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(id);
                 StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
                 if (storageUnit.isMaster()) {
@@ -405,13 +402,15 @@ public class DefaultMetaManager implements IMetaManager {
                     fragmentMeta.setMasterStorageUnit(getStorageUnit(storageUnit.getMasterId()));
                 }
                 storage.addFragment(fragmentMeta);
-                cache.addFragment(fragmentMeta);
             }
+            cache.initStorageUnit(storage.loadStorageUnit());
+            cache.initFragment(storage.loadFragment());
             return true;
         } catch (MetaStorageException e) {
             logger.error("encounter error when init fragment: ", e);
         } finally {
             try {
+                storage.releaseStorageUnit();
                 storage.releaseFragment();
             } catch (MetaStorageException e) {
                 logger.error("encounter error when release fragment lock: ", e);
