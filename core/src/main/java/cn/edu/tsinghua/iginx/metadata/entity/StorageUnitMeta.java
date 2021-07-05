@@ -34,6 +34,8 @@ public final class StorageUnitMeta {
 
     private long createdBy;
 
+    private boolean initialStorageUnit = true;
+
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
@@ -128,5 +130,13 @@ public final class StorageUnitMeta {
 
     public void setCreatedBy(long createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public boolean isInitialStorageUnit() {
+        return initialStorageUnit;
+    }
+
+    public void setInitialStorageUnit(boolean initialStorageUnit) {
+        this.initialStorageUnit = initialStorageUnit;
     }
 }

@@ -154,6 +154,9 @@ public class DefaultMetaManager implements IMetaManager {
             if (storageUnit.getCreatedBy() == DefaultMetaManager.this.id) { // 不存在
                 return;
             }
+            if (storageUnit.isInitialStorageUnit()) { // 初始分片不通过异步事件更新
+                return;
+            }
             if (!cache.hasStorageUnit()) {
                 return;
             }
@@ -202,6 +205,9 @@ public class DefaultMetaManager implements IMetaManager {
                 return;
             }
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
+                return;
+            }
+            if (fragment.isInitialFragment()) { // 初始分片不通过异步事件更新
                 return;
             }
             if (!cache.hasFragment()) {
