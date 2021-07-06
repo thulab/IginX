@@ -251,8 +251,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
 
-        long count = 0L;
-
         // 创建 Tablet
         for (int i = 0; i < plan.getPathsNum(); i++) {
             String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + plan.getPath(i).substring(0, plan.getPath(i).lastIndexOf('.'));
@@ -275,7 +273,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         int row = tablet.rowSize++;
                         tablet.addTimestamp(row, plan.getTimestamp(i));
                         if (plan.getDataType(j) == BINARY) {
-                            count++;
                             tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[k]));
                         } else {
                             tablet.addValue(measurement, row, plan.getValues(i)[k]);
@@ -297,8 +294,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
             cnt += size;
         } while (cnt < plan.getTimestamps().length);
-
-        logger.error("abcdefg {}", count);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
