@@ -150,7 +150,13 @@ public class DefaultMetaManager implements IMetaManager {
             if (storageUnit == null) {
                 return;
             }
-            if (storageUnit.getCreatedBy() == DefaultMetaManager.this.id) { // 不存在
+            if (storageUnit.getCreatedBy() == DefaultMetaManager.this.id) { // 本地创建的
+                return;
+            }
+            if (storageUnit.isInitialStorageUnit()) { // 初始分片不通过异步事件更新
+                return;
+            }
+            if (!cache.hasStorageUnit()) {
                 return;
             }
             StorageUnitMeta originStorageUnitMeta = cache.getStorageUnit(id);
@@ -184,10 +190,10 @@ public class DefaultMetaManager implements IMetaManager {
             }
             cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
         });
-        for (StorageUnitMeta storageUnit: storage.loadStorageUnit().values()) {
-            cache.addStorageUnit(storageUnit);
-            cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
-        }
+        storage.lockStorageUnit();
+        Map<String, StorageUnitMeta> storageUnits = storage.loadStorageUnit();
+        storage.releaseStorageUnit();
+        cache.initStorageUnit(storageUnits);
     }
 
     private void initFragment() throws MetaStorageException {
@@ -200,15 +206,23 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
+            if (fragment.isInitialFragment()) { // 初始分片不通过异步事件更新
+                return;
+            }
+            if (!cache.hasFragment()) {
+                return;
+            }
             fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
             if (create) {
                 cache.addFragment(fragment);
             } else {
                 cache.updateFragment(fragment);
             }
-            cache.updateFragment(fragment);
         });
-        cache.initFragment(storage.loadFragment());
+        storage.lockFragment();
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = storage.loadFragment();
+        storage.releaseFragment();
+        cache.initFragment(fragmentMap);
     }
 
     private void initSchemaMapping() throws MetaStorageException {
@@ -307,9 +321,32 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean createFragments(List<FragmentMeta> fragments) {
+    public boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> fragments) {
         try {
             storage.lockFragment();
+            storage.lockStorageUnit();
+
+            Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
+            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+                masterStorageUnit.setCreatedBy(id);
+                String fakeName = masterStorageUnit.getId();
+                String actualName = storage.addStorageUnit();
+                StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
+                cache.updateStorageUnit(actualMasterStorageUnit);
+                storage.updateStorageUnit(actualMasterStorageUnit);
+                fakeIdToStorageUnit.put(fakeName, actualMasterStorageUnit);
+                for (StorageUnitMeta slaveStorageUnit : masterStorageUnit.getReplicas()) {
+                    slaveStorageUnit.setCreatedBy(id);
+                    String slaveFakeName = slaveStorageUnit.getId();
+                    String slaveActualName = storage.addStorageUnit();
+                    StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
+                    actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+                    cache.updateStorageUnit(actualSlaveStorageUnit);
+                    storage.updateStorageUnit(actualSlaveStorageUnit);
+                    fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
+                }
+            }
+
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta : latestFragments.values()) {
                 FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
@@ -318,8 +355,16 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.updateFragment(fragmentMeta);
                 storage.updateFragment(fragmentMeta);
             }
+
             for (FragmentMeta fragmentMeta : fragments) {
                 fragmentMeta.setCreatedBy(id);
+                fragmentMeta.setInitialFragment(false);
+                StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
+                if (storageUnit.isMaster()) {
+                    fragmentMeta.setMasterStorageUnit(storageUnit);
+                } else {
+                    fragmentMeta.setMasterStorageUnit(getStorageUnit(storageUnit.getMasterId()));
+                }
                 cache.addFragment(fragmentMeta);
                 storage.addFragment(fragmentMeta);
             }
@@ -329,6 +374,7 @@ public class DefaultMetaManager implements IMetaManager {
         } finally {
             try {
                 storage.releaseFragment();
+                storage.releaseStorageUnit();
             } catch (MetaStorageException e) {
                 logger.error("release fragment lock error: ", e);
             }
@@ -341,15 +387,29 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.hasFragment();
     }
 
-    protected Map<String, StorageUnitMeta> tryInitStorageUnits(List<StorageUnitMeta> storageUnits) {
-        if (cache.hasStorageUnit()) {
-            return null;
+    @Override
+    public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) { // 必须同时初始化 fragment 和 cache，并且这个方法的主体部分在任意时刻只能由某个 iginx 的某个线程执行
+        if (cache.hasFragment() && cache.hasStorageUnit()) {
+            return false;
         }
         try {
+            storage.lockFragment();
             storage.lockStorageUnit();
-            if (cache.hasStorageUnit()) {
-                return null;
+
+            // 接下来的部分只有一个 iginx 的一个线程执行
+            if (cache.hasFragment() && cache.hasStorageUnit()) {
+                return false;
             }
+            // 查看一下服务器上是不是已经有了
+            Map<String, StorageUnitMeta> globalStorageUnits = storage.loadStorageUnit();
+            if (globalStorageUnits != null && !globalStorageUnits.isEmpty()) { // 服务器上已经有人创建过了，本地只需要加载
+                Map<TimeSeriesInterval, List<FragmentMeta>> globalFragmentMap = storage.loadFragment();
+                cache.initStorageUnit(globalStorageUnits);
+                cache.initFragment(globalFragmentMap);
+                return false;
+            }
+
+            // 确实没有人创建过，以我为准
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
             for (StorageUnitMeta masterStorageUnit: storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
@@ -365,38 +425,11 @@ public class DefaultMetaManager implements IMetaManager {
                     StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
                     actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
                     storage.updateStorageUnit(actualSlaveStorageUnit);
-                    cache.addStorageUnit(actualSlaveStorageUnit);
                     fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
                 }
-                cache.addStorageUnit(actualMasterStorageUnit);
-            }
-            return fakeIdToStorageUnit;
-        } catch (MetaStorageException e) {
-            logger.error("encounter error when init storage units: ", e);
-        } finally {
-            try {
-                storage.releaseStorageUnit();
-            } catch (MetaStorageException e) {
-                logger.error("encounter error when release storage unit lock: ", e);
-            }
-        }
-        return null;
-    }
-
-    @Override
-    public boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments) {
-        Map<String, StorageUnitMeta> fakeIdToStorageUnit = tryInitStorageUnits(storageUnits);
-        if (fakeIdToStorageUnit == null) {
-            return false;
-        }
-        try {
-            storage.lockFragment();
-            if (cache.hasFragment()) {
-                return false;
             }
             initialFragments.sort(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()));
             for (FragmentMeta fragmentMeta : initialFragments) {
-                // 针对本机创建的分片，直接将其加入到本地
                 fragmentMeta.setCreatedBy(id);
                 StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
                 if (storageUnit.isMaster()) {
@@ -405,13 +438,15 @@ public class DefaultMetaManager implements IMetaManager {
                     fragmentMeta.setMasterStorageUnit(getStorageUnit(storageUnit.getMasterId()));
                 }
                 storage.addFragment(fragmentMeta);
-                cache.addFragment(fragmentMeta);
             }
+            cache.initStorageUnit(storage.loadStorageUnit());
+            cache.initFragment(storage.loadFragment());
             return true;
         } catch (MetaStorageException e) {
             logger.error("encounter error when init fragment: ", e);
         } finally {
             try {
+                storage.releaseStorageUnit();
                 storage.releaseFragment();
             } catch (MetaStorageException e) {
                 logger.error("encounter error when release fragment lock: ", e);
@@ -437,28 +472,28 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
+        List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
         List<Long> storageEngineIdList;
-        Pair<List<FragmentMeta>, StorageUnitMeta> pair;
+        Pair<FragmentMeta, StorageUnitMeta> pair;
         int index = 0;
 
         // [startTime, +∞) & [startPath, endPath)
-        int splitNum = paths.size() == 1 ? 0 : Math.min(getStorageEngineNum(), paths.size());
+        int splitNum = Math.max(Math.min(getStorageEngineNum(), paths.size() - 1), 0);
         for (int i = 0; i < splitNum; i++) {
             storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
             pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-            fragmentMap.put(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum)), pair.k);
+            fragmentList.add(pair.k);
             storageUnitList.add(pair.v);
         }
 
         // [startTime, +∞) & [endPath, null)
         storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
         pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-        fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() - 1), null), pair.k);
+        fragmentList.add(pair.k);
         storageUnitList.add(pair.v);
 
         // [0, startTime) & (-∞, +∞)
@@ -467,34 +502,51 @@ public class DefaultMetaManager implements IMetaManager {
         if (timeInterval.getStartTime() != 0) {
             storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
             pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
-            fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
+            fragmentList.add(pair.k);
             storageUnitList.add(pair.v);
         }
 
         // [startTime, +∞) & (null, startPath)
-        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
         pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-        fragmentMap.put(new TimeSeriesInterval(null, paths.get(0)), pair.k);
+        fragmentList.add(pair.k);
         storageUnitList.add(pair.v);
 
-        return new Pair<>(fragmentMap, storageUnitList);
+        return new Pair<>(fragmentList, storageUnitList);
     }
 
     @Override
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
-        List<FragmentMeta> fragmentMetaList = new ArrayList<>();
-        // TODO 新建 StorageUnit
-        List<StorageUnitMeta> storageUnitMetaList = new ArrayList<>();
-        prefixList = prefixList.stream().filter(Objects::nonNull).sorted(String::compareTo).collect(Collectors.toList());
-        String previousPrefix;
-        String prefix = null;
-        for (String s : prefixList) {
-            previousPrefix = prefix;
-            prefix = s;
-            fragmentMetaList.add(new FragmentMeta(previousPrefix, prefix, startTime, Long.MAX_VALUE));
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+        List<FragmentMeta> fragmentList = new ArrayList<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
+        List<Long> storageEngineIdList;
+        Pair<FragmentMeta, StorageUnitMeta> pair;
+        int index = 0;
+
+        // [startTime, +∞) & [startPath, endPath)
+        int splitNum = Math.max(Math.min(getStorageEngineNum(), prefixList.size() - 1), 0);
+        for (int i = 0; i < splitNum; i++) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(i), prefixList.get(i + 1), startTime, Long.MAX_VALUE, storageEngineIdList);
+            fragmentList.add(pair.k);
+            storageUnitList.add(pair.v);
         }
-        fragmentMetaList.add(new FragmentMeta(prefix, null, startTime, Long.MAX_VALUE));
-        return new Pair<>(fragmentMetaList, storageUnitMetaList);
+
+        // [startTime, +∞) & [endPath, null)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE, storageEngineIdList);
+        fragmentList.add(pair.k);
+        storageUnitList.add(pair.v);
+
+        // [startTime, +∞) & (null, startPath)
+        storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
+        fragmentList.add(pair.k);
+        storageUnitList.add(pair.v);
+
+        return new Pair<>(fragmentList, storageUnitList);
     }
 
     @Override
@@ -578,14 +630,13 @@ public class DefaultMetaManager implements IMetaManager {
         return storageEngineIdList;
     }
 
-    private Pair<List<FragmentMeta>, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
-        List<FragmentMeta> fragmentList = new ArrayList<>();
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true);
-        fragmentList.add(new FragmentMeta(startPath, endPath, startTime, endTime, masterId));
+        FragmentMeta fragment = new FragmentMeta(startPath, endPath, startTime, endTime, masterId);
         for (int i = 1; i < storageEngineList.size(); i++) {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
         }
-        return new Pair<>(fragmentList, storageUnit);
+        return new Pair<>(fragment, storageUnit);
     }
 }
