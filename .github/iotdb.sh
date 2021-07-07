@@ -12,14 +12,14 @@ sh -c "ls ./"
 
 sh -c "echo ========================="
 
-sh -c "sudo cp -r apache-iotdb-0.11.3 apache-iotdb2-0.11.3"
+sh -c "sudo cp -r apache-iotdb-0.11.3/ apache-iotdb2-0.11.3"
 
 sh -c "sudo sed -i 's/6667/6668/g' apache-iotdb2-0.11.3/conf/iotdb-engine.properties"
 
-sh -c "ls apache-iotdb-0.11.3"
+sh -c "cd apache-iotdb-0.11.3"
 
-sh -c "nohup apache-iotdb-0.11.3/sbin/start-server.sh &"
+sh -c "nohup sbin/start-server.sh &"
 
-sh -c "ls apache-iotdb2-0.11.3"
+sh -c "cd  ../apache-iotdb2-0.11.3"
 
-sh -c "nohup apache-iotdb2-0.11.3/sbin/start-server.sh &"
+sh -c "nohup sbin/start-server.sh &"
