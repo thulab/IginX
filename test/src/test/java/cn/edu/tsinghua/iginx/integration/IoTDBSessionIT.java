@@ -736,7 +736,7 @@ public class IoTDBSessionIT {
         for (int i = 0; i < addStorageLen; i++) {
             int pathNum = getPathNum(stDelPartAvgResPaths.get(i));
             assertNotEquals(pathNum, -1);
-            if (pathNum < currPath + stDelPartLen){ // Here is the removed rows
+            if (pathNum < currPath + stRemoveLen){ // Here is the removed rows
                 assertEquals(TIME_PERIOD - delTimePeriod, stDelPartCountResult[i]);
             } else {
                 assertEquals(TIME_PERIOD, stDelPartCountResult[i]);
