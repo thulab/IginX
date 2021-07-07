@@ -3,9 +3,10 @@ package cn.edu.tsinghua.iginx.rest.query;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.LoggerFactory;
-import java.util.regex.Pattern;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Annotation
 {
