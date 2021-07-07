@@ -293,6 +293,16 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public void initStorageUnit(Map<String, StorageUnitMeta> storageUnits) {
+        storageUnitLock.writeLock().lock();
+        for (StorageUnitMeta storageUnit: storageUnits.values()) {
+            storageUnitMetaMap.put(storageUnit.getId(), storageUnit);
+            getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
+        }
+        storageUnitLock.writeLock().unlock();
+    }
+
+    @Override
     public StorageUnitMeta getStorageUnit(String id) {
         StorageUnitMeta storageUnit;
         storageUnitLock.readLock().lock();

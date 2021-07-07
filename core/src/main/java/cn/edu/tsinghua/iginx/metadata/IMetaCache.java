@@ -59,6 +59,8 @@ public interface IMetaCache {
     // 数据单元相关的缓存读写接口
     boolean hasStorageUnit();
 
+    void initStorageUnit(Map<String, StorageUnitMeta> storageUnits);
+
     StorageUnitMeta getStorageUnit(String id);
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
