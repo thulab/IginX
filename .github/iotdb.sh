@@ -32,7 +32,7 @@ sh -c "echo ========================="
 
 sh -c "sudo sed -i 's/6667/6668/g' apache-iotdb2-0.11.3/conf/iotdb-engine.properties"
 
-sh -c "cd apache-iotdb-0.11.3"
+sh -c "cd apache-iotdb-0.11.3/"
 
 sh -c "ls ./"
 sh -c "echo ========================="
