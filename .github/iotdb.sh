@@ -14,6 +14,8 @@ sh -c "echo ========================="
 
 sh -c "sudo cp -r apache-iotdb-0.11.3/ apache-iotdb2-0.11.3/"
 
+sh -c "ls ./"
+
 sh -c "ls apache-iotdb-0.11.3"
 
 sh -c "ls apache-iotdb2-0.11.3"
