@@ -150,7 +150,7 @@ public class DefaultMetaManager implements IMetaManager {
             if (storageUnit == null) {
                 return;
             }
-            if (storageUnit.getCreatedBy() == DefaultMetaManager.this.id) { // 不存在
+            if (storageUnit.getCreatedBy() == DefaultMetaManager.this.id) { // 本地创建的
                 return;
             }
             if (storageUnit.isInitialStorageUnit()) { // 初始分片不通过异步事件更新
@@ -218,7 +218,6 @@ public class DefaultMetaManager implements IMetaManager {
             } else {
                 cache.updateFragment(fragment);
             }
-            cache.updateFragment(fragment);
         });
         storage.lockFragment();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = storage.loadFragment();
