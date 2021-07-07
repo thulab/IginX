@@ -447,53 +447,41 @@ public class DefaultMetaManager implements IMetaManager {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
-        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient();
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), getStorageEngineList().size());
-        String[] prefixes = new String[clients.length * instancesNumPerClient];
-        for (int i = 0; i < clients.length; i++) {
-            for (int j = 0; j < instancesNumPerClient; j++) {
-                prefixes[i * instancesNumPerClient + j] = clients[i] + (j + 1);
-            }
-        }
-        Arrays.sort(prefixes);
+        List<Long> storageEngineIdList;
+        Pair<List<FragmentMeta>, StorageUnitMeta> pair;
+        int index = 0;
 
-        List<FragmentMeta> fragmentMetaList;
-        String masterId;
-        StorageUnitMeta storageUnit;
-        for (int i = 0; i < clients.length * instancesNumPerClient - 1; i++) {
-            fragmentMetaList = new ArrayList<>();
-            masterId = RandomStringUtils.randomAlphanumeric(16);
-            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(i % getStorageEngineList().size()).getId(), masterId, true);
-//            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(i * 2 % getStorageEngineList().size()).getId(), masterId, true);
-            for (int j = i + 1; j < i + replicaNum; j++) {
-                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(j % getStorageEngineList().size()).getId(), masterId, false));
-//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get((i * 2 + 1) % getStorageEngineList().size()).getId(), masterId, false));
-            }
-            storageUnitList.add(storageUnit);
-            fragmentMetaList.add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, masterId));
-            fragmentMap.put(new TimeSeriesInterval(prefixes[i], prefixes[i + 1]), fragmentMetaList);
+        // [startTime, +∞) & [startPath, endPath)
+        int splitNum = paths.size() == 1 ? 0 : Math.min(getStorageEngineNum(), paths.size());
+        for (int i = 0; i < splitNum; i++) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            fragmentMap.put(new TimeSeriesInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum)), pair.k);
+            storageUnitList.add(pair.v);
         }
 
-        fragmentMetaList = new ArrayList<>();
-        masterId = RandomStringUtils.randomAlphanumeric(16);
-        storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(0).getId(), masterId, true);
-        for (int i = 1; i < replicaNum; i++) {
-            storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(i).getId(), masterId, false));
-        }
-        storageUnitList.add(storageUnit);
-        fragmentMetaList.add(new FragmentMeta(null, prefixes[0], 0, Long.MAX_VALUE, masterId));
-        fragmentMap.put(new TimeSeriesInterval(null, prefixes[0]), fragmentMetaList);
+        // [startTime, +∞) & [endPath, null)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(paths.get(paths.size() - 1), null), pair.k);
+        storageUnitList.add(pair.v);
 
-        fragmentMetaList = new ArrayList<>();
-        masterId = RandomStringUtils.randomAlphanumeric(16);
-        storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(getStorageEngineList().size() - 1).getId(), masterId, true);
-        for (int i = 1; i < replicaNum; i++) {
-            storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get(getStorageEngineList().size() - 1 - i).getId(), masterId, false));
+        // [0, startTime) & (-∞, +∞)
+        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
+        // TODO 考虑大规模插入历史数据的情况
+        if (timeInterval.getStartTime() != 0) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+            fragmentMap.put(new TimeSeriesInterval(null, null), pair.k);
+            storageUnitList.add(pair.v);
         }
-        storageUnitList.add(storageUnit);
-        fragmentMetaList.add(new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, masterId));
-        fragmentMap.put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null), fragmentMetaList);
+
+        // [startTime, +∞) & (null, startPath)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentMap.put(new TimeSeriesInterval(null, paths.get(0)), pair.k);
+        storageUnitList.add(pair.v);
 
         return new Pair<>(fragmentMap, storageUnitList);
     }
