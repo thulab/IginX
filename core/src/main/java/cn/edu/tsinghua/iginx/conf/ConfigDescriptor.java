@@ -86,6 +86,9 @@ public class ConfigDescriptor {
 
             config.setEnableGlobalStatistics(Boolean.parseBoolean(properties.getProperty("enableGlobalStatistics", "false")));
             config.setGlobalStatisticsCollectInterval(Long.parseLong(properties.getProperty("globalStatisticsCollectInterval", "60")));
+
+            config.setEnableReshardPeriodically(Boolean.parseBoolean(properties.getProperty("enableReshardPeriodically", "true")));
+            config.setReshardInterval(Integer.parseInt(properties.getProperty("reshardInterval", "60")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

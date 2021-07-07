@@ -74,6 +74,10 @@ public class Config {
 
     private long globalStatisticsCollectInterval = 60;
 
+    private boolean enableReshardPeriodically = true;
+
+    private int reshardInterval = 60;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -288,5 +292,22 @@ public class Config {
 
     public void setGlobalStatisticsCollectInterval(long globalStatisticsCollectInterval) {
         this.globalStatisticsCollectInterval = globalStatisticsCollectInterval;
+    }
+
+
+    public boolean isEnableReshardPeriodically() {
+        return enableReshardPeriodically;
+    }
+
+    public void setEnableReshardPeriodically(boolean enableReshardPeriodically) {
+        this.enableReshardPeriodically = enableReshardPeriodically;
+    }
+
+    public int getReshardInterval() {
+        return reshardInterval;
+    }
+
+    public void setReshardInterval(int reshardInterval) {
+        this.reshardInterval = reshardInterval;
     }
 }

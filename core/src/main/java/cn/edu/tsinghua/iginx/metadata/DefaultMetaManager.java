@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
@@ -31,6 +32,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -561,6 +563,53 @@ public class DefaultMetaManager implements IMetaManager {
         cache.updateActiveFragmentStatistics(statisticsItemMap);
     }
 
+    @Override
+    public boolean reshard() {
+        Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
+
+        try {
+            for (Map.Entry<TimeSeriesInterval, FragmentMeta> entry : latestFragments.entrySet()) {
+                FragmentMeta newFragment = new FragmentMeta();
+                storage.updateFragment(newFragment);
+            }
+        } catch (MetaStorageException e) {
+            e.printStackTrace();
+        }
+
+        InterProcessMutex mutex = new InterProcessMutex(, Constants.FRAGMENT_LOCK_NODE);
+        try {
+            mutex.acquire();
+            Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
+//            for (Map.Entry<TimeSeriesInterval, FragmentMeta> entry : latestFragments.entrySet()) { // 终结老分片
+//                FragmentMeta fragmentMeta = entry.getValue().endFragmentMeta();
+//                // 在更新分片时，先更新本地
+//                fragmentMeta.setUpdatedBy(iginxId);
+//                updateFragment(fragmentMeta);
+//                this.zookeeperClient.setData()
+//                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+//            }
+//            for (FragmentMeta fragmentMeta : fragments) {
+//                // 针对本机创建的分片，直接将其加入到本地
+//                fragmentMeta.setCreatedBy(iginxId);
+//                addFragment(fragmentMeta);
+//                this.zookeeperClient.create()
+//                        .creatingParentsIfNeeded()
+//                        .withMode(CreateMode.PERSISTENT)
+//                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+//            }
+            return true;
+        } catch (Exception e) {
+            logger.error("create fragment error: ", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                logger.error("release mutex error: ", e);
+            }
+        }
+        return false;
+    }
+
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
         List<StorageEngineMeta> storageEngineMetaList = new ArrayList<>();
         String[] storageEngineStrings = ConfigDescriptor.getInstance().getConfig().getStorageEngineList().split(",");
@@ -600,5 +649,9 @@ public class DefaultMetaManager implements IMetaManager {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
         }
         return new Pair<>(fragmentList, storageUnit);
+    }
+
+    private Map<TimeSeriesInterval, FragmentMeta> generateFragmentsForResharding() {
+
     }
 }

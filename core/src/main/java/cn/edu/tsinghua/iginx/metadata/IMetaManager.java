@@ -176,4 +176,8 @@ public interface IMetaManager {
      */
     void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap);
 
+    /**
+     * 重分片
+     */
+    boolean reshard();
 }
