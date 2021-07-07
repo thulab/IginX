@@ -92,6 +92,12 @@ public final class FragmentMeta {
         return fragment;
     }
 
+    public FragmentMeta endFragmentMeta(long endTime, FragmentStatistics statistics) {
+        FragmentMeta fragment = endFragmentMeta(endTime);
+        fragment.setFragmentStatistics(statistics);
+        return fragment;
+    }
+
     public long getCreatedBy() {
         return createdBy;
     }

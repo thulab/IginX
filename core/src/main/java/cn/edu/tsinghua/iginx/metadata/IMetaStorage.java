@@ -72,4 +72,6 @@ public interface IMetaStorage {
 
     void registerFragmentChangeHook(FragmentChangeHook hook);
 
+    void updateActiveFragmentStatistics(long id, )
+
 }

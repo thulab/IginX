@@ -38,11 +38,11 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 
 public final class ActiveFragmentStatisticsItem {
 
-    private final TimeSeriesInterval tsInterval; // 序列区间
+    private final TimeSeriesInterval tsInterval; // 当前请求落入该分片的部分的实际的时间序列的范围
 
-    private final TimeInterval timeInterval; // 时间区间
+    private final TimeInterval timeInterval; // 当前请求落入该分片的部分的实际的时间戳范围
 
-    private final long count;
+    private final long count; // 当前请求落入该分片部分的点的个数
 
     public ActiveFragmentStatisticsItem(TimeSeriesInterval tsInterval, TimeInterval timeInterval, long count) {
         this.tsInterval = tsInterval;
