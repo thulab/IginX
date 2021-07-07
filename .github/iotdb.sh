@@ -4,8 +4,6 @@ set -e
 
 sh -c "wget -nv https://mirrors.ocf.berkeley.edu/apache/iotdb/0.11.3/apache-iotdb-0.11.3-bin.zip"
 
-sh -c "ls ./"
-
 sh -c "echo ========================="
 
 sh -c "unzip apache-iotdb-0.11.3-bin.zip"
@@ -16,10 +14,7 @@ sh -c "sudo cp -r apache-iotdb-0.11.3/ apache-iotdb2-0.11.3/"
 
 sh -c "sudo sed -i 's/6667/6668/g' apache-iotdb2-0.11.3/conf/iotdb-engine.properties"
 
-sh -c "sudo cd apache-iotdb-0.11.3/"
+sh -c "cd apache-iotdb-0.11.3/; nohup sbin/start-server.sh &"
 
-sh -c "nohup sbin/start-server.sh &"
+sh -c "cd apache-iotdb2-0.11.3/; nohup sbin/start-server.sh &"
 
-sh -c "sudo cd ../apache-iotdb2-0.11.3"
-
-sh -c "nohup sbin/start-server.sh &"
