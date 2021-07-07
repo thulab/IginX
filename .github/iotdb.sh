@@ -4,6 +4,10 @@ set -e
 
 sh -c "wget -nv https://mirrors.ocf.berkeley.edu/apache/iotdb/0.11.3/apache-iotdb-0.11.3-bin.zip"
 
+sh -c "ls ./"
+
+sh -c "echo ========================="
+
 sh -c "unzip apache-iotdb-0.11.3-bin.zip"
 
 sh -c "sleep 10"
