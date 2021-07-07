@@ -54,6 +54,8 @@ public final class FragmentMeta {
 
     private transient String fakeStorageUnitId;
 
+    private boolean initialFragment = true;
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
@@ -81,7 +83,9 @@ public final class FragmentMeta {
     }
 
     public FragmentMeta endFragmentMeta(long endTime) {
-        return new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
+        FragmentMeta fragment = new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
+        fragment.setInitialFragment(initialFragment);
+        return fragment;
     }
 
     public long getCreatedBy() {
@@ -144,5 +148,13 @@ public final class FragmentMeta {
     @Override
     public int hashCode() {
         return Objects.hash(timeInterval, tsInterval);
+    }
+
+    public boolean isInitialFragment() {
+        return initialFragment;
+    }
+
+    public void setInitialFragment(boolean initialFragment) {
+        this.initialFragment = initialFragment;
     }
 }

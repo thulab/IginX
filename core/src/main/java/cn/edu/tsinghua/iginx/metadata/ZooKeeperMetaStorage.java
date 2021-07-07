@@ -465,16 +465,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     @Override
     public Map<String, StorageUnitMeta> loadStorageUnit() throws MetaStorageException {
-        InterProcessMutex mutex = new InterProcessMutex(this.client, STORAGE_UNIT_LOCK_NODE);
         try {
-            mutex.acquire();
             Map<String, StorageUnitMeta> storageUnitMetaMap = new HashMap<>();
             if (this.client.checkExists().forPath(STORAGE_UNIT_NODE_PREFIX) == null) {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
                 this.client.create().withMode(CreateMode.PERSISTENT).forPath(STORAGE_UNIT_NODE_PREFIX);
             } else {
                 List<String> storageUnitIds = this.client.getChildren().forPath(STORAGE_UNIT_NODE_PREFIX);
+                logger.info("sort storage unit ids");
+                storageUnitIds.sort(String::compareTo);
                 for (String storageUnitId : storageUnitIds) {
+                    logger.info("load storage unit: " + storageUnitId);
                     byte[] data = this.client.getData()
                             .forPath(STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitId);
                     StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
@@ -493,12 +494,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             return storageUnitMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("get error when load storage unit", e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                throw new MetaStorageException("get error when release interprocess lock for " + STORAGE_UNIT_LOCK_NODE, e);
-            }
         }
     }
 
@@ -579,9 +574,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
-        InterProcessMutex mutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         try {
-            mutex.acquire();
             Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap = new HashMap<>();
             if (this.client.checkExists().forPath(FRAGMENT_NODE_PREFIX) == null) {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
@@ -604,12 +597,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             return fragmentListMap;
         } catch (Exception e) {
             throw new MetaStorageException("get error when update schema mapping", e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                throw new MetaStorageException("get error when release interprocess lock for " + FRAGMENT_LOCK_NODE, e);
-            }
         }
     }
 
