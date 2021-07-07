@@ -323,7 +323,6 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> fragments) {
-        // TODO: 创建 DU
         try {
             storage.lockFragment();
             storage.lockStorageUnit();
