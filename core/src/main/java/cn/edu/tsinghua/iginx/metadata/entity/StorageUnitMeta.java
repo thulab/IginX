@@ -86,6 +86,7 @@ public final class StorageUnitMeta {
     public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
         StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
         storageUnitMeta.setCreatedBy(createdBy);
+        storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
         return storageUnitMeta;
     }
 

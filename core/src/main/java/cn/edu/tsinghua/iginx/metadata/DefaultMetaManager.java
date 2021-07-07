@@ -336,6 +336,7 @@ public class DefaultMetaManager implements IMetaManager {
             }
             for (FragmentMeta fragmentMeta : fragments) {
                 fragmentMeta.setCreatedBy(id);
+                fragmentMeta.setInitialFragment(false);
                 cache.addFragment(fragmentMeta);
                 storage.addFragment(fragmentMeta);
             }
