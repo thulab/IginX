@@ -12,6 +12,14 @@ sh -c "ls ./"
 
 sh -c "echo ========================="
 
+sh -c "cp apache-iotdb-0.11.3 apache-iotdb2-0.11.3"
+
+sed -i "s/6667/6668/g" apache-iotdb2-0.11.3/conf/config.properties
+
 sh -c "ls apache-iotdb-0.11.3"
 
 sh -c "nohup apache-iotdb-0.11.3/sbin/start-server.sh &"
+
+sh -c "ls apache-iotdb2-0.11.3"
+
+sh -c "nohup apache-iotdb2-0.11.3/sbin/start-server.sh &"

@@ -31,11 +31,6 @@ import static org.junit.Assert.*;
 public class IoTDBSessionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(IoTDBSessionIT.class);
-    /*
-    private static final String COLUMN_D1_S1 = "sg1.d1.s1";
-    private static final String COLUMN_D2_S2 = "sg1.d2.s2";
-    private static final String COLUMN_D3_S3 = "sg1.d3.s3";
-    private static final String COLUMN_D4_S4 = "sg1.d4.s4";*/
     private static final long TIME_PERIOD = 100000L;
     private static final long START_TIME = 1000L;
     private static final long END_TIME = START_TIME + TIME_PERIOD - 1;
@@ -106,7 +101,7 @@ public class IoTDBSessionIT {
     @After
     public void tearDown() throws SessionException {
         // delete metadata from ZooKeeper
-        /*
+
         ZooKeeper zk = null;
         try {
             zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
@@ -118,7 +113,7 @@ public class IoTDBSessionIT {
             logger.error(e.getMessage());
         }
 
-        /*
+
         // delete data from IoTDB
         org.apache.iotdb.session.Session iotdbSession = null;
         try {
@@ -131,14 +126,14 @@ public class IoTDBSessionIT {
 
         // close session
         try {
-            //iotdbSession.close();
+            iotdbSession.close();
             if (zk != null) {
                 zk.close();
             }
             session.closeSession();
         } catch (InterruptedException | IoTDBConnectionException e) {
             logger.error(e.getMessage());
-        }*/
+        }
         session.closeSession();
     }
 
@@ -626,8 +621,7 @@ public class IoTDBSessionIT {
         Map<String, String> extraParams =  new HashMap<>();
         extraParams.put("username", "root");
         extraParams.put("password", "root");
-        extraParams.put("readSessions", "2");
-        extraParams.put("writeSessions", "5");
+        extraParams.put("sessionPoolSize", "100");
         session.addStorageEngine("127.0.0.1", 6668, StorageEngineType.IOTDB, extraParams);
 
         int addStorageLen = 5;
