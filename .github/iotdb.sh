@@ -12,7 +12,7 @@ sh -c "ls ./"
 
 sh -c "echo ========================="
 
-sh -c "cp apache-iotdb-0.11.3 apache-iotdb2-0.11.3"
+sh -c "sudo cp apache-iotdb-0.11.3 apache-iotdb2-0.11.3"
 
 sed -i "s/6667/6668/g" apache-iotdb2-0.11.3/conf/config.properties
 
