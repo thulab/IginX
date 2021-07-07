@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.combine.meta;
 
-import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
-import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
