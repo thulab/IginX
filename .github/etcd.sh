@@ -4,9 +4,9 @@ set -e
 
 sh -c "wget -nv https://golang.org/dl/go1.16.5.linux-amd64.tar.gz"
 
-sh -c "tar -C /usr/local -zxvf go1.16.5.linux-amd64.tar.gz"
+sh -c "tar -zxvf go1.16.5.linux-amd64.tar.gz"
 
-sh -c "export GOROOT=/usr/local/go"
+sh -c "export GOROOT=$PWD/go"
 
 sh -c "echo 'export PATH=$PATH:$GOROOT/bin' >> /etc/profile"
 
