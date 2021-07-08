@@ -6,17 +6,17 @@ sh -c "wget -nv https://golang.org/dl/go1.16.5.linux-amd64.tar.gz"
 
 sh -c "tar -zxvf go1.16.5.linux-amd64.tar.gz"
 
-sh -c "export GOROOT=$PWD/go"
+export GOROOT=$PWD/go
 
-sh -c "export GOPATH=$GOROOT/bin"
+export GOPATH=$GOROOT/bin
 
-sh -c "export PATH=$PATH:$GOPATH"
+export PATH=$PATH:$GOPATH
 
-sh -c "echo $PATH"
+echo $PATH
 
-sh -c "echo $GOROOT"
+echo $GOROOT
 
-sh -c "echo $GOPATH"
+echo $GOPATH
 
 sh -c "wget -nv https://github.com/etcd-io/etcd/releases/download/v3.5.0/etcd-v3.5.0-linux-amd64.tar.gz"
 
