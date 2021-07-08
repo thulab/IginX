@@ -88,6 +88,8 @@ public final class FragmentMeta {
 
     public FragmentMeta endFragmentMeta(long endTime) {
         FragmentMeta fragment = new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
+        fragment.setMasterStorageUnit(masterStorageUnit);
+        fragment.setMasterStorageUnitId(masterStorageUnitId);
         fragment.setInitialFragment(initialFragment);
         return fragment;
     }
