@@ -73,8 +73,8 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
           "${GITHUB_WORKSPACE}/.github/etcd.sh"
-      - name: Run Test For Meta Manager
-        run: mvn test -q -Dtest=*Test,IMetaManagerTest -DfailIfNoTests=false
+      #- name: Run Test For Meta Manager
+      #  run: mvn test -q -Dtest=*Test,IMetaManagerTest -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
