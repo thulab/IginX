@@ -87,8 +87,6 @@ jobs:
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
       - name: Install with Maven
         run: mvn -B clean install -DskipTests
-      - name: Add dependencies
-        run: cp "${GITHUB_WORKSPACE}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar" "${GITHUB_WORKSPACE}/core/lib/iotdb-0.1.0-SNAPSHOT.jar"
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
