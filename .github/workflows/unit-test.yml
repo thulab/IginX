@@ -19,6 +19,7 @@ jobs:
     runs-on: ${{ matrix.os}}
     env:
       STORAGE: zookeeper
+      ZOOKEEPER_CONNECTION_STRING: 127.0.0.1:2181
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK ${{ matrix.java }}
@@ -55,6 +56,7 @@ jobs:
     runs-on: ${{ matrix.os}}
     env:
       STORAGE: etcd
+      ETCD_ENDPOINTS: http://localhost:2379
     steps:
       - uses: actions/checkout@v2
       - name: Set up JDK ${{ matrix.java }}
