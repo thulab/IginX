@@ -1040,7 +1040,5 @@ public class IoTDBSessionIT {
                 assertEquals(TIME_PERIOD, stDelPartCountResult[i]);
             }
         }
-
-        fail();
     }
 }
