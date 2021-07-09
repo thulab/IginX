@@ -1,4 +1,7 @@
-name: System Test
+# This workflow will build a Java project with Maven
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: Java CI with Maven
 
 on:
   push:
@@ -9,7 +12,7 @@ on:
       - main
 
 jobs:
-  use-zk:
+  IoTDB-build:
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -50,14 +53,14 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
           nohup "${GITHUB_WORKSPACE}/startIginX.sh" &
-      - name: A Lame Integration Test with Maven and Coverage report
-        run: mvn -B verify -P coverage --no-transfer-progress
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=*Test,IoTDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
-  use-etcd:
+  InfluxDB-build:
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -78,28 +81,22 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Run ETCD
+      - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
-      - name: Run IoTDB
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
+      - name: Run InfluxDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          "${GITHUB_WORKSPACE}/.github/influxdb.sh"
       - name: Install with Maven
         run: mvn -B clean install -DskipTests
-      - name: Add dependencies
-        run: cp "${GITHUB_WORKSPACE}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar" "${GITHUB_WORKSPACE}/core/lib/iotdb-0.1.0-SNAPSHOT.jar"
-      - name: Change Config
-        run: |
-          mv "${GITHUB_WORKSPACE}/conf/config.properties" "${GITHUB_WORKSPACE}/conf/config-zk.properties"
-          mv "${GITHUB_WORKSPACE}/conf/config-etcd.properties" "${GITHUB_WORKSPACE}/conf/config.properties"
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
           nohup "${GITHUB_WORKSPACE}/startIginX.sh" &
-      - name: A Lame Integration Test with Maven and Coverage report
-        run: mvn -B verify -P coverage --no-transfer-progress
+      - name: A Lame Integration Test with Maven for InfluxDB
+        run: mvn test -q -Dtest=*Test,InfluxDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
