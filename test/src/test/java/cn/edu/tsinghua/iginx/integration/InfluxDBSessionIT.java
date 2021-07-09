@@ -8,11 +8,6 @@ import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.iotdb.rpc.IoTDBConnectionException;
-import org.apache.iotdb.rpc.StatementExecutionException;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZKUtil;
-import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -61,29 +56,7 @@ public class InfluxDBSessionIT {
 
     @After
     public void tearDown() throws SessionException {
-        // delete metadata from ZooKeeper
-        ZooKeeper zk = null;
-        try {
-            zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
-            ZKUtil.deleteRecursive(zk, "/unit");
-            ZKUtil.deleteRecursive(zk, "/lock");
-            ZKUtil.deleteRecursive(zk, "/fragment");
-            ZKUtil.deleteRecursive(zk, "/schema");
-        } catch (IOException | InterruptedException | KeeperException e) {
-            logger.error(e.getMessage());
-        }
-
-        // TODO :Is there no delete in influxDB?
-
-        // close session
-        try {
-            if (zk != null) {
-                zk.close();
-            }
-            session.closeSession();
-        } catch (InterruptedException e) {
-            logger.error(e.getMessage());
-        }
+        session.closeSession();
     }
 
     @Test
