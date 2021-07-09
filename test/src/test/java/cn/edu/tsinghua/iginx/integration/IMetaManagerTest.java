@@ -49,6 +49,7 @@ public class IMetaManagerTest {
     @Test
     public void schemaMappingTest() {
         System.out.println("Test Schema Mapping");
+        System.out.printf("env: STORAGE=%s%n", System.getenv("STORAGE"));
     }
 
 }
