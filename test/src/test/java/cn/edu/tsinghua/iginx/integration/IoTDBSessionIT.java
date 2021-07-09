@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.AssertFalse;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -1039,5 +1040,7 @@ public class IoTDBSessionIT {
                 assertEquals(TIME_PERIOD, stDelPartCountResult[i]);
             }
         }
+
+        fail();
     }
 }
