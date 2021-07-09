@@ -367,7 +367,7 @@ public class DefaultMetaCache implements IMetaCache {
     public Map<String, Integer> getSchemaMapping(String schema) {
         if (this.schemaMappings.get(schema) == null)
             return null;
-        return Collections.unmodifiableMap(this.schemaMappings.get(schema));
+        return new HashMap<>(this.schemaMappings.get(schema));
     }
 
     @Override
