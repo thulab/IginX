@@ -8,12 +8,6 @@ import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
-import org.apache.iotdb.rpc.IoTDBConnectionException;
-import org.apache.iotdb.rpc.StatementExecutionException;
-import org.apache.iotdb.tsfile.read.filter.operator.In;
-import org.apache.zookeeper.KeeperException;
-import org.apache.zookeeper.ZKUtil;
-import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -24,7 +18,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import java.io.IOException;
 
 import static org.junit.Assert.*;
 
@@ -39,12 +32,21 @@ public class IoTDBSessionIT {
     private static Session session;
     private int currPath = 0;
 
+    //params for datatype test
+    private static final String ranStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int STRING_LEN = 1000;
+
     private List<String> getPaths(int startPosition, int len) {
         List<String> paths = new ArrayList<>();
         for(int i = startPosition; i < startPosition + len; i++){
             paths.add("sg1.d" + i + ".s" + i);
         }
         return paths;
+    }
+
+    private String getSinglePath(int startPosition, int offset) {
+        int pos = startPosition + offset;
+        return ("sg1.d" + pos + ".s" + pos);
     }
 
     private int getPathNum(String path) {
@@ -62,6 +64,16 @@ public class IoTDBSessionIT {
         } else {
             return -1;
         }
+    }
+
+    private String getRandomStr(int seed, int length) {
+        Random random = new Random(seed);
+        StringBuilder sb = new StringBuilder();
+        for (int k = 0; k < length; k++) {
+            int number = random.nextInt(ranStr.length());
+            sb.append(ranStr.charAt(number));
+        }
+        return sb.toString();
     }
 
     private void insertNumRecords(List<String> insertPaths) throws SessionException, ExecutionException {
@@ -88,6 +100,55 @@ public class IoTDBSessionIT {
         session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
+    // the length of the insertPaths must be 6
+    private void insertDataTypeRecords(List<String> insertPaths, int startPathNum) throws SessionException, ExecutionException {
+        long[] timestamps = new long[(int) TIME_PERIOD];
+        for (long i = 0; i < TIME_PERIOD; i++) {
+            timestamps[(int) i] = i + START_TIME;
+        }
+
+        Object[] valuesList = new Object[6];
+        for (int i = 0; i < 6; i++) {
+            Object[] values = new Object[(int) TIME_PERIOD];
+            int pathNum = getPathNum(insertPaths.get(i)) - startPathNum;
+            for (int j = 0; j < TIME_PERIOD; j++) {
+                switch (pathNum) {
+                    case 1:
+                        //integer
+                        values[j] = (int) (pathNum + (TIME_PERIOD - j - 1) + START_TIME);
+                        break;
+                    case 2:
+                        //long
+                        values[j] = (pathNum + j + START_TIME) * 1000;
+                        break;
+                    case 3:
+                        values[j] = (float) (pathNum + j + START_TIME + 0.01);
+                        //float
+                        break;
+                    case 4:
+                        //double
+                        values[j] = (pathNum + (TIME_PERIOD - j - 1) + START_TIME + 0.01) * 999;
+                        break;
+                    case 5:
+                        //binary
+                        values[j] = getRandomStr(j, STRING_LEN).getBytes();
+                        break;
+                    default:
+                        //boolean
+                        values[j] = (j % 2 == 0);
+                        break;
+                }
+            }
+            valuesList[i] = values;
+        }
+
+        List<DataType> dataTypeList = new ArrayList<>();
+        for (int i = 0; i < 6; i++) {
+            dataTypeList.add(DataType.findByValue(i));
+        }
+        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+    }
+
     @Before
     public void setUp() {
         try {
@@ -100,40 +161,6 @@ public class IoTDBSessionIT {
 
     @After
     public void tearDown() throws SessionException {
-        // delete metadata from ZooKeeper
-
-        ZooKeeper zk = null;
-        try {
-            zk = new ZooKeeper("127.0.0.1:2181", 5000, null);
-            ZKUtil.deleteRecursive(zk, "/unit");
-            ZKUtil.deleteRecursive(zk, "/lock");
-            ZKUtil.deleteRecursive(zk, "/fragment");
-            ZKUtil.deleteRecursive(zk, "/schema");
-        } catch (IOException | InterruptedException | KeeperException e) {
-            logger.error(e.getMessage());
-        }
-
-
-        // delete data from IoTDB
-        org.apache.iotdb.session.Session iotdbSession = null;
-        try {
-            iotdbSession = new org.apache.iotdb.session.Session("127.0.0.1", 6667, "root", "root");
-            iotdbSession.open(false);
-            iotdbSession.executeNonQueryStatement("DELETE TIMESERIES root.*");
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
-        }
-
-        // close session
-        try {
-            iotdbSession.close();
-            if (zk != null) {
-                zk.close();
-            }
-            session.closeSession();
-        } catch (InterruptedException | IoTDBConnectionException e) {
-            logger.error(e.getMessage());
-        }
         session.closeSession();
     }
 
@@ -580,10 +607,10 @@ public class IoTDBSessionIT {
         List<String> delAllColumnPaths = getPaths(currPath, delAllColumnLen);
         insertNumRecords(delAllColumnPaths);
         session.deleteColumns(delAllColumnPaths);
-        SessionQueryDataSet dataSet = session.queryData(delAllColumnPaths, START_TIME, END_TIME + 1);
-        assertEquals(0, dataSet.getPaths().size());
-        assertEquals(0, dataSet.getTimestamps().length);
-        assertEquals(0, dataSet.getValues().size());
+        SessionQueryDataSet delAllColumnDataSet = session.queryData(delAllColumnPaths, START_TIME, END_TIME + 1);
+        assertEquals(0, delAllColumnDataSet.getPaths().size());
+        assertEquals(0, delAllColumnDataSet.getTimestamps().length);
+        assertEquals(0, delAllColumnDataSet.getValues().size());
         currPath += delAllColumnLen;
 
         // deletePartColumnsTest
@@ -615,7 +642,283 @@ public class IoTDBSessionIT {
         }
         currPath += delPartColumnLen;
 
-        logger.info("finish");
+        //dataTypeTest
+        int dataTypeLen = 6;
+        List<String> dataTypePaths = getPaths(currPath, dataTypeLen);
+        insertDataTypeRecords(dataTypePaths, currPath);
+
+        //queryData
+        SessionQueryDataSet dtQueryDataSet = session.queryData(dataTypePaths, START_TIME, END_TIME + 1);
+        int dtQueryLen = dtQueryDataSet.getTimestamps().length;
+        List<String> dataTypeResPaths = dtQueryDataSet.getPaths();
+        assertEquals(6, dataTypeResPaths.size());
+        assertEquals(TIME_PERIOD, dtQueryLen);
+        assertEquals(TIME_PERIOD, dtQueryDataSet.getValues().size());
+        for (int i = 0; i < dtQueryLen; i++) {
+            long timestamp = dtQueryDataSet.getTimestamps()[i];
+            assertEquals(i + START_TIME, timestamp);
+            List<Object> result = dtQueryDataSet.getValues().get(i);
+            for (int j = 0; j < 6; j++) {
+                int currPathPos = getPathNum(dataTypeResPaths.get(j)) - currPath;
+                switch (currPathPos)  {
+                    case 1:
+                        assertEquals((int) ((END_TIME - i) + 1), result.get(j));
+                        break;
+                    case 2:
+                        assertEquals((i + 2 + START_TIME) * 1000, result.get(j));
+                        break;
+                    case 3:
+                        assertEquals((float) (i + 3 + START_TIME + 0.01), (float) result.get(j), (float) delta);
+                        break;
+                    case 4:
+                        assertEquals(((END_TIME - i) + 4 + 0.01) * 999, (double) result.get(j), delta);
+                        break;
+                    case 5:
+                        assertArrayEquals(getRandomStr(i, STRING_LEN).getBytes(), (byte[]) (result.get(j)));
+                        break;
+                    case 0:
+                        assertEquals(i % 2 == 0, result.get(j));
+                        break;
+                    default:
+                        fail();
+                        break;
+                }
+            }
+        }
+
+        //aggregateData max & avg
+        List<String> dTAggrPaths = getPaths(currPath + 1, 4);
+        //max
+        SessionAggregateQueryDataSet dtMaxDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
+        List<String> dtMaxPaths = dtMaxDataSet.getPaths();
+        Object[] dtMaxResult = dtMaxDataSet.getValues();
+        assertEquals(4, dtMaxPaths.size());
+        assertEquals(4, dtMaxResult.length);
+        for (int i = 0; i < 4; i++) {
+            int currPathPos = getPathNum(dtMaxPaths.get(i)) - currPath;
+            switch (currPathPos) {
+                case 1:
+                    assertEquals((int) (END_TIME + 1), dtMaxResult[i]);
+                    break;
+                case 2:
+                    assertEquals((END_TIME + 2) * 1000, dtMaxResult[i]);
+                    break;
+                case 3:
+                    assertEquals((float) (END_TIME + 3 + 0.01), (float) dtMaxResult[i], delta);
+                    break;
+                case 4:
+                    assertEquals((END_TIME + 4 + 0.01) * 999, (double) dtMaxResult[i], delta);
+                    break;
+                default:
+                    fail();
+                    break;
+            }
+        }
+        //avg
+        SessionAggregateQueryDataSet dtAvgDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        List<String> dtAvgPaths = dtAvgDataSet.getPaths();
+        Object[] dtAvgResult = dtAvgDataSet.getValues();
+        assertEquals(4, dtAvgPaths.size());
+        assertEquals(4, dtAvgResult.length);
+        for (int i = 0; i < 4; i++) {
+            int currPathPos = getPathNum(dtAvgPaths.get(i)) - currPath;
+            switch (currPathPos) {
+                case 1:
+                    assertEquals((START_TIME + END_TIME) / 2.0 + 1, (double) dtAvgResult[i], delta);
+                    break;
+                case 2:
+                    assertEquals((START_TIME + END_TIME) * 500.0 + 2000, dtAvgResult[i]);
+                    break;
+                case 3:
+                    assertEquals((START_TIME + END_TIME) / 2.0 + 3 + 0.01, (double) dtAvgResult[i], delta * 10000);
+                    break;
+                case 4:
+                    assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, (double) dtAvgResult[i], delta * 10000);
+                    break;
+                default:
+                    fail();
+                    break;
+            }
+        }
+        //deletePatialData
+
+        List<String> dtDelPaths = new ArrayList<>();
+        dtDelPaths.add(getSinglePath(currPath, 1));
+        dtDelPaths.add(getSinglePath(currPath, 3));
+        dtDelPaths.add(getSinglePath(currPath, 5));
+
+        // ensure after delete there are still points in the timeseries
+        long dtDelStartTime = START_TIME + TIME_PERIOD / 5;
+        long dtDelEndTime = START_TIME + TIME_PERIOD / 10 * 9;
+        long dtDelTimePeriod = dtDelEndTime - dtDelStartTime + 1;
+
+        session.deleteDataInColumns(dtDelPaths, dtDelStartTime, dtDelEndTime);
+
+        SessionQueryDataSet dtDelPartDataSet = session.queryData(dataTypePaths, START_TIME, END_TIME + 1);
+
+        int dtDelPartLen = dtDelPartDataSet.getTimestamps().length;
+        List<String> dtDelPartResPaths = dtDelPartDataSet.getPaths();
+        assertEquals(TIME_PERIOD, dtDelPartDataSet.getTimestamps().length);
+        assertEquals(TIME_PERIOD, dtDelPartDataSet.getValues().size());
+        for (int i = 0; i < dtDelPartLen; i++) {
+            long timestamp = dtDelPartDataSet.getTimestamps()[i];
+            assertEquals(i + START_TIME, timestamp);
+            List<Object> result = dtDelPartDataSet.getValues().get(i);
+            for (int j = 0; j < 6; j++) {
+                int currPathPos = getPathNum(dtDelPartResPaths.get(j)) - currPath;
+                switch (currPathPos) {
+                    case 0:
+                        assertEquals(timestamp % 2 == 0, result.get(j));
+                        break;
+                    case 2:
+                        assertEquals((timestamp + 2) * 1000, result.get(j));
+                        break;
+                    case 4:
+                        assertEquals((4 + (END_TIME - timestamp) + START_TIME + 0.01) * 999, (double) result.get(j), delta);
+                        break;
+                    case 1:
+                        if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                            assertNull(result.get(j));
+                        } else {
+                            assertEquals((int) ((END_TIME - i) + 1), result.get(j));
+                        }
+                        break;
+                    case 3:
+                        if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                            assertNull(result.get(j));
+                        } else {
+                            assertEquals((float) (i + 3 + START_TIME + 0.01), (float) result.get(j), (float) delta);
+                        }
+                        break;
+                    case 5:
+                        if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                            assertNull(result.get(j));
+                        } else {
+                            assertArrayEquals(getRandomStr(i, STRING_LEN).getBytes(), (byte[]) (result.get(j)));
+                        }
+                        break;
+                    default:
+                        fail();
+                        break;
+                }
+            }
+        }
+
+        // Test aggregate function for the delete
+        SessionAggregateQueryDataSet dtDelPartAvgDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        List<String> dtDelPartAvgResPaths = dtDelPartAvgDataSet.getPaths();
+        Object[] dtDelPartAvgResult = dtDelPartAvgDataSet.getValues();
+        assertEquals(4, dtDelPartAvgResPaths.size());
+        assertEquals(4, dtDelPartAvgResult.length);
+        for (int i = 0; i < 4; i++) {
+            int currPathPos = getPathNum(dtDelPartAvgResPaths.get(i)) - currPath;
+            switch (currPathPos){
+                case 1:
+                    assertEquals(((START_TIME + END_TIME) * TIME_PERIOD / 2.0 - (END_TIME -
+                            (dtDelStartTime - START_TIME) + END_TIME - (dtDelEndTime - START_TIME)) * dtDelTimePeriod / 2.0)
+                            / (TIME_PERIOD - dtDelTimePeriod) + 1.0, (double) dtDelPartAvgResult[i], delta * 10000);
+                    break;
+                case 2:
+                    assertEquals((START_TIME + END_TIME) * 500.0 + 2000, dtDelPartAvgResult[i]);
+                    break;
+                case 3:
+                    assertEquals(((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
+                            (dtDelStartTime + dtDelEndTime) * dtDelTimePeriod / 2.0) / (TIME_PERIOD - dtDelTimePeriod) + 3.01, (double) dtDelPartAvgResult[i], delta * 10000);
+                    break;
+                case 4:
+                    assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, (double) dtDelPartAvgResult[i], delta * 10000);
+                    break;
+                default:
+                    fail();
+                    break;
+            }
+        }
+
+        currPath += dataTypeLen;
+
+        //deleteAll data in column, before deletion must insert first
+        List<String> dataTypePaths2 = getPaths(currPath, dataTypeLen);
+        insertDataTypeRecords(dataTypePaths2, currPath);
+        int dtDelColumnNum = 2;
+        List<String> dtDelColumnPaths = getPaths(currPath, dtDelColumnNum);
+        session.deleteDataInColumns(dtDelColumnPaths, START_TIME, END_TIME);
+        SessionQueryDataSet dtDelColDataSet = session.queryData(dataTypePaths2, START_TIME, END_TIME + 1);
+        int dtDelColLen = dtDelColDataSet.getTimestamps().length;
+        List<String> dtDelColResPaths = dtDelColDataSet.getPaths();
+        assertEquals(TIME_PERIOD, dtDelColDataSet.getTimestamps().length);
+        assertEquals(TIME_PERIOD, dtDelColDataSet.getValues().size());
+        for (int i = 0; i < dtDelColLen; i++) {
+            long timestamp = dtDelColDataSet.getTimestamps()[i];
+            assertEquals(i + START_TIME, timestamp);
+            List<Object> result = dtDelColDataSet.getValues().get(i);
+            for (int j = 0; j < 6; j++) {
+                int currPathPos = getPathNum(dtDelColResPaths.get(j)) - currPath;
+                if (currPathPos < dtDelColumnNum) {
+                    assertNull(result.get(j));
+                } else {
+                    switch (getPathNum(dtDelColResPaths.get(j)) - currPath) {
+                        case 0:
+                            assertEquals(timestamp % 2 == 0, result.get(j));
+                            break;
+                        case 1:
+                            assertEquals((int) ((END_TIME - timestamp) + 1), result.get(j));
+                            break;
+                        case 2:
+                            assertEquals((timestamp + 2) * 1000, result.get(j));
+                            break;
+                        case 3:
+                            assertEquals((float) (timestamp + 3 + 0.01), (float) result.get(j), (float) delta);
+                            break;
+                        case 4:
+                            assertEquals((4 + (END_TIME - timestamp) + START_TIME + 0.01) * 999, (double) result.get(j), delta);
+                            break;
+                        case 5:
+                            assertArrayEquals(getRandomStr(i, STRING_LEN).getBytes(), (byte[]) (result.get(j)));
+                            break;
+                        default:
+                            fail();
+                            break;
+                    }
+                }
+            }
+        }
+
+        // Test aggregate function for the delete
+
+        List<String> dTDeleteAggrPaths = getPaths(currPath + 1, 4);//only the 1-4 columns are numbers
+
+        SessionAggregateQueryDataSet dtDelColAvgDataSet = session.aggregateQuery(dTDeleteAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        List<String> dtDelColAvgPaths = dtDelColAvgDataSet.getPaths();
+        Object[] dtDelColAvgResult = dtDelColAvgDataSet.getValues();
+        assertEquals(4, dtDelColAvgPaths.size());
+        assertEquals(4, dtDelColAvgDataSet.getValues().length);
+        for (int i = 0; i < 4; i++) {
+            int currPathPos = getPathNum(dtDelColAvgPaths.get(i)) - currPath;
+            if (currPathPos < dtDelColumnNum){
+                assertEquals("null", new String((byte[]) dtDelColAvgResult[i]));
+            } else {
+                switch (currPathPos) {
+                    case 1:
+                        assertEquals((START_TIME + END_TIME) / 2.0 + 1, (double) dtDelColAvgResult[i], delta);
+                        break;
+                    case 2:
+                        assertEquals((START_TIME + END_TIME) * 500.0 + 2000, dtDelColAvgResult[i]);
+                        break;
+                    case 3:
+                        assertEquals((START_TIME + END_TIME) / 2.0 + 3 + 0.01, (double) dtDelColAvgResult[i], delta * 10000);
+                        break;
+                    case 4:
+                        assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, (double) dtDelColAvgResult[i], delta * 10000);
+                        break;
+                    default:
+                        fail();
+                        break;
+                }
+            }
+        }
+
+
+        currPath += dataTypeLen;
 
         //addStorageEngineTest
         Map<String, String> extraParams =  new HashMap<>();

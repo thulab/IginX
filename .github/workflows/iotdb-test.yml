@@ -50,7 +50,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
           nohup "${GITHUB_WORKSPACE}/startIginX.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=*Test,IoTDB*IT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=*Test,IoTDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
