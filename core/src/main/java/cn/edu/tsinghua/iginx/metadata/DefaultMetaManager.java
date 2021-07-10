@@ -573,6 +573,9 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
         Map<String, Integer> schemaMapping = cache.getSchemaMapping(schema);
+        if (schemaMapping == null) {
+            schemaMapping = new HashMap<>();
+        }
         if (value == -1) {
             schemaMapping.remove(key);
         } else {
@@ -604,6 +607,9 @@ public class DefaultMetaManager implements IMetaManager {
         List<StorageEngineMeta> storageEngineMetaList = new ArrayList<>();
         String[] storageEngineStrings = ConfigDescriptor.getInstance().getConfig().getStorageEngineList().split(",");
         for (int i = 0; i < storageEngineStrings.length; i++) {
+            if (storageEngineStrings[i].length() == 0) {
+                continue;
+            }
             String[] storageEngineParts = storageEngineStrings[i].split("#");
             String ip = storageEngineParts[0];
             int port = Integer.parseInt(storageEngineParts[1]);

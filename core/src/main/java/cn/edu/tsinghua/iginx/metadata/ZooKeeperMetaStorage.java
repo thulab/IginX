@@ -348,6 +348,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             if (this.client.checkExists().forPath(STORAGE_ENGINE_NODE_PREFIX) == null) { // 节点不存在，说明还没有别的 iginx 节点写入过元信息
+                this.client.create().creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(STORAGE_ENGINE_NODE_PREFIX);
                 for (StorageEngineMeta storageEngineMeta : storageEngines) {
                     String nodeName = this.client.create()
                             .creatingParentsIfNeeded()
