@@ -200,11 +200,13 @@ public class NaivePlanSplitter implements IPlanSplitter {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
         if (fragmentMap.isEmpty()) {
+            //on startup
             policy.setNeedReAllocate(false);
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateInitialFragmentsAndStorageUnits(plan.getPaths(), plan.getTimeInterval());
             iMetaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
         } else if (policy.isNeedReAllocate()) {
+            //on scale-out or any events requiring reallocation
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1);
             iMetaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
         }

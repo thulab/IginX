@@ -90,12 +90,14 @@ public class DefaultMetaManager implements IMetaManager {
                 storage = ETCDMetaStorage.getInstance();
                 break;
             case "":
-                logger.info("doesn't specify meta storage, use zookeeper as default.");
-                storage = ZooKeeperMetaStorage.getInstance();
+                //without configuration, file storage should be the safe choice
+                logger.info("doesn't specify meta storage, use file as meta storage.");
+                storage = FileMetaStorage.getInstance();
                 break;
             default:
-                logger.info("unknown meta storage, use zookeeper as default.");
-                storage = ZooKeeperMetaStorage.getInstance();
+                //without configuration, file storage should be the safe choice
+                logger.info("unknown meta storage, use file as meta storage.");
+                storage = FileMetaStorage.getInstance();
                 break;
         }
 
