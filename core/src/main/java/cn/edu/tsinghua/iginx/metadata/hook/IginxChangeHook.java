@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 
-public interface StorageEngineChangeHook {
+public interface IginxChangeHook {
 
-    void onChanged(StorageEngineMeta before, StorageEngineMeta after);
+    void onChange(long id, IginxMeta iginx);
 
 }

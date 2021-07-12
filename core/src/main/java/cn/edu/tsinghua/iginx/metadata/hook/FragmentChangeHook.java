@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
-public interface IginxChangeHook {
+public interface FragmentChangeHook {
 
-    void onChange(long id, IginxMeta iginx);
+    void onChange(boolean create, FragmentMeta fragment);
 
 }

@@ -16,10 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -45,6 +51,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -527,7 +534,9 @@ public class ETCDMetaStorage implements IMetaStorage {
                     .get(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
                             GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).build())
                     .get();
-            for (KeyValue kv: response.getKvs()) {
+            List<KeyValue> kvs = response.getKvs();
+            kvs.sort(Comparator.comparing(e -> e.getKey().toString(StandardCharsets.UTF_8)));
+            for (KeyValue kv: kvs) {
                 StorageUnitMeta storageUnit = JsonUtils.fromJson(kv.getValue().getBytes(), StorageUnitMeta.class);
                 if (!storageUnit.isMaster()) { // 需要加入到主节点的子节点列表中
                     StorageUnitMeta masterStorageUnit = storageUnitMap.get(storageUnit.getMasterId());
