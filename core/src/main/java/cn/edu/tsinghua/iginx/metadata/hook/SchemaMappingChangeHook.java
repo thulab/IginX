@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import java.util.Map;
 
-public interface StorageChangeHook {
+public interface SchemaMappingChangeHook {
 
-    void onChange(long id, StorageEngineMeta storageEngine);
+    void onChange(String schema, Map<String, Integer> schemaMapping);
 
 }

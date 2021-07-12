@@ -26,7 +26,7 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

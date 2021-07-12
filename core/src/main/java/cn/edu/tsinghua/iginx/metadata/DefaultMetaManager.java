@@ -21,12 +21,19 @@ package cn.edu.tsinghua.iginx.metadata;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
+import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
+import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -39,7 +46,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -76,10 +82,6 @@ public class DefaultMetaManager implements IMetaManager {
             case "zookeeper":
                 logger.info("use zookeeper as meta storage.");
                 storage = ZooKeeperMetaStorage.getInstance();
-                break;
-            case "memory":
-                logger.info("use memory as meta storage");
-                storage = MemoryMetaStorage.getInstance();
                 break;
             case "file":
                 logger.info("use file as meta storage");
