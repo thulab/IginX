@@ -85,12 +85,44 @@ ZooKeeper 是 Apache 推出的开源的分布式应用程序协调服务。具�
 
 ### 安装 IginX 
 
-IginX 为系统的主体部分，直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/rc%2Fv0.2.0/IginX-release-v0.2.0-bin.tar.gz) 即可。
+IginX 为系统的主体部分，可以通过以下两种方式进行安装
+
+1. 发布包安装：直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/rc%2Fv0.2.0/IginX-release-v0.2.0-bin.tar.gz) 即可。
 
 ```shell
 $ cd ~
-$ wget https://github.com/thulab/IginX/releases/download/rc%2Fv0.2.0/IginX-release-v0.2.0-bin.tar.gz
-$ tar -zxvf IginX-release-v0.2.0-bin.tar.gz
+$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.2.0/IginX-release-v0.2.0-bin.zip
+$ unzip IginX-release-v0.2.0-bin.zip
+```
+
+2. 源码安装：拉取最新开发版本，并进行本地构建
+
+```shell
+$ cd ~
+$ git clone git@github.com:thulab/IginX.git
+$ cd IginX
+$ mvn clean install -Dmaven.test.skip=true
+```
+
+显示出如下字样，表示 IginX 构建成功：
+
+```shell
+[INFO] Reactor Summary for IginX 0.1.0-SNAPSHOT:
+[INFO]
+[INFO] IginX .............................................. SUCCESS [  0.252 s]
+[INFO] IginX Thrift ....................................... SUCCESS [  5.961 s]
+[INFO] IginX Core ......................................... SUCCESS [  4.383 s]
+[INFO] IginX IoTDB ........................................ SUCCESS [  0.855 s]
+[INFO] IginX InfluxDB ..................................... SUCCESS [  0.772 s]
+[INFO] IginX Client ....................................... SUCCESS [  7.713 s]
+[INFO] IginX Example ...................................... SUCCESS [  0.677 s]
+[INFO] IginX Test ......................................... SUCCESS [  0.114 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  20.887 s
+[INFO] Finished at: 2021-07-12T16:01:31+08:00
+[INFO] ------------------------------------------------------------------------
 ```
 
 ### 安装 IoTDB
@@ -149,11 +181,22 @@ Starting zookeeper ... STARTED
 
 最后启动 IginX：
 
+1. 使用发布包启动
+
 ```shell
 $ cd ~
 $ cd IginX-release-v0.2.0-bin
-$ chmod +x start.sh # 为启动脚本添加启动权限
-$ ./start.sh 
+$ chmod +x startIginX.sh # 为启动脚本添加启动权限
+$ ./startIginX.sh
+```
+
+2. 使用源码启动
+
+```shell
+$ cd ~
+$ cd Iginx
+$ chmod +x startIginX.sh # 为启动脚本添加启动权限
+$ ./startIginX.sh
 ```
 
 显示出如下字样，表示 IginX 启动成功：
