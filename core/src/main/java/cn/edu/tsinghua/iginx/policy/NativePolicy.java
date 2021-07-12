@@ -35,6 +35,7 @@ public class NativePolicy implements IPolicy {
     protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IPlanSplitter iPlanSplitter;
     private IMetaManager iMetaManager;
+    private IFragmentGenerator iFragmentGenerator;
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
@@ -77,9 +78,15 @@ public class NativePolicy implements IPolicy {
     }
 
     @Override
+    public IFragmentGenerator getIFragmentGenerator() {
+        return this.iFragmentGenerator;
+    }
+
+    @Override
     public void init(IMetaManager iMetaManager) {
         this.iMetaManager = iMetaManager;
         this.iPlanSplitter = new NaivePlanSplitter(this, this.iMetaManager);
+        this.iFragmentGenerator = new NaiveIFragmentGenerator(this.iMetaManager);
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);

@@ -46,6 +46,8 @@ public interface IPolicy {
 
     IPlanSplitter getIPlanSplitter();
 
+    IFragmentGenerator getIFragmentGenerator();
+
     void init(IMetaManager iMetaManager);
 
     StorageEngineChangeHook getStorageEngineChangeHook();
