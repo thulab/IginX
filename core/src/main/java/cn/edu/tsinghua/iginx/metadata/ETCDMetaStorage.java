@@ -142,7 +142,12 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void reallocate(int fragment, long timestamp) throws Exception
+    public void registerReallocateChangeHook(ReallocateChangeHook hook) {
+
+    }
+
+    @Override
+    public void reallocate(int fragment, long timestamp, long iginxid) throws Exception
     {
 
     }

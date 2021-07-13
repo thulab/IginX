@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.policy.FragmentCreator;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -612,7 +613,8 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initReallocate() throws MetaStorageException {
         storage.registerReallocateChangeHook((fragment, timestamp, iginxid) -> {
-            cache.updatePrefix(prefix);
+            FragmentCreator fragmentCreator = FragmentCreator.getInstance();
+            fragmentCreator.setFragmentData(fragment, timestamp, Math.toIntExact(iginxid));
         });
     }
 
