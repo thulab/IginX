@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.policy;
+package cn.edu.tsinghua.iginx.policy.naive;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -49,6 +49,7 @@ import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
+import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
@@ -67,7 +68,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-public class NaivePlanSplitter implements IPlanSplitter {
+class NaivePlanSplitter implements IPlanSplitter {
 
     private static final Logger logger = LoggerFactory.getLogger(NaivePlanSplitter.class);
 
