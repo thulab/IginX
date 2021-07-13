@@ -79,6 +79,10 @@ public interface IMetaStorage {
 
     void registerPrefixChangeHook(PrefixChangeHook hook);
 
+    void registerReallocateChangeHook(ReallocateChangeHook hook);
+
+    void reallocate(int fragment, long timestamp, long iginxid) throws Exception;
+
     boolean selection() throws Exception;
 
     void updatePrefix(Map<String, Double> prefix, long iginxid) throws Exception;

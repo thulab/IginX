@@ -176,4 +176,7 @@ public interface IMetaManager {
 
 
     Map<String, Double> getPrefix() throws Exception;
+
+
+    void reallocate(int fragment, long timestamp) throws Exception;
 }

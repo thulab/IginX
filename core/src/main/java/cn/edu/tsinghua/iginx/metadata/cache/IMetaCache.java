@@ -96,5 +96,7 @@ public interface IMetaCache {
 
     void updatePrefix(Map<String, Double> prefix);
 
+    void reallocate(int fragment, long timestamp) throws Exception;
+
     Map<String, Double> getPrefixs();
 }

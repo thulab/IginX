@@ -110,6 +110,7 @@ public class DefaultMetaManager implements IMetaManager {
             initFragment();
             initSchemaMapping();
             initPrefix();
+            initReallocate();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -650,6 +651,12 @@ public class DefaultMetaManager implements IMetaManager {
         });
     }
 
+    private void initReallocate() throws MetaStorageException {
+        storage.registerReallocateChangeHook((fragment, timestamp, iginxid) -> {
+            cache.updatePrefix(prefix);
+        });
+    }
+
     @Override
     public void registerStorageEngineChangeHook(StorageEngineChangeHook hook) {
         if (hook != null) {
@@ -721,6 +728,15 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.getPrefixs();
     }
 
+    @Override
+    public void reallocate(int fragment, long timestamp) throws Exception
+    {
+        try {
+            storage.reallocate(fragment, timestamp, getIginxId());
+        } catch (MetaStorageException e) {
+            logger.error("update prefix error: ", e);
+        }
+    }
 
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {

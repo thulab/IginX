@@ -72,6 +72,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String PREFIX_LOCK_NODE = "/lock/prefix";
 
+    private static final String REALLOCATE_LOCK_NODE = "/lock/reallocate";
+
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
     private static final String IGINX_NODE_PREFIX = "/iginx";
@@ -82,12 +84,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String SCHEMA_MAPPING_PREFIX = "/schema";
 
-
-
     public static final String FRAGMENT_CREATOR = "/creator";
 
     public static final String FRAGMENT_CREATOR_LEADER = "/creator/leader";
 
+    public static final String REALLOCATE_NODE = "/reallocate";
 
     public static final String PREFIX_NODE = "/prefix";
 
@@ -107,6 +108,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     protected TreeCache iginxCache2;
     protected TreeCache iginxCache3;
+    protected TreeCache iginxCache4;
+
+    private ReallocateChangeHook reallocateChangeHook = null;
+
     private PrefixChangeHook prefixChangeHook = null;
 
     private StorageChangeHook storageChangeHook = null;
@@ -718,6 +723,39 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.prefixChangeHook = hook;
     }
 
+    @Override
+    public void registerReallocateChangeHook(ReallocateChangeHook hook)
+    {
+        this.reallocateChangeHook = hook;
+    }
+
+    @Override
+    public void reallocate(int fragment, long timestamp, long iginxid) throws Exception {
+        StringBuilder sb = new StringBuilder();
+
+        InterProcessMutex mutex = new InterProcessMutex(this.client, REALLOCATE_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.client.checkExists().forPath(REALLOCATE_NODE + "/" + iginxid) == null) {
+
+                sb.append(fragment + " " + timestamp + " " + "1");
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(REALLOCATE_NODE + "/" + iginxid, sb.toString().getBytes());
+            } else {
+                String tmp = new String(this.client.getData().forPath(REALLOCATE_NODE + "/" + iginxid));
+                sb.append(fragment + " " + timestamp + " " + (Long.parseLong(new String(tmp.split(" ")[2])) + 1));
+                this.client.setData().forPath(REALLOCATE_NODE + "/" + iginxid, sb.toString().getBytes());
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when reallocate", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + REALLOCATE_LOCK_NODE, e);
+            }
+        }
+    }
+
     private void registerMaster() throws Exception {
         try
         {
@@ -767,6 +805,28 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         };
         this.iginxCache3.getListenable().addListener(listener2);
         this.iginxCache3.start();
+
+        this.iginxCache4 = new TreeCache(this.client, REALLOCATE_NODE);
+        TreeCacheListener listener3 = (curatorFramework, event) -> {
+            byte[] data;
+            switch (event.getType())
+            {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    String str = new String(data);
+                    if (str != null) {
+                        reallocateChangeHook.onChange(Integer.parseInt(str.split(" ")[0]), Long.parseLong(str.split(" ")[1]), Long.parseLong(str.split(" ")[2]));
+                    } else {
+                        logger.error("resolve prefix from zookeeper error");
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.iginxCache4.getListenable().addListener(listener3);
+        this.iginxCache4.start();
     }
 
     @Override
