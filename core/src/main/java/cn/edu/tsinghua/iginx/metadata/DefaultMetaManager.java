@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
+import cn.edu.tsinghua.iginx.policy.FragmentCreator;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.slf4j.Logger;
@@ -664,7 +665,8 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initReallocate() throws MetaStorageException {
         storage.registerReallocateChangeHook((fragment, timestamp, iginxid) -> {
-            cache.updatePrefix(prefix);
+            FragmentCreator fragmentCreator = FragmentCreator.getInstance();
+            fragmentCreator.setFragmentData(fragment, timestamp, Math.toIntExact(iginxid));
         });
     }
 

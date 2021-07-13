@@ -29,13 +29,13 @@ public class FragmentCreator
     private int updateRequireNum = 0;
     private static int LIMIT = -1;
     private static int ts = -1;
-    private static int cntRequire = 0;
     final Semaphore semp = new Semaphore(0);
     final Semaphore semp2 = new Semaphore(0);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static FragmentCreator INSTANCE = null;
     private int fragmentNum;
     private long fragmentTime;
+    private Map<Integer, Integer> updateRequire = new HashMap<>();
 
     private FragmentCreator()
     {
@@ -85,7 +85,7 @@ public class FragmentCreator
     public void tryGet()
     {
         LOGGER.info("insert tryGet");
-        lock.writeLock().lock();;
+        lock.writeLock().lock();
         if (LIMIT == -1)
             LIMIT = ts * iMetaManager.getIginxList().size();
         fragmentTime = System.currentTimeMillis();
@@ -109,17 +109,27 @@ public class FragmentCreator
     }
 
 
-    public void setFragmentData(int fragment, long timestamp)
+    public void setFragmentData(int fragment, long timestamp, int iginxid)
     {
         fragmentTime = timestamp;
         fragmentNum = fragment;
 
         lock.writeLock().lock();
-        cntRequire += 1;
-        if (cntRequire >= 1)
+        if (updateRequire.get(iginxid) == null)
+            updateRequire.put(iginxid, 1);
+        else
+            updateRequire.put(iginxid, updateRequire.get(iginxid));
+        boolean flag = true;
+        for (Map.Entry<Integer, Integer> entry: updateRequire.entrySet()){
+            if (entry.getValue() == 0)
+                flag = false;
+        }
+        if (flag)
         {
+            for (Map.Entry<Integer, Integer> entry: updateRequire.entrySet()){
+                updateRequire.put(entry.getKey() ,entry.getValue() - 1);
+            }
             semp2.release();
-            cntRequire = 0;
         }
         lock.writeLock().unlock();
     }
