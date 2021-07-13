@@ -135,7 +135,7 @@ public class FragmentCreator
             try
             {
                 semp.acquire();
-                //semp2.acquire();
+                semp2.acquire();
                 LOGGER.info("semp acquire");
             }
             catch (InterruptedException e)

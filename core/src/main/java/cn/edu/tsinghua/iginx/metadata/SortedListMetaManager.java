@@ -317,4 +317,10 @@ public class SortedListMetaManager extends AbstractMetaManager {
         return null;
     }
 
+    @Override
+    public void reallocate(int fragment, long timestamp) throws Exception
+    {
+
+    }
+
 }

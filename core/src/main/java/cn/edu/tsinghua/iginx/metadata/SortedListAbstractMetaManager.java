@@ -283,6 +283,12 @@ public class SortedListAbstractMetaManager extends AbstractMetaManager {
         return null;
     }
 
+    @Override
+    public void reallocate(int fragment, long timestamp) throws Exception
+    {
+
+    }
+
     public void shutdown() {
         this.iginxCache.close();
         this.storageEngineCache.close();

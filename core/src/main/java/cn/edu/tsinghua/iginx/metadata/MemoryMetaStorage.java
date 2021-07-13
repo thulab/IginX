@@ -189,6 +189,12 @@ public class MemoryMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void reallocate(int fragment, long timestamp) throws Exception
+    {
+
+    }
+
+    @Override
     public boolean selection() throws Exception
     {
         return false;

@@ -409,6 +409,12 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public void reallocate(int fragment, long timestamp) throws Exception
+    {
+
+    }
+
+    @Override
     public Map<String, Double> getPrefixs()
     {
         return cachedprefixs;
