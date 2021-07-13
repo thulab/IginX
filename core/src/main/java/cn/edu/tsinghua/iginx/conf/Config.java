@@ -44,7 +44,7 @@ public class Config {
 
     private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
 
-    private String policyClassName = "cn.edu.tsinghua.iginx.policy.NativePolicy";
+    private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 
     private int storageUnitNum = 30;
 
