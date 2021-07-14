@@ -732,18 +732,18 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void reallocate(int fragment, long timestamp, long iginxid) throws Exception {
         StringBuilder sb = new StringBuilder();
-
+        sb.append(fragment + " " + timestamp);
         InterProcessMutex mutex = new InterProcessMutex(this.client, REALLOCATE_LOCK_NODE);
         try {
             mutex.acquire();
             if (this.client.checkExists().forPath(REALLOCATE_NODE + "/" + iginxid) == null) {
 
-                sb.append(fragment + " " + timestamp + " " + "1");
                 this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(REALLOCATE_NODE + "/" + iginxid, sb.toString().getBytes());
+                logger.info("create reallocate end,  {}", sb.toString());
             } else {
-                String tmp = new String(this.client.getData().forPath(REALLOCATE_NODE + "/" + iginxid));
-                sb.append(fragment + " " + timestamp + " " + (Long.parseLong(new String(tmp.split(" ")[2])) + 1));
                 this.client.setData().forPath(REALLOCATE_NODE + "/" + iginxid, sb.toString().getBytes());
+                logger.info("update reallocate end,  {}", sb.toString());
+
             }
         } catch (Exception e) {
             throw new MetaStorageException("get error when reallocate", e);
@@ -816,7 +816,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     data = event.getData().getData();
                     String str = new String(data);
                     if (str != null) {
-                        reallocateChangeHook.onChange(Integer.parseInt(str.split(" ")[0]), Long.parseLong(str.split(" ")[1]), Long.parseLong(str.split(" ")[2]));
+                        reallocateChangeHook.onChange(Integer.parseInt(str.split(" ")[0]), Long.parseLong(str.split(" ")[1]));
                     } else {
                         logger.error("resolve prefix from zookeeper error");
                     }

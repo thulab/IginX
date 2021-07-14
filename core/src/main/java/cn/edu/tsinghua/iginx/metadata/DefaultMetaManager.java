@@ -664,9 +664,9 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     private void initReallocate() throws MetaStorageException {
-        storage.registerReallocateChangeHook((fragment, timestamp, iginxid) -> {
+        storage.registerReallocateChangeHook((fragment, timestamp) -> {
             FragmentCreator fragmentCreator = FragmentCreator.getInstance();
-            fragmentCreator.setFragmentData(fragment, timestamp, Math.toIntExact(iginxid));
+            fragmentCreator.setFragmentData(fragment, timestamp);
         });
     }
 
