@@ -18,10 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.client;
 
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -181,22 +181,28 @@ public class IginxClient {
 
     private static void processCommand(String command) {
         String[] commandParts = command.split(" ");
-        if (commandParts.length == 3 && commandParts[0].equals("add") && commandParts[1].equals("storageEngine")) {
-            String[] storageEngineParts = commandParts[2].split("#");
-            String ip = storageEngineParts[0];
-            int port = Integer.parseInt(storageEngineParts[1]);
-            StorageEngineType storageEngineType = StorageEngine.toThrift(StorageEngine.fromString(storageEngineParts[2]));
-            Map<String, String> extraParams = new HashMap<>();
-            for (int i = 3; i < storageEngineParts.length; i++) {
-                String[] KAndV = storageEngineParts[i].split("=");
-                if (KAndV.length != 2) {
-                    System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
-                    continue;
+        if (commandParts.length == 3 && commandParts[0].equals("add") && commandParts[1].equals("storageEngines")) {
+            String[] storageEngineStrings = commandParts[2].split(",");
+            List<StorageEngine> storageEngines = new ArrayList<>();
+            for (String storageEngineString: storageEngineStrings) {
+                String[] storageEngineParts = storageEngineString.split("#");
+                String ip = storageEngineParts[0];
+                int port = Integer.parseInt(storageEngineParts[1]);
+                StorageEngineType storageEngineType = cn.edu.tsinghua.iginx.core.db.StorageEngine.toThrift(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(storageEngineParts[2]));
+                Map<String, String> extraParams = new HashMap<>();
+                for (int i = 3; i < storageEngineParts.length; i++) {
+                    String[] KAndV = storageEngineParts[i].split("=");
+                    if (KAndV.length != 2) {
+                        System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
+                        continue;
+                    }
+                    extraParams.put(KAndV[0], KAndV[1]);
                 }
-                extraParams.put(KAndV[0], KAndV[1]);
+                StorageEngine storageEngine = new StorageEngine(ip, port, storageEngineType, extraParams);
+                storageEngines.add(storageEngine);
             }
             try {
-                session.addStorageEngine(ip, port, storageEngineType, extraParams);
+                session.addStorageEngines(storageEngines);
                 System.out.println("success");
             } catch (Exception e) {
                 System.out.println("encounter error when executing add storageEngine, please check the status of storage engine");

@@ -34,9 +34,7 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -243,13 +241,15 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean addStorageEngine(StorageEngineMeta storageEngineMeta) {
+    public boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
         try {
-            storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
-            cache.addStorageEngine(storageEngineMeta);
+            for (StorageEngineMeta storageEngineMeta: storageEngineMetas) {
+                storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
+                cache.addStorageEngine(storageEngineMeta);
+            }
             return true;
         } catch (MetaStorageException e) {
-            logger.error("add storage engine error: ", e);
+            logger.error("add storage engines error:", e);
         }
         return false;
     }

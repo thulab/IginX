@@ -99,7 +99,8 @@ public class NativePolicy implements IPolicy {
     @Override
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
-            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId()) { // 哪台机器加了分片，哪台机器初始化
+            // 哪台机器加了分片，哪台机器初始化，并且在批量添加的时候只有最后一个存储引擎才会导致扩容发生
+            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isLastOfBatch()) {
                 needReAllocate.set(true);
             }
             // TODO: 针对节点退出的情况缩容
