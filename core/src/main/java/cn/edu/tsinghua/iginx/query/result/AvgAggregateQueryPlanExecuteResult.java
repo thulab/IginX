@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.query.result;
 
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AvgAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecuteResult {
@@ -30,6 +31,8 @@ public class AvgAggregateQueryPlanExecuteResult extends AggregateQueryPlanExecut
 
     public AvgAggregateQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
         super(statusCode, plan);
+        this.sums = new ArrayList<>();
+        this.counts = new ArrayList<>();
     }
 
     public List<Object> getSums() {

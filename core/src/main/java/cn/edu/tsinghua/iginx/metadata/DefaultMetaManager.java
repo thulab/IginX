@@ -82,8 +82,26 @@ public class DefaultMetaManager implements IMetaManager {
                 logger.info("use zookeeper as meta storage.");
                 storage = ZooKeeperMetaStorage.getInstance();
                 break;
-            default:
+            case "memory":
+                logger.info("use memory as meta storage");
+                storage = MemoryMetaStorage.getInstance();
+                break;
+            case "file":
+                logger.info("use file as meta storage");
+                storage = FileMetaStorage.getInstance();
+                break;
+            case "etcd":
+                logger.info("use etcd as meta storage");
+                storage = ETCDMetaStorage.getInstance();
+                break;
+            case "":
+                logger.info("doesn't specify meta storage, use zookeeper as default.");
                 storage = ZooKeeperMetaStorage.getInstance();
+                break;
+            default:
+                logger.info("unknown meta storage, use zookeeper as default.");
+                storage = ZooKeeperMetaStorage.getInstance();
+                break;
         }
 
         storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
@@ -714,7 +732,7 @@ public class DefaultMetaManager implements IMetaManager {
                 }
                 extraParams.put(KAndV[0], KAndV[1]);
             }
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine));
+            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, id));
         }
         return storageEngineMetaList;
     }

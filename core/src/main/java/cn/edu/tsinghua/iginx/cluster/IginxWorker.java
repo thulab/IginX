@@ -159,7 +159,7 @@ public class IginxWorker implements IService.Iface {
     public Status addStorageEngine(AddStorageEngineReq req) {
         // 处理扩容
         StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
-        StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine);
+        StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine, metaManager.getIginxId());
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String part : parts) {
             String[] kAndV = part.split("=");

@@ -36,6 +36,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import java.util.Objects;
+
 public final class FragmentMeta {
 
     private final TimeInterval timeInterval;
@@ -129,5 +131,18 @@ public final class FragmentMeta {
                 "timeInterval=" + timeInterval +
                 ", tsInterval=" + tsInterval +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FragmentMeta that = (FragmentMeta) o;
+        return Objects.equals(timeInterval, that.timeInterval) && Objects.equals(tsInterval, that.tsInterval);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(timeInterval, tsInterval);
     }
 }

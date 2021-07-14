@@ -62,13 +62,21 @@ public class Config {
 
     private int maxTimeseriesLength = 10;
 
+    private long disorderMargin = 10;
+
     private boolean enableRestService = true;
+
 
     private int fragmentSplitPerEngine = 1;
 
     private int reallocateTime = 60000;
 
     private int pathSendSize = 1000;
+
+    private String fileDataDir = "";
+
+    private String etcdEndpoints = "http://localhost:2379";
+
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -247,6 +255,7 @@ public class Config {
         this.metaStorage = metaStorage;
     }
 
+
     public void setFragmentSplitPerEngine(int fragmentSplitPerEngine)
     {
         this.fragmentSplitPerEngine = fragmentSplitPerEngine;
@@ -276,4 +285,30 @@ public class Config {
     {
         return pathSendSize;
     }
+
+    public String getFileDataDir() {
+        return fileDataDir;
+    }
+
+    public void setFileDataDir(String fileDataDir) {
+        this.fileDataDir = fileDataDir;
+    }
+
+    public long getDisorderMargin() {
+        return disorderMargin;
+    }
+
+    public void setDisorderMargin(long disorderMargin) {
+        this.disorderMargin = disorderMargin;
+    }
+
+    public String getEtcdEndpoints() {
+        return etcdEndpoints;
+    }
+
+    public void setEtcdEndpoints(String etcdEndpoints) {
+        this.etcdEndpoints = etcdEndpoints;
+    }
+
+
 }

@@ -75,6 +75,8 @@ public class ConfigDescriptor {
             config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
             config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
 
+            config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
+
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
 
@@ -82,9 +84,14 @@ public class ConfigDescriptor {
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
 
 
+
             config.setFragmentSplitPerEngine(Integer.parseInt(properties.getProperty("fragmentSplitPerEngine", "1")));
             config.setReallocateTime(Integer.parseInt(properties.getProperty("reallocateTime", "60000")));
             config.setPathSendSize(Integer.parseInt(properties.getProperty("pathSendSize", "1000")));
+
+
+            config.setFileDataDir(properties.getProperty("fileDataDir", ""));
+            config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);

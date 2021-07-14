@@ -56,12 +56,15 @@ public final class StorageEngineMeta {
      */
     private transient List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine) {
+    private long createdBy;
+
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, long createdBy) {
         this.id = id;
         this.ip = ip;
         this.port = port;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
+        this.createdBy = createdBy;
     }
 
     public long getId() {
@@ -123,5 +126,13 @@ public final class StorageEngineMeta {
             storageUnitList = new ArrayList<>();
         }
         storageUnitList.add(storageUnit);
+    }
+
+    public long getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(long createdBy) {
+        this.createdBy = createdBy;
     }
 }
