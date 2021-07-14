@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata;
+package cn.edu.tsinghua.iginx.metadata.cache;
 
 import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
@@ -29,7 +29,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -373,7 +372,7 @@ public class DefaultMetaCache implements IMetaCache {
     public Map<String, Integer> getSchemaMapping(String schema) {
         if (this.schemaMappings.get(schema) == null)
             return null;
-        return Collections.unmodifiableMap(this.schemaMappings.get(schema));
+        return new HashMap<>(this.schemaMappings.get(schema));
     }
 
     @Override

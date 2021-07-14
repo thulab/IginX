@@ -16,18 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 
-import java.util.List;
+public interface StorageUnitChangeHook {
 
-public interface IPlanExecutor {
-
-    List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext);
-
-    StorageEngineChangeHook getStorageEngineChangeHook();
+    void onChange(String id, StorageUnitMeta storageUnit);
 
 }

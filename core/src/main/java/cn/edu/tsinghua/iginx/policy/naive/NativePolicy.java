@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.policy;
+package cn.edu.tsinghua.iginx.policy.naive;
 
 import cn.edu.tsinghua.iginx.core.processor.PostQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryPlanProcessor;
@@ -26,7 +26,10 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryExecuteProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryPlanProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
+import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
+import cn.edu.tsinghua.iginx.policy.IPolicy;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -35,6 +38,7 @@ public class NativePolicy implements IPolicy {
     protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IPlanSplitter iPlanSplitter;
     private IMetaManager iMetaManager;
+    private IFragmentGenerator iFragmentGenerator;
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
@@ -77,9 +81,15 @@ public class NativePolicy implements IPolicy {
     }
 
     @Override
+    public IFragmentGenerator getIFragmentGenerator() {
+        return this.iFragmentGenerator;
+    }
+
+    @Override
     public void init(IMetaManager iMetaManager) {
         this.iMetaManager = iMetaManager;
         this.iPlanSplitter = new NaivePlanSplitter(this, this.iMetaManager);
+        this.iFragmentGenerator = new NaiveFragmentGenerator(this.iMetaManager);
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);
