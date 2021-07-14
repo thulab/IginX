@@ -35,7 +35,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -236,12 +235,6 @@ public class DefaultMetaManager implements IMetaManager {
             }
             cache.updateFragment(fragment);
         });
-<<<<<<< HEAD
-        storage.lockFragment();
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = storage.loadFragment();
-        storage.releaseFragment();
-        cache.initFragment(fragmentMap);
-=======
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = storage.loadFragment();
         for (List<FragmentMeta> fragmentList: fragments.values()) {
             for (FragmentMeta fragment: fragmentList) {
@@ -251,7 +244,6 @@ public class DefaultMetaManager implements IMetaManager {
             }
         }
         cache.initFragment(fragments);
->>>>>>> dev
     }
 
     private void initSchemaMapping() throws MetaStorageException {
