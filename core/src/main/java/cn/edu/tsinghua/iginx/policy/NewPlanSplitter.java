@@ -54,6 +54,7 @@ public class NewPlanSplitter implements IPlanSplitter {
             try
             {
                 iMetaManager.updatePrefix(prefixList);
+                logger.info("update prefix end, now size = {}", prefixList.size());
             }
             catch (Exception e)
             {
@@ -63,6 +64,7 @@ public class NewPlanSplitter implements IPlanSplitter {
             if (isFirst) {
                 isFirst = false;
                 policy.setNeedReAllocate(true);
+                logger.info("set reallocate, now size = {}", prefixList.size());
             }
         }
         lock.writeLock().unlock();
@@ -127,24 +129,15 @@ public class NewPlanSplitter implements IPlanSplitter {
         } else if (policy.isNeedReAllocate()) {
             logger.info("ReAllocate, now size = {}", prefixList.size());
             lock.writeLock().lock();
-            /*
-            if (policy.isNeedReAllocate())
+            try
             {
-                logger.info("real ReAllocate, now size = {}", prefixList.size());
-                List<String> ips = new ArrayList<>();
-                for (IginxMeta iginxMeta: iMetaManager.getIginxList())
-                    ips.add(iginxMeta.getIp());
-
-                List<String> ins = new ArrayList<>();
-                ins.add(String.valueOf(iMetaManager.getStorageEngineList().size() * k));
-                ins.add(String.valueOf(plan.getEndTime() + 1));
-                for (String ip: ips)
-                {
-                    String url = "http://" + ip + ":" + config.getRestPort()
-                            + FRAGMENT_URL;
-                    HttpUtils.doPost(url, ins);
-                }
-            }*/
+                iMetaManager.reallocate(config.getFragmentSplitPerEngine() * iMetaManager.getStorageEngineNum(), plan.getEndTime());
+                logger.info("set reallocate end, now size = {}", prefixList.size());
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
             policy.setNeedReAllocate(false);
             lock.writeLock().unlock();
         }
@@ -173,24 +166,15 @@ public class NewPlanSplitter implements IPlanSplitter {
         } else if (policy.isNeedReAllocate()) {
             logger.info("ReAllocate, now size = {}", prefixList.size());
             lock.writeLock().lock();
-            /*
-            if (policy.isNeedReAllocate())
+            try
             {
-                logger.info("real ReAllocate, now size = {}", prefixList.size());
-                List<String> ips = new ArrayList<>();
-                for (IginxMeta iginxMeta: iMetaManager.getIginxList())
-                    ips.add(iginxMeta.getIp());
-
-                List<String> ins = new ArrayList<>();
-                ins.add(String.valueOf(iMetaManager.getStorageEngineList().size() * k));
-                ins.add(String.valueOf(plan.getEndTime() + 1));
-                for (String ip: ips)
-                {
-                    String url = "http://" + ip + ":" + config.getRestPort()
-                            + FRAGMENT_URL;
-                    HttpUtils.doPost(url, ins);
-                }
-            }*/
+                iMetaManager.reallocate(config.getFragmentSplitPerEngine() * iMetaManager.getStorageEngineNum(), plan.getEndTime());
+                logger.info("set reallocate end, now size = {}", prefixList.size());
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
             policy.setNeedReAllocate(false);
             lock.writeLock().unlock();
         }

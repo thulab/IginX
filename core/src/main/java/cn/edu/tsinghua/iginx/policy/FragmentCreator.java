@@ -35,7 +35,7 @@ public class FragmentCreator
     private static FragmentCreator INSTANCE = null;
     private int fragmentNum;
     private long fragmentTime;
-    private Map<Integer, Integer> updateRequire = new HashMap<>();
+    private long updateRequire = 0;
 
     private FragmentCreator()
     {
@@ -88,8 +88,6 @@ public class FragmentCreator
         lock.writeLock().lock();
         if (LIMIT == -1)
             LIMIT = ts * iMetaManager.getIginxList().size();
-        fragmentTime = System.currentTimeMillis();
-        fragmentNum = config.getFragmentSplitPerEngine() * iMetaManager.getStorageEngineNum();
         try
         {
             prefixList = iMetaManager.getPrefix();
@@ -102,35 +100,28 @@ public class FragmentCreator
         {
             semp.release();
             LIMIT += ts * iMetaManager.getIginxList().size();
-            LOGGER.info("semp release");
+            LOGGER.info("semp1 release");
         }
         LOGGER.info("tryGet end, list size : {}", prefixList.size());
         lock.writeLock().unlock();
     }
 
 
-    public void setFragmentData(int fragment, long timestamp, int iginxid)
+    public void setFragmentData(int fragment, long timestamp)
     {
+        LOGGER.info("insert setFragmentData");
         fragmentTime = timestamp;
         fragmentNum = fragment;
 
         lock.writeLock().lock();
-        if (updateRequire.get(iginxid) == null)
-            updateRequire.put(iginxid, 1);
-        else
-            updateRequire.put(iginxid, updateRequire.get(iginxid));
-        boolean flag = true;
-        for (Map.Entry<Integer, Integer> entry: updateRequire.entrySet()){
-            if (entry.getValue() == 0)
-                flag = false;
-        }
-        if (flag)
+        updateRequire += 1;
+        if (updateRequire >= iMetaManager.getIginxList().size())
         {
-            for (Map.Entry<Integer, Integer> entry: updateRequire.entrySet()){
-                updateRequire.put(entry.getKey() ,entry.getValue() - 1);
-            }
+            updateRequire -= iMetaManager.getIginxList().size();
             semp2.release();
+            LOGGER.info("semp2 release");
         }
+        LOGGER.info("setFragmentData end, fragmentTime : {}, fragmentNum : {}", fragmentTime, fragmentNum);
         lock.writeLock().unlock();
     }
 
