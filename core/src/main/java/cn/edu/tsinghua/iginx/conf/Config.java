@@ -71,7 +71,7 @@ public class Config {
 
     private int reallocateTime = 60000;
 
-    private int pathSendSize = 1000;
+    private int pathSendSize = 1760;
 
     private String fileDataDir = "";
 

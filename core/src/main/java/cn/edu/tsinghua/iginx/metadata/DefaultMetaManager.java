@@ -207,7 +207,12 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
-            fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
+            try {
+                fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
+            }
+            catch (Exception e){
+                e.printStackTrace();
+            }
             if (create) {
                 cache.addFragment(fragment);
             } else {
