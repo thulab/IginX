@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.metadata;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -48,6 +49,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
@@ -63,6 +67,10 @@ public class DefaultMetaManager implements IMetaManager {
     private long id;
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
+
+    private AtomicLong activeFragmentStartTime = new AtomicLong(-1L);
+
+    private final ScheduledExecutorService fragmentStatisticsUpdater;
 
     public static DefaultMetaManager getInstance() {
         if (INSTANCE == null) {
@@ -115,6 +123,9 @@ public class DefaultMetaManager implements IMetaManager {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
         }
+
+        fragmentStatisticsUpdater = new ScheduledThreadPoolExecutor(5);
+
     }
 
     private void initIginx() throws MetaStorageException {
@@ -204,6 +215,10 @@ public class DefaultMetaManager implements IMetaManager {
         storage.registerFragmentChangeHook((create, fragment) -> {
             if (fragment == null)
                 return;
+            if (create) { // 创建的分片更新时间
+                final long startTime = fragment.getTimeInterval().getStartTime();
+                activeFragmentStartTime.getAndUpdate(e -> Math.max(e, startTime));
+            }
             if (create && fragment.getCreatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
@@ -223,10 +238,15 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.updateFragment(fragment);
             }
         });
-        storage.lockFragment();
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = storage.loadFragment();
-        storage.releaseFragment();
-        cache.initFragment(fragmentMap);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = storage.loadFragment();
+        for (List<FragmentMeta> fragmentList: fragments.values()) {
+            for (FragmentMeta fragment: fragmentList) {
+                if (fragment.getTimeInterval().getStartTime() > activeFragmentStartTime.get()) {
+                    activeFragmentStartTime.set(fragment.getTimeInterval().getStartTime());
+                }
+            }
+        }
+        cache.initFragment(fragments);
     }
 
     private void initSchemaMapping() throws MetaStorageException {
@@ -353,6 +373,7 @@ public class DefaultMetaManager implements IMetaManager {
 
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta : latestFragments.values()) {
+                // TODO: 计算分片的
                 FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
                 // 在更新分片时，先更新本地
                 fragmentMeta.setUpdatedBy(id);
@@ -527,6 +548,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public int getSchemaMappingItem(String schema, String key) {
         return cache.getSchemaMappingItem(schema, key);
+    }
+
+    @Override
+    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
+        cache.updateActiveFragmentStatistics(statisticsItemMap);
     }
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {

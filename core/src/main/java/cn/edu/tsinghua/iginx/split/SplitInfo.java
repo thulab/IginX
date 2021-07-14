@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.split;
 
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -31,6 +32,8 @@ public class SplitInfo {
 
     private StorageUnitMeta storageUnit;
 
+    private FragmentMeta fragment;
+
     private IginxPlan.IginxPlanType type;
 
     private int combineGroup;
@@ -43,11 +46,12 @@ public class SplitInfo {
     }
 
     public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
-                     IginxPlan.IginxPlanType type) {
+                     FragmentMeta fragment) {
         this.timeInterval = timeInterval;
         this.timeSeriesInterval = timeSeriesInterval;
         this.storageUnit = storageUnit;
-        this.type = type;
+        this.fragment = fragment;
+        this.type = IginxPlan.IginxPlanType.UNKNOWN;
     }
 
     public SplitInfo(TimeInterval timeInterval, TimeSeriesInterval timeSeriesInterval, StorageUnitMeta storageUnit,
@@ -97,5 +101,13 @@ public class SplitInfo {
 
     public void setCombineGroup(int combineGroup) {
         this.combineGroup = combineGroup;
+    }
+
+    public FragmentMeta getFragment() {
+        return fragment;
+    }
+
+    public void setFragment(FragmentMeta fragment) {
+        this.fragment = fragment;
     }
 }

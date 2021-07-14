@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -62,6 +64,8 @@ public class DefaultMetaCache implements IMetaCache {
     // schemaMapping 的缓存
     private final Map<String, Map<String, Integer>> schemaMappings;
 
+    private final Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatisticsMap;
+
     public static DefaultMetaCache getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaCache.class) {
@@ -87,6 +91,8 @@ public class DefaultMetaCache implements IMetaCache {
         storageEngineMetaMap = new ConcurrentHashMap<>();
         // schemaMapping 相关
         schemaMappings = new ConcurrentHashMap<>();
+        // 统计信息
+        activeFragmentStatisticsMap = new ConcurrentHashMap<>();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -401,5 +407,23 @@ public class DefaultMetaCache implements IMetaCache {
     public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
         Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
         mapping.put(key, value);
+    }
+
+    @Override
+    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
+        for (FragmentMeta fragmentMeta: statisticsItemMap.keySet()) {
+            ActiveFragmentStatisticsItem statisticsItem = statisticsItemMap.get(fragmentMeta);
+            this.activeFragmentStatisticsMap.computeIfAbsent(fragmentMeta, e -> new ActiveFragmentStatistics()).updateByItem(statisticsItem);
+        }
+    }
+
+    @Override
+    public Map<FragmentMeta, ActiveFragmentStatistics> getActiveFragmentStatistics() {
+        return new HashMap<>(activeFragmentStatisticsMap);
+    }
+
+    @Override
+    public void clearActiveFragmentStatistics() {
+        activeFragmentStatisticsMap.clear();
     }
 }

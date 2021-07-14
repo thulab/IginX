@@ -48,7 +48,11 @@ public final class FragmentMeta {
 
     private long updatedBy;
 
+    private long createdAt;
+
     private String masterStorageUnitId;
+
+    private FragmentStatistics fragmentStatistics;
 
     private transient StorageUnitMeta masterStorageUnit;
 
@@ -87,6 +91,12 @@ public final class FragmentMeta {
         fragment.setMasterStorageUnit(masterStorageUnit);
         fragment.setMasterStorageUnitId(masterStorageUnitId);
         fragment.setInitialFragment(initialFragment);
+        return fragment;
+    }
+
+    public FragmentMeta endFragmentMeta(long endTime, FragmentStatistics statistics) {
+        FragmentMeta fragment = endFragmentMeta(endTime);
+        fragment.setFragmentStatistics(statistics);
         return fragment;
     }
 
@@ -129,6 +139,22 @@ public final class FragmentMeta {
 
     public void setMasterStorageUnitId(String masterStorageUnitId) {
         this.masterStorageUnitId = masterStorageUnitId;
+    }
+
+    public FragmentStatistics getFragmentStatistics() {
+        return fragmentStatistics;
+    }
+
+    public void setFragmentStatistics(FragmentStatistics fragmentStatistics) {
+        this.fragmentStatistics = fragmentStatistics;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
     }
 
     @Override
