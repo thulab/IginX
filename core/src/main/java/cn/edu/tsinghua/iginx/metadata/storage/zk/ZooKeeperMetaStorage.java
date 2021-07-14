@@ -820,7 +820,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     if (str != null) {
                         reallocateChangeHook.onChange(Integer.parseInt(str.split(" ")[0]), Long.parseLong(str.split(" ")[1]));
                     } else {
-                        logger.error("resolve prefix from zookeeper error");
+                        logger.error("resolve prefix from zookeeper error, str:{}", str);
                     }
                     break;
                 default:

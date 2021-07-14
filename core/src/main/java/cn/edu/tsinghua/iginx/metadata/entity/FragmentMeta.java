@@ -139,6 +139,12 @@ public final class FragmentMeta {
                 '}';
     }
 
+    public String toStr() {
+        return "FragmentMeta{" +
+                "timeInterval=" + timeInterval.toStr() +
+                ", tsInterval=" + tsInterval +
+                '}';
+    }
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

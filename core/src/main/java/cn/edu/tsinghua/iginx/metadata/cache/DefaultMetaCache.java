@@ -25,6 +25,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -42,11 +44,12 @@ public class DefaultMetaCache implements IMetaCache {
     private static DefaultMetaCache INSTANCE = null;
 
     // 分片列表的缓存
-    private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
+    public final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
 
     private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
     private final ReadWriteLock fragmentLock;
+    private static final Logger logger = LoggerFactory.getLogger(DefaultMetaCache.class);
 
     // 数据单元的缓存
     private final Map<String, StorageUnitMeta> storageUnitMetaMap;
