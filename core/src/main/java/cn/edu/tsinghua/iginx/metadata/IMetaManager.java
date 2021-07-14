@@ -25,18 +25,12 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface IMetaManager {
-
-    /**
-     * 新增存储引擎节点
-     */
-    boolean addStorageEngine(StorageEngineMeta storageEngineMeta);
 
     /**
      * 批量新增存储引擎节点

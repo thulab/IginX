@@ -200,6 +200,9 @@ public class IginxWorker implements IService.Iface {
             storageEngineMetas.add(meta);
 
         }
+        if (!storageEngineMetas.isEmpty()) {
+            storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
+        }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             return RpcUtils.FAILURE;
         }

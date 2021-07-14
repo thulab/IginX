@@ -58,13 +58,20 @@ public final class StorageEngineMeta {
 
     private long createdBy;
 
+    private boolean lastOfBatch;
+
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, long createdBy) {
+        this(id, ip, port, extraParams, storageEngine, createdBy, false);
+    }
+
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, long createdBy, boolean lastOfBatch) {
         this.id = id;
         this.ip = ip;
         this.port = port;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
         this.createdBy = createdBy;
+        this.lastOfBatch = lastOfBatch;
     }
 
     public long getId() {
@@ -134,5 +141,13 @@ public final class StorageEngineMeta {
 
     public void setCreatedBy(long createdBy) {
         this.createdBy = createdBy;
+    }
+
+    public boolean isLastOfBatch() {
+        return lastOfBatch;
+    }
+
+    public void setLastOfBatch(boolean lastOfBatch) {
+        this.lastOfBatch = lastOfBatch;
     }
 }
