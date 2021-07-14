@@ -19,9 +19,9 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -32,7 +32,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +41,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -612,49 +610,8 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public boolean reshard() {
-        Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
-
-        try {
-            for (Map.Entry<TimeSeriesInterval, FragmentMeta> entry : latestFragments.entrySet()) {
-                FragmentMeta newFragment = new FragmentMeta();
-                storage.updateFragment(newFragment);
-            }
-        } catch (MetaStorageException e) {
-            e.printStackTrace();
-        }
-
-        InterProcessMutex mutex = new InterProcessMutex(, Constants.FRAGMENT_LOCK_NODE);
-        try {
-            mutex.acquire();
-            Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
-//            for (Map.Entry<TimeSeriesInterval, FragmentMeta> entry : latestFragments.entrySet()) { // 终结老分片
-//                FragmentMeta fragmentMeta = entry.getValue().endFragmentMeta();
-//                // 在更新分片时，先更新本地
-//                fragmentMeta.setUpdatedBy(iginxId);
-//                updateFragment(fragmentMeta);
-//                this.zookeeperClient.setData()
-//                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
-//            }
-//            for (FragmentMeta fragmentMeta : fragments) {
-//                // 针对本机创建的分片，直接将其加入到本地
-//                fragmentMeta.setCreatedBy(iginxId);
-//                addFragment(fragmentMeta);
-//                this.zookeeperClient.create()
-//                        .creatingParentsIfNeeded()
-//                        .withMode(CreateMode.PERSISTENT)
-//                        .forPath(Constants.FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
-//            }
-            return true;
-        } catch (Exception e) {
-            logger.error("create fragment error: ", e);
-        } finally {
-            try {
-                mutex.release();
-            } catch (Exception e) {
-                logger.error("release mutex error: ", e);
-            }
-        }
-        return false;
+        Pair<List<StorageUnitMeta>, List<FragmentMeta>> pair = generateFragmentsAndStorageUnitsForResharding();
+        return createFragmentsAndStorageUnits(pair.k, pair.v);
     }
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
@@ -697,7 +654,15 @@ public class DefaultMetaManager implements IMetaManager {
         return new Pair<>(fragment, storageUnit);
     }
 
-    private Map<TimeSeriesInterval, FragmentMeta> generateFragmentsForResharding() {
-
+    private Pair<List<StorageUnitMeta>, List<FragmentMeta>> generateFragmentsAndStorageUnitsForResharding() {
+        List<StorageUnitMeta> storageUnits = new ArrayList<>();
+        List<FragmentMeta> fragments = new ArrayList<>();
+        long totalCount = 0;
+        double totalDistance = 0.0;
+        for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : cache.getActiveFragmentStatistics().entrySet()) {
+            totalCount += entry.getValue().getCount();
+            totalDistance += entry.getValue().getTsInterval().getDistance();
+        }
+        return new Pair<>(storageUnits, fragments);
     }
 }

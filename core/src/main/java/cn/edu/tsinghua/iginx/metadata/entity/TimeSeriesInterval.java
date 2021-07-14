@@ -31,10 +31,13 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
     // 右边界是否为闭
     private boolean isClosed;
 
+    private double distance;
+
     public TimeSeriesInterval(String startTimeSeries, String endTimeSeries, boolean isClosed) {
         this.startTimeSeries = startTimeSeries;
         this.endTimeSeries = endTimeSeries;
         this.isClosed = isClosed;
+        this.distance = calculateDistance();
     }
 
     public TimeSeriesInterval(String startTimeSeries, String endTimeSeries) {
@@ -79,6 +82,14 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     public void setEndTimeSeries(String endTimeSeries) {
         this.endTimeSeries = endTimeSeries;
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void updateDistance() {
+        this.distance = calculateDistance();
     }
 
     @Override
@@ -127,5 +138,13 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         if (value != 0)
             return value;
         return compareTo(endTimeSeries, o.endTimeSeries);
+    }
+
+    private double calculateDistance() {
+        double dis = 0.0;
+        for (int i = 0; i < Math.max(startTimeSeries.length(), endTimeSeries.length()); i++) {
+            dis += (startTimeSeries.charAt(i) - endTimeSeries.charAt(i)) >> (8 * i);
+        }
+        return dis;
     }
 }

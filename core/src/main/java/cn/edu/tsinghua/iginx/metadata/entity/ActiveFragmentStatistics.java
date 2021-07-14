@@ -75,6 +75,7 @@ public final class ActiveFragmentStatistics {
         if (this.tsInterval.getEndTimeSeries() == null || this.tsInterval.getEndTimeSeries().compareTo(tsInterval.getEndTimeSeries()) < 0) {
             this.tsInterval.setEndTimeSeries(tsInterval.getEndTimeSeries());
         }
+        this.tsInterval.updateDistance();
     }
 
     private void updateTimeInterval(TimeInterval timeInterval) {
