@@ -112,12 +112,16 @@ struct QueryDataResp {
     4: optional QueryDataSet queryDataSet
 }
 
-struct AddStorageEngineReq {
+struct AddStorageEnginesReq {
     1: required i64 sessionId
-    2: required string ip
-    3: required i32 port
-    4: required StorageEngineType type
-    5: required map<string, string> extraParams
+    2: required list<StorageEngine> storageEngines
+}
+
+struct StorageEngine {
+    1: required string ip
+    2: required i32 port
+    3: required StorageEngineType type
+    4: required map<string, string> extraParams
 }
 
 struct AggregateQueryReq {
@@ -204,7 +208,7 @@ service IService {
 
     QueryDataResp queryData(1:QueryDataReq req);
 
-    Status addStorageEngine(1: AddStorageEngineReq req);
+    Status addStorageEngines(1: AddStorageEnginesReq req);
 
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
 
