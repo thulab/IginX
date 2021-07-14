@@ -79,9 +79,6 @@ public class InfluxDBSessionIT {
 
     @Test
     public void InfluxDBTest() throws Exception {
-        session = new Session("127.0.0.1", 6888, "root", "root");
-        // 打开 Session
-        session.openSession();
 
         // 列式插入数据
         insertColumnRecords();
