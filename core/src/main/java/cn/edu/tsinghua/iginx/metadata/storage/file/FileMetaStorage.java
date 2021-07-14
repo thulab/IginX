@@ -388,4 +388,40 @@ public class FileMetaStorage implements IMetaStorage {
             fragmentChangeHook = hook;
         }
     }
+
+    @Override
+    public void registerPrefixChangeHook(PrefixChangeHook hook)
+    {
+
+    }
+
+    @Override
+    public void registerReallocateChangeHook(ReallocateChangeHook hook)
+    {
+
+    }
+
+    @Override
+    public void reallocate(int fragment, long timestamp, long iginxid) throws Exception
+    {
+
+    }
+
+    @Override
+    public boolean selection() throws Exception
+    {
+        return false;
+    }
+
+    @Override
+    public void updatePrefix(Map<String, Double> prefix, long iginxid) throws Exception
+    {
+
+    }
+
+    @Override
+    public void updateMeta() throws Exception
+    {
+
+    }
 }
