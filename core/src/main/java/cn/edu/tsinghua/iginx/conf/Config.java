@@ -70,6 +70,10 @@ public class Config {
 
     private String etcdEndpoints = "http://localhost:2379";
 
+    private String clients = "tpc5,tpc6,tpc7,tpc8";
+
+    private int instancesNumPerClient = 11;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -270,4 +274,19 @@ public class Config {
         this.etcdEndpoints = etcdEndpoints;
     }
 
+    public String getClients() {
+        return clients;
+    }
+
+    public void setClients(String clients) {
+        this.clients = clients;
+    }
+
+    public int getInstancesNumPerClient() {
+        return instancesNumPerClient;
+    }
+
+    public void setInstancesNumPerClient(int instancesNumPerClient) {
+        this.instancesNumPerClient = instancesNumPerClient;
+    }
 }
