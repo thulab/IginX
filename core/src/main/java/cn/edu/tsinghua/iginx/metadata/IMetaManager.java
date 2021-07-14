@@ -39,6 +39,11 @@ public interface IMetaManager {
     boolean addStorageEngine(StorageEngineMeta storageEngineMeta);
 
     /**
+     * 批量新增存储引擎节点
+     */
+    boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas);
+
+    /**
      * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
      */
     List<StorageEngineMeta> getStorageEngineList();

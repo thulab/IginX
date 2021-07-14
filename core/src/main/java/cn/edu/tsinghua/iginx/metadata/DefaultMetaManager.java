@@ -255,6 +255,11 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
+        return false;
+    }
+
+    @Override
     public List<StorageEngineMeta> getStorageEngineList() {
         return new ArrayList<>(cache.getStorageEngineList());
     }

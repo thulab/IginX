@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,21 +112,7 @@ public class IMetaManagerTest {
 
     @Test
     public void storageEngineTest() {
-        List<StorageEngineMeta> storageEngines = iMetaManager.getStorageEngineList();
-        // 初始情况下没有存储数据后端
-        assertEquals(0, storageEngines.size());
-        // 增加一个数据后端
-        Map<String, String> extraParams = new HashMap<>();
-        extraParams.put("username", "root");
-        extraParams.put("password", "root");
-        extraParams.put("sessionPoolSize", "20");
-        StorageEngineMeta engine1 = new StorageEngineMeta(0, "127.0.0.1", 1001, extraParams, StorageEngine.IoTDB, iMetaManager.getIginxId());
-        iMetaManager.addStorageEngine(engine1);
-        // 查询数据后端
-        storageEngines = iMetaManager.getStorageEngineList();
-        assertEquals(1, storageEngines.size());
-        assertEquals(1001, storageEngines.get(0).getPort());
-        assertEquals(iMetaManager.getIginxId(), storageEngines.get(0).getCreatedBy());
+        // 方法已移除
     }
 
     @Test
