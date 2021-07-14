@@ -732,7 +732,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void reallocate(int fragment, long timestamp, long iginxid) throws Exception {
         StringBuilder sb = new StringBuilder();
+
         sb.append(fragment + " " + timestamp);
+        logger.info("create reallocate ,  {}", sb.toString());
         InterProcessMutex mutex = new InterProcessMutex(this.client, REALLOCATE_LOCK_NODE);
         try {
             mutex.acquire();
