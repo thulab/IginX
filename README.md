@@ -50,7 +50,11 @@ experience.
 
 ## Quick start
 
-[Quick Start in Chinese](./docs/quick%20start.md)
+Quick starts in Chinese ([A complete version]((./docs/quickStarts/IginXManual.md))): 
+
+- [Use IginX in one shot](./docs/quickStarts/IginXInOneShot.md)
+- [Use IginX by compiling sources](./docs/quickStarts/IginXBySource.md)
+- [Deploy an IginX Cluster](./docs/quickStarts/IginXCluster.md)
 
 Or, please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is
 still being written.
