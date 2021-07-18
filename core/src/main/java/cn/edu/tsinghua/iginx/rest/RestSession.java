@@ -22,10 +22,8 @@ import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
-import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
@@ -149,43 +147,6 @@ public class RestSession {
             lock.readLock().lock();
             try {
                 status = client.addStorageEngines(req);
-            } finally {
-                lock.readLock().unlock();
-            }
-        } while (checkRedirect(status));
-        RpcUtils.verifySuccess(status);
-    }
-
-    public void addColumn(String path) throws ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(path);
-        addColumns(paths);
-    }
-
-    public void addColumns(List<String> paths) throws ExecutionException {
-        AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-
-        Status status;
-        do {
-            lock.readLock().lock();
-            try {
-                status = client.addColumns(req);
-            } finally {
-                lock.readLock().unlock();
-            }
-        } while (checkRedirect(status));
-        RpcUtils.verifySuccess(status);
-    }
-
-    public void addColumns(List<String> paths, List<Map<String, String>> attributes) throws ExecutionException {
-        AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-        req.setAttributesList(attributes);
-
-        Status status;
-        do {
-            lock.readLock().lock();
-            try {
-                status = client.addColumns(req);
             } finally {
                 lock.readLock().unlock();
             }

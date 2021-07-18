@@ -20,15 +20,12 @@ package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
@@ -151,14 +148,6 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
-        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
-        if (storageEngine != null)
-            return storageEngine.syncExecuteAddColumnsPlan(plan);
-        return null;
-    }
-
-    @Override
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
@@ -171,22 +160,6 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
             return storageEngine.syncExecuteDeleteDataInColumnsPlan(plan);
-        return null;
-    }
-
-    @Override
-    public NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
-        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
-        if (storageEngine != null)
-            return storageEngine.syncExecuteCreateDatabasePlan(plan);
-        return null;
-    }
-
-    @Override
-    public NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
-        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
-        if (storageEngine != null)
-            return storageEngine.syncExecuteDropDatabasePlan(plan);
         return null;
     }
 
