@@ -44,22 +44,6 @@ struct CloseSessionReq {
     1: required i64 sessionId
 }
 
-struct CreateDatabaseReq {
-    1: required i64 sessionId
-    2: required string databaseName
-}
-
-struct DropDatabaseReq {
-    1: required i64 sessionId
-    2: required string databaseName
-}
-
-struct AddColumnsReq {
-    1: required i64 sessionId
-    2: required list<string> paths
-    3: optional list<map<string, string>> attributesList
-}
-
 struct DeleteColumnsReq {
     1: required i64 sessionId
     2: required list<string> paths
@@ -195,8 +179,6 @@ service IService {
     OpenSessionResp openSession(1:OpenSessionReq req);
 
     Status closeSession(1:CloseSessionReq req);
-
-    Status addColumns(1:AddColumnsReq req);
 
     Status deleteColumns(1:DeleteColumnsReq req);
 
