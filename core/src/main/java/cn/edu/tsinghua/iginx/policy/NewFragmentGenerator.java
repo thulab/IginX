@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.policy.naive;
+package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -24,18 +24,17 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-class NaiveFragmentGenerator implements IFragmentGenerator {
+public class NewFragmentGenerator implements IFragmentGenerator {
 
     private IMetaManager iMetaManager;
 
-    public NaiveFragmentGenerator(IMetaManager iMetaManager) {
+    public NewFragmentGenerator(IMetaManager iMetaManager) {
         this.iMetaManager = iMetaManager;
     }
 
@@ -84,7 +83,6 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
         return new Pair<>(fragmentList, storageUnitList);
     }
 
-    @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
@@ -142,5 +140,4 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
         }
         return new Pair<>(fragment, storageUnit);
     }
-
 }

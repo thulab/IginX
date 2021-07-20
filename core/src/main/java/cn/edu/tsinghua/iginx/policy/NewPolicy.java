@@ -1,3 +1,21 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.policy;
 
 
@@ -11,10 +29,14 @@ import cn.edu.tsinghua.iginx.core.processor.PreQueryResultCombineProcessor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class NewPolicy implements IPolicy {
 
-    protected boolean needReAllocate = false;
+    protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IPlanSplitter iPlanSplitter;
+    private IMetaManager iMetaManager;
+    private IFragmentGenerator iFragmentGenerator;
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
@@ -58,12 +80,14 @@ public class NewPolicy implements IPolicy {
 
     @Override
     public IFragmentGenerator getIFragmentGenerator() {
-        return null;
+        return iFragmentGenerator;
     }
 
     @Override
     public void init(IMetaManager iMetaManager) {
-        this.iPlanSplitter = new NewPlanSplitter(this, iMetaManager);
+        this.iMetaManager = iMetaManager;
+        this.iPlanSplitter = new NewPlanSplitter(this, this.iMetaManager);
+        this.iFragmentGenerator = new NewFragmentGenerator(this.iMetaManager);
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);
@@ -73,18 +97,18 @@ public class NewPolicy implements IPolicy {
     @Override
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
-            if (before == null && after != null) {
-                needReAllocate = true;
+            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isLastOfBatch()) {
+                needReAllocate.set(true);
             }
         };
     }
 
     public boolean isNeedReAllocate() {
-        return needReAllocate;
+        return needReAllocate.getAndSet(false);
     }
 
 
     public void setNeedReAllocate(boolean needReAllocate) {
-        this.needReAllocate = needReAllocate;
+        this.needReAllocate.set(needReAllocate);
     }
 }

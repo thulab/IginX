@@ -126,15 +126,6 @@ public interface IMetaManager {
      */
     List<Long> selectStorageEngineIdList();
 
-    /**
-     * 初始时创建分片和存储单元
-     */
-    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
-
-    Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
-
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> prefixList, long startTime);
-
     void registerStorageEngineChangeHook(StorageEngineChangeHook hook);
 
     /**

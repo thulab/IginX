@@ -24,6 +24,7 @@ public class FragmentCreator
     private Map<String, Double> prefixList = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
     private final IMetaManager iMetaManager = DefaultMetaManager.getInstance();
+    private final IPolicy iPolicy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
     private final Random random = new Random();
     private final int prefixMaxSize = 1048576;
     private int updateRequireNum = 0;
@@ -144,9 +145,8 @@ public class FragmentCreator
                 e.printStackTrace();
             }
 
-
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iMetaManager.generateFragmentsAndStorageUnits(samplePrefix(fragmentNum - 1), new TimeInterval(fragmentTime, Long.MAX_VALUE));
-            iMetaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k.values().stream().flatMap(List::stream).collect(Collectors.toList()));
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = iPolicy.getIFragmentGenerator().generateFragmentsAndStorageUnits(samplePrefix(fragmentNum - 1), fragmentTime);
+            iMetaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             LOGGER.info("create fragment  , size : {}", prefixList.size());
             updateRequireNum = 0;
         }

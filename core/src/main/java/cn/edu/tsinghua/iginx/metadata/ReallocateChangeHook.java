@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-
 public interface ReallocateChangeHook
 {
     void onChange(int fragment, long timestamp);
