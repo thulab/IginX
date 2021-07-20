@@ -7,7 +7,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.plan.*;
 import cn.edu.tsinghua.iginx.plan.downsample.*;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
-import cn.edu.tsinghua.iginx.utils.HttpUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
