@@ -21,13 +21,10 @@ package cn.edu.tsinghua.iginx.query;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.IService;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
@@ -99,20 +96,11 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
                             logger.info("execute async insert row records task");
                             planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
                             break;
-                        case ADD_COLUMNS:
-                            planExecuteResult = syncExecuteAddColumnsPlan((AddColumnsPlan) plan);
-                            break;
                         case DELETE_COLUMNS:
                             planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
                             break;
                         case DELETE_DATA_IN_COLUMNS:
                             planExecuteResult = syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan);
-                            break;
-                        case CREATE_DATABASE:
-                            planExecuteResult = syncExecuteCreateDatabasePlan((CreateDatabasePlan) plan);
-                            break;
-                        case DROP_DATABASE:
-                            planExecuteResult = syncExecuteDropDatabasePlan((DropDatabasePlan) plan);
                             break;
                         default:
                             logger.info("unimplemented method: " + plan.getIginxPlanType());
@@ -135,11 +123,8 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         functionMap.put(IginxPlan.IginxPlanType.INSERT_COLUMN_RECORDS, this::executeInsertColumnRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.INSERT_ROW_RECORDS, this::executeInsertRowRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.QUERY_DATA, this::executeQueryDataPlan);
-        functionMap.put(IginxPlan.IginxPlanType.CREATE_DATABASE, this::executeCreateDatabasePlan);
-        functionMap.put(IginxPlan.IginxPlanType.ADD_COLUMNS, this::executeAddColumnPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_COLUMNS, this::executeDeleteColumnsPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_DATA_IN_COLUMNS, this::executeDeleteDataInColumnsPlan);
-        functionMap.put(IginxPlan.IginxPlanType.DROP_DATABASE, this::executeDropDatabasePlan);
         functionMap.put(IginxPlan.IginxPlanType.AVG, this::executeAvgQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.SUM, this::executeSumQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.COUNT, this::executeCountQueryPlan);
@@ -187,20 +172,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         return null;
     }
 
-    protected Future<? extends PlanExecuteResult> executeCreateDatabasePlan(IginxPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteCreateDatabasePlan((CreateDatabasePlan) plan));
-        }
-        return null;
-    }
-
-    protected Future<? extends PlanExecuteResult> executeAddColumnPlan(IginxPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteAddColumnsPlan((AddColumnsPlan) plan));
-        }
-        return null;
-    }
-
     protected Future<? extends PlanExecuteResult> executeDeleteColumnsPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan));
@@ -211,13 +182,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     protected Future<? extends PlanExecuteResult> executeDeleteDataInColumnsPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan));
-        }
-        return null;
-    }
-
-    protected Future<? extends PlanExecuteResult> executeDropDatabasePlan(IginxPlan plan) {
-        if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteDropDatabasePlan((DropDatabasePlan) plan));
         }
         return null;
     }

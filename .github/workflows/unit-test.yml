@@ -36,10 +36,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run ETCD
-        run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
       - name: Run Test For Meta Manager
         run: mvn test -q -Dtest=IMetaManagerTest -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1

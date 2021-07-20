@@ -44,22 +44,6 @@ struct CloseSessionReq {
     1: required i64 sessionId
 }
 
-struct CreateDatabaseReq {
-    1: required i64 sessionId
-    2: required string databaseName
-}
-
-struct DropDatabaseReq {
-    1: required i64 sessionId
-    2: required string databaseName
-}
-
-struct AddColumnsReq {
-    1: required i64 sessionId
-    2: required list<string> paths
-    3: optional list<map<string, string>> attributesList
-}
-
 struct DeleteColumnsReq {
     1: required i64 sessionId
     2: required list<string> paths
@@ -112,12 +96,16 @@ struct QueryDataResp {
     4: optional QueryDataSet queryDataSet
 }
 
-struct AddStorageEngineReq {
+struct AddStorageEnginesReq {
     1: required i64 sessionId
-    2: required string ip
-    3: required i32 port
-    4: required StorageEngineType type
-    5: required map<string, string> extraParams
+    2: required list<StorageEngine> storageEngines
+}
+
+struct StorageEngine {
+    1: required string ip
+    2: required i32 port
+    3: required StorageEngineType type
+    4: required map<string, string> extraParams
 }
 
 struct AggregateQueryReq {
@@ -192,8 +180,6 @@ service IService {
 
     Status closeSession(1:CloseSessionReq req);
 
-    Status addColumns(1:AddColumnsReq req);
-
     Status deleteColumns(1:DeleteColumnsReq req);
 
     Status insertColumnRecords(1:InsertColumnRecordsReq req);
@@ -204,7 +190,7 @@ service IService {
 
     QueryDataResp queryData(1:QueryDataReq req);
 
-    Status addStorageEngine(1: AddStorageEngineReq req);
+    Status addStorageEngines(1: AddStorageEnginesReq req);
 
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
 

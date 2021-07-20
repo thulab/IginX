@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.policy;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -46,14 +45,6 @@ import cn.edu.tsinghua.iginx.split.SplitInfo;
 import java.util.List;
 
 public interface IPlanSplitter {
-
-    /**
-     * 拆分 AddColumnsPlan
-     *
-     * @param plan 待拆分的 AddColumnsPlan
-     * @return 拆分方式
-     */
-    List<SplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan);
 
     /**
      * 拆分 DeleteColumnsPlan
