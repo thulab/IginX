@@ -51,6 +51,12 @@ public final class TimeInterval {
         this.endTime = endTime;
     }
 
+    public static TimeInterval fromString(String str) {
+        String[] parts = str.split("-");
+        assert parts.length == 2;
+        return new TimeInterval(parts[0].equals("null") ? Long.MIN_VALUE : Long.parseLong(parts[0]), parts[1].equals("null") ? Long.MAX_VALUE : Long.parseLong(parts[1]));
+    }
+
     @Override
     public String toString() {
         return "" + startTime;

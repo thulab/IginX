@@ -21,6 +21,10 @@ package cn.edu.tsinghua.iginx.metadata.storage.zk;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
@@ -72,6 +76,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String SCHEMA_MAPPING_LOCK_NODE = "/lock/schema";
 
+    private static final String STATISTICS_LOCK_NODE = "/lock/statistics";
+
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
     private static final String IGINX_NODE_PREFIX = "/iginx";
@@ -81,6 +87,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String STORAGE_UNIT_NODE_PREFIX = "/unit";
 
     private static final String SCHEMA_MAPPING_PREFIX = "/schema";
+
+    private static final String STATISTICS_NODE_PREFIX = "/statistics";
 
     private static ZooKeeperMetaStorage INSTANCE = null;
 
@@ -114,6 +122,14 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private final InterProcessMutex fragmentMutex;
 
+    private ActiveFragmentStatisticsHook statisticsChangeHook = null;
+
+    protected TreeCache statisticsCache;
+
+    private final Lock statisticsMutexLock = new ReentrantLock();
+
+    private final InterProcessMutex statisticsMutex;
+
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
                 .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
@@ -124,6 +140,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
+        statisticsMutex = new InterProcessMutex(client, STATISTICS_LOCK_NODE);
     }
 
     public static ZooKeeperMetaStorage getInstance() {
@@ -692,5 +709,123 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
         this.fragmentChangeHook = hook;
+    }
+
+    @Override
+    public Map<FragmentMeta, ActiveFragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
+        try {
+            Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
+            if (this.client.checkExists().forPath(STATISTICS_NODE_PREFIX) == null) {
+                this.client.create().withMode(CreateMode.PERSISTENT).forPath(STATISTICS_NODE_PREFIX);
+            } else {
+                List<String> tsIntervalNames = this.client.getChildren().forPath(STATISTICS_NODE_PREFIX);
+                for (String tsIntervalName : tsIntervalNames) {
+                    TimeSeriesInterval tsInterval = TimeSeriesInterval.fromString(tsIntervalName);
+                    List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
+                    for (String timeIntervalName : timeIntervalNames) {
+                        TimeInterval timeInterval = TimeInterval.fromString(timeIntervalName);
+                        FragmentMeta fragmentMeta = new FragmentMeta(tsInterval, timeInterval);
+                        ActiveFragmentStatistics statistics = JsonUtils.fromJson(this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), ActiveFragmentStatistics.class);
+                        activeFragmentStatisticsMap.put(fragmentMeta, statistics);
+                    }
+                }
+                registerStatisticsListener();
+                return activeFragmentStatisticsMap;
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("meet error when loading active fragment statistics", e);
+        }
+        return null;
+    }
+
+    private void registerStatisticsListener() throws Exception {
+        this.statisticsCache = new TreeCache(this.client, STATISTICS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (statisticsChangeHook == null) {
+                return;
+            }
+            String path;
+            byte[] data;
+            FragmentMeta fragment;
+            ActiveFragmentStatisticsItem statistics;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    path = event.getData().getPath();
+                    data = event.getData().getData();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 4) {
+                        fragment = new FragmentMeta(TimeSeriesInterval.fromString(pathParts[1]), TimeInterval.fromString(pathParts[2]));
+                        statistics = JsonUtils.fromJson(data, ActiveFragmentStatisticsItem.class);
+                        if (statistics != null) {
+                            statisticsChangeHook.onChange(fragment, statistics);
+                        } else {
+                            logger.error("resolve fragment from zookeeper error");
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.statisticsCache.getListenable().addListener(listener);
+        this.statisticsCache.start();
+    }
+
+    @Override
+    public void lockActiveFragmentStatistics() throws MetaStorageException {
+        try {
+            statisticsMutexLock.lock();
+            statisticsMutex.acquire();
+        } catch (Exception e) {
+            statisticsMutexLock.unlock();
+            throw new MetaStorageException("acquire active fragment statistics mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+        try {
+            for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : activeFragmentStatistics.entrySet()) {
+                if (this.client.checkExists().forPath(STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString()) == null) {
+                    this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                            .forPath(STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString(), JsonUtils.toJson(entry.getValue()));
+                } else {
+                    this.client.setData()
+                            .forPath(STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString(), JsonUtils.toJson(entry.getValue()));
+                }
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when updating active fragment statistics", e);
+        }
+    }
+
+    @Override
+    public void addActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+        try {
+            for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : activeFragmentStatistics.entrySet()) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString(), JsonUtils.toJson(entry.getValue()));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when adding active fragment statistics", e);
+        }
+    }
+
+    @Override
+    public void releaseActiveFragmentStatisticsFragment() throws MetaStorageException {
+        try {
+            statisticsMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("release active fragment statistics mutex error: ", e);
+        } finally {
+            statisticsMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook) {
+        this.statisticsChangeHook = hook;
     }
 }

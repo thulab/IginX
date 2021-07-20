@@ -60,6 +60,11 @@ public final class FragmentMeta {
 
     private boolean initialFragment = true;
 
+    public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        this.timeInterval = timeInterval;
+        this.tsInterval = tsInterval;
+    }
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);

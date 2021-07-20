@@ -21,23 +21,21 @@ package cn.edu.tsinghua.iginx.metadata;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +49,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -119,13 +118,29 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initStatistics();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
         }
 
-        fragmentStatisticsUpdater = new ScheduledThreadPoolExecutor(5);
-
+        fragmentStatisticsUpdater = new ScheduledThreadPoolExecutor(1);
+        if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
+            fragmentStatisticsUpdater.scheduleAtFixedRate(
+                    () -> {
+                        try {
+                            storage.lockActiveFragmentStatistics();
+                            storage.updateActiveFragmentStatistics(cache.getActiveFragmentStatistics());
+                            storage.releaseActiveFragmentStatisticsFragment();
+                        } catch (MetaStorageException e) {
+                            logger.error("update active fragment statistics error: ", e);
+                        }
+                    },
+                    ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
+                    ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
+                    TimeUnit.SECONDS
+            );
+        }
     }
 
     private void initIginx() throws MetaStorageException {
@@ -157,7 +172,6 @@ public class DefaultMetaManager implements IMetaManager {
         for (StorageEngineMeta storageEngine: storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
             cache.addStorageEngine(storageEngine);
         }
-
     }
 
     private void initStorageUnit() throws MetaStorageException {
@@ -260,6 +274,17 @@ public class DefaultMetaManager implements IMetaManager {
         for (Map.Entry<String, Map<String, Integer>> schemaEntry: storage.loadSchemaMapping().entrySet()) {
             cache.addOrUpdateSchemaMapping(schemaEntry.getKey(), schemaEntry.getValue());
         }
+    }
+
+    private void initStatistics() throws MetaStorageException {
+        storage.registerActiveFragmentStatisticsHook((fragment, item) -> {
+            if (fragment == null || item == null) {
+                return;
+            }
+            Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap = new HashMap<>();
+            statisticsMap.put(fragment, item);
+            cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
+        });
     }
 
     @Override
@@ -552,7 +577,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
-        cache.updateActiveFragmentStatistics(statisticsItemMap);
+        cache.addOrUpdateActiveFragmentStatistics(statisticsItemMap);
     }
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {

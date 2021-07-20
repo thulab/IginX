@@ -2,6 +2,8 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
@@ -387,5 +389,35 @@ public class FileMetaStorage implements IMetaStorage {
         if (hook != null) {
             fragmentChangeHook = hook;
         }
+    }
+
+    @Override
+    public Map<FragmentMeta, ActiveFragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
+        return null;
+    }
+
+    @Override
+    public void lockActiveFragmentStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseActiveFragmentStatisticsFragment() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook) {
+
     }
 }

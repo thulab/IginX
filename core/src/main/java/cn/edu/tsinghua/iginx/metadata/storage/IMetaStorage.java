@@ -19,11 +19,13 @@
 package cn.edu.tsinghua.iginx.metadata.storage;
 
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -77,6 +79,15 @@ public interface IMetaStorage {
 
     void registerFragmentChangeHook(FragmentChangeHook hook);
 
-//    void updateActiveFragmentStatistics(long id, )
+    Map<FragmentMeta, ActiveFragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException;
 
+    void lockActiveFragmentStatistics() throws MetaStorageException;
+
+    void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException;
+
+    void addActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException;
+
+    void releaseActiveFragmentStatisticsFragment() throws MetaStorageException;
+
+    void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook);
 }
