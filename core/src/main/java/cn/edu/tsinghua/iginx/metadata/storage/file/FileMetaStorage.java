@@ -2,6 +2,8 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.PrefixChangeHook;
+import cn.edu.tsinghua.iginx.metadata.ReallocateChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;

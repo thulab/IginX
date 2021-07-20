@@ -19,6 +19,8 @@
 package cn.edu.tsinghua.iginx.metadata.storage;
 
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.PrefixChangeHook;
+import cn.edu.tsinghua.iginx.metadata.ReallocateChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;

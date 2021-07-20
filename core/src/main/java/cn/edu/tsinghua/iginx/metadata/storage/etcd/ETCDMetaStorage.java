@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.PrefixChangeHook;
+import cn.edu.tsinghua.iginx.metadata.ReallocateChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
@@ -676,6 +678,37 @@ public class ETCDMetaStorage implements IMetaStorage {
     @Override
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
         this.fragmentChangeHook = hook;
+    }
+
+    @Override
+    public void registerPrefixChangeHook(PrefixChangeHook hook) {
+        // TODO:
+    }
+
+    @Override
+    public void registerReallocateChangeHook(ReallocateChangeHook hook) {
+        // TODO:
+    }
+
+    @Override
+    public void reallocate(int fragment, long timestamp, long iginxid) throws Exception {
+        // TODO:
+    }
+
+    @Override
+    public boolean selection() throws Exception {
+        // TODO:
+        return false;
+    }
+
+    @Override
+    public void updatePrefix(Map<String, Double> prefix, long iginxid) throws Exception {
+        // TODO:
+    }
+
+    @Override
+    public void updateMeta() throws Exception {
+        // TODO: 
     }
 
     public void close() throws MetaStorageException {
