@@ -202,6 +202,16 @@ public abstract class BaseSessionIT {
         }
     }
 
+    public void a(){
+        assertTrue(false);
+        System.out.println("true");
+    }
+
+    @Test
+    public void bTest(){
+        a();
+    }
+
     private void insertNumRecords(List<String> insertPaths) throws SessionException, ExecutionException {
         int pathLen = insertPaths.size();
         long[] timestamps = new long[(int) TIME_PERIOD];
@@ -304,15 +314,53 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 6; i++) {
             dataTypeList.add(DataType.findByValue(i));
         }
+        System.out.println(dataTypeList);
         session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
-    private double changeResultToDouble(Object result) {
-        if (result instanceof java.lang.Long){
-            return (double)((long)result);
+    private double changeResultToDouble(Object rawResult) {
+        double result = 0;
+        if (rawResult instanceof java.lang.Long){
+            result = (double)((long)rawResult);
         } else {
-            return (double)result;
+            try {
+                result = (double)rawResult;
+            } catch (Exception e){
+                logger.error(e.getMessage());
+                fail();
+            }
         }
+        return result;
+    }
+
+    private float changeResultToFloat(Object rawResult){
+        float result = 0;
+        if (rawResult instanceof java.lang.Double){
+            result = (float)((double)rawResult);
+        } else {
+            try {
+                result = (float)rawResult;
+            } catch (Exception e){
+                logger.error(e.getMessage());
+                fail();
+            }
+        }
+        return result;
+    }
+
+    private int changeResultToInteger(Object rawResult){
+        int result = 0;
+        if (rawResult instanceof java.lang.Long){
+            result = (int)((long)rawResult);
+        } else {
+            try {
+                result = (int)rawResult;
+            } catch (Exception e){
+                logger.error(e.getMessage());
+                fail();
+            }
+        }
+        return result;
     }
 
     @Before
@@ -445,7 +493,7 @@ public abstract class BaseSessionIT {
             System.out.println(avgResult[i]);
             assertEquals(avg + pathNum, changeResultToDouble(avgResult[i]), delta);
         }
-        */
+
         // downSample Aggregate
 
         // downSample max
@@ -555,7 +603,7 @@ public abstract class BaseSessionIT {
                 assertEquals(sum + pathNum * (maxNum - dsTimestamp + 1), changeResultToDouble(dsResult.get(j)), delta);
             }
         }
-        /*
+
         //avg
         SessionQueryDataSet dsAvgDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
         int dsAvgLen = dsAvgDataSet.getTimestamps().length;
@@ -648,6 +696,7 @@ public abstract class BaseSessionIT {
                 }
             }
 
+            /*
             // Test downSample avg of the delete
             SessionQueryDataSet delDsAvgDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
             int delDsLen = delDsAvgDataSet.getTimestamps().length;
@@ -678,6 +727,7 @@ public abstract class BaseSessionIT {
                     }
                 }
             }
+            */
             currPath += simpleLen;
 
             //deleteAllDataInColumnTest, make new insert and delete here
@@ -747,6 +797,7 @@ public abstract class BaseSessionIT {
                 }
             }
 
+            /*
             // Test downsample function for the delete
             SessionQueryDataSet dsDelDataInColSet = session.downsampleQuery(delDataInColumnPaths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
             int dsDelDataLen = dsDelDataInColSet.getTimestamps().length;
@@ -768,7 +819,7 @@ public abstract class BaseSessionIT {
                         assertEquals(avg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                     }
                 }
-            }
+            }*/
             currPath += dataInColumnLen;
 
             // deleteAllColumnsTest
@@ -810,6 +861,8 @@ public abstract class BaseSessionIT {
                 }
             }
             currPath += delPartColumnLen;
+        } else {
+            currPath += simpleLen;
         }
 
         // fake data insert test
@@ -849,13 +902,14 @@ public abstract class BaseSessionIT {
                 int currPathPos = getPathNum(dataTypeResPaths.get(j)) - currPath;
                 switch (currPathPos) {
                     case 1:
-                        assertEquals((int) ((END_TIME - i) + 1), result.get(j));
+                        assertEquals((int)((END_TIME - i) + 1), changeResultToInteger(result.get(j)));
                         break;
                     case 2:
                         assertEquals((i + 2 + START_TIME) * 1000, result.get(j));
                         break;
                     case 3:
-                        assertEquals((float) (i + 3 + START_TIME + 0.01), (float) result.get(j), (float) delta);
+                        assertEquals((float)(i + 3 + START_TIME + 0.01),
+                                changeResultToFloat(result.get(j)), (float)delta);
                         break;
                     case 4:
                         assertEquals(((END_TIME - i) + 4 + 0.01) * 999, changeResultToDouble(result.get(j)), delta);
@@ -875,6 +929,7 @@ public abstract class BaseSessionIT {
 
         //aggregateData max & avg
         List<String> dTAggrPaths = getPaths(currPath + 1, 4);
+        logger.info(dTAggrPaths.toString());
         //max
         SessionAggregateQueryDataSet dtMaxDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> dtMaxPaths = dtMaxDataSet.getPaths();
@@ -885,13 +940,14 @@ public abstract class BaseSessionIT {
             int currPathPos = getPathNum(dtMaxPaths.get(i)) - currPath;
             switch (currPathPos) {
                 case 1:
-                    assertEquals((int) (END_TIME + 1), dtMaxResult[i]);
+                    assertEquals((int) (END_TIME + 1), changeResultToInteger(dtMaxResult[i]));
                     break;
                 case 2:
                     assertEquals((END_TIME + 2) * 1000, dtMaxResult[i]);
                     break;
                 case 3:
-                    assertEquals((float) (END_TIME + 3 + 0.01), (float) dtMaxResult[i], delta);
+                    assertEquals((float) (END_TIME + 3 + 0.01),
+                            changeResultToFloat(dtMaxResult[i]), (float)delta);
                     break;
                 case 4:
                     assertEquals((END_TIME + 4 + 0.01) * 999, changeResultToDouble(dtMaxResult[i]), delta);
@@ -970,14 +1026,15 @@ public abstract class BaseSessionIT {
                             if (delStartTime <= timestamp && timestamp <= delEndTime) {
                                 assertNull(result.get(j));
                             } else {
-                                assertEquals((int) ((END_TIME - i) + 1), result.get(j));
+                                assertEquals((int) ((END_TIME - i) + 1), changeResultToInteger(result.get(j)));
                             }
                             break;
                         case 3:
                             if (delStartTime <= timestamp && timestamp <= delEndTime) {
                                 assertNull(result.get(j));
                             } else {
-                                assertEquals((float) (i + 3 + START_TIME + 0.01), (float) result.get(j), (float) delta);
+                                assertEquals((float) (i + 3 + START_TIME + 0.01),
+                                        changeResultToFloat(result.get(j)), (float) delta);
                             }
                             break;
                         case 5:
@@ -1051,13 +1108,13 @@ public abstract class BaseSessionIT {
                                 assertEquals(timestamp % 2 == 0, result.get(j));
                                 break;
                             case 1:
-                                assertEquals((int) ((END_TIME - timestamp) + 1), result.get(j));
+                                assertEquals((int) ((END_TIME - timestamp) + 1), changeResultToInteger(result.get(j)));
                                 break;
                             case 2:
                                 assertEquals((timestamp + 2) * 1000, result.get(j));
                                 break;
                             case 3:
-                                assertEquals((float) (timestamp + 3 + 0.01), (float) result.get(j), (float) delta);
+                                assertEquals((float) (timestamp + 3 + 0.01), changeResultToFloat(result.get(j)), (float) delta);
                                 break;
                             case 4:
                                 assertEquals((4 + (END_TIME - timestamp) + START_TIME + 0.01) * 999, changeResultToDouble(result.get(j)), delta);
@@ -1108,6 +1165,8 @@ public abstract class BaseSessionIT {
             }
 
 
+            currPath += dataTypeLen;
+        } else {
             currPath += dataTypeLen;
         }
 
@@ -1591,7 +1650,7 @@ public abstract class BaseSessionIT {
                         }
                     }
                 } else {
-                    for (int j = 0; j < simpleLen; j++) {
+                    for (int j = 0; j < addStorageLen; j++) {
                         int pathNum = getPathNum(stDelPartResPaths.get(j));
                         assertNotEquals(pathNum, -1);
                         assertEquals(timestamp + pathNum, result.get(j));
