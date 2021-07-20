@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.AddColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
@@ -35,13 +34,11 @@ import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
-import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
@@ -61,6 +58,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -70,8 +68,12 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public class IginxWorker implements IService.Iface {
@@ -114,13 +116,6 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
-    public Status addColumns(AddColumnsReq req) {
-        AddColumnsContext context = new AddColumnsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
-    }
-
-    @Override
     public Status deleteColumns(DeleteColumnsReq req) {
         DeleteColumnsContext context = new DeleteColumnsContext(req);
         core.processRequest(context);
@@ -156,29 +151,51 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
-    public Status addStorageEngine(AddStorageEngineReq req) {
-        // 处理扩容
-        StorageEngine storageEngine = StorageEngine.fromThrift(req.type);
-        StorageEngineMeta meta = new StorageEngineMeta(0, req.getIp(), req.getPort(), req.getExtraParams(), storageEngine, metaManager.getIginxId());
-        String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String part : parts) {
-            String[] kAndV = part.split("=");
-            if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
-                continue;
-            }
+    public Status addStorageEngines(AddStorageEnginesReq req) {
+        List<StorageEngine> storageEngines = req.getStorageEngines();
+        List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
+
+        Map<cn.edu.tsinghua.iginx.core.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
+        String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
+        for (String driverInfo: driverInfos) {
+            String[] kAndV = driverInfo.split("=");
             String className = kAndV[1];
             try {
                 Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
                         loadClass(className);
                 Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-                if (!((boolean) method.invoke(null, meta))) {
-                    return RpcUtils.FAILURE;
-                }
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                checkConnectionMethods.put(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(kAndV[0]), method);
+            } catch (ClassNotFoundException | NoSuchMethodException | IllegalArgumentException e) {
                 logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
             }
         }
-        metaManager.addStorageEngine(meta);
+
+        for (StorageEngine storageEngine: storageEngines) {
+            cn.edu.tsinghua.iginx.core.db.StorageEngine type = cn.edu.tsinghua.iginx.core.db.StorageEngine.fromThrift(storageEngine.getType());
+            StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
+                    storageEngine.getExtraParams(), type, metaManager.getIginxId());
+            Method checkConnectionMethod = checkConnectionMethods.get(type);
+            if (checkConnectionMethod == null) {
+                logger.error("unsupported storage engine " + type);
+                return RpcUtils.FAILURE;
+            }
+            try {
+                if (!((boolean) checkConnectionMethod.invoke(null, meta))) {
+                    return RpcUtils.FAILURE;
+                }
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+                logger.error("load storage engine error, unable to connection to " + meta.getIp() + ":" + meta.getPort());
+                return RpcUtils.FAILURE;
+            }
+            storageEngineMetas.add(meta);
+
+        }
+        if (!storageEngineMetas.isEmpty()) {
+            storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
+        }
+        if (!metaManager.addStorageEngines(storageEngineMetas)) {
+            return RpcUtils.FAILURE;
+        }
         return RpcUtils.SUCCESS;
     }
 

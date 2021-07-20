@@ -288,13 +288,15 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean addStorageEngine(StorageEngineMeta storageEngineMeta) {
+    public boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
         try {
-            storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
-            cache.addStorageEngine(storageEngineMeta);
+            for (StorageEngineMeta storageEngineMeta: storageEngineMetas) {
+                storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
+                cache.addStorageEngine(storageEngineMeta);
+            }
             return true;
         } catch (MetaStorageException e) {
-            logger.error("add storage engine error: ", e);
+            logger.error("add storage engines error:", e);
         }
         return false;
     }

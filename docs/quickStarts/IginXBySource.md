@@ -1,4 +1,4 @@
-# IginX 安装使用教程
+# IginX 安装使用教程（编译安装）
 
 [TOC]
 
@@ -6,96 +6,97 @@ IginX 是清华大学大数据系统软件国家工程实验室，为满足工�
 
 ## 安装
 
-基于 IginX 的分布式时序数据库系统由三部分构成，一是 ZooKeeper，用于存储整个集群的原信息，二是 IginX 中间件，用于管理整个集群的拓扑结构，转发处理写入查询请求，并对外提供数据访问接口，三是数据存储后端，用于存储时序数据，本教程中使用 IoTDB 作为数据后端。
+### Java 安装
 
-### 安装 JDK8
-
-JDK 是 Java 程序的开发的运行环境，由于 ZooKeeper、IginX 以及 IoTDB 都是使用 Java 开发的，因此首先需要安装 Java。如果本地已经安装了 JDK8，直接跳过此步骤。
-
-安装 JDK8 具体方式如下：
+由于 ZooKeeper、IginX 以及 IoTDB 都是使用 Java 开发的，因此首先需要安装 Java。如果本地已经安装了 JDK>=1.8 的运行环境，**直接跳过此步骤**。
 
 1. 首先访问 [Java官方网站](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)下载适用于当前系统的 JDK 包。
-
 2. 安装
 
-   ```shell
-   $ cd ~/Downloads
-   $ tar -zxf jdk-8u181-linux-x64.gz # 解压文件
-   $ mkdir /opt/jdk
-   $ mv jdk-1.8.0_181 /opt/jdk/
-   ```
+```shell
+$ cd ~/Downloads
+$ tar -zxf jdk-8u181-linux-x64.gz # 解压文件
+$ mkdir /opt/jdk
+$ mv jdk-1.8.0_181 /opt/jdk/
+```
 
 3. 设置路径
 
-   编辑 ~/.bashrc 文件，在文件末端加入如下的两行：
+编辑 ~/.bashrc 文件，在文件末端加入如下的两行：
 
-   ```shell
-   export JAVA_HOME = /usr/jdk/jdk-1.8.0_181
-   export PATH=$PATH:$JAVA_HOME/bin
-   ```
+```shell
+export JAVA_HOME = /usr/jdk/jdk-1.8.0_181
+export PATH=$PATH:$JAVA_HOME/bin
+```
 
-   加载更改后的配置文件：
+加载更改后的配置文件：
 
-   ```shell
-   $ source ~/.bashrc
-   ```
+```shell
+$ source ~/.bashrc
+```
 
 4. 使用 java -version 判断 JDK 是否安装成功
 
-   ```shell
-   $ java -version
-   java version "1.8.0_181"
-   Java(TM) SE Runtime Environment (build 1.8.0_181-b13)
-   Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
-   ```
+```shell
+$ java -version
+java version "1.8.0_181"
+Java(TM) SE Runtime Environment (build 1.8.0_181-b13)
+Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
+```
 
-   如果显示出如上的字样，则表示安装成功。
+如果显示出如上的字样，则表示安装成功。
 
-### 安装 ZooKeeper
+### Maven 安装
 
-ZooKeeper 是 Apache 推出的开源的分布式应用程序协调服务。具体安装方式如下：
+Maven 是 Java 项目管理和自动构建工具，如果您需要从源码进行编译，还需要安装 Maven >= 3.6 的环境，否则，**直接跳过此步骤**。
 
-1. 访问[官网](https://zookeeper.apache.org/releases.html)下载并解压 ZooKeeper
+1. 访问[官网](http://maven.apache.org/download.cgi)下载并解压 Maven
 
-   ```shell
-   $ cd ~
-   $ wget https://mirrors.bfsu.edu.cn/apache/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz
-   $ tar -zxvf apache-zookeeper-3.7.0-bin.tar.gz
-   ```
+```
+$ wget http://mirrors.hust.edu.cn/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
 
-2. 修改 ZooKeeper 默认配置文件
+$ tar -xvf  apache-maven-3.3.9-bin.tar.gz
 
-   ```shell
-   $ cd apache-zookeeper-3.7.0-bin/
-   $ mkdir data
-   $ cp conf/zoo_sample.cfg conf/zoo.cfg
-   ```
+$ sudo mv -f apache-maven-3.3.9 /usr/local/
+```
 
-   然后编辑 conf/zoo.cfg 文件，将
+2. 设置路径
 
-   ```shell
-   dataDir=/tmp/zookeeper
-   ```
+编辑 ~/.bashrc 文件，在文件末端加入如下的两行：
 
-   修改为
+```shell
+export MAVEN_HOME=/usr/local/apache-maven-3.3.9
+export PATH=${PATH}:${MAVEN_HOME}/bin
+```
 
-   ```shell
-   dataDir=data
-   ```
+加载更改后的配置文件：
 
-### 安装 IginX 
+```shell
+$ source ~/.bashrc
+```
 
-IginX 为系统的主体部分，可以通过以下两种方式进行安装
+3. 使用 mvn -v 判断 Maven 是否安装成功
 
-1. 发布包安装：直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/rc%2Fv0.2.0/IginX-release-v0.2.0-bin.tar.gz) 即可。
+```shell
+$ mvn -v
+Apache Maven 3.6.1 (d66c9c0b3152b2e69ee9bac180bb8fcc8e6af555; 2019-04-05T03:00:29+08:00)
+```
+
+如果显示出如上的字样，则表示安装成功。
+
+### IoTDB 安装
+
+IoTDB 是 Apache 推出的时序数据库，具体安装方式如下：
 
 ```shell
 $ cd ~
-$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.2.0/IginX-release-v0.2.0-bin.zip
-$ unzip IginX-release-v0.2.0-bin.zip
+$ wget https://mirrors.bfsu.edu.cn/apache/iotdb/0.12.0/apache-iotdb-0.12.0-server-bin.zip
+$ unzip apache-iotdb-0.12.0-server-bin.zip
 ```
 
-2. 源码安装：拉取最新开发版本，并进行本地构建
+### IginX 安装
+
+拉取最新开发版本，并进行本地构建
 
 ```shell
 $ cd ~
@@ -125,16 +126,6 @@ $ mvn clean install -Dmaven.test.skip=true
 [INFO] ------------------------------------------------------------------------
 ```
 
-### 安装 IoTDB
-
-IoTDB 是 Apache 推出的时序数据库，具体安装方式如下：
-
-```shell
-$ cd ~
-$ wget https://mirrors.bfsu.edu.cn/apache/iotdb/0.12.0/apache-iotdb-0.12.0-server-bin.zip
-$ unzip apache-iotdb-0.12.0-server-bin.zip
-```
-
 ## 启动
 
 ### IoTDB
@@ -159,38 +150,9 @@ $ ./sbin/start-server.sh
 2021-05-27 08:21:07,450 [main] INFO  o.a.i.db.service.IoTDB:93 - IoTDB has started.
 ```
 
-### ZooKeeper
-
-随后启动 ZooKeeper：
-
-```shell
-$ cd ~
-$ cd apache-zookeeper-3.7.0-bin/
-$ ./bin/zkServer.sh start
-```
-
-显示出如下字样，表示 ZooKeeper 启动成功：
-
-```shell
-ZooKeeper JMX enabled by default
-Using config: /home/root/apache-zookeeper-3.7.0-bin/bin/../conf/zoo.cfg
-Starting zookeeper ... STARTED
-```
-
 ### IginX
 
-最后启动 IginX：
-
-1. 使用发布包启动
-
-```shell
-$ cd ~
-$ cd IginX-release-v0.2.0-bin
-$ chmod +x startIginX.sh # 为启动脚本添加启动权限
-$ ./startIginX.sh
-```
-
-2. 使用源码启动
+使用源码启动
 
 ```shell
 $ cd ~
@@ -494,4 +456,3 @@ session.closeSession();
 ```
 
 完整版使用代码可以参考：https://github.com/thulab/IginX/blob/main/example/src/main/java/cn/edu/tsinghua/iginx/session/IoTDBSessionExample.java
-

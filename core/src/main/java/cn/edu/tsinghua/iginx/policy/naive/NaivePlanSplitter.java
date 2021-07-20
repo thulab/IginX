@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -156,27 +155,6 @@ class NaivePlanSplitter implements IPlanSplitter {
             resultList.add(prefixArray[i]);
         }
         return resultList;
-    }
-
-    public List<SplitInfo> getSplitAddColumnsPlanResults(AddColumnsPlan plan) {
-        updatePrefix(plan);
-        List<SplitInfo> infoList = new ArrayList<>();
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
-        if (fragmentMap.isEmpty()) {
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateInitialFragmentsAndStorageUnits(plan.getPaths(), new TimeInterval(0, Long.MAX_VALUE));
-            iMetaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-            fragmentMap = iMetaManager.getFragmentMapByTimeSeriesInterval(plan.getTsInterval());
-        }
-        for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
-            for (FragmentMeta fragment : entry.getValue()) {
-                List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
-                for (StorageUnitMeta storageUnit : storageUnitList) {
-                    logger.info("add storage unit id {} to duplicate remove set.", storageUnit.getId());
-                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit));
-                }
-            }
-        }
-        return infoList;
     }
 
     public List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan) {

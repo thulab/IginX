@@ -27,12 +27,15 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import java.util.ArrayList;
+import java.util.Collections;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,7 +123,7 @@ public class IMetaManagerTest {
         extraParams.put("password", "root");
         extraParams.put("sessionPoolSize", "20");
         StorageEngineMeta engine1 = new StorageEngineMeta(0, "127.0.0.1", 1001, extraParams, StorageEngine.IoTDB, iMetaManager.getIginxId());
-        iMetaManager.addStorageEngine(engine1);
+        iMetaManager.addStorageEngines(Collections.singletonList(engine1));
         // 查询数据后端
         storageEngines = iMetaManager.getStorageEngineList();
         assertEquals(1, storageEngines.size());

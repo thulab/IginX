@@ -19,13 +19,10 @@
 package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
@@ -60,15 +57,9 @@ public interface IStorageEngine {
 
     QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
 
-    NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan);
-
     NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan);
 
     NonDataPlanExecuteResult syncExecuteDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan);
-
-    NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan);
-
-    NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan);
 
     AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan);
 

@@ -21,8 +21,7 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.thrift.AddColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEngineReq;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
@@ -44,6 +43,7 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
@@ -241,73 +241,19 @@ public class Session {
     }
 
     public void addStorageEngine(String ip, int port, StorageEngineType type, Map<String, String> extraParams) throws SessionException, ExecutionException {
-        AddStorageEngineReq req = new AddStorageEngineReq(sessionId, ip, port, type, extraParams);
+        StorageEngine storageEngine = new StorageEngine(ip, port, type, extraParams);
+        addStorageEngines(Collections.singletonList(storageEngine));
+    }
+
+    public void addStorageEngines(List<StorageEngine> storageEngines) throws SessionException, ExecutionException {
+        AddStorageEnginesReq req = new AddStorageEnginesReq(sessionId, storageEngines);
 
         try {
             Status status;
             do {
                 lock.readLock().lock();
                 try {
-                    status = client.addStorageEngine(req);
-                } finally {
-                    lock.readLock().unlock();
-                }
-            } while (checkRedirect(status));
-            RpcUtils.verifySuccess(status);
-        } catch (TException e) {
-            throw new SessionException(e);
-        }
-    }
-
-    public void addColumn(String path) throws ExecutionException, SessionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(path);
-        addColumns(paths);
-    }
-
-    public void addColumns(List<String> paths) throws SessionException, ExecutionException {
-        Collections.sort(paths);
-        AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-
-        try {
-            Status status;
-            do {
-                lock.readLock().lock();
-                try {
-                    status = client.addColumns(req);
-                } finally {
-                    lock.readLock().unlock();
-                }
-            } while (checkRedirect(status));
-            RpcUtils.verifySuccess(status);
-        } catch (TException e) {
-            throw new SessionException(e);
-        }
-    }
-
-    public void addColumns(List<String> paths, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
-        Integer[] index = new Integer[paths.size()];
-        for (int i = 0; i < paths.size(); i++) {
-            index[i] = i;
-        }
-        Arrays.sort(index, Comparator.comparing(paths::get));
-        Collections.sort(paths);
-        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
-        if (attributesList != null) {
-            for (Integer i : index) {
-                sortedAttributesList.add(attributesList.get(i));
-            }
-        }
-
-        AddColumnsReq req = new AddColumnsReq(sessionId, paths);
-        req.setAttributesList(sortedAttributesList);
-
-        try {
-            Status status;
-            do {
-                lock.readLock().lock();
-                try {
-                    status = client.addColumns(req);
+                    status = client.addStorageEngines(req);
                 } finally {
                     lock.readLock().unlock();
                 }

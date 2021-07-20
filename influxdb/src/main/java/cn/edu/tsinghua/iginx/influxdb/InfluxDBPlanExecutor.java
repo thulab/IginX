@@ -4,15 +4,12 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryExecuteDataSet;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.plan.AddColumnsPlan;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.CreateDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.DropDatabasePlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
@@ -303,11 +300,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteAddColumnsPlan(AddColumnsPlan plan) {
-        return new NonDataPlanExecuteResult(SUCCESS, plan);
-    }
-
-    @Override
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -347,30 +339,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
             );
         }
 
-        return new NonDataPlanExecuteResult(SUCCESS, plan);
-    }
-
-    @Override
-    public NonDataPlanExecuteResult syncExecuteCreateDatabasePlan(CreateDatabasePlan plan) {
-        InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
-        Organization organization = client.getOrganizationsApi()
-                .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
-        client.getBucketsApi().createBucket(plan.getDatabaseName(), organization);
-        return new NonDataPlanExecuteResult(SUCCESS, plan);
-    }
-
-    @Override
-    public NonDataPlanExecuteResult syncExecuteDropDatabasePlan(DropDatabasePlan plan) {
-        InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
-        Bucket bucket = client.getBucketsApi()
-                .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
-                .filter(b -> b.getName().equals(plan.getDatabaseName()))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
-        client.getBucketsApi().deleteBucket(bucket);
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
 
