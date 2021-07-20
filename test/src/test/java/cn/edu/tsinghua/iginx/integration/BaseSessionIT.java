@@ -623,7 +623,7 @@ public abstract class BaseSessionIT {
 
             //delete data
             session.deleteDataInColumns(delPartPaths, delStartTime, delEndTime);
-
+            Thread.sleep(1000);
             SessionQueryDataSet delPartDataSet = session.queryData(paths, START_TIME, END_TIME + 1);
 
             int delPartLen = delPartDataSet.getTimestamps().length;
@@ -728,6 +728,7 @@ public abstract class BaseSessionIT {
             int deleteDataInColumnLen = 2;
             List<String> delAllDataInColumnPaths = getPaths(currPath, deleteDataInColumnLen);
             session.deleteDataInColumns(delAllDataInColumnPaths, START_TIME, END_TIME);
+            Thread.sleep(1000);
             SessionQueryDataSet delDataInColumnDataSet = session.queryData(delDataInColumnPaths, START_TIME, END_TIME + 1);
             int delDataInColumnLen = delDataInColumnDataSet.getTimestamps().length;
             List<String> delDataInColumnResPaths = delDataInColumnDataSet.getPaths();
@@ -989,7 +990,7 @@ public abstract class BaseSessionIT {
             long dtDelTimePeriod = dtDelEndTime - dtDelStartTime + 1;
 
             session.deleteDataInColumns(dtDelPaths, dtDelStartTime, dtDelEndTime);
-
+            Thread.sleep(1000);
             SessionQueryDataSet dtDelPartDataSet = session.queryData(dataTypePaths, START_TIME, END_TIME + 1);
 
             int dtDelPartLen = dtDelPartDataSet.getTimestamps().length;
@@ -1079,6 +1080,7 @@ public abstract class BaseSessionIT {
             int dtDelColumnNum = 2;
             List<String> dtDelColumnPaths = getPaths(currPath, dtDelColumnNum);
             session.deleteDataInColumns(dtDelColumnPaths, START_TIME, END_TIME);
+            Thread.sleep(1000);
             SessionQueryDataSet dtDelColDataSet = session.queryData(dataTypePaths2, START_TIME, END_TIME + 1);
             int dtDelColLen = dtDelColDataSet.getTimestamps().length;
             List<String> dtDelColResPaths = dtDelColDataSet.getPaths();
@@ -1617,7 +1619,7 @@ public abstract class BaseSessionIT {
 
             //delete data
             session.deleteDataInColumns(stDelPartPaths, delStartTime, delEndTime);
-
+            Thread.sleep(1000);
             SessionQueryDataSet stDelPartDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
             //query
             int stDelPartLen = stDelPartDataSet.getTimestamps().length;
