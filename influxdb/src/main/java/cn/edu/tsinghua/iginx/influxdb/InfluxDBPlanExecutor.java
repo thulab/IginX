@@ -625,7 +625,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
                 values.add(table.getRecords().get(0).getValue());
                 timestamps.add(table.getRecords().get(0).getTime().toEpochMilli());
-                values.add(table.getRecords().get(0).getValue());
             }
         }
 
@@ -678,7 +677,6 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                 dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
                 values.add(table.getRecords().get(0).getValue());
                 timestamps.add(table.getRecords().get(0).getTime().toEpochMilli());
-                values.add(table.getRecords().get(0).getValue());
             }
         }
 
