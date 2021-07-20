@@ -202,16 +202,6 @@ public abstract class BaseSessionIT {
         }
     }
 
-    public void a(){
-        assertTrue(false);
-        System.out.println("true");
-    }
-
-    @Test
-    public void bTest(){
-        a();
-    }
-
     private void insertNumRecords(List<String> insertPaths) throws SessionException, ExecutionException {
         int pathLen = insertPaths.size();
         long[] timestamps = new long[(int) TIME_PERIOD];
