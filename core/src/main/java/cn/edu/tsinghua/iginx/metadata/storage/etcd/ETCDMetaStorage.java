@@ -564,7 +564,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             storageUnitLeaseLock.lock();
             storageUnitLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
-            client.getLockClient().lock(ByteSequence.from(STORAGE_UNIT_LOCK.getBytes()), storageUnitLease);
+            client.getLockClient().lock(ByteSequence.from(STORAGE_UNIT_LOCK.getBytes()), storageUnitLease).get().getKey();
         } catch (Exception e) {
             storageUnitLeaseLock.unlock();
             throw new MetaStorageException("acquire storage unit mutex error: ", e);
