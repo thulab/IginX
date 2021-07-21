@@ -456,7 +456,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     private void releaseStorage() throws MetaStorageException {
         try {
             client.getLockClient().unlock(ByteSequence.from(STORAGE_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(storageLease).get();
+            //client.getLeaseClient().revoke(storageLease).get();
             storageLease = -1L;
         } catch (Exception e) {
             throw new MetaStorageException("release storage error: ", e);
@@ -594,7 +594,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void releaseStorageUnit() throws MetaStorageException {
         try {
             client.getLockClient().unlock(ByteSequence.from(STORAGE_UNIT_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(storageUnitLease).get();
+            //client.getLeaseClient().revoke(storageUnitLease).get();
             storageUnitLease = -1L;
         } catch (Exception e) {
             throw new MetaStorageException("release storage mutex error: ", e);
@@ -664,7 +664,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void releaseFragment() throws MetaStorageException {
         try {
             client.getLockClient().unlock(ByteSequence.from(FRAGMENT_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(fragmentLease).get();
+            //client.getLeaseClient().revoke(fragmentLease).get();
             fragmentLease = -1L;
         } catch (Exception e) {
             throw new MetaStorageException("release fragment mutex error: ", e);
