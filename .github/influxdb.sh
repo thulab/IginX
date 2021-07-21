@@ -24,8 +24,10 @@ sed -i "s/your-token/${a}/g" conf/config.properties
 
 sed -i "s/my-org/testOrg/g" conf/config.properties
 
+sudo sh -c "cp -r ~/.influxdbv2/ ~/.influxdbv2-2"
+
 sed -i "s/storageEngineList=127.0.0.1#6667#iotdb/#storageEngineList=127.0.0.1#6667#iotdb/g" conf/config.properties
 
 sed -i "s/#storageEngineList=127.0.0.1#8086#influxdb/storageEngineList=127.0.0.1#8086#influxdb/g" conf/config.properties
 
-sudo sh -c "cd influxdb2-2.0.7-linux-amd64-2/; nohup ./influxd run --bolt-path=~/.influxdbv2/influxd.bolt2 --engine-path=~/.influxdbv2/engine2 --http-bind-address=:8087 &"
+sudo sh -c "cd influxdb2-2.0.7-linux-amd64-2/; nohup ./influxd run --bolt-path=~/.influxdbv2-2/influxd.bolt --engine-path=~/.influxdbv2-2/engine --http-bind-address=:8087 &"
