@@ -11,6 +11,7 @@ import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -843,8 +844,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                     return new DownsampleQueryPlanExecuteResult(FAILURE, plan, null);
                 }
             }
-
-            dataSets.addAll(tables.stream().map(InfluxDBQueryExecuteDataSet::new).collect(Collectors.toList()));
+            if (plan.getIginxPlanType() == IginxPlan.IginxPlanType.DOWNSAMPLE_SUM) { // 数字类型 downsample sum 也都返回 double
+                dataSets.addAll(tables.stream().map(e -> new InfluxDBQueryExecuteDataSet(e, true)).collect(Collectors.toList()));
+            } else {
+                dataSets.addAll(tables.stream().map(InfluxDBQueryExecuteDataSet::new).collect(Collectors.toList()));
+            }
         }
 
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, dataSets);
