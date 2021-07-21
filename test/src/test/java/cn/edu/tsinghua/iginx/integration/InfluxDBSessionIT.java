@@ -129,6 +129,8 @@ public class InfluxDBSessionIT {
 
         aggregateQuery();
 
+        downsampleQuery();
+
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
