@@ -8,8 +8,6 @@ sh -c "tar -zxvf influxdb2-2.0.7-linux-amd64.tar.gz"
 
 sh -c "ls influxdb2-2.0.7-linux-amd64"
 
-sh -c "sudo cp -r influxdb2-2.0.7-linux-amd64/ influxdb2-2.0.7-linux-amd64-2/"
-
 sudo sh -c "cd influxdb2-2.0.7-linux-amd64/; nohup ./influxd run --bolt-path=~/.influxdbv2/influxd.bolt --engine-path=~/.influxdbv2/engine --http-bind-address=:8086 &"
 
 sh -c "sleep 30"
@@ -24,10 +22,11 @@ sed -i "s/your-token/${a}/g" conf/config.properties
 
 sed -i "s/my-org/testOrg/g" conf/config.properties
 
-sudo sh -c "cp -r influxdb2-2.0.7-linux-amd64/.influxdbv2/ influxdb2-2.0.7-linux-amd64-2/.influxdbv2/"
 
 sed -i "s/storageEngineList=127.0.0.1#6667#iotdb/#storageEngineList=127.0.0.1#6667#iotdb/g" conf/config.properties
 
 sed -i "s/#storageEngineList=127.0.0.1#8086#influxdb/storageEngineList=127.0.0.1#8086#influxdb/g" conf/config.properties
+
+sh -c "sudo cp -r influxdb2-2.0.7-linux-amd64/ influxdb2-2.0.7-linux-amd64-2/"
 
 sudo sh -c "cd influxdb2-2.0.7-linux-amd64-2/; nohup ./influxd run --bolt-path=~/.influxdbv2/influxd.bolt --engine-path=~/.influxdbv2/engine --http-bind-address=:8087 &"
