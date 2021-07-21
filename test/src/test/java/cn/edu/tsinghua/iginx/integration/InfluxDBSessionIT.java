@@ -124,6 +124,10 @@ public class InfluxDBSessionIT {
         // 降采样聚合查询
         downsampleQuery();*/
 
+        aggregateQuery();
+
+        downsampleQuery();
+
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
@@ -295,12 +299,12 @@ public class InfluxDBSessionIT {
         dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 100);
         dataSet.print();
 
-        // SUM
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 100);
-        dataSet.print();
-
         // AVG
         dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 100);
+        dataSet.print();
+
+        // SUM
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 100);
         dataSet.print();
 
         // 降采样查询结束
