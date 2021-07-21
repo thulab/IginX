@@ -1197,6 +1197,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 5; i++) {
             mulStQueryThreads[i].join();
         }
+        Thread.sleep(1000);
         // TODO change the simple query and one of the avg query to multithread
         for (int i = 0; i < 5; i++) {
             SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
