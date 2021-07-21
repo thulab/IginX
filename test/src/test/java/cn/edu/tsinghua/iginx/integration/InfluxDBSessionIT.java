@@ -127,6 +127,8 @@ public class InfluxDBSessionIT {
         // 降采样聚合查询
         downsampleQuery();*/
 
+        aggregateQuery();
+
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
