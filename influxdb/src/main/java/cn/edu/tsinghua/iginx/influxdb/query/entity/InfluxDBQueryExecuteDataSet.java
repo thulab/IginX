@@ -13,17 +13,27 @@ import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInfluxDB;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
+import static cn.edu.tsinghua.iginx.thrift.DataType.DOUBLE;
 import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
 
 public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet {
 
-    private FluxTable table;
+    private final FluxTable table;
 
     private int index;
+
+    private final boolean transferToDouble;
 
     public InfluxDBQueryExecuteDataSet(FluxTable table) {
         this.table = table;
         this.index = 0;
+        this.transferToDouble = false;
+    }
+
+    public InfluxDBQueryExecuteDataSet(FluxTable table, boolean transferToDouble) {
+        this.table = table;
+        this.index = 0;
+        this.transferToDouble = transferToDouble;
     }
 
     @Override
@@ -42,7 +52,11 @@ public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet {
     public List<DataType> getColumnTypes() throws ExecutionException {
         List<DataType> columnTypes = new ArrayList<>();
         columnTypes.add(LONG);
-        columnTypes.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+        DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+        if (transferToDouble && dataType == LONG) {
+            dataType = DOUBLE;
+        }
+        columnTypes.add(dataType);
         return columnTypes;
     }
 
@@ -55,7 +69,18 @@ public class InfluxDBQueryExecuteDataSet implements QueryExecuteDataSet {
     public RowRecord next() throws ExecutionException {
         RowRecord rowRecord = new RowRecord(table.getRecords().get(index).getTime().toEpochMilli());
         Object value = table.getRecords().get(index).getValue();
-        rowRecord.setFields(Collections.singletonList(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()) == BINARY ? ((String) value).getBytes() : value));
+        DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+        if (dataType == BINARY) {
+            rowRecord.setFields(Collections.singletonList(((String) value).getBytes()));
+        } else if (dataType == LONG && transferToDouble) {
+            if (value == null) {
+                rowRecord.setFields(Collections.singletonList(null));
+            } else {
+                rowRecord.setFields(Collections.singletonList(((Long) value).doubleValue()));
+            }
+        } else {
+            rowRecord.setFields(Collections.singletonList(value));
+        }
         index++;
         return rowRecord;
     }
