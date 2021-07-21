@@ -66,6 +66,7 @@ import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInflu
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
+import static cn.edu.tsinghua.iginx.thrift.DataType.DOUBLE;
 import static com.influxdb.client.domain.WritePrecision.MS;
 
 public class InfluxDBPlanExecutor implements IStorageEngine {
@@ -387,9 +388,20 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                         countTables.get(i).getRecords().get(0).getValueByKey("t"),
                         countTables.get(i).getRecords().get(0).getField()
                 ));
-                dataTypeList.add(fromInfluxDB(sumTables.get(i).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
+                DataType dataType = fromInfluxDB(sumTables.get(i).getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+                if (dataType == DataType.LONG) {
+                    dataTypeList.add(DOUBLE);
+                    Long value = (Long) sumTables.get(i).getRecords().get(0).getValue();
+                    if (value == null) {
+                        sums.add(null);
+                    } else {
+                        sums.add(value.doubleValue());
+                    }
+                } else {
+                    dataTypeList.add(dataType);
+                    sums.add(sumTables.get(i).getRecords().get(0).getValue());
+                }
                 counts.add((Long) countTables.get(i).getRecords().get(0).getValue());
-                sums.add(sumTables.get(i).getRecords().get(0).getValue());
             }
         }
 
@@ -477,8 +489,19 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                         table.getRecords().get(0).getValueByKey("t"),
                         table.getRecords().get(0).getField()
                 ));
-                dataTypeList.add(fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType()));
-                values.add(table.getRecords().get(0).getValue());
+                DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+                if (dataType == DataType.LONG) {
+                    dataTypeList.add(DOUBLE);
+                    Long value = (Long) table.getRecords().get(0).getValue();
+                    if (value == null) {
+                        values.add(null);
+                    } else {
+                        values.add(value.doubleValue());
+                    }
+                } else {
+                    dataTypeList.add(dataType);
+                    values.add(table.getRecords().get(0).getValue());
+                }
             }
         }
 
