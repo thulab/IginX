@@ -180,7 +180,11 @@ public abstract class BaseSessionIT {
                 case 3:
                     try {
                         if (aggregateType == null) {
-                            queryDataSet = localSession.queryData(path, startTime, endTime);
+                            SessionQueryDataSet q = localSession.queryData(path, startTime, endTime);
+                            logger.info(q.getPaths().toString());
+                            logger.info(q.getValues().get(0).toString());
+                            logger.info(String.valueOf(q.getTimestamps().length));
+                            queryDataSet = q;
                         } else {
                             queryDataSet = localSession.aggregateQuery(path, startTime, endTime, aggregateType);
                         }
@@ -1199,11 +1203,13 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 5; i++) {
             mulStQueryThreads[i].join();
         }
-        Thread.sleep(300000);
+        Thread.sleep(1000);
         // TODO change the simple query and one of the avg query to multithread
         try {
         for (int i = 0; i < 5; i++) {
             SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
+            logger.info(dataSet.getPaths().toString());
+            logger.info(dataSet.getValues().get(0).toString());
             int len = dataSet.getTimestamps().length;
             List<String> resPaths = dataSet.getPaths();
             assertEquals(mulStQueryLen, resPaths.size());
