@@ -1199,7 +1199,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 5; i++) {
             mulStQueryThreads[i].join();
         }
-        Thread.sleep(30000);
+        Thread.sleep(300000);
         // TODO change the simple query and one of the avg query to multithread
         try {
         for (int i = 0; i < 5; i++) {
