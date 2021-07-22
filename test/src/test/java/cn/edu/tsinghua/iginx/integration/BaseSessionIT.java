@@ -1192,7 +1192,7 @@ public abstract class BaseSessionIT {
         MultiThreadTask[] mulStQueryTasks = new MultiThreadTask[mulStQueryLen];
         Thread[] mulStQueryThreads = new Thread[mulStQueryLen];
         //each query query one storage
-        int queryTaskNum = 3;
+        int queryTaskNum = 4;
         for (int i = 0; i < queryTaskNum; i++) {
             mulStQueryTasks[i] = new MultiThreadTask(3, mulStPaths, START_TIME, END_TIME + 1,
                     0, 0, null, 6888);
