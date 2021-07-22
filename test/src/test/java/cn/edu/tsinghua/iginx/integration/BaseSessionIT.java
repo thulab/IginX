@@ -52,6 +52,7 @@ public abstract class BaseSessionIT {
     protected boolean isAbleForDelete;
     protected StorageEngineType storageEngineType;
     protected int defaultPort2;
+    protected Map<String, String> extraParams;
 
     //params for downSample
     private static final long PRECISION = 123L;
@@ -1199,6 +1200,7 @@ public abstract class BaseSessionIT {
         }
         Thread.sleep(10000);
         // TODO change the simple query and one of the avg query to multithread
+        try {
         for (int i = 0; i < 5; i++) {
             SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
             int len = dataSet.getTimestamps().length;
@@ -1214,6 +1216,9 @@ public abstract class BaseSessionIT {
                     assertEquals(getPathNum(resPaths.get(k)) + timestamp, result.get(k));
                 }
             }
+        }} catch (Exception e){
+            logger.error(e.getMessage());
+            fail();
         }
         // Test max function
         SessionAggregateQueryDataSet mulStMaxDataSet = session.aggregateQuery(mulStPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
@@ -1562,10 +1567,6 @@ public abstract class BaseSessionIT {
 
 
         //addSameTypeOfStorageEngineTest
-        Map<String, String> extraParams =  new HashMap<>();
-        extraParams.put("username", "root");
-        extraParams.put("password", "root");
-        extraParams.put("sessionPoolSize", "100");
         session.addStorageEngine("127.0.0.1", defaultPort2, storageEngineType, extraParams);
 
         int addStorageLen = 5;
