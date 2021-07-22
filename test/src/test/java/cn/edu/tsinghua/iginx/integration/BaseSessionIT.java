@@ -1192,21 +1192,22 @@ public abstract class BaseSessionIT {
         MultiThreadTask[] mulStQueryTasks = new MultiThreadTask[mulStQueryLen];
         Thread[] mulStQueryThreads = new Thread[mulStQueryLen];
         //each query query one storage
-        for (int i = 0; i < 5; i++) {
+        int queryTaskNum = 3;
+        for (int i = 0; i < queryTaskNum; i++) {
             mulStQueryTasks[i] = new MultiThreadTask(3, mulStPaths, START_TIME, END_TIME + 1,
                     0, 0, null, 6888);
             mulStQueryThreads[i] = new Thread(mulStQueryTasks[i]);
         }
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < queryTaskNum; i++) {
             mulStQueryThreads[i].start();
         }
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < queryTaskNum; i++) {
             mulStQueryThreads[i].join();
         }
         Thread.sleep(3000);
         // TODO change the simple query and one of the avg query to multithread
         try {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < queryTaskNum; i++) {
             SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
             logger.info(dataSet.getPaths().toString());
             logger.info(dataSet.getValues().get(0).toString());
