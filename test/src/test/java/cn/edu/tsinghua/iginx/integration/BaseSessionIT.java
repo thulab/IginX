@@ -1217,7 +1217,7 @@ public abstract class BaseSessionIT {
                 }
             }
         }} catch (Exception e){
-            logger.error(e.getMessage());
+            e.printStackTrace();
             fail();
         }
         // Test max function
