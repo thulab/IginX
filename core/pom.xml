@@ -29,6 +29,19 @@
   <artifactId>iginx-core</artifactId>
   <name>IginX Core</name>
 
+  <repositories>
+    <!--   repository for moquette    -->
+    <repository>
+      <id>bintray</id>
+      <url>https://jcenter.bintray.com</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>cn.edu.tsinghua</groupId>
