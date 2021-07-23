@@ -464,7 +464,7 @@ public abstract class BaseSessionIT {
             assertNotEquals(pathNum, -1);
             assertEquals(sum + pathNum * TIME_PERIOD, changeResultToDouble(sumResult[i]), delta);
         }
-        /*
+
         //aggrAvg
         SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
         assertNull(avgDataSet.getTimestamps());
@@ -472,13 +472,10 @@ public abstract class BaseSessionIT {
         Object[] avgResult = avgDataSet.getValues();
         assertEquals(simpleLen, avgResPaths.size());
         assertEquals(simpleLen, avgDataSet.getValues().length);
-        System.out.println(avgResult[0]);
-        System.out.println(avgResPaths);
         for (int i = 0; i < simpleLen; i++) {
             double avg = (START_TIME + END_TIME) / 2.0;
             int pathNum = getPathNum(avgResPaths.get(i));
             assertNotEquals(pathNum, -1);
-            System.out.println(avgResult[i]);
             assertEquals(avg + pathNum, changeResultToDouble(avgResult[i]), delta);
         }
 
@@ -610,7 +607,7 @@ public abstract class BaseSessionIT {
                 assertNotEquals(pathNum, -1);
                 assertEquals(avg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
             }
-        }*/
+        }
 
         //Simple delete and aggregate
         if (isAbleForDelete) {
@@ -684,7 +681,7 @@ public abstract class BaseSessionIT {
                 }
             }
 
-            /*
+
             // Test downSample avg of the delete
             SessionQueryDataSet delDsAvgDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
             int delDsLen = delDsAvgDataSet.getTimestamps().length;
@@ -715,7 +712,7 @@ public abstract class BaseSessionIT {
                     }
                 }
             }
-            */
+
             currPath += simpleLen;
 
             //deleteAllDataInColumnTest, make new insert and delete here
@@ -786,7 +783,7 @@ public abstract class BaseSessionIT {
                 }
             }
 
-            /*
+
             // Test downsample function for the delete
             SessionQueryDataSet dsDelDataInColSet = session.downsampleQuery(delDataInColumnPaths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
             int dsDelDataLen = dsDelDataInColSet.getTimestamps().length;
@@ -808,7 +805,7 @@ public abstract class BaseSessionIT {
                         assertEquals(avg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                     }
                 }
-            }*/
+            }
             currPath += dataInColumnLen;
 
             // deleteAllColumnsTest
@@ -945,7 +942,7 @@ public abstract class BaseSessionIT {
                     break;
             }
         }
-        /*
+
         //avg
         SessionAggregateQueryDataSet dtAvgDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> dtAvgPaths = dtAvgDataSet.getPaths();
@@ -971,7 +968,7 @@ public abstract class BaseSessionIT {
                     fail();
                     break;
             }
-        }*/
+        }
 
         if (isAbleForDelete) {
             //deletePatialData
@@ -1228,7 +1225,6 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < mulStQueryLen; i++) {
             assertEquals(getPathNum(mulStMaxResPaths.get(i)) + END_TIME, mulStMaxResult[i]);
         }
-        /*
         // Test avg function
         SessionAggregateQueryDataSet mulStAvgDataSet = session.aggregateQuery(mulStPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> mulStAvgResPaths = mulStAvgDataSet.getPaths();
@@ -1237,7 +1233,7 @@ public abstract class BaseSessionIT {
         assertEquals(mulStQueryLen, mulStAvgDataSet.getValues().length);
         for (int i = 0; i < mulStQueryLen; i++) {
             assertEquals(getPathNum(mulStAvgResPaths.get(i)) + (START_TIME + END_TIME) / 2.0, changeResultToDouble(mulStAvgResult[i]), delta);
-        }*/
+        }
         currPath += mulStQueryLen;
         //query test, multithread insert for time, multithread query
         int mulTimeQueryLen = 5;
@@ -1282,7 +1278,6 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < mulTimeQueryLen; i++) {
             assertEquals(getPathNum(mulTimeMaxResPaths.get(i)) + END_TIME, mulTimeMaxResult[i]);
         }
-        /*
         // Test avg function
         SessionAggregateQueryDataSet mulTimeAvgDataSet = session.aggregateQuery(mulTimePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> mulTimeAvgResPaths = mulTimeAvgDataSet.getPaths();
@@ -1292,7 +1287,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < mulTimeQueryLen; i++) {
             assertEquals(getPathNum(mulTimeAvgResPaths.get(i)) + (START_TIME + END_TIME) / 2.0,
                     changeResultToDouble(mulTimeAvgResult[i]), delta);
-        }*/
+        }
         currPath += mulTimeQueryLen;
 
         // multithread delete test, insert in
@@ -1598,7 +1593,6 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < addStorageLen; i++) {
             assertEquals(TIME_PERIOD, addStCountResult[i]);
         }
-        /*
         //aggr Avg
         SessionAggregateQueryDataSet addStAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         assertNull(addStAvgDataSet.getTimestamps());
@@ -1611,7 +1605,7 @@ public abstract class BaseSessionIT {
             int pathNum = getPathNum(addStAvgResPaths.get(i));
             assertNotEquals(pathNum, -1);
             assertEquals(avg + pathNum, changeResultToDouble(addStAvgResult[i]), delta);
-        }*/
+        }
         //deletePartial, with query, aggr count and aggr Avg
         if (isAbleForDelete) {
             int stRemoveLen = 3;
