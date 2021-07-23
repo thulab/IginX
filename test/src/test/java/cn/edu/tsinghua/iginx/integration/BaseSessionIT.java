@@ -1189,10 +1189,11 @@ public abstract class BaseSessionIT {
         Thread.sleep(1000);
 
         //query
-        MultiThreadTask[] mulStQueryTasks = new MultiThreadTask[mulStQueryLen];
-        Thread[] mulStQueryThreads = new Thread[mulStQueryLen];
-        //each query query one storage
         int queryTaskNum = 5;
+        MultiThreadTask[] mulStQueryTasks = new MultiThreadTask[queryTaskNum];
+        Thread[] mulStQueryThreads = new Thread[queryTaskNum];
+        //each query query one storage
+
         for (int i = 0; i < queryTaskNum; i++) {
             mulStQueryTasks[i] = new MultiThreadTask(3, mulStPaths, START_TIME, END_TIME + 1,
                     0, 0, null, 6888);
@@ -1249,7 +1250,7 @@ public abstract class BaseSessionIT {
         }*/
         currPath += mulStQueryLen;
         //query test, multithread insert for time, multithread query
-        int mulTimeQueryLen = 5;
+        int mulTimeQueryLen = 10;
         List<String> mulTimePaths = getPaths(currPath, mulTimeQueryLen);
         MultiThreadTask[] mulTimeInsertTasks = new MultiThreadTask[mulTimeQueryLen];
         Thread[] mulTimeInsertThreads = new Thread[mulTimeQueryLen];
