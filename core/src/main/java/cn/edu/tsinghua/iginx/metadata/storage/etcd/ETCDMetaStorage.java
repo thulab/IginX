@@ -530,7 +530,6 @@ public class ETCDMetaStorage implements IMetaStorage {
     @Override
     public Map<String, StorageUnitMeta> loadStorageUnit() throws MetaStorageException {
         try {
-            lockStorageUnit();
             Map<String, StorageUnitMeta> storageUnitMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
                     .get(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
@@ -554,10 +553,6 @@ public class ETCDMetaStorage implements IMetaStorage {
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when load storage unit: ", e);
             throw new MetaStorageException(e);
-        } finally {
-            if (storageUnitLease != -1L) {
-                releaseStorageUnit();
-            }
         }
     }
 
@@ -566,7 +561,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             storageUnitLeaseLock.lock();
             storageUnitLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
-            client.getLockClient().lock(ByteSequence.from(STORAGE_UNIT_LOCK.getBytes()), storageUnitLease);
+            client.getLockClient().lock(ByteSequence.from(STORAGE_UNIT_LOCK.getBytes()), storageUnitLease).get().getKey();
         } catch (Exception e) {
             storageUnitLeaseLock.unlock();
             throw new MetaStorageException("acquire storage unit mutex error: ", e);
@@ -613,7 +608,6 @@ public class ETCDMetaStorage implements IMetaStorage {
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
         try {
-            lockFragment();
             Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
                     .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
@@ -628,10 +622,6 @@ public class ETCDMetaStorage implements IMetaStorage {
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when load fragments: ", e);
             throw new MetaStorageException(e);
-        } finally {
-            if (fragmentLease != -1L) {
-                releaseFragment();
-            }
         }
     }
 
