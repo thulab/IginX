@@ -64,6 +64,7 @@ public class DefaultMetaCache implements IMetaCache {
     // schemaMapping 的缓存
     private final Map<String, Map<String, Integer>> schemaMappings;
 
+    // 分片统计信息的缓存
     private final Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatisticsMap;
 
     public static DefaultMetaCache getInstance() {
@@ -91,7 +92,7 @@ public class DefaultMetaCache implements IMetaCache {
         storageEngineMetaMap = new ConcurrentHashMap<>();
         // schemaMapping 相关
         schemaMappings = new ConcurrentHashMap<>();
-        // 统计信息
+        // 分片统计信息相关
         activeFragmentStatisticsMap = new ConcurrentHashMap<>();
     }
 

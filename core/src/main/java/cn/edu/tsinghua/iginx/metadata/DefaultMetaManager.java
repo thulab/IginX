@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
+import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -131,6 +132,13 @@ public class DefaultMetaManager implements IMetaManager {
                         try {
                             storage.lockActiveFragmentStatistics();
                             storage.updateActiveFragmentStatistics(cache.getActiveFragmentStatistics());
+                            if (needToReshard()) {
+                                if (storage.proposeToReshard()) {
+
+                                } else {
+
+                                }
+                            }
                             storage.releaseActiveFragmentStatisticsFragment();
                         } catch (MetaStorageException e) {
                             logger.error("update active fragment statistics error: ", e);
@@ -607,4 +615,12 @@ public class DefaultMetaManager implements IMetaManager {
         return storageEngineMetaList;
     }
 
+    private boolean needToReshard() {
+        for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : cache.getActiveFragmentStatistics().entrySet()) {
+            if (entry.getValue().getCount() >= ConfigDescriptor.getInstance().getConfig().getCountThreshold()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

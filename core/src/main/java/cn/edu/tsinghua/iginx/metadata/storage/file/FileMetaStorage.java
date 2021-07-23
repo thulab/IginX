@@ -420,4 +420,9 @@ public class FileMetaStorage implements IMetaStorage {
     public void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook) {
 
     }
+
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        return false;
+    }
 }

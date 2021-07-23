@@ -90,4 +90,6 @@ public interface IMetaStorage {
     void releaseActiveFragmentStatisticsFragment() throws MetaStorageException;
 
     void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook);
+
+    boolean proposeToReshard() throws MetaStorageException;
 }

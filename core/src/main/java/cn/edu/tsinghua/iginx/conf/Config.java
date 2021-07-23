@@ -74,6 +74,8 @@ public class Config {
 
     private long globalStatisticsCollectInterval = 60;
 
+    private long countThreshold = 100000;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -288,5 +290,13 @@ public class Config {
 
     public void setGlobalStatisticsCollectInterval(long globalStatisticsCollectInterval) {
         this.globalStatisticsCollectInterval = globalStatisticsCollectInterval;
+    }
+
+    public long getCountThreshold() {
+        return countThreshold;
+    }
+
+    public void setCountThreshold(long countThreshold) {
+        this.countThreshold = countThreshold;
     }
 }

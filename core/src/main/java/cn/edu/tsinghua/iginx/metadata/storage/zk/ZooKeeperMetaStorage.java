@@ -78,6 +78,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String STATISTICS_LOCK_NODE = "/lock/statistics";
 
+    private static final String RESHARD_LOCK_NODE = "/lock/reshard";
+
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
     private static final String IGINX_NODE_PREFIX = "/iginx";
@@ -89,6 +91,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String SCHEMA_MAPPING_PREFIX = "/schema";
 
     private static final String STATISTICS_NODE_PREFIX = "/statistics";
+
+    private static final String RESHARD_NODE_PREFIX = "/reshard";
 
     private static ZooKeeperMetaStorage INSTANCE = null;
 
@@ -130,6 +134,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private final InterProcessMutex statisticsMutex;
 
+    private final InterProcessMutex reshardMutex;
+
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
                 .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
@@ -141,6 +147,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
         statisticsMutex = new InterProcessMutex(client, STATISTICS_LOCK_NODE);
+        reshardMutex = new InterProcessMutex(client, RESHARD_LOCK_NODE);
     }
 
     public static ZooKeeperMetaStorage getInstance() {
@@ -827,5 +834,25 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook) {
         this.statisticsChangeHook = hook;
+    }
+
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        try {
+            reshardMutex.acquire();
+            if (this.client.checkExists().forPath(RESHARD_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(RESHARD_NODE_PREFIX, JsonUtils.toJson(1));
+            } else {
+                if (this.client.getChildren().forPath(RESHARD_NODE_PREFIX).get(0).equals("0")) {
+                    this.client.setData()
+                            .forPath(RESHARD_NODE_PREFIX, JsonUtils.toJson(1));
+                }
+            }
+            reshardMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when proposing to reshard", e);
+        }
+        return false;
     }
 }

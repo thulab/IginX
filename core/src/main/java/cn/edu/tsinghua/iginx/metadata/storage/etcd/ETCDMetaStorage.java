@@ -710,6 +710,11 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     }
 
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        return false;
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;
