@@ -180,11 +180,7 @@ public abstract class BaseSessionIT {
                 case 3:
                     try {
                         if (aggregateType == null) {
-                            SessionQueryDataSet q = localSession.queryData(path, startTime, endTime);
-                            logger.info(q.getPaths().toString());
-                            logger.info(q.getValues().get(0).toString());
-                            logger.info(String.valueOf(q.getTimestamps().length));
-                            queryDataSet = q;
+                            queryDataSet = localSession.queryData(path, startTime, endTime);
                         } else {
                             queryDataSet = localSession.aggregateQuery(path, startTime, endTime, aggregateType);
                         }
@@ -309,7 +305,6 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 6; i++) {
             dataTypeList.add(DataType.findByValue(i));
         }
-        System.out.println(dataTypeList);
         session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
@@ -456,7 +451,6 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < simpleLen; i++) {
             assertEquals(TIME_PERIOD, countResult[i]);
         }
-        System.out.println(countResult[0]);
         //aggrSum
         SessionAggregateQueryDataSet sumDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.SUM);
         assertNull(sumDataSet.getTimestamps());
@@ -470,7 +464,6 @@ public abstract class BaseSessionIT {
             assertNotEquals(pathNum, -1);
             assertEquals(sum + pathNum * TIME_PERIOD, changeResultToDouble(sumResult[i]), delta);
         }
-        System.out.println(sumResult[0]);
         /*
         //aggrAvg
         SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
@@ -925,7 +918,6 @@ public abstract class BaseSessionIT {
 
         //aggregateData max & avg
         List<String> dTAggrPaths = getPaths(currPath + 1, 4);
-        logger.info(dTAggrPaths.toString());
         //max
         SessionAggregateQueryDataSet dtMaxDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> dtMaxPaths = dtMaxDataSet.getPaths();
@@ -1189,7 +1181,7 @@ public abstract class BaseSessionIT {
         Thread.sleep(1000);
 
         //query
-        int queryTaskNum = 5;
+        int queryTaskNum = 3;
         MultiThreadTask[] mulStQueryTasks = new MultiThreadTask[queryTaskNum];
         Thread[] mulStQueryThreads = new Thread[queryTaskNum];
         //each query query one storage
@@ -1210,8 +1202,6 @@ public abstract class BaseSessionIT {
         try {
         for (int i = 0; i < queryTaskNum; i++) {
             SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
-            logger.info(dataSet.getPaths().toString());
-            logger.info(dataSet.getValues().get(0).toString());
             int len = dataSet.getTimestamps().length;
             List<String> resPaths = dataSet.getPaths();
             assertEquals(mulStQueryLen, resPaths.size());
