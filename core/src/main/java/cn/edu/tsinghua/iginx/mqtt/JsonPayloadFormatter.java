@@ -86,7 +86,7 @@ public class JsonPayloadFormatter implements IPayloadFormatter {
                     break;
                 case "text":
                     dataType = DataType.BINARY;
-                    value = jsonValue.getAsString();
+                    value = jsonValue.getAsString().getBytes(StandardCharsets.UTF_8);
                     break;
             }
             if (value != null) {
