@@ -93,7 +93,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/startIginX.sh"
           nohup "${GITHUB_WORKSPACE}/startIginX.sh" &
       - name: A Lame Integration Test with Maven for InfluxDB
-        run: mvn test -q -Dtest=InfluxDBSessionTest -DfailIfNoTests=false
+        run: mvn test -q -Dtest=InfluxDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
