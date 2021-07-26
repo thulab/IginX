@@ -83,6 +83,13 @@ public class ConfigDescriptor {
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
             config.setFileDataDir(properties.getProperty("fileDataDir", ""));
             config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
+
+            config.setEnableMQTT(Boolean.parseBoolean(properties.getProperty("enable_mqtt", "false")));
+            config.setMqttHost(properties.getProperty("mqtt_host", "0.0.0.0"));
+            config.setMqttPort(Integer.parseInt(properties.getProperty("mqtt_port", "1883")));
+            config.setMqttHandlerPoolSize(Integer.parseInt(properties.getProperty("mqtt_handler_pool_size", "1")));
+            config.setMqttPayloadFormatter(properties.getProperty("mqtt_payload_formatter", "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter"));
+            config.setMqttMaxMessageSize(Integer.parseInt(properties.getProperty("mqtt_max_message_size", "1048576")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
