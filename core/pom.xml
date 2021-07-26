@@ -29,6 +29,19 @@
   <artifactId>iginx-core</artifactId>
   <name>IginX Core</name>
 
+  <repositories>
+    <!--   repository for moquette    -->
+    <repository>
+      <id>bintray</id>
+      <url>https://jcenter.bintray.com</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>cn.edu.tsinghua</groupId>
@@ -97,6 +110,16 @@
       <groupId>io.etcd</groupId>
       <artifactId>jetcd-core</artifactId>
       <version>0.5.7</version>
+    </dependency>
+    <dependency>
+      <groupId>io.moquette</groupId>
+      <artifactId>moquette-broker</artifactId>
+      <version>0.13</version>
+    </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-all</artifactId>
+      <version>4.1.42.Final</version>
     </dependency>
   </dependencies>
   <build>

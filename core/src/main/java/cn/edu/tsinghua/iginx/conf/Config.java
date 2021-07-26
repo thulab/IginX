@@ -70,6 +70,18 @@ public class Config {
 
     private String etcdEndpoints = "http://localhost:2379";
 
+    private boolean enableMQTT = false;
+
+    private String mqttHost = "0.0.0.0";
+
+    private int mqttPort = 1883;
+
+    private int mqttHandlerPoolSize = 1;
+
+    private String mqttPayloadFormatter = "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter";
+
+    private int mqttMaxMessageSize = 1048576;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -270,4 +282,51 @@ public class Config {
         this.etcdEndpoints = etcdEndpoints;
     }
 
+    public boolean isEnableMQTT() {
+        return enableMQTT;
+    }
+
+    public void setEnableMQTT(boolean enableMQTT) {
+        this.enableMQTT = enableMQTT;
+    }
+
+    public String getMqttHost() {
+        return mqttHost;
+    }
+
+    public void setMqttHost(String mqttHost) {
+        this.mqttHost = mqttHost;
+    }
+
+    public int getMqttPort() {
+        return mqttPort;
+    }
+
+    public void setMqttPort(int mqttPort) {
+        this.mqttPort = mqttPort;
+    }
+
+    public int getMqttHandlerPoolSize() {
+        return mqttHandlerPoolSize;
+    }
+
+    public void setMqttHandlerPoolSize(int mqttHandlerPoolSize) {
+        this.mqttHandlerPoolSize = mqttHandlerPoolSize;
+    }
+
+    public String getMqttPayloadFormatter() {
+        return mqttPayloadFormatter;
+    }
+
+    public void setMqttPayloadFormatter(String mqttPayloadFormatter) {
+        this.mqttPayloadFormatter = mqttPayloadFormatter;
+    }
+
+    public int getMqttMaxMessageSize() {
+        return mqttMaxMessageSize;
+    }
+
+    public void setMqttMaxMessageSize(int mqttMaxMessageSize) {
+        this.mqttMaxMessageSize = mqttMaxMessageSize;
+    }
 }
