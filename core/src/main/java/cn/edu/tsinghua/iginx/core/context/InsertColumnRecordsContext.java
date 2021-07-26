@@ -18,9 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -31,6 +35,11 @@ public class InsertColumnRecordsContext extends RequestContext {
     public InsertColumnRecordsContext(InsertColumnRecordsReq req) {
         super(req.sessionId, ContextType.InsertColumnRecords);
         this.req = req;
+        Config config = ConfigDescriptor.getInstance().getConfig();
+        if (config.isEnableEdgeCloudCollaboration() && config.isEdge() && !config.getEdgeName().equals("")) {
+            String prefix = config.getEdgeName() + ".";
+            this.req.setPaths(this.req.getPaths().stream().map(e -> prefix + e).collect(Collectors.toList()));
+        }
     }
 
     public InsertColumnRecordsReq getReq() {

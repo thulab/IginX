@@ -78,6 +78,12 @@ public class Config {
 
     private int mqttMaxMessageSize = 1048576;
 
+    private boolean enableEdgeCloudCollaboration = false;
+
+    private boolean isEdge = false;
+
+    private String edgeName = "";
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -308,5 +314,29 @@ public class Config {
 
     public void setMqttMaxMessageSize(int mqttMaxMessageSize) {
         this.mqttMaxMessageSize = mqttMaxMessageSize;
+    }
+
+    public boolean isEnableEdgeCloudCollaboration() {
+        return enableEdgeCloudCollaboration;
+    }
+
+    public void setEnableEdgeCloudCollaboration(boolean enableEdgeCloudCollaboration) {
+        this.enableEdgeCloudCollaboration = enableEdgeCloudCollaboration;
+    }
+
+    public boolean isEdge() {
+        return isEdge;
+    }
+
+    public void setEdge(boolean edge) {
+        isEdge = edge;
+    }
+
+    public String getEdgeName() {
+        return edgeName;
+    }
+
+    public void setEdgeName(String edgeName) {
+        this.edgeName = edgeName;
     }
 }
