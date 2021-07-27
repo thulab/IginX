@@ -35,11 +35,6 @@ public class InsertRowRecordsContext extends RequestContext {
     public InsertRowRecordsContext(InsertRowRecordsReq req) {
         super(req.sessionId, ContextType.InsertRowRecords);
         this.req = req;
-        Config config = ConfigDescriptor.getInstance().getConfig();
-        if (config.isEnableEdgeCloudCollaboration() && config.isEdge() && !config.getEdgeName().equals("")) {
-            String prefix = config.getEdgeName() + ".";
-            this.req.setPaths(this.req.getPaths().stream().map(e -> prefix + e).collect(Collectors.toList()));
-        }
     }
 
     public InsertRowRecordsReq getReq() {
