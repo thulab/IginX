@@ -61,7 +61,7 @@ class EdgeCloudCollaborationFragmentGenerator {
             List<StorageEngineMeta> edgeStorageEngineList = groupedStorageEngineLists.get(edge);
             if (edgeStorageEngineList == null) { // 边缘端部署了 iginx，没有部署 iotdb，所有的备份均存储在云端
                 List<Long> storageEngineIds = selectStorageEngines(storageEngineFragmentCounts, replicaNum);
-                Pair<FragmentMeta, StorageUnitMeta> pair = generateFragmentAndStorageUnit(edge + '.', edge + (char) ('.' + 1), startTime, storageEngineIds);
+                Pair<FragmentMeta, StorageUnitMeta> pair = generateFragmentAndStorageUnit(lowerBound(edge), upperBound(edge), startTime, storageEngineIds);
                 fragmentList.add(pair.k);
                 storageUnitList.add(pair.v);
             } else { // 边缘端部署了 iginx 也部署了 iotdb，每个分片在本地存储一个备份
@@ -86,20 +86,20 @@ class EdgeCloudCollaborationFragmentGenerator {
         } else {
             // 上空隙
             List<Long> storageEngineIds = selectStorageEngines(storageEngineFragmentCounts, replicaNum);
-            Pair<FragmentMeta, StorageUnitMeta> pair = generateFragmentAndStorageUnit(null, edges.get(0) + '.', startTime, storageEngineIds);
+            Pair<FragmentMeta, StorageUnitMeta> pair = generateFragmentAndStorageUnit(null,  lowerBound(edges.get(0)), startTime, storageEngineIds);
             fragmentList.add(pair.k);
             storageUnitList.add(pair.v);
 
             // 下空隙
             storageEngineIds = selectStorageEngines(storageEngineFragmentCounts, replicaNum);
-            pair = generateFragmentAndStorageUnit(edges.get(edges.size() - 1) + (char) ('.' + 1), null, startTime, storageEngineIds);
+            pair = generateFragmentAndStorageUnit(upperBound(edges.get(edges.size() - 1)), null, startTime, storageEngineIds);
             fragmentList.add(pair.k);
             storageUnitList.add(pair.v);
 
             // 中间的空隙
             for (int i = 0; i < edges.size() - 1; i++) {
                 storageEngineIds = selectStorageEngines(storageEngineFragmentCounts, replicaNum);
-                pair = generateFragmentAndStorageUnit(edges.get(i) + (char) ('.' + 1), edges.get(i + 1) + '.', startTime, storageEngineIds);
+                pair = generateFragmentAndStorageUnit(upperBound(edges.get(i)), lowerBound(edges.get(i + 1)), startTime, storageEngineIds);
                 fragmentList.add(pair.k);
                 storageUnitList.add(pair.v);
             }
@@ -141,7 +141,7 @@ class EdgeCloudCollaborationFragmentGenerator {
         if (partition < 1) {
             return Collections.emptyList();
         }
-        return Arrays.asList(edge + '.', edge + (char) ('.' + 1));
+        return Arrays.asList(lowerBound(edge), upperBound(edge));
     }
 
     // 根据时间和序列区间以及一组 storageEngineList 来生成分片和存储单元
@@ -153,6 +153,14 @@ class EdgeCloudCollaborationFragmentGenerator {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false));
         }
         return new Pair<>(fragment, storageUnit);
+    }
+
+    private static String lowerBound(String string) {
+        return string + '.' + (char)('A' - 1);
+    }
+
+    private static String upperBound(String string) {
+        return string + '.' + (char)('z' + 1);
     }
 
 }
