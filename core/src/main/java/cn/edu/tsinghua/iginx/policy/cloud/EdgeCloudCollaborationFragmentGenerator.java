@@ -52,7 +52,7 @@ class EdgeCloudCollaborationFragmentGenerator {
         List<String> edges = getEdges(iginxList, storageEngineList);
         Map<String, List<StorageEngineMeta>> groupedStorageEngineLists = storageEngineList.stream().collect(Collectors.groupingBy(e -> e.getExtraParams().getOrDefault("edgeName", "")));
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), groupedStorageEngineLists.getOrDefault("", Collections.emptyList()).size() + 1); // 最多备份数 = 云端服务节点树 + 1
-        List<Pair<Long, Integer>> storageEngineFragmentCounts = storageEngineList.stream().filter(e -> !e.getExtraParams().getOrDefault("edgeName", "").equals(""))
+        List<Pair<Long, Integer>> storageEngineFragmentCounts = storageEngineList.stream().filter(e -> e.getExtraParams().getOrDefault("edgeName", "").equals(""))
                 .map(e -> new Pair<>(e.getId(), e.getStorageUnitList().size())).collect(Collectors.toList()); // 记录每个云端存储单元已经分配的分片的个数
 
         List<FragmentMeta> fragmentList = new ArrayList<>();
@@ -111,13 +111,13 @@ class EdgeCloudCollaborationFragmentGenerator {
         Set<String> edges = new HashSet<>();
         for (IginxMeta iginx: iginxList) {
             String edge = iginx.getExtraParams().get("edge_name");
-            if (edge != null) {
+            if (edge != null && !edge.equals("")) {
                 edges.add(edge);
             }
         }
         for (StorageEngineMeta storageEngine: storageEngineList) {
             String edge = storageEngine.getExtraParams().get("edgeName");
-            if (edge != null) {
+            if (edge != null && !edge.equals("")) {
                 edges.add(edge);
             }
         }
