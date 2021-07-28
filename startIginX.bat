@@ -69,10 +69,7 @@ set HEAP_OPTS=-Xmx%MAX_HEAP_SIZE% -Xms%HEAP_NEWSIZE% -Xloggc:"%IGINX_HOME%\gc.lo
 
 @REM ***** CLASSPATH library setting *****
 @REM Ensure that any user defined CLASSPATH variables are not used on startup
-set CLASSPATH="%IGINX_HOME%\core\lib\*"
 set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\core\target\iginx-core-0.1.0-SNAPSHOT.jar"
-set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\thrift\lib\*"
-set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\thrift\target\iginx-thrift-0.1.0-SNAPSHOT.jar"
 set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\iotdb\target\iotdb-0.1.0-SNAPSHOT.jar"
 set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\influxdb\target\influxdb-0.1.0-SNAPSHOT.jar"
 goto okClasspath

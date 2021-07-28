@@ -16,9 +16,9 @@
 
   <modules>
     <module>thrift</module>
-    <module>core</module>
     <module>iotdb</module>
     <module>influxdb</module>
+    <module>core</module>
     <module>client</module>
     <module>example</module>
     <module>test</module>
