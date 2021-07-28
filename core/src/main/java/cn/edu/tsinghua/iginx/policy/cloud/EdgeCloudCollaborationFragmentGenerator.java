@@ -128,7 +128,7 @@ class EdgeCloudCollaborationFragmentGenerator {
         storageEngineFragmentCounts = storageEngineFragmentCounts.stream().sorted(Comparator.comparingInt(o -> o.v)).collect(Collectors.toList());
         List<Long> storageEngines = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            if (i > storageEngineFragmentCounts.size()) {
+            if (i >= storageEngineFragmentCounts.size()) {
                 break;
             }
             storageEngines.add(storageEngineFragmentCounts.get(i).k);
