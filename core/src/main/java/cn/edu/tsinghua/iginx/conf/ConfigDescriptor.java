@@ -123,6 +123,12 @@ public class ConfigDescriptor {
         config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
         config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));
         config.setEtcdEndpoints(EnvUtils.loadEnv("etcdEndpoints", config.getEtcdEndpoints()));
+        config.setEnableMQTT(EnvUtils.loadEnv("enable_mqtt", config.isEnableMQTT()));
+        config.setMqttHost(EnvUtils.loadEnv("mqtt_host", config.getMqttHost()));
+        config.setMqttPort(EnvUtils.loadEnv("mqtt_port", config.getMqttPort()));
+        config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
+        config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
+        config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
     }
 
 
