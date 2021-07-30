@@ -38,31 +38,17 @@ import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
-import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
-import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
-import cn.edu.tsinghua.iginx.thrift.Status;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
+import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
+import cn.edu.tsinghua.iginx.sql.SqlLexer;
+import cn.edu.tsinghua.iginx.sql.SqlParser;
+import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -230,5 +216,16 @@ public class IginxWorker implements IService.Iface {
     @Override
     public GetReplicaNumResp getReplicaNum(GetReplicaNumReq req) {
         return new GetReplicaNumResp(RpcUtils.SUCCESS, ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
+    }
+
+    @Override
+    public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
+        SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
+        CommonTokenStream tokens = new CommonTokenStream(lexer);
+        SqlParser parser = new SqlParser(tokens);
+        IginXSqlVisitor visitor = new IginXSqlVisitor();
+        ParseTree tree = parser.sqlStatement();
+        Operator operator = visitor.visit(tree);
+        return operator.doOperation(req.getSessionId());
     }
 }

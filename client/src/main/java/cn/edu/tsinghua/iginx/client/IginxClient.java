@@ -20,7 +20,9 @@ package cn.edu.tsinghua.iginx.client;
 
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
+import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
@@ -164,18 +166,33 @@ public class IginxClient {
                 System.out.print(IGINX_CLI_PREFIX + "> ");
                 String command;
                 while (!(command = reader.readLine()).equals("quit")) {
-                    processCommand(command);
+                    processSql(command);
                     System.out.print(IGINX_CLI_PREFIX + "> ");
                 }
                 System.out.println("Goodbye");
             } else {
-                processCommand(parseExecuteCommand(args));
+                processSql(parseExecuteCommand(args));
             }
         } catch (RuntimeException e) {
             System.out.println(IGINX_CLI_PREFIX + "> Parse Parameter error.");
             System.out.println(IGINX_CLI_PREFIX + "> Use -help for more information");
         } catch (Exception e) {
             System.out.println(IGINX_CLI_PREFIX + "> exit cli with error " + e.getMessage());
+        }
+    }
+
+    private static void processSql(String statement) {
+        try {
+            SessionExecuteSqlResult res = session.executeSql(statement);
+            if (res.needPrint()) {
+                res.print();
+            } else if (res.getSqlType() == SqlType.GetReplicaNum) {
+                System.out.println("Replica num: " + res.getReplicaNum());
+            } else {
+                System.out.println("Finished!");
+            }
+        } catch (Exception e) {
+            System.out.println("encounter error when executing sql statement.");
         }
     }
 
