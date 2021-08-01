@@ -24,6 +24,18 @@ enum AggregateType {
     LAST,
 }
 
+enum SqlType {
+    Insert
+    Delete
+    SimpleQuery
+    AggregateQuery
+    DownsampleQuery
+    ValueFilterQuery
+    NotSupportQuery
+    GetReplicaNum
+    AddStorageEngines
+}
+
 struct Status {
     1: required i32 code
     2: optional string message
@@ -174,6 +186,24 @@ struct GetReplicaNumResp {
     2: required i32 replicaNum
 }
 
+
+struct ExecuteSqlReq {
+    1: required i64 sessionId
+    2: required string statement
+}
+
+struct ExecuteSqlResp {
+    1: required Status status
+    2: required SqlType type
+    3: optional list<string> paths
+    4: optional list<DataType> dataTypeList
+    5: optional QueryDataSet queryDataSet
+    6: optional binary timestamps
+    7: optional binary valuesList
+    8: optional i32 replicaNum
+    9: optional AggregateType aggregateType
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -202,4 +232,5 @@ service IService {
 
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 
+    ExecuteSqlResp executeSql(1: ExecuteSqlReq req);
 }
