@@ -18,7 +18,9 @@ sh -c "./influxdb2-2.0.7-linux-amd64/influx auth list --json > token.json"
 
 a=$(cat token.json | sed 's/,/\n/g' | grep "token" | sed 's/: /\n/g' | sed '1d' | sed '/^"token/,$d' | sed 's/\"//g')
 
-sed -i "s/#storageEngineList=127.0.0.1#8086#influxdb#url=http://localhost:8086/#token=your-token#organization=your-organization/storageEngineList=127.0.0.1#8086#influxdb#token=${a}#organization=testOrg/g" conf/config.properties
+sed -i "s/your-token/${a}/g"
+
+sed -i "s/your-organization/testOrg/g"
 
 sh -c "sudo cp -r influxdb2-2.0.7-linux-amd64/ influxdb2-2.0.7-linux-amd64-2/"
 
