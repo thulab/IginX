@@ -86,7 +86,7 @@ public class ConfigDescriptor {
 
             config.setEnableGlobalStatistics(Boolean.parseBoolean(properties.getProperty("enableGlobalStatistics", "false")));
             config.setGlobalStatisticsCollectInterval(Long.parseLong(properties.getProperty("globalStatisticsCollectInterval", "60")));
-            config.setCountThreshold(Long.parseLong(properties.getProperty("countThreshold", "100000")));
+            config.setInsertThreshold(Long.parseLong(properties.getProperty("insertThreshold", "100000")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

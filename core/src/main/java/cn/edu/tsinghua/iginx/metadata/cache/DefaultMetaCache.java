@@ -67,6 +67,8 @@ public class DefaultMetaCache implements IMetaCache {
     // 分片统计信息的缓存
     private final Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatisticsMap;
 
+    private final ReadWriteLock statisticsLock;
+
     public static DefaultMetaCache getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaCache.class) {
@@ -94,6 +96,7 @@ public class DefaultMetaCache implements IMetaCache {
         schemaMappings = new ConcurrentHashMap<>();
         // 分片统计信息相关
         activeFragmentStatisticsMap = new ConcurrentHashMap<>();
+        statisticsLock = new ReentrantReadWriteLock();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -411,7 +414,14 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
-    public void addOrUpdateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
+    public void initActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> statisticsMap) {
+        statisticsLock.writeLock().lock();
+        activeFragmentStatisticsMap.putAll(statisticsMap);
+        statisticsLock.writeLock().unlock();
+    }
+
+    @Override
+    public void addOrUpdateActiveFragmentStatisticsItem(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
         for (Map.Entry<FragmentMeta, ActiveFragmentStatisticsItem> entry: statisticsItemMap.entrySet()) {
             this.activeFragmentStatisticsMap.computeIfAbsent(entry.getKey(), e -> new ActiveFragmentStatistics()).updateByItem(entry.getValue());
         }

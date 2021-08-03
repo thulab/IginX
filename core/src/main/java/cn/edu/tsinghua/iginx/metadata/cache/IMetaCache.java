@@ -96,8 +96,10 @@ public interface IMetaCache {
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
+    void initActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> statisticsMap);
+
     // 更新最新分片本机统计的的缓存信息
-    void addOrUpdateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap);
+    void addOrUpdateActiveFragmentStatisticsItem(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap);
 
     // 获取本地统计的缓存信息
     Map<FragmentMeta, ActiveFragmentStatistics> getActiveFragmentStatistics();

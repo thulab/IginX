@@ -26,8 +26,10 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
+import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardInfoHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
@@ -87,9 +89,29 @@ public interface IMetaStorage {
 
     void addActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException;
 
-    void releaseActiveFragmentStatisticsFragment() throws MetaStorageException;
+    void releaseActiveFragmentStatistics() throws MetaStorageException;
 
     void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook);
 
     boolean proposeToReshard() throws MetaStorageException;
+
+    void lockReshardInfo() throws MetaStorageException;
+
+    void updateReshardInfo(int info) throws MetaStorageException;
+
+    void releaseReshardInfo() throws MetaStorageException;
+
+    void removeReshardInfo() throws MetaStorageException;
+
+    void registerReshardInfoHook(ReshardInfoHook hook);
+
+    void lockCollectionCounter() throws MetaStorageException;
+
+    void updateCollectionCounter(int counter) throws MetaStorageException;
+
+    void releaseCollectionCounter() throws MetaStorageException;
+
+    void removeCollectionCounter() throws MetaStorageException;
+
+    void registerCollectionCounterHook(CollectionCounterHook hook);
 }

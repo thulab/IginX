@@ -31,6 +31,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardInfoHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
@@ -51,6 +53,7 @@ import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -71,6 +74,10 @@ public class DefaultMetaManager implements IMetaManager {
     private AtomicLong activeFragmentStartTime = new AtomicLong(-1L);
 
     private final ScheduledExecutorService fragmentStatisticsUpdater;
+
+    private AtomicInteger reshardInfo = new AtomicInteger(-1);
+
+    private AtomicInteger collectionCounter = new AtomicInteger(-1);
 
     public static DefaultMetaManager getInstance() {
         if (INSTANCE == null) {
@@ -120,6 +127,8 @@ public class DefaultMetaManager implements IMetaManager {
             initFragment();
             initSchemaMapping();
             initStatistics();
+            initReshardInfo();
+            initCollectionCounter();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -132,14 +141,10 @@ public class DefaultMetaManager implements IMetaManager {
                         try {
                             storage.lockActiveFragmentStatistics();
                             storage.updateActiveFragmentStatistics(cache.getActiveFragmentStatistics());
-                            if (needToReshard()) {
-                                if (storage.proposeToReshard()) {
+                            if (needToReshard() && storage.proposeToReshard()) {
 
-                                } else {
-
-                                }
                             }
-                            storage.releaseActiveFragmentStatisticsFragment();
+                            storage.releaseActiveFragmentStatistics();
                         } catch (MetaStorageException e) {
                             logger.error("update active fragment statistics error: ", e);
                         }
@@ -291,8 +296,30 @@ public class DefaultMetaManager implements IMetaManager {
             }
             Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap = new HashMap<>();
             statisticsMap.put(fragment, item);
-            cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
+            cache.addOrUpdateActiveFragmentStatisticsItem(statisticsMap);
         });
+        storage.lockActiveFragmentStatistics();
+        Map<FragmentMeta, ActiveFragmentStatistics> statistics = storage.loadActiveFragmentStatistics();
+        storage.releaseActiveFragmentStatistics();
+        cache.initActiveFragmentStatistics(statistics);
+    }
+
+    private void initReshardInfo() throws MetaStorageException {
+        storage.registerReshardInfoHook(reshard -> {
+            reshardInfo.set(reshard);
+        });
+        storage.lockReshardInfo();
+        storage.removeReshardInfo();
+        storage.releaseReshardInfo();
+    }
+
+    private void initCollectionCounter() throws MetaStorageException {
+        storage.registerCollectionCounterHook(counter -> {
+            collectionCounter.set(counter);
+        });
+        storage.lockCollectionCounter();
+        storage.removeCollectionCounter();
+        storage.releaseCollectionCounter();
     }
 
     @Override
@@ -587,7 +614,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
-        cache.addOrUpdateActiveFragmentStatistics(statisticsItemMap);
+        cache.addOrUpdateActiveFragmentStatisticsItem(statisticsItemMap);
     }
 
     private List<StorageEngineMeta> resolveStorageEngineFromConf() {
@@ -617,7 +644,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     private boolean needToReshard() {
         for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : cache.getActiveFragmentStatistics().entrySet()) {
-            if (entry.getValue().getCount() >= ConfigDescriptor.getInstance().getConfig().getCountThreshold()) {
+            if (entry.getValue().getCount() >= ConfigDescriptor.getInstance().getConfig().getInsertThreshold()) {
                 return true;
             }
         }

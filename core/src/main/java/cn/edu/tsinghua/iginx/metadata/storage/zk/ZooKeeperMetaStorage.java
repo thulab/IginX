@@ -25,7 +25,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
+import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardInfoHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -80,6 +82,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String RESHARD_LOCK_NODE = "/lock/reshard";
 
+    private static final String COUNTER_LOCK_NODE = "/lock/counter";
+
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
     private static final String IGINX_NODE_PREFIX = "/iginx";
@@ -93,6 +97,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String STATISTICS_NODE_PREFIX = "/statistics";
 
     private static final String RESHARD_NODE_PREFIX = "/reshard";
+
+    private static final String COUNTER_NODE_PREFIX = "/counter";
 
     private static ZooKeeperMetaStorage INSTANCE = null;
 
@@ -134,7 +140,15 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private final InterProcessMutex statisticsMutex;
 
+    private ReshardInfoHook reshardInfoHook = null;
+
     private final InterProcessMutex reshardMutex;
+
+    private CollectionCounterHook collectionCounterHook = null;
+
+    protected TreeCache counterCache;
+
+    private final InterProcessMutex counterMutex;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -148,6 +162,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
         statisticsMutex = new InterProcessMutex(client, STATISTICS_LOCK_NODE);
         reshardMutex = new InterProcessMutex(client, RESHARD_LOCK_NODE);
+        counterMutex = new InterProcessMutex(client, COUNTER_LOCK_NODE);
     }
 
     public static ZooKeeperMetaStorage getInstance() {
@@ -560,7 +575,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             this.client.setData()
                     .forPath(STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitMeta.getId(), JsonUtils.toJson(storageUnitMeta));
         } catch (Exception e) {
-            throw new MetaStorageException("add storage unit error: ", e);
+            throw new MetaStorageException("update storage unit error: ", e);
         }
     }
 
@@ -821,7 +836,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void releaseActiveFragmentStatisticsFragment() throws MetaStorageException {
+    public void releaseActiveFragmentStatistics() throws MetaStorageException {
         try {
             statisticsMutex.release();
         } catch (Exception e) {
@@ -854,5 +869,118 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             throw new MetaStorageException("get error when proposing to reshard", e);
         }
         return false;
+    }
+
+    @Override
+    public void lockReshardInfo() throws MetaStorageException {
+        try {
+            reshardMutex.acquire();
+        } catch (Exception e) {
+            throw new MetaStorageException("acquire reshard info mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void updateReshardInfo(int info) throws MetaStorageException {
+        try {
+            this.client.setData()
+                    .forPath(RESHARD_NODE_PREFIX, JsonUtils.toJson(info));
+        } catch (Exception e) {
+            throw new MetaStorageException("update reshard info error: ", e);
+        }
+    }
+
+    @Override
+    public void releaseReshardInfo() throws MetaStorageException {
+        try {
+            reshardMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("release reshard info mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void removeReshardInfo() throws MetaStorageException {
+        try {
+            this.client.delete().forPath(RESHARD_NODE_PREFIX);
+        } catch (Exception e) {
+            throw new MetaStorageException("remove reshard info error: ", e);
+        }
+    }
+
+    @Override
+    public void registerReshardInfoHook(ReshardInfoHook hook) {
+        this.reshardInfoHook = hook;
+    }
+
+    @Override
+    public void lockCollectionCounter() throws MetaStorageException {
+        try {
+            counterMutex.acquire();
+        } catch (Exception e) {
+            throw new MetaStorageException("acquire collection counter mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void updateCollectionCounter(int counter) throws MetaStorageException {
+        try {
+            this.client.setData()
+                    .forPath(COUNTER_NODE_PREFIX, JsonUtils.toJson(counter));
+        } catch (Exception e) {
+            throw new MetaStorageException("update collection counter error: ", e);
+        }
+    }
+
+    @Override
+    public void releaseCollectionCounter() throws MetaStorageException {
+        try {
+            counterMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("release collection counter mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void removeCollectionCounter() throws MetaStorageException {
+        try {
+            this.client.delete().forPath(COUNTER_NODE_PREFIX);
+        } catch (Exception e) {
+            throw new MetaStorageException("remove collection counter error: ", e);
+        }
+    }
+
+    @Override
+    public void registerCollectionCounterHook(CollectionCounterHook hook) {
+        this.collectionCounterHook = hook;
+    }
+
+    private void registerCollectionCounterListener() throws Exception {
+        this.counterCache = new TreeCache(this.client, COUNTER_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            byte[] data;
+            int counter;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    counter = JsonUtils.fromJson(data, Integer.class);
+//                    if (counter == 0) {
+//
+//                    } else if (counter == iginxCache.size()) {
+//
+//                    } else {
+//
+//                    }
+                    if (counter == iginxCache.size()) {
+                        updateReshardInfo(counter);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.counterCache.getListenable().addListener(listener);
+        this.counterCache.start();
     }
 }
