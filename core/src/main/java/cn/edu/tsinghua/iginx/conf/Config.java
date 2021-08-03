@@ -48,10 +48,6 @@ public class Config {
 
     private int storageUnitNum = 30;
 
-    private String influxDBToken = "token";
-
-    private String influxDBOrganizationName = "organization";
-
     private String statisticsCollectorClassName = "";
 
     private int statisticsLogInterval = 1000;
@@ -192,22 +188,6 @@ public class Config {
 
     public void setStorageUnitNum(int storageUnitNum) {
         this.storageUnitNum = storageUnitNum;
-    }
-
-    public String getInfluxDBToken() {
-        return influxDBToken;
-    }
-
-    public void setInfluxDBToken(String influxDBToken) {
-        this.influxDBToken = influxDBToken;
-    }
-
-    public String getInfluxDBOrganizationName() {
-        return influxDBOrganizationName;
-    }
-
-    public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
-        this.influxDBOrganizationName = influxDBOrganizationName;
     }
 
     public String getStatisticsCollectorClassName() {

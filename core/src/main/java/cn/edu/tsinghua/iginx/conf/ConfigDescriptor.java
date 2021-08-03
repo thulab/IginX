@@ -68,9 +68,6 @@ public class ConfigDescriptor {
 
             config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
 
-            config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
-            config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
-
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
             config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
 
@@ -111,8 +108,6 @@ public class ConfigDescriptor {
         config.setDatabaseClassNames(EnvUtils.loadEnv("databaseClassNames", config.getDatabaseClassNames()));
         config.setPolicyClassName(EnvUtils.loadEnv("policyClassName", config.getPolicyClassName()));
         config.setStorageUnitNum(EnvUtils.loadEnv("storageUnitNum", config.getStorageUnitNum()));
-        config.setInfluxDBToken(EnvUtils.loadEnv("influxDBToken", config.getInfluxDBToken()));
-        config.setInfluxDBOrganizationName(EnvUtils.loadEnv("influxDBOrganizationName", config.getInfluxDBOrganizationName()));
         config.setStatisticsCollectorClassName(EnvUtils.loadEnv("statisticsCollectorClassName", config.getStatisticsCollectorClassName()));
         config.setStatisticsLogInterval(EnvUtils.loadEnv("statisticsLogInterval", config.getStatisticsLogInterval()));
         config.setRestIp(EnvUtils.loadEnv("restIp", config.getRestIp()));
