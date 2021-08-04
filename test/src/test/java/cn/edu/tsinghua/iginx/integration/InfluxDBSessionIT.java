@@ -13,5 +13,7 @@ public class InfluxDBSessionIT extends BaseSessionIT {
         this.storageEngineType = StorageEngineType.INFLUXDB;
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("url", "http://localhost:8087/");
+        this.extraParams.put("token", "testToken");
+        this.extraParams.put("organization", "testOrg");
     }
 }

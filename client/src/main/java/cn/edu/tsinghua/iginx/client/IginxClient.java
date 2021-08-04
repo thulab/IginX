@@ -207,13 +207,19 @@ public class IginxClient {
                 int port = Integer.parseInt(storageEngineParts[1]);
                 StorageEngineType storageEngineType = cn.edu.tsinghua.iginx.core.db.StorageEngine.toThrift(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(storageEngineParts[2]));
                 Map<String, String> extraParams = new HashMap<>();
+                String[] KAndV;
                 for (int i = 3; i < storageEngineParts.length; i++) {
-                    String[] KAndV = storageEngineParts[i].split("=");
-                    if (KAndV.length != 2) {
-                        System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
-                        continue;
+                    if (storageEngineParts[i].contains("\"")) {
+                        KAndV = storageEngineParts[i].split("\"");
+                        extraParams.put(KAndV[0].substring(0, KAndV[0].length() - 1), KAndV[1]);
+                    } else {
+                        KAndV = storageEngineParts[i].split("=");
+                        if (KAndV.length != 2) {
+                            System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
+                            continue;
+                        }
+                        extraParams.put(KAndV[0], KAndV[1]);
                     }
-                    extraParams.put(KAndV[0], KAndV[1]);
                 }
                 StorageEngine storageEngine = new StorageEngine(ip, port, storageEngineType, extraParams);
                 storageEngines.add(storageEngine);
