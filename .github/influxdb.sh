@@ -22,7 +22,9 @@ sed -i "s/your-token/\"${a}\"/g" conf/config.properties
 
 sed -i "s/your-organization/testOrg/g" conf/config.properties
 
-head -100 conf/config.properties
+sed -i "s/storageEngineList=127.0.0.1#6667#iotdb/#storageEngineList=127.0.0.1#6667#iotdb/g" conf/config.properties
+
+sed -i "s/#storageEngineList=127.0.0.1#8086#influxdb/storageEngineList=127.0.0.1#8086#influxdb/g" conf/config.properties
 
 sh -c "sudo cp -r influxdb2-2.0.7-linux-amd64/ influxdb2-2.0.7-linux-amd64-2/"
 
