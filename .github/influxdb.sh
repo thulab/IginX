@@ -12,16 +12,11 @@ sudo sh -c "cd influxdb2-2.0.7-linux-amd64/; nohup ./influxd run --bolt-path=~/.
 
 sh -c "sleep 30"
 
-sh -c "./influxdb2-2.0.7-linux-amd64/influx setup --org testOrg --bucket testBucket --username user --password 12345678 --force"
+sh -c "./influxdb2-2.0.7-linux-amd64/influx setup --org testOrg --bucket testBucket --username user --password 12345678 --token testToken --force"
 
-sh -c "./influxdb2-2.0.7-linux-amd64/influx auth list --json > token.json"
+sed -i "s/your-token/testToken/g" conf/config.properties
 
-a=$(cat token.json | sed 's/,/\n/g' | grep "token" | sed 's/: /\n/g' | sed '1d' | sed '/^"token/,$d' | sed 's/\"//g')
-
-sed -i "s/your-token/${a}/g" conf/config.properties
-
-sed -i "s/my-org/testOrg/g" conf/config.properties
-
+sed -i "s/your-organization/testOrg/g" conf/config.properties
 
 sed -i "s/storageEngineList=127.0.0.1#6667#iotdb/#storageEngineList=127.0.0.1#6667#iotdb/g" conf/config.properties
 

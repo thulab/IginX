@@ -541,13 +541,19 @@ public class DefaultMetaManager implements IMetaManager {
             int port = Integer.parseInt(storageEngineParts[1]);
             StorageEngine storageEngine = StorageEngine.fromString(storageEngineParts[2]);
             Map<String, String> extraParams = new HashMap<>();
+            String[] KAndV;
             for (int j = 3; j < storageEngineParts.length; j++) {
-                String[] KAndV = storageEngineParts[j].split("=");
-                if (KAndV.length != 2) {
-                    logger.error("unexpected storage engine meta info: " + storageEngineStrings[i]);
-                    continue;
+                if (storageEngineParts[j].contains("\"")) {
+                    KAndV = storageEngineParts[j].split("\"");
+                    extraParams.put(KAndV[0].substring(0, KAndV[0].length() - 1), KAndV[1]);
+                } else {
+                    KAndV = storageEngineParts[j].split("=");
+                    if (KAndV.length != 2) {
+                        logger.error("unexpected storage engine meta info: " + storageEngineStrings[i]);
+                        continue;
+                    }
+                    extraParams.put(KAndV[0], KAndV[1]);
                 }
-                extraParams.put(KAndV[0], KAndV[1]);
             }
             storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, id));
         }
