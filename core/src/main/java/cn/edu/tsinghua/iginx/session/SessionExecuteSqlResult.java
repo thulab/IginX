@@ -9,6 +9,7 @@ import cn.edu.tsinghua.iginx.utils.ByteUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -18,12 +19,14 @@ public class SessionExecuteSqlResult {
 
     private SqlType sqlType;
     private AggregateType aggregateType;
-
     private long[] timestamps;
     private List<String> paths;
     private List<List<Object>> values;
-    private Object[] AggregateValues;
+    private List<DataType> dataTypeList;
     private int replicaNum;
+
+    // Only for mock test
+    public SessionExecuteSqlResult(){}
 
     public SessionExecuteSqlResult(ExecuteSqlResp resp) {
         this.sqlType = resp.getType();
@@ -32,30 +35,46 @@ public class SessionExecuteSqlResult {
             case Delete:
             case AddStorageEngines:
                 break;
-            case AggregateQuery:
-                this.paths = resp.getPaths();
-                if (resp.timestamps != null) {
-                    this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
-                }
-                this.AggregateValues = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
-                this.aggregateType = resp.aggregateType;
+            case GetReplicaNum:
+                this.replicaNum = resp.getReplicaNum();
                 break;
+            case AggregateQuery:
             case SimpleQuery:
             case DownsampleQuery:
             case ValueFilterQuery:
-                this.paths = resp.getPaths();
-                if (resp.queryDataSet.timestamps != null) {
-                    this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
-                }
-                parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
-                if (resp.getType() == SqlType.DownsampleQuery) {
-                    this.aggregateType = resp.aggregateType;
-                }
+                constructQueryResult(resp);
         }
     }
 
-    private void parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
-        values = new ArrayList<>();
+    private void constructQueryResult(ExecuteSqlResp resp) {
+        this.paths = resp.getPaths();
+        this.dataTypeList = resp.getDataTypeList();
+
+        if (resp.timestamps != null) {
+            this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
+        }
+        if (resp.queryDataSet != null && resp.queryDataSet.timestamps != null) {
+            this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+        }
+
+        if (resp.getType() == SqlType.AggregateQuery ||
+                resp.getType() == SqlType.DownsampleQuery) {
+            this.aggregateType = resp.aggregateType;
+        }
+
+        // parse values
+        if (resp.getType() == SqlType.AggregateQuery) {
+            Object[] aggregateValues = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
+            List<Object> aggregateValueList = new ArrayList<>(Arrays.asList(aggregateValues));
+            this.values = new ArrayList<>();
+            this.values.add(aggregateValueList);
+        } else {
+            this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+        }
+    }
+
+    private List<List<Object>> parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
+        List<List<Object>> res = new ArrayList<>();
         for (int i = 0; i < valuesList.size(); i++) {
             List<Object> tempValues = new ArrayList<>();
             ByteBuffer valuesBuffer = valuesList.get(i);
@@ -68,61 +87,41 @@ public class SessionExecuteSqlResult {
                     tempValues.add(null);
                 }
             }
-            values.add(tempValues);
+            res.add(tempValues);
         }
+        return res;
     }
 
     public void print() {
-        System.out.printf("Start to Print %s ResultSets:\n", sqlType.toString());
+        System.out.println(String.format("Start to Print %s ResultSets:", sqlType.toString()));
+        System.out.println("--------------------------------");
 
-        if (sqlType == SqlType.SimpleQuery || sqlType == SqlType.DownsampleQuery || sqlType == SqlType.ValueFilterQuery) {
+        if(timestamps != null)
             System.out.print("Time\t");
-            for (String path : paths) {
+        for (String path : paths) {
+            if (aggregateType == null)
                 System.out.print(path + "\t");
+            else
+                System.out.print(aggregateType.toString() + "(" + path + ")\t");
+        }
+
+        System.out.println();
+
+        for (int i = 0; i < values.size(); i++) {
+            if(timestamps != null)
+                System.out.print(timestamps[i] + "\t");
+            List<Object> rowData = values.get(i);
+            for (int j = 0; j < rowData.size(); j++) {
+                if (rowData.get(j) instanceof byte[]) {
+                    System.out.print(new String((byte[]) rowData.get(j)) + "\t");
+                } else {
+                    System.out.print(rowData.get(j) + "\t");
+                }
             }
             System.out.println();
-
-            for (int i = 0; i < timestamps.length; i++) {
-                System.out.print(timestamps[i] + "\t");
-                for (int j = 0; j < paths.size(); j++) {
-                    if (values.get(i).get(j) instanceof byte[]) {
-                        System.out.print(new String((byte[]) values.get(i).get(j)) + "\t");
-                    } else {
-                        System.out.print(values.get(i).get(j) + "\t");
-                    }
-                }
-                System.out.println();
-            }
-        } else if (sqlType == SqlType.AggregateQuery) {
-            System.out.println("Start to Print ResultSets:");
-            if (timestamps == null) {
-                for (String path : paths) {
-                    System.out.print(aggregateType.toString() + "(" + path + ")\t");
-                }
-                System.out.println();
-                for (Object value : AggregateValues) {
-                    if (value instanceof byte[]) {
-                        System.out.print(new String((byte[]) value) + "\t");
-                    } else {
-                        System.out.print(value + "\t");
-                    }
-                }
-                System.out.println();
-            } else {
-                for (int i = 0; i < timestamps.length; i++) {
-                    System.out.print("Time\t");
-                    System.out.print(aggregateType.toString() + "(" + paths.get(i) + ")\t");
-                    System.out.println();
-                    System.out.print(timestamps[i] + "\t");
-                    if (AggregateValues[i] instanceof byte[]) {
-                        System.out.print(new String((byte[]) AggregateValues[i]) + "\t");
-                    } else {
-                        System.out.print(AggregateValues[i] + "\t");
-                    }
-                    System.out.println();
-                }
-            }
         }
+
+        System.out.println("--------------------------------");
         System.out.println("Printing ResultSets Finished.");
     }
 
@@ -139,6 +138,14 @@ public class SessionExecuteSqlResult {
 
     public void setSqlType(SqlType sqlType) {
         this.sqlType = sqlType;
+    }
+
+    public AggregateType getAggregateType() {
+        return aggregateType;
+    }
+
+    public void setAggregateType(AggregateType aggregateType) {
+        this.aggregateType = aggregateType;
     }
 
     public long[] getTimestamps() {
@@ -165,12 +172,12 @@ public class SessionExecuteSqlResult {
         this.values = values;
     }
 
-    public Object[] getAggregateValues() {
-        return AggregateValues;
+    public List<DataType> getDataTypeList() {
+        return dataTypeList;
     }
 
-    public void setAggregateValues(Object[] aggregateValues) {
-        AggregateValues = aggregateValues;
+    public void setDataTypeList(List<DataType> dataTypeList) {
+        this.dataTypeList = dataTypeList;
     }
 
     public int getReplicaNum() {

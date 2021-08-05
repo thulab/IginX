@@ -7,13 +7,14 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.util.Arrays;
 import java.util.List;
 
-public class SessionExecuteExample {
+public class SQLSessionExample {
 
     private static Session session;
 
     private static final String S1 = "us.d1.s1";
     private static final String S2 = "us.d1.s2";
     private static final String S3 = "us.d1.s3";
+    private static final String S4 = "us.d1.s4";
 
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 15000L;
@@ -23,7 +24,7 @@ public class SessionExecuteExample {
     private static String showReplicationStr = "show replication;";
     private static String addStorageEnginesStr = "ADD STORAGEENGINE (127.0.0.1, 6667, IotDB, \"{clause: hello world!  }\"), (127.0.0.1, 6668, InfluxDB, \"{key: val}\");";
 
-    private static String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3) values ";
+    private static String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
     private static String deleteStr = "DELETE FROM us.d1.s1 WHERE time in (105, 115);";
 
     private static String simpleQueryStr = "SELECT us.d1.s1 FROM us.d1.s1 WHERE time in (100, 120);";
@@ -63,6 +64,7 @@ public class SessionExecuteExample {
     public static void showReplicationNum(String statement) throws SessionException, ExecutionException {
         SessionExecuteSqlResult res = session.executeSql(statement);
         System.out.println("Replication num: " + res.getReplicaNum());
+        System.out.println();
     }
 
     public static void aggregateQuery() throws SessionException, ExecutionException {
@@ -73,7 +75,7 @@ public class SessionExecuteExample {
 
     public static void downSampleQuery() throws SessionException, ExecutionException {
         for (String type : funcTypeList) {
-            execute(String.format(downSampleStr, type, S1, type, S2, S1, S2, "0", "1000", "100ms"), true);
+            execute(String.format(downSampleStr, type, S1, type, S4, S1, S4, "0", "1000", "100ms"), true);
         }
     }
 
@@ -83,6 +85,7 @@ public class SessionExecuteExample {
         if (needPrint) {
             res.print();
         }
+        System.out.println();
     }
 
     private static String buildInsertStr(String insertStrPrefix) {
@@ -95,7 +98,8 @@ public class SessionExecuteExample {
             builder.append((START_TIMESTAMP + i) + ", ");
             builder.append(i + ", ");
             builder.append((i + 1) + ", ");
-            builder.append("\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"");
+            builder.append("\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\", ");
+            builder.append((i + 0.1));
             builder.append(")");
         }
         builder.append(";");
