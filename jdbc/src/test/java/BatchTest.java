@@ -1,5 +1,4 @@
 import cn.edu.tsinghua.iginx.jdbc.IginXStatement;
-import javafx.print.Collation;
 import org.junit.Assert;
 import org.junit.Test;
 
