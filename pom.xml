@@ -23,6 +23,7 @@
     <module>example</module>
     <module>test</module>
     <module>antlr</module>
+    <module>jdbc</module>
   </modules>
 
   <dependencies>
