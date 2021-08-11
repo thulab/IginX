@@ -48,10 +48,6 @@ public class Config {
 
     private int storageUnitNum = 30;
 
-    private String influxDBToken = "token";
-
-    private String influxDBOrganizationName = "organization";
-
     private String statisticsCollectorClassName = "";
 
     private int statisticsLogInterval = 1000;
@@ -75,6 +71,18 @@ public class Config {
     private long globalStatisticsCollectInterval = 60;
 
     private long insertThreshold = 100000;
+
+    private boolean enableMQTT = false;
+
+    private String mqttHost = "0.0.0.0";
+
+    private int mqttPort = 1883;
+
+    private int mqttHandlerPoolSize = 1;
+
+    private String mqttPayloadFormatter = "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter";
+
+    private int mqttMaxMessageSize = 1048576;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -188,22 +196,6 @@ public class Config {
         this.storageUnitNum = storageUnitNum;
     }
 
-    public String getInfluxDBToken() {
-        return influxDBToken;
-    }
-
-    public void setInfluxDBToken(String influxDBToken) {
-        this.influxDBToken = influxDBToken;
-    }
-
-    public String getInfluxDBOrganizationName() {
-        return influxDBOrganizationName;
-    }
-
-    public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
-        this.influxDBOrganizationName = influxDBOrganizationName;
-    }
-
     public String getStatisticsCollectorClassName() {
         return statisticsCollectorClassName;
     }
@@ -298,5 +290,53 @@ public class Config {
 
     public void setInsertThreshold(long insertThreshold) {
         this.insertThreshold = insertThreshold;
+    }
+
+    public boolean isEnableMQTT() {
+        return enableMQTT;
+    }
+
+    public void setEnableMQTT(boolean enableMQTT) {
+        this.enableMQTT = enableMQTT;
+    }
+
+    public String getMqttHost() {
+        return mqttHost;
+    }
+
+    public void setMqttHost(String mqttHost) {
+        this.mqttHost = mqttHost;
+    }
+
+    public int getMqttPort() {
+        return mqttPort;
+    }
+
+    public void setMqttPort(int mqttPort) {
+        this.mqttPort = mqttPort;
+    }
+
+    public int getMqttHandlerPoolSize() {
+        return mqttHandlerPoolSize;
+    }
+
+    public void setMqttHandlerPoolSize(int mqttHandlerPoolSize) {
+        this.mqttHandlerPoolSize = mqttHandlerPoolSize;
+    }
+
+    public String getMqttPayloadFormatter() {
+        return mqttPayloadFormatter;
+    }
+
+    public void setMqttPayloadFormatter(String mqttPayloadFormatter) {
+        this.mqttPayloadFormatter = mqttPayloadFormatter;
+    }
+
+    public int getMqttMaxMessageSize() {
+        return mqttMaxMessageSize;
+    }
+
+    public void setMqttMaxMessageSize(int mqttMaxMessageSize) {
+        this.mqttMaxMessageSize = mqttMaxMessageSize;
     }
 }

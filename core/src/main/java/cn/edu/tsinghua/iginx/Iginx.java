@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx;
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.mqtt.MQTTService;
 import cn.edu.tsinghua.iginx.rest.RestServer;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import org.apache.thrift.TProcessor;
@@ -41,6 +42,9 @@ public class Iginx {
     public static void main(String[] args) throws Exception {
         if (config.isEnableRestService()) {
             new Thread(new RestServer()).start();
+        }
+        if (config.isEnableMQTT()) {
+            new Thread(MQTTService.getInstance()).start();
         }
         Iginx iginx = new Iginx();
         iginx.startServer();

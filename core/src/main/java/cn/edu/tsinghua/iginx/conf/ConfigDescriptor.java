@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.conf;
 
+import cn.edu.tsinghua.iginx.utils.EnvUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +36,15 @@ public class ConfigDescriptor {
 
     private ConfigDescriptor() {
         config = new Config();
-        loadProps();
+        loadPropsFromFile();
+        loadPropsFromEnv(); // 如果在环境变量中设置了相关参数，则会覆盖配置文件中设置的参数
     }
 
     public static ConfigDescriptor getInstance() {
         return ConfigDescriptorHolder.INSTANCE;
     }
 
-    private void loadProps() {
+    private void loadPropsFromFile() {
         File file = new File(Constants.CONFIG_FILE);
         logger.info(file.getAbsolutePath());
         try (InputStream in = new FileInputStream(Constants.CONFIG_FILE)) {
@@ -66,9 +68,6 @@ public class ConfigDescriptor {
 
             config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
 
-            config.setInfluxDBToken(properties.getProperty("influxDBToken", "your-token"));
-            config.setInfluxDBOrganizationName(properties.getProperty("influxDBOrganizationName", "my-org"));
-
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
             config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
 
@@ -87,10 +86,50 @@ public class ConfigDescriptor {
             config.setEnableGlobalStatistics(Boolean.parseBoolean(properties.getProperty("enableGlobalStatistics", "false")));
             config.setGlobalStatisticsCollectInterval(Long.parseLong(properties.getProperty("globalStatisticsCollectInterval", "60")));
             config.setInsertThreshold(Long.parseLong(properties.getProperty("insertThreshold", "100000")));
+
+            config.setEnableMQTT(Boolean.parseBoolean(properties.getProperty("enable_mqtt", "false")));
+            config.setMqttHost(properties.getProperty("mqtt_host", "0.0.0.0"));
+            config.setMqttPort(Integer.parseInt(properties.getProperty("mqtt_port", "1883")));
+            config.setMqttHandlerPoolSize(Integer.parseInt(properties.getProperty("mqtt_handler_pool_size", "1")));
+            config.setMqttPayloadFormatter(properties.getProperty("mqtt_payload_formatter", "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter"));
+            config.setMqttMaxMessageSize(Integer.parseInt(properties.getProperty("mqtt_max_message_size", "1048576")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
     }
+
+    private void loadPropsFromEnv() {
+        config.setIp(EnvUtils.loadEnv("ip", config.getIp()));
+        config.setPort(EnvUtils.loadEnv("port", config.getPort()));
+        config.setUsername(EnvUtils.loadEnv("username", config.getUsername()));
+        config.setPassword(EnvUtils.loadEnv("password", config.getPassword()));
+        config.setZookeeperConnectionString(EnvUtils.loadEnv("zookeeperConnectionString", config.getZookeeperConnectionString()));
+        config.setStorageEngineList(EnvUtils.loadEnv("storageEngineList", config.getStorageEngineList()));
+        config.setMaxAsyncRetryTimes(EnvUtils.loadEnv("maxAsyncRetryTimes", config.getMaxAsyncRetryTimes()));
+        config.setSyncExecuteThreadPool(EnvUtils.loadEnv("syncExecuteThreadPool", config.getSyncExecuteThreadPool()));
+        config.setAsyncExecuteThreadPool(EnvUtils.loadEnv("asyncExecuteThreadPool", config.getAsyncExecuteThreadPool()));
+        config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));
+        config.setDatabaseClassNames(EnvUtils.loadEnv("databaseClassNames", config.getDatabaseClassNames()));
+        config.setPolicyClassName(EnvUtils.loadEnv("policyClassName", config.getPolicyClassName()));
+        config.setStorageUnitNum(EnvUtils.loadEnv("storageUnitNum", config.getStorageUnitNum()));
+        config.setStatisticsCollectorClassName(EnvUtils.loadEnv("statisticsCollectorClassName", config.getStatisticsCollectorClassName()));
+        config.setStatisticsLogInterval(EnvUtils.loadEnv("statisticsLogInterval", config.getStatisticsLogInterval()));
+        config.setRestIp(EnvUtils.loadEnv("restIp", config.getRestIp()));
+        config.setRestPort(EnvUtils.loadEnv("restPort", config.getRestPort()));
+        config.setDisorderMargin(EnvUtils.loadEnv("disorderMargin", config.getDisorderMargin()));
+        config.setMaxTimeseriesLength(EnvUtils.loadEnv("maxtimeserieslength", config.getMaxTimeseriesLength()));
+        config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
+        config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
+        config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));
+        config.setEtcdEndpoints(EnvUtils.loadEnv("etcdEndpoints", config.getEtcdEndpoints()));
+        config.setEnableMQTT(EnvUtils.loadEnv("enable_mqtt", config.isEnableMQTT()));
+        config.setMqttHost(EnvUtils.loadEnv("mqtt_host", config.getMqttHost()));
+        config.setMqttPort(EnvUtils.loadEnv("mqtt_port", config.getMqttPort()));
+        config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
+        config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
+        config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
+    }
+
 
     public Config getConfig() {
         return config;

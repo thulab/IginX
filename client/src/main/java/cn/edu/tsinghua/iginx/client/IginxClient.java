@@ -20,7 +20,9 @@ package cn.edu.tsinghua.iginx.client;
 
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
+import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.apache.commons.cli.CommandLine;
@@ -164,18 +166,33 @@ public class IginxClient {
                 System.out.print(IGINX_CLI_PREFIX + "> ");
                 String command;
                 while (!(command = reader.readLine()).equals("quit")) {
-                    processCommand(command);
+                    processSql(command);
                     System.out.print(IGINX_CLI_PREFIX + "> ");
                 }
                 System.out.println("Goodbye");
             } else {
-                processCommand(parseExecuteCommand(args));
+                processSql(parseExecuteCommand(args));
             }
         } catch (RuntimeException e) {
             System.out.println(IGINX_CLI_PREFIX + "> Parse Parameter error.");
             System.out.println(IGINX_CLI_PREFIX + "> Use -help for more information");
         } catch (Exception e) {
             System.out.println(IGINX_CLI_PREFIX + "> exit cli with error " + e.getMessage());
+        }
+    }
+
+    private static void processSql(String statement) {
+        try {
+            SessionExecuteSqlResult res = session.executeSql(statement);
+            if (res.needPrint()) {
+                res.print();
+            } else if (res.getSqlType() == SqlType.GetReplicaNum) {
+                System.out.println("Replica num: " + res.getReplicaNum());
+            } else {
+                System.out.println("Finished!");
+            }
+        } catch (Exception e) {
+            System.out.println("encounter error when executing sql statement.");
         }
     }
 
@@ -190,13 +207,19 @@ public class IginxClient {
                 int port = Integer.parseInt(storageEngineParts[1]);
                 StorageEngineType storageEngineType = cn.edu.tsinghua.iginx.core.db.StorageEngine.toThrift(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(storageEngineParts[2]));
                 Map<String, String> extraParams = new HashMap<>();
+                String[] KAndV;
                 for (int i = 3; i < storageEngineParts.length; i++) {
-                    String[] KAndV = storageEngineParts[i].split("=");
-                    if (KAndV.length != 2) {
-                        System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
-                        continue;
+                    if (storageEngineParts[i].contains("\"")) {
+                        KAndV = storageEngineParts[i].split("\"");
+                        extraParams.put(KAndV[0].substring(0, KAndV[0].length() - 1), KAndV[1]);
+                    } else {
+                        KAndV = storageEngineParts[i].split("=");
+                        if (KAndV.length != 2) {
+                            System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
+                            continue;
+                        }
+                        extraParams.put(KAndV[0], KAndV[1]);
                     }
-                    extraParams.put(KAndV[0], KAndV[1]);
                 }
                 StorageEngine storageEngine = new StorageEngine(ip, port, storageEngineType, extraParams);
                 storageEngines.add(storageEngine);
