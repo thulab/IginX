@@ -902,7 +902,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void removeReshardInfo() throws MetaStorageException {
         try {
-            this.client.delete().forPath(RESHARD_NODE_PREFIX);
+            if (this.client.checkExists().forPath(RESHARD_NODE_PREFIX) != null) {
+                this.client.delete().forPath(RESHARD_NODE_PREFIX);
+            }
         } catch (Exception e) {
             throw new MetaStorageException("remove reshard info error: ", e);
         }
@@ -944,7 +946,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void removeCollectionCounter() throws MetaStorageException {
         try {
-            this.client.delete().forPath(COUNTER_NODE_PREFIX);
+            if (this.client.checkExists().forPath(COUNTER_NODE_PREFIX) != null) {
+                this.client.delete().forPath(COUNTER_NODE_PREFIX);
+            }
         } catch (Exception e) {
             throw new MetaStorageException("remove collection counter error: ", e);
         }
