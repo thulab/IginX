@@ -430,6 +430,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
+                    if (event.getData().getPath().equals(STORAGE_ENGINE_NODE_PREFIX)) {
+                        break;
+                    }
                     data = event.getData().getData();
                     logger.info("storage engine meta updated " + event.getData().getPath());
                     logger.info("storage engine: " + new String(data));
