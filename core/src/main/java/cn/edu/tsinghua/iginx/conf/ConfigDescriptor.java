@@ -51,79 +51,228 @@ public class ConfigDescriptor {
             Properties properties = new Properties();
             properties.load(in);
 
-            config.setIp(properties.getProperty("ip", "0.0.0.0"));
-            config.setPort(Integer.parseInt(properties.getProperty("port", "6888")));
-            config.setUsername(properties.getProperty("username", "root"));
-            config.setPassword(properties.getProperty("password", "root"));
-            config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
-                    "127.0.0.1:2181"));
-            config.setStorageEngineList(properties.getProperty("storageEngineList",
-                    "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100"));
-            config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
-            config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
-            config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
-            config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
-            config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
-            config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
-
-            config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
-
-            config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
-            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
-
-            config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
-            config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
-
-            config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
-
-            config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
-            config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
-
-            config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
-            config.setFileDataDir(properties.getProperty("fileDataDir", ""));
-            config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
-
-            config.setEnableMQTT(Boolean.parseBoolean(properties.getProperty("enable_mqtt", "false")));
-            config.setMqttHost(properties.getProperty("mqtt_host", "0.0.0.0"));
-            config.setMqttPort(Integer.parseInt(properties.getProperty("mqtt_port", "1883")));
-            config.setMqttHandlerPoolSize(Integer.parseInt(properties.getProperty("mqtt_handler_pool_size", "1")));
-            config.setMqttPayloadFormatter(properties.getProperty("mqtt_payload_formatter", "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter"));
-            config.setMqttMaxMessageSize(Integer.parseInt(properties.getProperty("mqtt_max_message_size", "1048576")));
+            config.setIp(
+                    properties.getProperty(Constants.IP, config.getIp())
+            );
+            config.setPort(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.PORT, Integer.toString(config.getPort()))
+                    )
+            );
+            config.setUsername(
+                    properties.getProperty(Constants.USERNAME, config.getIp())
+            );
+            config.setPassword(
+                    properties.getProperty(Constants.PASSWORD, Integer.toString(config.getPort()))
+            );
+            config.setMaxAsyncRetryTimes(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.MAX_ASYNC_RETRY_TIMES, Integer.toString(config.getMaxAsyncRetryTimes()))
+                    )
+            );
+            config.setAsyncExecuteThreadPoolSize(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.ASYNC_EXECUTE_THREAD_POOL_SIZE, Integer.toString(config.getAsyncExecuteThreadPoolSize()))
+                    )
+            );
+            config.setSyncExecuteThreadPoolSize(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.SYNC_EXECUTE_THREAD_POOL_SIZE, Integer.toString(config.getSyncExecuteThreadPoolSize()))
+                    )
+            );
+            config.setReplicaNum(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.REPLICA_NUM, Integer.toString(config.getReplicaNum()))
+                    )
+            );
+            config.setEnableStatisticsCollection(
+                    Boolean.parseBoolean(
+                            properties.getProperty(Constants.ENABLE_STATISTICS_COLLECTION, Boolean.toString(config.isEnableStatisticsCollection()))
+                    )
+            );
+            config.setStatisticsCollectorClassName(
+                    properties.getProperty(Constants.STATISTICS_COLLECTOR_CLASS_NAME, config.getStatisticsCollectorClassName())
+            );
+            config.setStatisticsLogInterval(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.STATISTICS_LOG_INTERVAL, "1000")
+                    )
+            );
+            config.setMetaStorage(
+                    properties.getProperty(Constants.META_STORAGE, config.getMetaStorage())
+            );
+            config.setZookeeperConnectionString(
+                    properties.getProperty(Constants.ZOOKEEPER_CONNECTION_STRING, config.getZookeeperConnectionString())
+            );
+            config.setFileDataDir(
+                    properties.getProperty(Constants.FILE_DATA_DIR, config.getFileDataDir())
+            );
+            config.setEtcdEndpoints(
+                    properties.getProperty(Constants.ETCD_ENDPOINTS, config.getEtcdEndpoints())
+            );
+            config.setPolicyClassName(
+                    properties.getProperty(Constants.POLICY_CLASS_NAME, config.getPolicyClassName())
+            );
+            config.setDisorderMargin(
+                    Long.parseLong(
+                            properties.getProperty(Constants.DISORDER_MARGIN, Long.toString(config.getDisorderMargin()))
+                    )
+            );
+            config.setStorageEngineList(
+                    properties.getProperty(Constants.STORAGE_ENGINE_LIST, config.getStorageEngineList())
+            );
+            config.setDatabaseClassNames(
+                    properties.getProperty(Constants.DATABASE_CLASS_NAMES, config.getDatabaseClassNames())
+            );
+            config.setInfluxDBToken(
+                    properties.getProperty(Constants.INFLUXDB_TOKEN, config.getInfluxDBToken())
+            );
+            config.setInfluxDBOrganizationName(
+                    properties.getProperty(Constants.INFLUXDB_ORGANIZATION_NAME, config.getInfluxDBOrganizationName())
+            );
+            config.setEnableRestService(
+                    Boolean.parseBoolean(
+                            properties.getProperty(Constants.ENABLE_REST_SERVICE, Boolean.toString(config.isEnableRestService()))
+                    )
+            );
+            config.setRestIp(
+                    properties.getProperty(Constants.REST_IP, config.getRestIp())
+            );
+            config.setRestPort(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.REST_PORT, Integer.toString(config.getRestPort()))
+                    )
+            );
+            config.setTimeseriesMaxTagSize(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.TIMESERIES_MAX_TAG_SIZE, Integer.toString(config.getTimeseriesMaxTagSize()))
+                    )
+            );
+            config.setEnableMQTT(
+                    Boolean.parseBoolean(
+                            properties.getProperty(Constants.ENABLE_MQTT, Boolean.toString(config.isEnableMQTT()))
+                    )
+            );
+            config.setMqttHost(
+                    properties.getProperty(Constants.MQTT_HOST, config.getMqttHost())
+            );
+            config.setMqttPort(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.MQTT_PORT, Integer.toString(config.getMqttPort()))
+                    )
+            );
+            config.setMqttHandlerPoolSize(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.MQTT_HANDLER_POOL_SIZE, Integer.toString(config.getMqttHandlerPoolSize()))
+                    )
+            );
+            config.setMqttPayloadFormatter(
+                    properties.getProperty(Constants.MQTT_PAYLOAD_FORMATTER, config.getMqttPayloadFormatter())
+            );
+            config.setMqttMaxMessageSize(
+                    Integer.parseInt(
+                            properties.getProperty(Constants.MQTT_MAX_MESSAGE_SIZE, Integer.toString(config.getMqttMaxMessageSize()))
+                    )
+            );
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
     }
 
     private void loadPropsFromEnv() {
-        config.setIp(EnvUtils.loadEnv("ip", config.getIp()));
-        config.setPort(EnvUtils.loadEnv("port", config.getPort()));
-        config.setUsername(EnvUtils.loadEnv("username", config.getUsername()));
-        config.setPassword(EnvUtils.loadEnv("password", config.getPassword()));
-        config.setZookeeperConnectionString(EnvUtils.loadEnv("zookeeperConnectionString", config.getZookeeperConnectionString()));
-        config.setStorageEngineList(EnvUtils.loadEnv("storageEngineList", config.getStorageEngineList()));
-        config.setMaxAsyncRetryTimes(EnvUtils.loadEnv("maxAsyncRetryTimes", config.getMaxAsyncRetryTimes()));
-        config.setSyncExecuteThreadPool(EnvUtils.loadEnv("syncExecuteThreadPool", config.getSyncExecuteThreadPool()));
-        config.setAsyncExecuteThreadPool(EnvUtils.loadEnv("asyncExecuteThreadPool", config.getAsyncExecuteThreadPool()));
-        config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));
-        config.setDatabaseClassNames(EnvUtils.loadEnv("databaseClassNames", config.getDatabaseClassNames()));
-        config.setPolicyClassName(EnvUtils.loadEnv("policyClassName", config.getPolicyClassName()));
-        config.setStorageUnitNum(EnvUtils.loadEnv("storageUnitNum", config.getStorageUnitNum()));
-        config.setStatisticsCollectorClassName(EnvUtils.loadEnv("statisticsCollectorClassName", config.getStatisticsCollectorClassName()));
-        config.setStatisticsLogInterval(EnvUtils.loadEnv("statisticsLogInterval", config.getStatisticsLogInterval()));
-        config.setRestIp(EnvUtils.loadEnv("restIp", config.getRestIp()));
-        config.setRestPort(EnvUtils.loadEnv("restPort", config.getRestPort()));
-        config.setDisorderMargin(EnvUtils.loadEnv("disorderMargin", config.getDisorderMargin()));
-        config.setMaxTimeseriesLength(EnvUtils.loadEnv("maxtimeserieslength", config.getMaxTimeseriesLength()));
-        config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
-        config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
-        config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));
-        config.setEtcdEndpoints(EnvUtils.loadEnv("etcdEndpoints", config.getEtcdEndpoints()));
-        config.setEnableMQTT(EnvUtils.loadEnv("enable_mqtt", config.isEnableMQTT()));
-        config.setMqttHost(EnvUtils.loadEnv("mqtt_host", config.getMqttHost()));
-        config.setMqttPort(EnvUtils.loadEnv("mqtt_port", config.getMqttPort()));
-        config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
-        config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
-        config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
+        config.setIp(
+                EnvUtils.loadEnv(Constants.IP, config.getIp())
+        );
+        config.setPort(
+                EnvUtils.loadEnv(Constants.PORT, config.getPort())
+        );
+        config.setUsername(
+                EnvUtils.loadEnv(Constants.USERNAME, config.getUsername())
+        );
+        config.setPassword(
+                EnvUtils.loadEnv(Constants.PASSWORD, config.getPassword())
+        );
+        config.setMaxAsyncRetryTimes(
+                EnvUtils.loadEnv(Constants.MAX_ASYNC_RETRY_TIMES, config.getMaxAsyncRetryTimes())
+        );
+        config.setAsyncExecuteThreadPoolSize(
+                EnvUtils.loadEnv(Constants.ASYNC_EXECUTE_THREAD_POOL_SIZE, config.getAsyncExecuteThreadPoolSize())
+        );
+        config.setSyncExecuteThreadPoolSize(
+                EnvUtils.loadEnv(Constants.SYNC_EXECUTE_THREAD_POOL_SIZE, config.getSyncExecuteThreadPoolSize())
+        );
+        config.setReplicaNum(
+                EnvUtils.loadEnv(Constants.REPLICA_NUM, config.getReplicaNum())
+        );
+        config.setEnableStatisticsCollection(
+                EnvUtils.loadEnv(Constants.ENABLE_STATISTICS_COLLECTION, config.isEnableStatisticsCollection())
+        );
+        config.setStatisticsCollectorClassName(
+                EnvUtils.loadEnv(Constants.STATISTICS_COLLECTOR_CLASS_NAME, config.getStatisticsCollectorClassName())
+        );
+        config.setStatisticsLogInterval(
+                EnvUtils.loadEnv(Constants.STATISTICS_LOG_INTERVAL, config.getStatisticsLogInterval())
+        );
+        config.setMetaStorage(
+                EnvUtils.loadEnv(Constants.META_STORAGE, config.getMetaStorage())
+        );
+        config.setZookeeperConnectionString(
+                EnvUtils.loadEnv(Constants.ZOOKEEPER_CONNECTION_STRING, config.getZookeeperConnectionString())
+        );
+        config.setFileDataDir(
+                EnvUtils.loadEnv(Constants.FILE_DATA_DIR, config.getFileDataDir())
+        );
+        config.setEtcdEndpoints(
+                EnvUtils.loadEnv(Constants.ETCD_ENDPOINTS, config.getEtcdEndpoints())
+        );
+        config.setPolicyClassName(
+                EnvUtils.loadEnv(Constants.POLICY_CLASS_NAME, config.getPolicyClassName())
+        );
+        config.setDisorderMargin(
+                EnvUtils.loadEnv(Constants.DISORDER_MARGIN, config.getDisorderMargin())
+        );
+        config.setStorageEngineList(
+                EnvUtils.loadEnv(Constants.STORAGE_ENGINE_LIST, config.getStorageEngineList())
+        );
+        config.setDatabaseClassNames(
+                EnvUtils.loadEnv(Constants.DATABASE_CLASS_NAMES, config.getDatabaseClassNames())
+        );
+        config.setInfluxDBToken(
+                EnvUtils.loadEnv(Constants.INFLUXDB_TOKEN, config.getInfluxDBToken())
+        );
+        config.setInfluxDBOrganizationName(
+                EnvUtils.loadEnv(Constants.INFLUXDB_ORGANIZATION_NAME, config.getInfluxDBOrganizationName())
+        );
+        config.setEnableRestService(
+                EnvUtils.loadEnv(Constants.ENABLE_REST_SERVICE, config.isEnableRestService())
+        );
+        config.setRestIp(
+                EnvUtils.loadEnv(Constants.REST_IP, config.getRestIp())
+        );
+        config.setRestPort(
+                EnvUtils.loadEnv(Constants.REST_PORT, config.getRestPort())
+        );
+        config.setTimeseriesMaxTagSize(
+                EnvUtils.loadEnv(Constants.TIMESERIES_MAX_TAG_SIZE, config.getTimeseriesMaxTagSize())
+        );
+        config.setEnableMQTT(
+                EnvUtils.loadEnv(Constants.ENABLE_MQTT, config.isEnableMQTT())
+        );
+        config.setMqttHost(
+                EnvUtils.loadEnv(Constants.MQTT_HOST, config.getMqttHost())
+        );
+        config.setMqttPort(
+                EnvUtils.loadEnv(Constants.MQTT_PORT, config.getMqttPort())
+        );
+        config.setMqttHandlerPoolSize(
+                EnvUtils.loadEnv(Constants.MQTT_HANDLER_POOL_SIZE, config.getMqttHandlerPoolSize())
+        );
+        config.setMqttPayloadFormatter(
+                EnvUtils.loadEnv(Constants.MQTT_PAYLOAD_FORMATTER, config.getMqttPayloadFormatter())
+        );
+        config.setMqttMaxMessageSize(
+                EnvUtils.loadEnv(Constants.MQTT_MAX_MESSAGE_SIZE, config.getMqttMaxMessageSize())
+        );
     }
 
 

@@ -79,7 +79,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected AbstractPlanExecutor() {
         asyncTaskQueue = new MemoryAsyncTaskQueue();
-        asyncTaskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPool());
+        asyncTaskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPoolSize());
         asyncTaskDispatcher = Executors.newSingleThreadExecutor();
         asyncTaskDispatcher.submit(() -> {
             while (true) {
@@ -114,7 +114,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
                 });
             }
         });
-        syncExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getSyncExecuteThreadPool());
+        syncExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getSyncExecuteThreadPoolSize());
 
         initFunctionMap();
     }

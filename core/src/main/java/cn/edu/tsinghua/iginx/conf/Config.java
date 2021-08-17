@@ -20,6 +20,9 @@ package cn.edu.tsinghua.iginx.conf;
 
 public class Config {
 
+    /**
+     * iginx 配置
+     */
     private String ip = "0.0.0.0";
 
     private int port = 6888;
@@ -28,44 +31,66 @@ public class Config {
 
     private String password = "root";
 
+    private int maxAsyncRetryTimes = 3;
+
+    private int asyncExecuteThreadPoolSize = 20;
+
+    private int syncExecuteThreadPoolSize = 60;
+
+    private int replicaNum = 1;
+
+    private boolean enableStatisticsCollection = false;
+
+    private String statisticsCollectorClassName = "cn.edu.tsinghua.iginx.statistics.StatisticsCollector";
+
+    private int statisticsLogInterval = 1000;
+
+    /**
+     * 元数据配置
+     */
     private String metaStorage = "zookeeper";
 
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
-    private String storageEngineList = "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100";
-
-    private int maxAsyncRetryTimes = 2;
-
-    private int syncExecuteThreadPool = 60;
-
-    private int asyncExecuteThreadPool = 20;
-
-    private int replicaNum = 1;
-
-    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
-
-    private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
-
-    private int storageUnitNum = 30;
-
-    private String statisticsCollectorClassName = "";
-
-    private int statisticsLogInterval = 1000;
-
-    private String restIp = "127.0.0.1";
-
-    private int restPort = 6666;
-
-    private int maxTimeseriesLength = 10;
-
-    private long disorderMargin = 10;
-
-    private boolean enableRestService = true;
-
-    private String fileDataDir = "";
+    private String fileDataDir = "meta";
 
     private String etcdEndpoints = "http://localhost:2379";
 
+    /**
+     * 策略配置
+     */
+    private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
+
+    private long disorderMargin = 10;
+
+    /**
+     * 底层数据库配置
+     */
+    private String storageEngineList = "127.0.0.1#6667#iotdb#username=root#password=root#session_pool_size=100";
+
+    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
+
+    /**
+     * InfluxDB 配置
+     */
+    private String influxDBToken = "your-token";
+
+    private String influxDBOrganizationName = "my-org";
+
+    /**
+     * Rest 服务配置
+     */
+    private boolean enableRestService = false;
+
+    private String restIp = "0.0.0.0";
+
+    private int restPort = 6666;
+
+    private int timeseriesMaxTagSize = 10;
+
+    /**
+     * MQTT 服务配置
+     */
     private boolean enableMQTT = false;
 
     private String mqttHost = "0.0.0.0";
@@ -77,14 +102,6 @@ public class Config {
     private String mqttPayloadFormatter = "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter";
 
     private int mqttMaxMessageSize = 1048576;
-
-    public int getMaxTimeseriesLength() {
-        return maxTimeseriesLength;
-    }
-
-    public void setMaxTimeseriesLength(int maxTimeseriesLength) {
-        this.maxTimeseriesLength = maxTimeseriesLength;
-    }
 
     public String getIp() {
         return ip;
@@ -118,22 +135,6 @@ public class Config {
         this.password = password;
     }
 
-    public String getZookeeperConnectionString() {
-        return zookeeperConnectionString;
-    }
-
-    public void setZookeeperConnectionString(String zookeeperConnectionString) {
-        this.zookeeperConnectionString = zookeeperConnectionString;
-    }
-
-    public String getStorageEngineList() {
-        return storageEngineList;
-    }
-
-    public void setStorageEngineList(String storageEngineList) {
-        this.storageEngineList = storageEngineList;
-    }
-
     public int getMaxAsyncRetryTimes() {
         return maxAsyncRetryTimes;
     }
@@ -142,20 +143,20 @@ public class Config {
         this.maxAsyncRetryTimes = maxAsyncRetryTimes;
     }
 
-    public int getSyncExecuteThreadPool() {
-        return syncExecuteThreadPool;
+    public int getAsyncExecuteThreadPoolSize() {
+        return asyncExecuteThreadPoolSize;
     }
 
-    public void setSyncExecuteThreadPool(int syncExecuteThreadPool) {
-        this.syncExecuteThreadPool = syncExecuteThreadPool;
+    public void setAsyncExecuteThreadPoolSize(int asyncExecuteThreadPoolSize) {
+        this.asyncExecuteThreadPoolSize = asyncExecuteThreadPoolSize;
     }
 
-    public int getAsyncExecuteThreadPool() {
-        return asyncExecuteThreadPool;
+    public int getSyncExecuteThreadPoolSize() {
+        return syncExecuteThreadPoolSize;
     }
 
-    public void setAsyncExecuteThreadPool(int asyncExecuteThreadPool) {
-        this.asyncExecuteThreadPool = asyncExecuteThreadPool;
+    public void setSyncExecuteThreadPoolSize(int syncExecuteThreadPoolSize) {
+        this.syncExecuteThreadPoolSize = syncExecuteThreadPoolSize;
     }
 
     public int getReplicaNum() {
@@ -166,28 +167,12 @@ public class Config {
         this.replicaNum = replicaNum;
     }
 
-    public String getDatabaseClassNames() {
-        return databaseClassNames;
+    public boolean isEnableStatisticsCollection() {
+        return enableStatisticsCollection;
     }
 
-    public void setDatabaseClassNames(String databaseClassNames) {
-        this.databaseClassNames = databaseClassNames;
-    }
-
-    public String getPolicyClassName() {
-        return policyClassName;
-    }
-
-    public void setPolicyClassName(String policyClassName) {
-        this.policyClassName = policyClassName;
-    }
-
-    public int getStorageUnitNum() {
-        return storageUnitNum;
-    }
-
-    public void setStorageUnitNum(int storageUnitNum) {
-        this.storageUnitNum = storageUnitNum;
+    public void setEnableStatisticsCollection(boolean enableStatisticsCollection) {
+        this.enableStatisticsCollection = enableStatisticsCollection;
     }
 
     public String getStatisticsCollectorClassName() {
@@ -206,6 +191,94 @@ public class Config {
         this.statisticsLogInterval = statisticsLogInterval;
     }
 
+    public String getMetaStorage() {
+        return metaStorage;
+    }
+
+    public void setMetaStorage(String metaStorage) {
+        this.metaStorage = metaStorage;
+    }
+
+    public String getZookeeperConnectionString() {
+        return zookeeperConnectionString;
+    }
+
+    public void setZookeeperConnectionString(String zookeeperConnectionString) {
+        this.zookeeperConnectionString = zookeeperConnectionString;
+    }
+
+    public String getFileDataDir() {
+        return fileDataDir;
+    }
+
+    public void setFileDataDir(String fileDataDir) {
+        this.fileDataDir = fileDataDir;
+    }
+
+    public String getEtcdEndpoints() {
+        return etcdEndpoints;
+    }
+
+    public void setEtcdEndpoints(String etcdEndpoints) {
+        this.etcdEndpoints = etcdEndpoints;
+    }
+
+    public String getPolicyClassName() {
+        return policyClassName;
+    }
+
+    public void setPolicyClassName(String policyClassName) {
+        this.policyClassName = policyClassName;
+    }
+
+    public long getDisorderMargin() {
+        return disorderMargin;
+    }
+
+    public void setDisorderMargin(long disorderMargin) {
+        this.disorderMargin = disorderMargin;
+    }
+
+    public String getStorageEngineList() {
+        return storageEngineList;
+    }
+
+    public void setStorageEngineList(String storageEngineList) {
+        this.storageEngineList = storageEngineList;
+    }
+
+    public String getDatabaseClassNames() {
+        return databaseClassNames;
+    }
+
+    public void setDatabaseClassNames(String databaseClassNames) {
+        this.databaseClassNames = databaseClassNames;
+    }
+
+    public String getInfluxDBToken() {
+        return influxDBToken;
+    }
+
+    public void setInfluxDBToken(String influxDBToken) {
+        this.influxDBToken = influxDBToken;
+    }
+
+    public String getInfluxDBOrganizationName() {
+        return influxDBOrganizationName;
+    }
+
+    public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
+        this.influxDBOrganizationName = influxDBOrganizationName;
+    }
+
+    public boolean isEnableRestService() {
+        return enableRestService;
+    }
+
+    public void setEnableRestService(boolean enableRestService) {
+        this.enableRestService = enableRestService;
+    }
+
     public String getRestIp() {
         return restIp;
     }
@@ -222,44 +295,12 @@ public class Config {
         this.restPort = restPort;
     }
 
-    public boolean isEnableRestService() {
-        return enableRestService;
+    public int getTimeseriesMaxTagSize() {
+        return timeseriesMaxTagSize;
     }
 
-    public void setEnableRestService(boolean enableRestService) {
-        this.enableRestService = enableRestService;
-    }
-
-    public String getMetaStorage() {
-        return metaStorage;
-    }
-
-    public void setMetaStorage(String metaStorage) {
-        this.metaStorage = metaStorage;
-    }
-
-    public String getFileDataDir() {
-        return fileDataDir;
-    }
-
-    public void setFileDataDir(String fileDataDir) {
-        this.fileDataDir = fileDataDir;
-    }
-
-    public long getDisorderMargin() {
-        return disorderMargin;
-    }
-
-    public void setDisorderMargin(long disorderMargin) {
-        this.disorderMargin = disorderMargin;
-    }
-
-    public String getEtcdEndpoints() {
-        return etcdEndpoints;
-    }
-
-    public void setEtcdEndpoints(String etcdEndpoints) {
-        this.etcdEndpoints = etcdEndpoints;
+    public void setTimeseriesMaxTagSize(int timeseriesMaxTagSize) {
+        this.timeseriesMaxTagSize = timeseriesMaxTagSize;
     }
 
     public boolean isEnableMQTT() {

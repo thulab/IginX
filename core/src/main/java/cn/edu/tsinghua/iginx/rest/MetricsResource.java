@@ -270,7 +270,7 @@ public class MetricsResource {
         RestSession restSession = new RestSession();
         restSession.openSession();
         List<String> ins = new ArrayList<>();
-        for (int i = 1; i < ConfigDescriptor.getInstance().getConfig().getMaxTimeseriesLength(); i++) {
+        for (int i = 1; i < ConfigDescriptor.getInstance().getConfig().getTimeseriesMaxTagSize(); i++) {
             StringBuilder stringBuilder = new StringBuilder();
             for (int j = 0; j < i; j++)
                 stringBuilder.append("*.");
