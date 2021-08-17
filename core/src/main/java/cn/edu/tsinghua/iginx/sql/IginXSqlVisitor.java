@@ -9,7 +9,6 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.apache.iotdb.tsfile.utils.Pair;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.INFLUXDB;
@@ -107,6 +106,16 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             addStorageEngineOp.setEngines(new StorageEngine(ip, port, type, extra));
         }
         return addStorageEngineOp;
+    }
+
+    @Override
+    public Operator visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
+        return new CountPointsOperator();
+    }
+
+    @Override
+    public Operator visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
+        return new ClearDataOperator();
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {

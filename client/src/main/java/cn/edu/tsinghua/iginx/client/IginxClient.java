@@ -184,10 +184,19 @@ public class IginxClient {
     private static void processSql(String statement) {
         try {
             SessionExecuteSqlResult res = session.executeSql(statement);
+
+            String parseErrorMsg = res.getParseErrorMsg();
+            if (parseErrorMsg != null && !parseErrorMsg.equals("")) {
+                System.out.println(res.getParseErrorMsg());
+                return;
+            }
+
             if (res.needPrint()) {
                 res.print();
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println("Replica num: " + res.getReplicaNum());
+            } else if (res.getSqlType() == SqlType.CountPoints) {
+                System.out.println("Points num: " + res.getPointsNum());
             } else {
                 System.out.println("Finished!");
             }
@@ -201,7 +210,7 @@ public class IginxClient {
         if (commandParts.length == 3 && commandParts[0].equals("add") && commandParts[1].equals("storageEngines")) {
             String[] storageEngineStrings = commandParts[2].split(",");
             List<StorageEngine> storageEngines = new ArrayList<>();
-            for (String storageEngineString: storageEngineStrings) {
+            for (String storageEngineString : storageEngineStrings) {
                 String[] storageEngineParts = storageEngineString.split("#");
                 String ip = storageEngineParts[0];
                 int port = Integer.parseInt(storageEngineParts[1]);

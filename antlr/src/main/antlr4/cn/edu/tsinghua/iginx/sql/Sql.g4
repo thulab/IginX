@@ -6,10 +6,12 @@ sqlStatement
 
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
-    | DELETE FROM path (COMMA path)* WHERE (timeRange)? #deleteStatement
+    | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
     | selectClause fromClause whereClause? groupByTimeClause? #selectStatement
-    | SHOW REPLICATION #showReplicationStatement
+    | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
+    | COUNT POINTS #countPointsStatement
+    | CLEAR DATA #clearDataStatement
     ;
 
 selectClause
@@ -179,8 +181,12 @@ SHOW
     : S H O W
     ;
 
-REPLICATION
-    : R E P L I C A T I O N
+REPLICA
+    : R E P L I C A
+    ;
+
+NUMBER
+    : N U M B E R
     ;
 
 WHERE
@@ -282,6 +288,15 @@ ADD
 STORAGEENGINE
     : S T O R A G E E N G I N E
     ;
+
+POINTS
+    : P O I N T S
+    ;
+
+CLEAR
+    : C L E A R
+    ;
+
 //============================
 // End of the keywords list
 //============================
