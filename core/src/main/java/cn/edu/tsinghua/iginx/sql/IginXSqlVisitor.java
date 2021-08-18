@@ -186,12 +186,17 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     private Map<String, String> parseExtra(StringLiteralContext ctx) {
         Map<String, String> map = new HashMap<>();
         String extra = ctx.getText().trim();
+        if (extra.length() == 0 || extra.equals(SQLConstant.DOUBLE_QUOTES)) {
+            return map;
+        }
         extra = extra.substring(extra.indexOf(SQLConstant.LBRACE) + 1, extra.indexOf(SQLConstant.RBRACE));
         String[] kvStr = extra.split(SQLConstant.COMMA);
         for (String kv : kvStr) {
-            String key = kv.split(SQLConstant.COLON)[0].trim();
-            String val = kv.split(SQLConstant.COLON)[1].trim();
-            map.put(key, val);
+            String[] kvArray = kv.split(SQLConstant.COLON);
+            if (kvArray.length != 2) {
+                continue;
+            }
+            map.put(kvArray[0].trim(), kvArray[1].trim());
         }
         return map;
     }

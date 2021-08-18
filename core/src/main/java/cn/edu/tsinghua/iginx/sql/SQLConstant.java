@@ -7,6 +7,7 @@ public class SQLConstant {
     public static final String COLON = ":";
     public static final String LBRACE = "{";
     public static final String RBRACE = "}";
+    public static final String DOUBLE_QUOTES = "\"\"";
 
     public static final String IOT_DB = "iotdb";
     public static final String INFLUX_DB = "influxdb";

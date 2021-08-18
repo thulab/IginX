@@ -187,18 +187,24 @@ public class IginxClient {
 
             String parseErrorMsg = res.getParseErrorMsg();
             if (parseErrorMsg != null && !parseErrorMsg.equals("")) {
-                System.out.println(res.getParseErrorMsg());
+                if (statement.startsWith("show")) {
+                    System.out.println("unsupported command");
+                } else {
+                    System.out.println(res.getParseErrorMsg());
+                }
                 return;
             }
 
             if (res.needPrint()) {
                 res.print();
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
-                System.out.println("Replica num: " + res.getReplicaNum());
+                System.out.println(res.getReplicaNum());
+                System.out.println("success");
             } else if (res.getSqlType() == SqlType.CountPoints) {
-                System.out.println("Points num: " + res.getPointsNum());
+                System.out.println(res.getPointsNum());
+                System.out.println("success");
             } else {
-                System.out.println("Finished!");
+                System.out.println("success");
             }
         } catch (Exception e) {
             System.out.println("encounter error when executing sql statement.");
