@@ -19,14 +19,6 @@
         <maven.compiler.target>8</maven.compiler.target>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.antlr</groupId>
-            <artifactId>antlr4-runtime</artifactId>
-            <version>4.9.1</version>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>

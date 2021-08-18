@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
+import cn.edu.tsinghua.iginx.db.StorageEngine;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -18,12 +18,14 @@
     <module>thrift</module>
     <module>iotdb</module>
     <module>influxdb</module>
+    <module>shared</module>
     <module>core</module>
     <module>client</module>
-    <module>example</module>
-    <module>test</module>
     <module>antlr</module>
     <module>jdbc</module>
+    <module>session</module>
+    <module>example</module>
+    <module>test</module>
   </modules>
 
   <dependencies>
