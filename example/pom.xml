@@ -22,7 +22,7 @@
   <dependencies>
     <dependency>
       <groupId>cn.edu.tsinghua</groupId>
-      <artifactId>iginx-core</artifactId>
+      <artifactId>iginx-session</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>

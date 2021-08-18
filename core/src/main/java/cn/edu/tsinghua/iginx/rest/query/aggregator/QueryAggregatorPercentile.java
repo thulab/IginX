@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.RestUtils;
+import cn.edu.tsinghua.iginx.rest.RestUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +30,7 @@ import java.util.List;
 
 public class QueryAggregatorPercentile extends QueryAggregator {
     public QueryAggregatorPercentile() {
-        super(QueryAggregatorType.PERSENTILE);
+        super(QueryAggregatorType.PERCENTILE);
     }
 
     @Override
