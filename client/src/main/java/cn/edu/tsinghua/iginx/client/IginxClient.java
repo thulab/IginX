@@ -184,12 +184,27 @@ public class IginxClient {
     private static void processSql(String statement) {
         try {
             SessionExecuteSqlResult res = session.executeSql(statement);
+
+            String parseErrorMsg = res.getParseErrorMsg();
+            if (parseErrorMsg != null && !parseErrorMsg.equals("")) {
+                if (statement.startsWith("show")) {
+                    System.out.println("unsupported command");
+                } else {
+                    System.out.println(res.getParseErrorMsg());
+                }
+                return;
+            }
+
             if (res.needPrint()) {
                 res.print();
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
-                System.out.println("Replica num: " + res.getReplicaNum());
+                System.out.println(res.getReplicaNum());
+                System.out.println("success");
+            } else if (res.getSqlType() == SqlType.CountPoints) {
+                System.out.println(res.getPointsNum());
+                System.out.println("success");
             } else {
-                System.out.println("Finished!");
+                System.out.println("success");
             }
         } catch (Exception e) {
             System.out.println("encounter error when executing sql statement.");
@@ -201,7 +216,7 @@ public class IginxClient {
         if (commandParts.length == 3 && commandParts[0].equals("add") && commandParts[1].equals("storageEngines")) {
             String[] storageEngineStrings = commandParts[2].split(",");
             List<StorageEngine> storageEngines = new ArrayList<>();
-            for (String storageEngineString: storageEngineStrings) {
+            for (String storageEngineString : storageEngineStrings) {
                 String[] storageEngineParts = storageEngineString.split("#");
                 String ip = storageEngineParts[0];
                 int port = Integer.parseInt(storageEngineParts[1]);

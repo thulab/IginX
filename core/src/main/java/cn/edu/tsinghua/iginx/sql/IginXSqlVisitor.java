@@ -9,7 +9,6 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.apache.iotdb.tsfile.utils.Pair;
 
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.INFLUXDB;
@@ -109,6 +108,16 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         return addStorageEngineOp;
     }
 
+    @Override
+    public Operator visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
+        return new CountPointsOperator();
+    }
+
+    @Override
+    public Operator visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
+        return new ClearDataOperator();
+    }
+
     private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {
         List<ExpressionContext> expressions = ctx.expression();
 
@@ -177,12 +186,17 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     private Map<String, String> parseExtra(StringLiteralContext ctx) {
         Map<String, String> map = new HashMap<>();
         String extra = ctx.getText().trim();
+        if (extra.length() == 0 || extra.equals(SQLConstant.DOUBLE_QUOTES)) {
+            return map;
+        }
         extra = extra.substring(extra.indexOf(SQLConstant.LBRACE) + 1, extra.indexOf(SQLConstant.RBRACE));
         String[] kvStr = extra.split(SQLConstant.COMMA);
         for (String kv : kvStr) {
-            String key = kv.split(SQLConstant.COLON)[0].trim();
-            String val = kv.split(SQLConstant.COLON)[1].trim();
-            map.put(key, val);
+            String[] kvArray = kv.split(SQLConstant.COLON);
+            if (kvArray.length != 2) {
+                continue;
+            }
+            map.put(kvArray[0].trim(), kvArray[1].trim());
         }
         return map;
     }

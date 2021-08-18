@@ -39,6 +39,7 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
+import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
 import cn.edu.tsinghua.iginx.sql.operator.Operator;
@@ -48,7 +49,6 @@ import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -143,7 +143,7 @@ public class IginxWorker implements IService.Iface {
 
         Map<cn.edu.tsinghua.iginx.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
         String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String driverInfo: driverInfos) {
+        for (String driverInfo : driverInfos) {
             String[] kAndV = driverInfo.split("=");
             String className = kAndV[1];
             try {
@@ -156,7 +156,8 @@ public class IginxWorker implements IService.Iface {
             }
         }
 
-        for (StorageEngine storageEngine: storageEngines) {
+
+        for (StorageEngine storageEngine : storageEngines) {
             cn.edu.tsinghua.iginx.db.StorageEngine type = cn.edu.tsinghua.iginx.db.StorageEngine.fromThrift(storageEngine.getType());
             StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
                     storageEngine.getExtraParams(), type, metaManager.getIginxId());
@@ -242,10 +243,23 @@ public class IginxWorker implements IService.Iface {
     @Override
     public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
         SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(SQLParseError.INSTANCE);
+
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SqlParser parser = new SqlParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(SQLParseError.INSTANCE);
+
         IginXSqlVisitor visitor = new IginXSqlVisitor();
-        ParseTree tree = parser.sqlStatement();
+        ParseTree tree;
+        try {
+            tree = parser.sqlStatement();
+        } catch (Exception e) {
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknow);
+            resp.setParseErrorMsg(e.getMessage());
+            return resp;
+        }
         Operator operator = visitor.visit(tree);
         return operator.doOperation(req.getSessionId());
     }

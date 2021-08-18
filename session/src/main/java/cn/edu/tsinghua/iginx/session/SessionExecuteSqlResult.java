@@ -42,19 +42,26 @@ public class SessionExecuteSqlResult {
     private List<List<Object>> values;
     private List<DataType> dataTypeList;
     private int replicaNum;
+    private long pointsNum;
+    private String parseErrorMsg;
 
     // Only for mock test
     public SessionExecuteSqlResult(){}
 
     public SessionExecuteSqlResult(ExecuteSqlResp resp) {
         this.sqlType = resp.getType();
+        this.parseErrorMsg = resp.getParseErrorMsg();
         switch (resp.getType()) {
             case Insert:
             case Delete:
             case AddStorageEngines:
+            case ClearData:
                 break;
             case GetReplicaNum:
                 this.replicaNum = resp.getReplicaNum();
+                break;
+            case CountPoints:
+                this.pointsNum = resp.getPointsNum();
                 break;
             case AggregateQuery:
             case SimpleQuery:
@@ -204,5 +211,21 @@ public class SessionExecuteSqlResult {
 
     public void setReplicaNum(int replicaNum) {
         this.replicaNum = replicaNum;
+    }
+
+    public long getPointsNum() {
+        return pointsNum;
+    }
+
+    public void setPointsNum(long pointsNum) {
+        this.pointsNum = pointsNum;
+    }
+
+    public String getParseErrorMsg() {
+        return parseErrorMsg;
+    }
+
+    public void setParseErrorMsg(String parseErrorMsg) {
+        this.parseErrorMsg = parseErrorMsg;
     }
 }
