@@ -176,13 +176,34 @@ public class IginxWorker implements IService.Iface {
             storageEngineMetas.add(meta);
 
         }
+        Status status = RpcUtils.SUCCESS;
+        // 检测是否与已有的存储单元冲突
+        List<StorageEngineMeta> currentStorageEngines = metaManager.getStorageEngineList();
+        List<StorageEngineMeta> duplicatedStorageEngine = new ArrayList<>();
+        for (StorageEngineMeta storageEngine: storageEngineMetas) {
+            for (StorageEngineMeta currentStorageEngine: currentStorageEngines) {
+                if (currentStorageEngine.getIp().equals(storageEngine.getIp()) && currentStorageEngine.getPort() == storageEngine.getPort()) {
+                    duplicatedStorageEngine.add(storageEngine);
+                    break;
+                }
+            }
+        }
+        if (!duplicatedStorageEngine.isEmpty()) {
+            storageEngineMetas.removeAll(duplicatedStorageEngine);
+            if (!storageEngines.isEmpty()) {
+                status = new Status(RpcUtils.PARTIAL_SUCCESS.code);
+            } else {
+                status = new Status(RpcUtils.FAILURE.code);
+            }
+            status.setMessage("unexpected repeated add");
+        }
         if (!storageEngineMetas.isEmpty()) {
             storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
-            return RpcUtils.FAILURE;
+            status = RpcUtils.FAILURE;
         }
-        return RpcUtils.SUCCESS;
+        return status;
     }
 
     @Override
