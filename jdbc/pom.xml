@@ -21,12 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>cn.edu.tsinghua</groupId>
-            <artifactId>iginx-session</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>cn.edu.tsinghua</groupId>
-            <artifactId>iginx-shared</artifactId>
+            <artifactId>iginx-core</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>
