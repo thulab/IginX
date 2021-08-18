@@ -5,7 +5,7 @@ if [[ -z "${IGINX_HOME}" ]]; then
   export IGINX_HOME="$(cd "`dirname "$0"`"; pwd)"
 fi
 
-CLASSPATH="${IGINX_HOME}/core/target/iginx-core-0.1.0-SNAPSHOT.jar"":${IGINX_HOME}/iotdb/target/iotdb-0.1.0-SNAPSHOT.jar"":${IGINX_HOME}/influxdb/target/influxdb-0.1.0-SNAPSHOT.jar"
+CLASSPATH="${IGINX_HOME}/core/target/iginx-core-0.3.0-SNAPSHOT.jar"":${IGINX_HOME}/iotdb/target/iotdb-0.3.0-SNAPSHOT.jar"":${IGINX_HOME}/influxdb/target/influxdb-0.3.0-SNAPSHOT.jar"
 
 if [ -n "$JAVA_HOME" ]; then
     for java in "$JAVA_HOME"/bin/amd64/java "$JAVA_HOME"/bin/java; do
