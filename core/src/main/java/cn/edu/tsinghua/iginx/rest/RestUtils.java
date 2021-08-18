@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.utils;
+package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;

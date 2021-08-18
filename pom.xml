@@ -18,7 +18,7 @@
     <module>thrift</module>
     <module>iotdb</module>
     <module>influxdb</module>
-    <module>tools</module>
+    <module>shared</module>
     <module>core</module>
     <module>client</module>
     <module>antlr</module>

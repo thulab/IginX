@@ -33,7 +33,7 @@ public enum QueryAggregatorType {
     SAVE_AS("save_as"),
     RATE("rate"),
     SAMPLER("sampler"),
-    PERSENTILE("percentile"),
+    PERCENTILE("percentile"),
     NONE("");
     private String type;
 

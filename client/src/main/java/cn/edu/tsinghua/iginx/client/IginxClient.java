@@ -205,7 +205,7 @@ public class IginxClient {
                 String[] storageEngineParts = storageEngineString.split("#");
                 String ip = storageEngineParts[0];
                 int port = Integer.parseInt(storageEngineParts[1]);
-                StorageEngineType storageEngineType = cn.edu.tsinghua.iginx.core.db.StorageEngine.toThrift(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(storageEngineParts[2]));
+                StorageEngineType storageEngineType = cn.edu.tsinghua.iginx.db.StorageEngine.toThrift(cn.edu.tsinghua.iginx.db.StorageEngine.fromString(storageEngineParts[2]));
                 Map<String, String> extraParams = new HashMap<>();
                 String[] KAndV;
                 for (int i = 3; i < storageEngineParts.length; i++) {

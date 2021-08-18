@@ -141,7 +141,7 @@ public class IginxWorker implements IService.Iface {
         List<StorageEngine> storageEngines = req.getStorageEngines();
         List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
 
-        Map<cn.edu.tsinghua.iginx.core.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
+        Map<cn.edu.tsinghua.iginx.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
         String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String driverInfo: driverInfos) {
             String[] kAndV = driverInfo.split("=");
@@ -150,14 +150,14 @@ public class IginxWorker implements IService.Iface {
                 Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
                         loadClass(className);
                 Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-                checkConnectionMethods.put(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(kAndV[0]), method);
+                checkConnectionMethods.put(cn.edu.tsinghua.iginx.db.StorageEngine.fromString(kAndV[0]), method);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalArgumentException e) {
                 logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
             }
         }
 
         for (StorageEngine storageEngine: storageEngines) {
-            cn.edu.tsinghua.iginx.core.db.StorageEngine type = cn.edu.tsinghua.iginx.core.db.StorageEngine.fromThrift(storageEngine.getType());
+            cn.edu.tsinghua.iginx.db.StorageEngine type = cn.edu.tsinghua.iginx.db.StorageEngine.fromThrift(storageEngine.getType());
             StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
                     storageEngine.getExtraParams(), type, metaManager.getIginxId());
             Method checkConnectionMethod = checkConnectionMethods.get(type);
