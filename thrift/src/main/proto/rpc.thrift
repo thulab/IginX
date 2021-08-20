@@ -40,6 +40,13 @@ enum SqlType {
     ShowTimeSeries,
 }
 
+enum AuthType {
+    Read,
+    Write,
+    Admin,
+    Cluster
+}
+
 struct Status {
     1: required i32 code
     2: optional string message
@@ -226,6 +233,25 @@ struct ExecuteSqlResp {
     13: optional i32 offset
 }
 
+struct UpdateUserReq {
+    1: required i64 sessionId
+    2: required string username
+    3: optional binary password
+    4: optional set<AuthType> auths
+}
+
+struct AddUserReq {
+    1: required i64 sessionId
+    2: required string username
+    3: required binary password
+    4: required set<AuthType> auths
+}
+
+struct DeleteUserReq {
+    1: required i64 sessionId
+    2: required string username
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -257,4 +283,10 @@ service IService {
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 
     ExecuteSqlResp executeSql(1: ExecuteSqlReq req);
+
+    Status updateUser(1: UpdateUserReq req);
+
+    Status addUser(1: AddUserReq req);
+
+    Status deleteUser(1: DeleteUserReq req);
 }
