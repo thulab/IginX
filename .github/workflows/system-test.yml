@@ -46,8 +46,8 @@ jobs:
         run: mvn -B clean install -DskipTests
       - name: Start IginX
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/startIginX.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/startIginX.sh" &
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=IoTDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
@@ -88,8 +88,8 @@ jobs:
         run: mvn -B clean install -DskipTests
       - name: Start IginX
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/startIginX.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/startIginX.sh" &
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh" &
       - name: A Lame Integration Test with Maven for InfluxDB
         run: mvn test -q -Dtest=InfluxDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
