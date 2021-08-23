@@ -72,6 +72,10 @@ public class UserManager {
     }
 
     public boolean deleteUser(String username) {
+        UserMeta user = getUser(username);
+        if (user == null || user.getUserType() == UserType.Administrator) {
+            return false;
+        }
         return metaManager.removeUser(username);
     }
 

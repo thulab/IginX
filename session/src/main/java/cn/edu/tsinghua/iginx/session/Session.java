@@ -30,6 +30,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -666,13 +668,73 @@ public class Session {
                 } finally {
                     lock.readLock().unlock();
                 }
-            } while (checkRedirect(resp.status));
+            } while(checkRedirect(resp.status));
             RpcUtils.verifySuccess(resp.status);
         } catch (TException e) {
             throw new SessionException(e);
         }
 
         return new LastQueryDataSet(resp);
+    }
+
+    public void addUser(String username, String password, Set<AuthType> auths) throws SessionException, ExecutionException  {
+        AddUserReq req = new AddUserReq(sessionId, username, password, auths);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.addUser(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void updateUser(String username, String password, Set<AuthType> auths) throws SessionException, ExecutionException {
+        UpdateUserReq req = new UpdateUserReq(sessionId, username);
+        if (password != null) {
+            req.setPassword(password);
+        }
+        if (auths != null) {
+            req.setAuths(auths);
+        }
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.updateUser(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void deleteUser(String username) throws SessionException, ExecutionException {
+        DeleteUserReq req = new DeleteUserReq(sessionId, username);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.deleteUser(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
     }
 
     // 适用于查询类请求和删除类请求，因为其 paths 可能带有 *
