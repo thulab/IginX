@@ -20,7 +20,9 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -666,6 +668,31 @@ public class ETCDMetaStorage implements IMetaStorage {
     @Override
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
         this.fragmentChangeHook = hook;
+    }
+
+    @Override
+    public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
+        return null;
+    }
+
+    @Override
+    public void registerUserChangeHook(UserChangeHook hook) {
+
+    }
+
+    @Override
+    public void addUser(UserMeta userMeta) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void updateUser(UserMeta userMeta) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeUser(String username) throws MetaStorageException {
+
     }
 
     public void close() throws MetaStorageException {

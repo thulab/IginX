@@ -29,11 +29,14 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -109,6 +113,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initUser();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -237,6 +242,19 @@ public class DefaultMetaManager implements IMetaManager {
         });
         for (Map.Entry<String, Map<String, Integer>> schemaEntry: storage.loadSchemaMapping().entrySet()) {
             cache.addOrUpdateSchemaMapping(schemaEntry.getKey(), schemaEntry.getValue());
+        }
+    }
+
+    private void initUser() throws MetaStorageException {
+        storage.registerUserChangeHook((username, user) -> {
+            if (user == null) {
+                cache.removeUser(username);
+            } else {
+                cache.addOrUpdateUser(user);
+            }
+        });
+        for (UserMeta user: storage.loadUser(resolveUserFromConf())) {
+            cache.addOrUpdateUser(user);
         }
     }
 
@@ -560,4 +578,78 @@ public class DefaultMetaManager implements IMetaManager {
         return storageEngineMetaList;
     }
 
+    private UserMeta resolveUserFromConf() {
+        String username = ConfigDescriptor.getInstance().getConfig().getUsername();
+        String password = ConfigDescriptor.getInstance().getConfig().getPassword();
+        UserType userType = UserType.Administrator;
+        Set<AuthType> auths = new HashSet<>();
+        auths.add(AuthType.Read);
+        auths.add(AuthType.Write);
+        auths.add(AuthType.Admin);
+        auths.add(AuthType.Cluster);
+        return new UserMeta(username, password, userType, auths);
+    }
+
+    @Override
+    public boolean addUser(UserMeta user) {
+        try {
+            storage.addUser(user);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("add user error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateUser(String username, String password, Set<AuthType> auths) {
+        List<UserMeta> users = cache.getUser(Collections.singletonList(username));
+        if (users.size() == 0) { // 待更新的用户不存在
+            return false;
+        }
+        UserMeta user = users.get(0);
+        if (password != null) {
+            user.setPassword(password);
+        }
+        if (auths != null) {
+            user.setAuths(auths);
+        }
+        try {
+            storage.updateUser(user);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("update user error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean removeUser(String username) {
+        try {
+            storage.removeUser(username);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("remove user error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public UserMeta getUser(String username) {
+        List<UserMeta> users = cache.getUser(Collections.singletonList(username));
+        if (users.size() == 0) {
+            return null;
+        }
+        return users.get(0);
+    }
+
+    @Override
+    public List<UserMeta> getUsers() {
+        return cache.getUser();
+    }
+
+    @Override
+    public List<UserMeta> getUsers(List<String> username) {
+        return cache.getUser(username);
+    }
 }
