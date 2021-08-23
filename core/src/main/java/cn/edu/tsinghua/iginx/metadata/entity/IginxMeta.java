@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public final class IginxMeta {
@@ -62,6 +63,8 @@ public final class IginxMeta {
     }
 
     public Map<String, String> getExtraParams() {
+        if (extraParams == null)
+            return new HashMap<>();
         return extraParams;
     }
 }

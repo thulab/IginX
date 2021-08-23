@@ -89,6 +89,10 @@ public class ConfigDescriptor {
             config.setMqttHandlerPoolSize(Integer.parseInt(properties.getProperty("mqtt_handler_pool_size", "1")));
             config.setMqttPayloadFormatter(properties.getProperty("mqtt_payload_formatter", "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter"));
             config.setMqttMaxMessageSize(Integer.parseInt(properties.getProperty("mqtt_max_message_size", "1048576")));
+
+            config.setEnableEdgeCloudCollaboration(Boolean.parseBoolean(properties.getProperty("enable_edge_cloud_collaboration", "false")));
+            config.setEdge(Boolean.parseBoolean(properties.getProperty("is_edge", "false")));
+            config.setEdgeName(properties.getProperty("edge_name", ""));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

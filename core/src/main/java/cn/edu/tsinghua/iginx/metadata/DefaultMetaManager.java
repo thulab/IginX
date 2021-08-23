@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
@@ -126,8 +127,12 @@ public class DefaultMetaManager implements IMetaManager {
         for (IginxMeta iginx: storage.loadIginx().values()) {
             cache.addIginx(iginx);
         }
+        Map<String, String> extraParams = new HashMap<>();
+        extraParams.put("enable_edge_cloud_collaboration", Boolean.toString(ConfigDescriptor.getInstance().getConfig().isEnableEdgeCloudCollaboration()));
+        extraParams.put("is_edge", Boolean.toString(ConfigDescriptor.getInstance().getConfig().isEdge()));
+        extraParams.put("edge_name", ConfigDescriptor.getInstance().getConfig().getEdgeName());
         IginxMeta iginx = new IginxMeta(0L, ConfigDescriptor.getInstance().getConfig().getIp(),
-                ConfigDescriptor.getInstance().getConfig().getPort(), null);
+                ConfigDescriptor.getInstance().getConfig().getPort(), extraParams);
         id = storage.registerIginx(iginx);
         SnowFlakeUtils.init(id);
     }

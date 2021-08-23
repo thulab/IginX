@@ -434,6 +434,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         break;
                     }
                     data = event.getData().getData();
+                    if (event.getData().getPath().equals(STORAGE_ENGINE_NODE_PREFIX)) {
+                        break;
+                    }
                     logger.info("storage engine meta updated " + event.getData().getPath());
                     logger.info("storage engine: " + new String(data));
                     storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);

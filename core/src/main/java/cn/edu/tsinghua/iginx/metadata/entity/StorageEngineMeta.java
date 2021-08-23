@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 import cn.edu.tsinghua.iginx.db.StorageEngine;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -99,6 +100,8 @@ public final class StorageEngineMeta {
     }
 
     public Map<String, String> getExtraParams() {
+        if (extraParams == null)
+            return new HashMap<>();
         return extraParams;
     }
 

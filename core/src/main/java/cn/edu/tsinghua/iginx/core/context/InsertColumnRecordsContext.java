@@ -18,9 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.stream.Collectors;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
