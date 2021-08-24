@@ -260,7 +260,16 @@ public class IginxWorker implements IService.Iface {
             resp.setParseErrorMsg(e.getMessage());
             return resp;
         }
-        Operator operator = visitor.visit(tree);
+
+        Operator operator;
+        try {
+            operator = visitor.visit(tree);
+        } catch (Exception e) {
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknow);
+            resp.setParseErrorMsg(e.getMessage());
+            return resp;
+        }
+
         return operator.doOperation(req.getSessionId());
     }
 }

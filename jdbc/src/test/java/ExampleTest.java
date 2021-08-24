@@ -12,10 +12,12 @@ public class ExampleTest {
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 100L;
 
-    private static String S1 = "us.d2.long";
-    private static String S2 = "us.d2.double";
-    private static String S3 = "us.d2.boolean";
-    private static String S4 = "us.d2.string";
+    private static String prefix = "us.d2";
+
+    private static String S1 = "long";
+    private static String S2 = "double";
+    private static String S3 = "boolean";
+    private static String S4 = "string";
 
     public static void main(String[] args) throws SQLException {
         // Create connection
@@ -71,10 +73,10 @@ public class ExampleTest {
         statement.executeUpdate(sql);
 
         // Full query use executeQuery
-        String fullQueryClause = "SELECT %s, %s, %s, %s FROM %s, %s, %s, %s;";
+        String fullQueryClause = "SELECT %s, %s, %s, %s FROM %s WHERE TIME IN (%s, %s);";
         sql = String.format(fullQueryClause,
                 S1, S2, S3, S4, // select
-                S1, S2, S3, S4, // from
+                prefix, // from
                 0, 200 // time range
         );
         ResultSet resultSet = statement.executeQuery(sql);
@@ -83,7 +85,7 @@ public class ExampleTest {
 
         // Time range query use execute
         String timeRangeClause = "SELECT %s FROM %s WHERE time in (50, 100);";
-        sql = String.format(timeRangeClause, S1, S1);
+        sql = String.format(timeRangeClause, S1, prefix);
         if (statement.execute(sql)) {
             resultSet = statement.getResultSet();
         }
@@ -92,14 +94,14 @@ public class ExampleTest {
 
         // DownSample query use executeQuery
         String downSampleClause = "SELECT %s(%s) FROM %s WHERE time in (%s, %s) GROUP BY %s;";
-        sql = String.format(downSampleClause, "MAX", S2, S2, "0", "200", "10ms");
+        sql = String.format(downSampleClause, "MAX", S2, prefix, "0", "200", "10ms");
         resultSet = statement.executeQuery(sql);
         System.out.println("sql: " + sql);
         outputResult(resultSet);
 
         // Aggregate query use execute
         String aggregateClause = "SELECT COUNT(%s) FROM %s;";
-        sql = String.format(aggregateClause, S4, S4);
+        sql = String.format(aggregateClause, S4, prefix);
         if (statement.execute(sql)) {
             resultSet = statement.getResultSet();
         }
@@ -111,7 +113,7 @@ public class ExampleTest {
 
         // Create prepareStatement
         String preparedClause = "SELECT %s FROM %s WHERE time in (?, ?) and %s < ?;";
-        preparedStatement = connection.prepareStatement(String.format(preparedClause, S1, S1, S1));
+        preparedStatement = connection.prepareStatement(String.format(preparedClause, S1, prefix, S1));
         if (statement == null) {
             System.out.println("create statement fail.");
             return;
@@ -135,6 +137,13 @@ public class ExampleTest {
 
         // Close prepareStatement
         preparedStatement.close();
+
+        // clear data
+        statement = connection.createStatement();
+        sql = "clear data;";
+        System.out.println("sql: " + sql);
+        statement.execute(sql);
+        statement.close();
 
         // CLose connection
         connection.close();

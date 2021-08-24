@@ -52,27 +52,29 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     public Operator visitSelectStatement(SqlParser.SelectStatementContext ctx) {
         SelectOperator selectOp = new SelectOperator();
         // Step 1. parse as much information as possible.
+        // parse from paths
+        if (ctx.fromClause() != null) {
+            selectOp.setFromPath(ctx.fromClause().path().getText());
+        }
         // parse select paths
         if (ctx.selectClause() != null) {
             parseSelectPaths(ctx.selectClause(), selectOp);
         }
-        // parse from paths
-        if (ctx.fromClause() != null) {
-            ctx.fromClause().path().stream().forEach(e -> selectOp.setFromPath(e.getText()));
-        }
-        // parse time range
+        // parse where clause
         if (ctx.whereClause() != null) {
+            // parse time range
             Pair<Long, Long> range = parseTimeRange(ctx.whereClause().timeRange());
             selectOp.setStartTime(range.left);
             selectOp.setEndTime(range.right);
-        }
-        // parse booleanExpression
-        if (ctx.whereClause() != null && ctx.whereClause().orExpression() != null) {
-            // can not simply use orExpression().getText()
-            // you may get "a>1andb<2orc>3", and value filter may goes wrong.
-            String ret = parseOrExpression(ctx.whereClause().orExpression());
-            selectOp.setBooleanExpression(ret);
-            selectOp.setHasValueFilter(true);
+
+            // parse booleanExpression
+            if (ctx.whereClause().orExpression() != null) {
+                // can not simply use orExpression().getText()
+                // you may get "a>1andb<2orc>3", and value filter may goes wrong.
+                String ret = parseOrExpression(ctx.whereClause().orExpression(), selectOp);
+                selectOp.setBooleanExpression(ret);
+                selectOp.setHasValueFilter(true);
+            }
         }
         // parse group by precision
         if (ctx.groupByTimeClause() != null) {
@@ -121,7 +123,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {
         List<ExpressionContext> expressions = ctx.expression();
 
-        List<Pair<SelectOperator.FuncType, String>> selectedPaths = new ArrayList<>();
         boolean hasFunc = expressions.get(0).functionName() != null;
         selectOp.setHasFunc(hasFunc);
 
@@ -136,39 +137,41 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         }
     }
 
-    private String parseOrExpression(OrExpressionContext ctx) {
+    private String parseOrExpression(OrExpressionContext ctx, SelectOperator selectOp) {
         List<AndExpressionContext> list = ctx.andExpression();
         if (list.size() > 1) {
-            String ret = parseAndExpression(list.get(0));
+            String ret = parseAndExpression(list.get(0), selectOp);
             for (int i = 1; i < list.size(); i++) {
-                ret += " || " + parseAndExpression(list.get(i));
+                ret += " || " + parseAndExpression(list.get(i), selectOp);
             }
             return ret;
         } else {
-            return parseAndExpression(list.get(0));
+            return parseAndExpression(list.get(0), selectOp);
         }
     }
 
-    private String parseAndExpression(AndExpressionContext ctx) {
+    private String parseAndExpression(AndExpressionContext ctx, SelectOperator selectOp) {
         List<PredicateContext> list = ctx.predicate();
         if (list.size() > 1) {
-            String ret = parsePredicate(list.get(0));
+            String ret = parsePredicate(list.get(0), selectOp);
             for (int i = 1; i < list.size(); i++) {
-                ret += " && " + parsePredicate(list.get(i));
+                ret += " && " + parsePredicate(list.get(i), selectOp);
             }
             return ret;
         } else {
-            return parsePredicate(list.get(0));
+            return parsePredicate(list.get(0), selectOp);
         }
     }
 
-    private String parsePredicate(PredicateContext ctx) {
+    private String parsePredicate(PredicateContext ctx, SelectOperator selectOp) {
         if (ctx.orExpression() != null) {
-            return "!(" + parseOrExpression(ctx.orExpression()) + ")";
+            return "!(" + parseOrExpression(ctx.orExpression(), selectOp) + ")";
         } else {
-            return ctx.getChild(0).getText() +
-                    " " + ctx.getChild(1).getText() +
-                    " " + ctx.getChild(2).getText();
+            StringBuilder builder = new StringBuilder();
+            builder.append(selectOp.getFromPath()).append(SQLConstant.DOT).append(ctx.path().getText()).append(" ");
+            builder.append(ctx.comparisonOperator().getText()).append(" ");
+            builder.append(ctx.constant().getText());
+            return builder.toString();
         }
     }
 
@@ -189,7 +192,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         if (extra.length() == 0 || extra.equals(SQLConstant.DOUBLE_QUOTES)) {
             return map;
         }
-        extra = extra.substring(extra.indexOf(SQLConstant.LBRACE) + 1, extra.indexOf(SQLConstant.RBRACE));
+        extra = extra.substring(extra.indexOf(SQLConstant.QUOTE) + 1, extra.lastIndexOf(SQLConstant.QUOTE));
         String[] kvStr = extra.split(SQLConstant.COMMA);
         for (String kv : kvStr) {
             String[] kvArray = kv.split(SQLConstant.COLON);
@@ -256,13 +259,13 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             return Double.parseDouble(ctx.getText());
         } else if (ctx.FLOAT() != null) {
             String floatStr = ctx.getText();
-            return Float.parseFloat(floatStr.substring(0, floatStr.length()-1));
+            return Float.parseFloat(floatStr.substring(0, floatStr.length() - 1));
         } else if (ctx.INT() != null) {
             // INT() may NOT IN [-2147483648, 2147483647], see Sql.g4 for more details.
             return Long.parseLong(ctx.getText());
         } else if (ctx.INTEGER() != null) {
             String intStr = ctx.getText();
-            return Integer.parseInt(intStr.substring(0, intStr.length()-1)); // trim i, 123i —> 123
+            return Integer.parseInt(intStr.substring(0, intStr.length() - 1)); // trim i, 123i —> 123
         } else {
             return null;
         }
@@ -297,8 +300,19 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             startTime = Long.MIN_VALUE;
             endTime = Long.MAX_VALUE;
         } else {
-            startTime = parseTime(timeRange.timeInterval().startTime);
-            endTime = parseTime(timeRange.timeInterval().endTime);
+            // use index +- 1 to implement [start, end], [start, end),
+            // (start, end), (start, end] range in [start, end) interface.
+            if (timeRange.timeInterval().LR_BRACKET() != null) { // (
+                startTime = parseTime(timeRange.timeInterval().startTime) + 1;
+            } else {
+                startTime = parseTime(timeRange.timeInterval().startTime);
+            }
+
+            if (timeRange.timeInterval().RR_BRACKET() != null) { // )
+                endTime = parseTime(timeRange.timeInterval().endTime);
+            } else {
+                endTime = parseTime(timeRange.timeInterval().endTime) + 1;
+            }
         }
 
         if (startTime > endTime) {
