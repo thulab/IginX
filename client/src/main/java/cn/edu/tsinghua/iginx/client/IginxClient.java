@@ -19,12 +19,9 @@
 package cn.edu.tsinghua.iginx.client;
 
 import cn.edu.tsinghua.iginx.session.Session;
-import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
@@ -32,16 +29,23 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.*;
+import org.jline.reader.Completer;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.impl.completer.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.completer.NullCompleter;
+import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
  */
 public class IginxClient {
 
-    private static final String IGINX_CLI_PREFIX = "IginX";
+    private static final String IGINX_CLI_PREFIX = "IginX> ";
 
     private static final String HOST_ARGS = "h";
     private static final String HOST_NAME = "host";
@@ -81,6 +85,10 @@ public class IginxClient {
     private static CommandLine commandLine;
 
     private static Session session;
+
+    private static final String QUIT_COMMAND = "quit";
+    private static final String EXIT_COMMAND = "exit";
+    private static final String SET_TIME_UNIT = "set timeunit in";
 
     private static Options createOptions() {
         Options options = new Options();
@@ -141,7 +149,7 @@ public class IginxClient {
             if (isRequired && defaultValue == null) {
                 String msg =
                         String.format(
-                                "%s> Required values for option '%s' not provided", IGINX_CLI_PREFIX, name);
+                                "%s Required values for option '%s' not provided", IGINX_CLI_PREFIX, name);
                 System.out.println(msg);
                 System.out.println("Use -help for more information");
                 throw new RuntimeException();
@@ -152,7 +160,16 @@ public class IginxClient {
     }
 
     private static void serve(String[] args) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
+        try {
+            Terminal terminal = TerminalBuilder.builder()
+                    .system(true)
+                    .build();
+
+            LineReader reader = LineReaderBuilder.builder()
+                    .terminal(terminal)
+                    .completer(buildIginxCompleter())
+                    .build();
+
             host = parseArg(HOST_ARGS, HOST_NAME, false, "127.0.0.1");
             port = parseArg(PORT_ARGS, PORT_NAME, false, "6888");
             username = parseArg(USERNAME_ARGS, USERNAME_NAME, false, "root");
@@ -161,53 +178,102 @@ public class IginxClient {
 
             session = new Session(host, port, username, password);
             session.openSession();
+
             if (execute.equals("")) {
-                System.out.print(IGINX_CLI_PREFIX + "> ");
                 String command;
-                while (!(command = reader.readLine()).equals("quit")) {
-                    command = command
-                            .replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1")
-                            .replaceAll("^((\r\n)|\n)", "");
-                    if (!command.trim().equals("")) {
-                        processCommand(command.trim());
+                while (true) {
+                    command = reader.readLine(IGINX_CLI_PREFIX);
+                    boolean continues = processCommand(command);
+                    if (!continues) {
+                        break;
                     }
-                    System.out.print(IGINX_CLI_PREFIX + "> ");
                 }
                 System.out.println("Goodbye");
             } else {
-                processSql(parseExecuteCommand(args));
+                processCommand(parseExecuteCommand(args));
             }
+        } catch (UserInterruptException e) {
+            System.out.println("Goodbye");
         } catch (RuntimeException e) {
-            System.out.println(IGINX_CLI_PREFIX + "> Parse Parameter error.");
-            System.out.println(IGINX_CLI_PREFIX + "> Use -help for more information");
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+            System.out.println(IGINX_CLI_PREFIX + "Parse Parameter error.");
+            System.out.println(IGINX_CLI_PREFIX + "Use -help for more information");
         } catch (Exception e) {
-            System.out.println(IGINX_CLI_PREFIX + "> exit cli with error " + e.getMessage());
+            System.out.println(IGINX_CLI_PREFIX + "exit cli with error " + e.getMessage());
         }
     }
 
-    private static void processCommand(String statement) {
-        if (statement.startsWith("set")) {
-            statement = statement.replaceAll(" +", " ");
-            String[] parts = statement.split(" ");
-            if (parts.length == 4 && parts[0].equalsIgnoreCase("set")
-                    && parts[1].equalsIgnoreCase("timeunit") && parts[2].equalsIgnoreCase("in")) {
-                if (parts[3].equalsIgnoreCase("second") || parts[3].equalsIgnoreCase("s")) {
-                    timestampPrecision = "s";
-                } else if (parts[3].equalsIgnoreCase("millisecond") || parts[3].equalsIgnoreCase("ms")) {
-                    timestampPrecision = "ms";
-                } else if (parts[3].equalsIgnoreCase("microsecond") || parts[3].equalsIgnoreCase("µs")) {
-                    timestampPrecision = "µs";
-                } else if (parts[3].equalsIgnoreCase("nanoseconds") || parts[3].equalsIgnoreCase("ns")) {
-                    timestampPrecision = "ns";
-                } else {
-                    System.out.println(String.format("Not support time unit %s.", parts[3]));
+    private static boolean processCommand(String command) {
+        if (command == null || command.trim().equals("")) {
+            return true;
+        }
+        String[] cmds = command.trim().split(";");
+        for (String cmd : cmds) {
+            if (cmd != null && !cmd.trim().equals("")) {
+                OperationResult res = handleInputStatement(cmd);
+                switch (res) {
+                    case STOP:
+                        return false;
+                    case CONTINUE:
+                        continue;
+                    default:
+                        break;
                 }
-                System.out.println(String.format("timeunit: %s", timestampPrecision));
-            } else {
-                System.out.println("Set timeunit command error.");
             }
+        }
+        return true;
+    }
+
+    enum OperationResult {
+        STOP,
+        CONTINUE,
+        DO_NOTHING,
+    }
+
+    private static OperationResult handleInputStatement(String statement) {
+        String trimedStatement = statement.replaceAll(" +", " ").toLowerCase().trim();
+
+        if (trimedStatement.equals(EXIT_COMMAND) || trimedStatement.equals(QUIT_COMMAND)) {
+            return OperationResult.STOP;
+        }
+
+        if (trimedStatement.startsWith(SET_TIME_UNIT)) {
+            setTimeUnit(trimedStatement);
+            return OperationResult.CONTINUE;
+        }
+
+        processSql(statement);
+        return OperationResult.DO_NOTHING;
+    }
+
+    private static void setTimeUnit(String statement) {
+        String[] parts = statement.split(" ");
+        if (parts.length == 4) {
+            switch (parts[3].toLowerCase()) {
+                case "second":
+                case "s":
+                    timestampPrecision = "s";
+                    break;
+                case "millisecond":
+                case "ms":
+                    timestampPrecision = "ms";
+                    break;
+                case "microsecond":
+                case "µs":
+                    timestampPrecision = "µs";
+                    break;
+                case "nanosecond":
+                case "ns":
+                    timestampPrecision = "ns";
+                    break;
+                default:
+                    System.out.println(String.format("Not support time unit %s.", parts[3]));
+                    break;
+            }
+            System.out.println(String.format("Current time unit: %s", timestampPrecision));
         } else {
-            processSql(statement);
+            System.out.println("Set timeunit error, please input like: set timeunit in s/ms/µs/ns");
         }
     }
 
@@ -258,5 +324,121 @@ public class IginxClient {
             command.append(" ");
         }
         return command.substring(0, command.toString().length() - 1);
+    }
+
+    private static Completer buildIginxCompleter() {
+        Completer upperInsertCompleter = new ArgumentCompleter(
+                new StringsCompleter("INSERT"),
+                new StringsCompleter("INTO"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer lowerInsertCompleter = new ArgumentCompleter(
+                new StringsCompleter("insert"),
+                new StringsCompleter("into"),
+                NullCompleter.INSTANCE
+        );
+
+
+        Completer upperDeleteCompleter = new ArgumentCompleter(
+                new StringsCompleter("DELETE"),
+                new StringsCompleter("FROM"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer lowerDeleteCompleter = new ArgumentCompleter(
+                new StringsCompleter("delete"),
+                new StringsCompleter("from"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer upperSelectCompleter = new AggregateCompleter(
+                new StringsCompleter("SELECT"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer lowerSelectCompleter = new AggregateCompleter(
+                new StringsCompleter("select"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer upperShowReplicaCompleter = new ArgumentCompleter(
+                new StringsCompleter("SHOW"),
+                new StringsCompleter("REPLICA"),
+                new StringsCompleter("NUMBER")
+        );
+
+        Completer lowerShowReplicaCompleter = new ArgumentCompleter(
+                new StringsCompleter("show"),
+                new StringsCompleter("replica"),
+                new StringsCompleter("number")
+        );
+
+        Completer upperAddStorageEngineCompleter = new ArgumentCompleter(
+                new StringsCompleter("ADD"),
+                new StringsCompleter("STORAGEENGINE"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer lowerAddStorageEngineCompleter = new ArgumentCompleter(
+                new StringsCompleter("add"),
+                new StringsCompleter("storageengine"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer upperCountPointsCompleter = new ArgumentCompleter(
+                new StringsCompleter("COUNT"),
+                new StringsCompleter("POINTS")
+        );
+
+        Completer lowerCountPointsCompleter = new ArgumentCompleter(
+                new StringsCompleter("count"),
+                new StringsCompleter("points")
+        );
+
+        Completer upperClearDataCompleter = new ArgumentCompleter(
+                new StringsCompleter("CLEAR"),
+                new StringsCompleter("DATA")
+        );
+
+        Completer lowerClearDataCompleter = new ArgumentCompleter(
+                new StringsCompleter("clear"),
+                new StringsCompleter("data")
+        );
+
+        Completer upperSetTimeUnitCompleter = new ArgumentCompleter(
+                new StringsCompleter("SET"),
+                new StringsCompleter("TIMEUNIT"),
+                new StringsCompleter("IN"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer lowerSetTimeUnitCompleter = new ArgumentCompleter(
+                new StringsCompleter("set"),
+                new StringsCompleter("timeunit"),
+                new StringsCompleter("in"),
+                NullCompleter.INSTANCE
+        );
+
+        Completer iginxCompleter = new AggregateCompleter(
+                upperInsertCompleter,
+                lowerInsertCompleter,
+                upperDeleteCompleter,
+                lowerDeleteCompleter,
+                upperSelectCompleter,
+                lowerSelectCompleter,
+                upperShowReplicaCompleter,
+                lowerShowReplicaCompleter,
+                upperAddStorageEngineCompleter,
+                lowerAddStorageEngineCompleter,
+                upperCountPointsCompleter,
+                lowerCountPointsCompleter,
+                upperClearDataCompleter,
+                lowerClearDataCompleter,
+                upperSetTimeUnitCompleter,
+                lowerSetTimeUnitCompleter
+        );
+
+        return iginxCompleter;
     }
 }
