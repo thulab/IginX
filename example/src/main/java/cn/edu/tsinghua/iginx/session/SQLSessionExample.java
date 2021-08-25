@@ -100,7 +100,7 @@ public class SQLSessionExample {
             System.out.println("Statement:" + statement);
         System.out.println("SQL Type: " + res.getSqlType());
         if (needPrint) {
-            res.print();
+            res.print(false, "");
         }
         System.out.println();
     }

@@ -34,10 +34,7 @@ import org.apache.commons.cli.ParseException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
@@ -68,6 +65,8 @@ public class IginxClient {
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
 
     private static int MAX_GETDATA_NUM = 100;
+
+    private static String timestampPrecision = "ms";
 
     static String host = "127.0.0.1";
 
@@ -166,7 +165,12 @@ public class IginxClient {
                 System.out.print(IGINX_CLI_PREFIX + "> ");
                 String command;
                 while (!(command = reader.readLine()).equals("quit")) {
-                    processSql(command);
+                    command = command
+                            .replaceAll("((\r\n)|\n)[\\s\t ]*(\\1)+", "$1")
+                            .replaceAll("^((\r\n)|\n)", "");
+                    if (!command.trim().equals("")) {
+                        processCommand(command.trim());
+                    }
                     System.out.print(IGINX_CLI_PREFIX + "> ");
                 }
                 System.out.println("Goodbye");
@@ -181,13 +185,39 @@ public class IginxClient {
         }
     }
 
-    private static void processSql(String statement) {
+    private static void processCommand(String statement) {
+        if (statement.startsWith("set")) {
+            statement = statement.replaceAll(" +", " ");
+            String[] parts = statement.split(" ");
+            if (parts.length == 4 && parts[0].equalsIgnoreCase("set")
+                    && parts[1].equalsIgnoreCase("timeunit") && parts[2].equalsIgnoreCase("in")) {
+                if (parts[3].equalsIgnoreCase("second") || parts[3].equalsIgnoreCase("s")) {
+                    timestampPrecision = "s";
+                } else if (parts[3].equalsIgnoreCase("millisecond") || parts[3].equalsIgnoreCase("ms")) {
+                    timestampPrecision = "ms";
+                } else if (parts[3].equalsIgnoreCase("microsecond") || parts[3].equalsIgnoreCase("µs")) {
+                    timestampPrecision = "µs";
+                } else if (parts[3].equalsIgnoreCase("nanoseconds") || parts[3].equalsIgnoreCase("ns")) {
+                    timestampPrecision = "ns";
+                } else {
+                    System.out.println(String.format("Not support time unit %s.", parts[3]));
+                }
+                System.out.println(String.format("timeunit: %s", timestampPrecision));
+            } else {
+                System.out.println("Set timeunit command error.");
+            }
+        } else {
+            processSql(statement);
+        }
+    }
+
+    private static void processSql(String sql) {
         try {
-            SessionExecuteSqlResult res = session.executeSql(statement);
+            SessionExecuteSqlResult res = session.executeSql(sql);
 
             String parseErrorMsg = res.getParseErrorMsg();
             if (parseErrorMsg != null && !parseErrorMsg.equals("")) {
-                if (statement.startsWith("show")) {
+                if (sql.startsWith("show")) {
                     System.out.println("unsupported command");
                 } else {
                     System.out.println(res.getParseErrorMsg());
@@ -196,7 +226,7 @@ public class IginxClient {
             }
 
             if (res.needPrint()) {
-                res.print();
+                res.print(true, timestampPrecision);
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
                 System.out.println("success");
@@ -208,76 +238,6 @@ public class IginxClient {
             }
         } catch (Exception e) {
             System.out.println("encounter error when executing sql statement.");
-        }
-    }
-
-    private static void processCommand(String command) {
-        String[] commandParts = command.split(" ");
-        if (commandParts.length == 3 && commandParts[0].equals("add") && commandParts[1].equals("storageEngines")) {
-            String[] storageEngineStrings = commandParts[2].split(",");
-            List<StorageEngine> storageEngines = new ArrayList<>();
-            for (String storageEngineString : storageEngineStrings) {
-                String[] storageEngineParts = storageEngineString.split("#");
-                String ip = storageEngineParts[0];
-                int port = Integer.parseInt(storageEngineParts[1]);
-                StorageEngineType storageEngineType = cn.edu.tsinghua.iginx.db.StorageEngine.toThrift(cn.edu.tsinghua.iginx.db.StorageEngine.fromString(storageEngineParts[2]));
-                Map<String, String> extraParams = new HashMap<>();
-                String[] KAndV;
-                for (int i = 3; i < storageEngineParts.length; i++) {
-                    if (storageEngineParts[i].contains("\"")) {
-                        KAndV = storageEngineParts[i].split("\"");
-                        extraParams.put(KAndV[0].substring(0, KAndV[0].length() - 1), KAndV[1]);
-                    } else {
-                        KAndV = storageEngineParts[i].split("=");
-                        if (KAndV.length != 2) {
-                            System.out.println("unexpected storage engine meta info: " + storageEngineParts[i]);
-                            continue;
-                        }
-                        extraParams.put(KAndV[0], KAndV[1]);
-                    }
-                }
-                StorageEngine storageEngine = new StorageEngine(ip, port, storageEngineType, extraParams);
-                storageEngines.add(storageEngine);
-            }
-            try {
-                session.addStorageEngines(storageEngines);
-                System.out.println("success");
-            } catch (Exception e) {
-                System.out.println("encounter error when executing add storageEngine, please check the status of storage engine");
-            }
-        } else if (commandParts.length == 2 && commandParts[0].equals("count") && commandParts[1].equals("points")) {
-            try {
-                List<String> paths = new ArrayList<>();
-                paths.add("*");
-                SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, 0, Long.MAX_VALUE, AggregateType.COUNT);
-                long count = 0;
-                for (Object value : dataSet.getValues()) {
-                    count += (long) value;
-                }
-                System.out.println(count);
-                System.out.println("success");
-            } catch (Exception e) {
-                System.out.println("encounter error when executing count points");
-            }
-        } else if (commandParts.length == 3 && commandParts[0].equals("show") && commandParts[1].equals("replication") && commandParts[2].equals("factor")) {
-            try {
-                System.out.println(session.getReplicaNum());
-                System.out.println("success");
-            } catch (Exception e) {
-                System.out.println("encounter error when executing show replication factor");
-            }
-        } else if (commandParts.length == 2 && commandParts[0].equals("delete") && commandParts[1].equals("data")) {
-            try {
-                List<String> paths = new ArrayList<>();
-                paths.add("*");
-                session.deleteColumns(paths);
-                System.out.println("success");
-            } catch (Exception e) {
-                System.out.println("encounter error when executing delete data");
-            }
-        } else {
-            System.out.println("unsupported command");
-            return;
         }
     }
 
