@@ -52,12 +52,13 @@ andExpression
     ;
 
 predicate
-    : (TIME | TIMESTAMP | path) comparisonOperator constant
+    : path comparisonOperator constant
+    | constant comparisonOperator path
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
 fromClause
-    : FROM path (COMMA path)*
+    : FROM path
     ;
 
 groupByTimeClause

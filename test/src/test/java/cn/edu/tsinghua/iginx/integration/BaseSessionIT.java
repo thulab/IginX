@@ -66,9 +66,9 @@ public abstract class BaseSessionIT {
     //params for patialDelete
     private long delStartTime = START_TIME + TIME_PERIOD / 5;
     private long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
-    private long delTimePeriod = delEndTime - delStartTime + 1;
+    private long delTimePeriod = delEndTime - delStartTime;
     double deleteAvg = ((START_TIME + END_TIME) * TIME_PERIOD / 2.0
-            - (delStartTime + delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod);
+            - (delStartTime + delEndTime - 1) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod);
     double originAvg = (START_TIME + END_TIME) / 2.0;
 
     private List<String> getPaths(int startPosition, int len) {
@@ -126,7 +126,7 @@ public abstract class BaseSessionIT {
         private Session localSession;
 
         public MultiThreadTask(int type, List<String> path, long startTime, long endTime,
-                    long pointNum, int step, AggregateType aggrType, int portNum) throws SessionException {
+                               long pointNum, int step, AggregateType aggrType, int portNum) throws SessionException {
             this.type = type;
             this.path = new ArrayList(path);
             this.startTime = startTime;
@@ -631,7 +631,7 @@ public abstract class BaseSessionIT {
                 long timestamp = delPartDataSet.getTimestamps()[i];
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = delPartDataSet.getValues().get(i);
-                if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                if (delStartTime <= timestamp && timestamp < delEndTime) {
                     for (int j = 0; j < simpleLen; j++) {
                         int pathNum = getPathNum(delPartResPaths.get(j));
                         assertNotEquals(pathNum, -1);
@@ -701,12 +701,12 @@ public abstract class BaseSessionIT {
                     if (pathNum < currPath + removeLen) { // Here is the removed rows
                         if (dsStartTime > delEndTime || dsEndTime < delStartTime) {
                             assertEquals(delDsAvg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
-                        } else if (dsStartTime >= delStartTime && dsEndTime <= delEndTime) {
+                        } else if (dsStartTime >= delStartTime && dsEndTime < delEndTime) {
                             assertNull(dsResult.get(j));
                         } else if (dsStartTime < delStartTime) {
                             assertEquals((dsStartTime + delStartTime - 1) / 2.0 + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                         } else {
-                            assertEquals((dsEndTime + delEndTime + 1) / 2.0 + pathNum, changeResultToDouble(dsResult.get(j)), delta);
+                            assertEquals((dsEndTime + (delEndTime - 1) + 1) / 2.0 + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                         }
                     } else {
                         assertEquals(delDsAvg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
@@ -723,7 +723,7 @@ public abstract class BaseSessionIT {
             //TODO add test to test if the insert is right(Is it necessary?)
             int deleteDataInColumnLen = 2;
             List<String> delAllDataInColumnPaths = getPaths(currPath, deleteDataInColumnLen);
-            session.deleteDataInColumns(delAllDataInColumnPaths, START_TIME, END_TIME);
+            session.deleteDataInColumns(delAllDataInColumnPaths, START_TIME, END_TIME + 1);
             Thread.sleep(1000);
             SessionQueryDataSet delDataInColumnDataSet = session.queryData(delDataInColumnPaths, START_TIME, END_TIME + 1);
             int delDataInColumnLen = delDataInColumnDataSet.getTimestamps().length;
@@ -982,7 +982,7 @@ public abstract class BaseSessionIT {
             // ensure after delete there are still points in the timeseries
             long dtDelStartTime = START_TIME + TIME_PERIOD / 5;
             long dtDelEndTime = START_TIME + TIME_PERIOD / 10 * 9;
-            long dtDelTimePeriod = dtDelEndTime - dtDelStartTime + 1;
+            long dtDelTimePeriod = (dtDelEndTime - 1) - dtDelStartTime + 1;
 
             session.deleteDataInColumns(dtDelPaths, dtDelStartTime, dtDelEndTime);
             Thread.sleep(1000);
@@ -1009,14 +1009,14 @@ public abstract class BaseSessionIT {
                             assertEquals((4 + (END_TIME - timestamp) + START_TIME + 0.01) * 999, changeResultToDouble(result.get(j)), delta);
                             break;
                         case 1:
-                            if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                            if (delStartTime <= timestamp && timestamp < delEndTime) {
                                 assertNull(result.get(j));
                             } else {
                                 assertEquals((int) ((END_TIME - i) + 1), changeResultToInteger(result.get(j)));
                             }
                             break;
                         case 3:
-                            if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                            if (delStartTime <= timestamp && timestamp < delEndTime) {
                                 assertNull(result.get(j));
                             } else {
                                 assertEquals((float) (i + 3 + START_TIME + 0.01),
@@ -1024,7 +1024,7 @@ public abstract class BaseSessionIT {
                             }
                             break;
                         case 5:
-                            if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                            if (delStartTime <= timestamp && timestamp < delEndTime) {
                                 assertNull(result.get(j));
                             } else {
                                 assertArrayEquals(getRandomStr(i, STRING_LEN).getBytes(), (byte[]) (result.get(j)));
@@ -1048,7 +1048,7 @@ public abstract class BaseSessionIT {
                 switch (currPathPos) {
                     case 1:
                         assertEquals(((START_TIME + END_TIME) * TIME_PERIOD / 2.0 - (END_TIME -
-                                (dtDelStartTime - START_TIME) + END_TIME - (dtDelEndTime - START_TIME)) * dtDelTimePeriod / 2.0)
+                                (dtDelStartTime - START_TIME) + END_TIME - (dtDelEndTime - 1 - START_TIME)) * dtDelTimePeriod / 2.0)
                                 / (TIME_PERIOD - dtDelTimePeriod) + 1.0, changeResultToDouble(dtDelPartAvgResult[i]), delta * 10000);
                         break;
                     case 2:
@@ -1056,7 +1056,7 @@ public abstract class BaseSessionIT {
                         break;
                     case 3:
                         assertEquals(((START_TIME + END_TIME) * TIME_PERIOD / 2.0 -
-                                (dtDelStartTime + dtDelEndTime) * dtDelTimePeriod / 2.0) / (TIME_PERIOD - dtDelTimePeriod) + 3.01, changeResultToDouble(dtDelPartAvgResult[i]), delta * 10000);
+                                (dtDelStartTime + dtDelEndTime - 1) * dtDelTimePeriod / 2.0) / (TIME_PERIOD - dtDelTimePeriod) + 3.01, changeResultToDouble(dtDelPartAvgResult[i]), delta * 10000);
                         break;
                     case 4:
                         assertEquals((START_TIME + END_TIME) * 999 / 2.0 + 4.01 * 999, changeResultToDouble(dtDelPartAvgResult[i]), delta * 10000);
@@ -1074,7 +1074,7 @@ public abstract class BaseSessionIT {
             insertDataTypeRecords(dataTypePaths2, currPath);
             int dtDelColumnNum = 2;
             List<String> dtDelColumnPaths = getPaths(currPath, dtDelColumnNum);
-            session.deleteDataInColumns(dtDelColumnPaths, START_TIME, END_TIME);
+            session.deleteDataInColumns(dtDelColumnPaths, START_TIME, END_TIME + 1);
             Thread.sleep(1000);
             SessionQueryDataSet dtDelColDataSet = session.queryData(dataTypePaths2, START_TIME, END_TIME + 1);
             int dtDelColLen = dtDelColDataSet.getTimestamps().length;
@@ -1198,22 +1198,22 @@ public abstract class BaseSessionIT {
         Thread.sleep(3000);
         // TODO change the simple query and one of the avg query to multithread
         try {
-        for (int i = 0; i < queryTaskNum; i++) {
-            SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
-            int len = dataSet.getTimestamps().length;
-            List<String> resPaths = dataSet.getPaths();
-            assertEquals(mulStQueryLen, resPaths.size());
-            assertEquals(TIME_PERIOD, len);
-            assertEquals(TIME_PERIOD, dataSet.getValues().size());
-            for (int j = 0; j < len; j++) {
-                long timestamp = dataSet.getTimestamps()[j];
-                assertEquals(j + START_TIME, timestamp);
-                List<Object> result = dataSet.getValues().get(j);
-                for (int k = 0; k < mulStQueryLen; k++) {
-                    assertEquals(getPathNum(resPaths.get(k)) + timestamp, result.get(k));
+            for (int i = 0; i < queryTaskNum; i++) {
+                SessionQueryDataSet dataSet = (SessionQueryDataSet) mulStQueryTasks[i].getQueryDataSet();
+                int len = dataSet.getTimestamps().length;
+                List<String> resPaths = dataSet.getPaths();
+                assertEquals(mulStQueryLen, resPaths.size());
+                assertEquals(TIME_PERIOD, len);
+                assertEquals(TIME_PERIOD, dataSet.getValues().size());
+                for (int j = 0; j < len; j++) {
+                    long timestamp = dataSet.getTimestamps()[j];
+                    assertEquals(j + START_TIME, timestamp);
+                    List<Object> result = dataSet.getValues().get(j);
+                    for (int k = 0; k < mulStQueryLen; k++) {
+                        assertEquals(getPathNum(resPaths.get(k)) + timestamp, result.get(k));
+                    }
                 }
-            }
-        }} catch (Exception e){
+            }} catch (Exception e){
             e.printStackTrace();
             fail();
         }
@@ -1330,7 +1330,7 @@ public abstract class BaseSessionIT {
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = delPSDataSet.getValues().get(i);
                 for (int j = 0; j < mulDelPSLen; j++) {
-                    if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                    if (delStartTime <= timestamp && timestamp < delEndTime) {
                         if (getPathNum(delPSResPaths.get(j)) >= currPath + delPSThreadNum){
                             assertEquals(timestamp + getPathNum(delPSResPaths.get(j)), result.get(j));
                         } else {
@@ -1350,7 +1350,7 @@ public abstract class BaseSessionIT {
             assertEquals(mulDelPSLen, delPSAvgDataSet.getValues().length);
             for (int i = 0; i < mulDelPSLen; i++) {
                 double avg = ((START_TIME + END_TIME) * TIME_PERIOD / 2.0
-                        - (delStartTime + delEndTime) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod);
+                        - (delStartTime + delEndTime - 1) * delTimePeriod / 2.0) / (TIME_PERIOD - delTimePeriod);
                 if (getPathNum(delPSAvgResPaths.get(i)) >= currPath + delPSThreadNum){
                     assertEquals(getPathNum(delPSAvgResPaths.get(i)) + (START_TIME + END_TIME) / 2.0,
                             changeResultToDouble(delPSAvgResult[i]), delta);
@@ -1385,7 +1385,7 @@ public abstract class BaseSessionIT {
             long delPTEndTime = delPTStartTime + TIME_PERIOD / 10 * delPTThreadNum - 1;
             for (int i = 0; i < delPTThreadNum; i++) {
                 delPTTasks[i] = new MultiThreadTask(2, delPTPaths, delPTStartTime + delPTStep * i,
-                        delPTStartTime + delPTStep * (i + 1) - 1, delPTStep, 1, null, 6888);
+                        delPTStartTime + delPTStep * (i + 1), delPTStep, 1, null, 6888);
                 delPTThreads[i] = new Thread(delPTTasks[i]);
             }
             for (int i = 0; i < delPTThreadNum; i++) {
@@ -1449,7 +1449,7 @@ public abstract class BaseSessionIT {
             Thread[] delASThreads = new Thread[delASThreadNum];
             for (int i = 0; i < delASThreadNum; i++) {
                 delASTasks[i] = new MultiThreadTask(2, getPaths(currPath + i, 1), START_TIME,
-                        END_TIME, TIME_PERIOD, 1, null, 6888);
+                        END_TIME + 1, TIME_PERIOD, 1, null, 6888);
                 delASThreads[i] = new Thread(delASTasks[i]);
             }
             for (int i = 0; i < delASThreadNum; i++) {
@@ -1512,7 +1512,7 @@ public abstract class BaseSessionIT {
 
             for (int i = 0; i < delATThreadNum; i++) {
                 delATTasks[i] = new MultiThreadTask(2, delATPath, delATStartTime + delATStep * i,
-                        delATStartTime + delATStep * (i + 1) - 1, delATStep, 1, null, 6888);
+                        delATStartTime + delATStep * (i + 1), delATStep, 1, null, 6888);
                 delATThreads[i] = new Thread(delATTasks[i]);
             }
             for (int i = 0; i < delATThreadNum; i++) {
@@ -1627,7 +1627,7 @@ public abstract class BaseSessionIT {
                 long timestamp = stDelPartDataSet.getTimestamps()[i];
                 assertEquals(i + START_TIME, timestamp);
                 List<Object> result = stDelPartDataSet.getValues().get(i);
-                if (delStartTime <= timestamp && timestamp <= delEndTime) {
+                if (delStartTime <= timestamp && timestamp < delEndTime) {
                     for (int j = 0; j < addStorageLen; j++) {
                         int pathNum = getPathNum(stDelPartResPaths.get(j));
                         assertNotEquals(pathNum, -1);
