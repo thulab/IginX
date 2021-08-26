@@ -30,8 +30,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 public class ShangFeiPayloadFormatter implements IPayloadFormatter {
 
@@ -53,30 +53,41 @@ public class ShangFeiPayloadFormatter implements IPayloadFormatter {
             JsonObject metadata = jsonObject.get("metadata").getAsJsonObject();
             JsonElement value = jsonObject.get("value");
 
-            String displayName = metadata.get("displayName").getAsString();
-            String path = metadata.get("path").getAsString().replace('/', '.').substring(1) + jsonObject.get("name").getAsString() + "@" + displayName;
+            String path = metadata.get("path").getAsString().replace('/', '.').substring(1) + "." + jsonObject.get("name").getAsString();
             long timestamp = jsonObject.get("timestamp").getAsLong();
 
             Message message = new Message();
             message.setPath(path);
             message.setTimestamp(timestamp);
 
-            String dataType = metadata.get("dataType").getAsString();
+            String dataType = metadata.get("dataType").getAsString().toLowerCase(Locale.ROOT);
             switch (dataType) {
-                case "Boolean":
+                case "boolean":
                     message.setValue(value.getAsBoolean());
                     message.setDataType(DataType.BOOLEAN);
                     break;
-                case "Char":
+                case "char":
+                case "string":
                     message.setValue(value.getAsString().getBytes(StandardCharsets.UTF_8));
                     message.setDataType(DataType.BINARY);
                     break;
-                case "Byte":
+                case "byte":
                     message.setValue(value.getAsInt());
                     message.setDataType(DataType.INTEGER);
                     break;
+                case "short":
+                    message.setValue((int)value.getAsShort());
+                    message.setDataType(DataType.INTEGER);
+                    break;
+                case "float":
+                    message.setValue(value.getAsFloat());
+                    message.setDataType(DataType.FLOAT);
+                    break;
                 default:
-                    logger.warn("unknown datatype of mqtt: " + dataType);
+                    logger.warn("unknown datatype of mqtt: " + dataType + ", process as string.");
+                    message.setValue(value.getAsString().getBytes(StandardCharsets.UTF_8));
+                    message.setDataType(DataType.BINARY);
+                    break;
             }
             messages.add(message);
         }
