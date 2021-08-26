@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,7 +47,8 @@ public class SessionExecuteSqlResult {
     private String parseErrorMsg;
 
     // Only for mock test
-    public SessionExecuteSqlResult(){}
+    public SessionExecuteSqlResult() {
+    }
 
     public SessionExecuteSqlResult(ExecuteSqlResp resp) {
         this.sqlType = resp.getType();
@@ -117,11 +119,11 @@ public class SessionExecuteSqlResult {
         return res;
     }
 
-    public void print() {
+    public void print(boolean needFormatTime, String timePrecision) {
         System.out.printf("Start to Print %s ResultSets:%n", sqlType.toString());
         System.out.println("--------------------------------");
 
-        if(timestamps != null)
+        if (timestamps != null)
             System.out.print("Time\t");
         for (String path : paths) {
             if (aggregateType == null)
@@ -133,8 +135,13 @@ public class SessionExecuteSqlResult {
         System.out.println();
 
         for (int i = 0; i < values.size(); i++) {
-            if(timestamps != null)
-                System.out.print(timestamps[i] + "\t");
+            if (timestamps != null) {
+                if (needFormatTime) {
+                    System.out.print(formatTime(timestamps[i], timePrecision) + "\t");
+                } else {
+                    System.out.print(timestamps[i] + "\t");
+                }
+            }
             List<Object> rowData = values.get(i);
             for (Object rowDatum : rowData) {
                 if (rowDatum instanceof byte[]) {
@@ -148,6 +155,24 @@ public class SessionExecuteSqlResult {
 
         System.out.println("--------------------------------");
         System.out.println("Printing ResultSets Finished.");
+    }
+
+    private String formatTime(long timestamp, String timePrecision) {
+        long timeInMs;
+        switch (timePrecision) {
+            case "s":
+                timeInMs = timestamp * 1000;
+                break;
+            case "µs":
+                timeInMs = timestamp / 1000;
+                break;
+            case "ns":
+                timeInMs = timestamp / 1000000;
+                break;
+            default:
+                timeInMs = timestamp;
+        }
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(timeInMs);
     }
 
     public boolean needPrint() {
