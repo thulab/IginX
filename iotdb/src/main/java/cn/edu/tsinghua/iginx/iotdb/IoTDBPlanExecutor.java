@@ -55,6 +55,7 @@ import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteRe
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
@@ -261,7 +262,20 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<Map<String, Tablet>> tabletsList = new ArrayList<>();
+        // 将 paths 按照 deviceId 分组
+        // 例如：paths = {d1.s11, d1.s12, d1.s13, d2.s21, d2.s22, d3.s31}
+        // 那么 paths 会被分为 {d1.s11, d2.s21, d3.s31} {d1.s12, d2.s22} {d1.s13} 三组
+        // tabletsIndexToPathsIndexes = <0, {0, 3, 5}>, <1, {1, 4}>, <2, {2}>
         Map<Integer, List<Integer>> tabletsIndexToPathsIndexes = new HashMap<>();
+        // 解析 bitmap
+        // 例如：plan.getBitmapList() = {
+        //   [1, 1, 1, 1, 1, 1],
+        //   [1, 0, 1, 0, 1, 0],
+        //   [0, 1, 1, 0, 1, 1],
+        // }
+        // 那么 pathsIndexToValuesIndexes = <0, [0, 0, -1]>, <1, [1, -1, 0]>, <2, [2, 1, 1]>,
+        // <3, [3, -1, -1]>, <4, [4, 2, 2]>, <5, [5, -1, 3]>
+        Map<Integer, int[]> pathsIndexToValuesIndexes = new HashMap<>();
 
         // 创建 Tablet
         for (int i = 0; i < plan.getPathsNum(); i++) {
@@ -286,6 +300,22 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         }
 
+        // 解析 bitmap
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            pathsIndexToValuesIndexes.put(i, new int[plan.getTimestamps().length]);
+        }
+        for (int i = 0; i < plan.getTimestamps().length; i++) {
+            int cnt = 0;
+            for (int j = 0; j < plan.getPathsNum(); j++) {
+                if (plan.getBitmap(i).get(j)) {
+                    pathsIndexToValuesIndexes.get(j)[i] = cnt;
+                    cnt++;
+                } else {
+                    pathsIndexToValuesIndexes.get(j)[i] = -1;
+                }
+            }
+        }
+
         for (Map.Entry<Integer, List<Integer>> entry : tabletsIndexToPathsIndexes.entrySet()) {
             int cnt = 0;
             do {
@@ -294,16 +324,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 // 插入 timestamps 和 values
                 for (int i = cnt; i < cnt + size; i++) {
                     for (Integer index : entry.getValue()) {
-                        if (plan.getBitmap(i).get(index)) {
+                        if (pathsIndexToValuesIndexes.get(index)[i] != -1) {
                             String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + plan.getPath(index).substring(0, plan.getPath(index).lastIndexOf('.'));
                             String measurement = plan.getPath(index).substring(plan.getPath(index).lastIndexOf('.') + 1);
                             Tablet tablet = tabletsList.get(entry.getKey()).get(deviceId);
                             int row = tablet.rowSize++;
                             tablet.addTimestamp(row, plan.getTimestamp(i));
                             if (plan.getDataType(index) == BINARY) {
-                                tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[index]));
+                                tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[pathsIndexToValuesIndexes.get(index)[i]]));
                             } else {
-                                tablet.addValue(measurement, row, plan.getValues(i)[index]);
+                                tablet.addValue(measurement, row, plan.getValues(i)[pathsIndexToValuesIndexes.get(index)[i]]);
                             }
                         }
                     }
