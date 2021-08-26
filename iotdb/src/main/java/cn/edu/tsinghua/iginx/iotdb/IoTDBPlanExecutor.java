@@ -117,7 +117,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String FIRST_VALUE = "SELECT FIRST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String LAST = "SELECT LAST(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+    private static final String LAST = "SELECT LAST %s FROM " + PREFIX + "%s WHERE time >= %d";
 
     private static final String AVG = "SELECT COUNT(%s), SUM(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
@@ -613,28 +613,25 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
-                int cnt = 0;
+                        sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
                 while (true) {
                     RowRecord rowRecord = dataSet.next();
                     if (rowRecord == null || rowRecord.getFields().isEmpty()) {
                         break;
                     }
-                    if (rowRecord.getFields().size() != 3) {
+                    if (rowRecord.getFields().size() != 2) {
                         break;
                     }
-                    if (rowRecord.getFields().get(2) != null && !rowRecord.getFields().get(2).getStringValue().equals("null")) {
+                    if (rowRecord.getFields().get(1) != null && !rowRecord.getFields().get(1).getStringValue().equals("null")) {
                         timestamps.add(rowRecord.getTimestamp());
-                        String columnName = dataSet.getColumnNames().get(cnt);
-                        String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
-                        paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                        dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(cnt)));
-                        if (dataSet.getColumnTypes().get(cnt) != TSDataType.TEXT) {
-                            values.add(rowRecord.getFields().get(cnt).getObjectValue(dataSet.getColumnTypes().get(cnt)));
+                        String columnName = rowRecord.getFields().get(0).getStringValue();
+                        paths.add(columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1));
+                        dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(2)));
+                        if (dataSet.getColumnTypes().get(2) != TSDataType.TEXT) {
+                            values.add(rowRecord.getFields().get(1).getObjectValue(dataSet.getColumnTypes().get(2)));
                         } else {
-                            values.add(rowRecord.getFields().get(cnt).getBinaryV().getValues());
+                            values.add(rowRecord.getFields().get(1).getBinaryV().getValues());
                         }
-                        cnt++;
                     }
                 }
                 dataSet.close();
@@ -855,7 +852,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         }
         return new DownsampleQueryPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
-
 
     @Override
     public ValueFilterQueryPlanExecuteResult syncExecuteValueFilterQueryPlan(ValueFilterQueryPlan plan) {
