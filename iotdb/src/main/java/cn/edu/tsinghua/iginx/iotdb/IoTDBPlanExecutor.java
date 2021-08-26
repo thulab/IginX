@@ -117,7 +117,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String FIRST_VALUE = "SELECT FIRST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
-    private static final String LAST_VALUE = "SELECT LAST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+    private static final String LAST = "SELECT LAST(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
     private static final String AVG = "SELECT COUNT(%s), SUM(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
@@ -613,22 +613,28 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(LAST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
-                RowRecord rowRecord = dataSet.next();
-                if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
-                    for (int i = 0; i < rowRecord.getFields().size(); i++) {
-                        if (rowRecord.getFields().get(i) != null && !rowRecord.getFields().get(i).getStringValue().equals("null")) {
-                            timestamps.add(plan.getStartTime());
-                            String columnName = dataSet.getColumnNames().get(i);
-                            String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
-                            paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
-                            if (dataSet.getColumnTypes().get(i) != TSDataType.TEXT) {
-                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
-                            } else {
-                                values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
-                            }
+                        sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                int cnt = 0;
+                while (true) {
+                    RowRecord rowRecord = dataSet.next();
+                    if (rowRecord == null || rowRecord.getFields().isEmpty()) {
+                        break;
+                    }
+                    if (rowRecord.getFields().size() != 3) {
+                        break;
+                    }
+                    if (rowRecord.getFields().get(2) != null && !rowRecord.getFields().get(2).getStringValue().equals("null")) {
+                        timestamps.add(rowRecord.getTimestamp());
+                        String columnName = dataSet.getColumnNames().get(cnt);
+                        String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
+                        paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
+                        dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(cnt)));
+                        if (dataSet.getColumnTypes().get(cnt) != TSDataType.TEXT) {
+                            values.add(rowRecord.getFields().get(cnt).getObjectValue(dataSet.getColumnTypes().get(cnt)));
+                        } else {
+                            values.add(rowRecord.getFields().get(cnt).getBinaryV().getValues());
                         }
+                        cnt++;
                     }
                 }
                 dataSet.close();
