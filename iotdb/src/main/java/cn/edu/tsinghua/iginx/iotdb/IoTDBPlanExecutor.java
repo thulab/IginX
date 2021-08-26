@@ -286,7 +286,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
         }
 
-        int[] cnts = new int[plan.getTimestamps().length];
         for (Map.Entry<Integer, List<Integer>> entry : tabletsIndexToPathsIndexes.entrySet()) {
             int cnt = 0;
             do {
@@ -302,11 +301,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                             int row = tablet.rowSize++;
                             tablet.addTimestamp(row, plan.getTimestamp(i));
                             if (plan.getDataType(index) == BINARY) {
-                                tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[cnts[i]]));
+                                tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[index]));
                             } else {
-                                tablet.addValue(measurement, row, plan.getValues(i)[cnts[i]]);
+                                tablet.addValue(measurement, row, plan.getValues(i)[index]);
                             }
-                            cnts[i]++;
                         }
                     }
                 }
