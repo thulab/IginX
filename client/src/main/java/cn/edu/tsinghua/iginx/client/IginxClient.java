@@ -180,6 +180,9 @@ public class IginxClient {
             session.openSession();
 
             if (execute.equals("")) {
+                echoStarting();
+                displayLogo("0.3.0");
+
                 String command;
                 while (true) {
                     command = reader.readLine(IGINX_CLI_PREFIX);
@@ -195,8 +198,6 @@ public class IginxClient {
         } catch (UserInterruptException e) {
             System.out.println("Goodbye");
         } catch (RuntimeException e) {
-            e.printStackTrace();
-            System.out.println(e.getMessage());
             System.out.println(IGINX_CLI_PREFIX + "Parse Parameter error.");
             System.out.println(IGINX_CLI_PREFIX + "Use -help for more information");
         } catch (Exception e) {
@@ -291,8 +292,10 @@ public class IginxClient {
                 return;
             }
 
-            if (res.needPrint()) {
+            if (res.isQuery()) {
                 res.print(true, timestampPrecision);
+            } else if (res.getSqlType() == SqlType.ShowTimeSeries) {
+                res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
                 System.out.println("success");
@@ -420,6 +423,26 @@ public class IginxClient {
                 NullCompleter.INSTANCE
         );
 
+        Completer upperShowTimeSeriesCompleter = new ArgumentCompleter(
+                new StringsCompleter("SHOW"),
+                new StringsCompleter("TIME"),
+                new StringsCompleter("SERIES")
+        );
+
+        Completer lowerShowTimeSeriesCompleter = new ArgumentCompleter(
+                new StringsCompleter("show"),
+                new StringsCompleter("time"),
+                new StringsCompleter("series")
+        );
+
+        Completer upperQuitCompleter = new StringsCompleter("QUIT");
+
+        Completer lowerQuitCompleter = new StringsCompleter("quit");
+
+        Completer upperExitCompleter = new StringsCompleter("EXIT");
+
+        Completer lowerExitCompleter = new StringsCompleter("exit");
+
         Completer iginxCompleter = new AggregateCompleter(
                 upperInsertCompleter,
                 lowerInsertCompleter,
@@ -436,9 +459,36 @@ public class IginxClient {
                 upperClearDataCompleter,
                 lowerClearDataCompleter,
                 upperSetTimeUnitCompleter,
-                lowerSetTimeUnitCompleter
+                lowerSetTimeUnitCompleter,
+                upperShowTimeSeriesCompleter,
+                lowerShowTimeSeriesCompleter,
+                upperQuitCompleter,
+                lowerQuitCompleter,
+                upperExitCompleter,
+                lowerExitCompleter
         );
 
         return iginxCompleter;
+    }
+
+    public static void echoStarting() {
+        System.out.println("-----------------------");
+        System.out.println("Starting IginX Client");
+        System.out.println("-----------------------");
+    }
+
+    public static void displayLogo(String version) {
+        System.out.println(
+                "  _____        _        __   __\n" +
+                        " |_   _|      (_)       \\ \\ / /\n" +
+                        "   | |   __ _  _  _ __   \\ V / \n" +
+                        "   | |  / _` || || '_ \\   > <  \n" +
+                        "  _| |_| (_| || || | | | / . \\ \n" +
+                        " |_____|\\__, ||_||_| |_|/_/ \\_\\\n" +
+                        "         __/ |                 \n" +
+                        "        |___/                       version " +
+                        version +
+                        "\n"
+        );
     }
 }

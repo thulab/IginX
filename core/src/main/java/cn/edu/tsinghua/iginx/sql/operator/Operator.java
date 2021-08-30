@@ -20,5 +20,6 @@ public abstract class Operator {
         SHOW_REPLICATION,
         COUNT_POINTS,
         CLEAR_DATA,
+        SHOW_TIME_SERIES,
     }
 }

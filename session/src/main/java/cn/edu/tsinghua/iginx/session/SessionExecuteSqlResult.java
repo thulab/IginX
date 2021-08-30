@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
@@ -45,6 +46,8 @@ public class SessionExecuteSqlResult {
     private int replicaNum;
     private long pointsNum;
     private String parseErrorMsg;
+    private int limit;
+    private int offset;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -53,12 +56,9 @@ public class SessionExecuteSqlResult {
     public SessionExecuteSqlResult(ExecuteSqlResp resp) {
         this.sqlType = resp.getType();
         this.parseErrorMsg = resp.getParseErrorMsg();
+        this.limit = resp.getLimit();
+        this.offset = resp.getOffset();
         switch (resp.getType()) {
-            case Insert:
-            case Delete:
-            case AddStorageEngines:
-            case ClearData:
-                break;
             case GetReplicaNum:
                 this.replicaNum = resp.getReplicaNum();
                 break;
@@ -70,6 +70,13 @@ public class SessionExecuteSqlResult {
             case DownsampleQuery:
             case ValueFilterQuery:
                 constructQueryResult(resp);
+                break;
+            case ShowTimeSeries:
+                this.paths = resp.getPaths();
+                this.dataTypeList = resp.getDataTypeList();
+                break;
+            default:
+                break;
         }
     }
 
@@ -120,41 +127,131 @@ public class SessionExecuteSqlResult {
     }
 
     public void print(boolean needFormatTime, String timePrecision) {
-        System.out.printf("Start to Print %s ResultSets:%n", sqlType.toString());
-        System.out.println("--------------------------------");
+        if (isQuery()) {
+            printQueryResult(needFormatTime, timePrecision);
+        } else if (sqlType == SqlType.ShowTimeSeries) {
+            printShowTimeSeriesResult();
+        } else if (sqlType == SqlType.GetReplicaNum) {
+            System.out.println("Replica num:" + replicaNum);
+        } else if (sqlType == SqlType.CountPoints) {
+            System.out.println("Points num:" + pointsNum);
+        } else {
+            System.out.println("No data to print.");
+        }
+    }
 
-        if (timestamps != null)
-            System.out.print("Time\t");
+    private void printQueryResult(boolean needFormatTime, String timePrecision) {
+        System.out.printf("%s ResultSets:%n", sqlType.toString());
+
+        List<Integer> maxSizeList = new ArrayList<>();
+        List<List<String>> cache = new ArrayList<>();
+        cacheResult(needFormatTime, timePrecision, maxSizeList, cache);
+
+        printBlockLine(maxSizeList);
+        printRow(cache, 0, maxSizeList);
+        printBlockLine(maxSizeList);
+        for (int i = 1; i < cache.size(); i++) {
+            printRow(cache, i, maxSizeList);
+        }
+        printBlockLine(maxSizeList);
+
+        printCount(cache.size()-1);
+    }
+
+    private List<List<String>> cacheResult(boolean needFormatTime, String timePrecision,
+                                           List<Integer> maxSizeList, List<List<String>> cache) {
+        List<String> label = new ArrayList<>();
+        if (timestamps != null) {
+            label.add("Time");
+            maxSizeList.add(4);
+        }
         for (String path : paths) {
-            if (aggregateType == null)
-                System.out.print(path + "\t");
-            else
-                System.out.print(aggregateType.toString() + "(" + path + ")\t");
+            if (aggregateType == null) {
+                label.add(path);
+                maxSizeList.add(path.length());
+            } else {
+                String newLabel = aggregateType.toString() + "(" + path + ")";
+                label.add(newLabel);
+                maxSizeList.add(newLabel.length());
+            }
         }
+        cache.add(label);
 
-        System.out.println();
-
-        for (int i = 0; i < values.size(); i++) {
+        int maxOutputLen = Math.min(offset + limit, values.size());
+        for (int i = offset; i < maxOutputLen; i++) {
+            List<String> rowCache = new ArrayList<>();
             if (timestamps != null) {
+                String timeValue;
                 if (needFormatTime) {
-                    System.out.print(formatTime(timestamps[i], timePrecision) + "\t");
+                    timeValue = formatTime(timestamps[i], timePrecision);
                 } else {
-                    System.out.print(timestamps[i] + "\t");
+                    timeValue = String.valueOf(timestamps[i]);
+                }
+                rowCache.add(timeValue);
+                if (maxSizeList.get(0) < timeValue.length()) {
+                    maxSizeList.set(0, timeValue.length());
                 }
             }
+
             List<Object> rowData = values.get(i);
-            for (Object rowDatum : rowData) {
+            for (int j = 0; j < rowData.size(); j++) {
+                Object rowDatum = rowData.get(j);
+                String rowValue;
                 if (rowDatum instanceof byte[]) {
-                    System.out.print(new String((byte[]) rowDatum) + "\t");
+                    rowValue = new String((byte[]) rowDatum);
                 } else {
-                    System.out.print(rowDatum + "\t");
+                    rowValue = String.valueOf(rowDatum);
+                }
+                rowCache.add(rowValue);
+
+                int index = timestamps == null ? j : j + 1;
+                if (maxSizeList.get(index) < rowValue.length()) {
+                    maxSizeList.set(index, rowValue.length());
                 }
             }
-            System.out.println();
+            cache.add(rowCache);
         }
 
-        System.out.println("--------------------------------");
-        System.out.println("Printing ResultSets Finished.");
+        return cache;
+    }
+
+    private static void printBlockLine(List<Integer> maxSizeList) {
+        StringBuilder blockLine = new StringBuilder();
+        for (Integer integer : maxSizeList) {
+            blockLine.append("+").append(StringUtils.repeat("-", integer));
+        }
+        blockLine.append("+");
+        System.out.println(blockLine.toString());
+    }
+
+    private static void printRow(List<List<String>> cache, int rowIdx, List<Integer> maxSizeList) {
+        System.out.print("|");
+        int maxSize;
+        String rowValue;
+        for (int i = 0; i < maxSizeList.size(); i++) {
+            maxSize = maxSizeList.get(i);
+            rowValue = cache.get(rowIdx).get(i);
+            System.out.printf("%" + maxSize + "s|", rowValue);
+        }
+        System.out.println();
+    }
+
+    public static void printCount(int count) {
+        if (count <= 0) {
+            System.out.println("Empty set.");
+        } else {
+            System.out.println("Total line number = " + count);
+        }
+    }
+
+    private void printShowTimeSeriesResult() {
+        int num = paths == null ? 0 : paths.size();
+        if (paths != null) {
+            for (int i = 0; i < paths.size(); i++) {
+                System.out.println(String.format("TimeSeries{Path='%s', DataType='%s'}", paths.get(i), dataTypeList.get(i)));
+            }
+        }
+        System.out.println("Total time series num = " + num);
     }
 
     private String formatTime(long timestamp, String timePrecision) {
@@ -172,10 +269,10 @@ public class SessionExecuteSqlResult {
             default:
                 timeInMs = timestamp;
         }
-        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(timeInMs);
+        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(timeInMs);
     }
 
-    public boolean needPrint() {
+    public boolean isQuery() {
         return sqlType == SqlType.SimpleQuery ||
                 sqlType == SqlType.AggregateQuery ||
                 sqlType == SqlType.DownsampleQuery ||
@@ -252,5 +349,21 @@ public class SessionExecuteSqlResult {
 
     public void setParseErrorMsg(String parseErrorMsg) {
         this.parseErrorMsg = parseErrorMsg;
+    }
+
+    public long getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
 }
