@@ -40,8 +40,6 @@ jobs:
           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
       - name: Install with Maven
         run: mvn clean package -DskipTests
-      - name: Show packages
-        run: ls ${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/lib/
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh"
