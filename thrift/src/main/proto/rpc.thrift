@@ -25,7 +25,7 @@ enum AggregateType {
 }
 
 enum SqlType {
-    Unknow,
+    Unknown,
     Insert,
     Delete,
     SimpleQuery,
@@ -37,6 +37,7 @@ enum SqlType {
     AddStorageEngines,
     CountPoints,
     ClearData,
+    ShowTimeSeries,
 }
 
 struct Status {
@@ -207,6 +208,8 @@ struct ExecuteSqlResp {
     9: optional i64 pointsNum;
     10: optional AggregateType aggregateType
     11: optional string parseErrorMsg
+    12: optional i32 limit
+    13: optional i32 offset
 }
 
 service IService {

@@ -35,6 +35,8 @@ public class SelectOperator extends Operator {
     private long startTime;
     private long endTime;
     private long precision;
+    private int limit;
+    private int offset;
 
     public SelectOperator() {
         this.operatorType = OperatorType.SELECT;
@@ -44,6 +46,8 @@ public class SelectOperator extends Operator {
         fromPath = "";
         startTime = Long.MIN_VALUE;
         endTime = Long.MAX_VALUE;
+        limit = Integer.MAX_VALUE;
+        offset = 0;
     }
 
     public boolean isHasFunc() {
@@ -141,6 +145,22 @@ public class SelectOperator extends Operator {
 
     public void setQueryType(QueryType queryType) {
         this.queryType = queryType;
+    }
+
+    public long getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
 
     public void setQueryType() {
@@ -251,6 +271,8 @@ public class SelectOperator extends Operator {
         resp.setPaths(queryDataResp.getPaths());
         resp.setDataTypeList(queryDataResp.getDataTypeList());
         resp.setQueryDataSet(queryDataResp.getQueryDataSet());
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -273,6 +295,8 @@ public class SelectOperator extends Operator {
         resp.setTimestamps(aggregateQueryResp.getTimestamps());
         resp.setValuesList(aggregateQueryResp.getValuesList());
         resp.setAggregateType(funcType2AggregateType(selectedFuncsAndPaths.get(0).k));
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -295,6 +319,8 @@ public class SelectOperator extends Operator {
         resp.setDataTypeList(downsampleQueryResp.getDataTypeList());
         resp.setQueryDataSet(downsampleQueryResp.getQueryDataSet());
         resp.setAggregateType(funcType2AggregateType(selectedFuncsAndPaths.get(0).k));
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -315,6 +341,8 @@ public class SelectOperator extends Operator {
         resp.setPaths(valueFilterQueryResp.getPaths());
         resp.setDataTypeList(valueFilterQueryResp.getDataTypeList());
         resp.setQueryDataSet(valueFilterQueryResp.getQueryDataSet());
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 

@@ -83,6 +83,10 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             selectOp.setPrecision(precision);
             selectOp.setHasGroupBy(true);
         }
+        // parse special clause
+        if (ctx.specialClause() != null) {
+            parseSpecialClause(ctx.specialClause(), selectOp);
+        }
 
         // Step 2. decide the query type according to the information.
         selectOp.setQueryType();
@@ -120,6 +124,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         return new ClearDataOperator();
     }
 
+    @Override
+    public Operator visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
+        return new ShowTimeSeriesOperator();
+    }
+
     private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {
         List<ExpressionContext> expressions = ctx.expression();
 
@@ -133,6 +142,27 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
                 selectOp.setSelectedFuncsAndPaths(null, expr.path().getText());
             } else {
                 throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
+            }
+        }
+    }
+
+    // like standard SQL, limit N, M means limit M offset N
+    private void parseSpecialClause(SpecialClauseContext ctx, SelectOperator selectOp) {
+        if (ctx.limitClause() != null) {
+            if (ctx.limitClause().INT().size() == 1) {
+                int limit = Integer.parseInt(ctx.limitClause().INT(0).getText());
+                selectOp.setLimit(limit);
+                if (ctx.limitClause().offsetClause() != null) {
+                    int offset = Integer.parseInt(ctx.limitClause().offsetClause().INT().getText());
+                    selectOp.setOffset(offset);
+                }
+            } else if (ctx.limitClause().INT().size() == 2) {
+                int offset = Integer.parseInt(ctx.limitClause().INT(0).getText());
+                int limit = Integer.parseInt(ctx.limitClause().INT(1).getText());
+                selectOp.setOffset(offset);
+                selectOp.setLimit(limit);
+            } else {
+                throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
             }
         }
     }
