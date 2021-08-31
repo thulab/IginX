@@ -75,20 +75,9 @@ class NaivePlanSplitter implements IPlanSplitter {
 
     private final NativePolicy policy;
 
-    private final Set<String> prefixSet = new HashSet<>();
-
-    private final List<String> prefixList = new LinkedList<>();
-
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
-    private final int prefixMaxSize;
-
-    private final Random random = new Random();
-
     public NaivePlanSplitter(NativePolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
-        this.prefixMaxSize = 100;
     }
 
     public static List<TimeInterval> splitTimeIntervalForDownsampleQuery(List<TimeInterval> timeIntervals,
@@ -116,43 +105,13 @@ class NaivePlanSplitter implements IPlanSplitter {
     }
 
     private void updatePrefix(NonDatabasePlan plan) {
-        lock.readLock().lock();
-        if (prefixMaxSize <= prefixSet.size()) {
-            lock.readLock().unlock();
-            return;
-        }
-        lock.readLock().unlock();
-        lock.writeLock().lock();
-        if (prefixMaxSize <= prefixSet.size()) {
-            lock.writeLock().unlock();
-            return;
-        }
-        TimeSeriesInterval tsInterval = plan.getTsInterval();
-        if (tsInterval.getStartTimeSeries() != null && !prefixSet.contains(tsInterval.getStartTimeSeries())) {
-            prefixSet.add(tsInterval.getStartTimeSeries());
-            prefixList.add(tsInterval.getStartTimeSeries());
-        }
-        if (tsInterval.getEndTimeSeries() != null && !prefixSet.contains(tsInterval.getEndTimeSeries())) {
-            prefixSet.add(tsInterval.getEndTimeSeries());
-            prefixList.add(tsInterval.getEndTimeSeries());
-        }
-        lock.writeLock().unlock();
     }
 
     public List<String> samplePrefix(int count) {
-        lock.readLock().lock();
-        String[] prefixArray = new String[prefixList.size()];
-        prefixList.toArray(prefixArray);
-        lock.readLock().unlock();
-        for (int i = 0; i < prefixList.size(); i++) {
-            int next = random.nextInt(prefixList.size());
-            String value = prefixArray[next];
-            prefixArray[next] = prefixArray[i];
-            prefixArray[i] = value;
-        }
         List<String> resultList = new ArrayList<>();
-        for (int i = 0; i < count && i < prefixArray.length; i++) {
-            resultList.add(prefixArray[i]);
+        int delta = 200 / (count + 1);
+        for (int i = 0; i < count; i++) {
+            resultList.add(String.format("cpu.usage.h%03d", (i + 1) * delta));
         }
         return resultList;
     }
