@@ -23,6 +23,8 @@ import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
+import cn.edu.tsinghua.iginx.core.context.InsertAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
@@ -34,6 +36,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -57,6 +61,8 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.InsertAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -70,6 +76,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getAlignedColumnValuesByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getAlignedRowValuesByDataType;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getColumnValuesByDataType;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesByDataType;
@@ -103,6 +111,18 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+            case InsertAlignedColumnRecords:
+                InsertAlignedColumnRecordsReq insertAlignedColumnRecordsReq = ((InsertAlignedColumnRecordsContext) requestContext).getReq();
+                long[] alignedTimestamps = getLongArrayFromByteArray(insertAlignedColumnRecordsReq.getTimestamps());
+                InsertAlignedColumnRecordsPlan insertAlignedColumnRecordsPlan = new InsertAlignedColumnRecordsPlan(
+                        insertAlignedColumnRecordsReq.getPaths(),
+                        alignedTimestamps,
+                        getAlignedColumnValuesByDataType(insertAlignedColumnRecordsReq.getValuesList(), insertAlignedColumnRecordsReq.getDataTypeList(), alignedTimestamps.length),
+                        insertAlignedColumnRecordsReq.getDataTypeList(),
+                        insertAlignedColumnRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertAlignedColumnRecordsPlanResults(insertAlignedColumnRecordsPlan);
+                return splitInsertAlignedColumnRecordsPlan(insertAlignedColumnRecordsPlan, splitInfoList);
             case InsertRowRecords:
                 InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
@@ -115,6 +135,17 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
+            case InsertAlignedRowRecords:
+                InsertAlignedRowRecordsReq insertAlignedRowRecordsReq = ((InsertAlignedRowRecordsContext) requestContext).getReq();
+                InsertAlignedRowRecordsPlan insertAlignedRowRecordsPlan = new InsertAlignedRowRecordsPlan(
+                        insertAlignedRowRecordsReq.getPaths(),
+                        getLongArrayFromByteArray(insertAlignedRowRecordsReq.getTimestamps()),
+                        getAlignedRowValuesByDataType(insertAlignedRowRecordsReq.getValuesList(), insertAlignedRowRecordsReq.getDataTypeList()),
+                        insertAlignedRowRecordsReq.getDataTypeList(),
+                        insertAlignedRowRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertAlignedRowRecordsPlanResults(insertAlignedRowRecordsPlan);
+                return splitInsertAlignedRowRecordsPlan(insertAlignedRowRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -325,6 +356,32 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<InsertAlignedColumnRecordsPlan> splitInsertAlignedColumnRecordsPlan(InsertAlignedColumnRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertAlignedColumnRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (values.length == 0) {
+                continue;
+            }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            InsertAlignedColumnRecordsPlan subPlan = new InsertAlignedColumnRecordsPlan(
+                    paths,
+                    timestampsAndIndexes.k,
+                    values,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
+            subPlan.setSync(info.getStorageUnit().isMaster());
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
     public List<InsertRowRecordsPlan> splitInsertRowRecordsPlan(InsertRowRecordsPlan plan, List<SplitInfo> infoList) {
         List<InsertRowRecordsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
@@ -342,6 +399,32 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     timestampsAndIndexes.k,
                     valuesAndBitmaps.k,
                     valuesAndBitmaps.v,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
+            subPlan.setSync(info.getStorageUnit().isMaster());
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<InsertAlignedRowRecordsPlan> splitInsertAlignedRowRecordsPlan(InsertAlignedRowRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertAlignedRowRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (values.length == 0) {
+                continue;
+            }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            InsertAlignedRowRecordsPlan subPlan = new InsertAlignedRowRecordsPlan(
+                    paths,
+                    timestampsAndIndexes.k,
+                    values,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
                     info.getStorageUnit()

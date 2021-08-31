@@ -18,19 +18,18 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.InsertAlignedColumnRecordsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    InsertRowRecords,
-    InsertAlignedRowRecords,
-    InsertColumnRecords,
-    InsertAlignedColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    ShowColumns,
-    Unknown;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class InsertAlignedColumnRecordsContext extends RequestContext {
 
+    private InsertAlignedColumnRecordsReq req;
+
+    public InsertAlignedColumnRecordsContext(InsertAlignedColumnRecordsReq req) {
+        super(req.sessionId, ContextType.InsertAlignedColumnRecords);
+        this.req = req;
+    }
 }

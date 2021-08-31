@@ -386,6 +386,88 @@ public class Session {
         }
     }
 
+    public void insertAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+        if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+            logger.error("Invalid insert request!");
+            return;
+        }
+        if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
+            logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
+            return;
+        }
+        if (attributesList != null && paths.size() != attributesList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+            return;
+        }
+
+        Integer[] index = new Integer[timestamps.length];
+        for (int i = 0; i < timestamps.length; i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+        Arrays.sort(timestamps);
+        for (int i = 0; i < valuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) valuesList[i])[index[j]];
+            }
+            valuesList[i] = values;
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+            sortedDataTypeList.add(dataTypeList.get(index[i]));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
+        List<ByteBuffer> valueBufferList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
+            if (values.length != timestamps.length) {
+                logger.error("The sizes of timestamps and the element of valuesList should be equal.");
+                return;
+            }
+            valueBufferList.add(ByteUtils.getColumnByteBuffer(values, sortedDataTypeList.get(i)));
+        }
+
+        InsertAlignedColumnRecordsReq req = new InsertAlignedColumnRecordsReq();
+        req.setSessionId(sessionId);
+        req.setPaths(paths);
+        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setValuesList(valueBufferList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
+
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.insertAlignedColumnRecords(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
     public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
@@ -473,6 +555,94 @@ public class Session {
                 lock.readLock().lock();
                 try {
                     status = client.insertRowRecords(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void insertAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+        if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+            logger.error("Invalid insert request!");
+            return;
+        }
+        if (paths.size() != dataTypeList.size()) {
+            logger.error("The sizes of paths and dataTypeList should be equal.");
+            return;
+        }
+        if (timestamps.length != valuesList.length) {
+            logger.error("The sizes of timestamps and valuesList should be equal.");
+            return;
+        }
+        if (attributesList != null && paths.size() != attributesList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+            return;
+        }
+
+        Integer[] index = new Integer[timestamps.length];
+        for (int i = 0; i < timestamps.length; i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+        Arrays.sort(timestamps);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
+            }
+            sortedValuesList[i] = values;
+        }
+        for (Integer i : index) {
+            sortedDataTypeList.add(dataTypeList.get(i));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
+        List<ByteBuffer> valueBufferList = new ArrayList<>();
+        for (int i = 0; i < timestamps.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
+            if (values.length != paths.size()) {
+                logger.error("The sizes of paths and the element of valuesList should be equal.");
+                return;
+            }
+            valueBufferList.add(ByteUtils.getRowByteBuffer(values, sortedDataTypeList));
+        }
+
+        InsertAlignedRowRecordsReq req = new InsertAlignedRowRecordsReq();
+        req.setSessionId(sessionId);
+        req.setPaths(paths);
+        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setValuesList(valueBufferList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
+
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.insertAlignedRowRecords(req);
                 } finally {
                     lock.readLock().unlock();
                 }

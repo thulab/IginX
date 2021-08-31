@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -121,7 +123,9 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     private void initFunctionMap() {
         functionMap.put(IginxPlan.IginxPlanType.INSERT_COLUMN_RECORDS, this::executeInsertColumnRecordsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.INSERT_ALIGNED_COLUMN_RECORDS, this::executeInsertAlignedColumnRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.INSERT_ROW_RECORDS, this::executeInsertRowRecordsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.INSERT_ALIGNED_ROW_RECORDS, this::executeInsertAlignedRowRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.QUERY_DATA, this::executeQueryDataPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_COLUMNS, this::executeDeleteColumnsPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_DATA_IN_COLUMNS, this::executeDeleteDataInColumnsPlan);
@@ -151,9 +155,23 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         return null;
     }
 
+    protected Future<? extends PlanExecuteResult> executeInsertAlignedColumnRecordsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertAlignedColumnRecordsPlan((InsertAlignedColumnRecordsPlan) plan));
+        }
+        return null;
+    }
+
     protected Future<? extends PlanExecuteResult> executeInsertRowRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan));
+        }
+        return null;
+    }
+
+    protected Future<? extends PlanExecuteResult> executeInsertAlignedRowRecordsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertAlignedRowRecordsPlan((InsertAlignedRowRecordsPlan) plan));
         }
         return null;
     }

@@ -31,6 +31,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -201,6 +203,11 @@ class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
+    public List<SplitInfo> getSplitInsertAlignedColumnRecordsPlanResults(InsertAlignedColumnRecordsPlan plan) {
+        return getSplitInsertColumnRecordsPlanResults(plan);
+    }
+
+    @Override
     public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
@@ -224,6 +231,11 @@ class NaivePlanSplitter implements IPlanSplitter {
             }
         }
         return infoList;
+    }
+
+    @Override
+    public List<SplitInfo> getSplitInsertAlignedRowRecordsPlanResults(InsertAlignedRowRecordsPlan plan) {
+        return getSplitInsertRowRecordsPlanResults(plan);
     }
 
     @Override

@@ -28,6 +28,8 @@ import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -259,6 +261,56 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
+    public NonDataPlanExecuteResult syncExecuteInsertAlignedColumnRecordsPlan(InsertAlignedColumnRecordsPlan plan) {
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
+        Map<String, Tablet> tablets = new HashMap<>();
+
+        // 创建 tablets
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            String path = plan.getPath(i);
+            String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+            String measurement = path.substring(path.lastIndexOf('.') + 1);
+            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), BATCH_SIZE));
+        }
+
+        int cnt = 0;
+        do {
+            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+
+            // 插入 timestamps 和 values
+            for (int i = 0; i < plan.getPathsNum(); i++) {
+                String path = plan.getPath(i);
+                String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                String measurement = path.substring(path.lastIndexOf('.') + 1);
+                Tablet tablet = tablets.get(deviceId);
+                for (int j = cnt; j < cnt + size; j++) {
+                    int row = tablet.rowSize++;
+                    tablet.addTimestamp(row, plan.getTimestamp(j));
+                    if (plan.getDataType(i) == BINARY) {
+                        tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[j]));
+                    } else {
+                        tablet.addValue(measurement, row, plan.getValues(i)[j]);
+                    }
+                }
+            }
+
+            try {
+                sessionPool.insertTablets(tablets);
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
+            }
+
+            for (Tablet tablet : tablets.values()) {
+                tablet.reset();
+            }
+            cnt += size;
+        } while (cnt < plan.getTimestamps().length);
+
+        return new NonDataPlanExecuteResult(SUCCESS, plan);
+    }
+
+    @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<Map<String, Tablet>> tabletsList = new ArrayList<>();
@@ -352,6 +404,56 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 cnt += size;
             } while (cnt < plan.getTimestamps().length);
         }
+
+        return new NonDataPlanExecuteResult(SUCCESS, plan);
+    }
+
+    @Override
+    public NonDataPlanExecuteResult syncExecuteInsertAlignedRowRecordsPlan(InsertAlignedRowRecordsPlan plan) {
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
+        Map<String, Tablet> tablets = new HashMap<>();
+
+        // 创建 tablets
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            String path = plan.getPath(i);
+            String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+            String measurement = path.substring(path.lastIndexOf('.') + 1);
+            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), BATCH_SIZE));
+        }
+
+        int cnt = 0;
+        do {
+            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+
+            // 插入 timestamps 和 values
+            for (int i = cnt; i < cnt + size; i++) {
+                for (int j = 0; j < plan.getPathsNum(); j++) {
+                    String path = plan.getPath(i);
+                    String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
+                    String measurement = path.substring(path.lastIndexOf('.') + 1);
+                    Tablet tablet = tablets.get(deviceId);
+                    int row = tablet.rowSize++;
+                    tablet.addTimestamp(row, plan.getTimestamp(i));
+                    if (plan.getDataType(j) == BINARY) {
+                        tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[j]));
+                    } else {
+                        tablet.addValue(measurement, row, plan.getValues(i)[j]);
+                    }
+                }
+            }
+
+            try {
+                sessionPool.insertTablets(tablets);
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
+            }
+
+            for (Tablet tablet : tablets.values()) {
+                tablet.reset();
+            }
+            cnt += size;
+        } while (cnt < plan.getTimestamps().length);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }

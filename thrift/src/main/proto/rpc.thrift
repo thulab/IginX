@@ -75,6 +75,15 @@ struct InsertColumnRecordsReq {
     7: optional list<map<string, string>> attributesList
 }
 
+struct InsertAlignedColumnRecordsReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required binary timestamps
+    4: required list<binary> valuesList
+    5: required list<DataType> dataTypeList
+    6: optional list<map<string, string>> attributesList
+}
+
 struct InsertRowRecordsReq {
     1: required i64 sessionId
     2: required list<string> paths
@@ -83,6 +92,15 @@ struct InsertRowRecordsReq {
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> attributesList
+}
+
+struct InsertAlignedRowRecordsReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required binary timestamps
+    4: required list<binary> valuesList
+    5: required list<DataType> dataTypeList
+    6: optional list<map<string, string>> attributesList
 }
 
 struct DeleteDataInColumnsReq {
@@ -223,6 +241,10 @@ service IService {
     Status insertColumnRecords(1:InsertColumnRecordsReq req);
 
     Status insertRowRecords(1:InsertRowRecordsReq req);
+
+    Status insertAlignedColumnRecords(1:InsertAlignedColumnRecordsReq req);
+
+    Status insertAlignedRowRecords(1:InsertAlignedRowRecordsReq req);
 
     Status deleteDataInColumns(1:DeleteDataInColumnsReq req);
 
