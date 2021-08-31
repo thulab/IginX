@@ -39,7 +39,9 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
       - name: Install with Maven
-        run: mvn clean package -DskipTests
+        run: |
+          mvn clean package -DskipTests
+          mvn package -DskipTests
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh"
@@ -81,7 +83,9 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
       - name: Install with Maven
-        run: mvn clean package -DskipTests
+        run: |
+          mvn clean package -DskipTests
+          mvn package -DskipTests
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/sbin/start_server.sh"
