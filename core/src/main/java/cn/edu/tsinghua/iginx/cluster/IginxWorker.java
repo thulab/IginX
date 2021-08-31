@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -48,6 +49,7 @@ import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -252,24 +254,21 @@ public class IginxWorker implements IService.Iface {
         parser.addErrorListener(SQLParseError.INSTANCE);
 
         IginXSqlVisitor visitor = new IginXSqlVisitor();
-        ParseTree tree;
+
         try {
-            tree = parser.sqlStatement();
-        } catch (Exception e) {
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknow);
+            ParseTree tree = parser.sqlStatement();
+            Operator operator = visitor.visit(tree);
+            return operator.doOperation(req.getSessionId());
+        } catch (SQLParserException | ParseCancellationException e) {
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
             resp.setParseErrorMsg(e.getMessage());
             return resp;
-        }
-
-        Operator operator;
-        try {
-            operator = visitor.visit(tree);
         } catch (Exception e) {
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknow);
-            resp.setParseErrorMsg(e.getMessage());
+            e.printStackTrace();
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
+            resp.setParseErrorMsg("Execute Error: encounter error(s) when executing sql statement, " +
+                    "see server log for more details.");
             return resp;
         }
-
-        return operator.doOperation(req.getSessionId());
     }
 }

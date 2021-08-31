@@ -9,7 +9,7 @@ public class SQLParserException extends RuntimeException {
     }
 
     public SQLParserException(String message) {
-        super(message);
+        super("Parse Error: " + message);
     }
 
     public SQLParserException(String type, String message) {
