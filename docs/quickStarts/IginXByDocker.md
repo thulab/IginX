@@ -176,7 +176,7 @@ $ mvn clean install -Dmaven.test.skip=true # 编译 IginX
 随后使用 maven 插件构建 IginX 镜像：
 
 ```shell
-$ mvn clean package -pl core -DskipTests docker:build
+$ mvn package shade:shade -pl core -DskipTests docker:build
 ```
 
 显示出如下的字样表示镜像构建成功：
