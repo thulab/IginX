@@ -126,6 +126,30 @@ public class ParseTest {
     }
 
     @Test
+    public void testParseLimitClause() {
+        String selectWithLimit = "SELECT * FROM a.b LIMIT 10";
+        String selectWithLimitAndOffset01 = "SELECT * FROM a.b LIMIT 2, 10";
+        String selectWithLimitAndOffset02 = "SELECT * FROM a.b LIMIT 10 OFFSET 2";
+        String selectWithLimitAndOffset03 = "SELECT * FROM a.b OFFSET 2 LIMIT 10";
+
+        SelectOperator op = (SelectOperator) buildOperator(selectWithLimit);
+        assertEquals(10, op.getLimit());
+        assertEquals(0, op.getOffset());
+
+        op = (SelectOperator) buildOperator(selectWithLimitAndOffset01);
+        assertEquals(10, op.getLimit());
+        assertEquals(2, op.getOffset());
+
+        op = (SelectOperator) buildOperator(selectWithLimitAndOffset02);
+        assertEquals(10, op.getLimit());
+        assertEquals(2, op.getOffset());
+
+        op = (SelectOperator) buildOperator(selectWithLimitAndOffset03);
+        assertEquals(10, op.getLimit());
+        assertEquals(2, op.getOffset());
+    }
+
+    @Test
     public void testParseShowReplication() {
         String showReplicationStr = "SHOW REPLICA NUMBER";
         ShowReplicationOperator op = (ShowReplicationOperator) buildOperator(showReplicationStr);
