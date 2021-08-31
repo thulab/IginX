@@ -89,6 +89,9 @@ public class ConfigDescriptor {
             config.setMqttHandlerPoolSize(Integer.parseInt(properties.getProperty("mqtt_handler_pool_size", "1")));
             config.setMqttPayloadFormatter(properties.getProperty("mqtt_payload_formatter", "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter"));
             config.setMqttMaxMessageSize(Integer.parseInt(properties.getProperty("mqtt_max_message_size", "1048576")));
+
+            config.setClients(properties.getProperty("clients", ""));
+            config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
