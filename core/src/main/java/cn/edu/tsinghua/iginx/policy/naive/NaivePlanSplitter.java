@@ -85,7 +85,6 @@ class NaivePlanSplitter implements IPlanSplitter {
 
     private final Random random = new Random();
 
-
     public NaivePlanSplitter(NativePolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
