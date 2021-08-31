@@ -16,24 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan.downsample;
+package cn.edu.tsinghua.iginx.core.context;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.List;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class LastQueryContext extends RequestContext {
 
-public class DownsampleFirstQueryPlan extends DownsampleQueryPlan {
+    private LastQueryReq req;
 
-    private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstQueryPlan.class);
-
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        this(paths, startTime, endTime, precision, null);
-    }
-
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
-        super(paths, startTime, endTime, precision, storageUnit);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
+    public LastQueryContext(LastQueryReq req) {
+        super(req.sessionId, ContextType.LastQuery);
+        this.req = req;
     }
 }

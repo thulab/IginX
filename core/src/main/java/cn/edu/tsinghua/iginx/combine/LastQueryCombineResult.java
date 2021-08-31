@@ -16,25 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan.downsample;
+package cn.edu.tsinghua.iginx.combine;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
-public class DownsampleLastQueryPlan extends DownsampleQueryPlan {
+public class LastQueryCombineResult  extends DataCombineResult {
 
-    private static final Logger logger = LoggerFactory.getLogger(DownsampleLastQueryPlan.class);
+    private final LastQueryResp resp;
 
-    public DownsampleLastQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        this(paths, startTime, endTime, precision, null);
+    public LastQueryCombineResult(Status status, LastQueryResp resp) {
+        super(status);
+        this.resp = resp;
     }
 
-    public DownsampleLastQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
-        super(paths, startTime, endTime, precision, storageUnit);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_LAST);
+    public LastQueryResp getResp() {
+        return resp;
     }
-
 }

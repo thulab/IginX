@@ -179,11 +179,11 @@ public class InfluxDBSessionExample {
         dataSet.print();
 
         // FIRST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE);
         dataSet.print();
 
         // LAST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST_VALUE);
         dataSet.print();
 
         // COUNT
@@ -220,11 +220,11 @@ public class InfluxDBSessionExample {
         dataSet.print();
 
         // FIRST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, ROW_INTERVAL * 100);
         dataSet.print();
 
         // LAST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, ROW_INTERVAL * 100);
         dataSet.print();
 
         // COUNT

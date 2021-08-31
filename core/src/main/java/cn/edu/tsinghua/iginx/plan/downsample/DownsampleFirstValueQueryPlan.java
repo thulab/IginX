@@ -16,25 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan;
-
+package cn.edu.tsinghua.iginx.plan.downsample;
 
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.LAST;
+public class DownsampleFirstValueQueryPlan extends DownsampleQueryPlan {
 
-public class LastQueryPlan extends DataPlan {
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstValueQueryPlan.class);
 
-    public LastQueryPlan(List<String> paths, long startTime) {
-        super(false, paths, startTime, Long.MAX_VALUE, null);
-        this.setIginxPlanType(LAST);
-        this.setSync(true);
+    public DownsampleFirstValueQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        this(paths, startTime, endTime, precision, null);
     }
 
-    public LastQueryPlan(List<String> paths, long startTime, StorageUnitMeta storageUnit) {
-        this(paths, startTime);
-        this.setStorageUnit(storageUnit);
+    public DownsampleFirstValueQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, precision, storageUnit);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
     }
 }
