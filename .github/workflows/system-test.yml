@@ -38,11 +38,9 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-      - name: Run ETCD
-        run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
       - name: Install with Maven
+        run: ls ${GITHUB_WORKSPACE}/core/target/iginx-core-0.3.0-SNAPSHOT/lib/
+      - name: Show package
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
