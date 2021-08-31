@@ -45,9 +45,7 @@ public class ConfigDescriptor {
     }
 
     private void loadPropsFromFile() {
-        File file = new File(Constants.CONFIG_FILE);
-        logger.info(file.getAbsolutePath());
-        try (InputStream in = new FileInputStream(Constants.CONFIG_FILE)) {
+        try (InputStream in = new FileInputStream(EnvUtils.loadEnv(Constants.CONF, Constants.CONFIG_FILE))) {
             Properties properties = new Properties();
             properties.load(in);
 
