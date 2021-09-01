@@ -49,7 +49,7 @@ public abstract class BaseSessionIT {
 
     private static Session session;
     private int currPath = 0;
-    protected boolean isAbleForDelete;
+    protected boolean isAbleToDelete;
     protected StorageEngineType storageEngineType;
     protected int defaultPort2;
     protected Map<String, String> extraParams;
@@ -63,7 +63,7 @@ public abstract class BaseSessionIT {
     private static final String ranStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int STRING_LEN = 1000;
 
-    //params for patialDelete
+    //params for partialDelete
     private long delStartTime = START_TIME + TIME_PERIOD / 5;
     private long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
     private long delTimePeriod = delEndTime - delStartTime;
@@ -611,7 +611,7 @@ public abstract class BaseSessionIT {
         }*/
 
         //Simple delete and aggregate
-        if (isAbleForDelete) {
+        if (isAbleToDelete) {
             //deletePartialDataInColumnTest
             int removeLen = 1;
             List<String> delPartPaths = getPaths(currPath, removeLen);
@@ -971,8 +971,8 @@ public abstract class BaseSessionIT {
             }
         }
 
-        if (isAbleForDelete) {
-            //deletePatialData
+        if (isAbleToDelete) {
+            //deletePartialData
 
             List<String> dtDelPaths = new ArrayList<>();
             dtDelPaths.add(getSinglePath(currPath, 1));
@@ -1292,7 +1292,7 @@ public abstract class BaseSessionIT {
         currPath += mulTimeQueryLen;
 
         // multithread delete test, insert in
-        if(isAbleForDelete) {
+        if(isAbleToDelete) {
             // for Storage Part delete
             int mulDelPSLen = 5;
             List<String> mulDelPSPaths = getPaths(currPath, mulDelPSLen);
@@ -1608,7 +1608,7 @@ public abstract class BaseSessionIT {
             assertEquals(avg + pathNum, changeResultToDouble(addStAvgResult[i]), delta);
         }
         //deletePartial, with query, aggr count and aggr Avg
-        if (isAbleForDelete) {
+        if (isAbleToDelete) {
             int stRemoveLen = 3;
             List<String> stDelPartPaths = getPaths(currPath, stRemoveLen);
             // ensure after delete there are still points in the timeseries
