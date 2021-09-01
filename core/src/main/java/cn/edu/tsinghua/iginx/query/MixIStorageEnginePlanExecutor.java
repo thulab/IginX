@@ -27,8 +27,8 @@ import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -126,10 +126,10 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertAlignedColumnRecordsPlan(InsertAlignedColumnRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
-            return storageEngine.syncExecuteInsertAlignedColumnRecordsPlan(plan);
+            return storageEngine.syncExecuteInsertColumnRecordsPlan(plan);
         return null;
     }
 
@@ -142,10 +142,10 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertAlignedRowRecordsPlan(InsertAlignedRowRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
-            return storageEngine.syncExecuteInsertAlignedRowRecordsPlan(plan);
+            return storageEngine.syncExecuteInsertRowRecordsPlan(plan);
         return null;
     }
 

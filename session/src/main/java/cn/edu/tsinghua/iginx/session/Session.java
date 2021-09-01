@@ -35,8 +35,8 @@ import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertAlignedColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
@@ -415,7 +415,7 @@ public class Session {
         }
     }
 
-    public void insertAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                     List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
@@ -473,7 +473,7 @@ public class Session {
             valueBufferList.add(ByteUtils.getColumnByteBuffer(values, sortedDataTypeList.get(i)));
         }
 
-        InsertAlignedColumnRecordsReq req = new InsertAlignedColumnRecordsReq();
+        InsertColumnRecordsReq req = new InsertColumnRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -486,7 +486,7 @@ public class Session {
             do {
                 lock.readLock().lock();
                 try {
-                    status = client.insertAlignedColumnRecords(req);
+                    status = client.insertColumnRecords(req);
                 } finally {
                     lock.readLock().unlock();
                 }
@@ -594,7 +594,7 @@ public class Session {
         }
     }
 
-    public void insertAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
@@ -658,7 +658,7 @@ public class Session {
             valueBufferList.add(ByteUtils.getRowByteBuffer(values, sortedDataTypeList));
         }
 
-        InsertAlignedRowRecordsReq req = new InsertAlignedRowRecordsReq();
+        InsertRowRecordsReq req = new InsertRowRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -671,7 +671,7 @@ public class Session {
             do {
                 lock.readLock().lock();
                 try {
-                    status = client.insertAlignedRowRecords(req);
+                    status = client.insertRowRecords(req);
                 } finally {
                     lock.readLock().unlock();
                 }

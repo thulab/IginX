@@ -29,8 +29,8 @@ import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.InsertAlignedColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertAlignedRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
@@ -113,8 +113,8 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
-    public Status insertAlignedColumnRecords(InsertAlignedColumnRecordsReq req) {
-        InsertAlignedColumnRecordsContext context = new InsertAlignedColumnRecordsContext(req);
+    public Status insertColumnRecords(InsertColumnRecordsReq req) {
+        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
     }
@@ -127,8 +127,8 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
-    public Status insertAlignedRowRecords(InsertAlignedRowRecordsReq req) {
-        InsertAlignedRowRecordsContext context = new InsertAlignedRowRecordsContext(req);
+    public Status insertRowRecords(InsertRowRecordsReq req) {
+        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
     }

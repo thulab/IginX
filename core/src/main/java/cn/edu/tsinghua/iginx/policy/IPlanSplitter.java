@@ -25,8 +25,8 @@ import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
@@ -57,12 +57,12 @@ public interface IPlanSplitter {
     List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan);
 
     /**
-     * 拆分 InsertAlignedColumnRecordsPlan
+     * 拆分 InsertColumnRecordsPlan
      *
-     * @param plan 待拆分的 InsertAlignedColumnRecordsPlan
+     * @param plan 待拆分的 InsertColumnRecordsPlan
      * @return 拆分方式
      */
-    List<SplitInfo> getSplitInsertAlignedColumnRecordsPlanResults(InsertAlignedColumnRecordsPlan plan);
+    List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan);
 
     /**
      * 拆分 InsertNonAlignedColumnRecordsPlan
@@ -73,12 +73,12 @@ public interface IPlanSplitter {
     List<SplitInfo> getSplitInsertNonAlignedColumnRecordsPlanResults(InsertNonAlignedColumnRecordsPlan plan);
 
     /**
-     * 拆分 InsertAlignedRowRecordsPlan
+     * 拆分 InsertRowRecordsPlan
      *
-     * @param plan 待拆分的 InsertAlignedRowRecordsPlan
+     * @param plan 待拆分的 InsertRowRecordsPlan
      * @return 拆分方式
      */
-    List<SplitInfo> getSplitInsertAlignedRowRecordsPlanResults(InsertAlignedRowRecordsPlan plan);
+    List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan);
 
     /**
      * 拆分 InsertNonAlignedRowRecordsPlan

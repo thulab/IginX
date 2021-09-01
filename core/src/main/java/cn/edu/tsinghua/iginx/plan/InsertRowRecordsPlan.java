@@ -29,27 +29,27 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ALIGNED_COLUMN_RECORDS;
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ROW_RECORDS;
 
 @ToString
-public class InsertAlignedColumnRecordsPlan extends InsertNonAlignedColumnRecordsPlan {
+public class InsertRowRecordsPlan extends InsertNonAlignedRowRecordsPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(InsertAlignedColumnRecordsPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
 
-    public InsertAlignedColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
         super(paths, timestamps, valuesList, null, dataTypeList, attributesList, storageUnit);
-        this.setIginxPlanType(INSERT_ALIGNED_COLUMN_RECORDS);
+        this.setIginxPlanType(INSERT_ROW_RECORDS);
     }
 
-    public InsertAlignedColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
         this(paths, timestamps, valuesList, dataTypeList, attributesList, null);
     }
 
     public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertAlignedColumnRecordsPlan.");
+            logger.error("There are no values in the InsertNonAlignedRowRecordsPlan.");
             return null;
         }
         int startIndex;
@@ -77,14 +77,15 @@ public class InsertAlignedColumnRecordsPlan extends InsertNonAlignedColumnRecord
             }
         }
 
-        Object[] tempValues = new Object[endIndex - startIndex + 1];
-        for (int i = startIndex; i <= endIndex; i++) {
-            Object[] tempColumnValues = new Object[rowIndexes.v - rowIndexes.k + 1];
-            for (int j = rowIndexes.k; j <= rowIndexes.v; j++) {
-                tempColumnValues[j - rowIndexes.k] = getValues(i)[j];
+        Object[] tempValues = new Object[rowIndexes.v - rowIndexes.k + 1];
+        for (int i = rowIndexes.k; i <= rowIndexes.v; i++) {
+            Object[] tempRowValues = new Object[endIndex - startIndex + 1];
+            for (int j = startIndex; j <= startIndex; j++) {
+                tempRowValues[j - startIndex] = getValues(i)[j];
             }
-            tempValues[i - startIndex] = tempColumnValues;
+            tempValues[i - rowIndexes.k] = tempRowValues;
         }
         return tempValues;
     }
+
 }

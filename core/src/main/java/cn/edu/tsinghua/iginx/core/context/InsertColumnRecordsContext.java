@@ -18,18 +18,18 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
-import cn.edu.tsinghua.iginx.thrift.InsertAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-public class InsertAlignedRowRecordsContext extends RequestContext {
+public class InsertColumnRecordsContext extends RequestContext {
 
-    private InsertAlignedRowRecordsReq req;
+    private InsertColumnRecordsReq req;
 
-    public InsertAlignedRowRecordsContext(InsertAlignedRowRecordsReq req) {
-        super(req.sessionId, ContextType.InsertAlignedRowRecords);
+    public InsertColumnRecordsContext(InsertColumnRecordsReq req) {
+        super(req.sessionId, ContextType.InsertColumnRecords);
         this.req = req;
     }
 }

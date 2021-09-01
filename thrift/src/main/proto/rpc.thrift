@@ -65,7 +65,7 @@ struct DeleteColumnsReq {
     2: required list<string> paths
 }
 
-struct InsertAlignedColumnRecordsReq {
+struct InsertColumnRecordsReq {
     1: required i64 sessionId
     2: required list<string> paths
     3: required binary timestamps
@@ -84,7 +84,7 @@ struct InsertNonAlignedColumnRecordsReq {
     7: optional list<map<string, string>> attributesList
 }
 
-struct InsertAlignedRowRecordsReq {
+struct InsertRowRecordsReq {
     1: required i64 sessionId
     2: required list<string> paths
     3: required binary timestamps
@@ -238,11 +238,11 @@ service IService {
 
     Status deleteColumns(1:DeleteColumnsReq req);
 
-    Status insertAlignedColumnRecords(1:InsertAlignedColumnRecordsReq req);
+    Status insertColumnRecords(1:InsertColumnRecordsReq req);
 
     Status insertNonAlignedColumnRecords(1:InsertNonAlignedColumnRecordsReq req);
 
-    Status insertAlignedRowRecords(1:InsertAlignedRowRecordsReq req);
+    Status insertRowRecords(1:InsertRowRecordsReq req);
 
     Status insertNonAlignedRowRecords(1:InsertNonAlignedRowRecordsReq req);
 
