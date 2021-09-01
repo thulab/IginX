@@ -31,8 +31,8 @@ import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -146,7 +146,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -291,7 +291,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()

@@ -46,9 +46,9 @@ public class IoTDBSessionExample {
         session.openSession();
 
         // 列式插入数据
-        insertColumnRecords();
+        insertNonAlignedColumnRecords();
         // 行式插入数据
-        insertRowRecords();
+        insertNonAlignedRowRecords();
         // 值过滤查询
         valueFilterQuery();
         // 查询数据
@@ -66,7 +66,7 @@ public class IoTDBSessionExample {
         session.closeSession();
     }
 
-    private static void insertColumnRecords() throws SessionException, ExecutionException {
+    private static void insertNonAlignedColumnRecords() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add(S1);
         paths.add(S2);
@@ -104,10 +104,10 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
-        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
-    private static void insertRowRecords() throws SessionException, ExecutionException {
+    private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add(S1);
         paths.add(S2);
@@ -142,7 +142,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
-        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void queryData() throws SessionException, ExecutionException {

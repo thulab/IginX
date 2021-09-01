@@ -33,8 +33,8 @@ import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -175,7 +175,7 @@ class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
-    public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
+    public List<SplitInfo> getSplitInsertNonAlignedColumnRecordsPlanResults(InsertNonAlignedColumnRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
@@ -204,11 +204,11 @@ class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitInsertAlignedColumnRecordsPlanResults(InsertAlignedColumnRecordsPlan plan) {
-        return getSplitInsertColumnRecordsPlanResults(plan);
+        return getSplitInsertNonAlignedColumnRecordsPlanResults(plan);
     }
 
     @Override
-    public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
+    public List<SplitInfo> getSplitInsertNonAlignedRowRecordsPlanResults(InsertNonAlignedRowRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
@@ -235,7 +235,7 @@ class NaivePlanSplitter implements IPlanSplitter {
 
     @Override
     public List<SplitInfo> getSplitInsertAlignedRowRecordsPlanResults(InsertAlignedRowRecordsPlan plan) {
-        return getSplitInsertRowRecordsPlanResults(plan);
+        return getSplitInsertNonAlignedRowRecordsPlanResults(plan);
     }
 
     @Override

@@ -17,7 +17,6 @@
  * under the License.
  */
 package cn.edu.tsinghua.iginx.combine.valuefilter;
-//todo
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;

@@ -255,7 +255,7 @@ public class DataPointsParser {
             }
             valuesList[0] = values;
             try {
-                session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
                 if (metric.getAnnotation() != null)
                 {
                     for (int i = 0; i < size; i++) {
@@ -265,7 +265,7 @@ public class DataPointsParser {
                     path.append(ANNOTATION_SPLIT_STRING);
                     paths.set(0, path.toString());
                     type.set(0, DataType.BINARY);
-                    session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
                 }
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
@@ -322,7 +322,7 @@ public class DataPointsParser {
                 values[i] = metric.getAnnotation().getBytes();
             }
             valuesList[0] = values;
-            session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
         }
     }
 

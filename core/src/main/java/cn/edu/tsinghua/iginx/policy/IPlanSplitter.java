@@ -27,8 +27,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -57,14 +57,6 @@ public interface IPlanSplitter {
     List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan);
 
     /**
-     * 拆分 InsertColumnRecordsPlan
-     *
-     * @param plan 待拆分的 InsertColumnRecordsPlan
-     * @return 拆分方式
-     */
-    List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan);
-
-    /**
      * 拆分 InsertAlignedColumnRecordsPlan
      *
      * @param plan 待拆分的 InsertAlignedColumnRecordsPlan
@@ -73,12 +65,12 @@ public interface IPlanSplitter {
     List<SplitInfo> getSplitInsertAlignedColumnRecordsPlanResults(InsertAlignedColumnRecordsPlan plan);
 
     /**
-     * 拆分 InsertRowRecordsPlan
+     * 拆分 InsertNonAlignedColumnRecordsPlan
      *
-     * @param plan 待拆分的 InsertRowRecordsPlan
+     * @param plan 待拆分的 InsertNonAlignedColumnRecordsPlan
      * @return 拆分方式
      */
-    List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan);
+    List<SplitInfo> getSplitInsertNonAlignedColumnRecordsPlanResults(InsertNonAlignedColumnRecordsPlan plan);
 
     /**
      * 拆分 InsertAlignedRowRecordsPlan
@@ -87,6 +79,14 @@ public interface IPlanSplitter {
      * @return 拆分方式
      */
     List<SplitInfo> getSplitInsertAlignedRowRecordsPlanResults(InsertAlignedRowRecordsPlan plan);
+
+    /**
+     * 拆分 InsertNonAlignedRowRecordsPlan
+     *
+     * @param plan 待拆分的 InsertNonAlignedRowRecordsPlan
+     * @return 拆分方式
+     */
+    List<SplitInfo> getSplitInsertNonAlignedRowRecordsPlanResults(InsertNonAlignedRowRecordsPlan plan);
 
     /**
      * 拆分 DeleteDataInColumnsPlan

@@ -31,8 +31,8 @@ import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.InsertAlignedColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertAlignedRowRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
@@ -53,7 +53,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -114,20 +113,6 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
-    public Status insertColumnRecords(InsertColumnRecordsReq req) {
-        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
-    }
-
-    @Override
-    public Status insertRowRecords(InsertRowRecordsReq req) {
-        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
-    }
-
-    @Override
     public Status insertAlignedColumnRecords(InsertAlignedColumnRecordsReq req) {
         InsertAlignedColumnRecordsContext context = new InsertAlignedColumnRecordsContext(req);
         core.processRequest(context);
@@ -135,8 +120,22 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
+    public Status insertNonAlignedColumnRecords(InsertNonAlignedColumnRecordsReq req) {
+        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
+
+    @Override
     public Status insertAlignedRowRecords(InsertAlignedRowRecordsReq req) {
         InsertAlignedRowRecordsContext context = new InsertAlignedRowRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
+
+    @Override
+    public Status insertNonAlignedRowRecords(InsertNonAlignedRowRecordsReq req) {
+        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
     }

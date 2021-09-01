@@ -31,27 +31,25 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ROW_RECORDS;
-
 @ToString
-public class InsertRowRecordsPlan extends InsertRecordsPlan {
+public class InsertNonAlignedRowRecordsPlan extends InsertRecordsPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(InsertNonAlignedRowRecordsPlan.class);
 
-    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+    public InsertNonAlignedRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                          List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
         super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
-        this.setIginxPlanType(INSERT_ROW_RECORDS);
+        this.setIginxPlanType(IginxPlanType.INSERT_NON_ALIGNED_ROW_RECORDS);
     }
 
-    public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+    public InsertNonAlignedRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                          List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
         this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, null);
     }
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertRowRecordsPlan.");
+            logger.error("There are no values in the InsertNonAlignedRowRecordsPlan.");
             return null;
         }
         int startIndex;

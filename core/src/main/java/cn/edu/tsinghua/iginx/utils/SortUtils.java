@@ -1,7 +1,7 @@
 package cn.edu.tsinghua.iginx.utils;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.nio.ByteBuffer;
@@ -12,8 +12,8 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 
 public class SortUtils {
 
-    public static InsertColumnRecordsReq sortAndBuildInsertReq(long sessionId, List<String> paths, long[] timestamps, Object[] valuesList,
-                                                               List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+    public static InsertNonAlignedColumnRecordsReq sortAndBuildInsertReq(long sessionId, List<String> paths, long[] timestamps, Object[] valuesList,
+                                                                         List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             return null;
         }
@@ -74,7 +74,7 @@ public class SortUtils {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertColumnRecordsReq req = new InsertColumnRecordsReq();
+        InsertNonAlignedColumnRecordsReq req = new InsertNonAlignedColumnRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));

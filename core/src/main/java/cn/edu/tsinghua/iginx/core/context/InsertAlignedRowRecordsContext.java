@@ -29,7 +29,7 @@ public class InsertAlignedRowRecordsContext extends RequestContext {
     private InsertAlignedRowRecordsReq req;
 
     public InsertAlignedRowRecordsContext(InsertAlignedRowRecordsReq req) {
-        super(req.sessionId, ContextType.InsertRowRecords);
+        super(req.sessionId, ContextType.InsertAlignedRowRecords);
         this.req = req;
     }
 }

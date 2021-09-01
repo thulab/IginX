@@ -26,8 +26,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -53,13 +53,13 @@ import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 
 public interface IStorageEngine {
 
-    NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan);
-
     NonDataPlanExecuteResult syncExecuteInsertAlignedColumnRecordsPlan(InsertAlignedColumnRecordsPlan plan);
 
-    NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan);
+    NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan);
 
     NonDataPlanExecuteResult syncExecuteInsertAlignedRowRecordsPlan(InsertAlignedRowRecordsPlan plan);
+
+    NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan);
 
     QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan);
 

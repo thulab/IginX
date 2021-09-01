@@ -163,7 +163,7 @@ public abstract class BaseSessionIT {
                         dataTypeList.add(DataType.LONG);
                     }
                     try {
-                        localSession.insertColumnRecords(path, timestamps, valuesList, dataTypeList, null);
+                        localSession.insertNonAlignedColumnRecords(path, timestamps, valuesList, dataTypeList, null);
                     } catch (SessionException | ExecutionException e) {
                         logger.error(e.getMessage());
                     }
@@ -224,7 +224,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < pathLen; i++) {
             dataTypeList.add(DataType.LONG);
         }
-        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private void insertFakeNumRecords(List<String> insertPaths, long count) throws SessionException, ExecutionException {
@@ -256,7 +256,7 @@ public abstract class BaseSessionIT {
                 dataTypeList.add(DataType.LONG);
             }
         }
-        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     // the length of the insertPaths must be 6
@@ -305,7 +305,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 6; i++) {
             dataTypeList.add(DataType.findByValue(i));
         }
-        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private double changeResultToDouble(Object rawResult) {

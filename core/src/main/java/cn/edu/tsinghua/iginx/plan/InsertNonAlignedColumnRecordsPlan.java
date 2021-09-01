@@ -31,27 +31,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_COLUMN_RECORDS;
+import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_NON_ALIGNED_COLUMN_RECORDS;
 
 @ToString
-public class InsertColumnRecordsPlan extends InsertRecordsPlan {
+public class InsertNonAlignedColumnRecordsPlan extends InsertRecordsPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(InsertColumnRecordsPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(InsertNonAlignedColumnRecordsPlan.class);
 
-    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+    public InsertNonAlignedColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                             List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
         super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
-        this.setIginxPlanType(INSERT_COLUMN_RECORDS);
+        this.setIginxPlanType(INSERT_NON_ALIGNED_COLUMN_RECORDS);
     }
 
-    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
+    public InsertNonAlignedColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                             List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
         this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, null);
     }
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertColumnRecordsPlan.");
+            logger.error("There are no values in the InsertNonAlignedColumnRecordsPlan.");
             return null;
         }
         int startIndex;

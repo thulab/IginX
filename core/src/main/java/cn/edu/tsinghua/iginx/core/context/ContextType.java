@@ -20,10 +20,10 @@ package cn.edu.tsinghua.iginx.core.context;
 
 public enum ContextType {
 
-    InsertRowRecords,
     InsertAlignedRowRecords,
-    InsertColumnRecords,
+    InsertNonAlignedRowRecords,
     InsertAlignedColumnRecords,
+    InsertNonAlignedColumnRecords,
     QueryData,
     DeleteColumns,
     DeleteDataInColumns,

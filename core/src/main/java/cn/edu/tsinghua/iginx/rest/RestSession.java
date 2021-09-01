@@ -34,8 +34,8 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -175,7 +175,7 @@ public class RestSession {
         RpcUtils.verifySuccess(status);
     }
 
-    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                     List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
@@ -222,7 +222,7 @@ public class RestSession {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertColumnRecordsReq req = new InsertColumnRecordsReq();
+        InsertNonAlignedColumnRecordsReq req = new InsertNonAlignedColumnRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -235,7 +235,7 @@ public class RestSession {
         do {
             lock.readLock().lock();
             try {
-                status = client.insertColumnRecords(req);
+                status = client.insertNonAlignedColumnRecords(req);
             } finally {
                 lock.readLock().unlock();
             }
@@ -243,7 +243,7 @@ public class RestSession {
         RpcUtils.verifySuccess(status);
     }
 
-    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
@@ -291,7 +291,7 @@ public class RestSession {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -304,7 +304,7 @@ public class RestSession {
         do {
             lock.readLock().lock();
             try {
-                status = client.insertRowRecords(req);
+                status = client.insertNonAlignedRowRecords(req);
             } finally {
                 lock.readLock().unlock();
             }

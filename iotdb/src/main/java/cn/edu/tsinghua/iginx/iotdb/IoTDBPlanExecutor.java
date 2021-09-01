@@ -17,7 +17,6 @@
  * under the License.
  */
 package cn.edu.tsinghua.iginx.iotdb;
-//todo
 
 import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryExecuteDataSet;
@@ -30,8 +29,8 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertAlignedRowRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
@@ -57,7 +56,6 @@ import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteRe
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
@@ -190,7 +188,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<Map<String, Tablet>> tabletsList = new ArrayList<>();
         Map<Integer, List<Integer>> tabletsIndexToPathsIndexes = new HashMap<>();
@@ -311,7 +309,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<Map<String, Tablet>> tabletsList = new ArrayList<>();
         // 将 paths 按照 deviceId 分组

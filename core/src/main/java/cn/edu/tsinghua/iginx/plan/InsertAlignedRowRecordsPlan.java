@@ -32,7 +32,7 @@ import java.util.Map;
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ALIGNED_ROW_RECORDS;
 
 @ToString
-public class InsertAlignedRowRecordsPlan extends InsertRowRecordsPlan {
+public class InsertAlignedRowRecordsPlan extends InsertNonAlignedRowRecordsPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(InsertAlignedRowRecordsPlan.class);
 
@@ -49,7 +49,7 @@ public class InsertAlignedRowRecordsPlan extends InsertRowRecordsPlan {
 
     public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertRowRecordsPlan.");
+            logger.error("There are no values in the InsertNonAlignedRowRecordsPlan.");
             return null;
         }
         int startIndex;

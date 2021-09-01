@@ -32,7 +32,7 @@ import java.util.Map;
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ALIGNED_COLUMN_RECORDS;
 
 @ToString
-public class InsertAlignedColumnRecordsPlan extends InsertColumnRecordsPlan {
+public class InsertAlignedColumnRecordsPlan extends InsertNonAlignedColumnRecordsPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(InsertAlignedColumnRecordsPlan.class);
 
