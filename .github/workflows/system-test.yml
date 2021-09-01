@@ -45,8 +45,8 @@ jobs:
           mvn package -DskipTests
       - name: Start IginX
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_server.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_server.sh" &
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=IoTDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
@@ -90,8 +90,8 @@ jobs:
           mvn package -DskipTests
       - name: Start IginX
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_server.sh"
-          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_server.sh" &
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for InfluxDB
         run: mvn test -q -Dtest=InfluxDBSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
