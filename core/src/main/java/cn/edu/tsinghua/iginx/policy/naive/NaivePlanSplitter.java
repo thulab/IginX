@@ -159,6 +159,7 @@ class NaivePlanSplitter implements IPlanSplitter {
         return resultList;
     }
 
+    @Override
     public List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
@@ -175,7 +176,9 @@ class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
-    public List<SplitInfo> getSplitInsertNonAlignedColumnRecordsPlanResults(InsertNonAlignedColumnRecordsPlan plan) {
+
+    @Override
+    public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
@@ -203,12 +206,12 @@ class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
-        return getSplitInsertNonAlignedColumnRecordsPlanResults(plan);
+    public List<SplitInfo> getSplitInsertNonAlignedColumnRecordsPlanResults(InsertNonAlignedColumnRecordsPlan plan) {
+        return getSplitInsertColumnRecordsPlanResults(plan);
     }
 
     @Override
-    public List<SplitInfo> getSplitInsertNonAlignedRowRecordsPlanResults(InsertNonAlignedRowRecordsPlan plan) {
+    public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
@@ -234,8 +237,8 @@ class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
-    public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
-        return getSplitInsertNonAlignedRowRecordsPlanResults(plan);
+    public List<SplitInfo> getSplitInsertNonAlignedRowRecordsPlanResults(InsertNonAlignedRowRecordsPlan plan) {
+        return getSplitInsertRowRecordsPlanResults(plan);
     }
 
     @Override
@@ -255,6 +258,7 @@ class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
+    @Override
     public List<SplitInfo> getSplitQueryDataPlanResults(QueryDataPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();

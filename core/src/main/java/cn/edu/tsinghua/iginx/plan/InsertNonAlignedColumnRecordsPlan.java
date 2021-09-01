@@ -34,19 +34,35 @@ import java.util.Map;
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_NON_ALIGNED_COLUMN_RECORDS;
 
 @ToString
-public class InsertNonAlignedColumnRecordsPlan extends InsertRecordsPlan {
+public class InsertNonAlignedColumnRecordsPlan extends InsertColumnRecordsPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(InsertNonAlignedColumnRecordsPlan.class);
 
+    private List<Bitmap> bitmapList;
+
     public InsertNonAlignedColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
+        super(paths, timestamps, valuesList, dataTypeList, attributesList, storageUnit);
+        this.bitmapList = bitmapList;
         this.setIginxPlanType(INSERT_NON_ALIGNED_COLUMN_RECORDS);
     }
 
     public InsertNonAlignedColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
         this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, null);
+    }
+
+
+    public Bitmap getBitmap(int index) {
+        if (bitmapList == null || bitmapList.isEmpty()) {
+            logger.error("There are no bitmaps in the InsertRecordsPlan.");
+            return null;
+        }
+        if (index < 0 || index >= bitmapList.size()) {
+            logger.error("The given index {} is out of bounds.", index);
+            return null;
+        }
+        return bitmapList.get(index);
     }
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {

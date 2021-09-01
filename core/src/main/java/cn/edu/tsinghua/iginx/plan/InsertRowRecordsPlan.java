@@ -32,13 +32,13 @@ import java.util.Map;
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ROW_RECORDS;
 
 @ToString
-public class InsertRowRecordsPlan extends InsertNonAlignedRowRecordsPlan {
+public class InsertRowRecordsPlan extends InsertRecordsPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(InsertRowRecordsPlan.class);
 
     public InsertRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(paths, timestamps, valuesList, null, dataTypeList, attributesList, storageUnit);
+        super(paths, timestamps, valuesList, dataTypeList, attributesList, storageUnit);
         this.setIginxPlanType(INSERT_ROW_RECORDS);
     }
 
