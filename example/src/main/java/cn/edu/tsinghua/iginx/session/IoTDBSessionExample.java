@@ -53,6 +53,8 @@ public class IoTDBSessionExample {
         valueFilterQuery();
         // 查询数据
         queryData();
+        // Last 查询
+        lastQuery();
         // 聚合查询数据
         aggregateQuery();
         // 降采样聚合查询
@@ -170,6 +172,16 @@ public class IoTDBSessionExample {
         long endTime = ROW_START_TIMESTAMP + 100L;
         String booleanExpression = S2 + " < " + (ROW_START_TIMESTAMP + 50L) + " && " + S1 + " > " + (COLUMN_END_TIMESTAMP - 50L);
         SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
+        dataSet.print();
+    }
+
+    private static void lastQuery() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+        paths.add(S3);
+        paths.add(S4);
+        LastQueryDataSet dataSet = session.queryLast(paths, 0L);
         dataSet.print();
     }
 
