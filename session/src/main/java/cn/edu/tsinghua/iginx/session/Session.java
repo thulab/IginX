@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.*;
@@ -50,6 +49,13 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 public class Session {
 
     private static final Logger logger = LoggerFactory.getLogger(Session.class);
+
+    private static final int MAX_REDIRECT_TIME = 3;
+
+    private static final String USERNAME = "root";
+
+    private static final String PASSWORD = "root";
+
     private final String username;
     private final String password;
     private final ReadWriteLock lock;
@@ -62,11 +68,11 @@ public class Session {
     private int redirectTimes;
 
     public Session(String host, int port) {
-        this(host, port, Constants.DEFAULT_USERNAME, Constants.DEFAULT_PASSWORD);
+        this(host, port, USERNAME, PASSWORD);
     }
 
     public Session(String host, String port) {
-        this(host, port, Constants.DEFAULT_USERNAME, Constants.DEFAULT_PASSWORD);
+        this(host, port, USERNAME, PASSWORD);
     }
 
     public Session(String host, String port, String username, String password) {
@@ -90,7 +96,7 @@ public class Session {
         }
 
         redirectTimes += 1;
-        if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
+        if (redirectTimes > MAX_REDIRECT_TIME) {
             throw new SessionException("重定向次数过多！");
         }
 
@@ -99,7 +105,7 @@ public class Session {
         try {
             tryCloseSession();
 
-            while (redirectTimes <= Constants.MAX_REDIRECT_TIME) {
+            while (redirectTimes <= MAX_REDIRECT_TIME) {
 
                 String[] targetAddress = status.getMessage().split(":");
                 if (targetAddress.length != 2) {
@@ -121,7 +127,7 @@ public class Session {
                 redirectTimes += 1;
             }
 
-            if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
+            if (redirectTimes > MAX_REDIRECT_TIME) {
                 throw new SessionException("重定向次数过多！");
             }
         } finally {
@@ -189,9 +195,9 @@ public class Session {
                 this.port = Integer.parseInt(targetAddress[1]);
                 redirectTimes += 1;
 
-            } while (redirectTimes <= Constants.MAX_REDIRECT_TIME);
+            } while (redirectTimes <= MAX_REDIRECT_TIME);
 
-            if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
+            if (redirectTimes > MAX_REDIRECT_TIME) {
                 throw new SessionException("重定向次数过多！");
             }
             redirectTimes = 0;
@@ -635,7 +641,6 @@ public class Session {
                     lock.readLock().unlock();
                 }
             } while (checkRedirect(resp.status));
-            RpcUtils.verifySuccess(resp.status);
         } catch (TException e) {
             throw new SessionException(e);
         }
@@ -657,9 +662,7 @@ public class Session {
         }
         List<String> mergedPaths = new ArrayList<>();
         for (String path : paths) {
-            if (path.contains("*")) {
-                mergedPaths.add(path);
-            } else {
+            if (!path.contains("*")) {
                 boolean skip = false;
                 for (String prefix : prefixes) {
                     if (path.startsWith(prefix)) {
@@ -670,8 +673,8 @@ public class Session {
                 if (skip) {
                     continue;
                 }
-                mergedPaths.add(path);
             }
+            mergedPaths.add(path);
         }
         mergedPaths.sort(Comparator.comparing(o -> o.substring(0, o.indexOf("*"))));
         return mergedPaths;

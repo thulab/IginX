@@ -9,6 +9,8 @@ import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
+import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -28,20 +30,24 @@ public class SelectOperator extends Operator {
 
     private List<Pair<FuncType, String>> selectedFuncsAndPaths;
     private Set<FuncType> funcTypeSet;
-    private List<String> fromPaths;
+    private String fromPath;
     private String booleanExpression;
     private long startTime;
     private long endTime;
     private long precision;
+    private int limit;
+    private int offset;
 
     public SelectOperator() {
         this.operatorType = OperatorType.SELECT;
-        this.queryType = QueryType.NotSupport;
+        this.queryType = QueryType.Unknown;
         selectedFuncsAndPaths = new ArrayList<>();
         funcTypeSet = new HashSet<>();
-        fromPaths = new ArrayList<>();
+        fromPath = "";
         startTime = Long.MIN_VALUE;
         endTime = Long.MAX_VALUE;
+        limit = Integer.MAX_VALUE;
+        offset = 0;
     }
 
     public boolean isHasFunc() {
@@ -81,7 +87,7 @@ public class SelectOperator extends Operator {
     }
 
     public void setSelectedFuncsAndPaths(FuncType type, String path) {
-        this.selectedFuncsAndPaths.add(new Pair<>(type, path));
+        this.selectedFuncsAndPaths.add(new Pair<>(type, fromPath + SQLConstant.DOT + path));
         this.funcTypeSet.add(type);
     }
 
@@ -93,12 +99,12 @@ public class SelectOperator extends Operator {
         this.funcTypeSet = funcTypeSet;
     }
 
-    public List<String> getFromPaths() {
-        return fromPaths;
+    public String getFromPath() {
+        return fromPath;
     }
 
     public void setFromPath(String path) {
-        this.fromPaths.add(path);
+        this.fromPath = path;
     }
 
     public String getBooleanExpression() {
@@ -141,10 +147,26 @@ public class SelectOperator extends Operator {
         this.queryType = queryType;
     }
 
+    public long getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
     public void setQueryType() {
         if (hasFunc) {
             if (hasGroupBy && hasValueFilter) {
-                this.queryType = QueryType.NotSupport;
+                this.queryType = QueryType.MixedQuery;
             } else if (hasGroupBy) {
                 if (funcTypeSet.size() > 1) {
                     this.queryType = QueryType.MultiDownSampleQuery;
@@ -152,7 +174,7 @@ public class SelectOperator extends Operator {
                     this.queryType = QueryType.DownSampleQuery;
                 }
             } else if (hasValueFilter) {
-                this.queryType = QueryType.NotSupport;
+                this.queryType = QueryType.ValueFilterAndAggregateQuery;
             } else {
                 if (funcTypeSet.size() > 1) {
                     this.queryType = QueryType.MultiAggregateQuery;
@@ -164,7 +186,7 @@ public class SelectOperator extends Operator {
             if (hasGroupBy && hasValueFilter) {
                 this.queryType = QueryType.ValueFilterAndDownSampleQuery;
             } else if (hasGroupBy) {
-                this.queryType = QueryType.NotSupport;
+                throw new SQLParserException("Group by clause cannot be used without aggregate function.");
             } else if (hasValueFilter) {
                 this.queryType = QueryType.ValueFilterQuery;
             } else {
@@ -227,7 +249,9 @@ public class SelectOperator extends Operator {
             case ValueFilterQuery:
                 return valueFilterQuery(sessionId);
             default:
-                return new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.NotSupportQuery);
+                ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.NotSupportQuery);
+                resp.setParseErrorMsg(String.format("Not support %s for now.", queryType.toString()));
+                return resp;
         }
     }
 
@@ -247,6 +271,8 @@ public class SelectOperator extends Operator {
         resp.setPaths(queryDataResp.getPaths());
         resp.setDataTypeList(queryDataResp.getDataTypeList());
         resp.setQueryDataSet(queryDataResp.getQueryDataSet());
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -269,6 +295,8 @@ public class SelectOperator extends Operator {
         resp.setTimestamps(aggregateQueryResp.getTimestamps());
         resp.setValuesList(aggregateQueryResp.getValuesList());
         resp.setAggregateType(funcType2AggregateType(selectedFuncsAndPaths.get(0).k));
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -291,6 +319,8 @@ public class SelectOperator extends Operator {
         resp.setDataTypeList(downsampleQueryResp.getDataTypeList());
         resp.setQueryDataSet(downsampleQueryResp.getQueryDataSet());
         resp.setAggregateType(funcType2AggregateType(selectedFuncsAndPaths.get(0).k));
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -311,6 +341,8 @@ public class SelectOperator extends Operator {
         resp.setPaths(valueFilterQueryResp.getPaths());
         resp.setDataTypeList(valueFilterQueryResp.getDataTypeList());
         resp.setQueryDataSet(valueFilterQueryResp.getQueryDataSet());
+        resp.setLimit(limit);
+        resp.setOffset(offset);
         return resp;
     }
 
@@ -327,7 +359,7 @@ public class SelectOperator extends Operator {
     }
 
     public enum QueryType {
-        NotSupport,
+        Unknown,
         SimpleQuery,
         AggregateQuery,
         MultiAggregateQuery,
@@ -335,5 +367,7 @@ public class SelectOperator extends Operator {
         MultiDownSampleQuery,
         ValueFilterQuery,
         ValueFilterAndDownSampleQuery,
+        ValueFilterAndAggregateQuery,
+        MixedQuery,
     }
 }

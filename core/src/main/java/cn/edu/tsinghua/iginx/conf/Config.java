@@ -84,6 +84,10 @@ public class Config {
 
     private int mqttMaxMessageSize = 1048576;
 
+    private String clients = "";
+
+    private int instancesNumPerClient = 0;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -338,5 +342,20 @@ public class Config {
 
     public void setMqttMaxMessageSize(int mqttMaxMessageSize) {
         this.mqttMaxMessageSize = mqttMaxMessageSize;
+    }
+    public String getClients() {
+        return clients;
+    }
+
+    public void setClients(String clients) {
+        this.clients = clients;
+    }
+
+    public int getInstancesNumPerClient() {
+        return instancesNumPerClient;
+    }
+
+    public void setInstancesNumPerClient(int instancesNumPerClient) {
+        this.instancesNumPerClient = instancesNumPerClient;
     }
 }

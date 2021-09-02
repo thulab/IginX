@@ -6,10 +6,13 @@ sqlStatement
 
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
-    | DELETE FROM path (COMMA path)* WHERE (timeRange)? #deleteStatement
-    | selectClause fromClause whereClause? groupByTimeClause? #selectStatement
-    | SHOW REPLICATION #showReplicationStatement
+    | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
+    | selectClause fromClause whereClause? groupByTimeClause? specialClause? #selectStatement
+    | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
+    | COUNT POINTS #countPointsStatement
+    | CLEAR DATA #clearDataStatement
+    | SHOW TIME SERIES #showTimeSeriesStatement
     ;
 
 selectClause
@@ -50,16 +53,31 @@ andExpression
     ;
 
 predicate
-    : (TIME | TIMESTAMP | path) comparisonOperator constant
+    : path comparisonOperator constant
+    | constant comparisonOperator path
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
 fromClause
-    : FROM path (COMMA path)*
+    : FROM path
     ;
 
 groupByTimeClause
     : GROUP BY DURATION
+    ;
+
+specialClause
+    : limitClause
+    ;
+
+limitClause
+    : LIMIT INT COMMA INT
+    | LIMIT INT offsetClause?
+    | offsetClause? LIMIT INT
+    ;
+
+offsetClause
+    : OFFSET INT
     ;
 
 comparisonOperator
@@ -117,6 +135,47 @@ path
 nodeName
     : ID
     | STAR
+    | DOUBLE_QUOTE_STRING_LITERAL
+    | DURATION
+    | dateExpression
+    | dateFormat
+    | MINUS? (EXPONENT | INT)
+    | booleanClause
+    | INSERT
+    | DELETE
+    | SELECT
+    | SHOW
+    | INTO
+    | WHERE
+    | FROM
+    | BY
+    | LIMIT
+    | OFFSET
+    | TIME
+    | SERIES
+    | TIMESTAMP
+    | GROUP
+    | ADD
+    | VALUES
+    | NOW
+    | COUNT
+    | LAST
+    | CLEAR
+    | FIRST
+    | LAST
+    | MIN
+    | MAX
+    | AVG
+    | COUNT
+    | SUM
+    | STORAGEENGINE
+    | POINTS
+    | DATA
+    | NULL
+    | SHOW
+    | REPLICA
+    | IOTDB
+    | INFLUXDB
     ;
 
 ip
@@ -179,8 +238,12 @@ SHOW
     : S H O W
     ;
 
-REPLICATION
-    : R E P L I C A T I O N
+REPLICA
+    : R E P L I C A
+    ;
+
+NUMBER
+    : N U M B E R
     ;
 
 WHERE
@@ -271,6 +334,14 @@ SUM
     : S U M
     ;
 
+LIMIT
+    : L I M I T
+    ;
+
+OFFSET
+    : O F F S E T
+    ;
+
 DATA
     : D A T A
     ;
@@ -282,6 +353,19 @@ ADD
 STORAGEENGINE
     : S T O R A G E E N G I N E
     ;
+
+POINTS
+    : P O I N T S
+    ;
+
+CLEAR
+    : C L E A R
+    ;
+
+SERIES
+    : S E R I E S
+    ;
+
 //============================
 // End of the keywords list
 //============================

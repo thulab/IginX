@@ -126,6 +126,11 @@ $ mvn clean install -Dmaven.test.skip=true
 [INFO] ------------------------------------------------------------------------
 ```
 
+此外，IginX 还支持 Docker。使用如下命令即可构建本地 IginX 镜像：
+```shell
+mvn clean package -pl core -DskipTests docker:build
+```
+
 ## 启动
 
 ### IoTDB

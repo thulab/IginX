@@ -1,14 +1,15 @@
 package cn.edu.tsinghua.iginx.exceptions;
 
 public class SQLParserException extends RuntimeException {
-    private static final long serialVersionUID = 3249707655860110299L;
+
+    private static final long serialVersionUID = -96743874320267646L;
 
     public SQLParserException() {
         super("Error format in SQL statement, please check whether SQL statement is correct.");
     }
 
     public SQLParserException(String message) {
-        super(message);
+        super("Parse Error: " + message);
     }
 
     public SQLParserException(String type, String message) {

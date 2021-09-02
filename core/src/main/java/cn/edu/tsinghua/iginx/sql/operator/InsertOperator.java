@@ -2,6 +2,7 @@ package cn.edu.tsinghua.iginx.sql.operator;
 
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
@@ -12,8 +13,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InsertOperator extends Operator {
-
-    private static final String DOT = ".";
 
     private String prefixPath;
     private List<String> paths;
@@ -40,7 +39,7 @@ public class InsertOperator extends Operator {
     }
 
     public void setPath(String path) {
-        this.paths.add(prefixPath + DOT + path);
+        this.paths.add(prefixPath + SQLConstant.DOT + path);
     }
 
     public long[] getTimes() {

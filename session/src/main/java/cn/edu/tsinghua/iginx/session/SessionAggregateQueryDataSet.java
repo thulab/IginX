@@ -10,13 +10,13 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 
 public class SessionAggregateQueryDataSet {
 
-    private AggregateType type;
+    private final AggregateType type;
 
     private List<String> paths;
 
     private long[] timestamps;
 
-    private Object[] values;
+    private final Object[] values;
 
     public SessionAggregateQueryDataSet(AggregateQueryResp resp, AggregateType type) {
         this.paths = resp.getPaths();

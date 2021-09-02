@@ -18,5 +18,8 @@ public abstract class Operator {
         DELETE,
         ADD_STORAGE_ENGINE,
         SHOW_REPLICATION,
+        COUNT_POINTS,
+        CLEAR_DATA,
+        SHOW_TIME_SERIES,
     }
 }

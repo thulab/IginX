@@ -25,15 +25,19 @@ enum AggregateType {
 }
 
 enum SqlType {
-    Insert
-    Delete
-    SimpleQuery
-    AggregateQuery
-    DownsampleQuery
-    ValueFilterQuery
-    NotSupportQuery
-    GetReplicaNum
-    AddStorageEngines
+    Unknown,
+    Insert,
+    Delete,
+    SimpleQuery,
+    AggregateQuery,
+    DownsampleQuery,
+    ValueFilterQuery,
+    NotSupportQuery,
+    GetReplicaNum,
+    AddStorageEngines,
+    CountPoints,
+    ClearData,
+    ShowTimeSeries,
 }
 
 struct Status {
@@ -201,7 +205,11 @@ struct ExecuteSqlResp {
     6: optional binary timestamps
     7: optional binary valuesList
     8: optional i32 replicaNum
-    9: optional AggregateType aggregateType
+    9: optional i64 pointsNum;
+    10: optional AggregateType aggregateType
+    11: optional string parseErrorMsg
+    12: optional i32 limit
+    13: optional i32 offset
 }
 
 service IService {

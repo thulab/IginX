@@ -34,11 +34,13 @@ import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
+import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
 import cn.edu.tsinghua.iginx.sql.operator.Operator;
@@ -47,8 +49,8 @@ import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -141,23 +143,24 @@ public class IginxWorker implements IService.Iface {
         List<StorageEngine> storageEngines = req.getStorageEngines();
         List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
 
-        Map<cn.edu.tsinghua.iginx.core.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
+        Map<cn.edu.tsinghua.iginx.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
         String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String driverInfo: driverInfos) {
+        for (String driverInfo : driverInfos) {
             String[] kAndV = driverInfo.split("=");
             String className = kAndV[1];
             try {
                 Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
                         loadClass(className);
                 Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-                checkConnectionMethods.put(cn.edu.tsinghua.iginx.core.db.StorageEngine.fromString(kAndV[0]), method);
+                checkConnectionMethods.put(cn.edu.tsinghua.iginx.db.StorageEngine.fromString(kAndV[0]), method);
             } catch (ClassNotFoundException | NoSuchMethodException | IllegalArgumentException e) {
                 logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
             }
         }
 
-        for (StorageEngine storageEngine: storageEngines) {
-            cn.edu.tsinghua.iginx.core.db.StorageEngine type = cn.edu.tsinghua.iginx.core.db.StorageEngine.fromThrift(storageEngine.getType());
+
+        for (StorageEngine storageEngine : storageEngines) {
+            cn.edu.tsinghua.iginx.db.StorageEngine type = cn.edu.tsinghua.iginx.db.StorageEngine.fromThrift(storageEngine.getType());
             StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
                     storageEngine.getExtraParams(), type, metaManager.getIginxId());
             Method checkConnectionMethod = checkConnectionMethods.get(type);
@@ -176,13 +179,34 @@ public class IginxWorker implements IService.Iface {
             storageEngineMetas.add(meta);
 
         }
+        Status status = RpcUtils.SUCCESS;
+        // 检测是否与已有的存储单元冲突
+        List<StorageEngineMeta> currentStorageEngines = metaManager.getStorageEngineList();
+        List<StorageEngineMeta> duplicatedStorageEngine = new ArrayList<>();
+        for (StorageEngineMeta storageEngine: storageEngineMetas) {
+            for (StorageEngineMeta currentStorageEngine: currentStorageEngines) {
+                if (currentStorageEngine.getIp().equals(storageEngine.getIp()) && currentStorageEngine.getPort() == storageEngine.getPort()) {
+                    duplicatedStorageEngine.add(storageEngine);
+                    break;
+                }
+            }
+        }
+        if (!duplicatedStorageEngine.isEmpty()) {
+            storageEngineMetas.removeAll(duplicatedStorageEngine);
+            if (!storageEngines.isEmpty()) {
+                status = new Status(RpcUtils.PARTIAL_SUCCESS.code);
+            } else {
+                status = new Status(RpcUtils.FAILURE.code);
+            }
+            status.setMessage("unexpected repeated add");
+        }
         if (!storageEngineMetas.isEmpty()) {
             storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
-            return RpcUtils.FAILURE;
+            status = RpcUtils.FAILURE;
         }
-        return RpcUtils.SUCCESS;
+        return status;
     }
 
     @Override
@@ -221,11 +245,30 @@ public class IginxWorker implements IService.Iface {
     @Override
     public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
         SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
+        lexer.removeErrorListeners();
+        lexer.addErrorListener(SQLParseError.INSTANCE);
+
         CommonTokenStream tokens = new CommonTokenStream(lexer);
         SqlParser parser = new SqlParser(tokens);
+        parser.removeErrorListeners();
+        parser.addErrorListener(SQLParseError.INSTANCE);
+
         IginXSqlVisitor visitor = new IginXSqlVisitor();
-        ParseTree tree = parser.sqlStatement();
-        Operator operator = visitor.visit(tree);
-        return operator.doOperation(req.getSessionId());
+
+        try {
+            ParseTree tree = parser.sqlStatement();
+            Operator operator = visitor.visit(tree);
+            return operator.doOperation(req.getSessionId());
+        } catch (SQLParserException | ParseCancellationException e) {
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
+            resp.setParseErrorMsg(e.getMessage());
+            return resp;
+        } catch (Exception e) {
+            e.printStackTrace();
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
+            resp.setParseErrorMsg("Execute Error: encounter error(s) when executing sql statement, " +
+                    "see server log for more details.");
+            return resp;
+        }
     }
 }
