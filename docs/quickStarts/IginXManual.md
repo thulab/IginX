@@ -273,8 +273,8 @@ zookeeperConnectionString=127.0.0.1:2181
 ```shell
 $ cd ~
 $ cd Iginx
-$ chmod +x startIginX.sh # 为启动脚本添加启动权限
-$ ./startIginX.sh
+$ chmod +x sbin/start_iginx.sh # 为启动脚本添加启动权限
+$ ./sbin/start_iginx.sh
 ```
 
 修改 conf/config. Properties
@@ -289,7 +289,7 @@ restPort=7666
 启动第二个 IginX 实例
 
 ```shell
-./startIginX.sh
+$ ./sbin/start_iginx.sh
 ```
 
 ### 配置项

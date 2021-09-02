@@ -103,6 +103,7 @@ $ cd ~
 $ git clone git@github.com:thulab/IginX.git
 $ cd IginX
 $ mvn clean install -Dmaven.test.skip=true
+$ mvn package -pl core -Dmaven.test.skip=true
 ```
 
 显示出如下字样，表示 IginX 构建成功：
@@ -161,9 +162,9 @@ $ ./sbin/start-server.sh
 
 ```shell
 $ cd ~
-$ cd Iginx
-$ chmod +x startIginX.sh # 为启动脚本添加启动权限
-$ ./startIginX.sh
+$ cd IginX/core/target/iginx-core-0.3.0-SNAPSHOT
+$ chmod +x sbin/start_iginx.sh # 为启动脚本添加启动权限
+$ ./sbin/start_iginx.sh
 ```
 
 显示出如下字样，表示 IginX 启动成功：
