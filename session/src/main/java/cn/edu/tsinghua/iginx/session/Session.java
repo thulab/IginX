@@ -648,6 +648,33 @@ public class Session {
         return new SessionExecuteSqlResult(resp);
     }
 
+    public LastQueryDataSet queryLast(List<String> paths, long startTime)
+            throws SessionException, ExecutionException {
+        if (paths.isEmpty()) {
+            logger.error("Invalid query request!");
+            return null;
+        }
+        LastQueryReq req = new LastQueryReq(sessionId, mergeAndSortPaths(paths), startTime);
+
+        LastQueryResp resp;
+
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.lastQuery(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+
+        return new LastQueryDataSet(resp);
+    }
+
     // 适用于查询类请求和删除类请求，因为其 paths 可能带有 *
     private List<String> mergeAndSortPaths(List<String> paths) {
         if (paths.stream().anyMatch(x -> x.equals("*"))) {

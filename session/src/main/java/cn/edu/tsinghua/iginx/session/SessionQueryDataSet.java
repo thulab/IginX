@@ -61,7 +61,6 @@ public class SessionQueryDataSet {
         if (this.paths == null) {
             this.paths = new ArrayList<>();
         }
-
     }
 
     private void parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {

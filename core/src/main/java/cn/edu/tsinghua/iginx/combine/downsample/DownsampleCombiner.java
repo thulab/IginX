@@ -82,11 +82,11 @@ public class DownsampleCombiner {
                     AggregateCombiner.getInstance().combineSumOrCountResult(aggregateQueryResp, aggregateResultGroup.stream()
                             .map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                     break;
-                case FIRST:
+                case FIRST_VALUE:
                     AggregateCombiner.getInstance().combineFirstResult(aggregateQueryResp, aggregateResultGroup.stream()
                             .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                     break;
-                case LAST:
+                case LAST_VALUE:
                     AggregateCombiner.getInstance().combineLastResult(aggregateQueryResp, aggregateResultGroup.stream()
                             .map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                     break;

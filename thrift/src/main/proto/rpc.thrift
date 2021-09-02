@@ -20,8 +20,8 @@ enum AggregateType {
     SUM,
     COUNT,
     AVG,
-    FIRST,
-    LAST,
+    FIRST_VALUE,
+    LAST_VALUE,
 }
 
 enum SqlType {
@@ -155,6 +155,20 @@ struct ValueFilterQueryResp {
     4: optional QueryDataSet queryDataSet
 }
 
+struct LastQueryReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required i64 startTime
+}
+
+struct LastQueryResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+    4: optional binary timestamps
+    5: optional binary valuesList
+}
+
 struct DownsampleQueryReq {
     1: required i64 sessionId
     2: required list<string> paths
@@ -233,6 +247,8 @@ service IService {
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
 
     ValueFilterQueryResp valueFilterQuery(1:ValueFilterQueryReq req);
+
+    LastQueryResp lastQuery(1: LastQueryReq req);
 
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 

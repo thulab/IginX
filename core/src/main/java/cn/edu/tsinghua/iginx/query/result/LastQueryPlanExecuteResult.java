@@ -16,20 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.query.result;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import lombok.Getter;
+import lombok.Setter;
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    LastQuery,
-    ShowColumns,
-    Unknown;
+import java.util.ArrayList;
+import java.util.List;
+
+@Getter
+@Setter
+public class LastQueryPlanExecuteResult extends SyncPlanExecuteResult {
+
+    private List<String> paths;
+
+    private List<DataType> dataTypes;
+
+    private List<Long> times;
+
+    private List<Object> values;
+
+    public LastQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+        this.paths = new ArrayList<>();
+        this.dataTypes = new ArrayList<>();
+        this.times = new ArrayList<>();
+        this.values = new ArrayList<>();
+    }
 
 }

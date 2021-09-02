@@ -16,20 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.combine;
 
-public enum ContextType {
 
-    InsertRowRecords,
-    InsertColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    LastQuery,
-    ShowColumns,
-    Unknown;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
+public class LastQueryCombineResult  extends DataCombineResult {
+
+    private final LastQueryResp resp;
+
+    public LastQueryCombineResult(Status status, LastQueryResp resp) {
+        super(status);
+        this.resp = resp;
+    }
+
+    public LastQueryResp getResp() {
+        return resp;
+    }
 }

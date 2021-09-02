@@ -53,6 +53,8 @@ public class IoTDBSessionExample {
         valueFilterQuery();
         // 查询数据
         queryData();
+        // Last 查询
+        lastQuery();
         // 聚合查询数据
         aggregateQuery();
         // 降采样聚合查询
@@ -173,6 +175,16 @@ public class IoTDBSessionExample {
         dataSet.print();
     }
 
+    private static void lastQuery() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+        paths.add(S3);
+        paths.add(S4);
+        LastQueryDataSet dataSet = session.queryLast(paths, 0L);
+        dataSet.print();
+    }
+
     private static void downsampleQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add(S1);
@@ -192,11 +204,11 @@ public class IoTDBSessionExample {
         dataSet.print();
 
         // FIRST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, ROW_INTERVAL * 100);
         dataSet.print();
 
         // LAST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, ROW_INTERVAL * 100);
         dataSet.print();
 
         // COUNT
@@ -232,11 +244,11 @@ public class IoTDBSessionExample {
         dataSet.print();
 
         // FIRST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE);
         dataSet.print();
 
         // LAST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST_VALUE);
         dataSet.print();
 
         // COUNT

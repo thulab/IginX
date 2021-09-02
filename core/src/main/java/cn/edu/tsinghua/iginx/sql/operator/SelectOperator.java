@@ -219,9 +219,9 @@ public class SelectOperator extends Operator {
     public static AggregateType funcType2AggregateType(FuncType type) {
         switch (type) {
             case First:
-                return AggregateType.FIRST;
+                return AggregateType.FIRST_VALUE;
             case Last:
-                return AggregateType.LAST;
+                return AggregateType.LAST_VALUE;
             case Min:
                 return AggregateType.MIN;
             case Max:
