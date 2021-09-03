@@ -594,6 +594,7 @@ public class DefaultMetaManager implements IMetaManager {
     public boolean addUser(UserMeta user) {
         try {
             storage.addUser(user);
+            cache.addOrUpdateUser(user);
             return true;
         } catch (MetaStorageException e) {
             logger.error("add user error: ", e);
@@ -616,6 +617,7 @@ public class DefaultMetaManager implements IMetaManager {
         }
         try {
             storage.updateUser(user);
+            cache.addOrUpdateUser(user);
             return true;
         } catch (MetaStorageException e) {
             logger.error("update user error: ", e);
@@ -627,6 +629,7 @@ public class DefaultMetaManager implements IMetaManager {
     public boolean removeUser(String username) {
         try {
             storage.removeUser(username);
+            cache.removeUser(username);
             return true;
         } catch (MetaStorageException e) {
             logger.error("remove user error: ", e);

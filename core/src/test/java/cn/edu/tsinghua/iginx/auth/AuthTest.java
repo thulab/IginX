@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
-import io.etcd.jetcd.Auth;
 import org.apache.curator.shaded.com.google.common.collect.Sets;
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -33,10 +32,7 @@ import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 
-import java.io.File;
-import java.nio.file.Paths;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 @FixMethodOrder(MethodSorters.JVM)
