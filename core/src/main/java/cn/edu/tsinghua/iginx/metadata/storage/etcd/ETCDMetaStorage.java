@@ -757,6 +757,9 @@ public class ETCDMetaStorage implements IMetaStorage {
                 releaseUser();
             }
         }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(userMeta.getUsername(), userMeta);
+        }
     }
 
     @Override
@@ -772,6 +775,9 @@ public class ETCDMetaStorage implements IMetaStorage {
             if (userLease != -1) {
                 releaseUser();
             }
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(username, null);
         }
     }
 
