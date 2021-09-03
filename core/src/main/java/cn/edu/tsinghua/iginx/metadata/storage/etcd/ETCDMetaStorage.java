@@ -332,6 +332,44 @@ public class ETCDMetaStorage implements IMetaStorage {
 
                     }
                 });
+
+        // 注册 user 的监听
+        this.userWatcher = client.getWatchClient().watch(ByteSequence.from(USER_PREFIX.getBytes()),
+                WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(),
+                new Watch.Listener() {
+                    @Override
+                    public void onNext(WatchResponse watchResponse) {
+                        if (ETCDMetaStorage.this.userChangeHook == null) {
+                            return;
+                        }
+                        for (WatchEvent event: watchResponse.getEvents()) {
+                            UserMeta userMeta;
+                            switch (event.getEventType()) {
+                                case PUT:
+                                    userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
+                                    userChangeHook.onChange(userMeta.getUsername(), userMeta);
+                                    break;
+                                case DELETE:
+                                    userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
+                                    userChangeHook.onChange(userMeta.getUsername(), null);
+                                    break;
+                                default:
+                                    logger.error("unexpected watchEvent: " + event.getEventType());
+                                    break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
     }
 
     public static ETCDMetaStorage getInstance() {
