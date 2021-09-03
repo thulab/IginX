@@ -1,11 +1,11 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 
@@ -69,7 +69,7 @@ public class InsertOperator extends Operator {
     @Override
     public ExecuteSqlResp doOperation(long sessionId) {
         Core core = Core.getInstance();
-        InsertColumnRecordsReq req = SortUtils.sortAndBuildInsertReq(
+        InsertNonAlignedColumnRecordsReq req = SortUtils.sortAndBuildInsertReq(
                 sessionId,
                 paths,
                 times,
@@ -77,7 +77,7 @@ public class InsertOperator extends Operator {
                 types,
                 null
         );
-        InsertColumnRecordsContext ctx = new InsertColumnRecordsContext(req);
+        InsertNonAlignedColumnRecordsContext ctx = new InsertNonAlignedColumnRecordsContext(req);
         core.processRequest(ctx);
         return new ExecuteSqlResp(ctx.getStatus(), SqlType.Insert);
     }

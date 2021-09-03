@@ -49,7 +49,7 @@ public abstract class BaseSessionIT {
 
     private static Session session;
     private int currPath = 0;
-    protected boolean isAbleForDelete;
+    protected boolean isAbleToDelete;
     protected StorageEngineType storageEngineType;
     protected int defaultPort2;
     protected Map<String, String> extraParams;
@@ -63,7 +63,7 @@ public abstract class BaseSessionIT {
     private static final String ranStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int STRING_LEN = 1000;
 
-    //params for patialDelete
+    //params for partialDelete
     private long delStartTime = START_TIME + TIME_PERIOD / 5;
     private long delEndTime = START_TIME + TIME_PERIOD / 10 * 9;
     private long delTimePeriod = delEndTime - delStartTime;
@@ -163,7 +163,7 @@ public abstract class BaseSessionIT {
                         dataTypeList.add(DataType.LONG);
                     }
                     try {
-                        localSession.insertColumnRecords(path, timestamps, valuesList, dataTypeList, null);
+                        localSession.insertNonAlignedColumnRecords(path, timestamps, valuesList, dataTypeList, null);
                     } catch (SessionException | ExecutionException e) {
                         logger.error(e.getMessage());
                     }
@@ -224,7 +224,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < pathLen; i++) {
             dataTypeList.add(DataType.LONG);
         }
-        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private void insertFakeNumRecords(List<String> insertPaths, long count) throws SessionException, ExecutionException {
@@ -256,7 +256,7 @@ public abstract class BaseSessionIT {
                 dataTypeList.add(DataType.LONG);
             }
         }
-        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     // the length of the insertPaths must be 6
@@ -305,7 +305,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 6; i++) {
             dataTypeList.add(DataType.findByValue(i));
         }
-        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private double changeResultToDouble(Object rawResult) {
@@ -418,7 +418,7 @@ public abstract class BaseSessionIT {
             assertEquals(START_TIME + pathNum, minResult[i]);
         }
         //aggrFirst
-        SessionAggregateQueryDataSet firstDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.FIRST);
+        SessionAggregateQueryDataSet firstDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.FIRST_VALUE);
         List<String> firstResPaths = firstDataSet.getPaths();
         Object[] firstResult = firstDataSet.getValues();
         assertEquals(simpleLen, firstResPaths.size());
@@ -430,7 +430,7 @@ public abstract class BaseSessionIT {
             assertEquals(START_TIME + pathNum, firstResult[i]);
         }
         //aggrLast
-        SessionAggregateQueryDataSet lastDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.LAST);
+        SessionAggregateQueryDataSet lastDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.LAST_VALUE);
         List<String> lastResPaths = lastDataSet.getPaths();
         Object[] lastResult = lastDataSet.getValues();
         assertEquals(simpleLen, lastResPaths.size());
@@ -611,7 +611,7 @@ public abstract class BaseSessionIT {
         }*/
 
         //Simple delete and aggregate
-        if (isAbleForDelete) {
+        if (isAbleToDelete) {
             //deletePartialDataInColumnTest
             int removeLen = 1;
             List<String> delPartPaths = getPaths(currPath, removeLen);
@@ -971,8 +971,8 @@ public abstract class BaseSessionIT {
             }
         }
 
-        if (isAbleForDelete) {
-            //deletePatialData
+        if (isAbleToDelete) {
+            //deletePartialData
 
             List<String> dtDelPaths = new ArrayList<>();
             dtDelPaths.add(getSinglePath(currPath, 1));
@@ -1292,7 +1292,7 @@ public abstract class BaseSessionIT {
         currPath += mulTimeQueryLen;
 
         // multithread delete test, insert in
-        if(isAbleForDelete) {
+        if(isAbleToDelete) {
             // for Storage Part delete
             int mulDelPSLen = 5;
             List<String> mulDelPSPaths = getPaths(currPath, mulDelPSLen);
@@ -1608,7 +1608,7 @@ public abstract class BaseSessionIT {
             assertEquals(avg + pathNum, changeResultToDouble(addStAvgResult[i]), delta);
         }
         //deletePartial, with query, aggr count and aggr Avg
-        if (isAbleForDelete) {
+        if (isAbleToDelete) {
             int stRemoveLen = 3;
             List<String> stDelPartPaths = getPaths(currPath, stRemoveLen);
             // ensure after delete there are still points in the timeseries

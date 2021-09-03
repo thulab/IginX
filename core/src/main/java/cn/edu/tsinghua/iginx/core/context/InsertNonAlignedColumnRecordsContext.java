@@ -16,24 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.utils;
+package cn.edu.tsinghua.iginx.core.context;
 
-public class Pair<K, V> {
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    public K k;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class InsertNonAlignedColumnRecordsContext extends RequestContext {
 
-    public V v;
+    private InsertNonAlignedColumnRecordsReq req;
 
-    public Pair(K k, V v) {
-        this.k = k;
-        this.v = v;
-    }
-
-    @Override
-    public String toString() {
-        return "Pair{" +
-                "k=" + k +
-                ", v=" + v +
-                '}';
+    public InsertNonAlignedColumnRecordsContext(InsertNonAlignedColumnRecordsReq req) {
+        super(req.sessionId, ContextType.InsertNonAlignedColumnRecords);
+        this.req = req;
     }
 }

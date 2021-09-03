@@ -20,8 +20,8 @@ enum AggregateType {
     SUM,
     COUNT,
     AVG,
-    FIRST,
-    LAST,
+    FIRST_VALUE,
+    LAST_VALUE,
 }
 
 enum SqlType {
@@ -38,6 +38,18 @@ enum SqlType {
     CountPoints,
     ClearData,
     ShowTimeSeries,
+}
+
+enum AuthType {
+    Read,
+    Write,
+    Admin,
+    Cluster
+}
+
+enum UserType {
+    Administrator,
+    OrdinaryUser
 }
 
 struct Status {
@@ -70,12 +82,30 @@ struct InsertColumnRecordsReq {
     2: required list<string> paths
     3: required binary timestamps
     4: required list<binary> valuesList
+    5: required list<DataType> dataTypeList
+    6: optional list<map<string, string>> attributesList
+}
+
+struct InsertNonAlignedColumnRecordsReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required binary timestamps
+    4: required list<binary> valuesList
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> attributesList
 }
 
 struct InsertRowRecordsReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required binary timestamps
+    4: required list<binary> valuesList
+    5: required list<DataType> dataTypeList
+    6: optional list<map<string, string>> attributesList
+}
+
+struct InsertNonAlignedRowRecordsReq {
     1: required i64 sessionId
     2: required list<string> paths
     3: required binary timestamps
@@ -155,6 +185,20 @@ struct ValueFilterQueryResp {
     4: optional QueryDataSet queryDataSet
 }
 
+struct LastQueryReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required i64 startTime
+}
+
+struct LastQueryResp {
+    1: required Status status
+    2: optional list<string> paths
+    3: optional list<DataType> dataTypeList
+    4: optional binary timestamps
+    5: optional binary valuesList
+}
+
 struct DownsampleQueryReq {
     1: required i64 sessionId
     2: required list<string> paths
@@ -187,7 +231,7 @@ struct GetReplicaNumReq {
 
 struct GetReplicaNumResp {
     1: required Status status
-    2: required i32 replicaNum
+    2: optional i32 replicaNum
 }
 
 
@@ -212,6 +256,37 @@ struct ExecuteSqlResp {
     13: optional i32 offset
 }
 
+struct UpdateUserReq {
+    1: required i64 sessionId
+    2: required string username
+    3: optional string password
+    4: optional set<AuthType> auths
+}
+
+struct AddUserReq {
+    1: required i64 sessionId
+    2: required string username
+    3: required string password
+    4: required set<AuthType> auths
+}
+
+struct DeleteUserReq {
+    1: required i64 sessionId
+    2: required string username
+}
+
+struct GetUserReq {
+    1: required i64 sessionId
+    2: optional list<string> usernames
+}
+
+struct GetUserResp {
+    1: required Status status
+    2: optional list<string> usernames
+    3: optional list<UserType> userTypes
+    4: optional list<set<AuthType>> auths
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -222,7 +297,11 @@ service IService {
 
     Status insertColumnRecords(1:InsertColumnRecordsReq req);
 
+    Status insertNonAlignedColumnRecords(1:InsertNonAlignedColumnRecordsReq req);
+
     Status insertRowRecords(1:InsertRowRecordsReq req);
+
+    Status insertNonAlignedRowRecords(1:InsertNonAlignedRowRecordsReq req);
 
     Status deleteDataInColumns(1:DeleteDataInColumnsReq req);
 
@@ -234,6 +313,8 @@ service IService {
 
     ValueFilterQueryResp valueFilterQuery(1:ValueFilterQueryReq req);
 
+    LastQueryResp lastQuery(1: LastQueryReq req);
+
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 
     ShowColumnsResp showColumns(ShowColumnsReq req);
@@ -241,4 +322,12 @@ service IService {
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 
     ExecuteSqlResp executeSql(1: ExecuteSqlReq req);
+
+    Status updateUser(1: UpdateUserReq req);
+
+    Status addUser(1: AddUserReq req);
+
+    Status deleteUser(1: DeleteUserReq req);
+
+    GetUserResp getUser(1: GetUserReq req);
 }

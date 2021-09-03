@@ -16,21 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.core.context;
 
-public class MetaStorageException extends Exception {
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    private static final long serialVersionUID = -8128973325398925370L;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class LastQueryContext extends RequestContext {
 
-    public MetaStorageException(String message) {
-        super(message);
-    }
+    private LastQueryReq req;
 
-    public MetaStorageException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public MetaStorageException(Throwable cause) {
-        super(cause);
+    public LastQueryContext(LastQueryReq req) {
+        super(req.sessionId, ContextType.LastQuery);
+        this.req = req;
     }
 }

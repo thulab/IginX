@@ -19,8 +19,8 @@
 package cn.edu.tsinghua.iginx.exceptions;
 
 public enum StatusCode {
-    WRONG_PASSWORD(100),
-    INVALID_SESSION(101),
+    WRONG_USERNAME_OR_PASSWORD(100),
+    ACCESS_DENY(101),
 
     SUCCESS_STATUS(200),
     PARTIAL_SUCCESS(204),

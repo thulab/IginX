@@ -16,13 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.combine;
 
-public class UnsupportedDataTypeException extends RuntimeException {
 
-    private static final long serialVersionUID = 5278528888805786089L;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
-    public UnsupportedDataTypeException(String dataTypeName) {
-        super("Unsupported DataType: " + dataTypeName);
+public class LastQueryCombineResult  extends DataCombineResult {
+
+    private final LastQueryResp resp;
+
+    public LastQueryCombineResult(Status status, LastQueryResp resp) {
+        super(status);
+        this.resp = resp;
+    }
+
+    public LastQueryResp getResp() {
+        return resp;
     }
 }

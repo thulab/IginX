@@ -16,21 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.plan.downsample;
 
-public class SessionException extends IginxException {
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static final long serialVersionUID = -2811585771984779297L;
+import java.util.List;
 
-    public SessionException(String message) {
-        super(message, StatusCode.SESSION_ERROR.getStatusCode());
+public class DownsampleLastValueQueryPlan extends DownsampleQueryPlan {
+
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleLastValueQueryPlan.class);
+
+    public DownsampleLastValueQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        this(paths, startTime, endTime, precision, null);
     }
 
-    public SessionException(Throwable cause) {
-        super(cause, StatusCode.SESSION_ERROR.getStatusCode());
+    public DownsampleLastValueQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, precision, storageUnit);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_LAST);
     }
 
-    public SessionException(String message, Throwable cause) {
-        super(message, cause, StatusCode.SESSION_ERROR.getStatusCode());
-    }
 }

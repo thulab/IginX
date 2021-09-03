@@ -16,24 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.plan.downsample;
+package cn.edu.tsinghua.iginx.query.result;
 
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import lombok.Getter;
+import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class DownsampleFirstQueryPlan extends DownsampleQueryPlan {
+@Getter
+@Setter
+public class LastQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstQueryPlan.class);
+    private List<String> paths;
 
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
-        this(paths, startTime, endTime, precision, null);
+    private List<DataType> dataTypes;
+
+    private List<Long> times;
+
+    private List<Object> values;
+
+    public LastQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+        this.paths = new ArrayList<>();
+        this.dataTypes = new ArrayList<>();
+        this.times = new ArrayList<>();
+        this.values = new ArrayList<>();
     }
 
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
-        super(paths, startTime, endTime, precision, storageUnit);
-        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
-    }
 }

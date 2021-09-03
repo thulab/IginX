@@ -106,10 +106,11 @@ public abstract class IginxPlan {
     public enum IginxPlanType {
         UNKNOWN,
         IGINX, NON_DATABASE, COLUMN, SHOW_COLUMNS, DELETE_COLUMNS, DATA, INSERT_RECORDS,
-        INSERT_COLUMN_RECORDS, INSERT_ROW_RECORDS, DELETE_DATA_IN_COLUMNS, QUERY_DATA,
-        AGGREGATE_QUERY, MAX, MIN, SUM, COUNT, AVG, FIRST, LAST, DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX,
-        DOWNSAMPLE_MIN, DOWNSAMPLE_SUM, DOWNSAMPLE_COUNT, DOWNSAMPLE_AVG, DOWNSAMPLE_FIRST,
-        DOWNSAMPLE_LAST, VALUE_FILTER_QUERY;
+        INSERT_COLUMN_RECORDS, INSERT_NON_ALIGNED_COLUMN_RECORDS, INSERT_ROW_RECORDS,
+        INSERT_NON_ALIGNED_ROW_RECORDS, DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY, MAX, MIN,
+        SUM, COUNT, AVG, FIRST_VALUE, LAST_VALUE, DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX, DOWNSAMPLE_MIN,
+        DOWNSAMPLE_SUM, DOWNSAMPLE_COUNT, DOWNSAMPLE_AVG, DOWNSAMPLE_FIRST, DOWNSAMPLE_LAST,
+        VALUE_FILTER_QUERY, LAST;
 
         public boolean isDownsampleQuery() {
             return this == DOWNSAMPLE_QUERY || this == DOWNSAMPLE_AVG || this == DOWNSAMPLE_COUNT || this == DOWNSAMPLE_SUM ||
@@ -118,7 +119,7 @@ public abstract class IginxPlan {
 
         public boolean isAggregateQuery() {
             return this == AGGREGATE_QUERY || this == AVG || this == COUNT || this == SUM ||
-                    this == MIN || this == MAX || this == FIRST || this == LAST;
+                    this == MIN || this == MAX || this == FIRST_VALUE || this == LAST_VALUE;
         }
 
     }

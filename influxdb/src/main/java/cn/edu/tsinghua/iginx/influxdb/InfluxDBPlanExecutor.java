@@ -27,11 +27,14 @@ import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
@@ -40,8 +43,8 @@ import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
@@ -50,6 +53,7 @@ import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
@@ -144,7 +148,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -219,7 +223,77 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+        InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+        Organization organization = client.getOrganizationsApi()
+                .findOrganizations().stream()
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        Map<Bucket, List<Point>> bucketToPoints = new HashMap<>();
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            String[] elements = plan.getPath(i).split("\\.");
+            String bucketName = plan.getStorageUnit().getId();
+            String measurement = elements[0];
+            String field = elements[elements.length - 1];
+            Map<String, String> tags = new HashMap<>();
+            if (elements.length > 2) {
+                tags.put("t", plan.getPath(i).substring(plan.getPath(i).indexOf(".") + 1, plan.getPath(i).lastIndexOf(".")));
+            }
+
+            List<Bucket> bucketList = client.getBucketsApi()
+                    .findBucketsByOrgName(storageEngineIdToOrganization.get(plan.getStorageEngineId())).stream()
+                    .filter(b -> b.getName().equals(bucketName))
+                    .collect(Collectors.toList());
+            Bucket bucket;
+            if (bucketList.isEmpty()) {
+                bucket = client.getBucketsApi().createBucket(bucketName, organization);
+            } else {
+                bucket = bucketList.get(0);
+            }
+            bucketToPoints.putIfAbsent(bucket, new ArrayList<>());
+
+            Object[] values = (Object[]) (plan.getValuesList()[i]);
+            for (int j = 0; j < plan.getTimestamps().length; j++) {
+                // TODO 增加处理精度
+                switch (plan.getDataType(i)) {
+                    case BOOLEAN:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (boolean) values[j]).time(plan.getTimestamp(j), WRITE_PRECISION));
+                        break;
+                    case INTEGER:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (int) values[j]).time(plan.getTimestamp(j), WRITE_PRECISION));
+                        break;
+                    case LONG:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (long) values[j]).time(plan.getTimestamp(j), WRITE_PRECISION));
+                        break;
+                    case FLOAT:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (float) values[j]).time(plan.getTimestamp(j), WRITE_PRECISION));
+                        break;
+                    case DOUBLE:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (double) values[j]).time(plan.getTimestamp(j), WRITE_PRECISION));
+                        break;
+                    case BINARY:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, new String((byte[]) values[j])).time(plan.getTimestamp(j), WRITE_PRECISION));
+                        break;
+                    default:
+                        throw new UnsupportedDataTypeException(plan.getDataType(i).toString());
+                }
+            }
+        }
+
+        for (Map.Entry<Bucket, List<Point>> entry : bucketToPoints.entrySet()) {
+            if (plan.isSync()) {
+                client.getWriteApiBlocking().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+            } else {
+                client.getWriteApi().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+            }
+        }
+        return new NonDataPlanExecuteResult(SUCCESS, plan);
+    }
+
+    @Override
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -283,6 +357,80 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
                             throw new UnsupportedDataTypeException(plan.getDataType(i).toString());
                     }
                     k++;
+                }
+            }
+        }
+
+        for (Map.Entry<Bucket, List<Point>> entry : bucketToPoints.entrySet()) {
+            if (plan.isSync()) {
+                client.getWriteApiBlocking().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+            } else {
+                client.getWriteApi().writePoints(entry.getKey().getId(), organization.getId(), entry.getValue());
+            }
+        }
+        return new NonDataPlanExecuteResult(SUCCESS, plan);
+    }
+
+    @Override
+    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
+        Organization organization = client.getOrganizationsApi()
+                .findOrganizations().stream()
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+
+        Map<String, Bucket> pathToBucket = new HashMap<>();
+        Map<Bucket, List<Point>> bucketToPoints = new HashMap<>();
+        for (int i = 0; i < plan.getPathsNum(); i++) {
+            String bucketName = plan.getStorageUnit().getId();
+            List<Bucket> bucketList = client.getBucketsApi()
+                    .findBucketsByOrgName(storageEngineIdToOrganization.get(plan.getStorageEngineId())).stream()
+                    .filter(b -> b.getName().equals(bucketName))
+                    .collect(Collectors.toList());
+            Bucket bucket;
+            if (bucketList.isEmpty()) {
+                bucket = client.getBucketsApi().createBucket(bucketName, organization);
+            } else {
+                bucket = bucketList.get(0);
+            }
+            pathToBucket.put(plan.getPath(i), bucket);
+            bucketToPoints.putIfAbsent(bucket, new ArrayList<>());
+        }
+
+        for (int i = 0; i < plan.getTimestamps().length; i++) {
+            Object[] values = (Object[]) (plan.getValuesList()[i]);
+            for (int j = 0; j < plan.getPathsNum(); j++) {
+                String[] elements = plan.getPath(j).split("\\.");
+                String measurement = elements[0];
+                String field = elements[elements.length - 1];
+                Map<String, String> tags = new HashMap<>();
+                if (elements.length > 2) {
+                    tags.put("t", plan.getPath(j).substring(plan.getPath(j).indexOf(".") + 1, plan.getPath(j).lastIndexOf(".")));
+                }
+
+                Bucket bucket = pathToBucket.get(plan.getPath(j));
+                switch (plan.getDataType(j)) {
+                    case BOOLEAN:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (boolean) values[j]).time(plan.getTimestamp(i), WRITE_PRECISION));
+                        break;
+                    case INTEGER:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (int) values[j]).time(plan.getTimestamp(i), WRITE_PRECISION));
+                        break;
+                    case LONG:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (long) values[j]).time(plan.getTimestamp(i), WRITE_PRECISION));
+                        break;
+                    case FLOAT:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (float) values[j]).time(plan.getTimestamp(i), WRITE_PRECISION));
+                        break;
+                    case DOUBLE:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, (double) values[j]).time(plan.getTimestamp(i), WRITE_PRECISION));
+                        break;
+                    case BINARY:
+                        bucketToPoints.get(bucket).add(Point.measurement(measurement).addTags(tags).addField(field, new String((byte[]) values[j])).time(plan.getTimestamp(i), WRITE_PRECISION));
+                        break;
+                    default:
+                        throw new UnsupportedDataTypeException(plan.getDataType(i).toString());
                 }
             }
         }
@@ -363,6 +511,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         }
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
+    }
+
+    @Override
+    public LastQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+        return null;
     }
 
     @Override
@@ -536,7 +689,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -583,7 +736,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -760,12 +913,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstValueQueryPlan(DownsampleFirstValueQueryPlan plan) {
         return syncExecuteDownsampleQueryPlan(plan);
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastValueQueryPlan(DownsampleLastValueQueryPlan plan) {
         return syncExecuteDownsampleQueryPlan(plan);
     }
 

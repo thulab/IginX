@@ -16,29 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.plan.downsample;
 
-public class IginxException extends Exception {
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static final long serialVersionUID = -1355829042896588219L;
-    protected int errorCode;
+import java.util.List;
 
-    public IginxException(String message, int errorCode) {
-        super(message);
-        this.errorCode = errorCode;
+public class DownsampleFirstValueQueryPlan extends DownsampleQueryPlan {
+
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstValueQueryPlan.class);
+
+    public DownsampleFirstValueQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+        this(paths, startTime, endTime, precision, null);
     }
 
-    public IginxException(String message, Throwable cause, int errorCode) {
-        super(message, cause);
-        this.errorCode = errorCode;
-    }
-
-    public IginxException(Throwable cause, int errorCode) {
-        super(cause);
-        this.errorCode = errorCode;
-    }
-
-    public int getErrorCode() {
-        return errorCode;
+    public DownsampleFirstValueQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+        super(paths, startTime, endTime, precision, storageUnit);
+        this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
     }
 }

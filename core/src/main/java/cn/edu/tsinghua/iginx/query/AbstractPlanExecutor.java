@@ -25,11 +25,14 @@ import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
@@ -38,8 +41,8 @@ import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
@@ -92,9 +95,17 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
                             logger.info("execute async insert column records task");
                             planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
                             break;
+                        case INSERT_NON_ALIGNED_COLUMN_RECORDS:
+                            logger.info("execute async insert non-aligned column records task");
+                            planExecuteResult = syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+                            break;
                         case INSERT_ROW_RECORDS:
                             logger.info("execute async insert row records task");
                             planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
+                            break;
+                        case INSERT_NON_ALIGNED_ROW_RECORDS:
+                            logger.info("execute async insert non-aligned row records task");
+                            planExecuteResult = syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
                             break;
                         case DELETE_COLUMNS:
                             planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
@@ -121,17 +132,20 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     private void initFunctionMap() {
         functionMap.put(IginxPlan.IginxPlanType.INSERT_COLUMN_RECORDS, this::executeInsertColumnRecordsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.INSERT_NON_ALIGNED_COLUMN_RECORDS, this::executeInsertNonAlignedColumnRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.INSERT_ROW_RECORDS, this::executeInsertRowRecordsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.INSERT_NON_ALIGNED_ROW_RECORDS, this::executeInsertNonAlignedRowRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.QUERY_DATA, this::executeQueryDataPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_COLUMNS, this::executeDeleteColumnsPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_DATA_IN_COLUMNS, this::executeDeleteDataInColumnsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.LAST, this::executeLastQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.AVG, this::executeAvgQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.SUM, this::executeSumQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.COUNT, this::executeCountQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.MAX, this::executeMaxQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.MIN, this::executeMinQueryPlan);
-        functionMap.put(IginxPlan.IginxPlanType.FIRST, this::executeFirstQueryPlan);
-        functionMap.put(IginxPlan.IginxPlanType.LAST, this::executeLastQueryPlan);
+        functionMap.put(IginxPlan.IginxPlanType.FIRST_VALUE, this::executeFirstValueQueryPlan);
+        functionMap.put(IginxPlan.IginxPlanType.LAST_VALUE, this::executeLastValueQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_AVG, this::executeDownsampleAvgQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_SUM, this::executeDownsampleSumQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_COUNT, this::executeDownsampleCountQueryPlan);
@@ -144,9 +158,23 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     }
 
 
+    protected Future<? extends PlanExecuteResult> executeInsertNonAlignedColumnRecordsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan));
+        }
+        return null;
+    }
+
     protected Future<? extends PlanExecuteResult> executeInsertColumnRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan));
+        }
+        return null;
+    }
+
+    protected Future<? extends PlanExecuteResult> executeInsertNonAlignedRowRecordsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan));
         }
         return null;
     }
@@ -186,6 +214,13 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         return null;
     }
 
+    protected Future<? extends PlanExecuteResult> executeLastQueryPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteLastQueryPlan((LastQueryPlan) plan));
+        }
+        return null;
+    }
+
     protected Future<? extends PlanExecuteResult> executeAvgQueryPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteAvgQueryPlan((AvgQueryPlan) plan));
@@ -207,16 +242,16 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         return null;
     }
 
-    protected Future<? extends PlanExecuteResult> executeFirstQueryPlan(IginxPlan plan) {
+    protected Future<? extends PlanExecuteResult> executeFirstValueQueryPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteFirstQueryPlan((FirstQueryPlan) plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteFirstValueQueryPlan((FirstValueQueryPlan) plan));
         }
         return null;
     }
 
-    protected Future<? extends PlanExecuteResult> executeLastQueryPlan(IginxPlan plan) {
+    protected Future<? extends PlanExecuteResult> executeLastValueQueryPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteLastQueryPlan((LastQueryPlan) plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteLastValueQueryPlan((LastValueQueryPlan) plan));
         }
         return null;
     }
@@ -272,14 +307,14 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeDownsampleFirstQueryPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteDownsampleFirstQueryPlan((DownsampleFirstQueryPlan) plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteDownsampleFirstValueQueryPlan((DownsampleFirstValueQueryPlan) plan));
         }
         return null;
     }
 
     protected Future<? extends PlanExecuteResult> executeDownsampleLastQueryPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            return syncExecuteThreadPool.submit(() -> syncExecuteDownsampleLastQueryPlan((DownsampleLastQueryPlan) plan));
+            return syncExecuteThreadPool.submit(() -> syncExecuteDownsampleLastValueQueryPlan((DownsampleLastValueQueryPlan) plan));
         }
         return null;
     }

@@ -21,7 +21,7 @@ package cn.edu.tsinghua.iginx.mqtt;
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
@@ -130,7 +130,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         }
 
         // 采用行接口写入数据
-        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
         req.setSessionId(0L);
         req.setTimestamps(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG));
         req.setPaths(paths);
@@ -138,7 +138,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         req.setValuesList(valuesList);
         req.setBitmapList(bitmapList);
 
-        Status status = worker.insertRowRecords(req);
+        Status status = worker.insertNonAlignedRowRecords(req);
         logger.debug("event process result: {}", status);
     }
 }
