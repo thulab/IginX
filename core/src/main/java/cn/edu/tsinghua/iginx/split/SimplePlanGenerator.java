@@ -25,6 +25,8 @@ import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
@@ -37,6 +39,8 @@ import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -60,6 +64,8 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -73,9 +79,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getColumnValuesByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getAlignedColumnValuesByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getAlignedRowValuesByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getNonAlignedColumnValuesByDataType;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteArray;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getNonAlignedRowValuesByDataType;
 
 public class SimplePlanGenerator implements IPlanGenerator {
 
@@ -99,25 +107,48 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 InsertColumnRecordsPlan insertColumnRecordsPlan = new InsertColumnRecordsPlan(
                         insertColumnRecordsReq.getPaths(),
                         timestamps,
-                        getColumnValuesByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList(), insertColumnRecordsReq.getBitmapList(), timestamps.length),
-                        insertColumnRecordsReq.getBitmapList().stream().map(x -> new Bitmap(timestamps.length, x.array())).collect(Collectors.toList()),
+                        getAlignedColumnValuesByDataType(insertColumnRecordsReq.getValuesList(), insertColumnRecordsReq.getDataTypeList(), timestamps.length),
                         insertColumnRecordsReq.getDataTypeList(),
                         insertColumnRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+            case InsertNonAlignedColumnRecords:
+                InsertNonAlignedColumnRecordsReq insertNonAlignedColumnRecordsReq = ((InsertNonAlignedColumnRecordsContext) requestContext).getReq();
+                long[] nonAlignedTimestamps = getLongArrayFromByteArray(insertNonAlignedColumnRecordsReq.getTimestamps());
+                InsertNonAlignedColumnRecordsPlan insertNonAlignedColumnRecordsPlan = new InsertNonAlignedColumnRecordsPlan(
+                        insertNonAlignedColumnRecordsReq.getPaths(),
+                        nonAlignedTimestamps,
+                        getNonAlignedColumnValuesByDataType(insertNonAlignedColumnRecordsReq.getValuesList(), insertNonAlignedColumnRecordsReq.getDataTypeList(), insertNonAlignedColumnRecordsReq.getBitmapList(), nonAlignedTimestamps.length),
+                        insertNonAlignedColumnRecordsReq.getBitmapList().stream().map(x -> new Bitmap(nonAlignedTimestamps.length, x.array())).collect(Collectors.toList()),
+                        insertNonAlignedColumnRecordsReq.getDataTypeList(),
+                        insertNonAlignedColumnRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertNonAlignedColumnRecordsPlanResults(insertNonAlignedColumnRecordsPlan);
+                return splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
             case InsertRowRecords:
                 InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
                         insertRowRecordsReq.getPaths(),
                         getLongArrayFromByteArray(insertRowRecordsReq.getTimestamps()),
-                        getRowValuesByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList(), insertRowRecordsReq.getBitmapList()),
-                        insertRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
+                        getAlignedRowValuesByDataType(insertRowRecordsReq.getValuesList(), insertRowRecordsReq.getDataTypeList()),
                         insertRowRecordsReq.getDataTypeList(),
                         insertRowRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
+            case InsertNonAlignedRowRecords:
+                InsertNonAlignedRowRecordsReq insertNonAlignedRowRecordsReq = ((InsertNonAlignedRowRecordsContext) requestContext).getReq();
+                InsertNonAlignedRowRecordsPlan insertNonAlignedRowRecordsPlan = new InsertNonAlignedRowRecordsPlan(
+                        insertNonAlignedRowRecordsReq.getPaths(),
+                        getLongArrayFromByteArray(insertNonAlignedRowRecordsReq.getTimestamps()),
+                        getNonAlignedRowValuesByDataType(insertNonAlignedRowRecordsReq.getValuesList(), insertNonAlignedRowRecordsReq.getDataTypeList(), insertNonAlignedRowRecordsReq.getBitmapList()),
+                        insertNonAlignedRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertNonAlignedRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
+                        insertNonAlignedRowRecordsReq.getDataTypeList(),
+                        insertNonAlignedRowRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertNonAlignedRowRecordsPlanResults(insertNonAlignedRowRecordsPlan);
+                return splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -313,6 +344,32 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<InsertColumnRecordsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (values.length == 0) {
+                continue;
+            }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
+                    paths,
+                    timestampsAndIndexes.k,
+                    values,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
+            subPlan.setSync(info.getStorageUnit().isMaster());
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<InsertNonAlignedColumnRecordsPlan> splitInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertNonAlignedColumnRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
             Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
             if (valuesAndBitmaps.k.length == 0) {
                 continue;
@@ -321,7 +378,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
             if (paths.size() == 0) {
                 continue;
             }
-            InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
+            InsertNonAlignedColumnRecordsPlan subPlan = new InsertNonAlignedColumnRecordsPlan(
                     paths,
                     timestampsAndIndexes.k,
                     valuesAndBitmaps.k,
@@ -340,6 +397,32 @@ public class SimplePlanGenerator implements IPlanGenerator {
         List<InsertRowRecordsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
             Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Object[] values = plan.getValuesByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (values.length == 0) {
+                continue;
+            }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            InsertRowRecordsPlan subPlan = new InsertRowRecordsPlan(
+                    paths,
+                    timestampsAndIndexes.k,
+                    values,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
+            subPlan.setSync(info.getStorageUnit().isMaster());
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<InsertNonAlignedRowRecordsPlan> splitInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertNonAlignedRowRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
             Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
             if (valuesAndBitmaps.k.length == 0) {
                 continue;
@@ -348,7 +431,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
             if (paths.size() == 0) {
                 continue;
             }
-            InsertRowRecordsPlan subPlan = new InsertRowRecordsPlan(
+            InsertNonAlignedRowRecordsPlan subPlan = new InsertNonAlignedRowRecordsPlan(
                     paths,
                     timestampsAndIndexes.k,
                     valuesAndBitmaps.k,

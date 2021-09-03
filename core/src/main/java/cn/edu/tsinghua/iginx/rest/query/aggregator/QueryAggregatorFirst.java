@@ -26,7 +26,6 @@ import cn.edu.tsinghua.iginx.rest.RestUtils;
 
 import java.util.List;
 
-//todo
 public class QueryAggregatorFirst extends QueryAggregator {
     public QueryAggregatorFirst() {
         super(QueryAggregatorType.FIRST);

@@ -9,7 +9,7 @@ public class InfluxDBSessionIT extends BaseSessionIT {
     public InfluxDBSessionIT(){
         super();
         this.defaultPort2 = 8087;
-        this.isAbleForDelete = false;
+        this.isAbleToDelete = false;
         this.storageEngineType = StorageEngineType.INFLUXDB;
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("url", "http://localhost:8087/");

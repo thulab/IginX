@@ -32,8 +32,4 @@ public class InsertColumnRecordsContext extends RequestContext {
         super(req.sessionId, ContextType.InsertColumnRecords);
         this.req = req;
     }
-
-    public InsertColumnRecordsReq getReq() {
-        return req;
-    }
 }

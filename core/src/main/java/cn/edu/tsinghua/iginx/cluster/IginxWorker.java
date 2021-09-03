@@ -34,6 +34,8 @@ import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
@@ -55,7 +57,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,11 +129,25 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
+    public Status insertNonAlignedColumnRecords(InsertNonAlignedColumnRecordsReq req) {
+        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
+
+    @Override
     public Status insertRowRecords(InsertRowRecordsReq req) {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
         InsertRowRecordsContext context = new InsertRowRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
+
+    @Override
+    public Status insertNonAlignedRowRecords(InsertNonAlignedRowRecordsReq req) {
+        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
     }

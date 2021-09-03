@@ -33,6 +33,8 @@ import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -158,6 +160,7 @@ class NaivePlanSplitter implements IPlanSplitter {
         return resultList;
     }
 
+    @Override
     public List<SplitInfo> getSplitDeleteColumnsPlanResults(DeleteColumnsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
@@ -174,6 +177,8 @@ class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
+
+    @Override
     public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
@@ -199,6 +204,11 @@ class NaivePlanSplitter implements IPlanSplitter {
             }
         }
         return infoList;
+    }
+
+    @Override
+    public List<SplitInfo> getSplitInsertNonAlignedColumnRecordsPlanResults(InsertNonAlignedColumnRecordsPlan plan) {
+        return getSplitInsertColumnRecordsPlanResults(plan);
     }
 
     @Override
@@ -228,6 +238,11 @@ class NaivePlanSplitter implements IPlanSplitter {
     }
 
     @Override
+    public List<SplitInfo> getSplitInsertNonAlignedRowRecordsPlanResults(InsertNonAlignedRowRecordsPlan plan) {
+        return getSplitInsertRowRecordsPlanResults(plan);
+    }
+
+    @Override
     public List<SplitInfo> getSplitDeleteDataInColumnsPlanResults(DeleteDataInColumnsPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();
@@ -244,6 +259,7 @@ class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
+    @Override
     public List<SplitInfo> getSplitQueryDataPlanResults(QueryDataPlan plan) {
         updatePrefix(plan);
         List<SplitInfo> infoList = new ArrayList<>();

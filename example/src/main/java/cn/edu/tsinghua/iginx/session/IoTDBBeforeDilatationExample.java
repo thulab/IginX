@@ -57,7 +57,6 @@ public class IoTDBBeforeDilatationExample {
     }
 
     private static void insertRecords() throws SessionException, ExecutionException, InterruptedException {
-
         List<DataType> dataTypeList = new ArrayList<>();
         for (int i = 0; i < paths.size(); i++) {
             dataTypeList.add(DataType.LONG);
@@ -76,12 +75,11 @@ public class IoTDBBeforeDilatationExample {
                 }
                 valuesList[k] = values;
             }
-            session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+            session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
             Thread.sleep(1);
             if ((insertTimes - i + 1) % 100 == 0) {
                 logger.info("insert progress: " + (insertTimes - i + 1) + "/" + insertTimes + ".");
             }
         }
     }
-
 }

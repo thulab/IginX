@@ -19,10 +19,7 @@
 package cn.edu.tsinghua.iginx.combine;
 
 import cn.edu.tsinghua.iginx.combine.valuefilter.ValueFilterCombiner;
-import cn.edu.tsinghua.iginx.query.result.AggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;

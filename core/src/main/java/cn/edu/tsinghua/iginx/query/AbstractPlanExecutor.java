@@ -29,6 +29,8 @@ import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -93,9 +95,17 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
                             logger.info("execute async insert column records task");
                             planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
                             break;
+                        case INSERT_NON_ALIGNED_COLUMN_RECORDS:
+                            logger.info("execute async insert non-aligned column records task");
+                            planExecuteResult = syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+                            break;
                         case INSERT_ROW_RECORDS:
                             logger.info("execute async insert row records task");
                             planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
+                            break;
+                        case INSERT_NON_ALIGNED_ROW_RECORDS:
+                            logger.info("execute async insert non-aligned row records task");
+                            planExecuteResult = syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
                             break;
                         case DELETE_COLUMNS:
                             planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
@@ -122,7 +132,9 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     private void initFunctionMap() {
         functionMap.put(IginxPlan.IginxPlanType.INSERT_COLUMN_RECORDS, this::executeInsertColumnRecordsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.INSERT_NON_ALIGNED_COLUMN_RECORDS, this::executeInsertNonAlignedColumnRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.INSERT_ROW_RECORDS, this::executeInsertRowRecordsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.INSERT_NON_ALIGNED_ROW_RECORDS, this::executeInsertNonAlignedRowRecordsPlan);
         functionMap.put(IginxPlan.IginxPlanType.QUERY_DATA, this::executeQueryDataPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_COLUMNS, this::executeDeleteColumnsPlan);
         functionMap.put(IginxPlan.IginxPlanType.DELETE_DATA_IN_COLUMNS, this::executeDeleteDataInColumnsPlan);
@@ -146,9 +158,23 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     }
 
 
+    protected Future<? extends PlanExecuteResult> executeInsertNonAlignedColumnRecordsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan));
+        }
+        return null;
+    }
+
     protected Future<? extends PlanExecuteResult> executeInsertColumnRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan));
+        }
+        return null;
+    }
+
+    protected Future<? extends PlanExecuteResult> executeInsertNonAlignedRowRecordsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan));
         }
         return null;
     }

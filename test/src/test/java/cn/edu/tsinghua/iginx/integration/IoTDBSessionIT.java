@@ -9,7 +9,7 @@ public class IoTDBSessionIT extends BaseSessionIT {
     public IoTDBSessionIT(){
         super();
         this.defaultPort2 = 6668;
-        this.isAbleForDelete = true;
+        this.isAbleToDelete = true;
         this.storageEngineType = StorageEngineType.IOTDB;
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("username", "root");

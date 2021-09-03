@@ -20,7 +20,42 @@ package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.AddUserReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
+import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -297,8 +332,8 @@ public class Session {
         }
     }
 
-    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -363,12 +398,94 @@ public class Session {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertColumnRecordsReq req = new InsertColumnRecordsReq();
+        InsertNonAlignedColumnRecordsReq req = new InsertNonAlignedColumnRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
+
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.insertNonAlignedColumnRecords(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+        if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+            logger.error("Invalid insert request!");
+            return;
+        }
+        if (paths.size() != valuesList.length || paths.size() != dataTypeList.size()) {
+            logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
+            return;
+        }
+        if (attributesList != null && paths.size() != attributesList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+            return;
+        }
+
+        Integer[] index = new Integer[timestamps.length];
+        for (int i = 0; i < timestamps.length; i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+        Arrays.sort(timestamps);
+        for (int i = 0; i < valuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) valuesList[i])[index[j]];
+            }
+            valuesList[i] = values;
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+            sortedDataTypeList.add(dataTypeList.get(index[i]));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
+        List<ByteBuffer> valueBufferList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
+            if (values.length != timestamps.length) {
+                logger.error("The sizes of timestamps and the element of valuesList should be equal.");
+                return;
+            }
+            valueBufferList.add(ByteUtils.getColumnByteBuffer(values, sortedDataTypeList.get(i)));
+        }
+
+        InsertColumnRecordsReq req = new InsertColumnRecordsReq();
+        req.setSessionId(sessionId);
+        req.setPaths(paths);
+        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setValuesList(valueBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setAttributesList(sortedAttributesList);
 
@@ -388,7 +505,7 @@ public class Session {
         }
     }
 
-    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
@@ -460,12 +577,100 @@ public class Session {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
+
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.insertNonAlignedRowRecords(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+        if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+            logger.error("Invalid insert request!");
+            return;
+        }
+        if (paths.size() != dataTypeList.size()) {
+            logger.error("The sizes of paths and dataTypeList should be equal.");
+            return;
+        }
+        if (timestamps.length != valuesList.length) {
+            logger.error("The sizes of timestamps and valuesList should be equal.");
+            return;
+        }
+        if (attributesList != null && paths.size() != attributesList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+            return;
+        }
+
+        Integer[] index = new Integer[timestamps.length];
+        for (int i = 0; i < timestamps.length; i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+        Arrays.sort(timestamps);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
+            }
+            sortedValuesList[i] = values;
+        }
+        for (Integer i : index) {
+            sortedDataTypeList.add(dataTypeList.get(i));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
+        List<ByteBuffer> valueBufferList = new ArrayList<>();
+        for (int i = 0; i < timestamps.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
+            if (values.length != paths.size()) {
+                logger.error("The sizes of paths and the element of valuesList should be equal.");
+                return;
+            }
+            valueBufferList.add(ByteUtils.getRowByteBuffer(values, sortedDataTypeList));
+        }
+
+        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        req.setSessionId(sessionId);
+        req.setPaths(paths);
+        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setValuesList(valueBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setAttributesList(sortedAttributesList);
 
