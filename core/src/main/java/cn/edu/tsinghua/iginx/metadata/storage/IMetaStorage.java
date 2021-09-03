@@ -24,11 +24,13 @@ import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 
 import java.util.List;
 import java.util.Map;
@@ -76,5 +78,15 @@ public interface IMetaStorage {
     void releaseFragment() throws MetaStorageException;
 
     void registerFragmentChangeHook(FragmentChangeHook hook);
+
+    List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException;
+
+    void registerUserChangeHook(UserChangeHook hook);
+
+    void addUser(UserMeta userMeta) throws MetaStorageException;
+
+    void updateUser(UserMeta userMeta) throws MetaStorageException;
+
+    void removeUser(String username) throws MetaStorageException;
 
 }

@@ -21,7 +21,9 @@ package cn.edu.tsinghua.iginx.metadata.storage.zk;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -82,6 +84,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String SCHEMA_MAPPING_PREFIX = "/schema";
 
+    private static final String USER_NODE_PREFIX = "/user";
+
+    private static final String USER_LOCK_NODE = "/lock/user";
+
     private static ZooKeeperMetaStorage INSTANCE = null;
 
     private final CuratorFramework client;
@@ -113,6 +119,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final Lock fragmentMutexLock = new ReentrantLock();
 
     private final InterProcessMutex fragmentMutex;
+
+    private UserChangeHook userChangeHook = null;
+
+    private TreeCache userCache;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -695,5 +705,132 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
         this.fragmentChangeHook = hook;
+    }
+
+    private void registerUserListener() throws Exception {
+        this.userCache = new TreeCache(this.client, USER_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (userChangeHook == null) {
+                return;
+            }
+            UserMeta userMeta;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    if (event.getData().getPath().equals(USER_NODE_PREFIX)) {
+                        return; // 前缀事件，非含数据的节点的变化，不需要处理
+                    }
+                    userMeta = JsonUtils.fromJson(event.getData().getData(), UserMeta.class);
+                    if (userMeta != null) {
+                        userChangeHook.onChange(userMeta.getUsername(), userMeta);
+                    } else {
+                        logger.error("resolve user from zookeeper error");
+                    }
+                    break;
+                case NODE_REMOVED:
+                    String path = event.getData().getPath();
+                    String[] pathParts = path.split("/");
+                    String username = pathParts[pathParts.length - 1];
+                    userChangeHook.onChange(username, null);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.userCache.getListenable().addListener(listener);
+        this.userCache.start();
+    }
+
+    @Override
+    public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, USER_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.client.checkExists().forPath(USER_NODE_PREFIX) == null) { // 节点不存在，说明系统中第一个用户还没有被创建
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
+            }
+            List<UserMeta> users = new ArrayList<>();
+            List<String> usernames = this.client.getChildren().forPath(USER_NODE_PREFIX);
+            for (String username: usernames) {
+                byte[] data = this.client.getData()
+                        .forPath(USER_NODE_PREFIX + "/" + username);
+                UserMeta user = JsonUtils.fromJson(data, UserMeta.class);
+                if (user == null) {
+                    logger.error("resolve data from " + USER_NODE_PREFIX + "/" + username + " error");
+                    continue;
+                }
+                users.add(user);
+            }
+            registerUserListener();
+            return users;
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when load user", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + USER_LOCK_NODE, e);
+            }
+        }
+    }
+
+    @Override
+    public void registerUserChangeHook(UserChangeHook hook) {
+        this.userChangeHook = hook;
+    }
+
+    @Override
+    public void addUser(UserMeta userMeta) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, USER_LOCK_NODE);
+        try {
+            mutex.acquire();
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when add user", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + USER_LOCK_NODE, e);
+            }
+        }
+    }
+
+    @Override
+    public void updateUser(UserMeta userMeta) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, USER_LOCK_NODE);
+        try {
+            mutex.acquire();
+            this.client.setData()
+                    .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when update user", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + USER_LOCK_NODE, e);
+            }
+        }
+    }
+
+    @Override
+    public void removeUser(String username) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, USER_LOCK_NODE);
+        try {
+            mutex.acquire();
+            this.client.delete()
+                    .forPath(USER_NODE_PREFIX + "/" + username);
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when remove user", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + USER_LOCK_NODE, e);
+            }
+        }
     }
 }

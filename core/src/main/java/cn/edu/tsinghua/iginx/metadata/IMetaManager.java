@@ -24,7 +24,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
 import java.util.Map;
@@ -160,5 +162,17 @@ public interface IMetaManager {
      * @return 数据项的值。如果不存在则返回 -1
      */
     int getSchemaMappingItem(String schema, String key);
+
+    boolean addUser(UserMeta user);
+
+    boolean updateUser(String username, String password, Set<AuthType> auths);
+
+    boolean removeUser(String username);
+
+    UserMeta getUser(String username);
+
+    List<UserMeta> getUsers();
+
+    List<UserMeta> getUsers(List<String> username);
 
 }

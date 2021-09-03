@@ -40,6 +40,18 @@ enum SqlType {
     ShowTimeSeries,
 }
 
+enum AuthType {
+    Read,
+    Write,
+    Admin,
+    Cluster
+}
+
+enum UserType {
+    Administrator,
+    OrdinaryUser
+}
+
 struct Status {
     1: required i32 code
     2: optional string message
@@ -201,7 +213,7 @@ struct GetReplicaNumReq {
 
 struct GetReplicaNumResp {
     1: required Status status
-    2: required i32 replicaNum
+    2: optional i32 replicaNum
 }
 
 
@@ -224,6 +236,37 @@ struct ExecuteSqlResp {
     11: optional string parseErrorMsg
     12: optional i32 limit
     13: optional i32 offset
+}
+
+struct UpdateUserReq {
+    1: required i64 sessionId
+    2: required string username
+    3: optional string password
+    4: optional set<AuthType> auths
+}
+
+struct AddUserReq {
+    1: required i64 sessionId
+    2: required string username
+    3: required string password
+    4: required set<AuthType> auths
+}
+
+struct DeleteUserReq {
+    1: required i64 sessionId
+    2: required string username
+}
+
+struct GetUserReq {
+    1: required i64 sessionId
+    2: optional list<string> usernames
+}
+
+struct GetUserResp {
+    1: required Status status
+    2: optional list<string> usernames
+    3: optional list<UserType> userTypes
+    4: optional list<set<AuthType>> auths
 }
 
 service IService {
@@ -257,4 +300,12 @@ service IService {
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 
     ExecuteSqlResp executeSql(1: ExecuteSqlReq req);
+
+    Status updateUser(1: UpdateUserReq req);
+
+    Status addUser(1: AddUserReq req);
+
+    Status deleteUser(1: DeleteUserReq req);
+
+    GetUserResp getUser(1: GetUserReq req);
 }
