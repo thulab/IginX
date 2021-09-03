@@ -407,7 +407,7 @@ public class FileMetaStorage implements IMetaStorage {
             addUser(userMeta);
             users.put(userMeta.getUsername(), userMeta);
         } else {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_META_FILE).toFile())))) {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, USER_META_FILE).toFile())))) {
                 String line;
                 String[] params;
                 while ((line = reader.readLine()) != null) {
