@@ -67,7 +67,54 @@ public class ByteUtils {
         return values;
     }
 
-    public static Object[] getColumnValuesByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, List<ByteBuffer> bitmapList, int timestampsSize) {
+    public static Object[] getAlignedColumnValuesByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, int timestampsSize) {
+        Object[] tempValues = new Object[valuesList.size()];
+        for (int i = 0; i < valuesList.size(); i++) {
+            ByteBuffer buffer = valuesList.get(i);
+            Object[] tempColumnValues = new Object[timestampsSize];
+            switch (dataTypeList.get(i)) {
+                case BOOLEAN:
+                    for (int j = 0; j < timestampsSize; j++) {
+                        tempColumnValues[j] = buffer.get() == 1;
+                    }
+                    break;
+                case INTEGER:
+                    for (int j = 0; j < timestampsSize; j++) {
+                        tempColumnValues[j] = buffer.getInt();
+                    }
+                    break;
+                case LONG:
+                    for (int j = 0; j < timestampsSize; j++) {
+                        tempColumnValues[j] = buffer.getLong();
+                    }
+                    break;
+                case FLOAT:
+                    for (int j = 0; j < timestampsSize; j++) {
+                        tempColumnValues[j] = buffer.getFloat();
+                    }
+                    break;
+                case DOUBLE:
+                    for (int j = 0; j < timestampsSize; j++) {
+                        tempColumnValues[j] = buffer.getDouble();
+                    }
+                    break;
+                case BINARY:
+                    for (int j = 0; j < timestampsSize; j++) {
+                        int length = buffer.getInt();
+                        byte[] bytes = new byte[length];
+                        buffer.get(bytes, 0, length);
+                        tempColumnValues[j] = bytes;
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException(dataTypeList.get(i).toString());
+            }
+            tempValues[i] = tempColumnValues;
+        }
+        return tempValues;
+    }
+
+    public static Object[] getNonAlignedColumnValuesByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, List<ByteBuffer> bitmapList, int timestampsSize) {
         Object[] tempValues = new Object[valuesList.size()];
         for (int i = 0; i < valuesList.size(); i++) {
             Bitmap bitmap = new Bitmap(timestampsSize, bitmapList.get(i).array());
@@ -121,7 +168,43 @@ public class ByteUtils {
         return tempValues;
     }
 
-    public static Object[] getRowValuesByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, List<ByteBuffer> bitmapList) {
+    public static Object[] getAlignedRowValuesByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList) {
+        Object[] tempValues = new Object[valuesList.size()];
+        for (int i = 0; i < valuesList.size(); i++) {
+            Object[] tempRowValues = new Object[dataTypeList.size()];
+            for (int j = 0; j < dataTypeList.size(); j++) {
+                switch (dataTypeList.get(j)) {
+                    case BOOLEAN:
+                        tempRowValues[j] = valuesList.get(i).get() == 1;
+                        break;
+                    case INTEGER:
+                        tempRowValues[j] = valuesList.get(i).getInt();
+                        break;
+                    case LONG:
+                        tempRowValues[j] = valuesList.get(i).getLong();
+                        break;
+                    case FLOAT:
+                        tempRowValues[j] = valuesList.get(i).getFloat();
+                        break;
+                    case DOUBLE:
+                        tempRowValues[j] = valuesList.get(i).getDouble();
+                        break;
+                    case BINARY:
+                        int length = valuesList.get(i).getInt();
+                        byte[] bytes = new byte[length];
+                        valuesList.get(i).get(bytes, 0, length);
+                        tempRowValues[j] = bytes;
+                        break;
+                    default:
+                        throw new UnsupportedOperationException(dataTypeList.get(i).toString());
+                }
+            }
+            tempValues[i] = tempRowValues;
+        }
+        return tempValues;
+    }
+
+    public static Object[] getNonAlignedRowValuesByDataType(List<ByteBuffer> valuesList, List<DataType> dataTypeList, List<ByteBuffer> bitmapList) {
         Object[] tempValues = new Object[valuesList.size()];
         for (int i = 0; i < valuesList.size(); i++) {
             Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapList.get(i).array());

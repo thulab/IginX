@@ -30,6 +30,7 @@ public enum ContextType {
     AggregateQuery,
     DownsampleQuery,
     ValueFilterQuery,
+    LastQuery,
     ShowColumns,
     Unknown;
 

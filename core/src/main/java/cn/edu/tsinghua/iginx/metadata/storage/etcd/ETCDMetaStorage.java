@@ -20,7 +20,9 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -75,6 +77,8 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String FRAGMENT_LOCK = "/lock/fragment/";
 
+    private static final String USER_LOCK = "/lock/user/";
+
     private static final String SCHEMA_MAPPING_PREFIX = "/schema/";
 
     private static final String IGINX_PREFIX = "/iginx/";
@@ -84,6 +88,8 @@ public class ETCDMetaStorage implements IMetaStorage {
     private static final String STORAGE_UNIT_PREFIX = "/storage_unit/";
 
     private static final String FRAGMENT_PREFIX = "/fragment/";
+
+    private static final String USER_PREFIX = "/user/";
 
     private static final long MAX_LOCK_TIME = 30; // 最长锁住 30 秒
 
@@ -124,6 +130,14 @@ public class ETCDMetaStorage implements IMetaStorage {
     private long fragmentLease = -1L;
 
     private final Lock fragmentLeaseLock = new ReentrantLock();
+
+    private Watch.Watcher userWatcher;
+
+    private UserChangeHook userChangeHook = null;
+
+    private long userLease = -1L;
+
+    private final Lock userLeaseLock = new ReentrantLock();
 
     public ETCDMetaStorage() {
         client = Client.builder()
@@ -301,6 +315,44 @@ public class ETCDMetaStorage implements IMetaStorage {
                                     fragmentChangeHook.onChange(isCreate, fragment);
                                     break;
                                 case DELETE:
+                                default:
+                                    logger.error("unexpected watchEvent: " + event.getEventType());
+                                    break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+
+        // 注册 user 的监听
+        this.userWatcher = client.getWatchClient().watch(ByteSequence.from(USER_PREFIX.getBytes()),
+                WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(),
+                new Watch.Listener() {
+                    @Override
+                    public void onNext(WatchResponse watchResponse) {
+                        if (ETCDMetaStorage.this.userChangeHook == null) {
+                            return;
+                        }
+                        for (WatchEvent event: watchResponse.getEvents()) {
+                            UserMeta userMeta;
+                            switch (event.getEventType()) {
+                                case PUT:
+                                    userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
+                                    userChangeHook.onChange(userMeta.getUsername(), userMeta);
+                                    break;
+                                case DELETE:
+                                    userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
+                                    userChangeHook.onChange(userMeta.getUsername(), null);
+                                    break;
                                 default:
                                     logger.error("unexpected watchEvent: " + event.getEventType());
                                     break;
@@ -668,6 +720,105 @@ public class ETCDMetaStorage implements IMetaStorage {
         this.fragmentChangeHook = hook;
     }
 
+    private void lockUser() throws MetaStorageException {
+        try {
+            userLeaseLock.lock();
+            userLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
+            client.getLockClient().lock(ByteSequence.from(USER_LOCK.getBytes()), userLease);
+        } catch (Exception e) {
+            userLeaseLock.unlock();
+            throw new MetaStorageException("acquire user mutex error: ", e);
+        }
+    }
+
+    private void releaseUser() throws MetaStorageException {
+        try {
+            client.getLockClient().unlock(ByteSequence.from(USER_LOCK.getBytes())).get();
+            client.getLeaseClient().revoke(userLease).get();
+            userLease = -1L;
+        } catch (Exception e) {
+            throw new MetaStorageException("release user mutex error: ", e);
+        } finally {
+            userLeaseLock.unlock();
+        }
+    }
+
+    @Override
+    public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
+        try {
+            lockUser();
+            Map<String, UserMeta> users = new HashMap<>();
+            GetResponse response = this.client.getKVClient().get(ByteSequence.from(USER_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).build())
+                    .get();
+            if (response.getCount() != 0L) { // 服务器上已经有了，本地的不作数
+                response.getKvs().forEach(e -> {
+                    UserMeta user = JsonUtils.fromJson(e.getValue().getBytes(), UserMeta.class);
+                    users.put(user.getUsername(), user);
+                });
+            } else {
+                addUser(userMeta);
+                users.put(userMeta.getUsername(), userMeta);
+            }
+            return new ArrayList<>(users.values());
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when load user: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (userLease != -1) {
+                releaseUser();
+            }
+        }
+    }
+
+    @Override
+    public void registerUserChangeHook(UserChangeHook hook) {
+        userChangeHook = hook;
+    }
+
+    @Override
+    public void addUser(UserMeta userMeta) throws MetaStorageException {
+        updateUser(userMeta);
+    }
+
+    @Override
+    public void updateUser(UserMeta userMeta) throws MetaStorageException {
+        try {
+            lockUser();
+            this.client.getKVClient()
+                    .put(ByteSequence.from((USER_PREFIX + userMeta.getUsername()).getBytes()), ByteSequence.from(JsonUtils.toJson(userMeta))).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when add/update user: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (userLease != -1) {
+                releaseUser();
+            }
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(userMeta.getUsername(), userMeta);
+        }
+    }
+
+    @Override
+    public void removeUser(String username) throws MetaStorageException {
+        try {
+            lockUser();
+            this.client.getKVClient()
+                    .delete(ByteSequence.from((USER_PREFIX + username).getBytes())).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when remove user: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (userLease != -1) {
+                releaseUser();
+            }
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(username, null);
+        }
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;
@@ -683,6 +834,9 @@ public class ETCDMetaStorage implements IMetaStorage {
 
         this.fragmentWatcher.close();
         this.fragmentWatcher = null;
+
+        this.userWatcher.close();
+        this.userWatcher = null;
 
         this.client.close();
         this.client = null;

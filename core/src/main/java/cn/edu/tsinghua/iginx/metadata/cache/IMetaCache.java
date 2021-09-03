@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 
 import java.util.List;
 import java.util.Map;
@@ -93,5 +94,13 @@ public interface IMetaCache {
     void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping);
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
+
+    void addOrUpdateUser(UserMeta userMeta);
+
+    void removeUser(String username);
+
+    List<UserMeta> getUser();
+
+    List<UserMeta> getUser(List<String> usernames);
 
 }

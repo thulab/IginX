@@ -16,13 +16,34 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.query.result;
 
-public class UnsupportedDataTypeException extends RuntimeException {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import lombok.Getter;
+import lombok.Setter;
 
-    private static final long serialVersionUID = 5278528888805786089L;
+import java.util.ArrayList;
+import java.util.List;
 
-    public UnsupportedDataTypeException(String dataTypeName) {
-        super("Unsupported DataType: " + dataTypeName);
+@Getter
+@Setter
+public class LastQueryPlanExecuteResult extends SyncPlanExecuteResult {
+
+    private List<String> paths;
+
+    private List<DataType> dataTypes;
+
+    private List<Long> times;
+
+    private List<Object> values;
+
+    public LastQueryPlanExecuteResult(int statusCode, IginxPlan plan) {
+        super(statusCode, plan);
+        this.paths = new ArrayList<>();
+        this.dataTypes = new ArrayList<>();
+        this.times = new ArrayList<>();
+        this.values = new ArrayList<>();
     }
+
 }

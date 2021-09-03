@@ -16,27 +16,40 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.session;
 
-public enum StatusCode {
-    WRONG_PASSWORD(100),
-    INVALID_SESSION(101),
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-    SUCCESS_STATUS(200),
-    PARTIAL_SUCCESS(204),
+public class Point {
 
-    REDIRECT(300),
+    private final String path;
 
-    SESSION_ERROR(400),
-    STATEMENT_EXECUTION_ERROR(401);
+    private final DataType dataType;
 
-    private int statusCode;
+    private final long timestamp;
 
-    StatusCode(int statusCode) {
-        this.statusCode = statusCode;
+    private final Object value;
+
+    public Point(String path, DataType dataType, long timestamp, Object value) {
+        this.path = path;
+        this.dataType = dataType;
+        this.timestamp = timestamp;
+        this.value = value;
     }
 
-    public int getStatusCode() {
-        return statusCode;
+    public String getPath() {
+        return path;
+    }
+
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public Object getValue() {
+        return value;
     }
 }

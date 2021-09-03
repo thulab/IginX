@@ -26,12 +26,13 @@ import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
@@ -40,8 +41,8 @@ import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
@@ -49,6 +50,7 @@ import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
@@ -118,6 +120,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     private static final String FIRST_VALUE = "SELECT FIRST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
     private static final String LAST_VALUE = "SELECT LAST_VALUE(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
+
+    private static final String LAST = "SELECT LAST %s FROM " + PREFIX + "%s WHERE time >= %d";
 
     private static final String AVG = "SELECT COUNT(%s), SUM(%s) FROM " + PREFIX + "%s " + TIME_RANGE_WHERE_CLAUSE;
 
@@ -534,6 +538,52 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
+    public LastQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
+        try {
+            List<String> paths = new ArrayList<>();
+            List<DataType> dataTypeList = new ArrayList<>();
+            List<Long> timestamps = new ArrayList<>();
+            List<Object> values = new ArrayList<>();
+            for (String path : plan.getPaths()) {
+                Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
+                SessionDataSetWrapper dataSet =
+                        sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
+                while (true) {
+                    RowRecord rowRecord = dataSet.next();
+                    if (rowRecord == null || rowRecord.getFields().isEmpty()) {
+                        break;
+                    }
+                    if (rowRecord.getFields().size() != 2) {
+                        break;
+                    }
+                    if (rowRecord.getFields().get(1) != null && !rowRecord.getFields().get(1).getStringValue().equals("null")) {
+                        timestamps.add(rowRecord.getTimestamp());
+                        String columnName = rowRecord.getFields().get(0).getStringValue();
+                        paths.add(columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1));
+                        dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(2)));
+                        if (dataSet.getColumnTypes().get(2) != TSDataType.TEXT) {
+                            values.add(rowRecord.getFields().get(1).getObjectValue(dataSet.getColumnTypes().get(2)));
+                        } else {
+                            values.add(rowRecord.getFields().get(1).getBinaryV().getValues());
+                        }
+                    }
+                }
+                dataSet.close();
+            }
+            LastQueryPlanExecuteResult result = new LastQueryPlanExecuteResult(SUCCESS, plan);
+            result.setPaths(paths);
+            result.setDataTypes(dataTypeList);
+            result.setTimes(timestamps);
+            result.setValues(values);
+            return result;
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+        }
+        return new LastQueryPlanExecuteResult(FAILURE, plan);
+    }
+
+    @Override
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             if (before == null && after != null) {
@@ -690,7 +740,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
@@ -733,7 +783,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             List<String> paths = new ArrayList<>();
@@ -947,7 +997,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstValueQueryPlan(DownsampleFirstValueQueryPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
@@ -964,7 +1014,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastValueQueryPlan(DownsampleLastValueQueryPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {

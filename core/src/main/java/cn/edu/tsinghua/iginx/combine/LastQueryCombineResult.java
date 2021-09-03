@@ -16,21 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.combine;
 
-public class MetaStorageException extends Exception {
 
-    private static final long serialVersionUID = -8128973325398925370L;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
-    public MetaStorageException(String message) {
-        super(message);
+public class LastQueryCombineResult  extends DataCombineResult {
+
+    private final LastQueryResp resp;
+
+    public LastQueryCombineResult(Status status, LastQueryResp resp) {
+        super(status);
+        this.resp = resp;
     }
 
-    public MetaStorageException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public MetaStorageException(Throwable cause) {
-        super(cause);
+    public LastQueryResp getResp() {
+        return resp;
     }
 }

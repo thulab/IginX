@@ -28,9 +28,9 @@ public class RpcUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(RpcUtils.class);
 
-    public static Status WRONG_PASSWORD = new Status(StatusCode.WRONG_PASSWORD.getStatusCode());
+    public static Status WRONG_USERNAME_OR_PASSWORD = new Status(StatusCode.WRONG_USERNAME_OR_PASSWORD.getStatusCode());
 
-    public static Status INVALID_SESSION = new Status(StatusCode.INVALID_SESSION.getStatusCode());
+    public static Status ACCESS_DENY = new Status(StatusCode.ACCESS_DENY.getStatusCode());
 
     public static Status SUCCESS = new Status(StatusCode.SUCCESS_STATUS.getStatusCode());
 

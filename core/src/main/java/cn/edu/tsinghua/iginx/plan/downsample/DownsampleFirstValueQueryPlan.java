@@ -24,15 +24,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
-public class DownsampleFirstQueryPlan extends DownsampleQueryPlan {
+public class DownsampleFirstValueQueryPlan extends DownsampleQueryPlan {
 
-    private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstQueryPlan.class);
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleFirstValueQueryPlan.class);
 
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
+    public DownsampleFirstValueQueryPlan(List<String> paths, long startTime, long endTime, long precision) {
         this(paths, startTime, endTime, precision, null);
     }
 
-    public DownsampleFirstQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
+    public DownsampleFirstValueQueryPlan(List<String> paths, long startTime, long endTime, long precision, StorageUnitMeta storageUnit) {
         super(paths, startTime, endTime, precision, storageUnit);
         this.setIginxPlanType(IginxPlanType.DOWNSAMPLE_FIRST);
     }

@@ -21,13 +21,16 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
@@ -39,6 +42,8 @@ import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -48,6 +53,7 @@ import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -59,6 +65,7 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
+import org.apache.zookeeper.data.Stat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +76,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -845,6 +853,93 @@ public class Session {
         }
 
         return new SessionExecuteSqlResult(resp);
+    }
+
+    public LastQueryDataSet queryLast(List<String> paths, long startTime)
+            throws SessionException, ExecutionException {
+        if (paths.isEmpty()) {
+            logger.error("Invalid query request!");
+            return null;
+        }
+        LastQueryReq req = new LastQueryReq(sessionId, mergeAndSortPaths(paths), startTime);
+
+        LastQueryResp resp;
+
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.lastQuery(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+
+        return new LastQueryDataSet(resp);
+    }
+
+    public void addUser(String username, String password, Set<AuthType> auths) throws SessionException, ExecutionException  {
+        AddUserReq req = new AddUserReq(sessionId, username, password, auths);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.addUser(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void updateUser(String username, String password, Set<AuthType> auths) throws SessionException, ExecutionException {
+        UpdateUserReq req = new UpdateUserReq(sessionId, username);
+        if (password != null) {
+            req.setPassword(password);
+        }
+        if (auths != null) {
+            req.setAuths(auths);
+        }
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.updateUser(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public void deleteUser(String username) throws SessionException, ExecutionException {
+        DeleteUserReq req = new DeleteUserReq(sessionId, username);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.deleteUser(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
     }
 
     // 适用于查询类请求和删除类请求，因为其 paths 可能带有 *

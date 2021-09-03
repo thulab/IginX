@@ -24,9 +24,11 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -62,6 +64,9 @@ public class DefaultMetaCache implements IMetaCache {
     // schemaMapping 的缓存
     private final Map<String, Map<String, Integer>> schemaMappings;
 
+    // user 的缓存
+    private final Map<String, UserMeta> userMetaMap;
+
     public static DefaultMetaCache getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaCache.class) {
@@ -87,6 +92,8 @@ public class DefaultMetaCache implements IMetaCache {
         storageEngineMetaMap = new ConcurrentHashMap<>();
         // schemaMapping 相关
         schemaMappings = new ConcurrentHashMap<>();
+        // user 相关
+        userMetaMap = new ConcurrentHashMap<>();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -402,4 +409,32 @@ public class DefaultMetaCache implements IMetaCache {
         Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
         mapping.put(key, value);
     }
+
+    @Override
+    public void addOrUpdateUser(UserMeta userMeta) {
+        userMetaMap.put(userMeta.getUsername(), userMeta);
+    }
+
+    @Override
+    public void removeUser(String username) {
+        userMetaMap.remove(username);
+    }
+
+    @Override
+    public List<UserMeta> getUser() {
+        return userMetaMap.values().stream().map(UserMeta::copy).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<UserMeta> getUser(List<String> usernames) {
+        List<UserMeta> users = new ArrayList<>();
+        for (String username: usernames) {
+            UserMeta user = userMetaMap.get(username);
+            if (user != null) {
+                users.add(user.copy());
+            }
+        }
+        return users;
+    }
+
 }

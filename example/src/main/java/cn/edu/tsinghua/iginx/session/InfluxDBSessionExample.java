@@ -63,6 +63,8 @@ public class InfluxDBSessionExample {
         valueFilterQuery();
         // 聚合查询
 		aggregateQuery();
+        // Last 查询
+        lastQuery();
         // 降采样聚合查询
 		downsampleQuery();
         // 删除数据
@@ -261,6 +263,9 @@ public class InfluxDBSessionExample {
         long startTime = COLUMN_END_TIMESTAMP - 100L;
         long endTime = NON_ALIGNED_ROW_START_TIMESTAMP + 100L;
 
+        // 聚合查询开始
+        System.out.println("Aggregate Query: ");
+
         // MAX
         SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
         dataSet.print();
@@ -269,12 +274,12 @@ public class InfluxDBSessionExample {
         dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
         dataSet.print();
 
-        // FIRST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+        // FIRST_VALUE
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE);
         dataSet.print();
 
-        // LAST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+        // LAST_VALUE
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST_VALUE);
         dataSet.print();
 
         // COUNT
@@ -288,6 +293,20 @@ public class InfluxDBSessionExample {
         // AVG
         dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
         dataSet.print();
+
+        // 聚合查询结束
+        System.out.println("Aggregate Query Finished.");
+    }
+
+    private static void lastQuery() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+        paths.add(S3);
+        paths.add(S4);
+
+        LastQueryDataSet dataSet = session.queryLast(paths, 0L);
+        dataSet.print();
     }
 
     private static void downsampleQuery() throws SessionException, ExecutionException {
@@ -298,6 +317,7 @@ public class InfluxDBSessionExample {
         long startTime = COLUMN_END_TIMESTAMP - 100L;
         long endTime = NON_ALIGNED_ROW_START_TIMESTAMP + 100L;
 
+        // 降采样查询开始
         System.out.println("Downsample Query: ");
 
         // MAX
@@ -308,12 +328,12 @@ public class InfluxDBSessionExample {
         dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, INTERVAL * 100L);
         dataSet.print();
 
-        // FIRST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, INTERVAL * 100L);
+        // FIRST_VALUE
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, INTERVAL * 100L);
         dataSet.print();
 
-        // LAST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, INTERVAL * 100L);
+        // LAST_VALUE
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, INTERVAL * 100L);
         dataSet.print();
 
         // COUNT

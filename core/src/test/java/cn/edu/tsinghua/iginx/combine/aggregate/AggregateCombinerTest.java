@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteRe
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.junit.After;
 import org.junit.Before;
