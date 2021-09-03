@@ -32,8 +32,4 @@ public class InsertNonAlignedColumnRecordsContext extends RequestContext {
         super(req.sessionId, ContextType.InsertNonAlignedColumnRecords);
         this.req = req;
     }
-
-    public InsertNonAlignedColumnRecordsReq getReq() {
-        return req;
-    }
 }
