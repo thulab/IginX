@@ -18,10 +18,14 @@
  */
 package cn.edu.tsinghua.iginx.query;
 
+import cn.edu.tsinghua.iginx.conf.Constants;
+import cn.edu.tsinghua.iginx.utils.EnvUtils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -37,7 +41,7 @@ public class StorageEngineClassLoader extends ClassLoader {
     private final Map<String, String> nameToJar;
 
     public StorageEngineClassLoader(String path) throws IOException {
-        this.path = path;
+        this.path = Paths.get(EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR), path).toAbsolutePath().toString();
         this.nameToJar = new HashMap<>();
         preloadClassNames();
     }

@@ -45,7 +45,10 @@ fi
 
 CONF="$IGINX_HOME/conf/config.properties"
 
+DRIVER="$IGINX_HOME/driver/"
+
 export CONF=$CONF
+export DRIVER=$DRIVER
 
 exec "$JAVA" -Duser.timezone=GMT+8 -cp "$CLASSPATH" "$MAIN_CLASS" "$@"
 
