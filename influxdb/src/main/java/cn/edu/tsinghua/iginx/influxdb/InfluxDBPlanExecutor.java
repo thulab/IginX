@@ -130,8 +130,8 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     private boolean createConnection(StorageEngineMeta storageEngineMeta) {
-        if (!storageEngineMeta.getDbType().equals("influxdb")) {
-            logger.warn("unexpected database: " + storageEngineMeta.getDbType());
+        if (!storageEngineMeta.getStorageEngine().equals("influxdb")) {
+            logger.warn("unexpected database: " + storageEngineMeta.getStorageEngine());
             return false;
         }
         if (!testConnection(storageEngineMeta)) {

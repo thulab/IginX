@@ -104,11 +104,11 @@ public final class StorageEngineMeta {
         this.extraParams = extraParams;
     }
 
-    public String getDbType() {
+    public String getStorageEngine() {
         return storageEngine;
     }
 
-    public void setDbType(String storageEngine) {
+    public void setStorageEngine(String storageEngine) {
         this.storageEngine = storageEngine;
     }
 

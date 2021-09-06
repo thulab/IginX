@@ -57,6 +57,7 @@ import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     public MixIStorageEnginePlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
         try {
             Map<String, List<StorageEngineMeta>> groupedStorageEngineMetaLists = storageEngineMetaList.stream()
-                    .collect(Collectors.groupingBy(StorageEngineMeta::getDbType));
+                    .collect(Collectors.groupingBy(StorageEngineMeta::getStorageEngine));
             for (String engine: groupedStorageEngineMetaLists.keySet()) {
                 ClassLoader classLoader = new StorageEngineClassLoader(engine);
                 classLoaders.put(engine, classLoader);
@@ -95,7 +96,14 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
         }
     }
 
-    private String getDriverClassName(String storageEngine) {
+    public static boolean testConnection(StorageEngineMeta meta) throws Exception {
+        ClassLoader classLoader = new StorageEngineClassLoader(meta.getStorageEngine());
+        Class<?> planExecutorClass = classLoader.loadClass(getDriverClassName(meta.getStorageEngine()));
+        Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
+        return (boolean) method.invoke(null, meta);
+    }
+
+    private static String getDriverClassName(String storageEngine) {
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String part : parts) {
             String[] kAndV = part.split("=");
@@ -307,8 +315,8 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             if (before == null && after != null) {
-                logger.info("a new storage engine added: " + after.getIp() + ":" + after.getPort() + "-" + after.getDbType());
-                String engine = after.getDbType();
+                logger.info("a new storage engine added: " + after.getIp() + ":" + after.getPort() + "-" + after.getStorageEngine());
+                String engine = after.getStorageEngine();
                 if (storageEngines.containsKey(engine)) { // 已有的引擎新增数据节点
                     hooks.get(engine).onChanged(null, after);
                 } else {
