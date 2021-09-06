@@ -76,7 +76,7 @@ public class StorageEngineClassLoader extends ClassLoader {
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         byte[] result = getClassFromJars(name);
         if (result == null) {
-            throw new ClassNotFoundException();
+            throw new ClassNotFoundException("unable to find class: " + name);
         } else {
             return defineClass(name, result, 0, result.length);
         }
