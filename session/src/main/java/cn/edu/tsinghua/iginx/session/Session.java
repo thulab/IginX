@@ -52,7 +52,6 @@ import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
@@ -258,7 +257,7 @@ public class Session {
         }
     }
 
-    public void addStorageEngine(String ip, int port, StorageEngineType type, Map<String, String> extraParams) throws SessionException, ExecutionException {
+    public void addStorageEngine(String ip, int port, String type, Map<String, String> extraParams) throws SessionException, ExecutionException {
         StorageEngine storageEngine = new StorageEngine(ip, port, type, extraParams);
         addStorageEngines(Collections.singletonList(storageEngine));
     }

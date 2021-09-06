@@ -64,16 +64,6 @@
       <version>2.8.5</version>
     </dependency>
     <dependency>
-      <groupId>org.apache.iotdb</groupId>
-      <artifactId>iotdb-session</artifactId>
-      <version>0.11.4</version>
-    </dependency>
-    <dependency>
-      <groupId>com.influxdb</groupId>
-      <artifactId>influxdb-client-java</artifactId>
-      <version>2.0.0</version>
-    </dependency>
-    <dependency>
       <groupId>javax.ws.rs</groupId>
       <artifactId>javax.ws.rs-api</artifactId>
       <version>2.1</version>
@@ -174,16 +164,6 @@
               <targetPath>/ROOT/lib</targetPath>
               <directory>${project.build.directory}</directory>
               <include>${project.build.finalName}.jar</include>
-            </resource>
-            <resource>
-              <targetPath>/ROOT/lib</targetPath>
-              <directory>${project.parent.basedir}/influxdb/target</directory>
-              <include>*.jar</include>
-            </resource>
-            <resource>
-              <targetPath>/ROOT/lib</targetPath>
-              <directory>${project.parent.basedir}/iotdb/target</directory>
-              <include>*.jar</include>
             </resource>
           </resources>
         </configuration>

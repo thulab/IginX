@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.iotdb;
 
-import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
@@ -175,7 +174,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     private boolean createSessionPool(StorageEngineMeta storageEngineMeta) {
-        if (storageEngineMeta.getDbType() != StorageEngine.IoTDB) {
+        if (!storageEngineMeta.getDbType().equals("iotdb")) {
             logger.warn("unexpected database: " + storageEngineMeta.getDbType());
             return false;
         }

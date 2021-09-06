@@ -42,7 +42,6 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -138,7 +137,7 @@ public class RestSession {
         return false;
     }
 
-    public void addStorageEngine(String ip, int port, StorageEngineType type, Map<String, String> extraParams) throws ExecutionException {
+    public void addStorageEngine(String ip, int port, String type, Map<String, String> extraParams) throws ExecutionException {
         StorageEngine storageEngine = new StorageEngine(ip, port, type, extraParams);
         AddStorageEnginesReq req = new AddStorageEnginesReq(sessionId, Collections.singletonList(storageEngine));
 

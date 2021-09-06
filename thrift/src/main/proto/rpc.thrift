@@ -9,11 +9,6 @@ enum DataType {
     BINARY,
 }
 
-enum StorageEngineType {
-    IOTDB,
-    INFLUXDB,
-}
-
 enum AggregateType {
     MAX,
     MIN,
@@ -150,7 +145,7 @@ struct AddStorageEnginesReq {
 struct StorageEngine {
     1: required string ip
     2: required i32 port
-    3: required StorageEngineType type
+    3: required string type
     4: required map<string, string> extraParams
 }
 
