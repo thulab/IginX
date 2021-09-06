@@ -185,7 +185,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
-        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
