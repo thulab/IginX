@@ -556,7 +556,7 @@ public class DefaultMetaManager implements IMetaManager {
             String[] storageEngineParts = storageEngineStrings[i].split("#");
             String ip = storageEngineParts[0];
             int port = Integer.parseInt(storageEngineParts[1]);
-            String storageEngine =storageEngineParts[2];
+            String storageEngine = storageEngineParts[2];
             Map<String, String> extraParams = new HashMap<>();
             String[] KAndV;
             for (int j = 3; j < storageEngineParts.length; j++) {

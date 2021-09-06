@@ -68,8 +68,6 @@ public class StorageEngineClassLoader extends ClassLoader {
         }
     }
 
-
-
     @Override
     protected Class<?> findClass(String name) throws ClassNotFoundException {
         byte[] result = getClassFromJars(name);
