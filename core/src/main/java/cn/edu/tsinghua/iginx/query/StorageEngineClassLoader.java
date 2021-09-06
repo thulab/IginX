@@ -41,7 +41,7 @@ public class StorageEngineClassLoader extends ClassLoader {
     private final Map<String, String> nameToJar;
 
     public StorageEngineClassLoader(String path) throws IOException {
-        this.path = Paths.get(EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR), path).toAbsolutePath().toString();
+        this.path = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR) + path;
         this.nameToJar = new HashMap<>();
         preloadClassNames();
     }

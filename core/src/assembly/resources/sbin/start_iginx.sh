@@ -44,7 +44,6 @@ else
 fi
 
 CONF="$IGINX_HOME/conf/config.properties"
-
 DRIVER="$IGINX_HOME/driver/"
 
 export CONF=$CONF
