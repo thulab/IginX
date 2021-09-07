@@ -130,6 +130,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status insertNonAlignedColumnRecords(InsertNonAlignedColumnRecordsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
@@ -147,6 +150,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status insertNonAlignedRowRecords(InsertNonAlignedRowRecordsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
