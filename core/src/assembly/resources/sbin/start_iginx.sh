@@ -32,6 +32,10 @@ for f in ${IGINX_HOME}/lib/*.jar; do
   CLASSPATH=${CLASSPATH}":"$f
 done
 
+for f in ${IGINX_HOME}/driver/*/*jar; do
+  CLASSPATH=${CLASSPATH}":"$f
+done
+
 if [ -n "$JAVA_HOME" ]; then
     for java in "$JAVA_HOME"/bin/amd64/java "$JAVA_HOME"/bin/java; do
         if [ -x "$java" ]; then
