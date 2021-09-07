@@ -41,14 +41,14 @@
         </fileSet>
         <fileSet>
             <directory>../iotdb/target</directory>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>driver/iotdb/</outputDirectory>
             <includes>
                 <include>*.jar</include>
             </includes>
         </fileSet>
         <fileSet>
             <directory>../influxdb/target</directory>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>driver/influxdb/</outputDirectory>
             <includes>
                 <include>*.jar</include>
             </includes>

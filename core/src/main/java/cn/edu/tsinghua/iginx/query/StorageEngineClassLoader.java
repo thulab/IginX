@@ -94,7 +94,7 @@ public class StorageEngineClassLoader extends ClassLoader {
                 JarEntry entry = entries.nextElement();
                 String entryName = entry.getName();
                 if (entryName.endsWith(".class")) {
-                    String entryClass = name.replace(".class", "").replaceAll("/", ".");
+                    String entryClass = entryName.replace(".class", "").replaceAll("/", ".");
                     if (entryClass.equals(name)) {
                         InputStream input = jar.getInputStream(entry);
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
