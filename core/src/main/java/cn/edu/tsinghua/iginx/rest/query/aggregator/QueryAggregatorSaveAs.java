@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
+import java.util.LinkedList
 import java.util.List;
 
 public class QueryAggregatorSaveAs extends QueryAggregator {
@@ -35,7 +36,7 @@ public class QueryAggregatorSaveAs extends QueryAggregator {
     @Override
     public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {
         DataPointsParser parser = new DataPointsParser();
-        List<Metric> metrics = new ArrayList<>();
+        List<Metric> metrics = new LinkedList<>();
         Metric ins = new Metric();
         String name = paths.get(0).split("\\.")[paths.get(0).split("\\.").length - 1];
         ins.setName(getMetric_name());
