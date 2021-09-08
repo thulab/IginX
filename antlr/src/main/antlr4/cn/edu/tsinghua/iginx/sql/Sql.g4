@@ -26,7 +26,6 @@ expression
 
 functionName
     : ID
-    | FIRST
     | LAST
     | FIRST_VALUE
     | LAST_VALUE
@@ -169,8 +168,6 @@ nodeName
     | COUNT
     | LAST
     | CLEAR
-    | FIRST
-    | LAST
     | MIN
     | MAX
     | AVG
@@ -324,20 +321,16 @@ NULL
     : N U L L
     ;
 
-FIRST
-    : F I R S T
-    ;
-
 LAST
     : L A S T
     ;
 
 FIRST_VALUE
-    : FIRST UNDERLINE VALUE
+    : F I R S T '_' V A L U E
     ;
 
 LAST_VALUE
-    : LAST UNDERLINE VALUE
+    : L A S T '_' V A L U E
     ;
 
 MIN

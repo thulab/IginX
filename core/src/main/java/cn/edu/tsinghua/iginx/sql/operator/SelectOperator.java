@@ -23,7 +23,7 @@ public class SelectOperator extends Operator {
     private boolean hasGroupBy;
     private boolean ascending;
 
-    private List<Pair<FuncType, String>> selectedFuncsAndPaths;
+    private List<Pair<String, String>> selectedFuncsAndPaths;
     private Set<FuncType> funcTypeSet;
     private String fromPath;
     private String orderByPath;
@@ -82,19 +82,19 @@ public class SelectOperator extends Operator {
 
     public List<String> getSelectedPaths() {
         List<String> paths = new ArrayList<>();
-        for (Pair<FuncType, String> kv : selectedFuncsAndPaths) {
+        for (Pair<String, String> kv : selectedFuncsAndPaths) {
             paths.add(kv.v);
         }
         return paths;
     }
 
-    public List<Pair<FuncType, String>> getSelectedFuncsAndPaths() {
+    public List<Pair<String, String>> getSelectedFuncsAndPaths() {
         return selectedFuncsAndPaths;
     }
 
-    public void setSelectedFuncsAndPaths(FuncType type, String path) {
-        this.selectedFuncsAndPaths.add(new Pair<>(type, fromPath + SQLConstant.DOT + path));
-        this.funcTypeSet.add(type);
+    public void setSelectedFuncsAndPaths(String func, String path) {
+        this.selectedFuncsAndPaths.add(new Pair<>(func, fromPath + SQLConstant.DOT + path));
+        this.funcTypeSet.add(str2FuncType(func));
     }
 
     public Set<FuncType> getFuncTypeSet() {
@@ -230,6 +230,8 @@ public class SelectOperator extends Operator {
                 return FuncType.Count;
             case "sum":
                 return FuncType.Sum;
+            case "":
+                return null;
             default:
                 return FuncType.Udf;
         }
@@ -302,14 +304,12 @@ public class SelectOperator extends Operator {
     }
 
     private ExecuteSqlResp aggregateQuery(long sessionId) {
-        FuncType funcType = selectedFuncsAndPaths.get(0).k;
+        String funcName = selectedFuncsAndPaths.get(0).k;
+        FuncType funcType = str2FuncType(funcName);
         AggregateType aggregateType = funcType2AggregateType(funcType);
 
-        if (aggregateType == null) {
-            throw new SQLParserException("Not support UDF function in aggregate query for now.");
-        }
-        if (aggregateType.equals(AggregateType.FIRST)) {
-            throw new SQLParserException("Not support First function in aggregate query for now.");
+        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST)) {
+            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
         }
         if (aggregateType.equals(AggregateType.LAST)) {
             return lastAggregateQuery(sessionId);
@@ -360,15 +360,12 @@ public class SelectOperator extends Operator {
     }
 
     private ExecuteSqlResp downSampleQuery(long sessionId) {
-        FuncType funcType = selectedFuncsAndPaths.get(0).k;
+        String funcName = selectedFuncsAndPaths.get(0).k;
+        FuncType funcType = str2FuncType(funcName);
         AggregateType aggregateType = funcType2AggregateType(funcType);
 
-        if (aggregateType == null) {
-            throw new SQLParserException("Not support UDF function in downSample query for now.");
-        }
-
-        if (aggregateType.equals(AggregateType.FIRST) || aggregateType.equals(AggregateType.LAST)) {
-            throw new SQLParserException("Not support FIRST & LAST function in downSample query for now.");
+        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST) || aggregateType.equals(AggregateType.LAST)) {
+            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
         }
 
         Core core = Core.getInstance();

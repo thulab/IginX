@@ -130,9 +130,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
 
         for (ExpressionContext expr : expressions) {
             if (expr.functionName() != null && hasFunc) {
-                selectOp.setSelectedFuncsAndPaths(SelectOperator.str2FuncType(expr.functionName().getText()), expr.path().getText());
+                selectOp.setSelectedFuncsAndPaths(expr.functionName().getText(), expr.path().getText());
             } else if (expr.functionName() == null && !hasFunc) {
-                selectOp.setSelectedFuncsAndPaths(null, expr.path().getText());
+                selectOp.setSelectedFuncsAndPaths("", expr.path().getText());
             } else {
                 throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
             }
