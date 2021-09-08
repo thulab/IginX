@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.rest.query;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class Query {
@@ -26,7 +27,7 @@ public class Query {
     private Long endAbsolute;
     private Long cacheTime;
     private String timeZone;
-    private List<QueryMetric> queryMetrics = new ArrayList<>();
+    private List<QueryMetric> queryMetrics = new LinkedList<>();
 
     public List<QueryMetric> getQueryMetrics() {
         return queryMetrics;
