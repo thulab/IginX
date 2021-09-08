@@ -13,7 +13,7 @@ import java.util.*;
 public class IginXPreparedStatement extends IginXStatement implements PreparedStatement {
 
     private String sql;
-    private final Map<Integer, String> params = new LinkedHashMap<>();
+    private final Map<Integer, String> params = new HashMap<>();
 
     public IginXPreparedStatement(IginXConnection connection, Session session, String sql) {
         super(connection, session);
