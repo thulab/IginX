@@ -76,13 +76,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
                 selectOp.setHasValueFilter(true);
             }
         }
-        // parse group by precision
-        if (ctx.groupByTimeClause() != null) {
-            String duration = ctx.groupByTimeClause().getChild(2).getText();
-            long precision = TimeUtils.convertDurationStrToLong(0, duration);
-            selectOp.setPrecision(precision);
-            selectOp.setHasGroupBy(true);
-        }
         // parse special clause
         if (ctx.specialClause() != null) {
             parseSpecialClause(ctx.specialClause(), selectOp);
@@ -146,8 +139,17 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         }
     }
 
-    // like standard SQL, limit N, M means limit M offset N
+
     private void parseSpecialClause(SpecialClauseContext ctx, SelectOperator selectOp) {
+        // parse group by precision
+        if (ctx.groupByTimeClause() != null) {
+            String duration = ctx.groupByTimeClause().DURATION().getText();
+            long precision = TimeUtils.convertDurationStrToLong(0, duration);
+            selectOp.setPrecision(precision);
+            selectOp.setHasGroupBy(true);
+        }
+        // parse limit & offset
+        // like standard SQL, limit N, M means limit M offset N
         if (ctx.limitClause() != null) {
             if (ctx.limitClause().INT().size() == 1) {
                 int limit = Integer.parseInt(ctx.limitClause().INT(0).getText());
@@ -163,6 +165,21 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
                 selectOp.setLimit(limit);
             } else {
                 throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
+            }
+        }
+        // parse order by
+        if (ctx.orderByClause() != null) {
+            if (selectOp.isHasFunc()) {
+                throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
+            }
+            if (ctx.orderByClause().path() != null) {
+                String suffixPath = ctx.orderByClause().path().getText();
+                selectOp.setOrderByPath(selectOp.getFromPath() + SQLConstant.DOT + suffixPath);
+            } else {
+                selectOp.setOrderByPath(SQLConstant.TIME);
+            }
+            if (ctx.orderByClause().DESC() != null) {
+                selectOp.setAscending(false);
             }
         }
     }

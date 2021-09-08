@@ -22,6 +22,8 @@ enum AggregateType {
     AVG,
     FIRST_VALUE,
     LAST_VALUE,
+    FIRST,
+    LAST
 }
 
 enum SqlType {
@@ -254,6 +256,8 @@ struct ExecuteSqlResp {
     11: optional string parseErrorMsg
     12: optional i32 limit
     13: optional i32 offset
+    14: optional string orderByPath
+    15: optional bool ascending
 }
 
 struct UpdateUserReq {

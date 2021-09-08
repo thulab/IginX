@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.sql;
 
+import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.operator.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
@@ -11,8 +12,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ParseTest {
 
@@ -54,8 +54,8 @@ public class ParseTest {
 
         Object[] s1Values = {new Integer(10), new Integer(11)};
         Object[] s2Values = {new Float(1.1), new Float(1.2)};
-        assertEquals(s1Values, (Object[])op.getValues()[0]);
-        assertEquals(s2Values, (Object[])op.getValues()[1]);
+        assertEquals(s1Values, (Object[]) op.getValues()[0]);
+        assertEquals(s2Values, (Object[]) op.getValues()[1]);
     }
 
     @Test
@@ -84,6 +84,42 @@ public class ParseTest {
         assertEquals(1670833104000l, op.getEndTime());
 
         assertEquals(1000l, op.getPrecision());
+    }
+
+    @Test
+    public void testParseSpecialClause() {
+        String limit = "SELECT a FROM test LIMIT 2, 5;";
+        SelectOperator op = (SelectOperator) buildOperator(limit);
+        assertEquals(5, op.getLimit());
+        assertEquals(2, op.getOffset());
+
+        String orderBy = "SELECT a FROM test ORDER BY timestamp";
+        op = (SelectOperator) buildOperator(orderBy);
+        assertEquals(SQLConstant.TIME, op.getOrderByPath());
+        assertTrue(op.isAscending());
+
+        String orderByAndLimit = "SELECT a FROM test ORDER BY a DESC LIMIT 10 OFFSET 5;";
+        op = (SelectOperator) buildOperator(orderByAndLimit);
+        assertEquals("test.a", op.getOrderByPath());
+        assertFalse(op.isAscending());
+        assertEquals(5, op.getOffset());
+        assertEquals(10, op.getLimit());
+
+        String groupBy = "SELECT max(a) FROM test GROUP BY 5ms";
+        op = (SelectOperator) buildOperator(groupBy);
+        assertEquals(5L, op.getPrecision());
+
+        String groupByAndLimit = "SELECT max(a) FROM test GROUP BY 10ms LIMIT 5 OFFSET 2;";
+        op = (SelectOperator) buildOperator(groupByAndLimit);
+        assertEquals(10L, op.getPrecision());
+        assertEquals(2, op.getOffset());
+        assertEquals(5, op.getLimit());
+    }
+
+    @Test(expected = SQLParserException.class)
+    public void testAggregateAndOrderBy() {
+        String aggregateAndOrderBy = "SELECT max(a) FROM test ORDER BY a DESC;";
+        SelectOperator op = (SelectOperator) buildOperator(aggregateAndOrderBy);
     }
 
     @Test
