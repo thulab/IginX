@@ -16,6 +16,7 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -41,7 +42,7 @@ public class SelectOperator extends Operator {
     public SelectOperator() {
         this.operatorType = OperatorType.SELECT;
         this.queryType = QueryType.Unknown;
-        selectedFuncsAndPaths = new ArrayList<>();
+        selectedFuncsAndPaths = new LinkedList<>();
         funcTypeSet = new HashSet<>();
         fromPath = "";
         startTime = Long.MIN_VALUE;
