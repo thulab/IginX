@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.query.expression;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Deque;
 import java.util.List;
 import java.util.Map;
@@ -28,7 +29,7 @@ public class BooleanExpression {
     private String boolExpression;
     private List<Element> postfixExpression;
     private TreeNode root;
-    private List<String> timeseries = new ArrayList<>();
+    private List<String> timeseries = new LinkedList<>();
 
     public BooleanExpression(String str) {
         boolExpression = str;
