@@ -25,7 +25,7 @@ import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
-import java.util.LinkedList
+import java.util.LinkedList;
 import java.util.List;
 
 public class QueryAggregatorSaveAs extends QueryAggregator {
