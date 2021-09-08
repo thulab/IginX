@@ -62,7 +62,7 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -178,7 +178,7 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         List<StorageEngine> storageEngines = req.getStorageEngines();
-        List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
+        List<StorageEngineMeta> storageEngineMetas = new LinkedList<>();
 
         Map<cn.edu.tsinghua.iginx.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
         String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
@@ -219,7 +219,7 @@ public class IginxWorker implements IService.Iface {
         Status status = RpcUtils.SUCCESS;
         // 检测是否与已有的存储单元冲突
         List<StorageEngineMeta> currentStorageEngines = metaManager.getStorageEngineList();
-        List<StorageEngineMeta> duplicatedStorageEngine = new ArrayList<>();
+        List<StorageEngineMeta> duplicatedStorageEngine = new LinkedList<>();
         for (StorageEngineMeta storageEngine: storageEngineMetas) {
             for (StorageEngineMeta currentStorageEngine: currentStorageEngines) {
                 if (currentStorageEngine.getIp().equals(storageEngine.getIp()) && currentStorageEngine.getPort() == storageEngine.getPort()) {
@@ -238,7 +238,7 @@ public class IginxWorker implements IService.Iface {
             status.setMessage("unexpected repeated add");
         }
         if (!storageEngineMetas.isEmpty()) {
-            storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
+            storageEngineMetas.getLast().setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;
