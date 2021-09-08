@@ -262,7 +262,7 @@ public class QueryResult {
     private Map<String, List<String>> getTagsFromPaths(String name, List<String> paths) throws Exception {
         List<Map<String, Integer>> dup = new ArrayList<>();
         Map<String, List<String>> ret = new TreeMap<>();
-        Map<Integer, String> pos2path = new TreeMap<>();
+        Map<Integer, String> pos2path = new HashMap<>();
         Map<String, Integer> metricschema = metaManager.getSchemaMapping(name);
         if (metricschema == null) {
             throw new Exception("No metadata found");
