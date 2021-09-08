@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.rest.query;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -29,7 +30,7 @@ public class QueryMetric {
     private String name;
     private Long limit;
     private Map<String, List<String>> tags = new TreeMap();
-    private List<QueryAggregator> aggregators = new ArrayList<>();
+    private List<QueryAggregator> aggregators = new LinkedList<>();
     private Boolean annotation = false;
     private AnnotationLimit annotationLimit;
 
