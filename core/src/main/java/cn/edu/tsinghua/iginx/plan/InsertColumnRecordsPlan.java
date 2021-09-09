@@ -21,11 +21,13 @@ package cn.edu.tsinghua.iginx.plan;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import lombok.ToString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -36,20 +38,20 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
 
     private static final Logger logger = LoggerFactory.getLogger(InsertColumnRecordsPlan.class);
 
-    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(paths, timestamps, valuesList, dataTypeList, attributesList, storageUnit);
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
         this.setIginxPlanType(INSERT_COLUMN_RECORDS);
     }
 
-    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) {
-        this(paths, timestamps, valuesList, dataTypeList, attributesList, null);
+        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, null);
     }
 
-    public Object[] getValuesByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
+    public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertColumnRecordsPlan.");
+            logger.error("There are no values in the InsertNonAlignedColumnRecordsPlan.");
             return null;
         }
         int startIndex;
@@ -70,7 +72,7 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
         } else {
             endIndex = -1;
             for (int i = getPathsNum() - 1; i >= 0; i--) {
-                if (getPath(i).compareTo(interval.getEndTimeSeries()) <= 0) {
+                if (getPath(i).compareTo(interval.getEndTimeSeries()) < 0) {
                     endIndex = i;
                     break;
                 }
@@ -78,13 +80,27 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
         }
 
         Object[] tempValues = new Object[endIndex - startIndex + 1];
+        List<Bitmap> tempBitmaps = new ArrayList<>();
         for (int i = startIndex; i <= endIndex; i++) {
-            Object[] tempColumnValues = new Object[rowIndexes.v - rowIndexes.k + 1];
-            for (int j = rowIndexes.k; j <= rowIndexes.v; j++) {
-                tempColumnValues[j - rowIndexes.k] = getValues(i)[j];
+            Bitmap tempBitmap = new Bitmap(rowIndexes.v - rowIndexes.k + 1);
+            List<Integer> indexes = new ArrayList<>();
+            int k = 0;
+            for (int j = 0; j < getTimestamps().length; j++) {
+                if (getBitmap(i).get(j)) {
+                    if (j >= rowIndexes.k && j <= rowIndexes.v) {
+                        indexes.add(k);
+                        tempBitmap.mark(j - rowIndexes.k);
+                    }
+                    k++;
+                }
+            }
+            Object[] tempColumnValues = new Object[indexes.size()];
+            for (int j = 0; j < indexes.size(); j++) {
+                tempColumnValues[j] = getValues(i)[indexes.get(j)];
             }
             tempValues[i - startIndex] = tempColumnValues;
+            tempBitmaps.add(tempBitmap);
         }
-        return tempValues;
+        return new Pair<>(tempValues, tempBitmaps);
     }
 }

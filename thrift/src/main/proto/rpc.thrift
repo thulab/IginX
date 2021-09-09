@@ -79,8 +79,9 @@ struct InsertColumnRecordsReq {
     2: required list<string> paths
     3: required binary timestamps
     4: required list<binary> valuesList
-    5: required list<DataType> dataTypeList
-    6: optional list<map<string, string>> attributesList
+    5: required list<binary> bitmapList
+    6: required list<DataType> dataTypeList
+    7: optional list<map<string, string>> attributesList
 }
 
 struct InsertNonAlignedColumnRecordsReq {
@@ -98,8 +99,9 @@ struct InsertRowRecordsReq {
     2: required list<string> paths
     3: required binary timestamps
     4: required list<binary> valuesList
-    5: required list<DataType> dataTypeList
-    6: optional list<map<string, string>> attributesList
+    5: required list<binary> bitmapList
+    6: required list<DataType> dataTypeList
+    7: optional list<map<string, string>> attributesList
 }
 
 struct InsertNonAlignedRowRecordsReq {

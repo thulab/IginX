@@ -193,6 +193,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+        // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
@@ -218,6 +219,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         }
 
         int cnt = 0;
+        int[] indexes = new int[plan.getPathsNum()];
         do {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
 
@@ -226,15 +228,18 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 String deviceId = entry.getKey();
                 Tablet tablet = tablets.get(deviceId);
                 for (int i = cnt; i < cnt + size; i++) {
-                    int row = tablet.rowSize++;
-                    tablet.addTimestamp(row, plan.getTimestamp(i));
-                    for (Integer index : entry.getValue()) {
-                        String path = plan.getPath(index);
-                        String measurement = path.substring(path.lastIndexOf('.') + 1);
-                        if (plan.getDataType(index) == BINARY) {
-                            tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(index)[i]));
-                        } else {
-                            tablet.addValue(measurement, row, plan.getValues(index)[i]);
+                    if (plan.getBitmap(entry.getValue().get(0)).get(i)) {
+                        int row = tablet.rowSize++;
+                        tablet.addTimestamp(row, plan.getTimestamp(i));
+                        for (Integer j : entry.getValue()) {
+                            String path = plan.getPath(j);
+                            String measurement = path.substring(path.lastIndexOf('.') + 1);
+                            if (plan.getDataType(j) == BINARY) {
+                                tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(j)[indexes[j]]));
+                            } else {
+                                tablet.addValue(measurement, row, plan.getValues(j)[indexes[j]]);
+                            }
+                            indexes[j]++;
                         }
                     }
                 }
@@ -327,6 +332,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
@@ -354,22 +360,30 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         int cnt = 0;
         do {
             int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+            // 对于每个时间戳，需要记录每个 deviceId 对应的 tablet 的 row 的变化
+            Map<String, Integer> deviceIdToRow = new HashMap<>();
 
             // 插入 timestamps 和 values
-            for (Map.Entry<String, List<Integer>> entry : deviceIdToPathIndexes.entrySet()) {
-                String deviceId = entry.getKey();
-                Tablet tablet = tablets.get(deviceId);
-                for (int i = cnt; i < cnt + size; i++) {
-                    int row = tablet.rowSize++;
-                    tablet.addTimestamp(row, plan.getTimestamp(i));
-                    for (Integer index : entry.getValue()) {
-                        String path = plan.getPath(index);
+            for (int i = cnt; i < cnt + size; i++) {
+                int index = 0;
+                deviceIdToRow.clear();
+                for (int j = 0; j < plan.getPathsNum(); j++) {
+                    if (plan.getBitmap(i).get(j)) {
+                        String path = plan.getPath(j);
+                        String deviceId = PREFIX + plan.getStorageUnit().getId() + "." + path.substring(0, path.lastIndexOf('.'));
                         String measurement = path.substring(path.lastIndexOf('.') + 1);
-                        if (plan.getDataType(index) == BINARY) {
-                            tablet.addValue(measurement, row, new Binary((byte[]) plan.getValues(i)[index]));
-                        } else {
-                            tablet.addValue(measurement, row, plan.getValues(i)[index]);
+                        Tablet tablet = tablets.get(deviceId);
+                        if (!deviceIdToRow.containsKey(deviceId)) {
+                            int row = tablet.rowSize++;
+                            tablet.addTimestamp(row, plan.getTimestamp(i));
+                            deviceIdToRow.put(deviceId, row);
                         }
+                        if (plan.getDataType(j) == BINARY) {
+                            tablet.addValue(measurement, deviceIdToRow.get(deviceId), new Binary((byte[]) plan.getValues(i)[index]));
+                        } else {
+                            tablet.addValue(measurement, deviceIdToRow.get(deviceId), plan.getValues(i)[index]);
+                        }
+                        index++;
                     }
                 }
             }

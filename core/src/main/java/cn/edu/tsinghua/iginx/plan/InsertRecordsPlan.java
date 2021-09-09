@@ -45,16 +45,19 @@ public abstract class InsertRecordsPlan extends DataPlan {
 
     private Object[] valuesList;
 
+    private List<Bitmap> bitmapList;
+
     private List<DataType> dataTypeList;
 
     private List<Map<String, String>> attributesList;
 
-    protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList,
+    protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
         super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageUnit);
         this.setIginxPlanType(INSERT_RECORDS);
         this.timestamps = timestamps;
         this.valuesList = valuesList;
+        this.bitmapList = bitmapList;
         this.dataTypeList = dataTypeList;
         this.attributesList = attributesList;
     }
@@ -103,6 +106,18 @@ public abstract class InsertRecordsPlan extends DataPlan {
             return null;
         }
         return (Object[]) valuesList[index];
+    }
+
+    public Bitmap getBitmap(int index) {
+        if (bitmapList == null || bitmapList.isEmpty()) {
+            logger.error("There are no bitmaps in the InsertRecordsPlan.");
+            return null;
+        }
+        if (index < 0 || index >= bitmapList.size()) {
+            logger.error("The given index {} is out of bounds.", index);
+            return null;
+        }
+        return bitmapList.get(index);
     }
 
     public DataType getDataType(int index) {
@@ -164,5 +179,4 @@ public abstract class InsertRecordsPlan extends DataPlan {
         }
         return attributesList.subList(startIndex, endIndex + 1);
     }
-
 }
