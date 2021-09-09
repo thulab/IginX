@@ -178,7 +178,7 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         List<StorageEngine> storageEngines = req.getStorageEngines();
-        List<StorageEngineMeta> storageEngineMetas = new LinkedList<>();
+        LinkedList<StorageEngineMeta> storageEngineMetas = new LinkedList<>();
 
         Map<cn.edu.tsinghua.iginx.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
         String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
