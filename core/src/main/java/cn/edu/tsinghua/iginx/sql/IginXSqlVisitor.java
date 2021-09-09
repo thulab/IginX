@@ -5,14 +5,10 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.operator.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
-import org.apache.iotdb.tsfile.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.*;
-
-import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.INFLUXDB;
-import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.IOTDB;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     @Override
@@ -43,8 +39,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         ctx.path().stream().forEach(e -> deleteOp.addPath(e.getText()));
         // parse time range
         Pair<Long, Long> range = parseTimeRange(ctx.timeRange());
-        deleteOp.setStartTime(range.left);
-        deleteOp.setEndTime(range.right);
+        deleteOp.setStartTime(range.k);
+        deleteOp.setEndTime(range.v);
         return deleteOp;
     }
 
@@ -64,8 +60,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         if (ctx.whereClause() != null) {
             // parse time range
             Pair<Long, Long> range = parseTimeRange(ctx.whereClause().timeRange());
-            selectOp.setStartTime(range.left);
-            selectOp.setEndTime(range.right);
+            selectOp.setStartTime(range.k);
+            selectOp.setEndTime(range.v);
 
             // parse booleanExpression
             if (ctx.whereClause().orExpression() != null) {
@@ -107,7 +103,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         for (StorageEngineContext engine : engines) {
             String ip = engine.ip().getText();
             int port = Integer.parseInt(engine.port.getText());
-            StorageEngineType type = parseStorageEngineType(engine.engineType());
+            String type = parseStorageEngineType(engine.engineType());
             Map<String, String> extra = parseExtra(engine.extra);
             addStorageEngineOp.setEngines(new StorageEngine(ip, port, type, extra));
         }
@@ -205,15 +201,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         }
     }
 
-    private StorageEngineType parseStorageEngineType(EngineTypeContext ctx) {
-        switch (ctx.getText().toLowerCase()) {
-            case SQLConstant.IOT_DB:
-                return IOTDB;
-            case SQLConstant.INFLUX_DB:
-                return INFLUXDB;
-            default:
-                return null;
-        }
+    private String parseStorageEngineType(EngineTypeContext ctx) {
+        return ctx.getText().toLowerCase();
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

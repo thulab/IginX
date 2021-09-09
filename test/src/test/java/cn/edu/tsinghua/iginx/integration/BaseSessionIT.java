@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +49,7 @@ public abstract class BaseSessionIT {
     private static Session session;
     private int currPath = 0;
     protected boolean isAbleToDelete;
-    protected StorageEngineType storageEngineType;
+    protected String storageEngineType;
     protected int defaultPort2;
     protected Map<String, String> extraParams;
 

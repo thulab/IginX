@@ -430,7 +430,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     private void registerStorageEngineListener() throws Exception {
-        this.storageEngineCache = new TreeCache(this.client, Constants.STORAGE_ENGINE_NODE_PREFIX);
+        this.storageEngineCache = new TreeCache(this.client, STORAGE_ENGINE_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
             if (storageChangeHook == null) {
                 return;
@@ -458,7 +458,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     data = event.getData().getData();
                     String path = event.getData().getPath();
                     logger.info("node " + path + " is removed");
-                    if (path.equals(Constants.IGINX_NODE_PREFIX)) {
+                    if (path.equals(IGINX_NODE_PREFIX)) {
                         // 根节点被删除
                         logger.info("all iginx leave from cluster, iginx exits");
                         System.exit(2);
