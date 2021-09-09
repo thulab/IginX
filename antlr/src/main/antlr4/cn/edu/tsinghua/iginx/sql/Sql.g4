@@ -7,7 +7,7 @@ sqlStatement
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
-    | selectClause fromClause whereClause? groupByTimeClause? specialClause? #selectStatement
+    | selectClause fromClause whereClause? specialClause? #selectStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | COUNT POINTS #countPointsStatement
@@ -26,8 +26,9 @@ expression
 
 functionName
     : ID
-    | FIRST
     | LAST
+    | FIRST_VALUE
+    | LAST_VALUE
     | MIN
     | MAX
     | AVG
@@ -62,12 +63,16 @@ fromClause
     : FROM path
     ;
 
-groupByTimeClause
-    : GROUP BY DURATION
-    ;
-
 specialClause
     : limitClause
+    | groupByTimeClause limitClause?
+    | orderByClause limitClause?
+    ;
+
+orderByClause : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?;
+
+groupByTimeClause
+    : GROUP BY DURATION
     ;
 
 limitClause
@@ -155,19 +160,21 @@ nodeName
     | SERIES
     | TIMESTAMP
     | GROUP
+    | ORDER
     | ADD
+    | VALUE
     | VALUES
     | NOW
     | COUNT
     | LAST
     | CLEAR
-    | FIRST
-    | LAST
     | MIN
     | MAX
     | AVG
     | COUNT
     | SUM
+    | DESC
+    | ASC
     | STORAGEENGINE
     | POINTS
     | DATA
@@ -270,8 +277,16 @@ GROUP
     : G R O U P
     ;
 
+ORDER
+    : O R D E R
+    ;
+
 BY
     : B Y
+    ;
+
+VALUE
+    : V A L U E
     ;
 
 VALUES
@@ -306,12 +321,16 @@ NULL
     : N U L L
     ;
 
-FIRST
-    : F I R S T
-    ;
-
 LAST
     : L A S T
+    ;
+
+FIRST_VALUE
+    : F I R S T '_' V A L U E
+    ;
+
+LAST_VALUE
+    : L A S T '_' V A L U E
     ;
 
 MIN
@@ -366,6 +385,13 @@ SERIES
     : S E R I E S
     ;
 
+DESC
+    : D E S C
+    ;
+
+ASC
+    : A S C
+    ;
 //============================
 // End of the keywords list
 //============================

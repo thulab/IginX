@@ -1,14 +1,8 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
-import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
-import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
-import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
+import cn.edu.tsinghua.iginx.combine.*;
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.core.context.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.*;
@@ -27,10 +21,12 @@ public class SelectOperator extends Operator {
     private boolean hasFunc;
     private boolean hasValueFilter;
     private boolean hasGroupBy;
+    private boolean ascending;
 
-    private List<Pair<FuncType, String>> selectedFuncsAndPaths;
+    private List<Pair<String, String>> selectedFuncsAndPaths;
     private Set<FuncType> funcTypeSet;
     private String fromPath;
+    private String orderByPath;
     private String booleanExpression;
     private long startTime;
     private long endTime;
@@ -39,11 +35,13 @@ public class SelectOperator extends Operator {
     private int offset;
 
     public SelectOperator() {
-        this.operatorType = OperatorType.SELECT;
-        this.queryType = QueryType.Unknown;
+        operatorType = OperatorType.SELECT;
+        queryType = QueryType.Unknown;
+        ascending = true;
         selectedFuncsAndPaths = new ArrayList<>();
         funcTypeSet = new HashSet<>();
         fromPath = "";
+        orderByPath = "";
         startTime = Long.MIN_VALUE;
         endTime = Long.MAX_VALUE;
         limit = Integer.MAX_VALUE;
@@ -74,21 +72,29 @@ public class SelectOperator extends Operator {
         this.hasGroupBy = hasGroupBy;
     }
 
+    public boolean isAscending() {
+        return ascending;
+    }
+
+    public void setAscending(boolean ascending) {
+        this.ascending = ascending;
+    }
+
     public List<String> getSelectedPaths() {
         List<String> paths = new ArrayList<>();
-        for (Pair<FuncType, String> kv : selectedFuncsAndPaths) {
+        for (Pair<String, String> kv : selectedFuncsAndPaths) {
             paths.add(kv.v);
         }
         return paths;
     }
 
-    public List<Pair<FuncType, String>> getSelectedFuncsAndPaths() {
+    public List<Pair<String, String>> getSelectedFuncsAndPaths() {
         return selectedFuncsAndPaths;
     }
 
-    public void setSelectedFuncsAndPaths(FuncType type, String path) {
-        this.selectedFuncsAndPaths.add(new Pair<>(type, fromPath + SQLConstant.DOT + path));
-        this.funcTypeSet.add(type);
+    public void setSelectedFuncsAndPaths(String func, String path) {
+        this.selectedFuncsAndPaths.add(new Pair<>(func, fromPath + SQLConstant.DOT + path));
+        this.funcTypeSet.add(str2FuncType(func));
     }
 
     public Set<FuncType> getFuncTypeSet() {
@@ -105,6 +111,15 @@ public class SelectOperator extends Operator {
 
     public void setFromPath(String path) {
         this.fromPath = path;
+    }
+
+    public String getOrderByPath() {
+        return orderByPath;
+    }
+
+    public void setOrderByPath(String orderByPath) {
+
+        this.orderByPath = orderByPath;
     }
 
     public String getBooleanExpression() {
@@ -197,6 +212,10 @@ public class SelectOperator extends Operator {
 
     public static FuncType str2FuncType(String str) {
         switch (str.toLowerCase()) {
+            case "first_value":
+                return FuncType.FirstValue;
+            case "last_value":
+                return FuncType.LastValue;
             case "first":
                 return FuncType.First;
             case "last":
@@ -211,6 +230,8 @@ public class SelectOperator extends Operator {
                 return FuncType.Count;
             case "sum":
                 return FuncType.Sum;
+            case "":
+                return null;
             default:
                 return FuncType.Udf;
         }
@@ -219,8 +240,12 @@ public class SelectOperator extends Operator {
     public static AggregateType funcType2AggregateType(FuncType type) {
         switch (type) {
             case First:
-                return AggregateType.FIRST_VALUE;
+                return AggregateType.FIRST;
             case Last:
+                return AggregateType.LAST;
+            case FirstValue:
+                return AggregateType.FIRST_VALUE;
+            case LastValue:
                 return AggregateType.LAST_VALUE;
             case Min:
                 return AggregateType.MIN;
@@ -273,17 +298,30 @@ public class SelectOperator extends Operator {
         resp.setQueryDataSet(queryDataResp.getQueryDataSet());
         resp.setLimit(limit);
         resp.setOffset(offset);
+        resp.setOrderByPath(orderByPath);
+        resp.setAscending(ascending);
         return resp;
     }
 
     private ExecuteSqlResp aggregateQuery(long sessionId) {
+        String funcName = selectedFuncsAndPaths.get(0).k;
+        FuncType funcType = str2FuncType(funcName);
+        AggregateType aggregateType = funcType2AggregateType(funcType);
+
+        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST)) {
+            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
+        }
+        if (aggregateType.equals(AggregateType.LAST)) {
+            return lastAggregateQuery(sessionId);
+        }
+
         Core core = Core.getInstance();
         AggregateQueryReq req = new AggregateQueryReq(
                 sessionId,
                 getSelectedPaths(),
                 startTime,
                 endTime,
-                funcType2AggregateType(selectedFuncsAndPaths.get(0).k)
+                aggregateType
         );
         AggregateQueryContext ctx = new AggregateQueryContext(req);
         core.processRequest(ctx);
@@ -292,22 +330,51 @@ public class SelectOperator extends Operator {
         ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.AggregateQuery);
         resp.setPaths(aggregateQueryResp.getPaths());
         resp.setDataTypeList(aggregateQueryResp.getDataTypeList());
-        resp.setTimestamps(aggregateQueryResp.getTimestamps());
         resp.setValuesList(aggregateQueryResp.getValuesList());
-        resp.setAggregateType(funcType2AggregateType(selectedFuncsAndPaths.get(0).k));
+        resp.setAggregateType(aggregateType);
+        resp.setLimit(limit);
+        resp.setOffset(offset);
+        return resp;
+    }
+
+    private ExecuteSqlResp lastAggregateQuery(long sessionId) {
+        if (endTime != Long.MAX_VALUE) {
+            throw new SQLParserException("End time must be set as INF in aggregate query with last function.");
+        }
+
+        Core core = Core.getInstance();
+        LastQueryReq req = new LastQueryReq(sessionId, getSelectedPaths(), startTime);
+        LastQueryContext ctx = new LastQueryContext(req);
+        core.processRequest(ctx);
+        LastQueryResp lastQueryResp = ((LastQueryCombineResult) ctx.getCombineResult()).getResp();
+
+        ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.AggregateQuery);
+        resp.setPaths(lastQueryResp.getPaths());
+        resp.setDataTypeList(lastQueryResp.getDataTypeList());
+        resp.setTimestamps(lastQueryResp.getTimestamps());
+        resp.setValuesList(lastQueryResp.getValuesList());
+        resp.setAggregateType(AggregateType.LAST);
         resp.setLimit(limit);
         resp.setOffset(offset);
         return resp;
     }
 
     private ExecuteSqlResp downSampleQuery(long sessionId) {
+        String funcName = selectedFuncsAndPaths.get(0).k;
+        FuncType funcType = str2FuncType(funcName);
+        AggregateType aggregateType = funcType2AggregateType(funcType);
+
+        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST) || aggregateType.equals(AggregateType.LAST)) {
+            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
+        }
+
         Core core = Core.getInstance();
         DownsampleQueryReq req = new DownsampleQueryReq(
                 sessionId,
                 getSelectedPaths(),
                 startTime,
                 endTime,
-                funcType2AggregateType(selectedFuncsAndPaths.get(0).k),
+                aggregateType,
                 precision
         );
         DownsampleQueryContext ctx = new DownsampleQueryContext(req);
@@ -318,7 +385,7 @@ public class SelectOperator extends Operator {
         resp.setPaths(downsampleQueryResp.getPaths());
         resp.setDataTypeList(downsampleQueryResp.getDataTypeList());
         resp.setQueryDataSet(downsampleQueryResp.getQueryDataSet());
-        resp.setAggregateType(funcType2AggregateType(selectedFuncsAndPaths.get(0).k));
+        resp.setAggregateType(aggregateType);
         resp.setLimit(limit);
         resp.setOffset(offset);
         return resp;
@@ -343,6 +410,8 @@ public class SelectOperator extends Operator {
         resp.setQueryDataSet(valueFilterQueryResp.getQueryDataSet());
         resp.setLimit(limit);
         resp.setOffset(offset);
+        resp.setOrderByPath(orderByPath);
+        resp.setAscending(ascending);
         return resp;
     }
 
@@ -350,6 +419,8 @@ public class SelectOperator extends Operator {
         Null,
         First,
         Last,
+        FirstValue,
+        LastValue,
         Min,
         Max,
         Avg,

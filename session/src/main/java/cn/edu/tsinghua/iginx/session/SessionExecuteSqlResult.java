@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -41,6 +42,7 @@ public class SessionExecuteSqlResult {
     private AggregateType aggregateType;
     private long[] timestamps;
     private List<String> paths;
+    private String orderByPath;
     private List<List<Object>> values;
     private List<DataType> dataTypeList;
     private int replicaNum;
@@ -48,6 +50,7 @@ public class SessionExecuteSqlResult {
     private String parseErrorMsg;
     private int limit;
     private int offset;
+    private boolean ascending;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -56,8 +59,6 @@ public class SessionExecuteSqlResult {
     public SessionExecuteSqlResult(ExecuteSqlResp resp) {
         this.sqlType = resp.getType();
         this.parseErrorMsg = resp.getParseErrorMsg();
-        this.limit = resp.getLimit();
-        this.offset = resp.getOffset();
         switch (resp.getType()) {
             case GetReplicaNum:
                 this.replicaNum = resp.getReplicaNum();
@@ -83,6 +84,10 @@ public class SessionExecuteSqlResult {
     private void constructQueryResult(ExecuteSqlResp resp) {
         this.paths = resp.getPaths();
         this.dataTypeList = resp.getDataTypeList();
+        this.limit = resp.getLimit();
+        this.offset = resp.getOffset();
+        this.orderByPath = resp.getOrderByPath();
+        this.ascending = resp.isAscending();
 
         if (resp.timestamps != null) {
             this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
@@ -144,8 +149,7 @@ public class SessionExecuteSqlResult {
         System.out.printf("%s ResultSets:%n", sqlType.toString());
 
         List<Integer> maxSizeList = new ArrayList<>();
-        List<List<String>> cache = new ArrayList<>();
-        cacheResult(needFormatTime, timePrecision, maxSizeList, cache);
+        List<List<String>> cache = cacheResult(needFormatTime, timePrecision, maxSizeList);
 
         printBlockLine(maxSizeList);
         printRow(cache, 0, maxSizeList);
@@ -155,11 +159,12 @@ public class SessionExecuteSqlResult {
         }
         printBlockLine(maxSizeList);
 
-        printCount(cache.size()-1);
+        printCount(cache.size() - 1);
     }
 
     private List<List<String>> cacheResult(boolean needFormatTime, String timePrecision,
-                                           List<Integer> maxSizeList, List<List<String>> cache) {
+                                           List<Integer> maxSizeList) {
+        List<List<String>> cache = new ArrayList<>();
         List<String> label = new ArrayList<>();
         if (timestamps != null) {
             label.add("Time");
@@ -175,7 +180,7 @@ public class SessionExecuteSqlResult {
                 maxSizeList.add(newLabel.length());
             }
         }
-        cache.add(label);
+
 
         int maxOutputLen = Math.min(offset + limit, values.size());
         for (int i = offset; i < maxOutputLen; i++) {
@@ -212,10 +217,44 @@ public class SessionExecuteSqlResult {
             cache.add(rowCache);
         }
 
+        int index = paths.indexOf(orderByPath);
+        if (orderByPath != null && !orderByPath.equals("") && index >= 0) {
+            DataType type = dataTypeList.get(index);
+            int finalIndex = timestamps == null ? index : ++index;
+            cache = cache.stream()
+                    .sorted((o1, o2) -> {
+                        if (ascending) {
+                            return compare(o1.get(finalIndex), o2.get(finalIndex), type);
+                        } else {
+                            return compare(o2.get(finalIndex), o1.get(finalIndex), type);
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        cache.add(0, label);
+
         return cache;
     }
 
-    private static void printBlockLine(List<Integer> maxSizeList) {
+    private int compare(String s1, String s2, DataType type) {
+        switch (type) {
+            case LONG:
+                return Long.compare(Long.parseLong(s1), Long.parseLong(s2));
+            case FLOAT:
+                return Float.compare(Float.parseFloat(s1), Float.parseFloat(s2));
+            case DOUBLE:
+                return Double.compare(Double.parseDouble(s1), Double.parseDouble(s2));
+            case INTEGER:
+                return Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2));
+            case BOOLEAN:
+                return Boolean.compare(Boolean.parseBoolean(s1), Boolean.parseBoolean(s2));
+            default:
+                return s1.compareTo(s2);
+        }
+    }
+
+    private void printBlockLine(List<Integer> maxSizeList) {
         StringBuilder blockLine = new StringBuilder();
         for (Integer integer : maxSizeList) {
             blockLine.append("+").append(StringUtils.repeat("-", integer));
@@ -224,7 +263,7 @@ public class SessionExecuteSqlResult {
         System.out.println(blockLine.toString());
     }
 
-    private static void printRow(List<List<String>> cache, int rowIdx, List<Integer> maxSizeList) {
+    private void printRow(List<List<String>> cache, int rowIdx, List<Integer> maxSizeList) {
         System.out.print("|");
         int maxSize;
         String rowValue;
@@ -236,7 +275,7 @@ public class SessionExecuteSqlResult {
         System.out.println();
     }
 
-    public static void printCount(int count) {
+    public void printCount(int count) {
         if (count <= 0) {
             System.out.println("Empty set.");
         } else {
