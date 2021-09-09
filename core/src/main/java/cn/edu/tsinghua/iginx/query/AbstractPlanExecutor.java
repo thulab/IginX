@@ -333,8 +333,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     @Override
     public List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext) {
         List<PlanExecuteResult> planExecuteResults = requestContext.getIginxPlans().stream().filter(e -> !e.isSync()).map(this::executeAsyncTask).collect(Collectors.toList());
-        logger.debug(requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans");
-        logger.debug("there are  " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
+        logger.info(requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans, there are " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
         planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(e -> functionMap.get(e.getIginxPlanType()).apply(e)).map(wrap(Future::get)).collect(Collectors.toList()));
         return planExecuteResults;
     }

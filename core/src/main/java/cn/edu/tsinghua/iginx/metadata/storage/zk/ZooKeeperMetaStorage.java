@@ -494,7 +494,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 this.client.create().withMode(CreateMode.PERSISTENT).forPath(STORAGE_UNIT_NODE_PREFIX);
             } else {
                 List<String> storageUnitIds = this.client.getChildren().forPath(STORAGE_UNIT_NODE_PREFIX);
-                logger.info("sort storage unit ids");
                 storageUnitIds.sort(String::compareTo);
                 for (String storageUnitId : storageUnitIds) {
                     logger.info("load storage unit: " + storageUnitId);
