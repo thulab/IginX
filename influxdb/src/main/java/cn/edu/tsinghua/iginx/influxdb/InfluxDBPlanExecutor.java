@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.influxdb;
 
-import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -131,8 +130,8 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     private boolean createConnection(StorageEngineMeta storageEngineMeta) {
-        if (storageEngineMeta.getDbType() != StorageEngine.InfluxDB) {
-            logger.warn("unexpected database: " + storageEngineMeta.getDbType());
+        if (!storageEngineMeta.getStorageEngine().equals("influxdb")) {
+            logger.warn("unexpected database: " + storageEngineMeta.getStorageEngine());
             return false;
         }
         if (!testConnection(storageEngineMeta)) {

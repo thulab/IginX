@@ -18,16 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.integration;
 
-import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.utils.Pair;
-import java.util.ArrayList;
 import java.util.Collections;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -35,7 +29,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +115,7 @@ public class IMetaManagerTest {
         extraParams.put("username", "root");
         extraParams.put("password", "root");
         extraParams.put("sessionPoolSize", "20");
-        StorageEngineMeta engine1 = new StorageEngineMeta(0, "127.0.0.1", 1001, extraParams, StorageEngine.IoTDB, iMetaManager.getIginxId());
+        StorageEngineMeta engine1 = new StorageEngineMeta(0, "127.0.0.1", 1001, extraParams, "iotdb", iMetaManager.getIginxId());
         iMetaManager.addStorageEngines(Collections.singletonList(engine1));
         // 查询数据后端
         storageEngines = iMetaManager.getStorageEngineList();

@@ -1,7 +1,5 @@
 package cn.edu.tsinghua.iginx.integration;
 
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
-
 import java.util.LinkedHashMap;
 
 public class IoTDBSessionIT extends BaseSessionIT {
@@ -10,7 +8,7 @@ public class IoTDBSessionIT extends BaseSessionIT {
         super();
         this.defaultPort2 = 6668;
         this.isAbleToDelete = true;
-        this.storageEngineType = StorageEngineType.IOTDB;
+        this.storageEngineType = "iotdb";
         this.extraParams = new LinkedHashMap<>();
         this.extraParams.put("username", "root");
         this.extraParams.put("password", "root");
