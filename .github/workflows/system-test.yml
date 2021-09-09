@@ -84,7 +84,6 @@ jobs:
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
       - name: Install with Maven
         run: mvn clean package -DskipTests
-        run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
