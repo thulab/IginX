@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -36,7 +37,7 @@ public class LastQueryDataSet {
     }
 
     LastQueryDataSet(LastQueryResp resp) {
-        points = new ArrayList<>();
+        points = new LinkedList<>();
         List<String> paths = resp.getPaths();
         List<DataType> dataTypes = resp.getDataTypeList();
         long[] timestamps = getLongArrayFromByteBuffer(resp.timestamps);

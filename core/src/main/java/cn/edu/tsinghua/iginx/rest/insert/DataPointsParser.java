@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -46,7 +47,7 @@ public class DataPointsParser {
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private Reader inputStream = null;
     private ObjectMapper mapper = new ObjectMapper();
-    private List<Metric> metricList = new ArrayList<>();
+    private List<Metric> metricList = new LinkedList<>();
     private RestSession session = new RestSession();
 
     public DataPointsParser() {

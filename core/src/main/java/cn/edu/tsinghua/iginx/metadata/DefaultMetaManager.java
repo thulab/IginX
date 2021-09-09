@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -104,7 +105,7 @@ public class DefaultMetaManager implements IMetaManager {
                 break;
         }
 
-        storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
+        storageEngineChangeHooks = Collections.synchronizedList(new LinkedList<>());
 
         try {
             initIginx();
