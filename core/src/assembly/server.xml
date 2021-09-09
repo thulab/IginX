@@ -39,33 +39,5 @@
             <directory>../conf/</directory>
             <outputDirectory>conf</outputDirectory>
         </fileSet>
-        <fileSet>
-            <directory>../iotdb/target</directory>
-            <outputDirectory>driver/iotdb/</outputDirectory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>../influxdb/target</directory>
-            <outputDirectory>driver/influxdb/</outputDirectory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>../iotdb/target/iotdb/</directory>
-            <outputDirectory>driver/iotdb/</outputDirectory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-        </fileSet>
-        <fileSet>
-            <directory>../influxdb/target/influxdb/</directory>
-            <outputDirectory>driver/influxdb/</outputDirectory>
-            <includes>
-                <include>*.jar</include>
-            </includes>
-        </fileSet>
     </fileSets>
 </assembly>
