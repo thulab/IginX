@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
@@ -557,7 +556,7 @@ public class DefaultMetaManager implements IMetaManager {
             String[] storageEngineParts = storageEngineStrings[i].split("#");
             String ip = storageEngineParts[0];
             int port = Integer.parseInt(storageEngineParts[1]);
-            StorageEngine storageEngine = StorageEngine.fromString(storageEngineParts[2]);
+            String storageEngine = storageEngineParts[2];
             Map<String, String> extraParams = new HashMap<>();
             String[] KAndV;
             for (int j = 3; j < storageEngineParts.length; j++) {

@@ -3,7 +3,6 @@ package cn.edu.tsinghua.iginx.sql;
 import cn.edu.tsinghua.iginx.sql.operator.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -166,12 +165,12 @@ public class ParseTest {
         Map<String, String> extra01 = new HashMap<>();
         extra01.put("username", "root");
         extra01.put("password", "root");
-        StorageEngine engine01 = new StorageEngine("127.0.0.1", 6667, StorageEngineType.IOTDB, extra01);
+        StorageEngine engine01 = new StorageEngine("127.0.0.1", 6667, "iotdb", extra01);
 
         Map<String, String> extra02 = new HashMap<>();
         extra02.put("key1", "val1");
         extra02.put("key2", "val2");
-        StorageEngine engine02 = new StorageEngine("127.0.0.1", 6668, StorageEngineType.INFLUXDB, extra02);
+        StorageEngine engine02 = new StorageEngine("127.0.0.1", 6668, "influxdb", extra02);
 
         assertEquals(engine01, op.getEngines().get(0));
         assertEquals(engine02, op.getEngines().get(1));
