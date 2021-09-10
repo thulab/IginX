@@ -81,9 +81,13 @@ goto okClasspath
 
 echo CLASSPATH: %CLASSPATH%
 
-setx DRIVER "%IGINX_HOME%\driver
+set DRIVER=
+setx DRIVER "%IGINX_HOME%\driver"
 
 "%JAVA_HOME%\bin\java" %JAVA_OPTS% %HEAP_OPTS% -cp %CLASSPATH% %MAIN_CLASS%
+
+reg delete "HKEY_CURRENT_USER\Environment" /v "DRIVER" /f
+set DRIVER=
 
 goto finally
 
@@ -94,8 +98,6 @@ pause
 
 @REM -----------------------------------------------------------------------------
 :finally
-
-reg delete "HKEY_CURRENT_USER\Environment" /v "DRIVER" /f 2>nul
 
 pause
 
