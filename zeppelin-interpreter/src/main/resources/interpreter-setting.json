@@ -32,11 +32,11 @@
         "description": "Password for authentication, Default = 'root'",
         "type": "password"
       },
-      "iginx.time.display.type": {
+      "iginx.time.precision": {
         "envName": null,
         "propertyName": "iginx.time.precision",
         "defaultValue": "default",
-        "description": "the time format to display. Default = 'ms'",
+        "description": "the time precision to display. Default = 'ms'",
         "type": "string"
       }
     },
