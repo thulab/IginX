@@ -261,8 +261,8 @@ public class IginxClient {
                     timestampPrecision = "ms";
                     break;
                 case "microsecond":
-                case "µs":
-                    timestampPrecision = "µs";
+                case "us":
+                    timestampPrecision = "us";
                     break;
                 case "nanosecond":
                 case "ns":
@@ -274,7 +274,7 @@ public class IginxClient {
             }
             System.out.println(String.format("Current time unit: %s", timestampPrecision));
         } else {
-            System.out.println("Set timeunit error, please input like: set timeunit in s/ms/µs/ns");
+            System.out.println("Set timeunit error, please input like: set timeunit in s/ms/us/ns");
         }
     }
 

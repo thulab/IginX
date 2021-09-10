@@ -26,6 +26,7 @@
     <module>session</module>
     <module>example</module>
     <module>test</module>
+    <module>zeppelin-interpreter</module>
   </modules>
 
   <dependencies>
