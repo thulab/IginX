@@ -352,7 +352,7 @@ public class SessionExecuteSqlResult {
             case "s":
                 timeInMs = timestamp * 1000;
                 break;
-            case "µs":
+            case "us":
                 timeInMs = timestamp / 1000;
                 break;
             case "ns":

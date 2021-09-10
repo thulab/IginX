@@ -113,8 +113,8 @@ public class IginxInterpreter extends AbstractInterpreter {
                     timePrecision = "ms";
                     break;
                 case "microsecond":
-                case "µs":
-                    timePrecision = "µs";
+                case "us":
+                    timePrecision = "us";
                     break;
                 case "nanosecond":
                 case "ns":
@@ -128,7 +128,7 @@ public class IginxInterpreter extends AbstractInterpreter {
                     String.format("Current time unit: %s", timePrecision));
         } else {
             return new InterpreterResult(InterpreterResult.Code.SUCCESS,
-                    "Set timeunit error, please input like: set timeunit in s/ms/µs/ns");
+                    "Set timeunit error, please input like: set timeunit in s/ms/us/ns");
         }
     }
 
