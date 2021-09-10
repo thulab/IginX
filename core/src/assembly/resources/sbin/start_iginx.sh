@@ -52,3 +52,4 @@ export DRIVER=$DRIVER
 exec "$JAVA" -Duser.timezone=GMT+8 -cp "$CLASSPATH" "$MAIN_CLASS" "$@"
 
 exit $?
+

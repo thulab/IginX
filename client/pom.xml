@@ -31,6 +31,11 @@
       <version>3.0.0.M1</version>
     </dependency>
     <dependency>
+      <groupId>org.fusesource.jansi</groupId>
+      <artifactId>jansi</artifactId>
+      <version>1.18</version>
+    </dependency>
+    <dependency>
       <groupId>cn.edu.tsinghua</groupId>
       <artifactId>iginx-session</artifactId>
       <version>${project.version}</version>

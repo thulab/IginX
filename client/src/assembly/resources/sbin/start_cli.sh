@@ -48,11 +48,6 @@ fi
 
 PARAMETERS="$@"
 
-# if [ $# -eq 0 ]
-# then
-# 	PARAMETERS="-h 127.0.0.1 -p 6667 -u root -pw root"
-# fi
-
 # Added parameters when default parameters are missing
 
 # sh version

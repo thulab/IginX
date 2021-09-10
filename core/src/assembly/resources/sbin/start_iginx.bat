@@ -76,17 +76,15 @@ set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\iotdb\target\iotdb-%IGINX_VERSION%.jar"
 set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\influxdb\target\influxdb-%IGINX_VERSION%.jar"
 goto okClasspath
 
-:append
-set CLASSPATH=%CLASSPATH%;%1
-
-goto :eof
-
 @REM -----------------------------------------------------------------------------
 :okClasspath
 
 echo CLASSPATH: %CLASSPATH%
 
+setx DRIVER "%IGINX_HOME%\driver
+
 "%JAVA_HOME%\bin\java" %JAVA_OPTS% %HEAP_OPTS% -cp %CLASSPATH% %MAIN_CLASS%
+
 goto finally
 
 :err
@@ -96,6 +94,8 @@ pause
 
 @REM -----------------------------------------------------------------------------
 :finally
+
+reg delete "HKEY_CURRENT_USER\Environment" /v "DRIVER" /f 2>nul
 
 pause
 
