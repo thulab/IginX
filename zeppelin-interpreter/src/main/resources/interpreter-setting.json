@@ -35,7 +35,7 @@
       "iginx.time.precision": {
         "envName": null,
         "propertyName": "iginx.time.precision",
-        "defaultValue": "default",
+        "defaultValue": "ms",
         "description": "the time precision to display. Default = 'ms'",
         "type": "string"
       }
