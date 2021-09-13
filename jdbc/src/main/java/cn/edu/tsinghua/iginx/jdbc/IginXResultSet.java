@@ -12,11 +12,28 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Date;
+import java.sql.NClob;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class IginXResultSet implements ResultSet {
@@ -650,14 +667,20 @@ public class IginXResultSet implements ResultSet {
     }
 
     @Override
+    public int getFetchDirection() throws SQLException {
+        checkClosed();
+        return ResultSet.FETCH_FORWARD;
+    }
+
+    @Override
     public void setFetchDirection(int direction) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
-    public int getFetchDirection() throws SQLException {
+    public int getFetchSize() throws SQLException {
         checkClosed();
-        return ResultSet.FETCH_FORWARD;
+        return fetchSize;
     }
 
     @Override
@@ -666,12 +689,6 @@ public class IginXResultSet implements ResultSet {
         if (rows < 0)
             throw new SQLException("fetch size should >= 0");
         this.fetchSize = rows;
-    }
-
-    @Override
-    public int getFetchSize() throws SQLException {
-        checkClosed();
-        return fetchSize;
     }
 
     @Override

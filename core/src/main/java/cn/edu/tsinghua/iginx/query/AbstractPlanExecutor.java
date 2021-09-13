@@ -28,9 +28,9 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -85,7 +85,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         asyncTaskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPool());
         asyncTaskDispatcher = Executors.newSingleThreadExecutor();
         asyncTaskDispatcher.submit(() -> {
-            while (true) {
+            while(true) {
                 AsyncTask asyncTask = asyncTaskQueue.getAsyncTask();
                 asyncTaskExecuteThreadPool.submit(() -> {
                     IginxPlan plan = asyncTask.getIginxPlan();

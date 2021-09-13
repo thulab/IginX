@@ -34,7 +34,7 @@ public abstract class IginxPlan {
 
     private boolean isSync;
 
-	private StorageUnitMeta storageUnit;
+    private StorageUnitMeta storageUnit;
 
     private int combineGroup;
 
@@ -83,12 +83,12 @@ public abstract class IginxPlan {
         this.isSync = isSync;
     }
 
-	public void setStorageUnit(StorageUnitMeta storageUnit) {
-		this.storageUnit = storageUnit;
-	}
-
-	public StorageUnitMeta getStorageUnit() {
+    public StorageUnitMeta getStorageUnit() {
         return this.storageUnit;
+    }
+
+    public void setStorageUnit(StorageUnitMeta storageUnit) {
+        this.storageUnit = storageUnit;
     }
 
     public long getStorageEngineId() {

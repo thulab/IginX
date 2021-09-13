@@ -30,7 +30,6 @@ import io.moquette.interception.InterceptHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 import java.util.List;
 import java.util.Properties;
 
@@ -44,6 +43,17 @@ public class MQTTService implements Runnable {
 
     protected MQTTService() {
 
+    }
+
+    public static MQTTService getInstance() {
+        if (INSTANCE == null) {
+            synchronized (MQTTService.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new MQTTService();
+                }
+            }
+        }
+        return INSTANCE;
     }
 
     public void start() {
@@ -79,17 +89,6 @@ public class MQTTService implements Runnable {
     @Override
     public void run() {
         start();
-    }
-
-    public static MQTTService getInstance() {
-        if (INSTANCE == null) {
-            synchronized (MQTTService.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new MQTTService();
-                }
-            }
-        }
-        return INSTANCE;
     }
 
     public void shutdown() {

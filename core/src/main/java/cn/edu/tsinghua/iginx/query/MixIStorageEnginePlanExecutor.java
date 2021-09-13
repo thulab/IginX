@@ -27,9 +27,9 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -77,7 +77,7 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
         try {
             Map<String, List<StorageEngineMeta>> groupedStorageEngineMetaLists = storageEngineMetaList.stream()
                     .collect(Collectors.groupingBy(StorageEngineMeta::getStorageEngine));
-            for (String engine: groupedStorageEngineMetaLists.keySet()) {
+            for (String engine : groupedStorageEngineMetaLists.keySet()) {
                 ClassLoader classLoader = new StorageEngineClassLoader(engine);
                 classLoaders.put(engine, classLoader);
 
@@ -86,7 +86,7 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
 
                 storageEngines.put(engine, storageEngine);
                 hooks.put(engine, storageEngine.getStorageEngineChangeHook());
-                for (StorageEngineMeta meta: groupedStorageEngineMetaLists.get(engine)) {
+                for (StorageEngineMeta meta : groupedStorageEngineMetaLists.get(engine)) {
                     storageEngineMap.put(meta.getId(), storageEngine);
                 }
             }

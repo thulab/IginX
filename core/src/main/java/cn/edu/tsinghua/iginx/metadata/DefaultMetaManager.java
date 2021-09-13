@@ -29,10 +29,10 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
@@ -53,28 +53,13 @@ import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
 
-    private static DefaultMetaManager INSTANCE;
-
     private static final Logger logger = LoggerFactory.getLogger(DefaultMetaManager.class);
-
+    private static DefaultMetaManager INSTANCE;
     private final IMetaCache cache;
 
     private final IMetaStorage storage;
-
-    private long id;
-
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
-
-    public static DefaultMetaManager getInstance() {
-        if (INSTANCE == null) {
-            synchronized (DefaultMetaManager.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DefaultMetaManager();
-                }
-            }
-        }
-        return INSTANCE;
-    }
+    private long id;
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
@@ -119,6 +104,17 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
+    public static DefaultMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (DefaultMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
     private void initIginx() throws MetaStorageException {
         storage.registerIginxChangeHook((id, iginx) -> {
             if (iginx == null) {
@@ -127,7 +123,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addIginx(iginx);
             }
         });
-        for (IginxMeta iginx: storage.loadIginx().values()) {
+        for (IginxMeta iginx : storage.loadIginx().values()) {
             cache.addIginx(iginx);
         }
         IginxMeta iginx = new IginxMeta(0L, ConfigDescriptor.getInstance().getConfig().getIp(),
@@ -140,12 +136,12 @@ public class DefaultMetaManager implements IMetaManager {
         storage.registerStorageChangeHook((id, storageEngine) -> {
             if (storageEngine != null) {
                 cache.addStorageEngine(storageEngine);
-                for (StorageEngineChangeHook hook: storageEngineChangeHooks) {
+                for (StorageEngineChangeHook hook : storageEngineChangeHooks) {
                     hook.onChanged(null, storageEngine);
                 }
             }
         });
-        for (StorageEngineMeta storageEngine: storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
+        for (StorageEngineMeta storageEngine : storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
             cache.addStorageEngine(storageEngine);
         }
 
@@ -239,7 +235,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addOrUpdateSchemaMapping(schema, schemaMapping);
             }
         });
-        for (Map.Entry<String, Map<String, Integer>> schemaEntry: storage.loadSchemaMapping().entrySet()) {
+        for (Map.Entry<String, Map<String, Integer>> schemaEntry : storage.loadSchemaMapping().entrySet()) {
             cache.addOrUpdateSchemaMapping(schemaEntry.getKey(), schemaEntry.getValue());
         }
     }
@@ -252,7 +248,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addOrUpdateUser(user);
             }
         });
-        for (UserMeta user: storage.loadUser(resolveUserFromConf())) {
+        for (UserMeta user : storage.loadUser(resolveUserFromConf())) {
             cache.addOrUpdateUser(user);
         }
     }
@@ -260,7 +256,7 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
         try {
-            for (StorageEngineMeta storageEngineMeta: storageEngineMetas) {
+            for (StorageEngineMeta storageEngineMeta : storageEngineMetas) {
                 storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
                 cache.addStorageEngine(storageEngineMeta);
             }
@@ -348,7 +344,7 @@ public class DefaultMetaManager implements IMetaManager {
             storage.lockStorageUnit();
 
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
-            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+            for (StorageUnitMeta masterStorageUnit : storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
                 String fakeName = masterStorageUnit.getId();
                 String actualName = storage.addStorageUnit();
@@ -432,7 +428,7 @@ public class DefaultMetaManager implements IMetaManager {
 
             // 确实没有人创建过，以我为准
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
-            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+            for (StorageUnitMeta masterStorageUnit : storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
                 String fakeName = masterStorageUnit.getId();
                 String actualName = storage.addStorageUnit();

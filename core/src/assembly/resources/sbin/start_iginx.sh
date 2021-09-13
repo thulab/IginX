@@ -22,7 +22,10 @@
 # export JAVA_HOME=$JAVA_HOME
 
 if [[ -z "${IGINX_HOME}" ]]; then
-  export IGINX_HOME="$(cd "`dirname "$0"`"/..; pwd)"
+  export IGINX_HOME="$(
+    cd "$(dirname "$0")"/..
+    pwd
+  )"
 fi
 
 MAIN_CLASS=cn.edu.tsinghua.iginx.Iginx
@@ -33,14 +36,14 @@ for f in ${IGINX_HOME}/lib/*.jar; do
 done
 
 if [ -n "$JAVA_HOME" ]; then
-    for java in "$JAVA_HOME"/bin/amd64/java "$JAVA_HOME"/bin/java; do
-        if [ -x "$java" ]; then
-            JAVA="$java"
-            break
-        fi
-    done
+  for java in "$JAVA_HOME"/bin/amd64/java "$JAVA_HOME"/bin/java; do
+    if [ -x "$java" ]; then
+      JAVA="$java"
+      break
+    fi
+  done
 else
-    JAVA=java
+  JAVA=java
 fi
 
 CONF="$IGINX_HOME/conf/config.properties"
@@ -52,4 +55,3 @@ export DRIVER=$DRIVER
 exec "$JAVA" -Duser.timezone=GMT+8 -cp "$CLASSPATH" "$MAIN_CLASS" "$@"
 
 exit $?
-

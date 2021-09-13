@@ -27,9 +27,9 @@ import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -256,7 +256,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 tablet.reset();
             }
             cnt += size;
-        } while (cnt < plan.getTimestamps().length);
+        } while(cnt < plan.getTimestamps().length);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -325,7 +325,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     tablet.reset();
                 }
                 cnt += size;
-            } while (cnt < plan.getTimestamps().length);
+            } while(cnt < plan.getTimestamps().length);
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -399,7 +399,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 tablet.reset();
             }
             cnt += size;
-        } while (cnt < plan.getTimestamps().length);
+        } while(cnt < plan.getTimestamps().length);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -477,7 +477,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 }
             }
             cnt += size;
-        } while (cnt < plan.getTimestamps().length);
+        } while(cnt < plan.getTimestamps().length);
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -521,7 +521,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         try {
             // change [start, end] to [start, end)
-            sessionPool.deleteData(plan.getPaths().stream().map(x -> PREFIX + plan.getStorageUnit().getId() + "." + x).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime()-1);
+            sessionPool.deleteData(plan.getPaths().stream().map(x -> PREFIX + plan.getStorageUnit().getId() + "." + x).collect(Collectors.toList()), plan.getStartTime(), plan.getEndTime() - 1);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
             return new NonDataPlanExecuteResult(FAILURE, plan);
@@ -541,7 +541,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
                         sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
-                while (true) {
+                while(true) {
                     RowRecord rowRecord = dataSet.next();
                     if (rowRecord == null || rowRecord.getFields().isEmpty()) {
                         break;
@@ -1047,7 +1047,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         List<DataType> dataTypes = new ArrayList<>();
         try {
             SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
-            while (dataSet.hasNext()) {
+            while(dataSet.hasNext()) {
                 RowRecord record = dataSet.next();
                 if (record == null || record.getFields().size() < 4) {
                     continue;

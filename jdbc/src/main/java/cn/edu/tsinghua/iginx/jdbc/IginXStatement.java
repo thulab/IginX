@@ -5,7 +5,11 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -187,17 +191,17 @@ public class IginXStatement implements Statement {
     }
 
     @Override
+    public int getFetchDirection() throws SQLException {
+        checkConnection("getFetchDirection");
+        return ResultSet.FETCH_FORWARD;
+    }
+
+    @Override
     public void setFetchDirection(int direction) throws SQLException {
         checkConnection("setFetchDirection");
         if (direction != ResultSet.FETCH_FORWARD) {
             throw new SQLException(String.format("direction %d is not supported!", direction));
         }
-    }
-
-    @Override
-    public int getFetchDirection() throws SQLException {
-        checkConnection("getFetchDirection");
-        return ResultSet.FETCH_FORWARD;
     }
 
     @Override
@@ -256,12 +260,12 @@ public class IginXStatement implements Statement {
     }
 
     @Override
-    public void setFetchSize(int rows) throws SQLException {
+    public int getFetchSize() throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
-    public int getFetchSize() throws SQLException {
+    public void setFetchSize(int rows) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
@@ -286,12 +290,12 @@ public class IginXStatement implements Statement {
     }
 
     @Override
-    public void setPoolable(boolean poolable) throws SQLException {
+    public boolean isPoolable() throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
-    public boolean isPoolable() throws SQLException {
+    public void setPoolable(boolean poolable) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 

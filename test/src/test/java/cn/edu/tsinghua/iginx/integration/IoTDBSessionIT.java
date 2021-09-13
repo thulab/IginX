@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 
 public class IoTDBSessionIT extends BaseSessionIT {
 
-    public IoTDBSessionIT(){
+    public IoTDBSessionIT() {
         super();
         this.defaultPort2 = 6668;
         this.isAbleToDelete = true;

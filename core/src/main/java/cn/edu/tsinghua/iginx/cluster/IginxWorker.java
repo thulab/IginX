@@ -33,9 +33,9 @@ import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
@@ -51,7 +51,43 @@ import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
 import cn.edu.tsinghua.iginx.sql.operator.Operator;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.AddUserReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
+import cn.edu.tsinghua.iginx.thrift.GetUserReq;
+import cn.edu.tsinghua.iginx.thrift.GetUserResp;
+import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
+import cn.edu.tsinghua.iginx.thrift.UserType;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -60,12 +96,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -205,8 +237,8 @@ public class IginxWorker implements IService.Iface {
         // 检测是否与已有的存储单元冲突
         List<StorageEngineMeta> currentStorageEngines = metaManager.getStorageEngineList();
         List<StorageEngineMeta> duplicatedStorageEngine = new ArrayList<>();
-        for (StorageEngineMeta storageEngine: storageEngineMetas) {
-            for (StorageEngineMeta currentStorageEngine: currentStorageEngines) {
+        for (StorageEngineMeta storageEngine : storageEngineMetas) {
+            for (StorageEngineMeta currentStorageEngine : currentStorageEngines) {
                 if (currentStorageEngine.getIp().equals(storageEngine.getIp()) && currentStorageEngine.getPort() == storageEngine.getPort()) {
                     duplicatedStorageEngine.add(storageEngine);
                     break;

@@ -112,7 +112,7 @@ public class RestSession {
             logger.info("当前请求将被重定向到：" + resp.status.getMessage());
             redirectTimes += 1;
 
-        } while (redirectTimes <= Constants.MAX_REDIRECT_TIME);
+        } while(redirectTimes <= Constants.MAX_REDIRECT_TIME);
 
         if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
             throw new SessionException("重定向次数过多！");
@@ -149,7 +149,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -170,12 +170,12 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -238,12 +238,12 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+                                           List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -307,7 +307,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -328,7 +328,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime) {
@@ -347,7 +347,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
     }
@@ -370,7 +370,7 @@ public class RestSession {
                 } finally {
                     lock.readLock().unlock();
                 }
-            } while (checkRedirect(resp.status));
+            } while(checkRedirect(resp.status));
         } catch (Exception e) {
             throw new SessionException(e);
         }
@@ -389,7 +389,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
@@ -407,7 +407,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
     }

@@ -25,7 +25,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -56,9 +55,9 @@ public class StorageEngineClassLoader extends ClassLoader {
             if (f.isFile() && f.getName().endsWith(".jar"))
                 jars.add(f);
         }
-        for (File jar: jars) {
+        for (File jar : jars) {
             Enumeration<JarEntry> entries = new JarFile(jar).entries();
-            while (entries.hasMoreElements()) {
+            while(entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 String name = entry.getName();
                 if (name.endsWith(".class")) {
@@ -90,7 +89,7 @@ public class StorageEngineClassLoader extends ClassLoader {
         try {
             JarFile jar = new JarFile(jarPath);
             Enumeration<JarEntry> entries = jar.entries();
-            while (entries.hasMoreElements()) {
+            while(entries.hasMoreElements()) {
                 JarEntry entry = entries.nextElement();
                 String entryName = entry.getName();
                 if (entryName.endsWith(".class")) {
@@ -101,7 +100,7 @@ public class StorageEngineClassLoader extends ClassLoader {
                         int bufferSize = 1024;
                         byte[] buffer = new byte[bufferSize];
                         int bytesNumRead;
-                        while ((bytesNumRead = input.read(buffer)) != -1) {
+                        while((bytesNumRead = input.read(buffer)) != -1) {
                             baos.write(buffer, 0, bytesNumRead);
                         }
                         byte[] cc = baos.toByteArray();

@@ -20,19 +20,19 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
-import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import io.etcd.jetcd.ByteSequence;
@@ -96,48 +96,27 @@ public class ETCDMetaStorage implements IMetaStorage {
     private static final long HEART_BEAT_INTERVAL = 5; // 和 etcd 之间的心跳包的时间间隔
 
     private static ETCDMetaStorage INSTANCE = null;
-
-    private Client client;
-
-    private Watch.Watcher schemaMappingWatcher;
-
-    private SchemaMappingChangeHook schemaMappingChangeHook = null;
-
-    private Watch.Watcher iginxWatcher;
-
-    private IginxChangeHook iginxChangeHook = null;
-
-    private Watch.Watcher storageWatcher;
-
-    private StorageChangeHook storageChangeHook = null;
-
-    private long storageLease = -1L;
-
     private final Lock storageLeaseLock = new ReentrantLock();
-
-    private Watch.Watcher storageUnitWatcher;
-
-    private StorageUnitChangeHook storageUnitChangeHook = null;
-
-    private long storageUnitLease = -1L;
-
     private final Lock storageUnitLeaseLock = new ReentrantLock();
-
-    private Watch.Watcher fragmentWatcher;
-
-    private FragmentChangeHook fragmentChangeHook = null;
-
-    private long fragmentLease = -1L;
-
     private final Lock fragmentLeaseLock = new ReentrantLock();
-
-    private Watch.Watcher userWatcher;
-
-    private UserChangeHook userChangeHook = null;
-
-    private long userLease = -1L;
-
     private final Lock userLeaseLock = new ReentrantLock();
+    private Client client;
+    private Watch.Watcher schemaMappingWatcher;
+    private SchemaMappingChangeHook schemaMappingChangeHook = null;
+    private Watch.Watcher iginxWatcher;
+    private IginxChangeHook iginxChangeHook = null;
+    private Watch.Watcher storageWatcher;
+    private StorageChangeHook storageChangeHook = null;
+    private long storageLease = -1L;
+    private Watch.Watcher storageUnitWatcher;
+    private StorageUnitChangeHook storageUnitChangeHook = null;
+    private long storageUnitLease = -1L;
+    private Watch.Watcher fragmentWatcher;
+    private FragmentChangeHook fragmentChangeHook = null;
+    private long fragmentLease = -1L;
+    private Watch.Watcher userWatcher;
+    private UserChangeHook userChangeHook = null;
+    private long userLease = -1L;
 
     public ETCDMetaStorage() {
         client = Client.builder()
@@ -193,7 +172,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.iginxChangeHook == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             IginxMeta iginx;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -233,7 +212,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.storageWatcher == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             StorageEngineMeta storageEngine;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -271,7 +250,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.storageUnitWatcher == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             StorageUnitMeta storageUnit;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -306,7 +285,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.fragmentChangeHook == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             FragmentMeta fragment;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -342,7 +321,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.userChangeHook == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             UserMeta userMeta;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -532,7 +511,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     storageEngines.put(storageEngine.getId(), storageEngine);
                 });
             } else { // 服务器上还没有，将本地的注册到服务器上
-                for (StorageEngineMeta storageEngine: localStorageEngines) {
+                for (StorageEngineMeta storageEngine : localStorageEngines) {
                     long id = nextId(STORAGE_ID); // 给每个数据后端分配 id
                     storageEngine.setId(id);
                     storageEngines.put(storageEngine.getId(), storageEngine);
@@ -587,7 +566,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     .get();
             List<KeyValue> kvs = response.getKvs();
             kvs.sort(Comparator.comparing(e -> e.getKey().toString(StandardCharsets.UTF_8)));
-            for (KeyValue kv: kvs) {
+            for (KeyValue kv : kvs) {
                 StorageUnitMeta storageUnit = JsonUtils.fromJson(kv.getValue().getBytes(), StorageUnitMeta.class);
                 if (!storageUnit.isMaster()) { // 需要加入到主节点的子节点列表中
                     StorageUnitMeta masterStorageUnit = storageUnitMap.get(storageUnit.getMasterId());
@@ -663,7 +642,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
                             GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
                     .get();
-            for (KeyValue kv: response.getKvs()) {
+            for (KeyValue kv : response.getKvs()) {
                 FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
                 fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>())
                         .add(fragment);

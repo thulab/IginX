@@ -23,7 +23,7 @@ public class BatchTest {
 
         IginXStatement statement = new IginXStatement(null, null);
 
-        for (String sql: sqlList) {
+        for (String sql : sqlList) {
             statement.addBatch(sql);
         }
         Assert.assertEquals(sqlList, statement.getBatchSQLList());

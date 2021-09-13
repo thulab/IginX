@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 

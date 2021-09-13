@@ -135,7 +135,8 @@ $ unzip apache-iotdb-0.12.0-server-bin.zip
 
 ### 下载二进制可执行文件
 
-直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/rc/v0.2.0/IginX-release-v0.2.0-bin.tar.gz) 即可
+直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/rc/v0.2.0/IginX-release-v0.2.0-bin.tar.gz)
+即可
 
 ```shell
 $ cd ~
@@ -294,7 +295,8 @@ $ ./sbin/start_iginx.sh
 
 ### 配置项
 
-为方便 IginX 的配置与管理，IginX 为用户提供多项可选配置。IginX 配置文件位于 IginX 安装目录 `$IginX_HOME/conf` 文件夹下的 `config.properties` 中，主要包括 IginX、Rest、元数据管理三方面配置。
+为方便 IginX 的配置与管理，IginX 为用户提供多项可选配置。IginX 配置文件位于 IginX 安装目录 `$IginX_HOME/conf` 文件夹下的 `config.properties` 中，主要包括
+IginX、Rest、元数据管理三方面配置。
 
 #### IginX 配置
 
@@ -473,7 +475,10 @@ $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1
 
 ### RPC 接口
 
-除了 RESTful 接口外，IginX 还提供了 RPC 的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX 还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了 RPC 接口最常见的用法。
+除了 RESTful 接口外，IginX 还提供了 RPC
+的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX
+还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了
+RPC 接口最常见的用法。
 
 下面是一个简短的使用教程。
 
@@ -500,7 +505,8 @@ $ mvn clean install -DskipTests
 </dependency>
 ```
 
-在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端 IginX 的账户名和密码直接填写 root 即可：
+在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端
+IginX 的账户名和密码直接填写 root 即可：
 
 ```Java
 Session session = new Session("127.0.0.1", 6888, "root", "root");

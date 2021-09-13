@@ -1,17 +1,21 @@
 import cn.edu.tsinghua.iginx.jdbc.IginXPreparedStatement;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 
 public class ExampleTest {
 
+    private static final long START_TIMESTAMP = 0L;
+    private static final long END_TIMESTAMP = 100L;
     private static Connection connection;
     private static Statement statement;
     private static PreparedStatement preparedStatement;
-
-    private static final long START_TIMESTAMP = 0L;
-    private static final long END_TIMESTAMP = 100L;
-
     private static String prefix = "us.d2";
 
     private static String S1 = "long";
@@ -175,7 +179,7 @@ public class ExampleTest {
                 System.out.print(metaData.getColumnLabel(i + 1) + " ");
             }
             System.out.println();
-            while (resultSet.next()) {
+            while(resultSet.next()) {
                 for (int i = 1; ; i++) {
                     System.out.print(resultSet.getString(i));
                     if (i < columnCount) {

@@ -69,7 +69,7 @@ public class LastQueryCombiner {
                 continue;
             }
             Pair<Long, Object> lastPair = rawData.get(0);
-            for (Pair<Long, Object> pair: rawData) {
+            for (Pair<Long, Object> pair : rawData) {
                 if (pair.v != null && (lastPair.v == null || pair.k > lastPair.k))
                     lastPair = pair;
             }

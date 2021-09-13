@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 
 public class InfluxDBSessionIT extends BaseSessionIT {
 
-    public InfluxDBSessionIT(){
+    public InfluxDBSessionIT() {
         super();
         this.defaultPort2 = 8087;
         this.isAbleToDelete = false;

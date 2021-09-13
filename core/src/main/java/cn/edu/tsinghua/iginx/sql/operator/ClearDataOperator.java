@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ClearDataOperator extends Operator {
 
-    public ClearDataOperator(){
+    public ClearDataOperator() {
         this.operatorType = OperatorType.CLEAR_DATA;
     }
 
