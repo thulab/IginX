@@ -76,24 +76,19 @@ public class QueryMetric {
         aggregators.add(qa);
     }
 
-
-    public void setAnnotation(Boolean annotation)
-    {
-        this.annotation = annotation;
-    }
-
-    public Boolean getAnnotation()
-    {
+    public Boolean getAnnotation() {
         return annotation;
     }
 
-    public AnnotationLimit getAnnotationLimit()
-    {
+    public void setAnnotation(Boolean annotation) {
+        this.annotation = annotation;
+    }
+
+    public AnnotationLimit getAnnotationLimit() {
         return annotationLimit;
     }
 
-    public void setAnnotationLimit(AnnotationLimit annotationLimit)
-    {
+    public void setAnnotationLimit(AnnotationLimit annotationLimit) {
         this.annotationLimit = annotationLimit;
     }
 }

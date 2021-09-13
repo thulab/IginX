@@ -1,11 +1,31 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
-import cn.edu.tsinghua.iginx.combine.*;
+import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
+import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
+import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
+import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
+import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.*;
+import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
+import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
+import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
+import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
@@ -46,6 +66,58 @@ public class SelectOperator extends Operator {
         endTime = Long.MAX_VALUE;
         limit = Integer.MAX_VALUE;
         offset = 0;
+    }
+
+    public static FuncType str2FuncType(String str) {
+        switch (str.toLowerCase()) {
+            case "first_value":
+                return FuncType.FirstValue;
+            case "last_value":
+                return FuncType.LastValue;
+            case "first":
+                return FuncType.First;
+            case "last":
+                return FuncType.Last;
+            case "min":
+                return FuncType.Min;
+            case "max":
+                return FuncType.Max;
+            case "avg":
+                return FuncType.Avg;
+            case "count":
+                return FuncType.Count;
+            case "sum":
+                return FuncType.Sum;
+            case "":
+                return null;
+            default:
+                return FuncType.Udf;
+        }
+    }
+
+    public static AggregateType funcType2AggregateType(FuncType type) {
+        switch (type) {
+            case First:
+                return AggregateType.FIRST;
+            case Last:
+                return AggregateType.LAST;
+            case FirstValue:
+                return AggregateType.FIRST_VALUE;
+            case LastValue:
+                return AggregateType.LAST_VALUE;
+            case Min:
+                return AggregateType.MIN;
+            case Max:
+                return AggregateType.MAX;
+            case Avg:
+                return AggregateType.AVG;
+            case Count:
+                return AggregateType.COUNT;
+            case Sum:
+                return AggregateType.SUM;
+            default:
+                return null;
+        }
     }
 
     public boolean isHasFunc() {
@@ -207,58 +279,6 @@ public class SelectOperator extends Operator {
             } else {
                 this.queryType = QueryType.SimpleQuery;
             }
-        }
-    }
-
-    public static FuncType str2FuncType(String str) {
-        switch (str.toLowerCase()) {
-            case "first_value":
-                return FuncType.FirstValue;
-            case "last_value":
-                return FuncType.LastValue;
-            case "first":
-                return FuncType.First;
-            case "last":
-                return FuncType.Last;
-            case "min":
-                return FuncType.Min;
-            case "max":
-                return FuncType.Max;
-            case "avg":
-                return FuncType.Avg;
-            case "count":
-                return FuncType.Count;
-            case "sum":
-                return FuncType.Sum;
-            case "":
-                return null;
-            default:
-                return FuncType.Udf;
-        }
-    }
-
-    public static AggregateType funcType2AggregateType(FuncType type) {
-        switch (type) {
-            case First:
-                return AggregateType.FIRST;
-            case Last:
-                return AggregateType.LAST;
-            case FirstValue:
-                return AggregateType.FIRST_VALUE;
-            case LastValue:
-                return AggregateType.LAST_VALUE;
-            case Min:
-                return AggregateType.MIN;
-            case Max:
-                return AggregateType.MAX;
-            case Avg:
-                return AggregateType.AVG;
-            case Count:
-                return AggregateType.COUNT;
-            case Sum:
-                return AggregateType.SUM;
-            default:
-                return null;
         }
     }
 

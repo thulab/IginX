@@ -1,7 +1,12 @@
 package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.operator.*;
+import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
+import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
+import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
+import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import org.antlr.v4.runtime.CharStreams;
@@ -9,9 +14,14 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class ParseTest {
 

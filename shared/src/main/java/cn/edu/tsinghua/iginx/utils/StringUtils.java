@@ -21,8 +21,8 @@ package cn.edu.tsinghua.iginx.utils;
 public class StringUtils {
 
     /**
-     * @param ts 时间序列(可能等于/含有*，不可能为null)
-     * @param border 分片的开始/结束边界(不可能等于/含有*，可能为null)
+     * @param ts      时间序列(可能等于/含有*，不可能为null)
+     * @param border  分片的开始/结束边界(不可能等于/含有*，可能为null)
      * @param isStart 是否为开始边界
      */
     public static int compare(String ts, String border, boolean isStart) {

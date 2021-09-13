@@ -22,18 +22,18 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import java.util.Collections;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class IMetaManagerTest {
 
@@ -92,7 +92,7 @@ public class IMetaManagerTest {
         iMetaManager.addOrUpdateSchemaMapping("schema2", schemaMap2);
         // query schema2
         Map<String, Integer> queriedSchemaMap2 = iMetaManager.getSchemaMapping("schema2");
-        for (String key: queriedSchemaMap2.keySet()) {
+        for (String key : queriedSchemaMap2.keySet()) {
             assertEquals(schemaMap2.get(key), queriedSchemaMap2.get(key));
         }
         // add schema2-key3-6
@@ -100,7 +100,7 @@ public class IMetaManagerTest {
         iMetaManager.addOrUpdateSchemaMappingItem("schema2", "key3", 6);
         // query schema2
         queriedSchemaMap2 = iMetaManager.getSchemaMapping("schema2");
-        for (String key: queriedSchemaMap2.keySet()) {
+        for (String key : queriedSchemaMap2.keySet()) {
             assertEquals(schemaMap2.get(key), queriedSchemaMap2.get(key));
         }
     }

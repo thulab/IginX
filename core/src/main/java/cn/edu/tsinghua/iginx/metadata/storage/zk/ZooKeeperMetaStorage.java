@@ -19,21 +19,20 @@
 package cn.edu.tsinghua.iginx.metadata.storage.zk;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
-import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import org.apache.curator.framework.CuratorFramework;
@@ -91,35 +90,20 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static ZooKeeperMetaStorage INSTANCE = null;
 
     private final CuratorFramework client;
-
-    private SchemaMappingChangeHook schemaMappingChangeHook = null;
-
-    protected TreeCache schemaMappingsCache;
-
-    private IginxChangeHook iginxChangeHook = null;
-
-    protected TreeCache iginxCache;
-
-    private StorageChangeHook storageChangeHook = null;
-
-    protected TreeCache storageEngineCache;
-
-    private StorageUnitChangeHook storageUnitChangeHook = null;
-
-    protected TreeCache storageUnitCache;
-
     private final Lock storageUnitMutexLock = new ReentrantLock();
-
     private final InterProcessMutex storageUnitMutex;
-
-    private FragmentChangeHook fragmentChangeHook = null;
-
-    protected TreeCache fragmentCache;
-
     private final Lock fragmentMutexLock = new ReentrantLock();
-
     private final InterProcessMutex fragmentMutex;
-
+    protected TreeCache schemaMappingsCache;
+    protected TreeCache iginxCache;
+    protected TreeCache storageEngineCache;
+    protected TreeCache storageUnitCache;
+    protected TreeCache fragmentCache;
+    private SchemaMappingChangeHook schemaMappingChangeHook = null;
+    private IginxChangeHook iginxChangeHook = null;
+    private StorageChangeHook storageChangeHook = null;
+    private StorageUnitChangeHook storageUnitChangeHook = null;
+    private FragmentChangeHook fragmentChangeHook = null;
     private UserChangeHook userChangeHook = null;
 
     private TreeCache userCache;
@@ -751,7 +735,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             }
             List<UserMeta> users = new ArrayList<>();
             List<String> usernames = this.client.getChildren().forPath(USER_NODE_PREFIX);
-            for (String username: usernames) {
+            for (String username : usernames) {
                 byte[] data = this.client.getData()
                         .forPath(USER_NODE_PREFIX + "/" + username);
                 UserMeta user = JsonUtils.fromJson(data, UserMeta.class);

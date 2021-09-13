@@ -44,7 +44,7 @@ public class ShowColumnsCombiner {
 
     public void combineResult(ShowColumnsResp resp, List<ShowColumnsPlanExecuteResult> planExecuteResults) {
         Map<String, DataType> columnMap = new HashMap<>();
-        for (ShowColumnsPlanExecuteResult planExecuteResult: planExecuteResults) {
+        for (ShowColumnsPlanExecuteResult planExecuteResult : planExecuteResults) {
             if (planExecuteResult == null || planExecuteResult.getPaths() == null || planExecuteResult.getDataTypes() == null) {
                 continue;
             }
@@ -65,7 +65,7 @@ public class ShowColumnsCombiner {
         }
         List<String> paths = new ArrayList<>();
         List<DataType> dataTypes = new ArrayList<>();
-        for (Map.Entry<String, DataType> entry: columnMap.entrySet()) {
+        for (Map.Entry<String, DataType> entry : columnMap.entrySet()) {
             paths.add(entry.getKey());
             dataTypes.add(entry.getValue());
         }

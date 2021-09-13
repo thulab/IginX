@@ -22,7 +22,7 @@ package cn.edu.tsinghua.iginx.combine;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 
-public class LastQueryCombineResult  extends DataCombineResult {
+public class LastQueryCombineResult extends DataCombineResult {
 
     private final LastQueryResp resp;
 

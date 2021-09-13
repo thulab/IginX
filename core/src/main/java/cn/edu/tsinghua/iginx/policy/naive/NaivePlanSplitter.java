@@ -32,9 +32,9 @@ import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
 import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
@@ -297,7 +297,7 @@ class NaivePlanSplitter implements IPlanSplitter {
         long timespan = 0L;
         for (List<FragmentMeta> fragmentMetas : fragmentMetasList) {
             long endTime = fragmentMetas.get(0).getTimeInterval().getEndTime();
-            while (index < planTimeIntervals.size() && planTimeIntervals.get(index).getEndTime() <= endTime) {
+            while(index < planTimeIntervals.size() && planTimeIntervals.get(index).getEndTime() <= endTime) {
                 TimeInterval timeInterval = planTimeIntervals.get(index++);
                 if (timeInterval.getSpan() >= precision) {
                     // 对于聚合子查询，清空 timespan，并且在计划全部加入之后增加组号

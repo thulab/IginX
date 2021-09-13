@@ -2,7 +2,12 @@ package cn.edu.tsinghua.iginx.jdbc;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.util.Properties;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -12,8 +17,6 @@ public class IginXDriver implements Driver {
 
     private static final boolean IGINX_JDBC_COMPLIANT = false;
 
-    private final String IGINX_URL_PREFIX = Config.IGINX_URL_PREFIX + ".*";
-
     static {
         try {
             DriverManager.registerDriver(new IginXDriver());
@@ -22,7 +25,10 @@ public class IginXDriver implements Driver {
         }
     }
 
-    public IginXDriver() {}
+    private final String IGINX_URL_PREFIX = Config.IGINX_URL_PREFIX + ".*";
+
+    public IginXDriver() {
+    }
 
     @Override
     public Connection connect(String url, Properties info) throws SQLException {

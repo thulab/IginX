@@ -131,7 +131,7 @@ public class DownsampleCombiner {
         {
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while (it.hasNext()) {
+            while(it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
                 if (dataSetWrapper.hasNext()) {
                     dataSetWrapper.next();
@@ -151,7 +151,7 @@ public class DownsampleCombiner {
             }
         }
 
-        while (!dataSetWrappers.isEmpty()) {
+        while(!dataSetWrappers.isEmpty()) {
             long timestamp = Long.MAX_VALUE;
             // 顺序访问所有的还有数据数据的 timestamp，获取当前的时间戳
             for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
@@ -183,7 +183,7 @@ public class DownsampleCombiner {
             // 在加载完一轮数据之后，把更新加载过数据的时间
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while (it.hasNext()) {
+            while(it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
                 if (dataSetWrapper.getTimestamp() == timestamp) { // 如果时间戳是当前的时间戳，则意味着本行读完了，加载下一行
                     if (dataSetWrapper.hasNext()) {

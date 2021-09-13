@@ -28,7 +28,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -67,17 +66,6 @@ public class DefaultMetaCache implements IMetaCache {
     // user 的缓存
     private final Map<String, UserMeta> userMetaMap;
 
-    public static DefaultMetaCache getInstance() {
-        if (INSTANCE == null) {
-            synchronized (DefaultMetaCache.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DefaultMetaCache();
-                }
-            }
-        }
-        return INSTANCE;
-    }
-
     private DefaultMetaCache() {
         // 分片相关
         sortedFragmentMetaLists = new ArrayList<>();
@@ -96,13 +84,24 @@ public class DefaultMetaCache implements IMetaCache {
         userMetaMap = new ConcurrentHashMap<>();
     }
 
+    public static DefaultMetaCache getInstance() {
+        if (INSTANCE == null) {
+            synchronized (DefaultMetaCache.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultMetaCache();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
         List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
         if (fragmentSeriesList.isEmpty()) {
             return resultList;
         }
         int index = 0;
-        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
+        while(index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
             if (fragmentSeriesList.get(index).k.isIntersect(tsInterval)) {
                 resultList.add(fragmentSeriesList.get(index));
             }
@@ -117,7 +116,7 @@ public class DefaultMetaCache implements IMetaCache {
             return resultList;
         }
         int index = 0;
-        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
+        while(index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
             if (fragmentSeriesList.get(index).k.isContain(tsName)) {
                 resultList.add(fragmentSeriesList.get(index));
             }
@@ -132,7 +131,7 @@ public class DefaultMetaCache implements IMetaCache {
             return resultList;
         }
         int index = 0;
-        while (index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
+        while(index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
             if (fragmentMetaList.get(index).getTimeInterval().isIntersect(timeInterval)) {
                 resultList.add(fragmentMetaList.get(index));
             }
@@ -173,7 +172,7 @@ public class DefaultMetaCache implements IMetaCache {
             return;
         }
         int left = 0, right = sortedFragmentMetaLists.size() - 1;
-        while (left <= right) {
+        while(left <= right) {
             int mid = (left + right) / 2;
             TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
             if (tsInterval.compareTo(midTsInterval) < 0) {
@@ -295,7 +294,7 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void initStorageUnit(Map<String, StorageUnitMeta> storageUnits) {
         storageUnitLock.writeLock().lock();
-        for (StorageUnitMeta storageUnit: storageUnits.values()) {
+        for (StorageUnitMeta storageUnit : storageUnits.values()) {
             storageUnitMetaMap.put(storageUnit.getId(), storageUnit);
             getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
         }
@@ -428,7 +427,7 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public List<UserMeta> getUser(List<String> usernames) {
         List<UserMeta> users = new ArrayList<>();
-        for (String username: usernames) {
+        for (String username : usernames) {
             UserMeta user = userMetaMap.get(username);
             if (user != null) {
                 users.add(user.copy());

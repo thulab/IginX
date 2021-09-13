@@ -102,12 +102,12 @@ public class IginXDataSource implements DataSource {
     }
 
     @Override
-    public void setLoginTimeout(int seconds) throws SQLException {
+    public int getLoginTimeout() throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
-    public int getLoginTimeout() throws SQLException {
+    public void setLoginTimeout(int seconds) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 

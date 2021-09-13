@@ -27,8 +27,8 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import io.moquette.interception.AbstractInterceptHandler;
 import io.moquette.interception.messages.InterceptPublishMessage;
-import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +88,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         // 计算实际写入的数据
         List<String> paths = events.stream().map(Message::getPath).distinct().sorted().collect(Collectors.toList());
         Map<String, DataType> dataTypeMap = new HashMap<>();
-        for (Message message: events) {
+        for (Message message : events) {
             if (dataTypeMap.containsKey(message.getPath())) {
                 if (dataTypeMap.get(message.getPath()) != message.getDataType()) {
                     logger.error("meet error when process message, data type conflict: {} with type {} and {}", message.getPath(), dataTypeMap.get(message.getPath()), message.getDataType());
@@ -107,9 +107,9 @@ public class PublishHandler extends AbstractInterceptHandler {
         List<ByteBuffer> bitmapList = new ArrayList<>();
         List<ByteBuffer> valuesList = new ArrayList<>();
         int from = 0, to = 0;
-        while (from < events.size()) {
+        while(from < events.size()) {
             long timestamp = events.get(from).getTimestamp();
-            while (to < events.size() && events.get(to).getTimestamp() == timestamp) {
+            while(to < events.size() && events.get(to).getTimestamp() == timestamp) {
                 to++;
             }
             timestamps.add(timestamp);

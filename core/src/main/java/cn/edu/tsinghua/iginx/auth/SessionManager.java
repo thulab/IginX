@@ -27,10 +27,8 @@ import java.util.Set;
 
 public class SessionManager {
 
-    private final UserManager userManager;
-
     private static SessionManager instance;
-
+    private final UserManager userManager;
     private final Set<Long> sessionIds = new ConcurrentSet<>();
 
     private SessionManager(UserManager userManager) {
@@ -61,7 +59,7 @@ public class SessionManager {
             throw new IllegalArgumentException("non-existed user: " + username);
         }
         long sessionId = (username.hashCode() + SnowFlakeUtils.getInstance().nextId()) << 4;
-        for (AuthType auth: userMeta.getAuths()) {
+        for (AuthType auth : userMeta.getAuths()) {
             sessionId += (1L << auth.getValue());
         }
         sessionIds.add(sessionId);

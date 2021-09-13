@@ -74,13 +74,11 @@ public class Metric {
         values.add(value);
     }
 
-    public String getAnnotation()
-    {
+    public String getAnnotation() {
         return annotation;
     }
 
-    public void setAnnotation(String annotation)
-    {
+    public void setAnnotation(String annotation) {
         this.annotation = annotation;
     }
 }

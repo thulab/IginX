@@ -98,7 +98,7 @@ public class QueryExecutor {
             StringBuilder path = new StringBuilder("");
             Iterator iter = pos2path.entrySet().iterator();
             int now = 0;
-            while (iter.hasNext()) {
+            while(iter.hasNext()) {
                 String ins = null;
                 Map.Entry entry = (Map.Entry) iter.next();
                 List<String> tmp = queryMetric.getTags().get(entry.getValue());

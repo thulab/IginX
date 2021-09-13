@@ -54,7 +54,6 @@ import java.util.concurrent.Executors;
 @Path("/")
 public class MetricsResource {
 
-    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private static final String INSERT_URL = "api/v1/datapoints";
     private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotations";
     private static final String QUERY_URL = "api/v1/datapoints/query";
@@ -65,6 +64,7 @@ public class MetricsResource {
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(100);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
+    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
 
     @Inject
@@ -87,7 +87,7 @@ public class MetricsResource {
         InputStreamReader inputStreamReader = new InputStreamReader(inputStream, "utf-8");
         BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
         String str;
-        while ((str = bufferedReader.readLine()) != null) {
+        while((str = bufferedReader.readLine()) != null) {
             buffer.append(str);
         }
         bufferedReader.close();
@@ -105,10 +105,8 @@ public class MetricsResource {
     @POST
     @Path("query")
     public Response grafanaQuery(String jsonStr) {
-        try
-        {
-            if (jsonStr == null)
-            {
+        try {
+            if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");
             }
             QueryParser parser = new QueryParser();
@@ -118,9 +116,7 @@ public class MetricsResource {
             String entity = parser.parseResultToGrafanaJson(result);
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }

@@ -100,7 +100,7 @@ public class SnowFlakeUtils {
     private long getNextMill() {
         long mill = getNewTimestamp();
         //使用while循环等待直到下一毫秒。
-        while (mill <= lastStamp) {
+        while(mill <= lastStamp) {
             mill = getNewTimestamp();
         }
         return mill;

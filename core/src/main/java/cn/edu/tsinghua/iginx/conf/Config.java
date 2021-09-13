@@ -313,6 +313,7 @@ public class Config {
     public void setMqttMaxMessageSize(int mqttMaxMessageSize) {
         this.mqttMaxMessageSize = mqttMaxMessageSize;
     }
+
     public String getClients() {
         return clients;
     }

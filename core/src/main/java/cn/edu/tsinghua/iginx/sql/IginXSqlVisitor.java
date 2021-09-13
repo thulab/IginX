@@ -1,14 +1,42 @@
 package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.SqlParser.*;
-import cn.edu.tsinghua.iginx.sql.operator.*;
+import cn.edu.tsinghua.iginx.sql.SqlParser.AndExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.ConstantContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.DateExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.EngineTypeContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.ExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.InsertMultiValueContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.InsertValuesSpecContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.MeasurementNameContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.OrExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.PredicateContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.SelectClauseContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.ShowTimeSeriesStatementContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.SpecialClauseContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.TimeRangeContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
+import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ClearDataOperator;
+import cn.edu.tsinghua.iginx.sql.operator.CountPointsOperator;
+import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
+import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
+import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ShowTimeSeriesOperator;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     @Override
