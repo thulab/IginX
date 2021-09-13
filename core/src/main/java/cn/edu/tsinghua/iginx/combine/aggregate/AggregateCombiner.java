@@ -148,7 +148,6 @@ public class AggregateCombiner {
     }
 
     public void combineMaxResult(AggregateQueryResp resp, List<SingleValueAggregateQueryPlanExecuteResult> planExecuteResults) {
-        logger.info("debug");
         combineSingleValueResult(resp, planExecuteResults, e -> e.v.stream().reduce((x, y) -> {
             int compareResult = compare(x.v, y.v, e.k);
             if (compareResult > 0)

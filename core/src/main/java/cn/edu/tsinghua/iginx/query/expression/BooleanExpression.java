@@ -41,7 +41,7 @@ public class BooleanExpression {
 
     public boolean getBool(Map<String, Object> values) {
         //System.out.println(values);
-          //      System.out.println(getAnswer(root, values));
+        //      System.out.println(getAnswer(root, values));
         return getAnswer(root, values);
     }
 
@@ -319,7 +319,7 @@ public class BooleanExpression {
                         operatorDeque.push(e);
                         break;
                     case RIGHTBRACKET:
-                        while (!operatorDeque.isEmpty() &&
+                        while(!operatorDeque.isEmpty() &&
                                 operatorDeque.peek().getOperator().getOperatorType() != OperatorType.LEFTBRACKET) {
                             postfixExpr.add(operatorDeque.pop());
                         }
@@ -340,7 +340,7 @@ public class BooleanExpression {
                     case OR:
                     case END:
                         int now = getOperatorPriority(e.getOperator().getOperatorType());
-                        while (!operatorDeque.isEmpty() &&
+                        while(!operatorDeque.isEmpty() &&
                                 getOperatorPriority(operatorDeque.peek().getOperator().getOperatorType()) <= now) {
                             postfixExpr.add(operatorDeque.pop());
                         }

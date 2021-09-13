@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
@@ -40,6 +41,7 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
@@ -111,11 +113,11 @@ public class CombineExecutor implements ICombineExecutor {
                         aggregateCombiner.combineMinResult(aggregateQueryResp, planExecuteResults.stream()
                                 .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
-                    case FIRST:
+                    case FIRST_VALUE:
                         aggregateCombiner.combineFirstResult(aggregateQueryResp, planExecuteResults.stream()
                                 .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
-                    case LAST:
+                    case LAST_VALUE:
                         aggregateCombiner.combineLastResult(aggregateQueryResp, planExecuteResults.stream()
                                 .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
@@ -151,6 +153,14 @@ public class CombineExecutor implements ICombineExecutor {
                     statusMessage = "Combine execute results failed: " + e.getMessage();
                 }
                 combineResult = new ValueFilterCombineResult(RpcUtils.status(statusCode, statusMessage), valueFilterQueryResp);
+                break;
+            case LastQuery:
+                LastQueryResp lastQueryResp = new LastQueryResp();
+                lastQueryResp.setStatus(RpcUtils.SUCCESS);
+                LastQueryCombiner.getInstance().combineResult(lastQueryResp, planExecuteResults.stream()
+                        .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
+                        .map(LastQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                combineResult = new LastQueryCombineResult(RpcUtils.status(statusCode, statusMessage), lastQueryResp);
                 break;
             case ShowColumns:
                 ShowColumnsResp showColumnsResp = new ShowColumnsResp();

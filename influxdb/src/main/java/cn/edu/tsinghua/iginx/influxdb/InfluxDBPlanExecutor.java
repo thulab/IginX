@@ -1,7 +1,23 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.influxdb;
 
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.UnsupportedDataTypeException;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -10,11 +26,14 @@ import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
@@ -23,8 +42,8 @@ import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
@@ -33,6 +52,7 @@ import cn.edu.tsinghua.iginx.query.IStorageEngine;
 import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
@@ -84,8 +104,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
 
     private final Map<Long, InfluxDBClient> storageEngineIdToClient;
 
+    private final Map<Long, String> storageEngineIdToOrganization;
+
     public InfluxDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
         storageEngineIdToClient = new ConcurrentHashMap<>();
+        storageEngineIdToOrganization = new ConcurrentHashMap<>();
         for (StorageEngineMeta storageEngineMeta : storageEngineMetaList) {
             if (!createConnection(storageEngineMeta)) {
                 System.exit(1);
@@ -97,7 +120,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String url = extraParams.get("url");
         try {
-            InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
+            InfluxDBClient client = InfluxDBClientFactory.create(url, extraParams.get("token").toCharArray());
             client.close();
         } catch (Exception e) {
             logger.error("test connection error: {}", e.getMessage());
@@ -107,27 +130,28 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     private boolean createConnection(StorageEngineMeta storageEngineMeta) {
-        if (storageEngineMeta.getDbType() != StorageEngine.InfluxDB) {
-            logger.warn("unexpected database: " + storageEngineMeta.getDbType());
+        if (!storageEngineMeta.getStorageEngine().equals("influxdb")) {
+            logger.warn("unexpected database: " + storageEngineMeta.getStorageEngine());
             return false;
         }
         if (!testConnection(storageEngineMeta)) {
-            logger.error("cannot connect to " + storageEngineMeta.toString());
+            logger.error("cannot connect to " + storageEngineMeta);
             return false;
         }
         Map<String, String> extraParams = storageEngineMeta.getExtraParams();
         String url = extraParams.getOrDefault("url", "http://localhost:8086/");
-        InfluxDBClient client = InfluxDBClientFactory.create(url, ConfigDescriptor.getInstance().getConfig().getInfluxDBToken().toCharArray());
+        InfluxDBClient client = InfluxDBClientFactory.create(url, extraParams.get("token").toCharArray());
         storageEngineIdToClient.put(storageEngineMeta.getId(), client);
+        storageEngineIdToOrganization.put(storageEngineMeta.getId(), extraParams.get("organization"));
         return true;
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -143,7 +167,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
             }
 
             List<Bucket> bucketList = client.getBucketsApi()
-                    .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
+                    .findBucketsByOrgName(storageEngineIdToOrganization.get(plan.getStorageEngineId())).stream()
                     .filter(b -> b.getName().equals(bucketName))
                     .collect(Collectors.toList());
             Bucket bucket;
@@ -198,11 +222,16 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+        return syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+    }
+
+    @Override
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -211,7 +240,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         for (int i = 0; i < plan.getPathsNum(); i++) {
             String bucketName = plan.getStorageUnit().getId();
             List<Bucket> bucketList = client.getBucketsApi()
-                    .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
+                    .findBucketsByOrgName(storageEngineIdToOrganization.get(plan.getStorageEngineId())).stream()
                     .filter(b -> b.getName().equals(bucketName))
                     .collect(Collectors.toList());
             Bucket bucket;
@@ -277,11 +306,16 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
+    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        return syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
+    }
+
+    @Override
     public QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -311,7 +345,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -326,7 +360,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
             }
 
             Bucket bucket = client.getBucketsApi()
-                    .findBucketsByOrgName(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()).stream()
+                    .findBucketsByOrgName(storageEngineIdToOrganization.get(plan.getStorageEngineId())).stream()
                     .filter(b -> b.getName().equals(bucketName))
                     .findFirst()
                     .orElseThrow(IllegalStateException::new);
@@ -345,11 +379,16 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
+    public LastQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+        return null;
+    }
+
+    @Override
     public AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -420,7 +459,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -459,7 +498,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -515,11 +554,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -562,11 +601,11 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -613,7 +652,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -666,7 +705,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -739,12 +778,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstValueQueryPlan(DownsampleFirstValueQueryPlan plan) {
         return syncExecuteDownsampleQueryPlan(plan);
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastValueQueryPlan(DownsampleLastValueQueryPlan plan) {
         return syncExecuteDownsampleQueryPlan(plan);
     }
 
@@ -753,7 +792,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 
@@ -793,7 +832,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
-                .filter(o -> o.getName().equals(ConfigDescriptor.getInstance().getConfig().getInfluxDBOrganizationName()))
+                .filter(o -> o.getName().equals(storageEngineIdToOrganization.get(plan.getStorageEngineId())))
                 .findFirst()
                 .orElseThrow(IllegalStateException::new);
 

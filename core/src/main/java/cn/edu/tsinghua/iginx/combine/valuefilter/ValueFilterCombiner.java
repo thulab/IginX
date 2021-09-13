@@ -17,7 +17,6 @@
  * under the License.
  */
 package cn.edu.tsinghua.iginx.combine.valuefilter;
-//todo
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
@@ -113,7 +112,7 @@ public class ValueFilterCombiner {
         {
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while (it.hasNext()) {
+            while(it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
                 if (dataSetWrapper.hasNext()) {
                     dataSetWrapper.next();
@@ -131,7 +130,7 @@ public class ValueFilterCombiner {
             }
         }
 
-        while (!dataSetWrappers.isEmpty()) {
+        while(!dataSetWrappers.isEmpty()) {
             long timestamp = Long.MAX_VALUE;
             for (QueryExecuteDataSetWrapper dataSetWrapper : dataSetWrappers) {
                 timestamp = Math.min(dataSetWrapper.getTimestamp(), timestamp);
@@ -183,7 +182,7 @@ public class ValueFilterCombiner {
 
             Iterator<QueryExecuteDataSetWrapper> it = dataSetWrappers.iterator();
             Set<QueryExecuteDataSetWrapper> deletedDataSetWrappers = new HashSet<>();
-            while (it.hasNext()) {
+            while(it.hasNext()) {
                 QueryExecuteDataSetWrapper dataSetWrapper = it.next();
                 if (dataSetWrapper.getTimestamp() == timestamp) {
                     if (dataSetWrapper.hasNext()) {

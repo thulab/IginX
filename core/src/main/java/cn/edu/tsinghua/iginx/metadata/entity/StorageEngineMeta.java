@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +47,7 @@ public final class StorageEngineMeta {
     /**
      * 数据库类型
      */
-    private StorageEngine storageEngine;
+    private String storageEngine;
 
     /**
      * 实例上管理的存储单元列表
@@ -60,11 +58,11 @@ public final class StorageEngineMeta {
 
     private boolean lastOfBatch;
 
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, long createdBy) {
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy) {
         this(id, ip, port, extraParams, storageEngine, createdBy, false);
     }
 
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, StorageEngine storageEngine, long createdBy, boolean lastOfBatch) {
+    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy, boolean lastOfBatch) {
         this.id = id;
         this.ip = ip;
         this.port = port;
@@ -106,11 +104,11 @@ public final class StorageEngineMeta {
         this.extraParams = extraParams;
     }
 
-    public StorageEngine getDbType() {
+    public String getStorageEngine() {
         return storageEngine;
     }
 
-    public void setDbType(StorageEngine storageEngine) {
+    public void setStorageEngine(String storageEngine) {
         this.storageEngine = storageEngine;
     }
 

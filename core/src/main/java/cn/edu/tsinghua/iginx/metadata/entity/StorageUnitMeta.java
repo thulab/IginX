@@ -73,14 +73,14 @@ public final class StorageUnitMeta {
         return isMaster;
     }
 
-    public void setReplicas(List<StorageUnitMeta> replicas) {
-        this.replicas = replicas;
-    }
-
     public List<StorageUnitMeta> getReplicas() {
         if (replicas == null)
             replicas = new ArrayList<>();
         return replicas;
+    }
+
+    public void setReplicas(List<StorageUnitMeta> replicas) {
+        this.replicas = replicas;
     }
 
     public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {

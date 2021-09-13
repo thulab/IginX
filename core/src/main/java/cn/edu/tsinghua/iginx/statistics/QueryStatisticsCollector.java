@@ -23,8 +23,8 @@ import cn.edu.tsinghua.iginx.core.context.ContextType;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.processor.PostQueryProcessor;
 import cn.edu.tsinghua.iginx.core.processor.PreQueryProcessor;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,11 +57,11 @@ public class QueryStatisticsCollector extends AbstractStageStatisticsCollector i
         Pair<Long, Long> detailInfo = detailInfos.computeIfAbsent(statistics.getRequestContext().getType(), e -> new Pair<>(0L, 0L));
         detailInfo.k += 1;
         detailInfo.v += statistics.getEndTime() - statistics.getBeginTime();
-        if (statistics.getRequestContext().getType() == ContextType.InsertRowRecords) {
-            insertPoints += statistics.getRequestContext().getIginxPlans().stream().map(InsertRowRecordsPlan.class::cast).mapToInt(e -> e.getTimestamps().length * e.getPathsNum()).sum();
+        if (statistics.getRequestContext().getType() == ContextType.InsertNonAlignedRowRecords) {
+            insertPoints += statistics.getRequestContext().getIginxPlans().stream().map(InsertNonAlignedRowRecordsPlan.class::cast).mapToInt(e -> e.getTimestamps().length * e.getPathsNum()).sum();
         }
-        if (statistics.getRequestContext().getType() == ContextType.InsertColumnRecords) {
-            insertPoints += statistics.getRequestContext().getIginxPlans().stream().map(InsertColumnRecordsPlan.class::cast).mapToInt(e -> e.getPathsNum() * e.getTimestamps().length).sum();
+        if (statistics.getRequestContext().getType() == ContextType.InsertNonAlignedColumnRecords) {
+            insertPoints += statistics.getRequestContext().getIginxPlans().stream().map(InsertNonAlignedColumnRecordsPlan.class::cast).mapToInt(e -> e.getPathsNum() * e.getTimestamps().length).sum();
         }
         if (statistics.getRequestContext().getType() == ContextType.QueryData) {
             queryPoints += (long) ((QueryDataCombineResult) statistics.getRequestContext().getCombineResult()).getResp().queryDataSet.getBitmapListSize() * ((QueryDataContext) statistics.getRequestContext()).getReq().paths.size();

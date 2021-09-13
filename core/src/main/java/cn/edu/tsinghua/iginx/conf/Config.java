@@ -48,10 +48,6 @@ public class Config {
 
     private int storageUnitNum = 30;
 
-    private String influxDBToken = "token";
-
-    private String influxDBOrganizationName = "organization";
-
     private String statisticsCollectorClassName = "";
 
     private int statisticsLogInterval = 1000;
@@ -81,6 +77,10 @@ public class Config {
     private String mqttPayloadFormatter = "cn.edu.tsinghua.iginx.mqtt.JsonPayloadFormatter";
 
     private int mqttMaxMessageSize = 1048576;
+
+    private String clients = "";
+
+    private int instancesNumPerClient = 0;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -192,22 +192,6 @@ public class Config {
 
     public void setStorageUnitNum(int storageUnitNum) {
         this.storageUnitNum = storageUnitNum;
-    }
-
-    public String getInfluxDBToken() {
-        return influxDBToken;
-    }
-
-    public void setInfluxDBToken(String influxDBToken) {
-        this.influxDBToken = influxDBToken;
-    }
-
-    public String getInfluxDBOrganizationName() {
-        return influxDBOrganizationName;
-    }
-
-    public void setInfluxDBOrganizationName(String influxDBOrganizationName) {
-        this.influxDBOrganizationName = influxDBOrganizationName;
     }
 
     public String getStatisticsCollectorClassName() {
@@ -328,5 +312,21 @@ public class Config {
 
     public void setMqttMaxMessageSize(int mqttMaxMessageSize) {
         this.mqttMaxMessageSize = mqttMaxMessageSize;
+    }
+
+    public String getClients() {
+        return clients;
+    }
+
+    public void setClients(String clients) {
+        this.clients = clients;
+    }
+
+    public int getInstancesNumPerClient() {
+        return instancesNumPerClient;
+    }
+
+    public void setInstancesNumPerClient(int instancesNumPerClient) {
+        this.instancesNumPerClient = instancesNumPerClient;
     }
 }

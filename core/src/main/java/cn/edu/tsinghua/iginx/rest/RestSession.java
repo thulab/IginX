@@ -34,15 +34,14 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -113,7 +112,7 @@ public class RestSession {
             logger.info("当前请求将被重定向到：" + resp.status.getMessage());
             redirectTimes += 1;
 
-        } while (redirectTimes <= Constants.MAX_REDIRECT_TIME);
+        } while(redirectTimes <= Constants.MAX_REDIRECT_TIME);
 
         if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
             throw new SessionException("重定向次数过多！");
@@ -138,7 +137,7 @@ public class RestSession {
         return false;
     }
 
-    public void addStorageEngine(String ip, int port, StorageEngineType type, Map<String, String> extraParams) throws ExecutionException {
+    public void addStorageEngine(String ip, int port, String type, Map<String, String> extraParams) throws ExecutionException {
         StorageEngine storageEngine = new StorageEngine(ip, port, type, extraParams);
         AddStorageEnginesReq req = new AddStorageEnginesReq(sessionId, Collections.singletonList(storageEngine));
 
@@ -150,7 +149,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -171,12 +170,12 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
-    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -222,7 +221,7 @@ public class RestSession {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertColumnRecordsReq req = new InsertColumnRecordsReq();
+        InsertNonAlignedColumnRecordsReq req = new InsertNonAlignedColumnRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -235,16 +234,16 @@ public class RestSession {
         do {
             lock.readLock().lock();
             try {
-                status = client.insertColumnRecords(req);
+                status = client.insertNonAlignedColumnRecords(req);
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
-    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                           List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -291,7 +290,7 @@ public class RestSession {
             bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
         }
 
-        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
         req.setSessionId(sessionId);
         req.setPaths(paths);
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
@@ -304,11 +303,11 @@ public class RestSession {
         do {
             lock.readLock().lock();
             try {
-                status = client.insertRowRecords(req);
+                status = client.insertNonAlignedRowRecords(req);
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -329,7 +328,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime) {
@@ -348,7 +347,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
     }
@@ -371,7 +370,7 @@ public class RestSession {
                 } finally {
                     lock.readLock().unlock();
                 }
-            } while (checkRedirect(resp.status));
+            } while(checkRedirect(resp.status));
         } catch (Exception e) {
             throw new SessionException(e);
         }
@@ -390,7 +389,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
@@ -408,7 +407,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
     }

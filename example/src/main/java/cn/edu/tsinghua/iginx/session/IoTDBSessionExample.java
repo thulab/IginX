@@ -30,14 +30,18 @@ import java.util.List;
 public class IoTDBSessionExample {
 
     private static final String S1 = "sg.d1.s1";
-    private static final String S2 = "sg.d2.s2";
-    private static final String S3 = "sg.d3.s3";
-    private static final String S4 = "sg.d4.s4";
-    private static final long COLUMN_START_TIMESTAMP = 0L;
-    private static final long COLUMN_END_TIMESTAMP = 10500L;
-    private static final long ROW_START_TIMESTAMP = 10501L;
-    private static final long ROW_END_TIMESTAMP = 21000L;
-    private static final int ROW_INTERVAL = 10;
+    private static final String S2 = "sg.d1.s2";
+    private static final String S3 = "sg.d2.s1";
+    private static final String S4 = "sg.d3.s1";
+    private static final long COLUMN_START_TIMESTAMP = 1L;
+    private static final long COLUMN_END_TIMESTAMP = 10000L;
+    private static final long NON_ALIGNED_COLUMN_START_TIMESTAMP = 10001L;
+    private static final long NON_ALIGNED_COLUMN_END_TIMESTAMP = 20000L;
+    private static final long ROW_START_TIMESTAMP = 20001L;
+    private static final long ROW_END_TIMESTAMP = 30000L;
+    private static final long NON_ALIGNED_ROW_START_TIMESTAMP = 30001L;
+    private static final long NON_ALIGNED_ROW_END_TIMESTAMP = 40000L;
+    private static final int INTERVAL = 10;
     private static Session session;
 
     public static void main(String[] args) throws SessionException, ExecutionException {
@@ -45,16 +49,22 @@ public class IoTDBSessionExample {
         // 打开 Session
         session.openSession();
 
-        // 列式插入数据
+        // 列式插入对齐数据
         insertColumnRecords();
-        // 行式插入数据
+        // 列式插入非对齐数据
+        insertNonAlignedColumnRecords();
+        // 行式插入对齐数据
         insertRowRecords();
-        // 值过滤查询
-        valueFilterQuery();
+        // 行式插入非对齐数据
+        insertNonAlignedRowRecords();
         // 查询数据
         queryData();
-        // 聚合查询数据
+        // 值过滤查询
+        valueFilterQuery();
+        // 聚合查询
         aggregateQuery();
+        // Last 查询
+        lastQuery();
         // 降采样聚合查询
         downsampleQuery();
         // 删除数据
@@ -73,10 +83,47 @@ public class IoTDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP);
+        int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP + 1);
         long[] timestamps = new long[size];
         for (long i = 0; i < size; i++) {
-            timestamps[(int) i] = i;
+            timestamps[(int) i] = i + COLUMN_START_TIMESTAMP;
+        }
+
+        Object[] valuesList = new Object[4];
+        for (long i = 0; i < 4; i++) {
+            Object[] values = new Object[size];
+            for (long j = 0; j < size; j++) {
+                if (i < 2) {
+                    values[(int) j] = i + j;
+                } else {
+                    values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+                }
+            }
+            valuesList[(int) i] = values;
+        }
+
+        List<DataType> dataTypeList = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.LONG);
+        }
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.BINARY);
+        }
+
+        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    private static void insertNonAlignedColumnRecords() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+        paths.add(S3);
+        paths.add(S4);
+
+        int size = (int) (NON_ALIGNED_COLUMN_END_TIMESTAMP - NON_ALIGNED_COLUMN_START_TIMESTAMP + 1);
+        long[] timestamps = new long[size];
+        for (long i = 0; i < size; i++) {
+            timestamps[(int) i] = i + NON_ALIGNED_COLUMN_START_TIMESTAMP;
         }
 
         Object[] valuesList = new Object[4];
@@ -104,7 +151,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
-        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
@@ -114,11 +161,45 @@ public class IoTDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP) / ROW_INTERVAL;
+        int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP + 1);
         long[] timestamps = new long[size];
         Object[] valuesList = new Object[size];
         for (long i = 0; i < size; i++) {
-            timestamps[(int) i] = ROW_START_TIMESTAMP + i * ROW_INTERVAL;
+            timestamps[(int) i] = ROW_START_TIMESTAMP + i;
+            Object[] values = new Object[4];
+            for (long j = 0; j < 4; j++) {
+                if (j < 2) {
+                    values[(int) j] = i + j;
+                } else {
+                    values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
+                }
+            }
+            valuesList[(int) i] = values;
+        }
+
+        List<DataType> dataTypeList = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.LONG);
+        }
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.BINARY);
+        }
+
+        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+        paths.add(S3);
+        paths.add(S4);
+
+        int size = (int) (NON_ALIGNED_ROW_END_TIMESTAMP - NON_ALIGNED_ROW_START_TIMESTAMP + 1);
+        long[] timestamps = new long[size];
+        Object[] valuesList = new Object[size];
+        for (long i = 0; i < size; i++) {
+            timestamps[(int) i] = NON_ALIGNED_ROW_START_TIMESTAMP + i;
             Object[] values = new Object[4];
             for (long j = 0; j < 4; j++) {
                 if ((i + j) % 2 == 0) {
@@ -142,7 +223,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
-        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void queryData() throws SessionException, ExecutionException {
@@ -152,7 +233,7 @@ public class IoTDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        long startTime = COLUMN_END_TIMESTAMP - 100L;
+        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
         long endTime = ROW_START_TIMESTAMP + 100L;
 
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
@@ -166,53 +247,11 @@ public class IoTDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        long startTime = COLUMN_END_TIMESTAMP - 100L;
+        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
         long endTime = ROW_START_TIMESTAMP + 100L;
-        String booleanExpression = S2 + " < " + (ROW_START_TIMESTAMP + 50L) + " && " + S1 + " > " + (COLUMN_END_TIMESTAMP - 50L);
+        String booleanExpression = S2 + " < " + 9930 + " && " + S1 + " > " + 9910;
         SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
         dataSet.print();
-    }
-
-    private static void downsampleQuery() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-
-        long startTime = ROW_START_TIMESTAMP;
-        long endTime = ROW_END_TIMESTAMP + 1;
-
-        System.out.println("Downsample Query: ");
-
-        // MAX
-        SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // MIN
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // FIRST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // LAST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // COUNT
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // SUM
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // AVG
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, ROW_INTERVAL * 100);
-        dataSet.print();
-
-        // 降采样查询结束
-        System.out.println("Downsample Query Finished.");
     }
 
     private static void aggregateQuery() throws SessionException, ExecutionException {
@@ -221,7 +260,10 @@ public class IoTDBSessionExample {
         paths.add(S2);
 
         long startTime = COLUMN_END_TIMESTAMP - 100L;
-        long endTime = ROW_START_TIMESTAMP + 100L;
+        long endTime = NON_ALIGNED_ROW_START_TIMESTAMP + 100L;
+
+        // 聚合查询开始
+        System.out.println("Aggregate Query: ");
 
         // MAX
         SessionAggregateQueryDataSet dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MAX);
@@ -231,12 +273,12 @@ public class IoTDBSessionExample {
         dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.MIN);
         dataSet.print();
 
-        // FIRST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST);
+        // FIRST_VALUE
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE);
         dataSet.print();
 
-        // LAST
-        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST);
+        // LAST_VALUE
+        dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.LAST_VALUE);
         dataSet.print();
 
         // COUNT
@@ -250,6 +292,63 @@ public class IoTDBSessionExample {
         // AVG
         dataSet = session.aggregateQuery(paths, startTime, endTime, AggregateType.AVG);
         dataSet.print();
+
+        // 聚合查询结束
+        System.out.println("Aggregate Query Finished.");
+    }
+
+    private static void lastQuery() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+        paths.add(S3);
+        paths.add(S4);
+
+        LastQueryDataSet dataSet = session.queryLast(paths, 0L);
+        dataSet.print();
+    }
+
+    private static void downsampleQuery() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+
+        long startTime = COLUMN_END_TIMESTAMP - 100L;
+        long endTime = NON_ALIGNED_ROW_START_TIMESTAMP + 100L;
+
+        // 降采样查询开始
+        System.out.println("Downsample Query: ");
+
+        // MAX
+        SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, INTERVAL * 100L);
+        dataSet.print();
+
+        // MIN
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, INTERVAL * 100L);
+        dataSet.print();
+
+        // FIRST_VALUE
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, INTERVAL * 100L);
+        dataSet.print();
+
+        // LAST_VALUE
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, INTERVAL * 100L);
+        dataSet.print();
+
+        // COUNT
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.COUNT, INTERVAL * 100L);
+        dataSet.print();
+
+        // SUM
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.SUM, INTERVAL * 100L);
+        dataSet.print();
+
+        // AVG
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.AVG, INTERVAL * 100L);
+        dataSet.print();
+
+        // 降采样查询结束
+        System.out.println("Downsample Query Finished.");
     }
 
     private static void deleteDataInColumns() throws SessionException, ExecutionException {
@@ -258,7 +357,7 @@ public class IoTDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        long startTime = COLUMN_END_TIMESTAMP - 50L;
+        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 50L;
         long endTime = ROW_START_TIMESTAMP + 50L;
 
         session.deleteDataInColumns(paths, startTime, endTime);

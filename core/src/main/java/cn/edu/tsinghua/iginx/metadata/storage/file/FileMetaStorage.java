@@ -2,17 +2,19 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -39,27 +41,17 @@ import java.util.concurrent.locks.ReentrantLock;
 public class FileMetaStorage implements IMetaStorage {
 
     private static final Logger logger = LoggerFactory.getLogger(FileMetaStorage.class);
-
-    private static FileMetaStorage INSTANCE = null;
-
     private static final String PATH = ConfigDescriptor.getInstance().getConfig().getFileDataDir();
-
     private static final String STORAGE_META_FILE = "storage.log";
-
     private static final String SCHEMA_MAPPING_FILE = "schema.log";
-
     private static final String FRAGMENT_META_FILE = "fragment.log";
-
     private static final String STORAGE_UNIT_META_FILE = "storage_unit.log";
-
     private static final String ID_FILE = "id.log";
-
+    private static final String USER_META_FILE = "user.log";
     private static final long ID_INTERVAL = 100000;
-
     private static final String UPDATE = "update";
-
     private static final String REMOVE = "remove";
-
+    private static FileMetaStorage INSTANCE = null;
     private final Lock storageUnitLock = new ReentrantLock();
 
     private final Lock fragmentUnitLock = new ReentrantLock();
@@ -72,18 +64,9 @@ public class FileMetaStorage implements IMetaStorage {
 
     private FragmentChangeHook fragmentChangeHook = null;
 
-    private AtomicLong idGenerator = null; // 加载完数据之后赋值
+    private UserChangeHook userChangeHook = null;
 
-    public static FileMetaStorage getInstance() {
-        if (INSTANCE == null) {
-            synchronized (FileMetaStorage.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new FileMetaStorage();
-                }
-            }
-        }
-        return INSTANCE;
-    }
+    private AtomicLong idGenerator = null; // 加载完数据之后赋值
 
     public FileMetaStorage() {
         try {
@@ -103,6 +86,9 @@ public class FileMetaStorage implements IMetaStorage {
             }
             if (Files.notExists(Paths.get(PATH, STORAGE_UNIT_META_FILE))) {
                 Files.createFile(Paths.get(PATH, STORAGE_UNIT_META_FILE));
+            }
+            if (Files.notExists(Paths.get(PATH, USER_META_FILE))) {
+                Files.createFile(Paths.get(PATH, USER_META_FILE));
             }
         } catch (IOException e) {
             logger.error("encounter error when create log file: ", e);
@@ -133,6 +119,17 @@ public class FileMetaStorage implements IMetaStorage {
         }
     }
 
+    public static FileMetaStorage getInstance() {
+        if (INSTANCE == null) {
+            synchronized (FileMetaStorage.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new FileMetaStorage();
+                }
+            }
+        }
+        return INSTANCE;
+    }
+
     private long nextId() {
         long id = idGenerator.incrementAndGet();
         if (id % ID_INTERVAL == 0) {
@@ -151,11 +148,12 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, SCHEMA_MAPPING_FILE).toFile())))) {
             String line;
             String[] params;
-            while ((line = reader.readLine()) != null) {
+            while((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 String schema = params[1];
                 if (params[0].equals(UPDATE)) {
-                    Map<String, Integer> schemeMapping = JsonUtils.getGson().fromJson(params[2], new TypeToken<Map<String, Integer>>() {}.getType());
+                    Map<String, Integer> schemeMapping = JsonUtils.getGson().fromJson(params[2], new TypeToken<Map<String, Integer>>() {
+                    }.getType());
                     schemaMappings.put(schema, schemeMapping);
                 } else if (params[0].equals(REMOVE)) {
                     schemaMappings.remove(schema);
@@ -206,7 +204,8 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerIginxChangeHook(IginxChangeHook hook) { }
+    public void registerIginxChangeHook(IginxChangeHook hook) {
+    }
 
     @Override
     public Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines) throws MetaStorageException {
@@ -214,7 +213,7 @@ public class FileMetaStorage implements IMetaStorage {
 
         File storageEngineLogFile = Paths.get(PATH, STORAGE_META_FILE).toFile();
         if (storageEngineLogFile.length() == 0L) { // 是第一次启动
-            for (StorageEngineMeta storageEngine: storageEngines) {
+            for (StorageEngineMeta storageEngine : storageEngines) {
                 storageEngine.setId(addStorageEngine(storageEngine));
                 storageEngineMap.put(storageEngine.getId(), storageEngine);
             }
@@ -222,7 +221,7 @@ public class FileMetaStorage implements IMetaStorage {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_META_FILE).toFile())))) {
                 String line;
                 String[] params;
-                while ((line = reader.readLine()) != null) {
+                while((line = reader.readLine()) != null) {
                     params = line.split(" ");
                     if (params[0].equals(UPDATE)) {
                         StorageEngineMeta storageEngine = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), StorageEngineMeta.class);
@@ -271,12 +270,12 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_UNIT_META_FILE).toFile())))) {
             String line;
             String[] params;
-            while ((line = reader.readLine()) != null) {
+            while((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     StorageUnitMeta storageUnit = JsonUtils.getGson().fromJson(params[1], StorageUnitMeta.class);
                     storageUnitMap.put(storageUnit.getId(), storageUnit);
-                }  else {
+                } else {
                     logger.error("unknown log content: " + line);
                 }
             }
@@ -328,14 +327,14 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, FRAGMENT_META_FILE).toFile())))) {
             String line;
             String[] params;
-            while ((line = reader.readLine()) != null) {
+            while((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
                     List<FragmentMeta> fragmentList = fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>());
                     fragmentList.remove(fragment);
                     fragmentList.add(fragment);
-                }  else {
+                } else {
                     logger.error("unknown log content: " + line);
                 }
             }
@@ -386,6 +385,84 @@ public class FileMetaStorage implements IMetaStorage {
     public void registerFragmentChangeHook(FragmentChangeHook hook) {
         if (hook != null) {
             fragmentChangeHook = hook;
+        }
+    }
+
+    @Override
+    public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
+        Map<String, UserMeta> users = new HashMap<>();
+
+        File userLogFile = Paths.get(PATH, USER_META_FILE).toFile();
+        if (userLogFile.length() == 0L) { // 是第一次启动
+            addUser(userMeta);
+            users.put(userMeta.getUsername(), userMeta);
+        } else {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, USER_META_FILE).toFile())))) {
+                String line;
+                String[] params;
+                while((line = reader.readLine()) != null) {
+                    params = line.split(" ");
+                    if (params[0].equals(UPDATE)) {
+                        UserMeta user = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), UserMeta.class);
+                        users.put(user.getUsername(), user);
+                    } else if (params[0].equals(REMOVE)) {
+                        String username = params[1];
+                        users.remove(username);
+                    } else {
+                        logger.error("unknown log content: " + line);
+                    }
+                }
+            } catch (IOException e) {
+                logger.error("encounter error when read user log file: ", e);
+                throw new MetaStorageException(e);
+            }
+        }
+        return new ArrayList<>(users.values());
+    }
+
+    @Override
+    public void registerUserChangeHook(UserChangeHook hook) {
+        if (hook != null) {
+            userChangeHook = hook;
+        }
+    }
+
+    @Override
+    public void addUser(UserMeta userMeta) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, USER_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(userMeta)));
+        } catch (IOException e) {
+            logger.error("write user file error: ", e);
+            throw new MetaStorageException(e);
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(userMeta.getUsername(), userMeta);
+        }
+    }
+
+    @Override
+    public void updateUser(UserMeta userMeta) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, USER_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(userMeta)));
+        } catch (IOException e) {
+            logger.error("write user file error: ", e);
+            throw new MetaStorageException(e);
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(userMeta.getUsername(), userMeta);
+        }
+    }
+
+    @Override
+    public void removeUser(String username) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, USER_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", REMOVE, username));
+        } catch (IOException e) {
+            logger.error("write user file error: ", e);
+            throw new MetaStorageException(e);
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(username, null);
         }
     }
 }

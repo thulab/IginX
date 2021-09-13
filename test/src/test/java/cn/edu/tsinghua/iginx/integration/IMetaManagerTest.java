@@ -18,17 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.integration;
 
-import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.utils.Pair;
-import java.util.ArrayList;
-import java.util.Collections;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -40,7 +33,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class IMetaManagerTest {
 
@@ -99,7 +92,7 @@ public class IMetaManagerTest {
         iMetaManager.addOrUpdateSchemaMapping("schema2", schemaMap2);
         // query schema2
         Map<String, Integer> queriedSchemaMap2 = iMetaManager.getSchemaMapping("schema2");
-        for (String key: queriedSchemaMap2.keySet()) {
+        for (String key : queriedSchemaMap2.keySet()) {
             assertEquals(schemaMap2.get(key), queriedSchemaMap2.get(key));
         }
         // add schema2-key3-6
@@ -107,7 +100,7 @@ public class IMetaManagerTest {
         iMetaManager.addOrUpdateSchemaMappingItem("schema2", "key3", 6);
         // query schema2
         queriedSchemaMap2 = iMetaManager.getSchemaMapping("schema2");
-        for (String key: queriedSchemaMap2.keySet()) {
+        for (String key : queriedSchemaMap2.keySet()) {
             assertEquals(schemaMap2.get(key), queriedSchemaMap2.get(key));
         }
     }
@@ -122,7 +115,7 @@ public class IMetaManagerTest {
         extraParams.put("username", "root");
         extraParams.put("password", "root");
         extraParams.put("sessionPoolSize", "20");
-        StorageEngineMeta engine1 = new StorageEngineMeta(0, "127.0.0.1", 1001, extraParams, StorageEngine.IoTDB, iMetaManager.getIginxId());
+        StorageEngineMeta engine1 = new StorageEngineMeta(0, "127.0.0.1", 1001, extraParams, "iotdb", iMetaManager.getIginxId());
         iMetaManager.addStorageEngines(Collections.singletonList(engine1));
         // 查询数据后端
         storageEngines = iMetaManager.getStorageEngineList();

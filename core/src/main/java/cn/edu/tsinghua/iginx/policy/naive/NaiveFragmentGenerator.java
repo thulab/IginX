@@ -24,12 +24,17 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 class NaiveFragmentGenerator implements IFragmentGenerator {
 
@@ -41,6 +46,17 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
+        if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
+            return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
+        } else
+            return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
+    }
+
+    /**
+     * This storage unit initialization method is used when no information about workloads is provided
+     */
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> paths, TimeInterval timeInterval) {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
@@ -82,6 +98,67 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
         storageUnitList.add(pair.v);
 
         return new Pair<>(fragmentList, storageUnitList);
+    }
+
+    /**
+     * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
+     */
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+        List<StorageEngineMeta> storageEngineList = iMetaManager.getStorageEngineList();
+        int storageEngineNum = storageEngineList.size();
+
+        String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
+        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+        String[] prefixes = new String[clients.length * instancesNumPerClient];
+        for (int i = 0; i < clients.length; i++) {
+            for (int j = 0; j < instancesNumPerClient; j++) {
+                prefixes[i * instancesNumPerClient + j] = clients[i] + (j + 2);
+            }
+        }
+        Arrays.sort(prefixes);
+
+        List<FragmentMeta> fragmentMetaList;
+        String masterId;
+        StorageUnitMeta storageUnit;
+        for (int i = 0; i < clients.length * instancesNumPerClient - 1; i++) {
+            fragmentMetaList = new ArrayList<>();
+            masterId = RandomStringUtils.randomAlphanumeric(16);
+            storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
+//            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(i * 2 % getStorageEngineList().size()).getId(), masterId, true);
+            for (int j = i + 1; j < i + replicaNum; j++) {
+                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(j % storageEngineNum).getId(), masterId, false));
+//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get((i * 2 + 1) % getStorageEngineList().size()).getId(), masterId, false));
+            }
+            storageUnitList.add(storageUnit);
+            fragmentMetaList.add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, masterId));
+            fragmentMap.put(new TimeSeriesInterval(prefixes[i], prefixes[i + 1]), fragmentMetaList);
+        }
+
+        fragmentMetaList = new ArrayList<>();
+        masterId = RandomStringUtils.randomAlphanumeric(16);
+        storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0).getId(), masterId, true);
+        for (int i = 1; i < replicaNum; i++) {
+            storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i).getId(), masterId, false));
+        }
+        storageUnitList.add(storageUnit);
+        fragmentMetaList.add(new FragmentMeta(null, prefixes[0], 0, Long.MAX_VALUE, masterId));
+        fragmentMap.put(new TimeSeriesInterval(null, prefixes[0]), fragmentMetaList);
+
+        fragmentMetaList = new ArrayList<>();
+        masterId = RandomStringUtils.randomAlphanumeric(16);
+        storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(storageEngineNum - 1).getId(), masterId, true);
+        for (int i = 1; i < replicaNum; i++) {
+            storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(storageEngineNum - 1 - i).getId(), masterId, false));
+        }
+        storageUnitList.add(storageUnit);
+        fragmentMetaList.add(new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, masterId));
+        fragmentMap.put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null), fragmentMetaList);
+
+        return new Pair<>(fragmentMap, storageUnitList);
     }
 
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {

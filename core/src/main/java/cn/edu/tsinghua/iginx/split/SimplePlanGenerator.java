@@ -24,7 +24,10 @@ import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
@@ -32,11 +35,14 @@ import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
@@ -45,8 +51,8 @@ import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleQueryPlan;
@@ -58,7 +64,10 @@ import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -103,6 +112,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 return splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
+            case InsertNonAlignedColumnRecords:
+                InsertNonAlignedColumnRecordsReq insertNonAlignedColumnRecordsReq = ((InsertNonAlignedColumnRecordsContext) requestContext).getReq();
+                long[] nonAlignedTimestamps = getLongArrayFromByteArray(insertNonAlignedColumnRecordsReq.getTimestamps());
+                InsertNonAlignedColumnRecordsPlan insertNonAlignedColumnRecordsPlan = new InsertNonAlignedColumnRecordsPlan(
+                        insertNonAlignedColumnRecordsReq.getPaths(),
+                        nonAlignedTimestamps,
+                        getColumnValuesByDataType(insertNonAlignedColumnRecordsReq.getValuesList(), insertNonAlignedColumnRecordsReq.getDataTypeList(), insertNonAlignedColumnRecordsReq.getBitmapList(), nonAlignedTimestamps.length),
+                        insertNonAlignedColumnRecordsReq.getBitmapList().stream().map(x -> new Bitmap(nonAlignedTimestamps.length, x.array())).collect(Collectors.toList()),
+                        insertNonAlignedColumnRecordsReq.getDataTypeList(),
+                        insertNonAlignedColumnRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertNonAlignedColumnRecordsPlanResults(insertNonAlignedColumnRecordsPlan);
+                return splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
             case InsertRowRecords:
                 InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
@@ -115,6 +137,18 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 return splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
+            case InsertNonAlignedRowRecords:
+                InsertNonAlignedRowRecordsReq insertNonAlignedRowRecordsReq = ((InsertNonAlignedRowRecordsContext) requestContext).getReq();
+                InsertNonAlignedRowRecordsPlan insertNonAlignedRowRecordsPlan = new InsertNonAlignedRowRecordsPlan(
+                        insertNonAlignedRowRecordsReq.getPaths(),
+                        getLongArrayFromByteArray(insertNonAlignedRowRecordsReq.getTimestamps()),
+                        getRowValuesByDataType(insertNonAlignedRowRecordsReq.getValuesList(), insertNonAlignedRowRecordsReq.getDataTypeList(), insertNonAlignedRowRecordsReq.getBitmapList()),
+                        insertNonAlignedRowRecordsReq.getBitmapList().stream().map(x -> new Bitmap(insertNonAlignedRowRecordsReq.getPathsSize(), x.array())).collect(Collectors.toList()),
+                        insertNonAlignedRowRecordsReq.getDataTypeList(),
+                        insertNonAlignedRowRecordsReq.getAttributesList()
+                );
+                splitInfoList = planSplitter.getSplitInsertNonAlignedRowRecordsPlanResults(insertNonAlignedRowRecordsPlan);
+                return splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -152,22 +186,22 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         );
                         splitInfoList = planSplitter.getSplitMinQueryPlanResults(minQueryPlan);
                         return splitMinQueryPlan(minQueryPlan, splitInfoList);
-                    case FIRST:
-                        FirstQueryPlan firstQueryPlan = new FirstQueryPlan(
+                    case FIRST_VALUE:
+                        FirstValueQueryPlan firstValueQueryPlan = new FirstValueQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
                                 aggregateQueryReq.getEndTime()
                         );
-                        splitInfoList = planSplitter.getSplitFirstQueryPlanResults(firstQueryPlan);
-                        return splitFirstQueryPlan(firstQueryPlan, splitInfoList);
-                    case LAST:
-                        LastQueryPlan lastQueryPlan = new LastQueryPlan(
+                        splitInfoList = planSplitter.getSplitFirstQueryPlanResults(firstValueQueryPlan);
+                        return splitFirstQueryPlan(firstValueQueryPlan, splitInfoList);
+                    case LAST_VALUE:
+                        LastValueQueryPlan lastValueQueryPlan = new LastValueQueryPlan(
                                 aggregateQueryReq.getPaths(),
                                 aggregateQueryReq.getStartTime(),
                                 aggregateQueryReq.getEndTime()
                         );
-                        splitInfoList = planSplitter.getSplitLastQueryPlanResults(lastQueryPlan);
-                        return splitLastQueryPlan(lastQueryPlan, splitInfoList);
+                        splitInfoList = planSplitter.getSplitLastQueryPlanResults(lastValueQueryPlan);
+                        return splitLastQueryPlan(lastValueQueryPlan, splitInfoList);
                     case AVG:
                         AvgQueryPlan avgQueryPlan = new AvgQueryPlan(
                                 aggregateQueryReq.getPaths(),
@@ -243,24 +277,24 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         );
                         splitInfoList = planSplitter.getSplitDownsampleCountQueryPlanResults(downsampleCountQueryPlan);
                         return splitDownsampleCountQueryPlan(downsampleCountQueryPlan, splitInfoList);
-                    case FIRST:
-                        DownsampleFirstQueryPlan downsampleFirstQueryPlan = new DownsampleFirstQueryPlan(
+                    case FIRST_VALUE:
+                        DownsampleFirstValueQueryPlan downsampleFirstValueQueryPlan = new DownsampleFirstValueQueryPlan(
                                 downsampleQueryReq.getPaths(),
                                 downsampleQueryReq.getStartTime(),
                                 downsampleQueryReq.getEndTime(),
                                 downsampleQueryReq.getPrecision()
                         );
-                        splitInfoList = planSplitter.getSplitDownsampleFirstQueryPlanResults(downsampleFirstQueryPlan);
-                        return splitDownsampleFirstQueryPlan(downsampleFirstQueryPlan, splitInfoList);
-                    case LAST:
-                        DownsampleLastQueryPlan downsampleLastQueryPlan = new DownsampleLastQueryPlan(
+                        splitInfoList = planSplitter.getSplitDownsampleFirstQueryPlanResults(downsampleFirstValueQueryPlan);
+                        return splitDownsampleFirstQueryPlan(downsampleFirstValueQueryPlan, splitInfoList);
+                    case LAST_VALUE:
+                        DownsampleLastValueQueryPlan downsampleLastValueQueryPlan = new DownsampleLastValueQueryPlan(
                                 downsampleQueryReq.getPaths(),
                                 downsampleQueryReq.getStartTime(),
                                 downsampleQueryReq.getEndTime(),
                                 downsampleQueryReq.getPrecision()
                         );
-                        splitInfoList = planSplitter.getSplitDownsampleLastQueryPlanResults(downsampleLastQueryPlan);
-                        return splitDownsampleLastQueryPlan(downsampleLastQueryPlan, splitInfoList);
+                        splitInfoList = planSplitter.getSplitDownsampleLastQueryPlanResults(downsampleLastValueQueryPlan);
+                        return splitDownsampleLastQueryPlan(downsampleLastValueQueryPlan, splitInfoList);
                     default:
                         throw new UnsupportedOperationException(downsampleQueryReq.getAggregateType().toString());
                 }
@@ -275,6 +309,14 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 splitInfoList = planSplitter.getValueFilterQueryPlanResults(valueFilterQueryPlan);
                 return splitValueFilterQueryPlan(valueFilterQueryPlan, splitInfoList);
             }
+            case LastQuery:
+                LastQueryReq lastQueryReq = ((LastQueryContext) requestContext).getReq();
+                LastQueryPlan lastQueryPlan = new LastQueryPlan(
+                        lastQueryReq.getPaths(),
+                        lastQueryReq.getStartTime()
+                );
+                splitInfoList = planSplitter.getLastQueryPlanResults(lastQueryPlan);
+                return splitLastQueryPlan(lastQueryPlan, splitInfoList);
             case ShowColumns:
                 return planSplitter.getSplitShowColumnsPlanResult().stream().map(ShowColumnsPlan::new).collect(Collectors.toList());
             default:
@@ -285,8 +327,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<DeleteColumnsPlan> splitDeleteColumnsPlan(DeleteColumnsPlan plan, List<SplitInfo> infoList) {
         List<DeleteColumnsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             DeleteColumnsPlan subPlan = new DeleteColumnsPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     info.getStorageUnit()
             );
             plans.add(subPlan);
@@ -302,8 +348,39 @@ public class SimplePlanGenerator implements IPlanGenerator {
             if (valuesAndBitmaps.k.length == 0) {
                 continue;
             }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             InsertColumnRecordsPlan subPlan = new InsertColumnRecordsPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
+                    timestampsAndIndexes.k,
+                    valuesAndBitmaps.k,
+                    valuesAndBitmaps.v,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
+            subPlan.setSync(info.getStorageUnit().isMaster());
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<InsertNonAlignedColumnRecordsPlan> splitInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertNonAlignedColumnRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (valuesAndBitmaps.k.length == 0) {
+                continue;
+            }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            InsertNonAlignedColumnRecordsPlan subPlan = new InsertNonAlignedColumnRecordsPlan(
+                    paths,
                     timestampsAndIndexes.k,
                     valuesAndBitmaps.k,
                     valuesAndBitmaps.v,
@@ -325,8 +402,39 @@ public class SimplePlanGenerator implements IPlanGenerator {
             if (valuesAndBitmaps.k.length == 0) {
                 continue;
             }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             InsertRowRecordsPlan subPlan = new InsertRowRecordsPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
+                    timestampsAndIndexes.k,
+                    valuesAndBitmaps.k,
+                    valuesAndBitmaps.v,
+                    plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
+                    plan.getAttributesByInterval(info.getTimeSeriesInterval()),
+                    info.getStorageUnit()
+            );
+            subPlan.setSync(info.getStorageUnit().isMaster());
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
+    public List<InsertNonAlignedRowRecordsPlan> splitInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan, List<SplitInfo> infoList) {
+        List<InsertNonAlignedRowRecordsPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            Pair<long[], Pair<Integer, Integer>> timestampsAndIndexes = plan.getTimestampsAndIndexesByInterval(info.getTimeInterval());
+            Pair<Object[], List<Bitmap>> valuesAndBitmaps = plan.getValuesAndBitmapsByIndexes(timestampsAndIndexes.v, info.getTimeSeriesInterval());
+            if (valuesAndBitmaps.k.length == 0) {
+                continue;
+            }
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            InsertNonAlignedRowRecordsPlan subPlan = new InsertNonAlignedRowRecordsPlan(
+                    paths,
                     timestampsAndIndexes.k,
                     valuesAndBitmaps.k,
                     valuesAndBitmaps.v,
@@ -343,8 +451,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<DeleteDataInColumnsPlan> splitDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan, List<SplitInfo> infoList) {
         List<DeleteDataInColumnsPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             DeleteDataInColumnsPlan subPlan = new DeleteDataInColumnsPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -357,8 +469,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<QueryDataPlan> splitQueryDataPlan(QueryDataPlan plan, List<SplitInfo> infoList) {
         List<QueryDataPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             QueryDataPlan subPlan = new QueryDataPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -371,8 +487,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<ValueFilterQueryPlan> splitValueFilterQueryPlan(ValueFilterQueryPlan plan, List<SplitInfo> infoList) {
         List<ValueFilterQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             ValueFilterQueryPlan subPlan = new ValueFilterQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     plan.getBooleanExpression(),
@@ -383,11 +503,32 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
+    public List<LastQueryPlan> splitLastQueryPlan(LastQueryPlan plan, List<SplitInfo> infoList) {
+        List<LastQueryPlan> plans = new ArrayList<>();
+        for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            LastQueryPlan subPlan = new LastQueryPlan(
+                    paths,
+                    Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
+                    info.getStorageUnit()
+            );
+            plans.add(subPlan);
+        }
+        return plans;
+    }
+
     public List<MaxQueryPlan> splitMaxQueryPlan(MaxQueryPlan plan, List<SplitInfo> infoList) {
         List<MaxQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             MaxQueryPlan subPlan = new MaxQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -400,11 +541,15 @@ public class SimplePlanGenerator implements IPlanGenerator {
     private List<IginxPlan> splitDownsampleQueryPlan(DownsampleQueryPlan plan, List<SplitInfo> infoList) {
         List<IginxPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             IginxPlan subPlan = null;
             switch (info.getType()) {
                 case MAX:
                     subPlan = new MaxQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
@@ -412,23 +557,23 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case MIN:
                     subPlan = new MinQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
                     );
                     break;
-                case FIRST:
-                    subPlan = new FirstQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                case FIRST_VALUE:
+                    subPlan = new FirstValueQueryPlan(
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
                     );
                     break;
-                case LAST:
-                    subPlan = new LastQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                case LAST_VALUE:
+                    subPlan = new LastValueQueryPlan(
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
@@ -436,7 +581,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case AVG:
                     subPlan = new AvgQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
@@ -444,7 +589,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case SUM:
                     subPlan = new SumQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
@@ -452,7 +597,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case COUNT:
                     subPlan = new CountQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             info.getStorageUnit()
@@ -460,7 +605,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case DOWNSAMPLE_MAX:
                     subPlan = new DownsampleMaxQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -469,7 +614,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case DOWNSAMPLE_MIN:
                     subPlan = new DownsampleMinQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -477,8 +622,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     );
                     break;
                 case DOWNSAMPLE_FIRST:
-                    subPlan = new DownsampleFirstQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    subPlan = new DownsampleFirstValueQueryPlan(
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -486,8 +631,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     );
                     break;
                 case DOWNSAMPLE_LAST:
-                    subPlan = new DownsampleLastQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    subPlan = new DownsampleLastValueQueryPlan(
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -496,7 +641,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case DOWNSAMPLE_AVG:
                     subPlan = new DownsampleAvgQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -505,7 +650,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case DOWNSAMPLE_SUM:
                     subPlan = new DownsampleSumQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -514,7 +659,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     break;
                 case DOWNSAMPLE_COUNT:
                     subPlan = new DownsampleCountQueryPlan(
-                            plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                            paths,
                             info.getTimeInterval().getStartTime(),
                             info.getTimeInterval().getEndTime(),
                             plan.getPrecision(),
@@ -537,8 +682,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<MinQueryPlan> splitMinQueryPlan(MinQueryPlan plan, List<SplitInfo> infoList) {
         List<MinQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             MinQueryPlan subPlan = new MinQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -552,11 +701,15 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return splitDownsampleQueryPlan(plan, infoList);
     }
 
-    public List<FirstQueryPlan> splitFirstQueryPlan(FirstQueryPlan plan, List<SplitInfo> infoList) {
-        List<FirstQueryPlan> plans = new ArrayList<>();
+    public List<FirstValueQueryPlan> splitFirstQueryPlan(FirstValueQueryPlan plan, List<SplitInfo> infoList) {
+        List<FirstValueQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
-            FirstQueryPlan subPlan = new FirstQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            FirstValueQueryPlan subPlan = new FirstValueQueryPlan(
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -566,15 +719,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
-    public List<IginxPlan> splitDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan, List<SplitInfo> infoList) {
+    public List<IginxPlan> splitDownsampleFirstQueryPlan(DownsampleFirstValueQueryPlan plan, List<SplitInfo> infoList) {
         return splitDownsampleQueryPlan(plan, infoList);
     }
 
-    public List<LastQueryPlan> splitLastQueryPlan(LastQueryPlan plan, List<SplitInfo> infoList) {
-        List<LastQueryPlan> plans = new ArrayList<>();
+    public List<LastValueQueryPlan> splitLastQueryPlan(LastValueQueryPlan plan, List<SplitInfo> infoList) {
+        List<LastValueQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
-            LastQueryPlan subPlan = new LastQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
+            LastValueQueryPlan subPlan = new LastValueQueryPlan(
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -584,15 +741,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
         return plans;
     }
 
-    public List<IginxPlan> splitDownsampleLastQueryPlan(DownsampleLastQueryPlan plan, List<SplitInfo> infoList) {
+    public List<IginxPlan> splitDownsampleLastQueryPlan(DownsampleLastValueQueryPlan plan, List<SplitInfo> infoList) {
         return splitDownsampleQueryPlan(plan, infoList);
     }
 
     public List<CountQueryPlan> splitCountQueryPlan(CountQueryPlan plan, List<SplitInfo> infoList) {
         List<CountQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             CountQueryPlan subPlan = new CountQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -609,8 +770,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<SumQueryPlan> splitSumQueryPlan(SumQueryPlan plan, List<SplitInfo> infoList) {
         List<SumQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             SumQueryPlan subPlan = new SumQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()
@@ -627,8 +792,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
     public List<AvgQueryPlan> splitAvgQueryPlan(AvgQueryPlan plan, List<SplitInfo> infoList) {
         List<AvgQueryPlan> plans = new ArrayList<>();
         for (SplitInfo info : infoList) {
+            List<String> paths = plan.getPathsByInterval(info.getTimeSeriesInterval());
+            if (paths.size() == 0) {
+                continue;
+            }
             AvgQueryPlan subPlan = new AvgQueryPlan(
-                    plan.getPathsByInterval(info.getTimeSeriesInterval()),
+                    paths,
                     Math.max(plan.getStartTime(), info.getTimeInterval().getStartTime()),
                     Math.min(plan.getEndTime(), info.getTimeInterval().getEndTime()),
                     info.getStorageUnit()

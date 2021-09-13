@@ -57,8 +57,7 @@ public class DataPointsParser {
         this.inputStream = stream;
     }
 
-    public void parse() throws Exception
-    {
+    public void parse() throws Exception {
         try {
             session.openSession();
         } catch (SessionException e) {
@@ -89,8 +88,7 @@ public class DataPointsParser {
         }
     }
 
-    public void parseAnnotation() throws Exception
-    {
+    public void parseAnnotation() throws Exception {
         try {
             session.openSession();
         } catch (SessionException e) {
@@ -126,7 +124,7 @@ public class DataPointsParser {
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
-        while (elements.hasNext() && fieldNames.hasNext()) {
+        while(elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
         JsonNode tim = node.get("timestamp"), val = node.get("value");
@@ -135,19 +133,15 @@ public class DataPointsParser {
             ret.addValue(val.asText());
         }
         JsonNode dp = node.get("datapoints");
-        if (dp != null)
-        {
-            if (dp.isArray())
-            {
-                for (JsonNode dpnode : dp)
-                {
+        if (dp != null) {
+            if (dp.isArray()) {
+                for (JsonNode dpnode : dp) {
                     ret.addTimestamp(dpnode.asLong());
                 }
             }
         }
         JsonNode anno = node.get("annotation");
-        if (anno != null)
-        {
+        if (anno != null) {
             ret.setAnnotation(anno.toString().replace("\n", "")
                     .replace("\t", "").replace(" ", ""));
         }
@@ -160,7 +154,7 @@ public class DataPointsParser {
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
-        while (elements.hasNext() && fieldNames.hasNext()) {
+        while(elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
         JsonNode tim = node.get("timestamp"), val = node.get("value");
@@ -180,8 +174,7 @@ public class DataPointsParser {
             }
         }
         JsonNode anno = node.get("annotation");
-        if (anno != null)
-        {
+        if (anno != null) {
             ret.setAnnotation(anno.toString().replace("\n", "")
                     .replace("\t", "").replace(" ", ""));
         }
@@ -192,9 +185,7 @@ public class DataPointsParser {
         try {
             session.openSession();
             sendMetricsData();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during sending data ", e);
         }
         session.closeSession();
@@ -208,10 +199,8 @@ public class DataPointsParser {
         this.metricList = metricList;
     }
 
-    private void sendMetricsData() throws Exception
-    {
-        for (Metric metric: metricList)
-        {
+    private void sendMetricsData() throws Exception {
+        for (Metric metric : metricList) {
             boolean needUpdate = false;
             Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
             if (metricschema == null) {
@@ -219,7 +208,7 @@ public class DataPointsParser {
                 metricschema = new ConcurrentHashMap<>();
             }
             Iterator iter = metric.getTags().entrySet().iterator();
-            while (iter.hasNext()) {
+            while(iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
@@ -234,7 +223,7 @@ public class DataPointsParser {
                 pos2path.put(entry.getValue(), entry.getKey());
             StringBuilder path = new StringBuilder("");
             iter = pos2path.entrySet().iterator();
-            while (iter.hasNext()) {
+            while(iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 String ins = metric.getTags().get(entry.getValue());
                 if (ins != null)
@@ -255,9 +244,8 @@ public class DataPointsParser {
             }
             valuesList[0] = values;
             try {
-                session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
-                if (metric.getAnnotation() != null)
-                {
+                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                if (metric.getAnnotation() != null) {
                     for (int i = 0; i < size; i++) {
                         values[i] = metric.getAnnotation().getBytes();
                     }
@@ -265,7 +253,7 @@ public class DataPointsParser {
                     path.append(ANNOTATION_SPLIT_STRING);
                     paths.set(0, path.toString());
                     type.set(0, DataType.BINARY);
-                    session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
                 }
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
@@ -274,10 +262,8 @@ public class DataPointsParser {
         }
     }
 
-    private void sendAnnotationMetricsData() throws Exception
-    {
-        for (Metric metric: metricList)
-        {
+    private void sendAnnotationMetricsData() throws Exception {
+        for (Metric metric : metricList) {
             boolean needUpdate = false;
             Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
             if (metricschema == null) {
@@ -285,7 +271,7 @@ public class DataPointsParser {
                 metricschema = new ConcurrentHashMap<>();
             }
             Iterator iter = metric.getTags().entrySet().iterator();
-            while (iter.hasNext()) {
+            while(iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
@@ -300,7 +286,7 @@ public class DataPointsParser {
                 pos2path.put(entry.getValue(), entry.getKey());
             StringBuilder path = new StringBuilder("");
             iter = pos2path.entrySet().iterator();
-            while (iter.hasNext()) {
+            while(iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 String ins = metric.getTags().get(entry.getValue());
                 if (ins != null)
@@ -317,12 +303,11 @@ public class DataPointsParser {
             int size = metric.getTimestamps().size();
             Object[] valuesList = new Object[1];
             Object[] values = new Object[size];
-            for (int i = 0; i < size; i++)
-            {
+            for (int i = 0; i < size; i++) {
                 values[i] = metric.getAnnotation().getBytes();
             }
             valuesList[0] = values;
-            session.insertColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
         }
     }
 

@@ -21,13 +21,16 @@ package cn.edu.tsinghua.iginx.core.context;
 public enum ContextType {
 
     InsertRowRecords,
+    InsertNonAlignedRowRecords,
     InsertColumnRecords,
+    InsertNonAlignedColumnRecords,
     QueryData,
     DeleteColumns,
     DeleteDataInColumns,
     AggregateQuery,
     DownsampleQuery,
     ValueFilterQuery,
+    LastQuery,
     ShowColumns,
     Unknown;
 

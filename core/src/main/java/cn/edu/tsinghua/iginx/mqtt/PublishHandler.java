@@ -21,14 +21,14 @@ package cn.edu.tsinghua.iginx.mqtt;
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import io.moquette.interception.AbstractInterceptHandler;
 import io.moquette.interception.messages.InterceptPublishMessage;
-import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.buffer.ByteBuf;
+import io.netty.handler.codec.mqtt.MqttQoS;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,7 +88,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         // 计算实际写入的数据
         List<String> paths = events.stream().map(Message::getPath).distinct().sorted().collect(Collectors.toList());
         Map<String, DataType> dataTypeMap = new HashMap<>();
-        for (Message message: events) {
+        for (Message message : events) {
             if (dataTypeMap.containsKey(message.getPath())) {
                 if (dataTypeMap.get(message.getPath()) != message.getDataType()) {
                     logger.error("meet error when process message, data type conflict: {} with type {} and {}", message.getPath(), dataTypeMap.get(message.getPath()), message.getDataType());
@@ -107,9 +107,9 @@ public class PublishHandler extends AbstractInterceptHandler {
         List<ByteBuffer> bitmapList = new ArrayList<>();
         List<ByteBuffer> valuesList = new ArrayList<>();
         int from = 0, to = 0;
-        while (from < events.size()) {
+        while(from < events.size()) {
             long timestamp = events.get(from).getTimestamp();
-            while (to < events.size() && events.get(to).getTimestamp() == timestamp) {
+            while(to < events.size() && events.get(to).getTimestamp() == timestamp) {
                 to++;
             }
             timestamps.add(timestamp);
@@ -130,7 +130,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         }
 
         // 采用行接口写入数据
-        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
         req.setSessionId(0L);
         req.setTimestamps(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG));
         req.setPaths(paths);
@@ -138,7 +138,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         req.setValuesList(valuesList);
         req.setBitmapList(bitmapList);
 
-        Status status = worker.insertRowRecords(req);
+        Status status = worker.insertNonAlignedRowRecords(req);
         logger.debug("event process result: {}", status);
     }
 }

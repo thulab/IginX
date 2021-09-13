@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.core.db.StorageEngine;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
@@ -29,11 +28,14 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -50,28 +53,13 @@ import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
 
-    private static DefaultMetaManager INSTANCE;
-
     private static final Logger logger = LoggerFactory.getLogger(DefaultMetaManager.class);
-
+    private static DefaultMetaManager INSTANCE;
     private final IMetaCache cache;
 
     private final IMetaStorage storage;
-
-    private long id;
-
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
-
-    public static DefaultMetaManager getInstance() {
-        if (INSTANCE == null) {
-            synchronized (DefaultMetaManager.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DefaultMetaManager();
-                }
-            }
-        }
-        return INSTANCE;
-    }
+    private long id;
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
@@ -109,10 +97,22 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initUser();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
         }
+    }
+
+    public static DefaultMetaManager getInstance() {
+        if (INSTANCE == null) {
+            synchronized (DefaultMetaManager.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultMetaManager();
+                }
+            }
+        }
+        return INSTANCE;
     }
 
     private void initIginx() throws MetaStorageException {
@@ -123,7 +123,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addIginx(iginx);
             }
         });
-        for (IginxMeta iginx: storage.loadIginx().values()) {
+        for (IginxMeta iginx : storage.loadIginx().values()) {
             cache.addIginx(iginx);
         }
         IginxMeta iginx = new IginxMeta(0L, ConfigDescriptor.getInstance().getConfig().getIp(),
@@ -136,12 +136,12 @@ public class DefaultMetaManager implements IMetaManager {
         storage.registerStorageChangeHook((id, storageEngine) -> {
             if (storageEngine != null) {
                 cache.addStorageEngine(storageEngine);
-                for (StorageEngineChangeHook hook: storageEngineChangeHooks) {
+                for (StorageEngineChangeHook hook : storageEngineChangeHooks) {
                     hook.onChanged(null, storageEngine);
                 }
             }
         });
-        for (StorageEngineMeta storageEngine: storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
+        for (StorageEngineMeta storageEngine : storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
             cache.addStorageEngine(storageEngine);
         }
 
@@ -235,15 +235,28 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addOrUpdateSchemaMapping(schema, schemaMapping);
             }
         });
-        for (Map.Entry<String, Map<String, Integer>> schemaEntry: storage.loadSchemaMapping().entrySet()) {
+        for (Map.Entry<String, Map<String, Integer>> schemaEntry : storage.loadSchemaMapping().entrySet()) {
             cache.addOrUpdateSchemaMapping(schemaEntry.getKey(), schemaEntry.getValue());
+        }
+    }
+
+    private void initUser() throws MetaStorageException {
+        storage.registerUserChangeHook((username, user) -> {
+            if (user == null) {
+                cache.removeUser(username);
+            } else {
+                cache.addOrUpdateUser(user);
+            }
+        });
+        for (UserMeta user : storage.loadUser(resolveUserFromConf())) {
+            cache.addOrUpdateUser(user);
         }
     }
 
     @Override
     public boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
         try {
-            for (StorageEngineMeta storageEngineMeta: storageEngineMetas) {
+            for (StorageEngineMeta storageEngineMeta : storageEngineMetas) {
                 storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
                 cache.addStorageEngine(storageEngineMeta);
             }
@@ -331,7 +344,7 @@ public class DefaultMetaManager implements IMetaManager {
             storage.lockStorageUnit();
 
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
-            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+            for (StorageUnitMeta masterStorageUnit : storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
                 String fakeName = masterStorageUnit.getId();
                 String actualName = storage.addStorageUnit();
@@ -415,7 +428,7 @@ public class DefaultMetaManager implements IMetaManager {
 
             // 确实没有人创建过，以我为准
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
-            for (StorageUnitMeta masterStorageUnit: storageUnits) {
+            for (StorageUnitMeta masterStorageUnit : storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
                 String fakeName = masterStorageUnit.getId();
                 String actualName = storage.addStorageUnit();
@@ -539,19 +552,102 @@ public class DefaultMetaManager implements IMetaManager {
             String[] storageEngineParts = storageEngineStrings[i].split("#");
             String ip = storageEngineParts[0];
             int port = Integer.parseInt(storageEngineParts[1]);
-            StorageEngine storageEngine = StorageEngine.fromString(storageEngineParts[2]);
+            String storageEngine = storageEngineParts[2];
             Map<String, String> extraParams = new HashMap<>();
+            String[] KAndV;
             for (int j = 3; j < storageEngineParts.length; j++) {
-                String[] KAndV = storageEngineParts[j].split("=");
-                if (KAndV.length != 2) {
-                    logger.error("unexpected storage engine meta info: " + storageEngineStrings[i]);
-                    continue;
+                if (storageEngineParts[j].contains("\"")) {
+                    KAndV = storageEngineParts[j].split("\"");
+                    extraParams.put(KAndV[0].substring(0, KAndV[0].length() - 1), KAndV[1]);
+                } else {
+                    KAndV = storageEngineParts[j].split("=");
+                    if (KAndV.length != 2) {
+                        logger.error("unexpected storage engine meta info: " + storageEngineStrings[i]);
+                        continue;
+                    }
+                    extraParams.put(KAndV[0], KAndV[1]);
                 }
-                extraParams.put(KAndV[0], KAndV[1]);
             }
             storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, id));
         }
         return storageEngineMetaList;
     }
 
+    private UserMeta resolveUserFromConf() {
+        String username = ConfigDescriptor.getInstance().getConfig().getUsername();
+        String password = ConfigDescriptor.getInstance().getConfig().getPassword();
+        UserType userType = UserType.Administrator;
+        Set<AuthType> auths = new HashSet<>();
+        auths.add(AuthType.Read);
+        auths.add(AuthType.Write);
+        auths.add(AuthType.Admin);
+        auths.add(AuthType.Cluster);
+        return new UserMeta(username, password, userType, auths);
+    }
+
+    @Override
+    public boolean addUser(UserMeta user) {
+        try {
+            storage.addUser(user);
+            cache.addOrUpdateUser(user);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("add user error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean updateUser(String username, String password, Set<AuthType> auths) {
+        List<UserMeta> users = cache.getUser(Collections.singletonList(username));
+        if (users.size() == 0) { // 待更新的用户不存在
+            return false;
+        }
+        UserMeta user = users.get(0);
+        if (password != null) {
+            user.setPassword(password);
+        }
+        if (auths != null) {
+            user.setAuths(auths);
+        }
+        try {
+            storage.updateUser(user);
+            cache.addOrUpdateUser(user);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("update user error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean removeUser(String username) {
+        try {
+            storage.removeUser(username);
+            cache.removeUser(username);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("remove user error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public UserMeta getUser(String username) {
+        List<UserMeta> users = cache.getUser(Collections.singletonList(username));
+        if (users.size() == 0) {
+            return null;
+        }
+        return users.get(0);
+    }
+
+    @Override
+    public List<UserMeta> getUsers() {
+        return cache.getUser();
+    }
+
+    @Override
+    public List<UserMeta> getUsers(List<String> username) {
+        return cache.getUser(username);
+    }
 }
