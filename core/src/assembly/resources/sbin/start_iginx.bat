@@ -4,7 +4,7 @@ echo Starting IginX
 echo ````````````````````````
 
 
-set "IGINX_VERSION=0.3.0-SNAPSHOT"
+set "IGINX_VERSION=0.4.0-SNAPSHOT"
 set PATH="%JAVA_HOME%\bin\";%PATH%
 set "FULL_VERSION="
 set "MAJOR_VERSION="

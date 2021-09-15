@@ -622,3 +622,22 @@ session.closeSession();
 ```
 
 完整版使用代码可以参考：https://github.com/thulab/IginX/blob/main/example/src/main/java/cn/edu/tsinghua/iginx/session/IoTDBSessionExample.java
+
+## 基于MAVEN引用IginX类库
+
+### 使用POM
+
+    <repositories>
+            <repository>
+                <id>github-release-repo</id>
+                <name>The Maven Repository on Github</name>
+                <url>https://thulab.github.io/IginX/maven-repo/</url>
+            </repository>
+    </repositories>
+    <dependencies>
+        <dependency>
+            <groupId>cn.edu.tsinghua</groupId>
+            <artifactId>iginx-session</artifactId>
+            <version>0.3.0</version>
+        </dependency>
+    </dependencies>
