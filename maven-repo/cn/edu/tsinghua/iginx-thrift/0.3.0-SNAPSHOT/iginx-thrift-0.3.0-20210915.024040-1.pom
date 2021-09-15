@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>cn.edu.tsinghua</groupId>
+        <artifactId>iginx</artifactId>
+        <version>0.3.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>iginx-thrift</artifactId>
+    <name>IginX Thrift</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.thrift</groupId>
+            <artifactId>libthrift</artifactId>
+            <version>0.13.0</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
+
+    <properties>
+        <thrift.version>0.13.0</thrift.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <distributionManagement>
+        <repository>
+            <id>local-repo-release</id>
+            <name>GitHub Release</name>
+            <url>file://${project.basedir}/../maven-repo</url>
+        </repository>
+    </distributionManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.thrift.tools</groupId>
+                <artifactId>maven-thrift-plugin</artifactId>
+                <version>0.1.11</version>
+                <executions>
+                    <execution>
+                        <id>generate-thrift-sources-java</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <generator>java</generator>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.eclipse.m2e</groupId>
+                    <artifactId>lifecycle-mapping</artifactId>
+                    <version>1.0.0</version>
+                    <configuration>
+                        <lifecycleMappingMetadata>
+                            <pluginExecutions>
+                                <pluginExecution>
+                                    <pluginExecutionFilter>
+                                        <groupId>
+                                            org.apache.thrift.tools
+                                        </groupId>
+                                        <artifactId>
+                                            maven-thrift-plugin
+                                        </artifactId>
+                                        <versionRange>
+                                            [0.1.10,)
+                                        </versionRange>
+                                        <goals>
+                                            <goal>compile</goal>
+                                        </goals>
+                                    </pluginExecutionFilter>
+                                    <action>
+                                        <execute>
+                                            <runOnIncremental>false</runOnIncremental>
+                                        </execute>
+                                    </action>
+                                </pluginExecution>
+                            </pluginExecutions>
+                        </lifecycleMappingMetadata>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+    <profiles>
+        <!--
+                Self activating profile, that activates itself as soon as a "src/main/proto" directory is found.
+                The different plugins here download the thrift executable matching the current os, make that
+                executable (on mac and unix/linux) and run the code generation.
+
+                Note to the Download: The download-maven-plugin checks if a resource is previously downloaded
+                and only downloads each file once. It caches downloaded files in:
+                {maven local repo}/.cache/download-maven-plugin
+              -->
+        <profile>
+            <id>thrift-generation</id>
+            <activation>
+                <file>
+                    <exists>src/main/proto</exists>
+                </file>
+            </activation>
+            <properties>
+                <thrift.exec.absolute.path>${project.build.directory}/tools/${thrift.executable}
+                </thrift.exec.absolute.path>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.googlecode.maven-download-plugin</groupId>
+                        <artifactId>download-maven-plugin</artifactId>
+                        <version>1.3.0</version>
+                        <executions>
+                            <execution>
+                                <id>get-thrift-executable</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>wget</goal>
+                                </goals>
+                                <configuration>
+                                    <url>${thrift.download-url}</url>
+                                    <outputDirectory>${project.build.directory}/tools</outputDirectory>
+                                    <outputFileName>${thrift.executable}</outputFileName>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <executions>
+                            <execution>
+                                <id>make-thrift-executable-executable</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <skip>${thrift.skip-making-executable}</skip>
+                                    <executable>${thrift.exec-cmd.executable}</executable>
+                                    <commandlineArgs>${thrift.exec-cmd.args}</commandlineArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.thrift.tools</groupId>
+                        <artifactId>maven-thrift-plugin</artifactId>
+                        <version>0.1.11</version>
+                        <executions>
+                            <execution>
+                                <id>generate-thrift-sources-java</id>
+                                <phase>generate-sources</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <generator>java</generator>
+                                    <thriftExecutable>${thrift.exec.absolute.path}</thriftExecutable>
+                                    <thriftSourceRoot>src/main/proto</thriftSourceRoot>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <thrift.download-url>
+                    http://artfiles.org/apache.org/thrift/${thrift.version}/thrift-${thrift.version}.exe
+                </thrift.download-url>
+                <thrift.executable>thrift-${thrift.version}-win-x86_64.exe</thrift.executable>
+                <thrift.skip-making-executable>true</thrift.skip-making-executable>
+                <thrift.exec-cmd.executable>echo</thrift.exec-cmd.executable>
+                <thrift.exec-cmd.args>"Do nothing"</thrift.exec-cmd.args>
+            </properties>
+        </profile>
+        <!-- Has to be listed before "mac" as it seems a mac is both "mac" and "unix" -->
+        <profile>
+            <id>unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties>
+                <thrift.download-url>
+                    https://github.com/jt2594838/mvn-thrift-compiler/raw/master/thrift_0.12.0_0.13.0_linux.exe
+                </thrift.download-url>
+                <thrift.executable>thrift_0.12.0_0.13.0_linux.exe</thrift.executable>
+                <thrift.skip-making-executable>false</thrift.skip-making-executable>
+                <thrift.exec-cmd.executable>chmod</thrift.exec-cmd.executable>
+                <thrift.exec-cmd.args>+x ${project.build.directory}/tools/${thrift.executable}
+                </thrift.exec-cmd.args>
+            </properties>
+        </profile>
+        <profile>
+            <id>mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <thrift.download-url>
+                    https://github.com/jt2594838/mvn-thrift-compiler/raw/master/thrift_0.12.0_0.13.0_mac.exe
+                </thrift.download-url>
+                <thrift.executable>thrift_0.12.0_0.13.0_mac.exe</thrift.executable>
+                <thrift.skip-making-executable>false</thrift.skip-making-executable>
+                <thrift.exec-cmd.executable>chmod</thrift.exec-cmd.executable>
+                <thrift.exec-cmd.args>+x ${project.build.directory}/tools/${thrift.executable}
+                </thrift.exec-cmd.args>
+            </properties>
+        </profile>
+    </profiles>
+
+</project>
