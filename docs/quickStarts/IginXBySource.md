@@ -163,7 +163,7 @@ $ ./sbin/start-server.sh
 
 ```shell
 $ cd ~
-$ cd IginX/core/target/iginx-core-0.3.0-SNAPSHOT
+$ cd IginX/core/target/iginx-core-0.3.0
 $ chmod +x sbin/start_iginx.sh # 为启动脚本添加启动权限
 $ ./sbin/start_iginx.sh
 ```

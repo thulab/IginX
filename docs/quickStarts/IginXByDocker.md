@@ -149,7 +149,7 @@ $ mvn clean install -Dmaven.test.skip=true # 编译 IginX
 
 ```shell
 [INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for IginX 0.3.0-SNAPSHOT:
+[INFO] Reactor Summary for IginX 0.3.0:
 [INFO]
 [INFO] IginX .............................................. SUCCESS [  0.274 s]
 [INFO] IginX Thrift ....................................... SUCCESS [  6.484 s]
