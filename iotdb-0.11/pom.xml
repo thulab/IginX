@@ -11,8 +11,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>iotdb</artifactId>
-    <name>IginX IoTDB</name>
+    <artifactId>iotdb-0.11</artifactId>
+    <name>IginX IoTDB-0.11</name>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
