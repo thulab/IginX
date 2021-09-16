@@ -18,6 +18,10 @@ sh -c "sudo cp -r apache-iotdb-0.12.2-server-bin/ apache-iotdb2-0.12.2-server-bi
 
 sh -c "sudo sed -i 's/6667/6668/g' apache-iotdb2-0.12.2-server-bin/conf/iotdb-engine.properties"
 
+sh -c "sudo sed -i 's/# enable_wal=false/enable_wal=false/' apache-iotdb-0.12.2-server-bin/conf/iotdb-engine.properties"
+
+sh -c "sudo sed -i 's/# enable_wal=false/enable_wal=false/' apache-iotdb2-0.12.2-server-bin/conf/iotdb-engine.properties"
+
 sudo sh -c "cd apache-iotdb-0.12.2-server-bin/; nohup sbin/start-server.sh &"
 
 sudo sh -c "cd apache-iotdb2-0.12.2-server-bin/; nohup sbin/start-server.sh &"
