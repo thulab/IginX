@@ -509,6 +509,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 }
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
+            if (e.getMessage().endsWith("does not exist;")) {
+                return new NonDataPlanExecuteResult(SUCCESS, plan);
+            }
             logger.error(e.getMessage());
             return new NonDataPlanExecuteResult(FAILURE, plan);
         }
