@@ -1,0 +1,49 @@
+[
+  {
+    "group": "iginx",
+    "name": "iginx",
+    "className": "org.apache.zeppelin.iginx.IginxInterpreter",
+    "properties": {
+      "iginx.host": {
+        "envName": null,
+        "propertyName": "iginx.host",
+        "defaultValue": "127.0.0.1",
+        "description": "IginX server host to connect to, Default = 127.0.0.1",
+        "type": "string"
+      },
+      "iginx.port": {
+        "envName": null,
+        "propertyName": "iginx.port",
+        "defaultValue": "6888",
+        "description": "IginX server port to connect to, Default = 6888",
+        "type": "number"
+      },
+      "iginx.username": {
+        "envName": null,
+        "propertyName": "iginx.username",
+        "defaultValue": "root",
+        "description": "Username for authentication, Default = 'root'",
+        "type": "string"
+      },
+      "iginx.password": {
+        "envName": null,
+        "propertyName": "iginx.password",
+        "defaultValue": "root",
+        "description": "Password for authentication, Default = 'root'",
+        "type": "password"
+      },
+      "iginx.time.precision": {
+        "envName": null,
+        "propertyName": "iginx.time.precision",
+        "defaultValue": "ms",
+        "description": "the time precision to display. Default = 'ms'",
+        "type": "string"
+      }
+    },
+    "editor": {
+      "language": "sql",
+      "editOnDblClick": false,
+      "completionKey": "TAB"
+    }
+  }
+]

@@ -103,6 +103,7 @@ $ cd ~
 $ git clone git@github.com:thulab/IginX.git
 $ cd IginX
 $ mvn clean install -Dmaven.test.skip=true
+$ mvn package -pl core -Dmaven.test.skip=true
 ```
 
 显示出如下字样，表示 IginX 构建成功：
@@ -127,6 +128,7 @@ $ mvn clean install -Dmaven.test.skip=true
 ```
 
 此外，IginX 还支持 Docker。使用如下命令即可构建本地 IginX 镜像：
+
 ```shell
 mvn clean package -pl core -DskipTests docker:build
 ```
@@ -161,9 +163,9 @@ $ ./sbin/start-server.sh
 
 ```shell
 $ cd ~
-$ cd Iginx
-$ chmod +x startIginX.sh # 为启动脚本添加启动权限
-$ ./startIginX.sh
+$ cd IginX/core/target/iginx-core-0.4.0-SNAPSHOT
+$ chmod +x sbin/start_iginx.sh # 为启动脚本添加启动权限
+$ ./sbin/start_iginx.sh
 ```
 
 显示出如下字样，表示 IginX 启动成功：
@@ -318,7 +320,10 @@ $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1
 
 ### RPC 接口
 
-除了 RESTful 接口外，IginX 还提供了 RPC 的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX 还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了 RPC 接口最常见的用法。
+除了 RESTful 接口外，IginX 还提供了 RPC
+的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX
+还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了
+RPC 接口最常见的用法。
 
 下面是一个简短的使用教程。
 
@@ -345,7 +350,8 @@ $ mvn clean install -DskipTests
 </dependency>
 ```
 
-在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端 IginX 的账户名和密码直接填写 root 即可：
+在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端
+IginX 的账户名和密码直接填写 root 即可：
 
 ```Java
 Session session = new Session("127.0.0.1", 6888, "root", "root");

@@ -1,18 +1,42 @@
 package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.SqlParser.*;
-import cn.edu.tsinghua.iginx.sql.operator.*;
+import cn.edu.tsinghua.iginx.sql.SqlParser.AndExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.ConstantContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.DateExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.EngineTypeContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.ExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.InsertMultiValueContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.InsertValuesSpecContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.MeasurementNameContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.OrExpressionContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.PredicateContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.SelectClauseContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.ShowTimeSeriesStatementContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.SpecialClauseContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.TimeRangeContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
+import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ClearDataOperator;
+import cn.edu.tsinghua.iginx.sql.operator.CountPointsOperator;
+import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
+import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
+import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ShowTimeSeriesOperator;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
-import org.apache.iotdb.tsfile.utils.Pair;
 
-import java.util.*;
-
-import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.INFLUXDB;
-import static cn.edu.tsinghua.iginx.thrift.StorageEngineType.IOTDB;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     @Override
@@ -43,8 +67,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         ctx.path().stream().forEach(e -> deleteOp.addPath(e.getText()));
         // parse time range
         Pair<Long, Long> range = parseTimeRange(ctx.timeRange());
-        deleteOp.setStartTime(range.left);
-        deleteOp.setEndTime(range.right);
+        deleteOp.setStartTime(range.k);
+        deleteOp.setEndTime(range.v);
         return deleteOp;
     }
 
@@ -64,8 +88,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         if (ctx.whereClause() != null) {
             // parse time range
             Pair<Long, Long> range = parseTimeRange(ctx.whereClause().timeRange());
-            selectOp.setStartTime(range.left);
-            selectOp.setEndTime(range.right);
+            selectOp.setStartTime(range.k);
+            selectOp.setEndTime(range.v);
 
             // parse booleanExpression
             if (ctx.whereClause().orExpression() != null) {
@@ -75,13 +99,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
                 selectOp.setBooleanExpression(ret);
                 selectOp.setHasValueFilter(true);
             }
-        }
-        // parse group by precision
-        if (ctx.groupByTimeClause() != null) {
-            String duration = ctx.groupByTimeClause().getChild(2).getText();
-            long precision = TimeUtils.convertDurationStrToLong(0, duration);
-            selectOp.setPrecision(precision);
-            selectOp.setHasGroupBy(true);
         }
         // parse special clause
         if (ctx.specialClause() != null) {
@@ -107,7 +124,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         for (StorageEngineContext engine : engines) {
             String ip = engine.ip().getText();
             int port = Integer.parseInt(engine.port.getText());
-            StorageEngineType type = parseStorageEngineType(engine.engineType());
+            String type = parseStorageEngineType(engine.engineType());
             Map<String, String> extra = parseExtra(engine.extra);
             addStorageEngineOp.setEngines(new StorageEngine(ip, port, type, extra));
         }
@@ -137,17 +154,26 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
 
         for (ExpressionContext expr : expressions) {
             if (expr.functionName() != null && hasFunc) {
-                selectOp.setSelectedFuncsAndPaths(SelectOperator.str2FuncType(expr.functionName().getText()), expr.path().getText());
+                selectOp.setSelectedFuncsAndPaths(expr.functionName().getText(), expr.path().getText());
             } else if (expr.functionName() == null && !hasFunc) {
-                selectOp.setSelectedFuncsAndPaths(null, expr.path().getText());
+                selectOp.setSelectedFuncsAndPaths("", expr.path().getText());
             } else {
                 throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
             }
         }
     }
 
-    // like standard SQL, limit N, M means limit M offset N
+
     private void parseSpecialClause(SpecialClauseContext ctx, SelectOperator selectOp) {
+        // parse group by precision
+        if (ctx.groupByTimeClause() != null) {
+            String duration = ctx.groupByTimeClause().DURATION().getText();
+            long precision = TimeUtils.convertDurationStrToLong(0, duration);
+            selectOp.setPrecision(precision);
+            selectOp.setHasGroupBy(true);
+        }
+        // parse limit & offset
+        // like standard SQL, limit N, M means limit M offset N
         if (ctx.limitClause() != null) {
             if (ctx.limitClause().INT().size() == 1) {
                 int limit = Integer.parseInt(ctx.limitClause().INT(0).getText());
@@ -163,6 +189,21 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
                 selectOp.setLimit(limit);
             } else {
                 throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
+            }
+        }
+        // parse order by
+        if (ctx.orderByClause() != null) {
+            if (selectOp.isHasFunc()) {
+                throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
+            }
+            if (ctx.orderByClause().path() != null) {
+                String suffixPath = ctx.orderByClause().path().getText();
+                selectOp.setOrderByPath(selectOp.getFromPath() + SQLConstant.DOT + suffixPath);
+            } else {
+                selectOp.setOrderByPath(SQLConstant.TIME);
+            }
+            if (ctx.orderByClause().DESC() != null) {
+                selectOp.setAscending(false);
             }
         }
     }
@@ -205,15 +246,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         }
     }
 
-    private StorageEngineType parseStorageEngineType(EngineTypeContext ctx) {
-        switch (ctx.getText().toLowerCase()) {
-            case SQLConstant.IOT_DB:
-                return IOTDB;
-            case SQLConstant.INFLUX_DB:
-                return INFLUXDB;
-            default:
-                return null;
-        }
+    private String parseStorageEngineType(EngineTypeContext ctx) {
+        return ctx.getText().toLowerCase();
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

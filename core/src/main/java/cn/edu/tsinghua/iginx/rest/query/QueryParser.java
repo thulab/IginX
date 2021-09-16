@@ -55,16 +55,23 @@ public class QueryParser {
 
     }
 
-    public Query parseGrafanaQueryMetric(String json) throws Exception
-    {
+    public static Long dealDateFormat(String oldDateStr) {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        try {
+            Date date = df.parse(oldDateStr);
+            return date.getTime() + 28800000l;
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Query parseGrafanaQueryMetric(String json) throws Exception {
         Query ret;
-        try
-        {
+        try {
             JsonNode node = mapper.readTree(json);
             ret = getGrafanaQuery(node);
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             LOGGER.error("Error occurred during parsing query ", e);
             throw e;
         }
@@ -94,24 +101,8 @@ public class QueryParser {
         }
         return ret;
     }
-    public static Long dealDateFormat(String oldDateStr)
-    {
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-        try
-        {
-            Date date = df.parse(oldDateStr);
-            return date.getTime() + 28800000l;
-        }
-        catch (ParseException e)
-        {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
-
-    private Query getGrafanaQuery(JsonNode node)
-    {
+    private Query getGrafanaQuery(JsonNode node) {
         Query ret = new Query();
         JsonNode timerange = node.get("range");
         if (timerange == null)
@@ -131,9 +122,8 @@ public class QueryParser {
 
         JsonNode array = node.get("targets");
         if (!array.isArray())
-             return null;
-        for (JsonNode jsonNode: array)
-        {
+            return null;
+        for (JsonNode jsonNode : array) {
             QueryMetric queryMetric = new QueryMetric();
             JsonNode type = jsonNode.get("type");
             if (type == null)
@@ -141,12 +131,9 @@ public class QueryParser {
             JsonNode target = jsonNode.get("target");
             if (target == null)
                 return null;
-            if (type.asText().equals("table"))
-            {
+            if (type.asText().equals("table")) {
                 queryMetric.setName(target.asText());
-            }
-            else
-            {
+            } else {
                 queryMetric.setName(target.asText());
             }
             ret.addQueryMetrics(queryMetric);
@@ -268,7 +255,7 @@ public class QueryParser {
                 if (tags != null) {
                     Iterator<String> fieldNames = tags.fieldNames();
                     Iterator<JsonNode> elements = tags.elements();
-                    while (elements.hasNext() && fieldNames.hasNext()) {
+                    while(elements.hasNext() && fieldNames.hasNext()) {
                         String key = fieldNames.next();
                         for (JsonNode valuenode : elements.next())
                             ins.addTag(key, valuenode.asText());
@@ -281,11 +268,9 @@ public class QueryParser {
         return ret;
     }
 
-    private Query getAnnotationQuery(JsonNode node, boolean isGrafana) throws JsonProcessingException
-    {
+    private Query getAnnotationQuery(JsonNode node, boolean isGrafana) throws JsonProcessingException {
         Query ret = new Query();
-        if (isGrafana)
-        {
+        if (isGrafana) {
             JsonNode range = node.get("range");
             if (range == null)
                 return null;
@@ -293,8 +278,7 @@ public class QueryParser {
             JsonNode end_absolute = range.get("to");
             if (start_absolute == null || end_absolute == null)
                 return null;
-            else
-            {
+            else {
                 Long start = dealDateFormat(start_absolute.asText());
                 Long end = dealDateFormat(end_absolute.asText());
                 ret.setStartAbsolute(start);
@@ -312,14 +296,11 @@ public class QueryParser {
             if (query.get("tags") == null)
                 query = mapper.readTree(query.asText());
             JsonNode tags = query.get("tags");
-            if (tags != null)
-            {
+            if (tags != null) {
                 tags = tags.get("tags");
-                if (tags != null)
-                {
+                if (tags != null) {
                     Iterator<String> fieldNames = tags.fieldNames();
-                    while (fieldNames.hasNext())
-                    {
+                    while(fieldNames.hasNext()) {
                         String key = fieldNames.next();
                         JsonNode valuenode = tags.get(key);
                         ins.addTag(key, valuenode.asText());
@@ -339,18 +320,14 @@ public class QueryParser {
             ins.setAnnotationLimit(annotationLimit);
             ins.setAnnotation(true);
             ret.addQueryMetrics(ins);
-        }
-        else
-        {
+        } else {
             JsonNode start_absolute = node.get("start_absolute");
             JsonNode end_absolute = node.get("end_absolute");
             Long now = System.currentTimeMillis();
-            if (start_absolute == null && end_absolute == null)
-            {
+            if (start_absolute == null && end_absolute == null) {
                 ret.setStartAbsolute(0l);
                 ret.setEndAbsolute(now);
-            }
-            else if (start_absolute != null && end_absolute != null) {
+            } else if (start_absolute != null && end_absolute != null) {
                 ret.setStartAbsolute(start_absolute.asLong());
                 ret.setEndAbsolute(end_absolute.asLong());
             } else if (start_absolute != null) {
@@ -449,7 +426,7 @@ public class QueryParser {
                     if (tags != null) {
                         Iterator<String> fieldNames = tags.fieldNames();
                         Iterator<JsonNode> elements = tags.elements();
-                        while (elements.hasNext() && fieldNames.hasNext()) {
+                        while(elements.hasNext() && fieldNames.hasNext()) {
                             String key = fieldNames.next();
                             for (JsonNode valuenode : elements.next())
                                 ins.addTag(key, valuenode.asText());
@@ -694,25 +671,21 @@ public class QueryParser {
         return ret.toString();
     }
 
-    public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana) throws Exception
-    {
+    public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana) throws Exception {
         StringBuilder ret = new StringBuilder("[");
         ret.append(result.toAnnotationResultString(isGrafana));
         ret.append("]");
         return ret.toString();
     }
 
-    public String parseResultToGrafanaJson(QueryResult result)
-    {
+    public String parseResultToGrafanaJson(QueryResult result) {
         StringBuilder ret = new StringBuilder("[");
-        for (int i=0; i< result.getSiz(); i++)
-        {
+        for (int i = 0; i < result.getSiz(); i++) {
             ret.append("{");
             ret.append(String.format("\"target\":\"%s\",", result.getQueryMetrics().get(i).getName()));
             ret.append("\"datapoints\":[");
             int n = result.getQueryResultDatasets().get(i).getSize();
-            for (int j=0;j<n;j++)
-            {
+            for (int j = 0; j < n; j++) {
                 ret.append("[");
                 if (result.getQueryResultDatasets().get(i).getValues().get(j) instanceof byte[])
                     ret.append(result.getQueryResultDatasets().get(i).getValues().get(j));
@@ -722,12 +695,12 @@ public class QueryParser {
                 ret.append(String.format(",%d", result.getQueryResultDatasets().get(i).getTimestamps().get(j)));
                 ret.append("],");
             }
-            if (ret.charAt(ret.length()-1) == ',')
-                ret.deleteCharAt(ret.length()-1);
+            if (ret.charAt(ret.length() - 1) == ',')
+                ret.deleteCharAt(ret.length() - 1);
             ret.append("]},");
         }
-        if (ret.charAt(ret.length()-1) == ',')
-            ret.deleteCharAt(ret.length()-1);
+        if (ret.charAt(ret.length() - 1) == ',')
+            ret.deleteCharAt(ret.length() - 1);
         ret.append("]");
         return ret.toString();
     }

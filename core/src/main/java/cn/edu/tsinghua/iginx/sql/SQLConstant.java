@@ -11,9 +11,7 @@ public class SQLConstant {
     public static final String QUOTE = "\"";
     public static final String DOUBLE_QUOTES = "\"\"";
 
-    public static final String IOT_DB = "iotdb";
-    public static final String INFLUX_DB = "influxdb";
-
+    public static final String TIME = "time";
     public static final String NOW_FUNC = "now()";
     public static final String INF = "inf";
 }

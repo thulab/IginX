@@ -1,17 +1,26 @@
 package cn.edu.tsinghua.iginx.sql;
 
-import cn.edu.tsinghua.iginx.sql.operator.*;
+import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
+import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
+import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
+import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
+import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
+import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineType;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ParseTest {
@@ -54,8 +63,8 @@ public class ParseTest {
 
         Object[] s1Values = {new Integer(10), new Integer(11)};
         Object[] s2Values = {new Float(1.1), new Float(1.2)};
-        assertEquals(s1Values, (Object[])op.getValues()[0]);
-        assertEquals(s2Values, (Object[])op.getValues()[1]);
+        assertEquals(s1Values, (Object[]) op.getValues()[0]);
+        assertEquals(s2Values, (Object[]) op.getValues()[1]);
     }
 
     @Test
@@ -84,6 +93,42 @@ public class ParseTest {
         assertEquals(1670833104000l, op.getEndTime());
 
         assertEquals(1000l, op.getPrecision());
+    }
+
+    @Test
+    public void testParseSpecialClause() {
+        String limit = "SELECT a FROM test LIMIT 2, 5;";
+        SelectOperator op = (SelectOperator) buildOperator(limit);
+        assertEquals(5, op.getLimit());
+        assertEquals(2, op.getOffset());
+
+        String orderBy = "SELECT a FROM test ORDER BY timestamp";
+        op = (SelectOperator) buildOperator(orderBy);
+        assertEquals(SQLConstant.TIME, op.getOrderByPath());
+        assertTrue(op.isAscending());
+
+        String orderByAndLimit = "SELECT a FROM test ORDER BY a DESC LIMIT 10 OFFSET 5;";
+        op = (SelectOperator) buildOperator(orderByAndLimit);
+        assertEquals("test.a", op.getOrderByPath());
+        assertFalse(op.isAscending());
+        assertEquals(5, op.getOffset());
+        assertEquals(10, op.getLimit());
+
+        String groupBy = "SELECT max(a) FROM test GROUP BY 5ms";
+        op = (SelectOperator) buildOperator(groupBy);
+        assertEquals(5L, op.getPrecision());
+
+        String groupByAndLimit = "SELECT max(a) FROM test GROUP BY 10ms LIMIT 5 OFFSET 2;";
+        op = (SelectOperator) buildOperator(groupByAndLimit);
+        assertEquals(10L, op.getPrecision());
+        assertEquals(2, op.getOffset());
+        assertEquals(5, op.getLimit());
+    }
+
+    @Test(expected = SQLParserException.class)
+    public void testAggregateAndOrderBy() {
+        String aggregateAndOrderBy = "SELECT max(a) FROM test ORDER BY a DESC;";
+        SelectOperator op = (SelectOperator) buildOperator(aggregateAndOrderBy);
     }
 
     @Test
@@ -166,12 +211,12 @@ public class ParseTest {
         Map<String, String> extra01 = new HashMap<>();
         extra01.put("username", "root");
         extra01.put("password", "root");
-        StorageEngine engine01 = new StorageEngine("127.0.0.1", 6667, StorageEngineType.IOTDB, extra01);
+        StorageEngine engine01 = new StorageEngine("127.0.0.1", 6667, "iotdb", extra01);
 
         Map<String, String> extra02 = new HashMap<>();
         extra02.put("key1", "val1");
         extra02.put("key2", "val2");
-        StorageEngine engine02 = new StorageEngine("127.0.0.1", 6668, StorageEngineType.INFLUXDB, extra02);
+        StorageEngine engine02 = new StorageEngine("127.0.0.1", 6668, "influxdb", extra02);
 
         assertEquals(engine01, op.getEngines().get(0));
         assertEquals(engine02, op.getEngines().get(1));

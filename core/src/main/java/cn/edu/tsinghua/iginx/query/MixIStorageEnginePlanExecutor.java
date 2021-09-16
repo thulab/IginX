@@ -19,17 +19,19 @@
 package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.db.StorageEngine;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteDataInColumnsPlan;
-import cn.edu.tsinghua.iginx.plan.FirstQueryPlan;
+import cn.edu.tsinghua.iginx.plan.FirstValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertNonAlignedRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.LastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.LastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
@@ -38,13 +40,14 @@ import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleCountQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstQueryPlan;
-import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleFirstValueQueryPlan;
+import cn.edu.tsinghua.iginx.plan.downsample.DownsampleLastValueQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleMinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleSumQueryPlan;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.DownsampleQueryPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
@@ -54,73 +57,66 @@ import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
 
     private static final Logger logger = LoggerFactory.getLogger(MixIStorageEnginePlanExecutor.class);
 
-    private final Set<Long> iotdbStorageEngines;
-    private final Set<Long> influxdbStorageEngines;
-    private IStorageEngine iotdbStorageEngine;
-    private StorageEngineChangeHook iotdbChangeHook;
-    private IStorageEngine influxdbStorageEngine;
-
-    private StorageEngineChangeHook influxdbChangeHook;
+    private final Map<String, ClassLoader> classLoaders = new ConcurrentHashMap<>();
+    private final Map<String, IStorageEngine> storageEngines = new ConcurrentHashMap<>();
+    private final Map<Long, IStorageEngine> storageEngineMap = new ConcurrentHashMap<>();
+    private final Map<String, StorageEngineChangeHook> hooks = new ConcurrentHashMap<>();
 
     public MixIStorageEnginePlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
-        List<StorageEngineMeta> iotdbStorageEngineMetaList = storageEngineMetaList.stream().filter(e -> e.getDbType() == StorageEngine.IoTDB)
-                .collect(Collectors.toList());
-        if (iotdbStorageEngineMetaList.size() != 0) {
-            iotdbStorageEngine = loadStorageEngine(StorageEngine.IoTDB, iotdbStorageEngineMetaList);
-            iotdbStorageEngines = Collections.synchronizedSet(iotdbStorageEngineMetaList.stream().map(StorageEngineMeta::getId).collect(Collectors.toSet()));
-            iotdbChangeHook = iotdbStorageEngine.getStorageEngineChangeHook();
-        } else {
-            iotdbStorageEngines = Collections.synchronizedSet(new HashSet<>());
-        }
-        List<StorageEngineMeta> influxdbStorageEngineMetaList = storageEngineMetaList.stream().filter(e -> e.getDbType() == StorageEngine.InfluxDB)
-                .collect(Collectors.toList());
-        if (influxdbStorageEngineMetaList.size() != 0) {
-            influxdbStorageEngine = loadStorageEngine(StorageEngine.InfluxDB, influxdbStorageEngineMetaList);
-            influxdbStorageEngines = Collections.synchronizedSet(influxdbStorageEngineMetaList.stream().map(StorageEngineMeta::getId).collect(Collectors.toSet()));
-            influxdbChangeHook = influxdbStorageEngine.getStorageEngineChangeHook();
-        } else {
-            influxdbStorageEngines = Collections.synchronizedSet(new HashSet<>());
+        try {
+            Map<String, List<StorageEngineMeta>> groupedStorageEngineMetaLists = storageEngineMetaList.stream()
+                    .collect(Collectors.groupingBy(StorageEngineMeta::getStorageEngine));
+            for (String engine : groupedStorageEngineMetaLists.keySet()) {
+                ClassLoader classLoader = new StorageEngineClassLoader(engine);
+                classLoaders.put(engine, classLoader);
+
+                IStorageEngine storageEngine = (IStorageEngine) classLoader.loadClass(getDriverClassName(engine))
+                        .getConstructor(List.class).newInstance(groupedStorageEngineMetaLists.get(engine));
+
+                storageEngines.put(engine, storageEngine);
+                hooks.put(engine, storageEngine.getStorageEngineChangeHook());
+                for (StorageEngineMeta meta : groupedStorageEngineMetaLists.get(engine)) {
+                    storageEngineMap.put(meta.getId(), storageEngine);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("encounter error when init MixIStorageEnginePlanExecutor: ", e);
+            System.exit(1);
         }
     }
 
-    private IStorageEngine loadStorageEngine(StorageEngine storageEngine, List<StorageEngineMeta> storageEngineMetaList) {
+    public static boolean testConnection(StorageEngineMeta meta) throws Exception {
+        ClassLoader classLoader = new StorageEngineClassLoader(meta.getStorageEngine());
+        Class<?> planExecutorClass = classLoader.loadClass(getDriverClassName(meta.getStorageEngine()));
+        Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
+        return (boolean) method.invoke(null, meta);
+    }
+
+    private static String getDriverClassName(String storageEngine) {
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String part : parts) {
             String[] kAndV = part.split("=");
-            if (StorageEngine.fromString(kAndV[0]) != storageEngine) {
+            if (!kAndV[0].equals(storageEngine)) {
                 continue;
             }
-            String className = kAndV[1];
-            try {
-                Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
-                        loadClass(className);
-                return ((Class<? extends IStorageEngine>) planExecutorClass)
-                        .getConstructor(List.class).newInstance(storageEngineMetaList);
-            } catch (ClassNotFoundException | NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
-                logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
-            }
+            return kAndV[1];
         }
-        throw new RuntimeException("cannot find class for " + storageEngine.name() + ", please check config.properties ");
+        throw new RuntimeException("cannot find driver for " + storageEngine + ", please check config.properties ");
     }
 
     private IStorageEngine findStorageEngine(long storageEngineId) {
-        if (iotdbStorageEngines.contains(storageEngineId))
-            return iotdbStorageEngine;
-        if (influxdbStorageEngines.contains(storageEngineId))
-            return influxdbStorageEngine;
-        logger.error("unable to find storage engine: " + storageEngineId);
-        return null;
+        return storageEngineMap.get(storageEngineId);
     }
 
     @Override
@@ -132,10 +128,26 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
+        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
+        if (storageEngine != null)
+            return storageEngine.syncExecuteInsertNonAlignedColumnRecordsPlan(plan);
+        return null;
+    }
+
+    @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
             return storageEngine.syncExecuteInsertRowRecordsPlan(plan);
+        return null;
+    }
+
+    @Override
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
+        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
+        if (storageEngine != null)
+            return storageEngine.syncExecuteInsertNonAlignedRowRecordsPlan(plan);
         return null;
     }
 
@@ -164,6 +176,14 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
+    public LastQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+        IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
+        if (storageEngine != null)
+            return storageEngine.syncExecuteLastQueryPlan(plan);
+        return null;
+    }
+
+    @Override
     public AvgAggregateQueryPlanExecuteResult syncExecuteAvgQueryPlan(AvgQueryPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
@@ -188,18 +208,18 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstQueryPlan(FirstQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteFirstValueQueryPlan(FirstValueQueryPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
-            return storageEngine.syncExecuteFirstQueryPlan(plan);
+            return storageEngine.syncExecuteFirstValueQueryPlan(plan);
         return null;
     }
 
     @Override
-    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastQueryPlan(LastQueryPlan plan) {
+    public SingleValueAggregateQueryPlanExecuteResult syncExecuteLastValueQueryPlan(LastValueQueryPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
-            return storageEngine.syncExecuteLastQueryPlan(plan);
+            return storageEngine.syncExecuteLastValueQueryPlan(plan);
         return null;
     }
 
@@ -260,18 +280,18 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstQueryPlan(DownsampleFirstQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleFirstValueQueryPlan(DownsampleFirstValueQueryPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
-            return storageEngine.syncExecuteDownsampleFirstQueryPlan(plan);
+            return storageEngine.syncExecuteDownsampleFirstValueQueryPlan(plan);
         return null;
     }
 
     @Override
-    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastQueryPlan(DownsampleLastQueryPlan plan) {
+    public DownsampleQueryPlanExecuteResult syncExecuteDownsampleLastValueQueryPlan(DownsampleLastValueQueryPlan plan) {
         IStorageEngine storageEngine = findStorageEngine(plan.getStorageEngineId());
         if (storageEngine != null)
-            return storageEngine.syncExecuteDownsampleLastQueryPlan(plan);
+            return storageEngine.syncExecuteDownsampleLastValueQueryPlan(plan);
         return null;
     }
 
@@ -295,26 +315,25 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             if (before == null && after != null) {
-                logger.info("a new storage engine added: " + after.getIp() + ":" + after.getPort() + "-" + after.getDbType());
-                switch (after.getDbType()) {
-                    case IoTDB:
-                        iotdbStorageEngines.add(after.getId());
-                        if (iotdbStorageEngine == null) {
-                            iotdbStorageEngine = loadStorageEngine(StorageEngine.IoTDB, Collections.singletonList(after));
-                            iotdbChangeHook = iotdbStorageEngine.getStorageEngineChangeHook();
-                        } else {
-                            iotdbChangeHook.onChanged(null, after);
-                        }
-                        break;
-                    case InfluxDB:
-                        influxdbStorageEngines.add(after.getId());
-                        if (influxdbStorageEngine == null) {
-                            influxdbStorageEngine = loadStorageEngine(StorageEngine.InfluxDB, Collections.singletonList(after));
-                            influxdbChangeHook = influxdbStorageEngine.getStorageEngineChangeHook();
-                        } else {
-                            influxdbChangeHook.onChanged(null, after);
-                        }
-                        break;
+                logger.info("a new storage engine added: " + after.getIp() + ":" + after.getPort() + "-" + after.getStorageEngine());
+                String engine = after.getStorageEngine();
+                if (storageEngines.containsKey(engine)) { // 已有的引擎新增数据节点
+                    hooks.get(engine).onChanged(null, after);
+                } else {
+                    try {
+                        ClassLoader classLoader = new StorageEngineClassLoader(engine);
+                        classLoaders.put(engine, classLoader);
+
+                        IStorageEngine storageEngine = (IStorageEngine) classLoader.loadClass(getDriverClassName(engine))
+                                .getConstructor(List.class).newInstance(Collections.singletonList(after));
+
+                        storageEngines.put(engine, storageEngine);
+                        hooks.put(engine, storageEngine.getStorageEngineChangeHook());
+                        storageEngineMap.put(after.getId(), storageEngine);
+
+                    } catch (Exception e) {
+                        logger.error("init storage engine " + engine + " error when change storage engines.");
+                    }
                 }
             }
         };

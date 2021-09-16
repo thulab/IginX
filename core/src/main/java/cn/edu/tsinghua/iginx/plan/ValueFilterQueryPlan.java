@@ -17,7 +17,6 @@
  * under the License.
  */
 package cn.edu.tsinghua.iginx.plan;
-//todo
 
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;

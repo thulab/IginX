@@ -35,6 +35,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import io.etcd.jetcd.ByteSequence;
@@ -79,6 +81,8 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String FRAGMENT_LOCK = "/lock/fragment/";
 
+    private static final String USER_LOCK = "/lock/user/";
+
     private static final String SCHEMA_MAPPING_PREFIX = "/schema/";
 
     private static final String IGINX_PREFIX = "/iginx/";
@@ -89,45 +93,34 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String FRAGMENT_PREFIX = "/fragment/";
 
+    private static final String USER_PREFIX = "/user/";
+
     private static final long MAX_LOCK_TIME = 30; // 最长锁住 30 秒
 
     private static final long HEART_BEAT_INTERVAL = 5; // 和 etcd 之间的心跳包的时间间隔
 
     private static ETCDMetaStorage INSTANCE = null;
-
-    private Client client;
-
-    private Watch.Watcher schemaMappingWatcher;
-
-    private SchemaMappingChangeHook schemaMappingChangeHook = null;
-
-    private Watch.Watcher iginxWatcher;
-
-    private IginxChangeHook iginxChangeHook = null;
-
-    private Watch.Watcher storageWatcher;
-
-    private StorageChangeHook storageChangeHook = null;
-
-    private long storageLease = -1L;
-
     private final Lock storageLeaseLock = new ReentrantLock();
-
-    private Watch.Watcher storageUnitWatcher;
-
-    private StorageUnitChangeHook storageUnitChangeHook = null;
-
-    private long storageUnitLease = -1L;
-
     private final Lock storageUnitLeaseLock = new ReentrantLock();
-
-    private Watch.Watcher fragmentWatcher;
-
-    private FragmentChangeHook fragmentChangeHook = null;
-
-    private long fragmentLease = -1L;
-
     private final Lock fragmentLeaseLock = new ReentrantLock();
+    private final Lock userLeaseLock = new ReentrantLock();
+    private Client client;
+    private Watch.Watcher schemaMappingWatcher;
+    private SchemaMappingChangeHook schemaMappingChangeHook = null;
+    private Watch.Watcher iginxWatcher;
+    private IginxChangeHook iginxChangeHook = null;
+    private Watch.Watcher storageWatcher;
+    private StorageChangeHook storageChangeHook = null;
+    private long storageLease = -1L;
+    private Watch.Watcher storageUnitWatcher;
+    private StorageUnitChangeHook storageUnitChangeHook = null;
+    private long storageUnitLease = -1L;
+    private Watch.Watcher fragmentWatcher;
+    private FragmentChangeHook fragmentChangeHook = null;
+    private long fragmentLease = -1L;
+    private Watch.Watcher userWatcher;
+    private UserChangeHook userChangeHook = null;
+    private long userLease = -1L;
 
     public ETCDMetaStorage() {
         client = Client.builder()
@@ -183,7 +176,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.iginxChangeHook == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             IginxMeta iginx;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -223,7 +216,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.storageWatcher == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             StorageEngineMeta storageEngine;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -261,7 +254,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.storageUnitWatcher == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             StorageUnitMeta storageUnit;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -296,7 +289,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                         if (ETCDMetaStorage.this.fragmentChangeHook == null) {
                             return;
                         }
-                        for (WatchEvent event: watchResponse.getEvents()) {
+                        for (WatchEvent event : watchResponse.getEvents()) {
                             FragmentMeta fragment;
                             switch (event.getEventType()) {
                                 case PUT:
@@ -305,6 +298,44 @@ public class ETCDMetaStorage implements IMetaStorage {
                                     fragmentChangeHook.onChange(isCreate, fragment);
                                     break;
                                 case DELETE:
+                                default:
+                                    logger.error("unexpected watchEvent: " + event.getEventType());
+                                    break;
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Throwable throwable) {
+
+                    }
+
+                    @Override
+                    public void onCompleted() {
+
+                    }
+                });
+
+        // 注册 user 的监听
+        this.userWatcher = client.getWatchClient().watch(ByteSequence.from(USER_PREFIX.getBytes()),
+                WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(),
+                new Watch.Listener() {
+                    @Override
+                    public void onNext(WatchResponse watchResponse) {
+                        if (ETCDMetaStorage.this.userChangeHook == null) {
+                            return;
+                        }
+                        for (WatchEvent event : watchResponse.getEvents()) {
+                            UserMeta userMeta;
+                            switch (event.getEventType()) {
+                                case PUT:
+                                    userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
+                                    userChangeHook.onChange(userMeta.getUsername(), userMeta);
+                                    break;
+                                case DELETE:
+                                    userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
+                                    userChangeHook.onChange(userMeta.getUsername(), null);
+                                    break;
                                 default:
                                     logger.error("unexpected watchEvent: " + event.getEventType());
                                     break;
@@ -484,7 +515,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     storageEngines.put(storageEngine.getId(), storageEngine);
                 });
             } else { // 服务器上还没有，将本地的注册到服务器上
-                for (StorageEngineMeta storageEngine: localStorageEngines) {
+                for (StorageEngineMeta storageEngine : localStorageEngines) {
                     long id = nextId(STORAGE_ID); // 给每个数据后端分配 id
                     storageEngine.setId(id);
                     storageEngines.put(storageEngine.getId(), storageEngine);
@@ -539,7 +570,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     .get();
             List<KeyValue> kvs = response.getKvs();
             kvs.sort(Comparator.comparing(e -> e.getKey().toString(StandardCharsets.UTF_8)));
-            for (KeyValue kv: kvs) {
+            for (KeyValue kv : kvs) {
                 StorageUnitMeta storageUnit = JsonUtils.fromJson(kv.getValue().getBytes(), StorageUnitMeta.class);
                 if (!storageUnit.isMaster()) { // 需要加入到主节点的子节点列表中
                     StorageUnitMeta masterStorageUnit = storageUnitMap.get(storageUnit.getMasterId());
@@ -615,7 +646,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
                             GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
                     .get();
-            for (KeyValue kv: response.getKvs()) {
+            for (KeyValue kv : response.getKvs()) {
                 FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
                 fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>())
                         .add(fragment);
@@ -757,6 +788,105 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     }
 
+    private void lockUser() throws MetaStorageException {
+        try {
+            userLeaseLock.lock();
+            userLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
+            client.getLockClient().lock(ByteSequence.from(USER_LOCK.getBytes()), userLease);
+        } catch (Exception e) {
+            userLeaseLock.unlock();
+            throw new MetaStorageException("acquire user mutex error: ", e);
+        }
+    }
+
+    private void releaseUser() throws MetaStorageException {
+        try {
+            client.getLockClient().unlock(ByteSequence.from(USER_LOCK.getBytes())).get();
+            client.getLeaseClient().revoke(userLease).get();
+            userLease = -1L;
+        } catch (Exception e) {
+            throw new MetaStorageException("release user mutex error: ", e);
+        } finally {
+            userLeaseLock.unlock();
+        }
+    }
+
+    @Override
+    public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
+        try {
+            lockUser();
+            Map<String, UserMeta> users = new HashMap<>();
+            GetResponse response = this.client.getKVClient().get(ByteSequence.from(USER_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).build())
+                    .get();
+            if (response.getCount() != 0L) { // 服务器上已经有了，本地的不作数
+                response.getKvs().forEach(e -> {
+                    UserMeta user = JsonUtils.fromJson(e.getValue().getBytes(), UserMeta.class);
+                    users.put(user.getUsername(), user);
+                });
+            } else {
+                addUser(userMeta);
+                users.put(userMeta.getUsername(), userMeta);
+            }
+            return new ArrayList<>(users.values());
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when load user: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (userLease != -1) {
+                releaseUser();
+            }
+        }
+    }
+
+    @Override
+    public void registerUserChangeHook(UserChangeHook hook) {
+        userChangeHook = hook;
+    }
+
+    @Override
+    public void addUser(UserMeta userMeta) throws MetaStorageException {
+        updateUser(userMeta);
+    }
+
+    @Override
+    public void updateUser(UserMeta userMeta) throws MetaStorageException {
+        try {
+            lockUser();
+            this.client.getKVClient()
+                    .put(ByteSequence.from((USER_PREFIX + userMeta.getUsername()).getBytes()), ByteSequence.from(JsonUtils.toJson(userMeta))).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when add/update user: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (userLease != -1) {
+                releaseUser();
+            }
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(userMeta.getUsername(), userMeta);
+        }
+    }
+
+    @Override
+    public void removeUser(String username) throws MetaStorageException {
+        try {
+            lockUser();
+            this.client.getKVClient()
+                    .delete(ByteSequence.from((USER_PREFIX + username).getBytes())).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when remove user: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (userLease != -1) {
+                releaseUser();
+            }
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(username, null);
+        }
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;
@@ -772,6 +902,9 @@ public class ETCDMetaStorage implements IMetaStorage {
 
         this.fragmentWatcher.close();
         this.fragmentWatcher = null;
+
+        this.userWatcher.close();
+        this.userWatcher = null;
 
         this.client.close();
         this.client = null;

@@ -2,7 +2,6 @@
 
 IginX 是清华大学大数据系统软件国家工程实验室，为满足工业互联网场景推出的新一代高可扩展时序数据库分布式中间件，目前支持 IoTDB，InfluxDB 作为数据后端。
 
-
 ## 环境安装
 
 ### Java 安装
@@ -150,7 +149,7 @@ $ mvn clean install -Dmaven.test.skip=true # 编译 IginX
 
 ```shell
 [INFO] ------------------------------------------------------------------------
-[INFO] Reactor Summary for IginX 0.3.0-SNAPSHOT:
+[INFO] Reactor Summary for IginX 0.3.0:
 [INFO]
 [INFO] IginX .............................................. SUCCESS [  0.274 s]
 [INFO] IginX Thrift ....................................... SUCCESS [  6.484 s]
@@ -200,7 +199,7 @@ REPOSITORY					TAG					IMAGE ID					CREATED					SIZE
 iginx								latest			7f00b2b9510b			36 seconds ago	702MB
 ```
 
-## 基于镜像运行 
+## 基于镜像运行
 
 首先需要从 DockerHub 上拉取 IoTDB 镜像：
 

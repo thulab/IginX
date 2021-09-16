@@ -10,7 +10,7 @@ import cn.edu.tsinghua.iginx.thrift.SqlType;
 
 public class ShowTimeSeriesOperator extends Operator {
 
-    public ShowTimeSeriesOperator(){
+    public ShowTimeSeriesOperator() {
         this.operatorType = OperatorType.SHOW_TIME_SERIES;
     }
 

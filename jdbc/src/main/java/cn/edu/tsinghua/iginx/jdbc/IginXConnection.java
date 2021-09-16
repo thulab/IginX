@@ -3,7 +3,22 @@ package cn.edu.tsinghua.iginx.jdbc;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 
-import java.sql.*;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
@@ -112,13 +127,13 @@ public class IginXConnection implements Connection {
     }
 
     @Override
-    public void setAutoCommit(boolean autoCommit) {
-        this.autoCommit = autoCommit;
+    public boolean getAutoCommit() {
+        return autoCommit;
     }
 
     @Override
-    public boolean getAutoCommit() {
-        return autoCommit;
+    public void setAutoCommit(boolean autoCommit) {
+        this.autoCommit = autoCommit;
     }
 
     @Override
@@ -132,17 +147,12 @@ public class IginXConnection implements Connection {
     }
 
     @Override
-    public void setReadOnly(boolean readOnly) throws SQLException {
-        throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
-    }
-
-    @Override
     public boolean isReadOnly() {
         return true;
     }
 
     @Override
-    public void setCatalog(String catalog) throws SQLException {
+    public void setReadOnly(boolean readOnly) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
@@ -152,13 +162,18 @@ public class IginXConnection implements Connection {
     }
 
     @Override
-    public void setTransactionIsolation(int level) throws SQLException {
+    public void setCatalog(String catalog) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
     public int getTransactionIsolation() {
         return Connection.TRANSACTION_NONE;
+    }
+
+    @Override
+    public void setTransactionIsolation(int level) throws SQLException {
+        throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
@@ -187,12 +202,12 @@ public class IginXConnection implements Connection {
     }
 
     @Override
-    public void setHoldability(int holdability) throws SQLException {
+    public int getHoldability() throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
-    public int getHoldability() throws SQLException {
+    public void setHoldability(int holdability) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
@@ -277,11 +292,6 @@ public class IginXConnection implements Connection {
     }
 
     @Override
-    public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        throw new SQLClientInfoException(Constant.METHOD_NOT_SUPPORTED, null);
-    }
-
-    @Override
     public String getClientInfo(String name) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
@@ -289,6 +299,11 @@ public class IginXConnection implements Connection {
     @Override
     public Properties getClientInfo() throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
+    }
+
+    @Override
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+        throw new SQLClientInfoException(Constant.METHOD_NOT_SUPPORTED, null);
     }
 
     @Override
@@ -302,12 +317,12 @@ public class IginXConnection implements Connection {
     }
 
     @Override
-    public void setSchema(String schema) throws SQLException {
+    public String getSchema() throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 
     @Override
-    public String getSchema() throws SQLException {
+    public void setSchema(String schema) throws SQLException {
         throw new SQLException(Constant.METHOD_NOT_SUPPORTED);
     }
 

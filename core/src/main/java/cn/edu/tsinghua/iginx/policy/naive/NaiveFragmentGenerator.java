@@ -46,10 +46,10 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
-        if(ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",")>0){
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair =  generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
+        if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
-        }else
+        } else
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
     }
 

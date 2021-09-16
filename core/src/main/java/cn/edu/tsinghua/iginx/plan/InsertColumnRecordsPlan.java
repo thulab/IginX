@@ -57,7 +57,7 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertColumnRecordsPlan.");
+            logger.error("There are no values in the InsertNonAlignedColumnRecordsPlan.");
             return null;
         }
         int startIndex;
@@ -78,7 +78,7 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
         } else {
             endIndex = -1;
             for (int i = getPathsNum() - 1; i >= 0; i--) {
-                if (getPath(i).compareTo(interval.getEndTimeSeries()) <= 0) {
+                if (getPath(i).compareTo(interval.getEndTimeSeries()) < 0) {
                     endIndex = i;
                     break;
                 }

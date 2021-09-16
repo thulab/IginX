@@ -18,8 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.cluster;
 
+import cn.edu.tsinghua.iginx.auth.SessionManager;
+import cn.edu.tsinghua.iginx.auth.UserManager;
 import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
+import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
 import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
@@ -30,7 +33,10 @@ import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
 import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
+import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
@@ -38,15 +44,51 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
 import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
 import cn.edu.tsinghua.iginx.sql.operator.Operator;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.AddUserReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
+import cn.edu.tsinghua.iginx.thrift.GetUserReq;
+import cn.edu.tsinghua.iginx.thrift.GetUserResp;
+import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
+import cn.edu.tsinghua.iginx.thrift.UserType;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
+import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
-import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
@@ -54,15 +96,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class IginxWorker implements IService.Iface {
 
@@ -70,11 +107,13 @@ public class IginxWorker implements IService.Iface {
 
     private static final IginxWorker instance = new IginxWorker();
 
-    private final Set<Long> sessions = Collections.synchronizedSet(new HashSet<>());
-
     private final Core core = Core.getInstance();
 
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
+
+    private final UserManager userManager = UserManager.getInstance();
+
+    private final SessionManager sessionManager = SessionManager.getInstance();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -82,29 +121,30 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public OpenSessionResp openSession(OpenSessionReq req) {
-        logger.info("received open session request");
-        logger.info("start to generate test id");
-        long id = SnowFlakeUtils.getInstance().nextId();
-        logger.info("generate session id: " + id);
-        sessions.add(id);
-        logger.info("add session " + id + " into set");
+        String username = req.getUsername();
+        String password = req.getPassword();
+        if (!userManager.checkUser(username, password)) {
+            OpenSessionResp resp = new OpenSessionResp(RpcUtils.WRONG_USERNAME_OR_PASSWORD);
+            resp.setSessionId(0L);
+            return resp;
+        }
+        long sessionId = sessionManager.openSession(username);
         OpenSessionResp resp = new OpenSessionResp(RpcUtils.SUCCESS);
-        resp.setSessionId(id);
-        logger.info("return request");
+        resp.setSessionId(sessionId);
         return resp;
     }
 
     @Override
     public Status closeSession(CloseSessionReq req) {
-        if (!sessions.contains(req.getSessionId())) {
-            return RpcUtils.INVALID_SESSION;
-        }
-        sessions.remove(req.sessionId);
+        sessionManager.closeSession(req.getSessionId());
         return RpcUtils.SUCCESS;
     }
 
     @Override
     public Status deleteColumns(DeleteColumnsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         DeleteColumnsContext context = new DeleteColumnsContext(req);
         core.processRequest(context);
         return context.getStatus();
@@ -112,20 +152,49 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status insertColumnRecords(InsertColumnRecordsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
     }
 
     @Override
+    public Status insertNonAlignedColumnRecords(InsertNonAlignedColumnRecordsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
+
+    @Override
     public Status insertRowRecords(InsertRowRecordsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         InsertRowRecordsContext context = new InsertRowRecordsContext(req);
         core.processRequest(context);
         return context.getStatus();
     }
 
     @Override
+    public Status insertNonAlignedRowRecords(InsertNonAlignedRowRecordsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
+        core.processRequest(context);
+        return context.getStatus();
+    }
+
+    @Override
     public Status deleteDataInColumns(DeleteDataInColumnsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
         core.processRequest(context);
         return context.getStatus();
@@ -133,6 +202,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public QueryDataResp queryData(QueryDataReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new QueryDataResp(RpcUtils.ACCESS_DENY);
+        }
         QueryDataContext context = new QueryDataContext(req);
         core.processRequest(context);
         return ((QueryDataCombineResult) context.getCombineResult()).getResp();
@@ -140,39 +212,21 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status addStorageEngines(AddStorageEnginesReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Cluster)) {
+            return RpcUtils.ACCESS_DENY;
+        }
         List<StorageEngine> storageEngines = req.getStorageEngines();
         List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
 
-        Map<cn.edu.tsinghua.iginx.db.StorageEngine, Method> checkConnectionMethods = new HashMap<>();
-        String[] driverInfos = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String driverInfo : driverInfos) {
-            String[] kAndV = driverInfo.split("=");
-            String className = kAndV[1];
-            try {
-                Class<?> planExecutorClass = MixIStorageEnginePlanExecutor.class.getClassLoader().
-                        loadClass(className);
-                Method method = planExecutorClass.getMethod("testConnection", StorageEngineMeta.class);
-                checkConnectionMethods.put(cn.edu.tsinghua.iginx.db.StorageEngine.fromString(kAndV[0]), method);
-            } catch (ClassNotFoundException | NoSuchMethodException | IllegalArgumentException e) {
-                logger.error("load storage engine for " + kAndV[0] + " error, unable to create instance of " + className);
-            }
-        }
-
-
         for (StorageEngine storageEngine : storageEngines) {
-            cn.edu.tsinghua.iginx.db.StorageEngine type = cn.edu.tsinghua.iginx.db.StorageEngine.fromThrift(storageEngine.getType());
+            String type = storageEngine.getType();
             StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
                     storageEngine.getExtraParams(), type, metaManager.getIginxId());
-            Method checkConnectionMethod = checkConnectionMethods.get(type);
-            if (checkConnectionMethod == null) {
-                logger.error("unsupported storage engine " + type);
-                return RpcUtils.FAILURE;
-            }
             try {
-                if (!((boolean) checkConnectionMethod.invoke(null, meta))) {
+                if (!MixIStorageEnginePlanExecutor.testConnection(meta)) {
                     return RpcUtils.FAILURE;
                 }
-            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            } catch (Exception e) {
                 logger.error("load storage engine error, unable to connection to " + meta.getIp() + ":" + meta.getPort());
                 return RpcUtils.FAILURE;
             }
@@ -183,8 +237,8 @@ public class IginxWorker implements IService.Iface {
         // 检测是否与已有的存储单元冲突
         List<StorageEngineMeta> currentStorageEngines = metaManager.getStorageEngineList();
         List<StorageEngineMeta> duplicatedStorageEngine = new ArrayList<>();
-        for (StorageEngineMeta storageEngine: storageEngineMetas) {
-            for (StorageEngineMeta currentStorageEngine: currentStorageEngines) {
+        for (StorageEngineMeta storageEngine : storageEngineMetas) {
+            for (StorageEngineMeta currentStorageEngine : currentStorageEngines) {
                 if (currentStorageEngine.getIp().equals(storageEngine.getIp()) && currentStorageEngine.getPort() == storageEngine.getPort()) {
                     duplicatedStorageEngine.add(storageEngine);
                     break;
@@ -211,6 +265,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public AggregateQueryResp aggregateQuery(AggregateQueryReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new AggregateQueryResp(RpcUtils.ACCESS_DENY);
+        }
         AggregateQueryContext context = new AggregateQueryContext(req);
         core.processRequest(context);
         return ((AggregateCombineResult) context.getCombineResult()).getResp();
@@ -218,6 +275,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new ValueFilterQueryResp(RpcUtils.ACCESS_DENY);
+        }
         ValueFilterQueryContext context = new ValueFilterQueryContext(req);
         core.processRequest(context);
         return ((ValueFilterCombineResult) context.getCombineResult()).getResp();
@@ -225,6 +285,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public DownsampleQueryResp downsampleQuery(DownsampleQueryReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new DownsampleQueryResp(RpcUtils.ACCESS_DENY);
+        }
         DownsampleQueryContext context = new DownsampleQueryContext(req);
         core.processRequest(context);
         return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
@@ -232,6 +295,9 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public ShowColumnsResp showColumns(ShowColumnsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new ShowColumnsResp(RpcUtils.ACCESS_DENY);
+        }
         ShowColumnsContext context = new ShowColumnsContext(req);
         core.processRequest(context);
         return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
@@ -239,7 +305,12 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public GetReplicaNumResp getReplicaNum(GetReplicaNumReq req) {
-        return new GetReplicaNumResp(RpcUtils.SUCCESS, ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new GetReplicaNumResp(RpcUtils.ACCESS_DENY);
+        }
+        GetReplicaNumResp resp = new GetReplicaNumResp(RpcUtils.SUCCESS);
+        resp.setReplicaNum(ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
+        return resp;
     }
 
     @Override
@@ -271,4 +342,67 @@ public class IginxWorker implements IService.Iface {
             return resp;
         }
     }
+
+    @Override
+    public LastQueryResp lastQuery(LastQueryReq req) {
+        LastQueryContext context = new LastQueryContext(req);
+        core.processRequest(context);
+        return ((LastQueryCombineResult) context.getCombineResult()).getResp();
+    }
+
+    @Override
+    public Status updateUser(UpdateUserReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Admin)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        if (userManager.updateUser(req.username, req.password, req.auths)) {
+            return RpcUtils.SUCCESS;
+        }
+        return RpcUtils.FAILURE;
+    }
+
+    @Override
+    public Status addUser(AddUserReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Admin)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        if (userManager.addUser(req.username, req.password, req.auths)) {
+            return RpcUtils.SUCCESS;
+        }
+        return RpcUtils.FAILURE;
+    }
+
+    @Override
+    public Status deleteUser(DeleteUserReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Admin)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        if (userManager.deleteUser(req.username)) {
+            return RpcUtils.SUCCESS;
+        }
+        return RpcUtils.FAILURE;
+    }
+
+    @Override
+    public GetUserResp getUser(GetUserReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new GetUserResp(RpcUtils.ACCESS_DENY);
+        }
+        GetUserResp resp = new GetUserResp(RpcUtils.SUCCESS);
+        List<UserMeta> users;
+        if (req.usernames == null) {
+            users = userManager.getUsers();
+        } else {
+            users = userManager.getUsers(req.getUsernames());
+        }
+        List<String> usernames = users.stream().map(UserMeta::getUsername).collect(Collectors.toList());
+        List<UserType> userTypes = users.stream().map(UserMeta::getUserType).collect(Collectors.toList());
+        List<Set<AuthType>> auths = users.stream().map(UserMeta::getAuths).collect(Collectors.toList());
+        resp.setUsernames(usernames);
+        resp.setUserTypes(userTypes);
+        resp.setAuths(auths);
+        return resp;
+    }
+
+
 }

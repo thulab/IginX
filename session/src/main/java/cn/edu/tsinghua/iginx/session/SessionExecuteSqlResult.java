@@ -31,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -41,6 +42,7 @@ public class SessionExecuteSqlResult {
     private AggregateType aggregateType;
     private long[] timestamps;
     private List<String> paths;
+    private String orderByPath;
     private List<List<Object>> values;
     private List<DataType> dataTypeList;
     private int replicaNum;
@@ -48,6 +50,7 @@ public class SessionExecuteSqlResult {
     private String parseErrorMsg;
     private int limit;
     private int offset;
+    private boolean ascending;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -56,8 +59,6 @@ public class SessionExecuteSqlResult {
     public SessionExecuteSqlResult(ExecuteSqlResp resp) {
         this.sqlType = resp.getType();
         this.parseErrorMsg = resp.getParseErrorMsg();
-        this.limit = resp.getLimit();
-        this.offset = resp.getOffset();
         switch (resp.getType()) {
             case GetReplicaNum:
                 this.replicaNum = resp.getReplicaNum();
@@ -83,6 +84,10 @@ public class SessionExecuteSqlResult {
     private void constructQueryResult(ExecuteSqlResp resp) {
         this.paths = resp.getPaths();
         this.dataTypeList = resp.getDataTypeList();
+        this.limit = resp.getLimit();
+        this.offset = resp.getOffset();
+        this.orderByPath = resp.getOrderByPath();
+        this.ascending = resp.isAscending();
 
         if (resp.timestamps != null) {
             this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
@@ -126,40 +131,72 @@ public class SessionExecuteSqlResult {
         return res;
     }
 
-    public void print(boolean needFormatTime, String timePrecision) {
+
+    public List<List<String>> getResultInList(boolean needFormatTime, String timePrecision) {
+        List<List<String>> result = new ArrayList<>();
         if (isQuery()) {
-            printQueryResult(needFormatTime, timePrecision);
+            List<Integer> maxSizeList = new ArrayList<>();
+            result = cacheResult(needFormatTime, timePrecision, maxSizeList);
         } else if (sqlType == SqlType.ShowTimeSeries) {
-            printShowTimeSeriesResult();
+            result.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
+            if (paths != null) {
+                for (int i = 0; i < paths.size(); i++) {
+                    result.add(Arrays.asList(paths.get(i) + "", dataTypeList.get(i) + ""));
+                }
+            }
         } else if (sqlType == SqlType.GetReplicaNum) {
-            System.out.println("Replica num:" + replicaNum);
+            result.add(new ArrayList<>(Arrays.asList("Replica num")));
+            result.add(new ArrayList<>(Arrays.asList(replicaNum + "")));
         } else if (sqlType == SqlType.CountPoints) {
-            System.out.println("Points num:" + pointsNum);
+            result.add(new ArrayList<>(Arrays.asList("Points num")));
+            result.add(new ArrayList<>(Arrays.asList(pointsNum + "")));
         } else {
-            System.out.println("No data to print.");
+            result.add(new ArrayList<>(Arrays.asList("Empty set")));
+        }
+        return result;
+    }
+
+    public void print(boolean needFormatTime, String timePrecision) {
+        System.out.print(getResultInString(needFormatTime, timePrecision));
+    }
+
+    public String getResultInString(boolean needFormatTime, String timePrecision) {
+        if (isQuery()) {
+            return buildQueryResult(needFormatTime, timePrecision);
+        } else if (sqlType == SqlType.ShowTimeSeries) {
+            return buildShowTimeSeriesResult();
+        } else if (sqlType == SqlType.GetReplicaNum) {
+            return "Replica num: " + replicaNum + "\n";
+        } else if (sqlType == SqlType.CountPoints) {
+            return "Points num: " + pointsNum + "\n";
+        } else {
+            return "No data to print." + "\n";
         }
     }
 
-    private void printQueryResult(boolean needFormatTime, String timePrecision) {
-        System.out.printf("%s ResultSets:%n", sqlType.toString());
+    private String buildQueryResult(boolean needFormatTime, String timePrecision) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(String.format("%s ResultSets:", sqlType.toString())).append("\n");
 
         List<Integer> maxSizeList = new ArrayList<>();
-        List<List<String>> cache = new ArrayList<>();
-        cacheResult(needFormatTime, timePrecision, maxSizeList, cache);
+        List<List<String>> cache = cacheResult(needFormatTime, timePrecision, maxSizeList);
 
-        printBlockLine(maxSizeList);
-        printRow(cache, 0, maxSizeList);
-        printBlockLine(maxSizeList);
+        builder.append(buildBlockLine(maxSizeList));
+        builder.append(buildRow(cache, 0, maxSizeList));
+        builder.append(buildBlockLine(maxSizeList));
         for (int i = 1; i < cache.size(); i++) {
-            printRow(cache, i, maxSizeList);
+            builder.append(buildRow(cache, i, maxSizeList));
         }
-        printBlockLine(maxSizeList);
+        builder.append(buildBlockLine(maxSizeList));
 
-        printCount(cache.size()-1);
+        builder.append(buildCount(cache.size() - 1));
+
+        return builder.toString();
     }
 
     private List<List<String>> cacheResult(boolean needFormatTime, String timePrecision,
-                                           List<Integer> maxSizeList, List<List<String>> cache) {
+                                           List<Integer> maxSizeList) {
+        List<List<String>> cache = new ArrayList<>();
         List<String> label = new ArrayList<>();
         if (timestamps != null) {
             label.add("Time");
@@ -175,7 +212,6 @@ public class SessionExecuteSqlResult {
                 maxSizeList.add(newLabel.length());
             }
         }
-        cache.add(label);
 
         int maxOutputLen = Math.min(offset + limit, values.size());
         for (int i = offset; i < maxOutputLen; i++) {
@@ -212,46 +248,102 @@ public class SessionExecuteSqlResult {
             cache.add(rowCache);
         }
 
+        int index = paths.indexOf(orderByPath);
+        if (orderByPath != null && !orderByPath.equals("") && index >= 0) {
+            DataType type = dataTypeList.get(index);
+            int finalIndex = timestamps == null ? index : ++index;
+            cache = cache.stream()
+                    .sorted((o1, o2) -> {
+                        if (ascending) {
+                            return compare(o1.get(finalIndex), o2.get(finalIndex), type);
+                        } else {
+                            return compare(o2.get(finalIndex), o1.get(finalIndex), type);
+                        }
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        cache.add(0, label);
+
         return cache;
     }
 
-    private static void printBlockLine(List<Integer> maxSizeList) {
+    private int compare(String s1, String s2, DataType type) {
+        switch (type) {
+            case LONG:
+                return Long.compare(Long.parseLong(s1), Long.parseLong(s2));
+            case FLOAT:
+                return Float.compare(Float.parseFloat(s1), Float.parseFloat(s2));
+            case DOUBLE:
+                return Double.compare(Double.parseDouble(s1), Double.parseDouble(s2));
+            case INTEGER:
+                return Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2));
+            case BOOLEAN:
+                return Boolean.compare(Boolean.parseBoolean(s1), Boolean.parseBoolean(s2));
+            default:
+                return s1.compareTo(s2);
+        }
+    }
+
+    private String buildBlockLine(List<Integer> maxSizeList) {
         StringBuilder blockLine = new StringBuilder();
         for (Integer integer : maxSizeList) {
             blockLine.append("+").append(StringUtils.repeat("-", integer));
         }
-        blockLine.append("+");
-        System.out.println(blockLine.toString());
+        blockLine.append("+").append("\n");
+        return blockLine.toString();
     }
 
-    private static void printRow(List<List<String>> cache, int rowIdx, List<Integer> maxSizeList) {
-        System.out.print("|");
+    private String buildRow(List<List<String>> cache, int rowIdx, List<Integer> maxSizeList) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("|");
         int maxSize;
         String rowValue;
         for (int i = 0; i < maxSizeList.size(); i++) {
             maxSize = maxSizeList.get(i);
             rowValue = cache.get(rowIdx).get(i);
-            System.out.printf("%" + maxSize + "s|", rowValue);
+            builder.append(String.format("%" + maxSize + "s|", rowValue));
         }
-        System.out.println();
+        builder.append("\n");
+        return builder.toString();
     }
 
-    public static void printCount(int count) {
+    public String buildCount(int count) {
         if (count <= 0) {
-            System.out.println("Empty set.");
+            return "Empty set.\n";
         } else {
-            System.out.println("Total line number = " + count);
+            return "Total line number = " + count + "\n";
         }
     }
 
-    private void printShowTimeSeriesResult() {
+    private String buildShowTimeSeriesResult() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Time series:").append("\n");
         int num = paths == null ? 0 : paths.size();
         if (paths != null) {
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
             for (int i = 0; i < paths.size(); i++) {
-                System.out.println(String.format("TimeSeries{Path='%s', DataType='%s'}", paths.get(i), dataTypeList.get(i)));
+                cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
             }
+
+            int pathMaxLen = 0, typeMaxLen = 0;
+            for (List<String> row : cache) {
+                pathMaxLen = Math.max(row.get(0).length(), pathMaxLen);
+                typeMaxLen = Math.max(row.get(1).length(), typeMaxLen);
+            }
+            List<Integer> maxSizeList = new ArrayList<>(Arrays.asList(pathMaxLen, typeMaxLen));
+
+            builder.append(buildBlockLine(maxSizeList));
+            builder.append(buildRow(cache, 0, maxSizeList));
+            builder.append(buildBlockLine(maxSizeList));
+            for (int i = 1; i < cache.size(); i++) {
+                builder.append(buildRow(cache, i, maxSizeList));
+            }
+            builder.append(buildBlockLine(maxSizeList));
         }
-        System.out.println("Total time series num = " + num);
+        builder.append(buildCount(num)).append("\n");
+        return builder.toString();
     }
 
     private String formatTime(long timestamp, String timePrecision) {
@@ -260,7 +352,7 @@ public class SessionExecuteSqlResult {
             case "s":
                 timeInMs = timestamp * 1000;
                 break;
-            case "µs":
+            case "us":
                 timeInMs = timestamp / 1000;
                 break;
             case "ns":

@@ -21,14 +21,12 @@ package cn.edu.tsinghua.iginx.client;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -67,28 +65,18 @@ public class IginxClient {
     private static final int MAX_HELP_CONSOLE_WIDTH = 88;
 
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
-
-    private static int MAX_GETDATA_NUM = 100;
-
-    private static String timestampPrecision = "ms";
-
-    static String host = "127.0.0.1";
-
-    static String port = "6667";
-
-    static String username = "root";
-
-    static String password = "root";
-
-    static String execute = "";
-
-    private static CommandLine commandLine;
-
-    private static Session session;
-
     private static final String QUIT_COMMAND = "quit";
     private static final String EXIT_COMMAND = "exit";
     private static final String SET_TIME_UNIT = "set timeunit in";
+    static String host = "127.0.0.1";
+    static String port = "6667";
+    static String username = "root";
+    static String password = "root";
+    static String execute = "";
+    private static int MAX_GETDATA_NUM = 100;
+    private static String timestampPrecision = "ms";
+    private static CommandLine commandLine;
+    private static Session session;
 
     private static Options createOptions() {
         Options options = new Options();
@@ -181,10 +169,10 @@ public class IginxClient {
 
             if (execute.equals("")) {
                 echoStarting();
-                displayLogo("0.3.0");
+                displayLogo("0.4.0-SNAPSHOT");
 
                 String command;
-                while (true) {
+                while(true) {
                     command = reader.readLine(IGINX_CLI_PREFIX);
                     boolean continues = processCommand(command);
                     if (!continues) {
@@ -226,12 +214,6 @@ public class IginxClient {
         return true;
     }
 
-    enum OperationResult {
-        STOP,
-        CONTINUE,
-        DO_NOTHING,
-    }
-
     private static OperationResult handleInputStatement(String statement) {
         String trimedStatement = statement.replaceAll(" +", " ").toLowerCase().trim();
 
@@ -261,8 +243,8 @@ public class IginxClient {
                     timestampPrecision = "ms";
                     break;
                 case "microsecond":
-                case "µs":
-                    timestampPrecision = "µs";
+                case "us":
+                    timestampPrecision = "us";
                     break;
                 case "nanosecond":
                 case "ns":
@@ -274,7 +256,7 @@ public class IginxClient {
             }
             System.out.println(String.format("Current time unit: %s", timestampPrecision));
         } else {
-            System.out.println("Set timeunit error, please input like: set timeunit in s/ms/µs/ns");
+            System.out.println("Set timeunit error, please input like: set timeunit in s/ms/us/ns");
         }
     }
 
@@ -490,5 +472,11 @@ public class IginxClient {
                         version +
                         "\n"
         );
+    }
+
+    enum OperationResult {
+        STOP,
+        CONTINUE,
+        DO_NOTHING,
     }
 }

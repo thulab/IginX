@@ -12,8 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
-public class InsertAnnotationWorker  extends Thread
-{
+public class InsertAnnotationWorker extends Thread {
     private static final String NO_CACHE = "no-cache";
     private static final Logger LOGGER = LoggerFactory.getLogger(InsertAnnotationWorker.class);
     private HttpHeaders httpheaders;
@@ -21,7 +20,7 @@ public class InsertAnnotationWorker  extends Thread
     private AsyncResponse asyncResponse;
 
     public InsertAnnotationWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
-                        InputStream stream) {
+                                  InputStream stream) {
         this.asyncResponse = asyncResponse;
         this.httpheaders = httpheaders;
         this.stream = stream;

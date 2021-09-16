@@ -96,7 +96,7 @@ public class StatisticsCollector implements IStatisticsCollector {
         // 启动一个新线程，定期播报统计信息
         broadcastThreadPool.execute(() -> {
             try {
-                while (broadcast.get()) {
+                while(broadcast.get()) {
                     planGenerateStatisticsCollector.broadcastStatistics();
                     planExecuteStatisticsCollector.broadcastStatistics();
                     resultCombineStatisticsCollector.broadcastStatistics();

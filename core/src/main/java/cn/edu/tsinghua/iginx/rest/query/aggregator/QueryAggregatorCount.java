@@ -19,14 +19,13 @@
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.RestUtils;
 import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.rest.RestUtils;
 
 import java.util.List;
 
-//todo
 public class QueryAggregatorCount extends QueryAggregator {
     public QueryAggregatorCount() {
         super(QueryAggregatorType.COUNT);

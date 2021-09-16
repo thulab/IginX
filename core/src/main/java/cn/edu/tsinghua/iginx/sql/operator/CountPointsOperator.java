@@ -4,7 +4,11 @@ import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
 import java.util.ArrayList;

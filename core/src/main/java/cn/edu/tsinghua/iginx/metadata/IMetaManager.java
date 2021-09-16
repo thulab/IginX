@@ -25,7 +25,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
 import java.util.Map;
@@ -168,5 +170,17 @@ public interface IMetaManager {
      * @param statisticsMap 活跃的分片的关于当前请求的统计信息
      */
     void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap);
+
+    boolean addUser(UserMeta user);
+
+    boolean updateUser(String username, String password, Set<AuthType> auths);
+
+    boolean removeUser(String username);
+
+    UserMeta getUser(String username);
+
+    List<UserMeta> getUsers();
+
+    List<UserMeta> getUsers(List<String> username);
 
 }

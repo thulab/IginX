@@ -4,7 +4,7 @@ echo Starting IginX
 echo ````````````````````````
 
 
-set "IGINX_VERSION=0.3.0-SNAPSHOT"
+set "IGINX_VERSION=0.4.0-SNAPSHOT"
 set PATH="%JAVA_HOME%\bin\";%PATH%
 set "FULL_VERSION="
 set "MAJOR_VERSION="
@@ -76,17 +76,19 @@ set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\iotdb\target\iotdb-%IGINX_VERSION%.jar"
 set CLASSPATH=%CLASSPATH%;"%IGINX_HOME%\influxdb\target\influxdb-%IGINX_VERSION%.jar"
 goto okClasspath
 
-:append
-set CLASSPATH=%CLASSPATH%;%1
-
-goto :eof
-
 @REM -----------------------------------------------------------------------------
 :okClasspath
 
 echo CLASSPATH: %CLASSPATH%
 
+set DRIVER=
+setx DRIVER "%IGINX_HOME%\driver"
+
 "%JAVA_HOME%\bin\java" %JAVA_OPTS% %HEAP_OPTS% -cp %CLASSPATH% %MAIN_CLASS%
+
+reg delete "HKEY_CURRENT_USER\Environment" /v "DRIVER" /f
+set DRIVER=
+
 goto finally
 
 :err

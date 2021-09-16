@@ -69,16 +69,16 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         return endTimeSeries;
     }
 
+    public void setEndTimeSeries(String endTimeSeries) {
+        this.endTimeSeries = endTimeSeries;
+    }
+
     public boolean isClosed() {
         return isClosed;
     }
 
     public void setClosed(boolean closed) {
         isClosed = closed;
-    }
-
-    public void setEndTimeSeries(String endTimeSeries) {
-        this.endTimeSeries = endTimeSeries;
     }
 
     @Override

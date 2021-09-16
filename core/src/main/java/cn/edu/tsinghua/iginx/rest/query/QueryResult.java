@@ -107,27 +107,21 @@ public class QueryResult {
     }
 
 
-
-
-    public String toAnnotationResultString(boolean isGrafana) throws Exception{
+    public String toAnnotationResultString(boolean isGrafana) throws Exception {
         StringBuilder ret = new StringBuilder("");
         List<Annotation> values = new ArrayList<>();
         int siz = queryResultDatasets.get(0).getValues().size();
-        for (int i = 0; i < siz; i++)
-        {
+        for (int i = 0; i < siz; i++) {
             Annotation ins = new Annotation(new String((byte[]) queryResultDatasets.get(0).getValues().get(i)), queryResultDatasets.get(0).getTimestamps().get(i));
             values.add(ins);
         }
         int now = 0;
         if (siz == 0)
             return "{}";
-        if (isGrafana)
-        {
+        if (isGrafana) {
             for (int i = 1; i < siz; i++)
-                if (!values.get(i).isEqual(values.get(i - 1)))
-                {
-                    if (values.get(i-1).match(queryMetrics.get(0).getAnnotationLimit()))
-                    {
+                if (!values.get(i).isEqual(values.get(i - 1))) {
+                    if (values.get(i - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
                         ret.append("{");
                         ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).text));
                         ret.append(String.format("\"title\": \"%s\",", values.get(i - 1).title));
@@ -143,8 +137,7 @@ public class QueryResult {
                     }
                     now = i;
                 }
-            if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit()))
-            {
+            if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
                 ret.append("{");
                 ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).text));
                 ret.append(String.format("\"title\": \"%s\",", values.get(siz - 1).title));
@@ -160,13 +153,10 @@ public class QueryResult {
             }
             if (ret.charAt(ret.length() - 1) == ',')
                 ret.deleteCharAt(ret.length() - 1);
-        }
-        else {
+        } else {
             for (int i = 1; i < siz; i++)
-                if (!values.get(i).isEqual(values.get(i - 1)))
-                {
-                    if (values.get(i-1).match(queryMetrics.get(0).getAnnotationLimit()))
-                    {
+                if (!values.get(i).isEqual(values.get(i - 1))) {
+                    if (values.get(i - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
                         ret.append("{");
                         ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).text));
                         ret.append(String.format("\"description\": \"%s\",", values.get(i - 1).title));
@@ -181,8 +171,7 @@ public class QueryResult {
                     }
                     now = i;
                 }
-            if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit()))
-            {
+            if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
                 ret.append("{");
                 ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).text));
                 ret.append(String.format("\"description\": \"%s\",", values.get(siz - 1).title));

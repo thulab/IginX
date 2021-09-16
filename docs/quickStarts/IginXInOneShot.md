@@ -218,7 +218,10 @@ $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1
 
 ### RPC 接口
 
-除了 RESTful 接口外，IginX 还提供了 RPC 的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX 还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了 RPC 接口最常见的用法。
+除了 RESTful 接口外，IginX 还提供了 RPC
+的数据访问接口，具体接口参考 [IginX 官方手册](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf)，同时 IginX
+还提供了部分[官方 example](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session)，展示了
+RPC 接口最常见的用法。
 
 下面是一个简短的使用教程。
 
@@ -245,7 +248,8 @@ $ mvn clean install -DskipTests
 </dependency>
 ```
 
-在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端 IginX 的账户名和密码直接填写 root 即可：
+在访问 iginx 之前，首先需要创建 session，并尝试连接。Session 构造器有 4 个参数，分别是要连接的 IginX 的 ip，port，以及用于 IginX 认证的用户名和密码。目前的权鉴系统还在编写中，因此访问后端
+IginX 的账户名和密码直接填写 root 即可：
 
 ```Java
 Session session = new Session("127.0.0.1", 6888, "root", "root");
