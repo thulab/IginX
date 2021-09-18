@@ -19,6 +19,8 @@
 package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
@@ -65,24 +67,29 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 
 public class RestSession {
     private static final Logger logger = LoggerFactory.getLogger(RestSession.class);
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private final ReadWriteLock lock;
     private IginxWorker client;
     private long sessionId;
     private boolean isClosed;
     private int redirectTimes;
-
+    private String username;
+    private String password;
 
     public RestSession() {
         this.isClosed = true;
         this.redirectTimes = 0;
         this.lock = new ReentrantReadWriteLock();
-
+        this.username = config.getUsername();
+        this.password = config.getPassword();
     }
 
 
     private OpenSessionResp tryOpenSession() {
         client = IginxWorker.getInstance();
         OpenSessionReq req = new OpenSessionReq();
+        req.username = this.username;
+        req.password = this.password;
         return client.openSession(req);
     }
 
