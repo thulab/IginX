@@ -89,4 +89,5 @@ public interface IMetaStorage {
 
     void removeUser(String username) throws MetaStorageException;
 
+    boolean election();
 }

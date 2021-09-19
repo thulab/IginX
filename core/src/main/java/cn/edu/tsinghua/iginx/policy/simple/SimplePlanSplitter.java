@@ -26,10 +26,12 @@ import cn.edu.tsinghua.iginx.plan.downsample.*;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -52,6 +54,10 @@ class SimplePlanSplitter implements IPlanSplitter {
     private final int prefixMaxSize;
 
     private final Random random = new Random();
+
+    private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
+
+    private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
 
     public SimplePlanSplitter(SimplePolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
@@ -107,6 +113,27 @@ class SimplePlanSplitter implements IPlanSplitter {
         lock.writeLock().unlock();
     }
 
+    private void saveTimeSeriesData(InsertRecordsPlan plan) {
+        insertRecordLock.writeLock().lock();
+        Long now = System.currentTimeMillis();
+        if (plan instanceof InsertColumnRecordsPlan) {
+
+        } else if (plan instanceof InsertRowRecordsPlan) {
+
+        }
+        insertRecordLock.writeLock().unlock();
+    }
+
+    private List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
+        insertRecordLock.readLock().lock();
+        num = Math.min(num, timeSeriesCalDOConcurrentHashMap.size());
+        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream().sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList()).subList(0, num);
+        insertRecordLock.readLock().unlock();
+        return ret;
+    }
+
+
     public List<String> samplePrefix(int count) {
         lock.readLock().lock();
         String[] prefixArray = new String[prefixList.size()];
@@ -146,6 +173,7 @@ class SimplePlanSplitter implements IPlanSplitter {
     @Override
     public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);
+        saveTimeSeriesData(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -179,6 +207,7 @@ class SimplePlanSplitter implements IPlanSplitter {
     @Override
     public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
         updatePrefix(plan);
+        saveTimeSeriesData(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());

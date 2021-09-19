@@ -819,6 +819,12 @@ public class ETCDMetaStorage implements IMetaStorage {
         }
     }
 
+    @Override
+    public boolean election()
+    {
+        return false;
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;

@@ -112,6 +112,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initPolicy();
             initUser();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
@@ -245,6 +246,19 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     private void initUser() throws MetaStorageException {
+        storage.registerUserChangeHook((username, user) -> {
+            if (user == null) {
+                cache.removeUser(username);
+            } else {
+                cache.addOrUpdateUser(user);
+            }
+        });
+        for (UserMeta user: storage.loadUser(resolveUserFromConf())) {
+            cache.addOrUpdateUser(user);
+        }
+    }
+
+    private void initPolicy() throws MetaStorageException {
         storage.registerUserChangeHook((username, user) -> {
             if (user == null) {
                 cache.removeUser(username);
@@ -653,5 +667,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<UserMeta> getUsers(List<String> username) {
         return cache.getUser(username);
+    }
+
+    @Override
+    public boolean election()
+    {
+        return storage.election();
     }
 }

@@ -175,4 +175,6 @@ public interface IMetaManager {
 
     List<UserMeta> getUsers(List<String> username);
 
+    boolean election();
+
 }

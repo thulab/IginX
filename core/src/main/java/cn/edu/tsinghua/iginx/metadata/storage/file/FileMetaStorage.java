@@ -475,4 +475,10 @@ public class FileMetaStorage implements IMetaStorage {
             userChangeHook.onChange(username, null);
         }
     }
+
+    @Override
+    public boolean election()
+    {
+        return false;
+    }
 }

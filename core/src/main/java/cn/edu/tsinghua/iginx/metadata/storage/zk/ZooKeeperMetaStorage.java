@@ -88,6 +88,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK_NODE = "/lock/user";
 
+    private static final String POLICY_NODE_PREFIX = "/policy";
+
+    private static final String POLICY_LOCK_NODE = "/lock/policy";
+
     private static ZooKeeperMetaStorage INSTANCE = null;
 
     private final CuratorFramework client;
@@ -831,5 +835,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 throw new MetaStorageException("get error when release interprocess lock for " + USER_LOCK_NODE, e);
             }
         }
+    }
+
+    @Override
+    public boolean election()
+    {
+        return false;
     }
 }
