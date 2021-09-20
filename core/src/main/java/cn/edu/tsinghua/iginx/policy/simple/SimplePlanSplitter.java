@@ -55,9 +55,12 @@ class SimplePlanSplitter implements IPlanSplitter {
 
     private final Random random = new Random();
 
-    private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
 
-    private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
+    List<String> getNewFragment(Map<String, Double> data) {
+        //todo
+        List<String> ret = new ArrayList<>();
+        return ret;
+    }
 
     public SimplePlanSplitter(SimplePolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
@@ -113,26 +116,6 @@ class SimplePlanSplitter implements IPlanSplitter {
         lock.writeLock().unlock();
     }
 
-    private void saveTimeSeriesData(InsertRecordsPlan plan) {
-        insertRecordLock.writeLock().lock();
-        Long now = System.currentTimeMillis();
-        if (plan instanceof InsertColumnRecordsPlan) {
-
-        } else if (plan instanceof InsertRowRecordsPlan) {
-
-        }
-        insertRecordLock.writeLock().unlock();
-    }
-
-    private List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
-        insertRecordLock.readLock().lock();
-        num = Math.min(num, timeSeriesCalDOConcurrentHashMap.size());
-        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream().sorted(Comparator.reverseOrder())
-                .collect(Collectors.toList()).subList(0, num);
-        insertRecordLock.readLock().unlock();
-        return ret;
-    }
-
 
     public List<String> samplePrefix(int count) {
         lock.readLock().lock();
@@ -173,7 +156,7 @@ class SimplePlanSplitter implements IPlanSplitter {
     @Override
     public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);
-        saveTimeSeriesData(plan);
+        iMetaManager.saveTimeSeriesData(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -184,9 +167,10 @@ class SimplePlanSplitter implements IPlanSplitter {
             iMetaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
         } else if (policy.isNeedReAllocate()) {
-            //on scale-out or any events requiring reallocation
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1);
+            Map<String, Double> data = iMetaManager.getTimeseriesData();
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateFragmentsAndStorageUnits(getNewFragment(data), plan.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1);
             iMetaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
+            logger.info("create fragment");
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {
@@ -207,7 +191,7 @@ class SimplePlanSplitter implements IPlanSplitter {
     @Override
     public List<SplitInfo> getSplitInsertRowRecordsPlanResults(InsertRowRecordsPlan plan) {
         updatePrefix(plan);
-        saveTimeSeriesData(plan);
+        iMetaManager.saveTimeSeriesData(plan);
         List<SplitInfo> infoList = new ArrayList<>();
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(
                 plan.getTsInterval(), plan.getTimeInterval());
@@ -217,8 +201,10 @@ class SimplePlanSplitter implements IPlanSplitter {
             iMetaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragmentMap = iMetaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(plan.getTsInterval(), plan.getTimeInterval());
         } else if (policy.isNeedReAllocate()) {
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateFragmentsAndStorageUnits(samplePrefix(iMetaManager.getStorageEngineList().size() - 1), plan.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1);
+            Map<String, Double> data = iMetaManager.getTimeseriesData();
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateFragmentsAndStorageUnits(getNewFragment(data), plan.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1);
             iMetaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
+            logger.info("create fragment");
         }
         for (Map.Entry<TimeSeriesInterval, List<FragmentMeta>> entry : fragmentMap.entrySet()) {
             for (FragmentMeta fragment : entry.getValue()) {

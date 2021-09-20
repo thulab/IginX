@@ -34,6 +34,10 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -259,15 +263,24 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     private void initPolicy() throws MetaStorageException {
-        storage.registerUserChangeHook((username, user) -> {
-            if (user == null) {
-                cache.removeUser(username);
-            } else {
-                cache.addOrUpdateUser(user);
+        storage.registerTimeseriesChangeHook(cache::timeseriesIsUpdated);
+        storage.registerVersionChangeHook((version, num) -> {
+            Map<String, Double> timeseriesData = cache.getMaxValueTimeSeries(num).stream().
+                    collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
+            try {
+                storage.updateTimeseriesData(timeseriesData, getIginxId(), version);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
-        for (UserMeta user: storage.loadUser(resolveUserFromConf())) {
-            cache.addOrUpdateUser(user);
+        int num = 0; //todo
+        try
+        {
+            storage.registerPolicy(getIginxId(), num);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
 
@@ -670,8 +683,27 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean election()
-    {
+    public boolean election() {
         return storage.election();
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertRecordsPlan plan) {
+        cache.saveTimeSeriesData(plan);
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
+        return cache.getMaxValueTimeSeries(num);
+    }
+
+    @Override
+    public Map<String, Double> getTimeseriesData() {
+        return storage.getTimeseriesData();
+    }
+
+    @Override
+    public int updateVersion(int num) {
+        return storage.updateVersion(num);
     }
 }

@@ -25,6 +25,10 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.ArrayList;
@@ -67,6 +71,15 @@ public class DefaultMetaCache implements IMetaCache {
     // user 的缓存
     private final Map<String, UserMeta> userMetaMap;
 
+    // 时序列信息版本号的缓存
+    private final Map<Integer, Integer> timeseriesVersionMap;
+
+    private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
+
+    private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
+
+
+
     public static DefaultMetaCache getInstance() {
         if (INSTANCE == null) {
             synchronized (DefaultMetaCache.class) {
@@ -94,6 +107,8 @@ public class DefaultMetaCache implements IMetaCache {
         schemaMappings = new ConcurrentHashMap<>();
         // user 相关
         userMetaMap = new ConcurrentHashMap<>();
+
+        timeseriesVersionMap = new ConcurrentHashMap<>();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -435,6 +450,33 @@ public class DefaultMetaCache implements IMetaCache {
             }
         }
         return users;
+    }
+
+    @Override
+    public void timeseriesIsUpdated(int node, int version) {
+        timeseriesVersionMap.put(node, version);
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertRecordsPlan plan) {
+        insertRecordLock.writeLock().lock();
+        Long now = System.currentTimeMillis();
+        if (plan instanceof InsertColumnRecordsPlan) {
+            //todo
+        } else if (plan instanceof InsertRowRecordsPlan) {
+
+        }
+        insertRecordLock.writeLock().unlock();
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
+        insertRecordLock.readLock().lock();
+        num = Math.min(num, timeSeriesCalDOConcurrentHashMap.size());
+        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream().sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList()).subList(0, num);
+        insertRecordLock.readLock().unlock();
+        return ret;
     }
 
 }

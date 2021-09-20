@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class SimplePolicy implements IPolicy {
@@ -33,6 +34,7 @@ public class SimplePolicy implements IPolicy {
     private IPlanSplitter iPlanSplitter;
     private IMetaManager iMetaManager;
     private IFragmentGenerator iFragmentGenerator;
+    private FragmentCreator fragmentCreator;
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
@@ -84,6 +86,7 @@ public class SimplePolicy implements IPolicy {
         this.iMetaManager = iMetaManager;
         this.iPlanSplitter = new SimplePlanSplitter(this, this.iMetaManager);
         this.iFragmentGenerator = new SimpleFragmentGenerator(this.iMetaManager);
+        this.fragmentCreator = new FragmentCreator(this, this.iMetaManager);
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);
@@ -107,5 +110,10 @@ public class SimplePolicy implements IPolicy {
 
     public void setNeedReAllocate(boolean needReAllocate) {
         this.needReAllocate.set(needReAllocate);
+    }
+
+    public boolean checkSuccess(Map<String, Double> timeseriesData) {
+        //todo
+        return true;
     }
 }

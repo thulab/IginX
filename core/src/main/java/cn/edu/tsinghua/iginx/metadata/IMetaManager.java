@@ -26,6 +26,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
@@ -177,4 +179,11 @@ public interface IMetaManager {
 
     boolean election();
 
+    void saveTimeSeriesData(InsertRecordsPlan plan);
+
+    List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num);
+
+    Map<String, Double> getTimeseriesData();
+
+    int updateVersion(int num);
 }
