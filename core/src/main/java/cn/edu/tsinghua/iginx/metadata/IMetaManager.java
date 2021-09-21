@@ -186,4 +186,7 @@ public interface IMetaManager {
     Map<String, Double> getTimeseriesData();
 
     int updateVersion(int num);
+
+    Map<Integer, Integer> getTimeseriesVersionMap();
+
 }

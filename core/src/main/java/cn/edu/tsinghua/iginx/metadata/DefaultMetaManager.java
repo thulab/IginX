@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
@@ -68,6 +69,8 @@ public class DefaultMetaManager implements IMetaManager {
     private long id;
 
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
+
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
     public static DefaultMetaManager getInstance() {
         if (INSTANCE == null) {
@@ -273,7 +276,7 @@ public class DefaultMetaManager implements IMetaManager {
                 e.printStackTrace();
             }
         });
-        int num = 0; //todo
+        int num = config.getCachedTimeseriesNum();
         try
         {
             storage.registerPolicy(getIginxId(), num);
@@ -705,5 +708,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public int updateVersion(int num) {
         return storage.updateVersion(num);
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap()
+    {
+        return cache.getTimeseriesVersionMap();
     }
 }

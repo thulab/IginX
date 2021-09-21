@@ -29,15 +29,11 @@ import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -457,14 +453,93 @@ public class DefaultMetaCache implements IMetaCache {
         timeseriesVersionMap.put(node, version);
     }
 
+    long transDatatypeToByte(DataType dataType) {
+        switch (dataType) {
+            case BOOLEAN:
+                return 1;
+            case INTEGER:
+            case FLOAT:
+                return 4;
+            case LONG:
+            case DOUBLE:
+                return 8;
+            default:
+                return 0;
+        }
+    }
+
     @Override
     public void saveTimeSeriesData(InsertRecordsPlan plan) {
         insertRecordLock.writeLock().lock();
         Long now = System.currentTimeMillis();
+        List<String> timeseries = plan.getPaths();
+        List<Bitmap> bitmaps = plan.getBitmapList();
+        int n = plan.getTimestamps().length;
+        int m = plan.getPathsNum();
         if (plan instanceof InsertColumnRecordsPlan) {
-            //todo
+            for (int i = 0; i < m; i++) {
+                Long minn = Long.MAX_VALUE;
+                Long maxx = Long.MIN_VALUE;
+                Long totalbyte = 0L;
+                Integer count = 0;
+                for (int j = 0; j < n; j++)
+                if (bitmaps.get(i).get(j)) {
+                    minn = Math.min(minn, plan.getTimestamp(j));
+                    maxx = Math.max(maxx, plan.getTimestamp(j));
+                    count ++;
+                    if (plan.getDataType(i) == DataType.BINARY) {
+                        totalbyte += ((byte[])plan.getValues(i)[j]).length;
+                    } else {
+                        totalbyte += transDatatypeToByte(plan.getDataType(i));
+                    }
+                }
+                if (count > 0) {
+                    TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
+                    timeSeriesCalDO.setTimeSeries(timeseries.get(i));
+                    if (timeSeriesCalDOConcurrentHashMap.containsKey(timeseries.get(i))) {
+                        timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(timeseries.get(i));
+                    }
+                    timeSeriesCalDO.merge(now, minn, maxx, count, totalbyte);
+                    timeSeriesCalDOConcurrentHashMap.put(timeseries.get(i), timeSeriesCalDO);
+                }
+            }
         } else if (plan instanceof InsertRowRecordsPlan) {
-
+            for (int i = 0; i < m; i++)
+            {
+                Long minn = Long.MAX_VALUE;
+                Long maxx = Long.MIN_VALUE;
+                Long totalbyte = 0L;
+                Integer count = 0;
+                for (int j = 0; j < n; j++)
+                    if (bitmaps.get(j).get(i))
+                    {
+                        minn = Math.min(minn, plan.getTimestamp(j));
+                        maxx = Math.max(maxx, plan.getTimestamp(j));
+                        count++;
+                        if (plan.getDataType(i) == DataType.BINARY)
+                        {
+                            totalbyte += ((byte[]) plan.getValues(j)[i]).length;
+                        }
+                        else
+                        {
+                            totalbyte += transDatatypeToByte(plan.getDataType(i));
+                        }
+                    }
+                if (count > 0)
+                {
+                    TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
+                    timeSeriesCalDO.setTimeSeries(timeseries.get(i));
+                    if (timeSeriesCalDOConcurrentHashMap.containsKey(timeseries.get(i)))
+                    {
+                        timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(timeseries.get(i));
+                    }
+                    timeSeriesCalDO.merge(now, minn, maxx, count, totalbyte);
+                    timeSeriesCalDOConcurrentHashMap.put(timeseries.get(i), timeSeriesCalDO);
+                }
+            }
+        }
+        if (timeSeriesCalDOConcurrentHashMap.size() > 1000000L) {
+            //todo
         }
         insertRecordLock.writeLock().unlock();
     }
@@ -477,6 +552,11 @@ public class DefaultMetaCache implements IMetaCache {
                 .collect(Collectors.toList()).subList(0, num);
         insertRecordLock.readLock().unlock();
         return ret;
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap() {
+        return timeseriesVersionMap;
     }
 
 }

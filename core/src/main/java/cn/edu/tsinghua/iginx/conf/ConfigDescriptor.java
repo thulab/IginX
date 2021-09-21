@@ -90,6 +90,13 @@ public class ConfigDescriptor {
 
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
+
+            config.setCachedTimeseriesNum(Integer.parseInt(properties.getProperty("cachedTimeseriesNum", "1000")));
+            config.setRetryCount(Integer.parseInt(properties.getProperty("retryCount", "10")));
+            config.setRetryWait(Integer.parseInt(properties.getProperty("retryWait", "1000")));
+            config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "20000")));
+            config.setFragmentPerEngine(Integer.parseInt(properties.getProperty("fragmentPerEngine", "1")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

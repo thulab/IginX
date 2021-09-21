@@ -29,31 +29,44 @@ public class FragmentCreator
     public FragmentCreator(SimplePolicy policy, IMetaManager iMetaManager) {
         this.policy = policy;
         this.iMetaManager = iMetaManager;
+        init(config.getReAllocatePeriod());
     }
 
 
 
-    boolean waitforUpdate() {
-        //todo
-        return true;
+    boolean waitforUpdate(int version) {
+        int retry = config.getRetryCount();
+        while (retry > 0) {
+            Map<Integer, Integer> timeseriesVersionMap = iMetaManager.getTimeseriesVersionMap();
+            if (version <= timeseriesVersionMap.values().stream().max(Integer::compareTo).orElse(0)) {
+                return true;
+            }
+            try {
+                Thread.sleep(config.getRetryWait());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            retry --;
+        }
+        return false;
     }
 
 
 
 
-    public void CreateFragment() throws Exception
-    {
+    public void CreateFragment() throws Exception {
         LOGGER.info("start CreateFragment");
         if (iMetaManager.election()) {
-            int num = 0;//todo
+            int num = config.getCachedTimeseriesNum();
             int version = iMetaManager.updateVersion(num);
             if (version > 0) {
-                if (!waitforUpdate()) {
-                    LOGGER.error("create fragment failed");
+                if (!waitforUpdate(version)) {
+                    LOGGER.error("update failed");
                     return;
                 }
-                if (policy.checkSuccess(iMetaManager.getTimeseriesData())) {
+                if (!policy.checkSuccess(iMetaManager.getTimeseriesData())) {
                     policy.setNeedReAllocate(true);
+                    LOGGER.info("set ReAllocate true");
                 }
             }
         }
@@ -62,19 +75,13 @@ public class FragmentCreator
 
 
 
-    public void init(int length)
-    {
-        timer.schedule(new TimerTask()
-        {
+    public void init(int length) {
+        timer.schedule(new TimerTask() {
             @Override
-            public void run()
-            {
-                try
-                {
+            public void run() {
+                try {
                     CreateFragment();
-                }
-                catch (Exception e)
-                {
+                } catch (Exception e) {
                     LOGGER.error("Error occurs when create fragment : {}", e);
                     e.printStackTrace();
                 }

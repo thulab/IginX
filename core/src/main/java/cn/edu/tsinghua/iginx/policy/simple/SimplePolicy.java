@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.policy.simple;
 
 import cn.edu.tsinghua.iginx.core.processor.*;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
@@ -114,6 +116,7 @@ public class SimplePolicy implements IPolicy {
 
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
         //todo
+        Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
         return true;
     }
 }

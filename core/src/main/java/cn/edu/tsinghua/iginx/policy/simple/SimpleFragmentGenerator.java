@@ -164,7 +164,7 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         int index = 0;
 
         // [startTime, +∞) & [startPath, endPath)
-        int splitNum = Math.max(Math.min(storageEngineNum, prefixList.size() - 1), 0);
+        int splitNum = Math.max(prefixList.size() - 1, 0);
         for (int i = 0; i < splitNum; i++) {
             storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
             pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(i), prefixList.get(i + 1), startTime, Long.MAX_VALUE, storageEngineIdList);

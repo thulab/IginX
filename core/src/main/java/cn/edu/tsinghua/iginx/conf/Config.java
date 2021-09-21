@@ -82,6 +82,17 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
+    //simple policy
+    private int cachedTimeseriesNum = 1000;
+
+    private int retryCount = 10;
+
+    private int retryWait = 1000;
+
+    private int reAllocatePeriod = 20000;
+
+    private int fragmentPerEngine = 1;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -327,5 +338,47 @@ public class Config {
 
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
+    }
+
+    public int getCachedTimeseriesNum() {
+        return cachedTimeseriesNum;
+    }
+
+    public void setCachedTimeseriesNum(int cachedTimeseriesNum) {
+        this.cachedTimeseriesNum = cachedTimeseriesNum;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public int getRetryWait() {
+        return retryWait;
+    }
+
+    public void setRetryWait(int retryWait) {
+        this.retryWait = retryWait;
+    }
+
+    public int getReAllocatePeriod() {
+        return reAllocatePeriod;
+    }
+
+    public void setReAllocatePeriod(int reAllocatePeriod) {
+        this.reAllocatePeriod = reAllocatePeriod;
+    }
+
+    public int getFragmentPerEngine()
+    {
+        return fragmentPerEngine;
+    }
+
+    public void setFragmentPerEngine(int fragmentPerEngine)
+    {
+        this.fragmentPerEngine = fragmentPerEngine;
     }
 }

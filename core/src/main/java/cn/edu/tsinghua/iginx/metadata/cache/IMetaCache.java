@@ -111,4 +111,5 @@ public interface IMetaCache {
 
     List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num);
 
+    Map<Integer, Integer> getTimeseriesVersionMap();
 }
