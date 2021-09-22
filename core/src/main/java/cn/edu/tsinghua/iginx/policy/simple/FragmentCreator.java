@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 public class FragmentCreator
 {
     private static Timer timer = new Timer();
+
     private static final Logger LOGGER = LoggerFactory.getLogger(FragmentCreator.class);
     private final IMetaManager iMetaManager;
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
@@ -38,9 +39,10 @@ public class FragmentCreator
         int retry = config.getRetryCount();
         while (retry > 0) {
             Map<Integer, Integer> timeseriesVersionMap = iMetaManager.getTimeseriesVersionMap();
-            if (version <= timeseriesVersionMap.values().stream().max(Integer::compareTo).orElse(0)) {
+            if (version <= timeseriesVersionMap.values().stream().min(Integer::compareTo).orElse(Integer.MAX_VALUE)) {
                 return true;
             }
+            LOGGER.info("retry, remain: {}, version:{}, minversion: {}", retry, version, timeseriesVersionMap.values().stream().min(Integer::compareTo).orElse(Integer.MAX_VALUE));
             try {
                 Thread.sleep(config.getRetryWait());
             } catch (InterruptedException e) {

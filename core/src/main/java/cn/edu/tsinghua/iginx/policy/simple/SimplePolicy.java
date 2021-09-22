@@ -114,9 +114,12 @@ public class SimplePolicy implements IPolicy {
         this.needReAllocate.set(needReAllocate);
     }
 
+    boolean isFirst = true;
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
         //todo
         Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-        return true;
+        if (timeseriesData.size() < 100 || !isFirst) return true;
+        isFirst = false;
+        return false;
     }
 }

@@ -486,12 +486,12 @@ public class DefaultMetaCache implements IMetaCache {
                 if (bitmaps.get(i).get(j)) {
                     minn = Math.min(minn, plan.getTimestamp(j));
                     maxx = Math.max(maxx, plan.getTimestamp(j));
-                    count ++;
                     if (plan.getDataType(i) == DataType.BINARY) {
-                        totalbyte += ((byte[])plan.getValues(i)[j]).length;
+                        totalbyte += ((byte[])plan.getValues(i)[count]).length;
                     } else {
                         totalbyte += transDatatypeToByte(plan.getDataType(i));
                     }
+                    count ++;
                 }
                 if (count > 0) {
                     TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();

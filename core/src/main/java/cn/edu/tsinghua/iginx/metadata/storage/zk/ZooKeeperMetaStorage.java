@@ -526,7 +526,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
                 }
             }
-            registerStorageUnitListener();
+            if (this.storageUnitCache == null) {
+                registerStorageUnitListener();
+            }
             return storageUnitMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("get error when load storage unit", e);
@@ -629,7 +631,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
                 }
             }
-            registerFragmentListener();
+            if (this.fragmentCache == null) {
+                registerFragmentListener();
+            }
             return fragmentListMap;
         } catch (Exception e) {
             throw new MetaStorageException("get error when update schema mapping", e);
@@ -939,7 +943,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             ret.append(entry.getValue());
             ret.append("^");
         }
-        if (ret.charAt(ret.length() - 1) == '^') {
+        if (ret.length() != 0 && ret.charAt(ret.length() - 1) == '^') {
             ret.deleteCharAt(ret.length() - 1);
         }
         logger.info(ret.toString());
@@ -971,6 +975,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void registerPolicy(long iginxId, int num) throws Exception {
         InterProcessMutex mutex = new InterProcessMutex(this.client, POLICY_LOCK_NODE);
         try {
+            mutex.acquire();
             if (client.checkExists().forPath(POLICY_NODE_PREFIX) == null) {
                 this.client.create()
                         .creatingParentsIfNeeded()
@@ -1029,7 +1034,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         int version = -1;
                         int node = -1;
                         if (pathParts.length == 2 && isNumeric(pathParts[1])) {
-                            version = Integer.parseInt(Arrays.toString(event.getData().getData()));
+                            version = Integer.parseInt(new String(event.getData().getData()));
                             node = Integer.parseInt(pathParts[1]);
                         }
                         if (version != -1 && node != -1) {
@@ -1047,9 +1052,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             TreeCacheListener listener3 = (curatorFramework, event) -> {
                 switch (event.getType())
                 {
-                    case NODE_ADDED:
                     case NODE_UPDATED:
-                        String[] str = Arrays.toString(event.getData().getData()).split("\t");
+                        String[] str = new String(event.getData().getData()).split("\t");
                         int version = Integer.parseInt(str[0]);
                         int newNum = Integer.parseInt(str[1]);
                         if (version > 0) {
@@ -1082,7 +1086,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         int version = -1;
         try
         {
-            version = Integer.parseInt(Arrays.toString(client.getData().forPath(POLICY_VERSION)));
+            version = Integer.parseInt(new String(client.getData().forPath(POLICY_VERSION)).split("\t")[0]);
             this.client.setData().forPath(POLICY_VERSION, ((version + 1) + "\t" + num).getBytes());
         }
         catch (Exception e)
