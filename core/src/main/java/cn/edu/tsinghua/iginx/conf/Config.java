@@ -91,7 +91,7 @@ public class Config {
 
     private int reAllocatePeriod = 20000;
 
-    private int fragmentPerEngine = 10;
+    private int fragmentPerEngine = 1;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
