@@ -115,8 +115,8 @@ JMX_OPTS="$JMX_OPTS -Xmx${MAX_HEAP_SIZE}"
 ICONF="$IGINX_HOME/conf/config.properties"
 IDRIVER="$IGINX_HOME/driver/"
 
-export IGINX_CONF=$CONF
-export IGINX_DRIVER=$DRIVER
+export IGINX_CONF=$ICONF
+export IGINX_DRIVER=$IDRIVER
 
 exec "$JAVA" -Duser.timezone=GMT+8 -cp "$CLASSPATH" "$MAIN_CLASS" "$@"
 
