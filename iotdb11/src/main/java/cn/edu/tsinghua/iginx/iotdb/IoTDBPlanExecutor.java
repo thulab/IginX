@@ -174,7 +174,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     private boolean createSessionPool(StorageEngineMeta storageEngineMeta) {
-        if (!storageEngineMeta.getStorageEngine().equals("iotdb")) {
+        if (!storageEngineMeta.getStorageEngine().equals("iotdb11")) {
             logger.warn("unexpected database: " + storageEngineMeta.getStorageEngine());
             return false;
         }

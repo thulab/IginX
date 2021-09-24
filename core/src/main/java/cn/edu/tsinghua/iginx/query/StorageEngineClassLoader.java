@@ -40,7 +40,8 @@ public class StorageEngineClassLoader extends ClassLoader {
     private final Map<String, String> nameToJar;
 
     public StorageEngineClassLoader(String path) throws IOException {
-        this.path = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR) + path;
+        String tPath = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR);
+        this.path = tPath.endsWith(File.separator)?tPath+path:tPath+File.separator + path;
         this.nameToJar = new HashMap<>();
         preloadClassNames();
     }

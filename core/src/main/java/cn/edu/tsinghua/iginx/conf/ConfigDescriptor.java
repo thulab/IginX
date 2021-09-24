@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.conf;
 
 import cn.edu.tsinghua.iginx.utils.EnvUtils;
+import java.io.File;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +73,7 @@ public class ConfigDescriptor {
             config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
 
             config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
+            config.setAsyncRestThreadPool(Integer.parseInt(properties.getProperty("asyncRestThreadPool", "100")));
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
@@ -114,6 +116,7 @@ public class ConfigDescriptor {
         config.setRestPort(EnvUtils.loadEnv("restPort", config.getRestPort()));
         config.setDisorderMargin(EnvUtils.loadEnv("disorderMargin", config.getDisorderMargin()));
         config.setMaxTimeseriesLength(EnvUtils.loadEnv("maxtimeserieslength", config.getMaxTimeseriesLength()));
+        config.setAsyncRestThreadPool(EnvUtils.loadEnv("asyncRestThreadPool", config.getAsyncRestThreadPool()));
         config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
         config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
         config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));

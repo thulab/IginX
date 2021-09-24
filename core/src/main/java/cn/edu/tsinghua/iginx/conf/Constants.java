@@ -22,9 +22,9 @@ public class Constants {
 
     public static final int MAX_REDIRECT_TIME = 5;
 
-    public static final String CONF = "CONF";
+    public static final String CONF = "IGINX_CONF";
 
-    public static final String DRIVER = "DRIVER";
+    public static final String DRIVER = "IGINX_DRIVER";
 
     public static final String CONFIG_FILE = "conf/config.properties";
 

@@ -11,7 +11,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>iotdb</artifactId>
+    <artifactId>iotdb11</artifactId>
     <name>IginX IoTDB</name>
 
     <properties>
@@ -53,7 +53,7 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>../core/target/iginx-core-${project.version}/driver/iotdb/
+                            <outputDirectory>../core/target/iginx-core-${project.version}/driver/iotdb11/
                             </outputDirectory>
                             <excludeScope>provided</excludeScope>
                         </configuration>
@@ -73,7 +73,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="../core/target/iginx-core-${project.version}/driver/iotdb/">
+                                <copy todir="../core/target/iginx-core-${project.version}/driver/iotdb11/">
                                     <fileset dir="${project.basedir}/target/">
                                         <include name="*.jar"/>
                                     </fileset>
