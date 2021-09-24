@@ -5,11 +5,7 @@ pipeline {
     stages {
         stage('IoTDB Test') {
             steps {
-                sh './.jenkins/scripts/iotdb.sh'
                 sh 'mvn clean package -DskipTests'
-                sh 'chmod +x core/target/iginx-core-0.4.0-SNAPSHOT/sbin/start_iginx.sh'
-                sh 'nohup core/target/iginx-core-0.4.0-SNAPSHOT/sbin/start_iginx.sh &'
-                sh 'mvn test -q -Dtest=IoTDBSessionIT -DfailIfNoTests=false'
             }
         }
     }
