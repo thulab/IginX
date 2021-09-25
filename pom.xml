@@ -18,6 +18,7 @@
     <module>core</module>
     <module>thrift</module>
     <module>iotdb11</module>
+    <module>iotdb12</module>
     <module>influxdb</module>
     <module>shared</module>
     <module>client</module>
