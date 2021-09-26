@@ -203,7 +203,6 @@
                 <configuration>
                     <imageName>iginx</imageName>
                     <baseImage>java</baseImage>
-                    <maintainer>ziyuan ziy20@mails.tsinghua.edu.cn</maintainer>
                     <workdir>/ROOT</workdir>
                     <entryPoint>["java", "-cp", "lib/*", "cn.edu.tsinghua.iginx.Iginx"]</entryPoint>
                     <resources>

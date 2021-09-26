@@ -78,7 +78,7 @@ public class ParseTest {
         assertEquals(SelectOperator.QueryType.MixedQuery, op.getQueryType());
 
         assertEquals(4, op.getSelectedFuncsAndPaths().size());
-        assertEquals(SelectOperator.FuncType.Max, op.getSelectedFuncsAndPaths().get(0).k);
+        assertEquals(SelectOperator.FuncType.Max.toString().toLowerCase(), op.getSelectedFuncsAndPaths().get(0).k.toLowerCase());
 
         assertEquals("a.b.c", op.getSelectedFuncsAndPaths().get(0).v);
         assertEquals("a.b.d", op.getSelectedFuncsAndPaths().get(1).v);

@@ -80,8 +80,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.fromIoTDB;
-import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
+import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.*;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
@@ -174,7 +173,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     private boolean createSessionPool(StorageEngineMeta storageEngineMeta) {
-        if (!storageEngineMeta.getStorageEngine().equals("iotdb")) {
+        if (!storageEngineMeta.getStorageEngine().equals("iotdb12")) {
             logger.warn("unexpected database: " + storageEngineMeta.getStorageEngine());
             return false;
         }
@@ -510,6 +509,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 }
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
+            if (e.getMessage().endsWith("does not exist;")) {
+                return new NonDataPlanExecuteResult(SUCCESS, plan);
+            }
             logger.error(e.getMessage());
             return new NonDataPlanExecuteResult(FAILURE, plan);
         }
@@ -553,9 +555,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         timestamps.add(rowRecord.getTimestamp());
                         String columnName = rowRecord.getFields().get(0).getStringValue();
                         paths.add(columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1));
-                        dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(2)));
-                        if (dataSet.getColumnTypes().get(2) != TSDataType.TEXT) {
-                            values.add(rowRecord.getFields().get(1).getObjectValue(dataSet.getColumnTypes().get(2)));
+                        dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(2)));
+                        if (!dataSet.getColumnTypes().get(2).equals(TEXT)) {
+                            values.add(rowRecord.getFields().get(1).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(2))));
                         } else {
                             values.add(rowRecord.getFields().get(1).getBinaryV().getValues());
                         }
@@ -606,10 +608,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                         if (rowRecord.getFields().get(i) != null && rowRecord.getFields().get(rowRecord.getFields().size() / 2 + i) != null) {
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(rowRecord.getFields().size() / 2 + i)));
+                            dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(rowRecord.getFields().size() / 2 + i)));
                             counts.add(rowRecord.getFields().get(i).getLongV());
                             if (rowRecord.getFields().get(rowRecord.getFields().size() / 2 + i).getDataType() != TSDataType.TEXT) {
-                                sums.add(rowRecord.getFields().get(rowRecord.getFields().size() / 2 + i).getObjectValue(dataSet.getColumnTypes().get(rowRecord.getFields().size() / 2 + i)));
+                                sums.add(rowRecord.getFields().get(rowRecord.getFields().size() / 2 + i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(rowRecord.getFields().size() / 2 + i))));
                             } else {
                                 sums.add(rowRecord.getFields().get(rowRecord.getFields().size() / 2 + i).getBinaryV().getValues());
                             }
@@ -658,9 +660,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                             String columnName = dataSet.getColumnNames().get(i);
                             String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
-                            if (dataSet.getColumnTypes().get(i) != TSDataType.TEXT) {
-                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(i)));
+                            if (!dataSet.getColumnTypes().get(i).equals(TEXT)) {
+                                values.add(rowRecord.getFields().get(i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(i))));
                             } else {
                                 values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
                             }
@@ -713,9 +715,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                         String columnName = dataSet.getColumnNames().get(i);
                         String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                         paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                        dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
+                        dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(i)));
                         if (rowRecord.getFields().get(i).getDataType() != TSDataType.TEXT) {
-                            values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            values.add(rowRecord.getFields().get(i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(i))));
                         } else {
                             values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
                         }
@@ -751,9 +753,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                             String columnName = dataSet.getColumnNames().get(i);
                             String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
-                            if (dataSet.getColumnTypes().get(i) != TSDataType.TEXT) {
-                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(i)));
+                            if (!dataSet.getColumnTypes().get(i).equals(TEXT)) {
+                                values.add(rowRecord.getFields().get(i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(i))));
                             } else {
                                 values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
                             }
@@ -794,9 +796,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                             String columnName = dataSet.getColumnNames().get(i);
                             String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
-                            if (dataSet.getColumnTypes().get(i) != TSDataType.TEXT) {
-                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(i)));
+                            if (!dataSet.getColumnTypes().get(i).equals(TEXT)) {
+                                values.add(rowRecord.getFields().get(i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(i))));
                             } else {
                                 values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
                             }
@@ -837,9 +839,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                             String columnName = dataSet.getColumnNames().get(i);
                             String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
-                            if (dataSet.getColumnTypes().get(i) != TSDataType.TEXT) {
-                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(i)));
+                            if (!dataSet.getColumnTypes().get(i).equals(TEXT)) {
+                                values.add(rowRecord.getFields().get(i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(i))));
                             } else {
                                 values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
                             }
@@ -880,9 +882,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                             String tempPath = columnName.substring(columnName.indexOf('(') + 1, columnName.indexOf(')'));
                             timestamps.add(-1L);
                             paths.add(tempPath.substring(tempPath.indexOf('.', tempPath.indexOf('.') + 1) + 1));
-                            dataTypeList.add(fromIoTDB(dataSet.getColumnTypes().get(i)));
-                            if (dataSet.getColumnTypes().get(i) != TSDataType.TEXT) {
-                                values.add(rowRecord.getFields().get(i).getObjectValue(dataSet.getColumnTypes().get(i)));
+                            dataTypeList.add(strFromIoTDB(dataSet.getColumnTypes().get(i)));
+                            if (!dataSet.getColumnTypes().get(i).equals(TEXT)) {
+                                values.add(rowRecord.getFields().get(i).getObjectValue(strToIoTDB(dataSet.getColumnTypes().get(i))));
                             } else {
                                 values.add(rowRecord.getFields().get(i).getBinaryV().getValues());
                             }
