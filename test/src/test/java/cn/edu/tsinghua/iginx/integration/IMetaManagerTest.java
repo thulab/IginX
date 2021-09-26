@@ -54,7 +54,6 @@ public class IMetaManagerTest {
                     System.out.println("use etcd as meta storage engine");
                     break;
             }
-
         }
         ConfigDescriptor.getInstance().getConfig().setStorageEngineList("");
         iMetaManager = DefaultMetaManager.getInstance();
@@ -67,12 +66,10 @@ public class IMetaManagerTest {
 
     @Before
     public void setUp() {
-
     }
 
     @After
     public void tearDown() {
-
     }
 
     @Test
