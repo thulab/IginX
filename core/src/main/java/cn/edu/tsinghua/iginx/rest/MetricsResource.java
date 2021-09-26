@@ -66,11 +66,10 @@ public class MetricsResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
-    private final ExecutorService threadPool;
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(config.getAsyncRestThreadPool());
 
     @Inject
     public MetricsResource() {
-        threadPool = Executors.newFixedThreadPool(config.getAsyncRestThreadPool());
     }
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
