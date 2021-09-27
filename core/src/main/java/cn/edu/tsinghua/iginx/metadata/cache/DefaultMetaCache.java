@@ -79,7 +79,7 @@ public class DefaultMetaCache implements IMetaCache {
         // 数据后端相关
         storageEngineMetaMap = new ConcurrentHashMap<>();
         // schemaMapping 相关
-        schemaMappings = new ConcurrentHashMap<>();
+        schemaMappings = new HashMap<>();
         // user 相关
         userMetaMap = new ConcurrentHashMap<>();
     }
@@ -370,9 +370,7 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public Map<String, Integer> getSchemaMapping(String schema) {
-        if (this.schemaMappings.get(schema) == null)
-            return null;
-        return new HashMap<>(this.schemaMappings.get(schema));
+        return this.schemaMappings.get(schema);
     }
 
     @Override
