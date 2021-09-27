@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.stream.Collectors;
 
 public class Sender extends Thread {
 
@@ -82,10 +83,16 @@ public class Sender extends Thread {
     }
 
     private void updateMetaAndMergeData() {
+        List<String> allName = metricList.stream().map(Metric::getName).distinct().collect(Collectors.toList());
+        Map<String, Map<String, Integer>> allSchemaMapping = new HashMap<>();
+        allName.forEach(name -> {
+            Map<String, Integer> metricschema = metaManager.getSchemaMapping(name);
+            allSchemaMapping.put(name, metricschema);
+        });
         for (Metric metric : metricList) {
             // update meta
             boolean needUpdate = false;
-            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
+            Map<String, Integer> metricschema = allSchemaMapping.get(metric.getName());
             if (metricschema == null) {
                 needUpdate = true;
                 metricschema = new ConcurrentHashMap<>();
@@ -99,8 +106,10 @@ public class Sender extends Thread {
                     metricschema.put((String) entry.getKey(), pos);
                 }
             }
-            if (needUpdate)
+            if (needUpdate) {
                 metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
+                allSchemaMapping.put(metric.getName(), metricschema);
+            }
             Map<Integer, String> pos2path = new TreeMap<>();
             for (Map.Entry<String, Integer> entry : metricschema.entrySet())
                 pos2path.put(entry.getValue(), entry.getKey());
