@@ -550,7 +550,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
+                    sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
                 while(true) {
                     RowRecord rowRecord = dataSet.next();
                     if (rowRecord == null || rowRecord.getFields().isEmpty()) {
@@ -660,7 +660,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(COUNT, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(COUNT, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -752,7 +752,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(FIRST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(FIRST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -795,7 +795,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(LAST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(LAST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -838,7 +838,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(MAX_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(MAX_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -881,7 +881,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(MIN_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(MIN_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {

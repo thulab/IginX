@@ -38,6 +38,7 @@ import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -68,7 +69,7 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 public class RestSession {
     private static final Logger logger = LoggerFactory.getLogger(RestSession.class);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
-    private final ReadWriteLock lock;
+    //private final ReadWriteLock lock;
     private IginxWorker client;
     private long sessionId;
     private boolean isClosed;
@@ -79,7 +80,7 @@ public class RestSession {
     public RestSession() {
         this.isClosed = true;
         this.redirectTimes = 0;
-        this.lock = new ReentrantReadWriteLock();
+        //this.lock = new ReentrantReadWriteLock();
         this.username = config.getUsername();
         this.password = config.getPassword();
     }
@@ -110,8 +111,6 @@ public class RestSession {
                 sessionId = resp.getSessionId();
                 break;
             }
-
-
             String[] targetAddress = resp.status.getMessage().split(":");
             if (targetAddress.length != 2) {
                 throw new SessionException("unexpected redirect address " + resp.status.getMessage());
@@ -150,12 +149,12 @@ public class RestSession {
 
         Status status;
         do {
-            lock.readLock().lock();
-            try {
+            /*lock.readLock().lock();
+            try {*/
                 status = client.addStorageEngines(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
@@ -171,12 +170,12 @@ public class RestSession {
 
         Status status;
         do {
-            lock.readLock().lock();
-            try {
+            /*lock.readLock().lock();
+            try {*/
                 status = client.deleteColumns(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
@@ -239,17 +238,17 @@ public class RestSession {
 
         Status status;
         do {
-            lock.readLock().lock();
-            try {
+           /* lock.readLock().lock();
+            try {*/
                 status = client.insertNonAlignedColumnRecords(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while (checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
-    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+    /*public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                            List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
@@ -332,12 +331,105 @@ public class RestSession {
 
         Status status;
         do {
-            lock.readLock().lock();
-            try {
+            *//*lock.readLock().lock();
+            try {*//*
                 status = client.insertNonAlignedRowRecords(req);
-            } finally {
+            *//*} finally {
                 lock.readLock().unlock();
+            }*//*
+        } while(checkRedirect(status));
+        RpcUtils.verifySuccess(status);
+    }*/
+
+    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+        List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+        if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
+            logger.error("Invalid insert request!");
+            return;
+        }
+        if (paths.size() != dataTypeList.size()) {
+            logger.error("The sizes of paths and dataTypeList should be equal.");
+            return;
+        }
+        if (timestamps.length != valuesList.length) {
+            logger.error("The sizes of timestamps and valuesList should be equal.");
+            return;
+        }
+        if (attributesList != null && paths.size() != attributesList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+            return;
+        }
+
+        Integer[] index = new Integer[timestamps.length];
+        for (int i = 0; i < timestamps.length; i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
+        Arrays.sort(timestamps);
+        Object[] sortedValuesList = new Object[valuesList.length];
+        for (int i = 0; i < valuesList.length; i++) {
+            sortedValuesList[i] = valuesList[index[i]];
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
             }
+            sortedValuesList[i] = values;
+        }
+        for (Integer i : index) {
+            sortedDataTypeList.add(dataTypeList.get(i));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
+        List<ByteBuffer> valueBufferList = new ArrayList<>();
+        List<ByteBuffer> bitmapBufferList = new ArrayList<>();
+        for (int i = 0; i < timestamps.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
+            if (values.length != paths.size()) {
+                logger.error("The sizes of paths and the element of valuesList should be equal.");
+                return;
+            }
+            valueBufferList.add(ByteUtils.getRowByteBuffer(values, sortedDataTypeList));
+            Bitmap bitmap = new Bitmap(values.length);
+            for (int j = 0; j < values.length; j++) {
+                if (values[j] != null) {
+                    bitmap.mark(j);
+                }
+            }
+            bitmapBufferList.add(ByteBuffer.wrap(bitmap.getBytes()));
+        }
+
+        InsertRowRecordsReq req = new InsertRowRecordsReq();
+        req.setSessionId(sessionId);
+        req.setPaths(paths);
+        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setValuesList(valueBufferList);
+        req.setBitmapList(bitmapBufferList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
+
+        Status status;
+        do {
+            /*lock.readLock().lock();
+            try {*/
+            status = client.insertRowRecords(req);
+            /*} finally {
+                lock.readLock().unlock();
+            }*/
         } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
@@ -353,12 +445,12 @@ public class RestSession {
 
         Status status;
         do {
-            lock.readLock().lock();
-            try {
+            /*lock.readLock().lock();
+            try {*/
                 status = client.deleteDataInColumns(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while(checkRedirect(status));
     }
 
@@ -372,12 +464,12 @@ public class RestSession {
         QueryDataResp resp;
 
         do {
-            lock.readLock().lock();
-            try {
+            /*lock.readLock().lock();
+            try {*/
                 resp = client.queryData(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
@@ -395,12 +487,12 @@ public class RestSession {
 
         try {
             do {
-                lock.readLock().lock();
-                try {
+                /*lock.readLock().lock();
+                try {*/
                     resp = client.valueFilterQuery(req);
-                } finally {
+                /*} finally {
                     lock.readLock().unlock();
-                }
+                }*/
             } while(checkRedirect(resp.status));
         } catch (Exception e) {
             throw new SessionException(e);
@@ -414,12 +506,12 @@ public class RestSession {
 
         AggregateQueryResp resp;
         do {
-            lock.readLock().lock();
-            try {
+            /*lock.readLock().lock();
+            try {*/
                 resp = client.aggregateQuery(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while(checkRedirect(resp.status));
 
         return new SessionAggregateQueryDataSet(resp, aggregateType);
@@ -432,12 +524,12 @@ public class RestSession {
         DownsampleQueryResp resp;
 
         do {
-            lock.readLock().lock();
-            try {
+            /*lock.readLock().lock();
+            try {*/
                 resp = client.downsampleQuery(req);
-            } finally {
+            /*} finally {
                 lock.readLock().unlock();
-            }
+            }*/
         } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
