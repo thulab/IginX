@@ -195,7 +195,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
+        Map<String, List<MeasurementSchema>> schemasMap = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
+        int batchSize = Math.min(plan.getTimestamps().length, BATCH_SIZE);
 
         // 创建 tablets
         for (int i = 0; i < plan.getPathsNum(); i++) {
@@ -204,23 +206,27 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             String measurement = path.substring(path.lastIndexOf('.') + 1);
             List<MeasurementSchema> schemaList;
             List<Integer> pathIndexes;
-            if (tablets.containsKey(deviceId)) {
-                schemaList = tablets.get(deviceId).getSchemas();
+            if (schemasMap.containsKey(deviceId)) {
+                schemaList = schemasMap.get(deviceId);
                 pathIndexes = deviceIdToPathIndexes.get(deviceId);
             } else {
                 schemaList = new ArrayList<>();
                 pathIndexes = new ArrayList<>();
             }
             schemaList.add(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i))));
-            tablets.put(deviceId, new Tablet(deviceId, schemaList, BATCH_SIZE));
+            schemasMap.put(deviceId, schemaList);
             pathIndexes.add(i);
             deviceIdToPathIndexes.put(deviceId, pathIndexes);
+        }
+
+        for (Map.Entry<String, List<MeasurementSchema>> entry : schemasMap.entrySet()) {
+            tablets.put(entry.getKey(), new Tablet(entry.getKey(), entry.getValue(), batchSize));
         }
 
         int cnt = 0;
         int[] indexes = new int[plan.getPathsNum()];
         do {
-            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+            int size = Math.min(plan.getTimestamps().length - cnt, batchSize);
 
             // 插入 timestamps 和 values
             for (Map.Entry<String, List<Integer>> entry : deviceIdToPathIndexes.entrySet()) {
@@ -266,6 +272,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         Map<Integer, Map<String, Tablet>> tabletsMap = new HashMap<>();
         Map<Integer, List<Integer>> tabletIndexToPathIndexes = new HashMap<>();
         Map<String, Integer> deviceIdToCnt = new HashMap<>();
+        int batchSize = Math.min(plan.getTimestamps().length, BATCH_SIZE);
 
         // 创建 tablets
         for (int i = 0; i < plan.getPathsNum(); i++) {
@@ -282,7 +289,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             pathIndexes.add(i);
             tabletIndexToPathIndexes.put(measurementNum + 1, pathIndexes);
             tablets = tabletsMap.computeIfAbsent(measurementNum + 1, x -> new HashMap<>());
-            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), BATCH_SIZE));
+            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), batchSize));
             tabletsMap.put(measurementNum + 1, tablets);
         }
 
@@ -290,7 +297,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             int cnt = 0;
             int[] indexesOfBitmap = new int[entry.getValue().size()];
             do {
-                int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+                int size = Math.min(plan.getTimestamps().length - cnt, batchSize);
 
                 // 插入 timestamps 和 values
                 for (int i = 0; i < entry.getValue().size(); i++) {
@@ -334,7 +341,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
+        Map<String, List<MeasurementSchema>> schemasMap = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
+        int batchSize = Math.min(plan.getTimestamps().length, BATCH_SIZE);
 
         // 创建 tablets
         for (int i = 0; i < plan.getPathsNum(); i++) {
@@ -343,22 +352,26 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             String measurement = path.substring(path.lastIndexOf('.') + 1);
             List<MeasurementSchema> schemaList;
             List<Integer> pathIndexes;
-            if (tablets.containsKey(deviceId)) {
-                schemaList = tablets.get(deviceId).getSchemas();
+            if (schemasMap.containsKey(deviceId)) {
+                schemaList = schemasMap.get(deviceId);
                 pathIndexes = deviceIdToPathIndexes.get(deviceId);
             } else {
                 schemaList = new ArrayList<>();
                 pathIndexes = new ArrayList<>();
             }
             schemaList.add(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i))));
-            tablets.put(deviceId, new Tablet(deviceId, schemaList, BATCH_SIZE));
+            schemasMap.put(deviceId, schemaList);
             pathIndexes.add(i);
             deviceIdToPathIndexes.put(deviceId, pathIndexes);
         }
 
+        for (Map.Entry<String, List<MeasurementSchema>> entry : schemasMap.entrySet()) {
+            tablets.put(entry.getKey(), new Tablet(entry.getKey(), entry.getValue(), batchSize));
+        }
+
         int cnt = 0;
         do {
-            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+            int size = Math.min(plan.getTimestamps().length - cnt, batchSize);
             // 对于每个时间戳，需要记录每个 deviceId 对应的 tablet 的 row 的变化
             Map<String, Integer> deviceIdToRow = new HashMap<>();
 
@@ -409,6 +422,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         Map<Integer, Map<String, Tablet>> tabletsMap = new HashMap<>();
         Map<Integer, Integer> pathIndexToTabletIndex = new HashMap<>();
         Map<String, Integer> deviceIdToCnt = new HashMap<>();
+        int batchSize = Math.min(plan.getTimestamps().length, BATCH_SIZE);
 
         // 创建 tablets
         for (int i = 0; i < plan.getPathsNum(); i++) {
@@ -422,13 +436,13 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             deviceIdToCnt.put(deviceId, measurementNum + 1);
             pathIndexToTabletIndex.put(i, measurementNum + 1);
             tablets = tabletsMap.computeIfAbsent(measurementNum + 1, x -> new HashMap<>());
-            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), BATCH_SIZE));
+            tablets.put(deviceId, new Tablet(deviceId, Collections.singletonList(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i)))), batchSize));
             tabletsMap.put(measurementNum + 1, tablets);
         }
 
         int cnt = 0;
         do {
-            int size = Math.min(plan.getTimestamps().length - cnt, BATCH_SIZE);
+            int size = Math.min(plan.getTimestamps().length - cnt, batchSize);
             boolean[] needToInsert = new boolean[tabletsMap.size()];
             Arrays.fill(needToInsert, false);
 
