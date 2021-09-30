@@ -261,12 +261,12 @@ public class QueryResult {
         for (String path : paths) {
             String[] splitpaths = path.split("\\.");
             for (int i = 0; i < pos2path.size(); i++) {
-                if (dup.get(i).get(splitpaths[i]) == null) {
-                    dup.get(i).put(splitpaths[i], 1);
-                    if (ret.get(pos2path.get(i + 1)) == null) {
-                        ret.put(pos2path.get(i + 1), new ArrayList<>());
+                for (int j = 0; j < splitpaths.length; j += 2) {
+                    if (splitpaths[j].equals(pos2path.get(i + 1)) && dup.get(i).get(splitpaths[j + 1]) == null) {
+                        dup.get(i).put(splitpaths[j + 1], 1);
+                        ret.computeIfAbsent(pos2path.get(i + 1), k -> new ArrayList<>());
+                        ret.get(pos2path.get(i + 1)).add(splitpaths[j + 1]);
                     }
-                    ret.get(pos2path.get(i + 1)).add(splitpaths[i]);
                 }
             }
         }

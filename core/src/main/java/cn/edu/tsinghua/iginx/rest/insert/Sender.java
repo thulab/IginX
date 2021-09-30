@@ -89,6 +89,7 @@ public class Sender extends Thread {
             Iterator iter = metric.getTags().entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
+                path.append(entry.getKey() + ".");
                 path.append(entry.getValue() + ".");
             }
             // merge data in time and prefix path
