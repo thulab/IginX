@@ -78,18 +78,16 @@ public class QueryExecutor {
 
     public List<String> getPaths(QueryMetric queryMetric) throws Exception {
         List<String> ret = new ArrayList<>();
-        Map<String, Integer> metricschema = metaManager.getSchemaMapping(queryMetric.getName());
-        if (metricschema == null) {
-            throw new Exception("No metadata found");
-        } else {
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet())
-                pos2path.put(entry.getValue(), entry.getKey());
-            List<Integer> pos = new ArrayList<>();
-            for (int i = 0; i < pos2path.size(); i++)
-                pos.add(-1);
-            dfsInsert(0, ret, pos2path, queryMetric, pos);
+        Map<Integer, String> pos2path = new TreeMap<>();
+        int now = 0;
+        for (Map.Entry<String, List<String>> entry : queryMetric.getTags().entrySet()) {
+            now ++;
+            pos2path.put(now, entry.getKey());
         }
+        List<Integer> pos = new ArrayList<>();
+        for (int i = 0; i < pos2path.size(); i++)
+            pos.add(-1);
+        dfsInsert(0, ret, pos2path, queryMetric, pos);
         return ret;
     }
 

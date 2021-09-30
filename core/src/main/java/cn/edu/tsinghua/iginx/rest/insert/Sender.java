@@ -83,45 +83,12 @@ public class Sender extends Thread {
     }
 
     private void updateMetaAndMergeData() {
-        List<String> allName = metricList.stream().map(Metric::getName).distinct().collect(Collectors.toList());
-        Map<String, Map<String, Integer>> allSchemaMapping = new HashMap<>();
-        allName.forEach(name -> {
-            Map<String, Integer> metricschema = metaManager.getSchemaMapping(name);
-            allSchemaMapping.put(name, metricschema);
-        });
         for (Metric metric : metricList) {
-            // update meta
-            boolean needUpdate = false;
-            Map<String, Integer> metricschema = allSchemaMapping.get(metric.getName());
-            if (metricschema == null) {
-                needUpdate = true;
-                metricschema = new ConcurrentHashMap<>();
-            }
+            StringBuilder path = new StringBuilder("");
             Iterator iter = metric.getTags().entrySet().iterator();
             while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
-                if (metricschema.get(entry.getKey()) == null) {
-                    needUpdate = true;
-                    int pos = metricschema.size() + 1;
-                    metricschema.put((String) entry.getKey(), pos);
-                }
-            }
-            if (needUpdate) {
-                metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-                allSchemaMapping.put(metric.getName(), metricschema);
-            }
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet())
-                pos2path.put(entry.getValue(), entry.getKey());
-            StringBuilder path = new StringBuilder("");
-            iter = pos2path.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
-                String ins = metric.getTags().get(entry.getValue());
-                if (ins != null)
-                    path.append(ins + ".");
-                else
-                    path.append("null.");
+                path.append(entry.getValue() + ".");
             }
             // merge data in time and prefix path
             String prefixPath = path.toString();
