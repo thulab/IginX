@@ -26,7 +26,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class IoTDBSessionExample {
 
@@ -50,143 +49,31 @@ public class IoTDBSessionExample {
         // 打开 Session
         session.openSession();
 
-
-        for (int i = 0; i < 100; i += 4) {
-            int biggerPathNum = 20000;
-            System.out.println("Insert path num: " + biggerPathNum);
-            testInsertNonAlignedRowRecords(System.currentTimeMillis() + i, biggerPathNum);
-            testInsertNonAlignedColumnRecords(System.currentTimeMillis() + i + 1, biggerPathNum);
-
-            System.out.println();
-
-            int smallerPathNum = 1200;
-            System.out.println("Insert path num: " + smallerPathNum);
-            testInsertRowRecords(System.currentTimeMillis() + i + 2, smallerPathNum);
-            testInsertColumnRecords(System.currentTimeMillis() + i + 3, smallerPathNum);
-        }
-
-
-//        // 列式插入对齐数据
-//        insertColumnRecords();
-//        // 列式插入非对齐数据
-//        insertNonAlignedColumnRecords();
-//        // 行式插入对齐数据
-//        insertRowRecords();
-//        // 行式插入非对齐数据
-//        insertNonAlignedRowRecords();
-//        // 查询数据
-//        queryData();
-//        // 值过滤查询
-//        valueFilterQuery();
-//        // 聚合查询
-//        aggregateQuery();
-//        // Last 查询
-//        lastQuery();
-//        // 降采样聚合查询
-//        downsampleQuery();
-//        // 删除数据
-//        deleteDataInColumns();
-//        // 再次查询数据
-//        queryData();
+        // 列式插入对齐数据
+        insertColumnRecords();
+        // 列式插入非对齐数据
+        insertNonAlignedColumnRecords();
+        // 行式插入对齐数据
+        insertRowRecords();
+        // 行式插入非对齐数据
+        insertNonAlignedRowRecords();
+        // 查询数据
+        queryData();
+        // 值过滤查询
+        valueFilterQuery();
+        // 聚合查询
+        aggregateQuery();
+        // Last 查询
+        lastQuery();
+        // 降采样聚合查询
+        downsampleQuery();
+        // 删除数据
+        deleteDataInColumns();
+        // 再次查询数据
+        queryData();
 
         // 关闭 Session
         session.closeSession();
-    }
-
-    private static void testInsertNonAlignedRowRecords(long time, int pathNum) throws ExecutionException, SessionException {
-        List<String> path = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            path.add("1001.SUCC" + i);
-        }
-        long[] timestamps = new long[1];
-        timestamps[0] = time;
-        Object[] values = new Object[1];
-        List<Object> valueList = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            valueList.add(323.0);
-        }
-        values[0] = valueList.toArray();
-        List<DataType> types = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            types.add(DataType.DOUBLE);
-        }
-        long startTime = System.currentTimeMillis();
-        System.out.printf("Session insertNonAlignedRowRecords start time: %s%n", startTime);
-        session.insertNonAlignedRowRecords(path, timestamps, values, types, null);
-        long endTime = System.currentTimeMillis();
-        System.out.printf("Session insertNonAlignedRowRecords end time: %s%n", endTime);
-        System.out.printf("Total insert time: %s%n", endTime - startTime);
-    }
-
-    private static void testInsertRowRecords(long time, int pathNum) throws ExecutionException, SessionException {
-        List<String> path = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            path.add("1001.SUCC" + i);
-        }
-        long[] timestamps = new long[1];
-        timestamps[0] = time;
-        Object[] values = new Object[1];
-        List<Object> valueList = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            valueList.add(323.0);
-        }
-        values[0] = valueList.toArray();
-        List<DataType> types = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            types.add(DataType.DOUBLE);
-        }
-        long startTime = System.currentTimeMillis();
-        System.out.printf("Session insertRowRecords start time: %s%n", startTime);
-        session.insertRowRecords(path, timestamps, values, types, null);
-        long endTime = System.currentTimeMillis();
-        System.out.printf("Session insertRowRecords end time: %s%n", endTime);
-        System.out.printf("Total insert time: %s%n", endTime - startTime);
-    }
-
-    private static void testInsertNonAlignedColumnRecords(long time, int pathNum) throws ExecutionException, SessionException {
-        List<String> path = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            path.add("1001.SUCC" + i);
-        }
-        long[] timestamps = new long[1];
-        timestamps[0] = time;
-        Object[] values = new Object[pathNum];
-        for (int i = 0; i < pathNum; i++) {
-            values[i] = new Object[]{323.0};
-        }
-        List<DataType> types = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            types.add(DataType.DOUBLE);
-        }
-        long startTime = System.currentTimeMillis();
-        System.out.printf("Session insertNonAlignedColumnRecords start time: %s%n", startTime);
-        session.insertNonAlignedColumnRecords(path, timestamps, values, types, null);
-        long endTime = System.currentTimeMillis();
-        System.out.printf("Session insertNonAlignedColumnRecords end time: %s%n", endTime);
-        System.out.printf("Total insert time: %s%n", endTime - startTime);
-    }
-
-    private static void testInsertColumnRecords(long time, int pathNum) throws ExecutionException, SessionException {
-        List<String> path = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            path.add("1001.SUCC" + i);
-        }
-        long[] timestamps = new long[1];
-        timestamps[0] = time;
-        Object[] values = new Object[pathNum];
-        for (int i = 0; i < pathNum; i++) {
-            values[i] = new Object[]{323.0};
-        }
-        List<DataType> types = new ArrayList<>();
-        for (int i = 0; i < pathNum; i++) {
-            types.add(DataType.DOUBLE);
-        }
-        long startTime = System.currentTimeMillis();
-        System.out.printf("Session insertColumnRecords start time: %s%n", startTime);
-        session.insertColumnRecords(path, timestamps, values, types, null);
-        long endTime = System.currentTimeMillis();
-        System.out.printf("Session insertColumnRecords end time: %s%n", endTime);
-        System.out.printf("Total insert time: %s%n", endTime - startTime);
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {

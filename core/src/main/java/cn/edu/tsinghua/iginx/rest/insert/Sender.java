@@ -73,7 +73,8 @@ public class Sender extends Thread {
 
             try {
                 long sessionInsertStartTime =  System.currentTimeMillis();
-                session.insertNonAlignedRowRecords(paths, timestamps, values, types, null);
+                //session.insertNonAlignedRowRecords(paths, timestamps, values, types, null);
+                session.insertRowRecords(paths, timestamps, values, types, null);
                 long sessionInsertEndTime =  System.currentTimeMillis();
                 LOGGER.info(String.format("Session insert cost time: %s ms", sessionInsertEndTime - sessionInsertStartTime));
             } catch (Exception e) {
