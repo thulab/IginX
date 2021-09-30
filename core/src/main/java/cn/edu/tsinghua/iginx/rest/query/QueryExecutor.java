@@ -40,7 +40,7 @@ public class QueryExecutor {
     private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private Query query;
-    private Integer maxPathLength = 10;
+    private Integer maxPathLength = 3;
     private RestSession session = new RestSession();
 
 
@@ -116,15 +116,16 @@ public class QueryExecutor {
             path.append(queryMetric.getName());
             Paths.add(path.toString());
         }
-        if (depth > maxPathLength) {
+        if (depth == maxPathLength) {
             return;
         }
         pos.set(depth, -1);
         dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos, nowPos);
-        for (int i = 0; i < queryMetric.getTags().get(pos2path.get(nowPos + 1)).size(); i++) {
-            pos.set(depth, i);
-            dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos, nowPos + 1);
-        }
+        if (pos2path.size() > nowPos)
+            for (int i = 0; i < queryMetric.getTags().get(pos2path.get(nowPos + 1)).size(); i++) {
+                pos.set(depth, i);
+                dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos, nowPos + 1);
+            }
 
     }
 }
