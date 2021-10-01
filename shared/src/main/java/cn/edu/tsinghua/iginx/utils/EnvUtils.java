@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ public class EnvUtils {
 
     public static boolean loadEnv(String name, boolean defaultValue) {
         String env = System.getenv(name);
+        env = env==null?System.getProperty(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -40,6 +42,7 @@ public class EnvUtils {
 
     public static long loadEnv(String name, long defaultValue) {
         String env = System.getenv(name);
+        env = env==null?System.getProperty(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -53,6 +56,7 @@ public class EnvUtils {
 
     public static int loadEnv(String name, int defaultValue) {
         String env = System.getenv(name);
+        env = env==null?System.getProperty(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -66,6 +70,7 @@ public class EnvUtils {
 
     public static double loadEnv(String name, double defaultValue) {
         String env = System.getenv(name);
+        env = env==null?System.getProperty(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -79,6 +84,7 @@ public class EnvUtils {
 
     public static float loadEnv(String name, float defaultValue) {
         String env = System.getenv(name);
+        env = env==null?System.getProperty(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -92,6 +98,7 @@ public class EnvUtils {
 
     public static String loadEnv(String name, String defaultValue) {
         String env = System.getenv(name);
+        env = env==null?System.getProperty(name):env;
         if (env == null) {
             return defaultValue;
         }

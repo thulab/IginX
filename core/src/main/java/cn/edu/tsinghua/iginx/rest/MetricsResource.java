@@ -61,15 +61,15 @@ public class MetricsResource {
     private static final String DELETE_URL = "api/v1/datapoints/delete";
     private static final String DELETE_METRIC_URL = "api/v1/metric/{metricName}";
     private static final String NO_CACHE = "no-cache";
-    private static final ExecutorService threadPool = Executors.newFixedThreadPool(100);
+
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
+    private static final ExecutorService threadPool = Executors.newFixedThreadPool(config.getAsyncRestThreadPool());
 
     @Inject
     public MetricsResource() {
-
     }
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {

@@ -40,7 +40,8 @@ public class StorageEngineClassLoader extends ClassLoader {
     private final Map<String, String> nameToJar;
 
     public StorageEngineClassLoader(String path) throws IOException {
-        this.path = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR) + path;
+        String tPath = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR);
+        this.path = tPath.endsWith(File.separator)?tPath+path:tPath+File.separator + path;
         this.nameToJar = new HashMap<>();
         preloadClassNames();
     }
@@ -62,9 +63,6 @@ public class StorageEngineClassLoader extends ClassLoader {
                 String name = entry.getName();
                 if (name.endsWith(".class")) {
                     String clss = name.replace(".class", "").replaceAll("/", ".");
-                    if (this.findLoadedClass(clss) != null) {
-                        continue;
-                    }
                     nameToJar.put(clss, jar.getAbsolutePath());
                 }
             }
@@ -72,13 +70,33 @@ public class StorageEngineClassLoader extends ClassLoader {
     }
 
     @Override
-    protected Class<?> findClass(String name) throws ClassNotFoundException {
+    protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        Class<?> clazz = findLocalClass(name);
+        if (clazz != null) {
+            if (resolve) {
+                resolveClass(clazz);
+            }
+            return clazz;
+        }
+        return super.loadClass(name, resolve);
+    }
+
+    private Class<?> findLocalClass(String name) {
         byte[] result = getClassFromJars(name);
         if (result == null) {
-            throw new ClassNotFoundException("unable to find class: " + name);
+            return null;
         } else {
             return defineClass(name, result, 0, result.length);
         }
+    }
+
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        Class<?> clazz = findLocalClass(name);
+        if (clazz == null) {
+            throw new ClassNotFoundException("unable to find class: " + name);
+        }
+        return clazz;
     }
 
     private byte[] getClassFromJars(String name) {

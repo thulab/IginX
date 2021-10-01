@@ -7,7 +7,7 @@
   <groupId>cn.edu.tsinghua</groupId>
   <artifactId>iginx</artifactId>
   <name>IginX</name>
-  <version>0.3.0-SNAPSHOT</version>
+  <version>0.4.0-SNAPSHOT</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,7 +17,8 @@
   <modules>
     <module>core</module>
     <module>thrift</module>
-    <module>iotdb</module>
+    <module>iotdb11</module>
+    <module>iotdb12</module>
     <module>influxdb</module>
     <module>shared</module>
     <module>client</module>
@@ -28,6 +29,14 @@
     <module>test</module>
     <module>zeppelin-interpreter</module>
   </modules>
+
+  <distributionManagement>
+    <repository>
+      <id>local-repo-release</id>
+      <name>GitHub Release</name>
+      <url>file://${project.basedir}/maven-repo</url>
+    </repository>
+  </distributionManagement>
 
   <dependencies>
     <dependency>
