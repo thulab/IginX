@@ -138,7 +138,16 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertNonAlignedColumnRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertNonAlignedColumnRecordsPlanResults(insertNonAlignedColumnRecordsPlan);
-                return splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
+                List<InsertNonAlignedColumnRecordsPlan> insertNonAlignedColumnRecordsPlans = splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
+                statisticsMap = new HashMap<>();
+                for (InsertNonAlignedColumnRecordsPlan plan: insertNonAlignedColumnRecordsPlans) {
+                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
+                    if (statisticsItem != null) {
+                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    }
+                }
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                return insertNonAlignedColumnRecordsPlans;
             case InsertRowRecords:
                 InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
                 InsertRowRecordsPlan insertRowRecordsPlan = new InsertRowRecordsPlan(
@@ -171,7 +180,16 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertNonAlignedRowRecordsReq.getAttributesList()
                 );
                 splitInfoList = planSplitter.getSplitInsertNonAlignedRowRecordsPlanResults(insertNonAlignedRowRecordsPlan);
-                return splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
+                List<InsertNonAlignedRowRecordsPlan> insertNonAlignedRowRecordsPlans = splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
+                statisticsMap = new HashMap<>();
+                for (InsertNonAlignedRowRecordsPlan plan: insertNonAlignedRowRecordsPlans) {
+                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
+                    if (statisticsItem != null) {
+                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    }
+                }
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                return insertNonAlignedRowRecordsPlans;
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();
                 DeleteDataInColumnsPlan deleteDataInColumnsPlan = new DeleteDataInColumnsPlan(
@@ -410,7 +428,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
-                    info.getStorageUnit()
+                    info.getStorageUnit(),
+                    info.getFragment()
             );
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
@@ -465,7 +484,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     valuesAndBitmaps.v,
                     plan.getDataTypeListByInterval(info.getTimeSeriesInterval()),
                     plan.getAttributesByInterval(info.getTimeSeriesInterval()),
-                    info.getStorageUnit()
+                    info.getStorageUnit(),
+                    info.getFragment()
             );
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);

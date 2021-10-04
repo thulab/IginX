@@ -30,7 +30,6 @@ import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardInfoHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
@@ -96,16 +95,6 @@ public interface IMetaStorage {
     void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook);
 
     boolean proposeToReshard() throws MetaStorageException;
-
-    void lockReshardInfo() throws MetaStorageException;
-
-    void updateReshardInfo(int info) throws MetaStorageException;
-
-    void releaseReshardInfo() throws MetaStorageException;
-
-    void removeReshardInfo() throws MetaStorageException;
-
-    void registerReshardInfoHook(ReshardInfoHook hook);
 
     void lockCollectionCounter() throws MetaStorageException;
 

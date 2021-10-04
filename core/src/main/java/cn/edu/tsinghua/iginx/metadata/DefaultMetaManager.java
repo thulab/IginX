@@ -30,8 +30,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardInfoHook;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
@@ -71,13 +69,13 @@ public class DefaultMetaManager implements IMetaManager {
 
     private AtomicLong activeFragmentStartTime = new AtomicLong(-1L);
 
-    private final ScheduledExecutorService fragmentStatisticsUpdater;
-
-    private AtomicInteger reshardInfo = new AtomicInteger(-1);
-
-    private AtomicInteger collectionCounter = new AtomicInteger(-1);
+    private final ScheduledExecutorService activeFragmentStatisticsUpdater;
 
     private long id;
+
+    private boolean isProposer = false;
+
+    private boolean hasCommitted = false;
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
@@ -115,8 +113,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
-            initStatistics();
-            initReshardInfo();
+            initActiveFragmentStatistics();
             initCollectionCounter();
             initUser();
         } catch (MetaStorageException e) {
@@ -124,24 +121,30 @@ public class DefaultMetaManager implements IMetaManager {
             System.exit(-1);
         }
 
-        fragmentStatisticsUpdater = new ScheduledThreadPoolExecutor(1);
+        activeFragmentStatisticsUpdater = new ScheduledThreadPoolExecutor(1);
         if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
-            fragmentStatisticsUpdater.scheduleAtFixedRate(
-                    () -> {
-                        try {
-                            storage.lockActiveFragmentStatistics();
-                            storage.updateActiveFragmentStatistics(cache.getActiveFragmentStatistics());
-                            if (needToReshard() && storage.proposeToReshard()) {
-
+            activeFragmentStatisticsUpdater.scheduleAtFixedRate(
+                () -> {
+                    try {
+                        storage.lockActiveFragmentStatistics();
+                        storage.updateActiveFragmentStatistics(cache.getActiveFragmentStatistics());
+                        hasCommitted = true;
+                        if (needToReshard()) {
+                            if (storage.proposeToReshard()) {
+                                isProposer = true;
+                                logger.info("iginx node {} proposed to reshard", id);
+                            } else {
+                                logger.info("resharding has begun");
                             }
-                            storage.releaseActiveFragmentStatistics();
-                        } catch (MetaStorageException e) {
-                            logger.error("update active fragment statistics error: ", e);
                         }
-                    },
-                    ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
-                    ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
-                    TimeUnit.SECONDS
+                        storage.releaseActiveFragmentStatistics();
+                    } catch (MetaStorageException e) {
+                        logger.error("update active fragment statistics error: ", e);
+                    }
+                },
+                ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
+                ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
+                TimeUnit.SECONDS
             );
         }
     }
@@ -290,7 +293,7 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
-    private void initStatistics() throws MetaStorageException {
+    private void initActiveFragmentStatistics() throws MetaStorageException {
         storage.registerActiveFragmentStatisticsHook((fragment, item) -> {
             if (fragment == null || item == null) {
                 return;
@@ -305,18 +308,32 @@ public class DefaultMetaManager implements IMetaManager {
         cache.initActiveFragmentStatistics(statistics);
     }
 
-    private void initReshardInfo() throws MetaStorageException {
-        storage.registerReshardInfoHook(reshard -> {
-            reshardInfo.set(reshard);
-        });
-        storage.lockReshardInfo();
-        storage.removeReshardInfo();
-        storage.releaseReshardInfo();
-    }
-
     private void initCollectionCounter() throws MetaStorageException {
         storage.registerCollectionCounterHook(counter -> {
-            collectionCounter.set(counter);
+            try {
+                if (counter <= 0) {
+                    hasCommitted = false;
+                    return;
+                }
+                if (!hasCommitted && counter <= getIginxList().size()) {
+                    storage.lockActiveFragmentStatistics();
+                    storage.updateActiveFragmentStatistics(cache.getActiveFragmentStatistics());
+                    storage.releaseActiveFragmentStatistics();
+                    storage.lockCollectionCounter();
+                    storage.updateCollectionCounter(counter + 1);
+                    storage.releaseCollectionCounter();
+                    hasCommitted = true;
+                }
+                if (isProposer && counter == getIginxList().size()) {
+                    storage.lockCollectionCounter();
+                    storage.updateCollectionCounter(0);
+                    storage.releaseCollectionCounter();
+                    hasCommitted = false;
+                    isProposer = false;
+                }
+            } catch (MetaStorageException e) {
+                logger.error("update collection counter error: ", e);
+            }
         });
         storage.lockCollectionCounter();
         storage.removeCollectionCounter();

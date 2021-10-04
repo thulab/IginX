@@ -177,7 +177,6 @@ class NaivePlanSplitter implements IPlanSplitter {
         return infoList;
     }
 
-
     @Override
     public List<SplitInfo> getSplitInsertColumnRecordsPlanResults(InsertColumnRecordsPlan plan) {
         updatePrefix(plan);

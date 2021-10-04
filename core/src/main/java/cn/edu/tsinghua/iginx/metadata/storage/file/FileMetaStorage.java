@@ -6,7 +6,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
 import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardInfoHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -425,31 +424,6 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public boolean proposeToReshard() throws MetaStorageException {
         return false;
-    }
-
-    @Override
-    public void lockReshardInfo() throws MetaStorageException {
-
-    }
-
-    @Override
-    public void updateReshardInfo(int info) throws MetaStorageException {
-
-    }
-
-    @Override
-    public void releaseReshardInfo() throws MetaStorageException {
-
-    }
-
-    @Override
-    public void removeReshardInfo() throws MetaStorageException {
-
-    }
-
-    @Override
-    public void registerReshardInfoHook(ReshardInfoHook hook) {
-
     }
 
     @Override

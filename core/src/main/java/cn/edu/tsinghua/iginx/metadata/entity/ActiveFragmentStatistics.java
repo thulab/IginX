@@ -89,6 +89,4 @@ public final class ActiveFragmentStatistics {
     private void updateCount(long count) {
         this.count += count;
     }
-
-
 }

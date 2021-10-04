@@ -422,15 +422,13 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void initActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> statisticsMap) {
         statisticsLock.writeLock().lock();
-//        activeFragmentStatisticsMap.putAll(statisticsMap);
+        activeFragmentStatisticsMap.putAll(statisticsMap);
         statisticsLock.writeLock().unlock();
     }
 
     @Override
     public void addOrUpdateActiveFragmentStatisticsItem(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
-        for (Map.Entry<FragmentMeta, ActiveFragmentStatisticsItem> entry: statisticsItemMap.entrySet()) {
-            this.activeFragmentStatisticsMap.computeIfAbsent(entry.getKey(), e -> new ActiveFragmentStatistics()).updateByItem(entry.getValue());
-        }
+        statisticsItemMap.forEach((key, value) -> this.activeFragmentStatisticsMap.computeIfAbsent(key, e -> new ActiveFragmentStatistics()).updateByItem(value));
     }
 
     @Override
