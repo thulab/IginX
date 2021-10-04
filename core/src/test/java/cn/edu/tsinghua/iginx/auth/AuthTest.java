@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.auth;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
@@ -35,7 +36,7 @@ import org.junit.runners.MethodSorters;
 import java.util.List;
 import java.util.Set;
 
-@FixMethodOrder(MethodSorters.JVM)
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class AuthTest {
 
     private static final String FILE_META_STORAGE = "file";
@@ -62,6 +63,8 @@ public class AuthTest {
 
     @BeforeClass
     public static void setUp() {
+        System.setProperty(Constants.CONF, "../conf/config.properties");
+
         config = ConfigDescriptor.getInstance().getConfig();
 
         config.setMetaStorage(FILE_META_STORAGE);
@@ -86,7 +89,7 @@ public class AuthTest {
     }
 
     @Test
-    public void testDefaultUser() {
+    public void test1DefaultUser() {
         Assert.assertTrue(userManager.hasUser(config.getUsername()));
 
         List<UserMeta> users = userManager.getUsers();
@@ -106,7 +109,7 @@ public class AuthTest {
     }
 
     @Test
-    public void testAddUser() {
+    public void test2AddUser() {
         userManager.addUser(username, password, Sets.newHashSet(AuthType.Read, AuthType.Write));
 
         Assert.assertTrue(userManager.hasUser(username));
@@ -126,7 +129,7 @@ public class AuthTest {
     }
 
     @Test
-    public void testOpenSession() {
+    public void test3OpenSession() {
         long userSession = sessionManager.openSession(username);
         long adminSession = sessionManager.openSession(config.getUsername());
 
@@ -161,7 +164,7 @@ public class AuthTest {
     }
 
     @Test
-    public void testCheckUser() {
+    public void test4CheckUser() {
         Assert.assertTrue(userManager.checkUser(username, password));
         Assert.assertFalse(userManager.checkUser(password, username));
 
@@ -169,7 +172,7 @@ public class AuthTest {
     }
 
     @Test
-    public void testUpdateUser() {
+    public void test5UpdateUser() {
         userManager.updateUser(username, username, null);
 
         UserMeta user = userManager.getUser(username);
@@ -209,7 +212,7 @@ public class AuthTest {
     }
 
     @Test
-    public void testRemoveUser() {
+    public void test6RemoveUser() {
         Assert.assertTrue(userManager.deleteUser(username));
         Assert.assertFalse(userManager.deleteUser(config.getUsername()));
     }

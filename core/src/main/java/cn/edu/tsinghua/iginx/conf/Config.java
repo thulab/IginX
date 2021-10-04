@@ -60,6 +60,8 @@ public class Config {
 
     private long disorderMargin = 10;
 
+    private int asyncRestThreadPool = 100;
+
     private boolean enableRestService = true;
 
     private String fileDataDir = "";
@@ -230,6 +232,14 @@ public class Config {
 
     public void setRestPort(int restPort) {
         this.restPort = restPort;
+    }
+
+    public int getAsyncRestThreadPool() {
+        return asyncRestThreadPool;
+    }
+
+    public void setAsyncRestThreadPool(int asyncRestThreadPool) {
+        this.asyncRestThreadPool = asyncRestThreadPool;
     }
 
     public boolean isEnableRestService() {

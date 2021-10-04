@@ -19,6 +19,8 @@
 package cn.edu.tsinghua.iginx.rest;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
@@ -65,24 +67,29 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getByteArrayFromLongArray;
 
 public class RestSession {
     private static final Logger logger = LoggerFactory.getLogger(RestSession.class);
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private final ReadWriteLock lock;
     private IginxWorker client;
     private long sessionId;
     private boolean isClosed;
     private int redirectTimes;
-
+    private String username;
+    private String password;
 
     public RestSession() {
         this.isClosed = true;
         this.redirectTimes = 0;
         this.lock = new ReentrantReadWriteLock();
-
+        this.username = config.getUsername();
+        this.password = config.getPassword();
     }
 
 
     private OpenSessionResp tryOpenSession() {
         client = IginxWorker.getInstance();
         OpenSessionReq req = new OpenSessionReq();
+        req.username = this.username;
+        req.password = this.password;
         return client.openSession(req);
     }
 
@@ -238,7 +245,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while(checkRedirect(status));
+        } while (checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -272,6 +279,30 @@ public class RestSession {
             sortedValuesList[i] = valuesList[index[i]];
         }
 
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) sortedValuesList[i])[index[j]];
+            }
+            sortedValuesList[i] = values;
+        }
+        for (Integer i : index) {
+            sortedDataTypeList.add(dataTypeList.get(i));
+        }
+        if (attributesList != null) {
+            for (Integer i : index) {
+                sortedAttributesList.add(attributesList.get(i));
+            }
+        }
+
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < timestamps.length; i++) {
@@ -280,7 +311,7 @@ public class RestSession {
                 logger.error("The sizes of paths and the element of valuesList should be equal.");
                 return;
             }
-            valueBufferList.add(ByteUtils.getRowByteBuffer(values, dataTypeList));
+            valueBufferList.add(ByteUtils.getRowByteBuffer(values, sortedDataTypeList));
             Bitmap bitmap = new Bitmap(values.length);
             for (int j = 0; j < values.length; j++) {
                 if (values[j] != null) {
@@ -296,8 +327,8 @@ public class RestSession {
         req.setTimestamps(getByteArrayFromLongArray(timestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
-        req.setDataTypeList(dataTypeList);
-        req.setAttributesList(attributesList);
+        req.setDataTypeList(sortedDataTypeList);
+        req.setAttributesList(sortedAttributesList);
 
         Status status;
         do {

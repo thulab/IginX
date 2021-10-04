@@ -11,8 +11,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>iotdb</artifactId>
-    <name>IginX IoTDB</name>
+    <artifactId>iotdb11</artifactId>
+    <name>IginX IoTDB11</name>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -25,6 +25,12 @@
             <artifactId>iginx-core</artifactId>
             <version>${project.version}</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.iotdb</groupId>
@@ -36,6 +42,12 @@
                     <artifactId>logback-classic</artifactId>
                 </exclusion>
             </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.32</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
@@ -53,7 +65,7 @@
                             <goal>copy-dependencies</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>../core/target/iginx-core-${project.version}/driver/iotdb/
+                            <outputDirectory>../core/target/iginx-core-${project.version}/driver/iotdb11/
                             </outputDirectory>
                             <excludeScope>provided</excludeScope>
                         </configuration>
@@ -73,7 +85,7 @@
                         </goals>
                         <configuration>
                             <target>
-                                <copy todir="../core/target/iginx-core-${project.version}/driver/iotdb/">
+                                <copy todir="../core/target/iginx-core-${project.version}/driver/iotdb11/">
                                     <fileset dir="${project.basedir}/target/">
                                         <include name="*.jar"/>
                                     </fileset>
