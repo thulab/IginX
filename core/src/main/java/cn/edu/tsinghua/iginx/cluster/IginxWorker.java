@@ -485,6 +485,7 @@ public class IginxWorker implements IService.Iface {
         if (localMetaStorageInfo != null) {
             resp.setLocalMetaStorageInfo(localMetaStorageInfo);
         }
+        resp.setStatus(RpcUtils.SUCCESS);
         return resp;
     }
 }

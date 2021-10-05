@@ -71,6 +71,8 @@ public class IoTDBSessionExample {
         deleteDataInColumns();
         // 再次查询数据
         queryData();
+        // 查看集群信息
+        showClusterInfo();
 
         // 关闭 Session
         session.closeSession();
@@ -361,5 +363,12 @@ public class IoTDBSessionExample {
         long endTime = ROW_START_TIMESTAMP + 50L;
 
         session.deleteDataInColumns(paths, startTime, endTime);
+    }
+
+    public static void showClusterInfo() throws SessionException, ExecutionException {
+        ClusterInfo clusterInfo = session.getClusterInfo();
+        System.out.println(clusterInfo.getIginxInfos());
+        System.out.println(clusterInfo.getStorageEngineInfos());
+        System.out.println(clusterInfo.getMetaStorageInfos());
     }
 }
