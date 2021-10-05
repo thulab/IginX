@@ -35,6 +35,8 @@ import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
+import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.IService;
@@ -956,6 +958,29 @@ public class Session {
         } catch (TException e) {
             throw new SessionException(e);
         }
+    }
+
+    public ClusterInfo getClusterInfo() throws SessionException, ExecutionException {
+        GetClusterInfoReq req = new GetClusterInfoReq(sessionId);
+
+        GetClusterInfoResp resp;
+
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.getClusterInfo(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+
+        return new ClusterInfo(resp);
+
     }
 
     // 适用于查询类请求和删除类请求，因为其 paths 可能带有 *
