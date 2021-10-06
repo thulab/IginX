@@ -13,6 +13,7 @@ statement
     | COUNT POINTS #countPointsStatement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
+    | SHOW CLUSTER INFO #showClusterInfoStatement
     ;
 
 selectClause
@@ -251,6 +252,14 @@ REPLICA
 
 NUMBER
     : N U M B E R
+    ;
+
+CLUSTER
+    : C L U S T E R
+    ;
+
+INFO
+    : I N F O
     ;
 
 WHERE

@@ -35,6 +35,7 @@ enum SqlType {
     CountPoints,
     ClearData,
     ShowTimeSeries,
+    ShowClusterInfo,
 }
 
 enum AuthType {
@@ -255,6 +256,10 @@ struct ExecuteSqlResp {
     13: optional i32 offset
     14: optional string orderByPath
     15: optional bool ascending
+    16: optional list<IginxInfo> iginxInfos
+    17: optional list<StorageEngineInfo> storageEngineInfos
+    18: optional list<MetaStorageInfo>  metaStorageInfos
+    19: optional LocalMetaStorageInfo localMetaStorageInfo
 }
 
 struct UpdateUserReq {
