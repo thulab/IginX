@@ -370,5 +370,6 @@ public class IoTDBSessionExample {
         System.out.println(clusterInfo.getIginxInfos());
         System.out.println(clusterInfo.getStorageEngineInfos());
         System.out.println(clusterInfo.getMetaStorageInfos());
+        System.out.println(clusterInfo.getLocalMetaStorageInfo());
     }
 }
