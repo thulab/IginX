@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
@@ -65,15 +66,15 @@ public class DefaultMetaManager implements IMetaManager {
         cache = DefaultMetaCache.getInstance();
 
         switch (ConfigDescriptor.getInstance().getConfig().getMetaStorage()) {
-            case "zookeeper":
+            case Constants.ZOOKEEPER_META:
                 logger.info("use zookeeper as meta storage.");
                 storage = ZooKeeperMetaStorage.getInstance();
                 break;
-            case "file":
+            case Constants.FILE_META:
                 logger.info("use file as meta storage");
                 storage = FileMetaStorage.getInstance();
                 break;
-            case "etcd":
+            case Constants.ETCD_META:
                 logger.info("use etcd as meta storage");
                 storage = ETCDMetaStorage.getInstance();
                 break;

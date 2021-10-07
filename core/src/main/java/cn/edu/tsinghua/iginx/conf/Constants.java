@@ -30,5 +30,11 @@ public class Constants {
 
     public static final String DRIVER_DIR = "driver/";
 
+    public static final String FILE_META = "file";
+
+    public static final String ZOOKEEPER_META = "zookeeper";
+
+    public static final String ETCD_META = "etcd";
+
 }
 

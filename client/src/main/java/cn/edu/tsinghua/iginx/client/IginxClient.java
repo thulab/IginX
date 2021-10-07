@@ -278,6 +278,8 @@ public class IginxClient {
                 res.print(true, timestampPrecision);
             } else if (res.getSqlType() == SqlType.ShowTimeSeries) {
                 res.print(false, "");
+            } else if (res.getSqlType() == SqlType.ShowClusterInfo) {
+                res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
                 System.out.println("success");
@@ -417,6 +419,18 @@ public class IginxClient {
                 new StringsCompleter("series")
         );
 
+        Completer upperShowClusterInfoCompleter = new ArgumentCompleter(
+                new StringsCompleter("SHOW"),
+                new StringsCompleter("CLUSTER"),
+                new StringsCompleter("INFO")
+        );
+
+        Completer lowerShowClusterInfoCompleter = new ArgumentCompleter(
+                new StringsCompleter("show"),
+                new StringsCompleter("cluster"),
+                new StringsCompleter("info")
+        );
+
         Completer upperQuitCompleter = new StringsCompleter("QUIT");
 
         Completer lowerQuitCompleter = new StringsCompleter("quit");
@@ -444,6 +458,8 @@ public class IginxClient {
                 lowerSetTimeUnitCompleter,
                 upperShowTimeSeriesCompleter,
                 lowerShowTimeSeriesCompleter,
+                upperShowClusterInfoCompleter,
+                lowerShowClusterInfoCompleter,
                 upperQuitCompleter,
                 lowerQuitCompleter,
                 upperExitCompleter,

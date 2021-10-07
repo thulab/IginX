@@ -21,5 +21,6 @@ public abstract class Operator {
         COUNT_POINTS,
         CLEAR_DATA,
         SHOW_TIME_SERIES,
+        SHOW_CLUSTER_INFO
     }
 }
