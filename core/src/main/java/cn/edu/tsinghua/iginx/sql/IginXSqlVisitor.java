@@ -18,15 +18,7 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeRangeContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
-import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ClearDataOperator;
-import cn.edu.tsinghua.iginx.sql.operator.CountPointsOperator;
-import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
-import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
-import cn.edu.tsinghua.iginx.sql.operator.Operator;
-import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ShowTimeSeriesOperator;
+import cn.edu.tsinghua.iginx.sql.operator.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -144,6 +136,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     @Override
     public Operator visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
         return new ShowTimeSeriesOperator();
+    }
+
+    @Override
+    public Operator visitShowClusterInfoStatement(SqlParser.ShowClusterInfoStatementContext ctx) {
+        return new ShowClusterInfoOperator();
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {

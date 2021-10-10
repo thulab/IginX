@@ -35,6 +35,7 @@ enum SqlType {
     CountPoints,
     ClearData,
     ShowTimeSeries,
+    ShowClusterInfo,
 }
 
 enum AuthType {
@@ -255,6 +256,10 @@ struct ExecuteSqlResp {
     13: optional i32 offset
     14: optional string orderByPath
     15: optional bool ascending
+    16: optional list<IginxInfo> iginxInfos
+    17: optional list<StorageEngineInfo> storageEngineInfos
+    18: optional list<MetaStorageInfo>  metaStorageInfos
+    19: optional LocalMetaStorageInfo localMetaStorageInfo
 }
 
 struct UpdateUserReq {
@@ -286,6 +291,41 @@ struct GetUserResp {
     2: optional list<string> usernames
     3: optional list<UserType> userTypes
     4: optional list<set<AuthType>> auths
+}
+
+struct GetClusterInfoReq {
+    1: required i64 sessionId
+}
+
+struct IginxInfo {
+    1: required i64 id
+    2: required string ip
+    3: required i32 port
+}
+
+struct StorageEngineInfo {
+    1: required i64 id
+    2: required string ip
+    3: required i32 port
+    4: required string type
+}
+
+struct MetaStorageInfo {
+    1: required string ip
+    2: required i32 port
+    3: required string type
+}
+
+struct LocalMetaStorageInfo {
+    1: required string path
+}
+
+struct GetClusterInfoResp {
+    1: required Status status
+    2: optional list<IginxInfo> iginxInfos
+    3: optional list<StorageEngineInfo> storageEngineInfos
+    4: optional list<MetaStorageInfo>  metaStorageInfos
+    5: optional LocalMetaStorageInfo localMetaStorageInfo
 }
 
 service IService {
@@ -331,4 +371,6 @@ service IService {
     Status deleteUser(1: DeleteUserReq req);
 
     GetUserResp getUser(1: GetUserReq req);
+
+    GetClusterInfoResp getClusterInfo(1: GetClusterInfoReq req);
 }
