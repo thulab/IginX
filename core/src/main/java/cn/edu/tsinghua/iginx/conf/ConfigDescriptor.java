@@ -35,8 +35,10 @@ public class ConfigDescriptor {
 
     private ConfigDescriptor() {
         config = new Config();
+        logger.info("load parameters from config.properties.");
         loadPropsFromFile();
         if (config.isEnableEnvParameter()) {
+            logger.info("load parameters from env.");
             loadPropsFromEnv(); // 如果在环境变量中设置了相关参数，则会覆盖配置文件中设置的参数
         }
     }
