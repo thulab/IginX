@@ -562,7 +562,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     if (rowRecord == null || rowRecord.getFields().isEmpty()) {
                         break;
                     }
-                    if (rowRecord.getFields().size() != 2) {
+                    if (rowRecord.getFields().size() != 3) {
                         break;
                     }
                     if (rowRecord.getFields().get(1) != null && !rowRecord.getFields().get(1).getStringValue().equals("null")) {

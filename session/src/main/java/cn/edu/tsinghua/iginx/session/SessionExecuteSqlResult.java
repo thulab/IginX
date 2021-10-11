@@ -169,6 +169,9 @@ public class SessionExecuteSqlResult {
 
     public String getResultInString(boolean needFormatTime, String timePrecision) {
         if (isQuery()) {
+            if (aggregateType == AggregateType.LAST) {
+                return buildLastQueryResult(timePrecision);
+            }
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             return buildShowTimeSeriesResult();
@@ -240,13 +243,7 @@ public class SessionExecuteSqlResult {
 
             List<Object> rowData = values.get(i);
             for (int j = 0; j < rowData.size(); j++) {
-                Object rowDatum = rowData.get(j);
-                String rowValue;
-                if (rowDatum instanceof byte[]) {
-                    rowValue = new String((byte[]) rowDatum);
-                } else {
-                    rowValue = String.valueOf(rowDatum);
-                }
+                String rowValue = valueToString(rowData.get(j));
                 rowCache.add(rowValue);
 
                 int index = timestamps == null ? j : j + 1;
@@ -323,6 +320,27 @@ public class SessionExecuteSqlResult {
         } else {
             return "Total line number = " + count + "\n";
         }
+    }
+
+    private String buildLastQueryResult(String timePrecision) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LastQuery ResultSets:").append("\n");
+        int num = paths == null ? 0 : paths.size();
+        if (values != null && !values.isEmpty()) {
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
+            for (int i = 0; i < paths.size(); i++) {
+                cache.add(new ArrayList<>(Arrays.asList(
+                        formatTime(timestamps[i], timePrecision),
+                        paths.get(i),
+                        valueToString(values.get(0).get(i))
+                )));
+            }
+
+            buildFromStringList(builder, cache);
+        }
+        builder.append(buildCount(num));
+        return builder.toString();
     }
 
     private String buildShowTimeSeriesResult() {
@@ -422,6 +440,16 @@ public class SessionExecuteSqlResult {
             }
             builder.append(buildBlockLine(maxSizeList));
         }
+    }
+
+    private String valueToString(Object value) {
+        String ret;
+        if (value instanceof byte[]) {
+            ret = new String((byte[]) value);
+        } else {
+            ret = String.valueOf(value);
+        }
+        return ret;
     }
 
     private String formatTime(long timestamp, String timePrecision) {
