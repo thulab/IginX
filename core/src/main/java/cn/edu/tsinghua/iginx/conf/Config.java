@@ -52,6 +52,8 @@ public class Config {
 
     private int statisticsLogInterval = 1000;
 
+    private boolean enableEnvParameter = false;
+
     private String restIp = "127.0.0.1";
 
     private int restPort = 6666;
@@ -210,6 +212,14 @@ public class Config {
 
     public void setStatisticsLogInterval(int statisticsLogInterval) {
         this.statisticsLogInterval = statisticsLogInterval;
+    }
+
+    public boolean isEnableEnvParameter() {
+        return enableEnvParameter;
+    }
+
+    public void setEnableEnvParameter(boolean enableEnvParameter) {
+        this.enableEnvParameter = enableEnvParameter;
     }
 
     public String getRestIp() {
