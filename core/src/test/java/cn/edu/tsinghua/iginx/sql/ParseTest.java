@@ -203,7 +203,7 @@ public class ParseTest {
 
     @Test
     public void testParseAddStorageEngine() {
-        String addStorageEngineStr = "ADD STORAGEENGINE (127.0.0.1, 6667, IotDB, \"username: root, password: root\"), (127.0.0.1, 6668, InfluxDB, \"key1: val1, key2: val2\");";
+        String addStorageEngineStr = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key1: val1, key2: val2\");";
         AddStorageEngineOperator op = (AddStorageEngineOperator) buildOperator(addStorageEngineStr);
 
         assertEquals(2, op.getEngines().size());
