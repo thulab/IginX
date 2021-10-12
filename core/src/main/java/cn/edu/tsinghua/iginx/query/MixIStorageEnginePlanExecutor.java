@@ -319,6 +319,8 @@ public class MixIStorageEnginePlanExecutor extends AbstractPlanExecutor {
                 String engine = after.getStorageEngine();
                 if (storageEngines.containsKey(engine)) { // 已有的引擎新增数据节点
                     hooks.get(engine).onChanged(null, after);
+                    IStorageEngine storageEngine = storageEngines.get(engine);
+                    storageEngineMap.put(after.getId(), storageEngine);
                 } else {
                     try {
                         ClassLoader classLoader = new StorageEngineClassLoader(engine);
