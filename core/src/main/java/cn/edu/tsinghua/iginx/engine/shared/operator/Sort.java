@@ -18,8 +18,42 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class Sort implements UnaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.Constants;
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
 
+public class Sort extends AbstractUnaryOperator {
 
+    private final String sortBy;
+
+    private final SortType sortType;
+
+    public Sort(Source source) {
+        this(source, Constants.TIMESTAMP, SortType.ASC);
+    }
+
+    public Sort(Source source, String sortBy, SortType sortType) {
+        super(OperatorType.Sort, source);
+        if (sortBy == null) {
+            throw new IllegalArgumentException("sortBy shouldn't be null");
+        }
+        if (sortType == null) {
+            throw new IllegalArgumentException("sortType shouldn't be null");
+        }
+        this.sortBy = sortBy;
+        this.sortType = sortType;
+    }
+
+    public String getSortBy() {
+        return sortBy;
+    }
+
+    public SortType getSortType() {
+        return sortType;
+    }
+
+    public enum SortType {
+        ASC,
+        DESC
+    }
 
 }

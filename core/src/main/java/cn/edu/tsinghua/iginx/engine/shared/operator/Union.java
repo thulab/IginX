@@ -18,5 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class Union implements BinaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+
+public class Union extends AbstractBinaryOperator {
+
+    public Union(Source sourceA, Source sourceB) {
+        super(OperatorType.Union, sourceA, sourceB);
+    }
 }

@@ -18,5 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+
 public interface BinaryOperator extends Operator {
+
+    Source getSourceA();
+
+    Source getSourceB();
+
 }

@@ -18,5 +18,26 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class RowTransform implements UnaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+import cn.edu.tsinghua.iginx.engine.shared.function.Function;
+import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+
+public class RowTransform extends AbstractUnaryOperator {
+
+    private final Function function;
+
+    public RowTransform(Source source, Function function) {
+        super(OperatorType.RowTransform, source);
+        if (function == null) {
+            throw new IllegalArgumentException("function shouldn't be null");
+        }
+        if (function.getMappingType() != MappingType.RowMapping) {
+            throw new IllegalArgumentException("function should be row mapping function");
+        }
+        this.function = function;
+    }
+
+    public Function getFunction() {
+        return function;
+    }
 }
