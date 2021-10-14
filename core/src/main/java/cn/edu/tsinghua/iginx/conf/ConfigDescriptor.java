@@ -78,6 +78,7 @@ public class ConfigDescriptor {
 
             config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
             config.setAsyncRestThreadPool(Integer.parseInt(properties.getProperty("asyncRestThreadPool", "100")));
+            config.setRestReqSplitNum(Integer.parseInt(properties.getProperty("restReqSplitNum", "10")));
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
@@ -121,6 +122,7 @@ public class ConfigDescriptor {
         config.setDisorderMargin(EnvUtils.loadEnv("disorderMargin", config.getDisorderMargin()));
         config.setMaxTimeseriesLength(EnvUtils.loadEnv("maxtimeserieslength", config.getMaxTimeseriesLength()));
         config.setAsyncRestThreadPool(EnvUtils.loadEnv("asyncRestThreadPool", config.getAsyncRestThreadPool()));
+        config.setRestReqSplitNum(EnvUtils.loadEnv("restReqSplitNum", config.getRestReqSplitNum()));
         config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
         config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
         config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));

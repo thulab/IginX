@@ -22,7 +22,6 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.rest.insert.InsertAnnotationWorker;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.Query;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
@@ -70,6 +69,7 @@ public class MetricsResource {
 
     @Inject
     public MetricsResource() {
+
     }
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
@@ -122,11 +122,7 @@ public class MetricsResource {
         }
     }
 
-    @POST
-    @Path(INSERT_ANNOTATION_URL)
-    public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
-        threadPool.execute(new InsertAnnotationWorker(asyncResponse, httpheaders, stream));
-    }
+
 
     @POST
     @Path("annotations")
@@ -273,7 +269,6 @@ public class MetricsResource {
             stringBuilder.append(metricName);
             ins.add(stringBuilder.toString());
         }
-        metaManager.addOrUpdateSchemaMapping(metricName, null);
         restSession.deleteColumns(ins);
         restSession.closeSession();
     }

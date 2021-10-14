@@ -55,6 +55,7 @@ public class InsertWorker extends Thread {
     @Override
     public void run() {
         Response response;
+        long restStartTime = System.currentTimeMillis();
         try {
             if (httpheaders != null) {
                 List<String> requestHeader = httpheaders.getRequestHeader("Content-Encoding");
@@ -68,6 +69,8 @@ public class InsertWorker extends Thread {
         } catch (Exception e) {
             response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
+        long restEndTime = System.currentTimeMillis();
+        LOGGER.info(String.format("Rest cost time: %s ms", restEndTime - restStartTime));
         asyncResponse.resume(response);
     }
 }

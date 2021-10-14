@@ -64,6 +64,8 @@ public class Config {
 
     private int asyncRestThreadPool = 100;
 
+    private int restReqSplitNum = 10;
+
     private boolean enableRestService = true;
 
     private String fileDataDir = "";
@@ -244,6 +246,14 @@ public class Config {
 
     public void setAsyncRestThreadPool(int asyncRestThreadPool) {
         this.asyncRestThreadPool = asyncRestThreadPool;
+    }
+
+    public int getRestReqSplitNum() {
+        return restReqSplitNum;
+    }
+
+    public void setRestReqSplitNum(int restReqSplitNum) {
+        this.restReqSplitNum = restReqSplitNum;
     }
 
     public boolean isEnableRestService() {
