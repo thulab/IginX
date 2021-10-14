@@ -89,6 +89,7 @@ public final class StorageUnitMeta {
         StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
         storageUnitMeta.setCreatedBy(createdBy);
         storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
+        storageUnitMeta.setLastOfBatch(lastOfBatch);
         return storageUnitMeta;
     }
 

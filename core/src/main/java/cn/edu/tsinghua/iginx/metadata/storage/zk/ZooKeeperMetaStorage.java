@@ -84,13 +84,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK_NODE = "/lock/user";
 
-    private static final String RESHARD_NOTIFICATION_LOCK_NODE = "/lock/notification";
+    private static final String RESHARD_NOTIFICATION_LOCK_NODE = "/lock/notification/reshard";
 
-//    private static final String RESHARD_NOTIFICATION_LOCK_NODE = "/lock/notification/reshard";
-
-    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter";
-
-//    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter/reshard";
+    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter/reshard";
 
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
@@ -711,9 +707,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
-            if (this.client.checkExists().forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString()) != null) {
-
-            }
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
                     .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
@@ -931,7 +924,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             } else {
                 resharding = JsonUtils.fromJson(
                         this.client.getData().forPath(RESHARD_NOTIFICATION_NODE_PREFIX), Boolean.class);
-                logger.info("resharding = {}", resharding);
                 if (!resharding) {
                     this.client.setData()
                             .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(true));

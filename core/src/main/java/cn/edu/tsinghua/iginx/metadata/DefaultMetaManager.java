@@ -238,7 +238,6 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initStorageUnit() throws MetaStorageException {
         storage.registerStorageUnitChangeHook((storageUnitId, storageUnit) -> {
-            logger.info("storageUnitId = {} storageUnit = {}", storageUnitId, storageUnit);
             if (storageUnit == null) {
                 return;
             }
@@ -274,7 +273,6 @@ public class DefaultMetaManager implements IMetaManager {
                     }
                 }
             }
-            logger.info("originStorageUnitMeta = {}", originStorageUnitMeta);
             if (originStorageUnitMeta != null) {
                 cache.updateStorageUnit(storageUnit);
                 cache.getStorageEngine(originStorageUnitMeta.getStorageEngineId()).removeStorageUnit(originStorageUnitMeta.getId());
@@ -288,7 +286,7 @@ public class DefaultMetaManager implements IMetaManager {
                     createFragment(storageUnit, fragment, true);
                 }
             }
-            logger.info("storage unit last of batch = {}", storageUnit.isLastOfBatch());
+            cache.removeReshardFragmentsByStorageUnitId(storageUnitId);
             synchronized (terminateResharding) {
                 try {
                     if (isResharding && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
@@ -380,10 +378,7 @@ public class DefaultMetaManager implements IMetaManager {
                         hasCommittedCreatingTask = true;
                         IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
                                 .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
-                        logger.error("cache.getActiveFragmentStatistics = {}", cache.getActiveFragmentStatistics());
                         Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.get());
-                        logger.info("maxActiveFragmentEndTime.get() = {}", maxActiveFragmentEndTime.get());
-                        logger.info("fragmentsAndStorageUnits = {}", fragmentsAndStorageUnits);
                         createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
                     }
                 }
@@ -430,10 +425,10 @@ public class DefaultMetaManager implements IMetaManager {
                     return;
                 }
                 if (isProposer && counter == getIginxList().size() - 1) {
-
-                    logger.info("after resharding = {}", cache.getActiveFragmentStatistics().keySet());
                     storage.addInactiveFragmentStatistics(cache.getActiveFragmentStatistics());
 
+                    storage.lockReshardCounter();
+                    storage.removeReshardCounter();
                     storage.removeReshardCounter();
 
                     storage.lockReshardNotification();
@@ -900,12 +895,10 @@ public class DefaultMetaManager implements IMetaManager {
     private void createFragment(StorageUnitMeta storageUnit, FragmentMeta fragment, boolean create) {
         fragment.setMasterStorageUnit(storageUnit);
         if (create) {
-            logger.info("activeFragmentStartTime = {}", activeFragmentStartTime.get());
             cache.addFragment(fragment);
         } else {
             cache.updateFragment(fragment);
         }
-        logger.info("fragment last of batch = {}", fragment.isLastOfBatch());
         synchronized (terminateResharding) {
             try {
                 if (isResharding && fragment.isLastOfBatch() && !hasCreatedFragments) {
