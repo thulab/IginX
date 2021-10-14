@@ -18,5 +18,26 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class SetTransform implements UnaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+import cn.edu.tsinghua.iginx.engine.shared.function.Function;
+import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+
+public class SetTransform extends AbstractUnaryOperator {
+
+    private final Function function;
+
+    public SetTransform(Source source, Function function) {
+        super(OperatorType.SetTransform, source);
+        if (function == null) {
+            throw new IllegalArgumentException("function shouldn't be null");
+        }
+        if (function.getMappingType() != MappingType.SetMapping) {
+            throw new IllegalArgumentException("function should be set mapping function");
+        }
+        this.function = function;
+    }
+
+    public Function getFunction() {
+        return function;
+    }
 }

@@ -19,4 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 public interface Operator {
+
+    OperatorType getType();
+
 }

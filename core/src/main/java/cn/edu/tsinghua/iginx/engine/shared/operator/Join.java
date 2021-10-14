@@ -18,5 +18,26 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class Join implements BinaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.Constants;
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+
+public class Join extends AbstractBinaryOperator {
+
+    private final String joinBy;
+
+    public Join(Source sourceA, Source sourceB) {
+        this(sourceA, sourceB, Constants.TIMESTAMP);
+    }
+
+    public Join(Source sourceA, Source sourceB, String joinBy) {
+        super(OperatorType.Join, sourceA, sourceB);
+        if (joinBy == null) {
+            throw new IllegalArgumentException("joinBy shouldn't be null");
+        }
+        this.joinBy = joinBy;
+    }
+
+    public String getJoinBy() {
+        return joinBy;
+    }
 }

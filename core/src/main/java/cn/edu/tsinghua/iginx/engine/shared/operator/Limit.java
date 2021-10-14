@@ -18,5 +18,28 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class Limit implements UnaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+
+public class Limit extends AbstractUnaryOperator {
+
+    private final int limit;
+
+    private final int offset;
+
+    public Limit(Source source, int limit, int offset) {
+        super(OperatorType.Limit, source);
+        if (limit < 0 || offset < 0) {
+            throw new IllegalArgumentException("limit and offset shouldn't less than zero");
+        }
+        this.limit = limit;
+        this.offset = offset;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
 }

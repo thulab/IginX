@@ -19,5 +19,10 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+
 public interface UnaryOperator extends Operator {
+
+    Source getSource();
+
 }

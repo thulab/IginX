@@ -18,5 +18,36 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-public class Downsample implements UnaryOperator {
+import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+import cn.edu.tsinghua.iginx.engine.shared.function.Function;
+import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+
+public class Downsample extends AbstractUnaryOperator {
+
+    private final long precision;
+
+    private final Function function;
+
+    public Downsample(Source source, long precision, Function function) {
+        super(OperatorType.Downsample, source);
+        if (precision <= 0) {
+            throw new IllegalArgumentException("precision should be greater than zero");
+        }
+        if (function == null) {
+            throw new IllegalArgumentException("function shouldn't be null");
+        }
+        if (function.getMappingType() != MappingType.SetMapping) {
+            throw new IllegalArgumentException("function should be set mapping function");
+        }
+        this.precision = precision;
+        this.function = function;
+    }
+
+    public long getPrecision() {
+        return precision;
+    }
+
+    public Function getFunction() {
+        return function;
+    }
 }
