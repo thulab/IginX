@@ -866,6 +866,7 @@ public class Session {
                     lock.readLock().unlock();
                 }
             } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
         } catch (TException e) {
             throw new SessionException(e);
         }
