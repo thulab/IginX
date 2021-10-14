@@ -215,6 +215,7 @@ public class DataPointsParser {
         LOGGER.info(String.format("Going in to meta data updates"));
         updateMetaAndMergeData();
         LOGGER.info(String.format("MetaData cost time: %s ms", System.currentTimeMillis() - umamdTime));
+
         for (Map.Entry<TimeAndPrefixPath, Map<String, String>> entry : batchMap.entrySet()) {
             List<String> paths = new ArrayList<>();
             List<DataType> types = new ArrayList<>();
