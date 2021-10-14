@@ -18,10 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +48,10 @@ public class SessionExecuteSqlResult {
     private int limit;
     private int offset;
     private boolean ascending;
+    private List<IginxInfo> iginxInfos;
+    private List<StorageEngineInfo> storageEngineInfos;
+    private List<MetaStorageInfo> metaStorageInfos;
+    private LocalMetaStorageInfo localMetaStorageInfo;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -75,6 +76,12 @@ public class SessionExecuteSqlResult {
             case ShowTimeSeries:
                 this.paths = resp.getPaths();
                 this.dataTypeList = resp.getDataTypeList();
+                break;
+            case ShowClusterInfo:
+                this.iginxInfos = resp.getIginxInfos();
+                this.storageEngineInfos = resp.getStorageEngineInfos();
+                this.metaStorageInfos = resp.getMetaStorageInfos();
+                this.localMetaStorageInfo = resp.getLocalMetaStorageInfo();
                 break;
             default:
                 break;
@@ -162,9 +169,14 @@ public class SessionExecuteSqlResult {
 
     public String getResultInString(boolean needFormatTime, String timePrecision) {
         if (isQuery()) {
+            if (aggregateType == AggregateType.LAST) {
+                return buildLastQueryResult(timePrecision);
+            }
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             return buildShowTimeSeriesResult();
+        } else if (sqlType == SqlType.ShowClusterInfo) {
+            return buildShowClusterInfoResult();
         } else if (sqlType == SqlType.GetReplicaNum) {
             return "Replica num: " + replicaNum + "\n";
         } else if (sqlType == SqlType.CountPoints) {
@@ -231,13 +243,7 @@ public class SessionExecuteSqlResult {
 
             List<Object> rowData = values.get(i);
             for (int j = 0; j < rowData.size(); j++) {
-                Object rowDatum = rowData.get(j);
-                String rowValue;
-                if (rowDatum instanceof byte[]) {
-                    rowValue = new String((byte[]) rowDatum);
-                } else {
-                    rowValue = String.valueOf(rowDatum);
-                }
+                String rowValue = valueToString(rowData.get(j));
                 rowCache.add(rowValue);
 
                 int index = timestamps == null ? j : j + 1;
@@ -316,6 +322,27 @@ public class SessionExecuteSqlResult {
         }
     }
 
+    private String buildLastQueryResult(String timePrecision) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("LastQuery ResultSets:").append("\n");
+        int num = paths == null ? 0 : paths.size();
+        if (values != null && !values.isEmpty()) {
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
+            for (int i = 0; i < paths.size(); i++) {
+                cache.add(new ArrayList<>(Arrays.asList(
+                        formatTime(timestamps[i], timePrecision),
+                        paths.get(i),
+                        valueToString(values.get(0).get(i))
+                )));
+            }
+
+            buildFromStringList(builder, cache);
+        }
+        builder.append(buildCount(num));
+        return builder.toString();
+    }
+
     private String buildShowTimeSeriesResult() {
         StringBuilder builder = new StringBuilder();
         builder.append("Time series:").append("\n");
@@ -327,13 +354,84 @@ public class SessionExecuteSqlResult {
                 cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
             }
 
-            int pathMaxLen = 0, typeMaxLen = 0;
-            for (List<String> row : cache) {
-                pathMaxLen = Math.max(row.get(0).length(), pathMaxLen);
-                typeMaxLen = Math.max(row.get(1).length(), typeMaxLen);
-            }
-            List<Integer> maxSizeList = new ArrayList<>(Arrays.asList(pathMaxLen, typeMaxLen));
+            buildFromStringList(builder, cache);
+        }
+        builder.append(buildCount(num));
+        return builder.toString();
+    }
 
+    private String buildShowClusterInfoResult() {
+        StringBuilder builder = new StringBuilder();
+
+        if (iginxInfos != null && !iginxInfos.isEmpty()) {
+            builder.append("IginX infos:").append("\n");
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("ID", "IP", "PORT")));
+            for (int i = 0; i < iginxInfos.size(); i++) {
+                IginxInfo info = iginxInfos.get(i);
+                cache.add(new ArrayList<>(Arrays.asList(
+                        String.valueOf(info.getId()),
+                        info.getIp(),
+                        String.valueOf(info.getPort())
+                )));
+            }
+            buildFromStringList(builder, cache);
+        }
+
+        if (storageEngineInfos != null && !storageEngineInfos.isEmpty()) {
+            builder.append("Storage engine infos:").append("\n");
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("ID", "IP", "PORT", "TYPE")));
+            for (int i = 0; i < storageEngineInfos.size(); i++) {
+                StorageEngineInfo info = storageEngineInfos.get(i);
+                cache.add(new ArrayList<>(Arrays.asList(
+                        String.valueOf(info.getId()),
+                        info.getIp(),
+                        String.valueOf(info.getPort()),
+                        info.getType()
+                )));
+            }
+            buildFromStringList(builder, cache);
+        }
+
+        if (metaStorageInfos != null && !metaStorageInfos.isEmpty()) {
+            builder.append("Meta Storage infos:").append("\n");
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("IP", "PORT", "TYPE")));
+            for (int i = 0; i < metaStorageInfos.size(); i++) {
+                MetaStorageInfo info = metaStorageInfos.get(i);
+                cache.add(new ArrayList<>(Arrays.asList(
+                        info.getIp(),
+                        String.valueOf(info.getPort()),
+                        info.getType()
+                )));
+            }
+            buildFromStringList(builder, cache);
+        }
+
+        if (localMetaStorageInfo != null) {
+            builder.append("Meta Storage path:").append("\n");
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("PATH")));
+            cache.add(new ArrayList<>(Arrays.asList(localMetaStorageInfo.getPath())));
+            buildFromStringList(builder, cache);
+        }
+
+        return builder.toString();
+    }
+
+    private void buildFromStringList(StringBuilder builder, List<List<String>> cache) {
+        List<Integer> maxSizeList = new ArrayList<>();
+        if (!cache.isEmpty()) {
+            int colCount = cache.get(0).size();
+            for (int i = 0; i < colCount; i++) {
+                maxSizeList.add(0);
+            }
+            for (List<String> row : cache) {
+                for (int i = 0; i < colCount; i++) {
+                    maxSizeList.set(i, Math.max(row.get(i).length(), maxSizeList.get(i)));
+                }
+            }
             builder.append(buildBlockLine(maxSizeList));
             builder.append(buildRow(cache, 0, maxSizeList));
             builder.append(buildBlockLine(maxSizeList));
@@ -342,8 +440,16 @@ public class SessionExecuteSqlResult {
             }
             builder.append(buildBlockLine(maxSizeList));
         }
-        builder.append(buildCount(num)).append("\n");
-        return builder.toString();
+    }
+
+    private String valueToString(Object value) {
+        String ret;
+        if (value instanceof byte[]) {
+            ret = new String((byte[]) value);
+        } else {
+            ret = String.valueOf(value);
+        }
+        return ret;
     }
 
     private String formatTime(long timestamp, String timePrecision) {
@@ -457,5 +563,53 @@ public class SessionExecuteSqlResult {
 
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+
+    public String getOrderByPath() {
+        return orderByPath;
+    }
+
+    public void setOrderByPath(String orderByPath) {
+        this.orderByPath = orderByPath;
+    }
+
+    public boolean isAscending() {
+        return ascending;
+    }
+
+    public void setAscending(boolean ascending) {
+        this.ascending = ascending;
+    }
+
+    public List<IginxInfo> getIginxInfos() {
+        return iginxInfos;
+    }
+
+    public void setIginxInfos(List<IginxInfo> iginxInfos) {
+        this.iginxInfos = iginxInfos;
+    }
+
+    public List<StorageEngineInfo> getStorageEngineInfos() {
+        return storageEngineInfos;
+    }
+
+    public void setStorageEngineInfos(List<StorageEngineInfo> storageEngineInfos) {
+        this.storageEngineInfos = storageEngineInfos;
+    }
+
+    public List<MetaStorageInfo> getMetaStorageInfos() {
+        return metaStorageInfos;
+    }
+
+    public void setMetaStorageInfos(List<MetaStorageInfo> metaStorageInfos) {
+        this.metaStorageInfos = metaStorageInfos;
+    }
+
+    public LocalMetaStorageInfo getLocalMetaStorageInfo() {
+        return localMetaStorageInfo;
+    }
+
+    public void setLocalMetaStorageInfo(LocalMetaStorageInfo localMetaStorageInfo) {
+        this.localMetaStorageInfo = localMetaStorageInfo;
     }
 }

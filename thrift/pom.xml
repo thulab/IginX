@@ -34,6 +34,11 @@
             <name>GitHub Release</name>
             <url>file://${project.basedir}/../maven-repo</url>
         </repository>
+        <snapshotRepository>
+            <id>local-snapshot-repo-release</id>
+            <name>GitHub Release</name>
+            <url>file://${project.basedir}/../maven-snapshot-repo</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <build>

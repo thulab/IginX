@@ -13,6 +13,7 @@ statement
     | COUNT POINTS #countPointsStatement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
+    | SHOW CLUSTER INFO #showClusterInfoStatement
     ;
 
 selectClause
@@ -116,7 +117,7 @@ storageEngineSpec
     ;
 
 storageEngine
-    : LR_BRACKET ip COMMA port=INT COMMA engineType COMMA extra=stringLiteral RR_BRACKET
+    : LR_BRACKET ip COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
     ;
 
 timeInterval
@@ -189,11 +190,6 @@ ip
     : INT (DOT INT)*
     ;
 
-engineType
-    : IOTDB
-    | INFLUXDB
-    ;
-
 dateFormat
     : DATETIME
     | NOW LR_BRACKET RR_BRACKET
@@ -251,6 +247,14 @@ REPLICA
 
 NUMBER
     : N U M B E R
+    ;
+
+CLUSTER
+    : C L U S T E R
+    ;
+
+INFO
+    : I N F O
     ;
 
 WHERE

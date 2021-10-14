@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.AndExpressionContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.ConstantContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.DateExpressionContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.EngineTypeContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.ExpressionContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.InsertMultiValueContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.InsertValuesSpecContext;
@@ -18,15 +17,7 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeRangeContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
-import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ClearDataOperator;
-import cn.edu.tsinghua.iginx.sql.operator.CountPointsOperator;
-import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
-import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
-import cn.edu.tsinghua.iginx.sql.operator.Operator;
-import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ShowTimeSeriesOperator;
+import cn.edu.tsinghua.iginx.sql.operator.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -124,7 +115,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         for (StorageEngineContext engine : engines) {
             String ip = engine.ip().getText();
             int port = Integer.parseInt(engine.port.getText());
-            String type = parseStorageEngineType(engine.engineType());
+            String typeStr = engine.engineType.getText().trim();
+            String type = typeStr.substring(typeStr.indexOf(SQLConstant.QUOTE) + 1, typeStr.lastIndexOf(SQLConstant.QUOTE));
             Map<String, String> extra = parseExtra(engine.extra);
             addStorageEngineOp.setEngines(new StorageEngine(ip, port, type, extra));
         }
@@ -144,6 +136,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     @Override
     public Operator visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
         return new ShowTimeSeriesOperator();
+    }
+
+    @Override
+    public Operator visitShowClusterInfoStatement(SqlParser.ShowClusterInfoStatementContext ctx) {
+        return new ShowClusterInfoOperator();
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {
@@ -244,10 +241,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             builder.append(ctx.constant().getText());
             return builder.toString();
         }
-    }
-
-    private String parseStorageEngineType(EngineTypeContext ctx) {
-        return ctx.getText().toLowerCase();
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

@@ -313,7 +313,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             mutex.acquire();
             String nodeName = this.client.create()
                     .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                    .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
                     .forPath(IGINX_NODE, "".getBytes(StandardCharsets.UTF_8));
             long id = Long.parseLong(nodeName.substring(IGINX_NODE.length()));
             IginxMeta iginxMeta = new IginxMeta(id, iginx.getIp(),

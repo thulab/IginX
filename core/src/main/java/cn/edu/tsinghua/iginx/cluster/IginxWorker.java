@@ -26,7 +26,9 @@ import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
 import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
@@ -44,6 +46,7 @@ import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
@@ -65,17 +68,22 @@ import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
+import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.GetUserReq;
 import cn.edu.tsinghua.iginx.thrift.GetUserResp;
 import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.thrift.IginxInfo;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
+import cn.edu.tsinghua.iginx.thrift.LocalMetaStorageInfo;
+import cn.edu.tsinghua.iginx.thrift.MetaStorageInfo;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
@@ -85,6 +93,7 @@ import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
@@ -97,7 +106,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Queue;
 import java.util.Set;
@@ -453,4 +464,76 @@ public class IginxWorker implements IService.Iface {
         return resp;
     }
 
+    @Override
+    public GetClusterInfoResp getClusterInfo(GetClusterInfoReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Cluster)) {
+            return new GetClusterInfoResp(RpcUtils.ACCESS_DENY);
+        }
+
+        GetClusterInfoResp resp = new GetClusterInfoResp();
+
+        // IginX 信息
+        List<IginxInfo> iginxInfos = new ArrayList<>();
+        for (IginxMeta iginxMeta: metaManager.getIginxList()) {
+            iginxInfos.add(new IginxInfo(iginxMeta.getId(), iginxMeta.getIp(), iginxMeta.getPort()));
+        }
+        iginxInfos.sort(Comparator.comparingLong(IginxInfo::getId));
+        resp.setIginxInfos(iginxInfos);
+
+        // 数据库信息
+        List<StorageEngineInfo> storageEngineInfos = new ArrayList<>();
+        for (StorageEngineMeta storageEngineMeta: metaManager.getStorageEngineList()) {
+            storageEngineInfos.add(new StorageEngineInfo(storageEngineMeta.getId(), storageEngineMeta.getIp(),
+                    storageEngineMeta.getPort(), storageEngineMeta.getStorageEngine()));
+        }
+        storageEngineInfos.sort(Comparator.comparingLong(StorageEngineInfo::getId));
+        resp.setStorageEngineInfos(storageEngineInfos);
+
+        Config config = ConfigDescriptor.getInstance().getConfig();
+        List<MetaStorageInfo> metaStorageInfos = null;
+        LocalMetaStorageInfo localMetaStorageInfo = null;
+
+        switch (config.getMetaStorage()) {
+            case Constants.ETCD_META:
+                metaStorageInfos = new ArrayList<>();
+                String[] endPoints = config.getEtcdEndpoints().split(",");
+                for (String endPoint: endPoints) {
+                    if (endPoint.startsWith("http://")) {
+                        endPoint = endPoint.substring(7);
+                    } else if (endPoint.startsWith("https://")) {
+                        endPoint = endPoint.substring(8);
+                    }
+                    String[] ipAndPort = endPoint.split(":", 2);
+                    MetaStorageInfo metaStorageInfo = new MetaStorageInfo(ipAndPort[0], Integer.parseInt(ipAndPort[1]),
+                            Constants.ETCD_META);
+                    metaStorageInfos.add(metaStorageInfo);
+                }
+                break;
+            case Constants.ZOOKEEPER_META:
+                metaStorageInfos = new ArrayList<>();
+                String[] zookeepers = config.getZookeeperConnectionString().split(",");
+                for (String zookeeper: zookeepers) {
+                    String[] ipAndPort = zookeeper.split(":", 2);
+                    MetaStorageInfo metaStorageInfo = new MetaStorageInfo(ipAndPort[0], Integer.parseInt(ipAndPort[1]),
+                            Constants.ZOOKEEPER_META);
+                    metaStorageInfos.add(metaStorageInfo);
+                }
+                break;
+            case Constants.FILE_META:
+            case "":
+            default:
+                localMetaStorageInfo = new LocalMetaStorageInfo(
+                        Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
+                );
+        }
+
+        if (metaStorageInfos != null) {
+            resp.setMetaStorageInfos(metaStorageInfos);
+        }
+        if (localMetaStorageInfo != null) {
+            resp.setLocalMetaStorageInfo(localMetaStorageInfo);
+        }
+        resp.setStatus(RpcUtils.SUCCESS);
+        return resp;
+    }
 }

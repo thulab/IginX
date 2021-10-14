@@ -61,6 +61,8 @@ public class FileMetaStorage implements IMetaStorage {
 
     private final Lock fragmentUnitLock = new ReentrantLock();
 
+    private IginxChangeHook iginxChangeHook = null;
+
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
 
     private StorageChangeHook storageChangeHook = null;
@@ -205,11 +207,15 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public long registerIginx(IginxMeta iginx) throws MetaStorageException { // 唯一的一个 iginx 的 id 始终都为 0
+        iginxChangeHook.onChange(0L, iginx);
         return 0L;
     }
 
     @Override
     public void registerIginxChangeHook(IginxChangeHook hook) {
+        if (hook != null) {
+            iginxChangeHook = hook;
+        }
     }
 
     @Override
