@@ -36,6 +36,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+
 import java.util.Objects;
 
 public final class FragmentMeta {
@@ -59,6 +61,8 @@ public final class FragmentMeta {
     private transient String fakeStorageUnitId;
 
     private boolean initialFragment = true;
+
+    private boolean lastOfBatch = false;
 
     public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
         this.timeInterval = timeInterval;
@@ -127,7 +131,6 @@ public final class FragmentMeta {
 
     public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
         this.masterStorageUnit = masterStorageUnit;
-        this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
     public String getFakeStorageUnitId() {
@@ -164,10 +167,7 @@ public final class FragmentMeta {
 
     @Override
     public String toString() {
-        return "FragmentMeta{" +
-                "timeInterval=" + timeInterval +
-                ", tsInterval=" + tsInterval +
-                '}';
+        return new String(JsonUtils.toJson(this));
     }
 
     @Override
@@ -189,5 +189,13 @@ public final class FragmentMeta {
 
     public void setInitialFragment(boolean initialFragment) {
         this.initialFragment = initialFragment;
+    }
+
+    public boolean isLastOfBatch() {
+        return lastOfBatch;
+    }
+
+    public void setLastOfBatch(boolean lastOfBatch) {
+        this.lastOfBatch = lastOfBatch;
     }
 }

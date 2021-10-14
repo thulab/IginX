@@ -18,8 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -194,13 +194,13 @@ public abstract class InsertRecordsPlan extends DataPlan {
 
     protected abstract long getCount();
 
-    public ActiveFragmentStatisticsItem getStatisticsItem() {
+    public FragmentStatistics getStatistics() {
 //        if (fragment.getTimeInterval().getEndTime() == Long.MAX_VALUE) {
 //            return null;
 //        }
         if (getPathsNum() == 0 || timestamps.length == 0) {
             return null;
         }
-        return new ActiveFragmentStatisticsItem(getTsInterval(), getTimeInterval(), getCount());
+        return new FragmentStatistics(getTsInterval(), getTimeInterval(), getCount());
     }
 }

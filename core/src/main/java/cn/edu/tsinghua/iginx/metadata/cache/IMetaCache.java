@@ -18,8 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -97,16 +96,31 @@ public interface IMetaCache {
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
-    void initActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> statisticsMap);
+    void initActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
 
-    // 更新最新分片本机统计的的缓存信息
-    void addOrUpdateActiveFragmentStatisticsItem(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap);
+    // 更新本地缓存的分片的统计信息
+    void addOrUpdateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
 
-    // 获取本地统计的缓存信息
-    Map<FragmentMeta, ActiveFragmentStatistics> getActiveFragmentStatistics();
+    // 获取本地缓存的分片的统计信息
+    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
 
-    // 清空本地缓存的统计信息
+    // 清空本地缓存的分片的统计信息
     void clearActiveFragmentStatistics();
+
+    // 更新本地缓存的分片的增量统计信息
+    void addOrUpdateDeltaActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
+
+    // 获取本地缓存的分片的增量统计信息
+    Map<FragmentMeta, FragmentStatistics> getDeltaActiveFragmentStatistics();
+
+    // 清空本地缓存的分片的增量统计信息
+    void clearDeltaActiveFragmentStatistics();
+
+    void addReshardFragment(FragmentMeta fragment);
+
+    List<FragmentMeta> getReshardFragmentsByStorageUnitId(String storageUnitId);
+
+    void removeReshardFragmentsByStorageUnitId(String storageUnitId);
 
     void addOrUpdateUser(UserMeta userMeta);
 

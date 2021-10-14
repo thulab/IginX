@@ -18,11 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 
-public interface ActiveFragmentStatisticsHook {
+import java.util.Map;
 
-    void onChange(FragmentMeta fragment, ActiveFragmentStatisticsItem item);
+public interface ActiveFragmentStatisticsChangeHook {
+
+    void onChange(Map<FragmentMeta, FragmentStatistics> statisticsMap);
 
 }

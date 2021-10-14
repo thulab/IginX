@@ -2,10 +2,12 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
-import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardInactiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -392,7 +394,7 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<FragmentMeta, ActiveFragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
+    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
         return null;
     }
 
@@ -402,12 +404,22 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+    public void lockReshardInactiveFragmentStatistics() throws MetaStorageException {
 
     }
 
     @Override
-    public void addActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+    public void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addReshardInactiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
 
     }
 
@@ -417,38 +429,28 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook) {
+    public void releaseReshardInactiveFragmentStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeActiveFragmentStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
+
+    }
+
+    @Override
+    public void registerReshardInactiveFragmentStatisticsChangeHook(ReshardInactiveFragmentStatisticsChangeHook hook) {
 
     }
 
     @Override
     public boolean proposeToReshard() throws MetaStorageException {
         return false;
-    }
-
-    @Override
-    public void lockCollectionCounter() throws MetaStorageException {
-
-    }
-
-    @Override
-    public void updateCollectionCounter(int counter) throws MetaStorageException {
-
-    }
-
-    @Override
-    public void releaseCollectionCounter() throws MetaStorageException {
-
-    }
-
-    @Override
-    public void removeCollectionCounter() throws MetaStorageException {
-
-    }
-
-    @Override
-    public void registerCollectionCounterHook(CollectionCounterHook hook) {
-
     }
 
     public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
@@ -526,5 +528,55 @@ public class FileMetaStorage implements IMetaStorage {
         if (userChangeHook != null) {
             userChangeHook.onChange(username, null);
         }
+    }
+
+    @Override
+    public void lockReshardNotification() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void updateReshardNotification(boolean notification) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseReshardNotification() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeReshardNotification() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
+
+    }
+
+    @Override
+    public void lockReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void removeReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
+
     }
 }

@@ -36,29 +36,70 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+
 public final class FragmentStatistics {
 
-    private final TimeSeriesInterval actualTsInterval;
+    private final TimeSeriesInterval tsInterval; // 序列区间
 
-    private final TimeInterval actualTimeInterval;
+    private final TimeInterval timeInterval; // 时间区间
 
-    private final long count; // 点数
+    private long count; // 近期写入点数
 
-    public FragmentStatistics(TimeSeriesInterval actualTsInterval, TimeInterval actualTimeInterval, long count) {
-        this.actualTsInterval = actualTsInterval;
-        this.actualTimeInterval = actualTimeInterval;
+    public FragmentStatistics() {
+        this.tsInterval = new TimeSeriesInterval(null, null);
+        this.timeInterval = new TimeInterval(-1L, -1L);
+        this.count = 0;
+    }
+
+    public FragmentStatistics(TimeSeriesInterval tsInterval, TimeInterval timeInterval, long count) {
+        this.tsInterval = tsInterval;
+        this.timeInterval = timeInterval;
         this.count = count;
     }
 
-    public TimeInterval getActualTimeInterval() {
-        return actualTimeInterval;
+    public TimeSeriesInterval getTsInterval() {
+        return tsInterval;
     }
 
-    public TimeSeriesInterval getActualTsInterval() {
-        return actualTsInterval;
+    public TimeInterval getTimeInterval() {
+        return timeInterval;
     }
 
     public long getCount() {
         return count;
+    }
+
+    public synchronized void update(FragmentStatistics fragmentStatistics) {
+        updateTsInterval(fragmentStatistics.getTsInterval());
+        updateTimeInterval(fragmentStatistics.getTimeInterval());
+        updateCount(fragmentStatistics.getCount());
+    }
+
+    private void updateTsInterval(TimeSeriesInterval tsInterval) {
+        if (this.tsInterval.getStartTimeSeries() == null || this.tsInterval.getStartTimeSeries().compareTo(tsInterval.getStartTimeSeries()) > 0) {
+            this.tsInterval.setStartTimeSeries(tsInterval.getStartTimeSeries());
+        }
+        if (this.tsInterval.getEndTimeSeries() == null || this.tsInterval.getEndTimeSeries().compareTo(tsInterval.getEndTimeSeries()) < 0) {
+            this.tsInterval.setEndTimeSeries(tsInterval.getEndTimeSeries());
+        }
+    }
+
+    private void updateTimeInterval(TimeInterval timeInterval) {
+        if (this.timeInterval.getStartTime() == -1 || this.timeInterval.getStartTime() > timeInterval.getStartTime()) {
+            this.timeInterval.setStartTime(timeInterval.getStartTime());
+        }
+        if (this.timeInterval.getEndTime() == -1 || this.timeInterval.getEndTime() < timeInterval.getEndTime()) {
+            this.timeInterval.setEndTime(timeInterval.getEndTime());
+        }
+    }
+
+    private void updateCount(long count) {
+        this.count += count;
+    }
+
+    @Override
+    public String toString() {
+        return new String(JsonUtils.toJson(this));
     }
 }

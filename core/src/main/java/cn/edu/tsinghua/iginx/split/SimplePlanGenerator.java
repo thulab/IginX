@@ -32,8 +32,8 @@ import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -117,11 +117,12 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 );
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 List<InsertColumnRecordsPlan> insertColumnRecordsPlans = splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
-                Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap = new HashMap<>();
+                Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
                 for (InsertColumnRecordsPlan plan: insertColumnRecordsPlans) {
-                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
-                    if (statisticsItem != null) {
-                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    FragmentStatistics statistics = plan.getStatistics();
+                    // TODO 边界条件处理
+                    if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
+                        statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
@@ -141,9 +142,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 List<InsertNonAlignedColumnRecordsPlan> insertNonAlignedColumnRecordsPlans = splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
                 statisticsMap = new HashMap<>();
                 for (InsertNonAlignedColumnRecordsPlan plan: insertNonAlignedColumnRecordsPlans) {
-                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
-                    if (statisticsItem != null) {
-                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    FragmentStatistics statistics = plan.getStatistics();
+                    if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
+                        statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
@@ -162,9 +163,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 List<InsertRowRecordsPlan> insertRowRecordsPlans = splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
                 statisticsMap = new HashMap<>();
                 for (InsertRowRecordsPlan plan: insertRowRecordsPlans) {
-                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
-                    if (statisticsItem != null) {
-                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    FragmentStatistics statistics = plan.getStatistics();
+                    if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
+                        statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
@@ -183,9 +184,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 List<InsertNonAlignedRowRecordsPlan> insertNonAlignedRowRecordsPlans = splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
                 statisticsMap = new HashMap<>();
                 for (InsertNonAlignedRowRecordsPlan plan: insertNonAlignedRowRecordsPlans) {
-                    ActiveFragmentStatisticsItem statisticsItem = plan.getStatisticsItem();
-                    if (statisticsItem != null) {
-                        statisticsMap.put(plan.getFragment(), statisticsItem);
+                    FragmentStatistics statistics = plan.getStatistics();
+                    if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
+                        statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);

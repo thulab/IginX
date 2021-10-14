@@ -16,24 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.policy;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 
-import java.util.List;
+import java.util.Map;
 
-public interface IFragmentGenerator {
+public interface ReshardInactiveFragmentStatisticsChangeHook {
 
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval);
-
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime);
-
-    void init(IMetaManager iMetaManager);
-
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime);
+    void onChange(Map<FragmentMeta, FragmentStatistics> statisticsMap);
 
 }

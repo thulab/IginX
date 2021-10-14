@@ -38,6 +38,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -98,7 +99,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class IginxWorker implements IService.Iface {
@@ -114,6 +117,8 @@ public class IginxWorker implements IService.Iface {
     private final UserManager userManager = UserManager.getInstance();
 
     private final SessionManager sessionManager = SessionManager.getInstance();
+
+    private final Queue<RequestContext> queue = new ConcurrentLinkedQueue<>();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -156,6 +161,15 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
+        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
+        if (DefaultMetaManager.getInstance().isResharding()) {
+//            queue.offer(context);
+            return RpcUtils.PARTIAL_SUCCESS;
+        }
+//        RequestContext requestContext;
+//        while ((requestContext = queue.poll()) != null) {
+//            core.processRequest(requestContext);
+//        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -166,6 +180,15 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
+        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
+        if (DefaultMetaManager.getInstance().isResharding()) {
+//            queue.offer(context);
+            return RpcUtils.PARTIAL_SUCCESS;
+        }
+//        RequestContext requestContext;
+//        while ((requestContext = queue.poll()) != null) {
+//            core.processRequest(requestContext);
+//        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -176,6 +199,15 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertRowRecordsContext context = new InsertRowRecordsContext(req);
+        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
+        if (DefaultMetaManager.getInstance().isResharding()) {
+//            queue.offer(context);
+            return RpcUtils.PARTIAL_SUCCESS;
+        }
+//        RequestContext requestContext;
+//        while ((requestContext = queue.poll()) != null) {
+//            core.processRequest(requestContext);
+//        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -186,6 +218,15 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
+        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
+        if (DefaultMetaManager.getInstance().isResharding()) {
+//            queue.offer(context);
+            return RpcUtils.PARTIAL_SUCCESS;
+        }
+//        RequestContext requestContext;
+//        while ((requestContext = queue.poll()) != null) {
+//            core.processRequest(requestContext);
+//        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -206,6 +247,15 @@ public class IginxWorker implements IService.Iface {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
         QueryDataContext context = new QueryDataContext(req);
+        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
+        if (DefaultMetaManager.getInstance().isResharding()) {
+//            queue.offer(context);
+            return null;
+        }
+//        RequestContext requestContext;
+//        while ((requestContext = queue.poll()) != null) {
+//            core.processRequest(requestContext);
+//        }
         core.processRequest(context);
         return ((QueryDataCombineResult) context.getCombineResult()).getResp();
     }
@@ -231,7 +281,6 @@ public class IginxWorker implements IService.Iface {
                 return RpcUtils.FAILURE;
             }
             storageEngineMetas.add(meta);
-
         }
         Status status = RpcUtils.SUCCESS;
         // 检测是否与已有的存储单元冲突
@@ -403,6 +452,5 @@ public class IginxWorker implements IService.Iface {
         resp.setAuths(auths);
         return resp;
     }
-
 
 }

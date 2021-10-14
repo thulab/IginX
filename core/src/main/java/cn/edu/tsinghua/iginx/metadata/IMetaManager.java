@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -169,7 +169,9 @@ public interface IMetaManager {
      *
      * @param statisticsMap 活跃的分片的关于当前请求的统计信息
      */
-    void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsMap);
+    void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
+
+    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
 
     boolean addUser(UserMeta user);
 

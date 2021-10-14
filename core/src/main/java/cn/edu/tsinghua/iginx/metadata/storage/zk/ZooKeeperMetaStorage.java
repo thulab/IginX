@@ -20,12 +20,12 @@ package cn.edu.tsinghua.iginx.metadata.storage.zk;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsHook;
-import cn.edu.tsinghua.iginx.metadata.hook.CollectionCounterHook;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardInactiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -66,6 +66,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String STORAGE_ENGINE_NODE = "/storage/node";
 
+    private static final String ACTIVE_FRAGMENT_STATISTICS_NODE = "/statistics/fragment/active/node";
+
+    private static final String RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE = "/statistics/fragment/inactive/reshard/node";
+
     private static final String STORAGE_UNIT_NODE = "/unit/unit";
 
     private static final String IGINX_LOCK_NODE = "/lock/iginx";
@@ -78,9 +82,15 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String SCHEMA_MAPPING_LOCK_NODE = "/lock/schema";
 
-    private static final String ACTIVE_FRAGMENT_STATISTICS_LOCK_NODE = "/lock/statistics";
+    private static final String USER_LOCK_NODE = "/lock/user";
 
-    private static final String COLLECTION_COUNTER_LOCK_NODE = "/lock/counter";
+    private static final String RESHARD_NOTIFICATION_LOCK_NODE = "/lock/notification";
+
+//    private static final String RESHARD_NOTIFICATION_LOCK_NODE = "/lock/notification/reshard";
+
+    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter";
+
+//    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter/reshard";
 
     private static final String STORAGE_ENGINE_NODE_PREFIX = "/storage";
 
@@ -92,13 +102,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String SCHEMA_MAPPING_PREFIX = "/schema";
 
-    private static final String ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics";
-
-    private static final String COLLECTION_COUNTER_NODE_PREFIX = "/counter";
-
     private static final String USER_NODE_PREFIX = "/user";
 
-    private static final String USER_LOCK_NODE = "/lock/user";
+    private static final String ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/active";
+
+    private static final String INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive";
+
+    private static final String RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive/reshard";
+
+    private static final String RESHARD_NOTIFICATION_NODE_PREFIX = "/notification/reshard";
+
+    private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
 
     private static ZooKeeperMetaStorage INSTANCE = null;
 
@@ -108,17 +122,22 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final Lock fragmentMutexLock = new ReentrantLock();
     private final InterProcessMutex fragmentMutex;
     private final Lock activeFragmentStatisticsMutexLock = new ReentrantLock();
-    private final InterProcessMutex activeFragmentStatisticsMutex;
-    private final InterProcessMutex collectionCounterMutex;
+    private final Lock reshardInactiveFragmentStatisticsMutexLock = new ReentrantLock();
+    private final Lock reshardNotificationMutexLock = new ReentrantLock();
+    private final InterProcessMutex reshardNotificationMutex;
+    private final Lock reshardCounterMutexLock = new ReentrantLock();
+    private final InterProcessMutex reshardCounterMutex;
 
     protected TreeCache schemaMappingsCache;
     protected TreeCache iginxCache;
     protected TreeCache storageEngineCache;
     protected TreeCache storageUnitCache;
     protected TreeCache fragmentCache;
-    protected TreeCache activeFragmentStatisticsCache;
-    protected TreeCache collectionCounterCache;
     private TreeCache userCache;
+    protected TreeCache activeFragmentStatisticsCache;
+    protected TreeCache reshardInactiveFragmentStatisticsCache;
+    protected TreeCache reshardNotificationCache;
+    protected TreeCache reshardCounterCache;
 
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
     private IginxChangeHook iginxChangeHook = null;
@@ -126,8 +145,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private StorageUnitChangeHook storageUnitChangeHook = null;
     private FragmentChangeHook fragmentChangeHook = null;
     private UserChangeHook userChangeHook = null;
-    private ActiveFragmentStatisticsHook statisticsChangeHook = null;
-    private CollectionCounterHook collectionCounterHook = null;
+    private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
+    private ReshardInactiveFragmentStatisticsChangeHook reshardInactiveFragmentStatisticsChangeHook = null;
+    private ReshardNotificationHook reshardNotificationHook = null;
+    private ReshardCounterChangeHook reshardCounterChangeHook = null;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -139,8 +160,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
-        activeFragmentStatisticsMutex = new InterProcessMutex(client, ACTIVE_FRAGMENT_STATISTICS_LOCK_NODE);
-        collectionCounterMutex = new InterProcessMutex(client, COLLECTION_COUNTER_LOCK_NODE);
+        reshardNotificationMutex = new InterProcessMutex(client, RESHARD_NOTIFICATION_LOCK_NODE);
+        reshardCounterMutex = new InterProcessMutex(client, RESHARD_COUNTER_LOCK_NODE);
     }
 
     public static ZooKeeperMetaStorage getInstance() {
@@ -690,6 +711,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
+            if (this.client.checkExists().forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString()) != null) {
+
+            }
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
                     .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
@@ -714,27 +738,28 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<FragmentMeta, ActiveFragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
+    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
         try {
-            Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
+            Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
             if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) == null) {
-                this.client.create().withMode(CreateMode.PERSISTENT).forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
+                client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
             } else {
-                List<String> tsIntervalNames = this.client.getChildren().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
-                for (String tsIntervalName : tsIntervalNames) {
-                    TimeSeriesInterval tsInterval = TimeSeriesInterval.fromString(tsIntervalName);
-                    List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
-                    for (String timeIntervalName : timeIntervalNames) {
-                        TimeInterval timeInterval = TimeInterval.fromString(timeIntervalName);
-                        FragmentMeta fragmentMeta = new FragmentMeta(tsInterval, timeInterval);
-                        ActiveFragmentStatistics statistics = JsonUtils.fromJson(this.client.getData()
-                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), ActiveFragmentStatistics.class);
-                        activeFragmentStatisticsMap.put(fragmentMeta, statistics);
+                List<String> children = client.getChildren().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
+                for (String childName : children) {
+                    byte[] data = client.getData()
+                            .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + childName);
+                    Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatisticsMap = JsonUtils.fromJson(data, activeFragmentStatisticsMap.getClass());
+                    if (deltaActiveFragmentStatisticsMap == null) {
+                        logger.error("resolve data from " + ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + childName + " error");
+                        continue;
                     }
+                    deltaActiveFragmentStatisticsMap.forEach((key, value) -> activeFragmentStatisticsMap.computeIfAbsent(key, e -> new FragmentStatistics()).update(value));
                 }
-                registerActiveFragmentStatisticsListener();
-                registerCollectionCounterListener();
             }
+            registerActiveFragmentStatisticsListener();
+            registerReshardInactiveFragmentStatisticsListener();
+            registerReshardNotificationListener();
+            registerReshardCounterListener();
             return activeFragmentStatisticsMap;
         } catch (Exception e) {
             throw new MetaStorageException("meet error when loading active fragment statistics", e);
@@ -744,26 +769,24 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private void registerActiveFragmentStatisticsListener() throws Exception {
         this.activeFragmentStatisticsCache = new TreeCache(this.client, ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
-            if (statisticsChangeHook == null) {
+            if (activeFragmentStatisticsChangeHook == null) {
                 return;
             }
             String path;
             byte[] data;
-            FragmentMeta fragment;
-            ActiveFragmentStatisticsItem statistics;
+            Map<FragmentMeta, FragmentStatistics> statisticsMap;
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
                     path = event.getData().getPath();
                     data = event.getData().getData();
                     String[] pathParts = path.split("/");
-                    if (pathParts.length == 4) {
-                        fragment = new FragmentMeta(TimeSeriesInterval.fromString(pathParts[1]), TimeInterval.fromString(pathParts[2]));
-                        statistics = JsonUtils.fromJson(data, ActiveFragmentStatisticsItem.class);
-                        if (statistics != null) {
-                            statisticsChangeHook.onChange(fragment, statistics);
+                    if (pathParts.length == 6) {
+                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType());
+                        if (statisticsMap != null) {
+                            activeFragmentStatisticsChangeHook.onChange(statisticsMap);
                         } else {
-                            logger.error("resolve fragment from zookeeper error");
+                            logger.error("resolve active fragment statistics from zookeeper error");
                         }
                     }
                     break;
@@ -775,145 +798,152 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.activeFragmentStatisticsCache.start();
     }
 
-    @Override
-    public void lockActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            activeFragmentStatisticsMutexLock.lock();
-            activeFragmentStatisticsMutex.acquire();
-        } catch (Exception e) {
-            activeFragmentStatisticsMutexLock.unlock();
-            throw new MetaStorageException("acquire active fragment statistics mutex error: ", e);
-        }
-    }
-
-    @Override
-    public void updateActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
-        try {
-            for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : activeFragmentStatistics.entrySet()) {
-                if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString()) == null) {
-                    this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                            .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString(), JsonUtils.toJson(entry.getValue()));
-                } else {
-                    this.client.setData()
-                            .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString(), JsonUtils.toJson(entry.getValue()));
-                }
-            }
-        } catch (Exception e) {
-            throw new MetaStorageException("get error when updating active fragment statistics", e);
-        }
-    }
-
-    @Override
-    public void addActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
-        try {
-            for (Map.Entry<FragmentMeta, ActiveFragmentStatistics> entry : activeFragmentStatistics.entrySet()) {
-                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                        .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + entry.getKey().getTsInterval().toString() + "/" + entry.getKey().getTimeInterval().toString(), JsonUtils.toJson(entry.getValue()));
-            }
-        } catch (Exception e) {
-            throw new MetaStorageException("get error when adding active fragment statistics", e);
-        }
-    }
-
-    @Override
-    public void releaseActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            activeFragmentStatisticsMutex.release();
-        } catch (Exception e) {
-            throw new MetaStorageException("release active fragment statistics mutex error: ", e);
-        } finally {
-            activeFragmentStatisticsMutexLock.unlock();
-        }
-    }
-
-    @Override
-    public void registerActiveFragmentStatisticsHook(ActiveFragmentStatisticsHook hook) {
-        this.statisticsChangeHook = hook;
-    }
-
-    @Override
-    public boolean proposeToReshard() throws MetaStorageException {
-        try {
-            collectionCounterMutex.acquire();
-            if (this.client.checkExists().forPath(COLLECTION_COUNTER_NODE_PREFIX) == null) {
-                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                        .forPath(COLLECTION_COUNTER_NODE_PREFIX, JsonUtils.toJson(1));
-            } else if (this.client.getChildren().forPath(COLLECTION_COUNTER_NODE_PREFIX).get(0).equals("0")) {
-                this.client.setData()
-                        .forPath(COLLECTION_COUNTER_NODE_PREFIX, JsonUtils.toJson(1));
-            } else {
-                collectionCounterMutex.release();
-                return false;
-            }
-            collectionCounterMutex.release();
-            return true;
-        } catch (Exception e) {
-            throw new MetaStorageException("get error when proposing to reshard", e);
-        }
-    }
-
-    @Override
-    public void lockCollectionCounter() throws MetaStorageException {
-        try {
-            collectionCounterMutex.acquire();
-        } catch (Exception e) {
-            throw new MetaStorageException("acquire collection counter mutex error: ", e);
-        }
-    }
-
-    @Override
-    public void updateCollectionCounter(int counter) throws MetaStorageException {
-        try {
-            this.client.setData()
-                    .forPath(COLLECTION_COUNTER_NODE_PREFIX, JsonUtils.toJson(counter));
-        } catch (Exception e) {
-            throw new MetaStorageException("update collection counter error: ", e);
-        }
-    }
-
-    @Override
-    public void releaseCollectionCounter() throws MetaStorageException {
-        try {
-            collectionCounterMutex.release();
-        } catch (Exception e) {
-            throw new MetaStorageException("release collection counter mutex error: ", e);
-        }
-    }
-
-    @Override
-    public void removeCollectionCounter() throws MetaStorageException {
-        try {
-            if (this.client.checkExists().forPath(COLLECTION_COUNTER_NODE_PREFIX) != null) {
-                this.client.delete().forPath(COLLECTION_COUNTER_NODE_PREFIX);
-            }
-        } catch (Exception e) {
-            throw new MetaStorageException("remove collection counter error: ", e);
-        }
-    }
-
-    @Override
-    public void registerCollectionCounterHook(CollectionCounterHook hook) {
-        this.collectionCounterHook = hook;
-    }
-
-    private void registerCollectionCounterListener() throws Exception {
-        this.collectionCounterCache = new TreeCache(this.client, COLLECTION_COUNTER_NODE_PREFIX);
+    private void registerReshardInactiveFragmentStatisticsListener() throws Exception {
+        this.reshardInactiveFragmentStatisticsCache= new TreeCache(this.client, RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
+            if (reshardInactiveFragmentStatisticsChangeHook == null) {
+                return;
+            }
+            String path;
             byte[] data;
-            int counter;
+            Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
+                    path = event.getData().getPath();
                     data = event.getData().getData();
-                    counter = JsonUtils.fromJson(data, Integer.class);
-                    collectionCounterHook.onChange(counter);
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 6) {
+                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType());
+                        if (statisticsMap != null) {
+                            reshardInactiveFragmentStatisticsChangeHook.onChange(statisticsMap);
+                        } else {
+                            logger.error("resolve reshard inactive fragment statistics from zookeeper error");
+                        }
+                    }
                     break;
                 default:
                     break;
             }
         };
-        this.collectionCounterCache.getListenable().addListener(listener);
-        this.collectionCounterCache.start();
+        this.reshardInactiveFragmentStatisticsCache.getListenable().addListener(listener);
+        this.reshardInactiveFragmentStatisticsCache.start();
+    }
+
+    @Override
+    public void lockActiveFragmentStatistics() throws MetaStorageException {
+        try {
+            activeFragmentStatisticsMutexLock.lock();
+        } catch (Exception e) {
+            activeFragmentStatisticsMutexLock.unlock();
+            throw new MetaStorageException("lock active fragment statistics error: ", e);
+        }
+    }
+
+    @Override
+    public void lockReshardInactiveFragmentStatistics() throws MetaStorageException {
+        try {
+            reshardInactiveFragmentStatisticsMutexLock.lock();
+        } catch (Exception e) {
+            reshardInactiveFragmentStatisticsMutexLock.unlock();
+            throw new MetaStorageException("lock reshard inactive fragment statistics error: ", e);
+        }
+    }
+
+    @Override
+    public void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                    .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE + id + "/update", JsonUtils.toJson(deltaActiveFragmentStatistics));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when adding or updating active fragment statistics", e);
+        }
+    }
+
+    @Override
+    public void addReshardInactiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE + id) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE + id, JsonUtils.toJson(deltaActiveFragmentStatistics));
+            } else {
+                this.client.setData().forPath(RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE + id, JsonUtils.toJson(deltaActiveFragmentStatistics));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when adding reshard inactive fragment statistics", e);
+        }
+    }
+
+    @Override
+    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+        try {
+            for (FragmentStatistics statistics : activeFragmentStatistics.values()) {
+                String path = INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + statistics.getTsInterval().toString() + "/" + statistics.getTimeInterval().getStartTime() + "-" + statistics.getTimeInterval().getEndTime();
+                if (this.client.checkExists().forPath(path) == null) {
+                    this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path, JsonUtils.toJson(statistics));
+                } else {
+                    this.client.setData().forPath(path, JsonUtils.toJson(statistics));
+                }
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when adding inactive fragment statistics ", e);
+        }
+    }
+
+    @Override
+    public void releaseActiveFragmentStatistics() throws MetaStorageException {
+        activeFragmentStatisticsMutexLock.unlock();
+    }
+
+    @Override
+    public void releaseReshardInactiveFragmentStatistics() throws MetaStorageException {
+        reshardInactiveFragmentStatisticsMutexLock.unlock();
+    }
+
+    @Override
+    public void removeActiveFragmentStatistics() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) != null) {
+                this.client.delete().deletingChildrenIfNeeded().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("remove active fragment statistics error: ", e);
+        }
+    }
+
+    @Override
+    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
+        this.activeFragmentStatisticsChangeHook = hook;
+    }
+
+    @Override
+    public void registerReshardInactiveFragmentStatisticsChangeHook(ReshardInactiveFragmentStatisticsChangeHook hook) {
+        this.reshardInactiveFragmentStatisticsChangeHook = hook;
+    }
+
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        try {
+            boolean resharding = true;
+            if (this.client.checkExists().forPath(RESHARD_NOTIFICATION_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(true));
+            } else {
+                resharding = JsonUtils.fromJson(
+                        this.client.getData().forPath(RESHARD_NOTIFICATION_NODE_PREFIX), Boolean.class);
+                logger.info("resharding = {}", resharding);
+                if (!resharding) {
+                    this.client.setData()
+                            .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(true));
+                    resharding = true;
+                } else {
+                    resharding = false;
+                }
+            }
+            return resharding;
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when proposing to reshard", e);
+        }
     }
 
     private void registerUserListener() throws Exception {
@@ -1041,5 +1071,153 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 throw new MetaStorageException("get error when release interprocess lock for " + USER_LOCK_NODE, e);
             }
         }
+    }
+
+    @Override
+    public void lockReshardNotification() throws MetaStorageException {
+        try {
+            reshardNotificationMutexLock.lock();
+            reshardNotificationMutex.acquire();
+        } catch (Exception e) {
+            reshardNotificationMutexLock.unlock();
+            throw new MetaStorageException("acquire reshard notification mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void updateReshardNotification(boolean notification) throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_NOTIFICATION_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(notification));
+            } else {
+                this.client.setData()
+                        .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(notification));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("update reshard notification error: ", e);
+        }
+    }
+
+    @Override
+    public void releaseReshardNotification() throws MetaStorageException {
+        try {
+            reshardNotificationMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("release reshard notification mutex error: ", e);
+        } finally {
+            reshardNotificationMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void removeReshardNotification() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_NOTIFICATION_NODE_PREFIX) != null) {
+                this.client.delete().forPath(RESHARD_NOTIFICATION_NODE_PREFIX);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("remove reshard notification error: ", e);
+        }
+    }
+
+    @Override
+    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
+        this.reshardNotificationHook = hook;
+    }
+
+    private void registerReshardNotificationListener() throws Exception {
+        this.reshardNotificationCache = new TreeCache(this.client, RESHARD_NOTIFICATION_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            byte[] data;
+            boolean notification;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    notification = JsonUtils.fromJson(data, Boolean.class);
+                    reshardNotificationHook.onChange(notification);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.reshardNotificationCache.getListenable().addListener(listener);
+        this.reshardNotificationCache.start();
+    }
+
+    @Override
+    public void lockReshardCounter() throws MetaStorageException {
+        try {
+            reshardCounterMutexLock.lock();
+            reshardCounterMutex.acquire();
+        } catch (Exception e) {
+            reshardCounterMutexLock.unlock();
+            throw new MetaStorageException("acquire reshard counter mutex error: ", e);
+        }
+    }
+
+    @Override
+    public void incrementReshardCounter() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_COUNTER_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(1));
+            } else {
+                int counter = JsonUtils.fromJson(
+                        this.client.getData().forPath(RESHARD_COUNTER_NODE_PREFIX), Integer.class);
+                this.client.setData()
+                        .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(counter + 1));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("update reshard countern error: ", e);
+        }
+    }
+
+    @Override
+    public void releaseReshardCounter() throws MetaStorageException {
+        try {
+            reshardCounterMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("release reshard counter mutex error: ", e);
+        } finally {
+            reshardCounterMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void removeReshardCounter() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_COUNTER_NODE_PREFIX) != null) {
+                this.client.delete().forPath(RESHARD_COUNTER_NODE_PREFIX);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("remove reshard counter error: ", e);
+        }
+    }
+
+    @Override
+    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
+        this.reshardCounterChangeHook = hook;
+    }
+
+    private void registerReshardCounterListener() throws Exception {
+        this.reshardCounterCache = new TreeCache(this.client, RESHARD_COUNTER_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            byte[] data;
+            int counter;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    counter = JsonUtils.fromJson(data, Integer.class);
+                    reshardCounterChangeHook.onChange(counter);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.reshardCounterCache.getListenable().addListener(listener);
+        this.reshardCounterCache.start();
     }
 }

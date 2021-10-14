@@ -18,8 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.entity.ActiveFragmentStatisticsItem;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -66,12 +65,20 @@ public class DefaultMetaCache implements IMetaCache {
     private final Map<String, Map<String, Integer>> schemaMappings;
 
     // 分片统计信息的缓存
-    private final Map<FragmentMeta, ActiveFragmentStatistics> activeFragmentStatisticsMap;
+    private final Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap;
 
-    private final ReadWriteLock statisticsLock;
+    private final Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatisticsMap;
+
+    private final ReadWriteLock activeFragmentStatisticsLock;
 
     // user 的缓存
     private final Map<String, UserMeta> userMetaMap;
+
+    // 重分片过程中 fragment 的缓存
+    // 为了解决重分片过程中 fragment 的创建先于 storage unit 的问题
+    private final Map<String, List<FragmentMeta>> reshardFragmentListMap;
+
+    private final ReadWriteLock reshardFragmentLock;
 
     private DefaultMetaCache() {
         // 分片相关
@@ -89,9 +96,13 @@ public class DefaultMetaCache implements IMetaCache {
         schemaMappings = new ConcurrentHashMap<>();
         // 分片统计信息相关
         activeFragmentStatisticsMap = new ConcurrentHashMap<>();
-        statisticsLock = new ReentrantReadWriteLock();
+        deltaActiveFragmentStatisticsMap = new ConcurrentHashMap<>();
+        activeFragmentStatisticsLock = new ReentrantReadWriteLock();
         // user 相关
         userMetaMap = new ConcurrentHashMap<>();
+        // 重分片中的 fragment 相关
+        reshardFragmentListMap = new ConcurrentHashMap<>();
+        reshardFragmentLock = new ReentrantReadWriteLock();
     }
 
     public static DefaultMetaCache getInstance() {
@@ -158,7 +169,7 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
                 .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
-        fragmentListMap.forEach(fragmentMetaListMap::put);
+        fragmentMetaListMap.putAll(fragmentListMap);
         fragmentLock.writeLock().unlock();
     }
 
@@ -420,19 +431,19 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
-    public void initActiveFragmentStatistics(Map<FragmentMeta, ActiveFragmentStatistics> statisticsMap) {
-        statisticsLock.writeLock().lock();
+    public void initActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap) {
+        activeFragmentStatisticsLock.writeLock().lock();
         activeFragmentStatisticsMap.putAll(statisticsMap);
-        statisticsLock.writeLock().unlock();
+        activeFragmentStatisticsLock.writeLock().unlock();
     }
 
     @Override
-    public void addOrUpdateActiveFragmentStatisticsItem(Map<FragmentMeta, ActiveFragmentStatisticsItem> statisticsItemMap) {
-        statisticsItemMap.forEach((key, value) -> this.activeFragmentStatisticsMap.computeIfAbsent(key, e -> new ActiveFragmentStatistics()).updateByItem(value));
+    public void addOrUpdateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap) {
+        statisticsMap.forEach((key, value) -> activeFragmentStatisticsMap.computeIfAbsent(key, e -> new FragmentStatistics()).update(value));
     }
 
     @Override
-    public Map<FragmentMeta, ActiveFragmentStatistics> getActiveFragmentStatistics() {
+    public Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics() {
         return new HashMap<>(activeFragmentStatisticsMap);
     }
 
@@ -441,6 +452,48 @@ public class DefaultMetaCache implements IMetaCache {
         activeFragmentStatisticsMap.clear();
     }
 
+    @Override
+    public void addOrUpdateDeltaActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap) {
+        deltaActiveFragmentStatisticsMap.putAll(statisticsMap);
+    }
+
+    @Override
+    public Map<FragmentMeta, FragmentStatistics> getDeltaActiveFragmentStatistics() {
+        return deltaActiveFragmentStatisticsMap;
+    }
+
+    @Override
+    public void clearDeltaActiveFragmentStatistics() {
+        deltaActiveFragmentStatisticsMap.clear();
+    }
+
+    @Override
+    public void addReshardFragment(FragmentMeta fragment) {
+        reshardFragmentLock.writeLock().lock();
+        reshardFragmentListMap.computeIfAbsent(fragment.getMasterStorageUnitId(), e -> {
+            List<FragmentMeta> fragments = new ArrayList<>();
+            fragments.add(fragment);
+            return fragments;
+        });
+        reshardFragmentLock.writeLock().unlock();
+    }
+
+    @Override
+    public List<FragmentMeta> getReshardFragmentsByStorageUnitId(String storageUnitId) {
+        reshardFragmentLock.readLock().lock();
+        List<FragmentMeta> fragments = reshardFragmentListMap.get(storageUnitId);
+        reshardFragmentLock.readLock().unlock();
+        return fragments;
+    }
+
+    @Override
+    public void removeReshardFragmentsByStorageUnitId(String storageUnitId) {
+        reshardFragmentLock.writeLock().lock();
+        reshardFragmentListMap.remove(storageUnitId);
+        reshardFragmentLock.writeLock().unlock();
+    }
+
+    @Override
     public void addOrUpdateUser(UserMeta userMeta) {
         userMetaMap.put(userMeta.getUsername(), userMeta);
     }

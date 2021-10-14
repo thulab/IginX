@@ -74,6 +74,8 @@ public class Config {
 
     private long insertThreshold = 100000;
 
+    private long reshardFragmentTimeMargin = 60;
+
     private boolean enableMQTT = false;
 
     private String mqttHost = "0.0.0.0";
@@ -304,6 +306,14 @@ public class Config {
 
     public void setInsertThreshold(long insertThreshold) {
         this.insertThreshold = insertThreshold;
+    }
+
+    public long getReshardFragmentTimeMargin() {
+        return reshardFragmentTimeMargin;
+    }
+
+    public void setReshardFragmentTimeMargin(long reshardFragmentTimeMargin) {
+        this.reshardFragmentTimeMargin = reshardFragmentTimeMargin;
     }
 
     public boolean isEnableMQTT() {
