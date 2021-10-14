@@ -30,7 +30,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardInactiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
@@ -88,23 +87,15 @@ public interface IMetaStorage {
 
     void lockActiveFragmentStatistics() throws MetaStorageException;
 
-    void lockReshardInactiveFragmentStatistics() throws MetaStorageException;
-
     void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException;
-
-    void addReshardInactiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException;
 
     void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException;
 
     void releaseActiveFragmentStatistics() throws MetaStorageException;
 
-    void releaseReshardInactiveFragmentStatistics() throws MetaStorageException;
-
     void removeActiveFragmentStatistics() throws MetaStorageException;
 
     void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook);
-
-    void registerReshardInactiveFragmentStatisticsChangeHook(ReshardInactiveFragmentStatisticsChangeHook hook);
 
     boolean proposeToReshard() throws MetaStorageException;
 

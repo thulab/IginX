@@ -143,7 +143,6 @@ public class DefaultMetaManager implements IMetaManager {
             initSchemaMapping();
             initUser();
             initActiveFragmentStatistics();
-            initReshardInactiveFragmentStatistics();
             initReshardNotification();
             initReshardCounter();
         } catch (MetaStorageException e) {
@@ -165,21 +164,20 @@ public class DefaultMetaManager implements IMetaManager {
                         storage.lockActiveFragmentStatistics();
                         storage.lockReshardNotification();
                         updateMaxActiveFragmentEndTime(cache.getDeltaActiveFragmentStatistics().values());
-                        if (needToReshard() && storage.proposeToReshard()) {
-                            isResharding = true;
-                            isProposer = true;
-                            logger.info("iginx node {} proposed to reshard", id);
-                        }
-                        if (isProposer && isResharding && !hasPushedStatistics) {
-                            hasPushedStatistics = true;
-                            logger.info("iginx node {}(proposer) update reshard inactive fragment statistics", id);
-                            storage.lockReshardInactiveFragmentStatistics();
-                            storage.addReshardInactiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
-                            storage.releaseReshardInactiveFragmentStatistics();
-                            storage.removeActiveFragmentStatistics();
+                        if (needToReshard()) {
+                            if (storage.proposeToReshard()) {
+                                isResharding = true;
+                                isProposer = true;
+                                logger.info("iginx node {} proposed to reshard", id);
+                                if (!hasPushedStatistics) {
+                                    storage.addOrUpdateActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                                    hasPushedStatistics = true;
+                                    logger.info("iginx node {}(proposer) update active fragment statistics during resharding", id);
+                                }
+                            }
                         } else {
-                            logger.info("iginx node {} add active fragment statistics", id);
                             storage.addOrUpdateActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                            logger.info("iginx node {} add active fragment statistics", id);
                         }
                         cache.clearDeltaActiveFragmentStatistics();
                         storage.releaseReshardNotification();
@@ -293,6 +291,7 @@ public class DefaultMetaManager implements IMetaManager {
                     if (isResharding && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
                         hasCreatedStorageUnits = true;
                         if (hasCreatedFragments) {
+                            logger.info("storageUnit.isLastOfBatch() = {} hasCreatedFragments = {} hasCreatedStorageUnits = {}", storageUnit.isLastOfBatch(), hasCreatedFragments, hasCreatedStorageUnits);
                             storage.lockReshardCounter();
                             storage.incrementReshardCounter();
                             storage.releaseReshardCounter();
@@ -357,21 +356,7 @@ public class DefaultMetaManager implements IMetaManager {
                 return;
             }
             cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
-        });
-        storage.lockActiveFragmentStatistics();
-        Map<FragmentMeta, FragmentStatistics> statisticsMap = storage.loadActiveFragmentStatistics();
-        updateMaxActiveFragmentEndTime(statisticsMap.values());
-        storage.releaseActiveFragmentStatistics();
-        cache.initActiveFragmentStatistics(statisticsMap);
-    }
-
-    private void initReshardInactiveFragmentStatistics() throws MetaStorageException {
-        storage.registerReshardInactiveFragmentStatisticsChangeHook(statisticsMap -> {
-            if (statisticsMap == null) {
-                return;
-            }
             if (isProposer && isResharding) {
-                cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
                 int updatedCounter = statisticsCounter.incrementAndGet();
                 logger.info("iginx node {}(proposer) update statistics counter: {}", id, updatedCounter);
                 synchronized (commitCreatingTask) {
@@ -380,11 +365,17 @@ public class DefaultMetaManager implements IMetaManager {
                         IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
                                 .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
                         Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.get());
+                        logger.info("fragmentsAndStorageUnits = {}", fragmentsAndStorageUnits);
                         createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
                     }
                 }
             }
         });
+        storage.lockActiveFragmentStatistics();
+        Map<FragmentMeta, FragmentStatistics> statisticsMap = storage.loadActiveFragmentStatistics();
+        updateMaxActiveFragmentEndTime(statisticsMap.values());
+        storage.releaseActiveFragmentStatistics();
+        cache.initActiveFragmentStatistics(statisticsMap);
     }
 
     private void initReshardNotification() throws MetaStorageException {
@@ -392,11 +383,11 @@ public class DefaultMetaManager implements IMetaManager {
             try {
                 isResharding = resharding;
                 if (!isProposer && isResharding && !hasPushedStatistics) {
-                    logger.info("iginx node {} update reshard inactive fragment statistics", id);
+                    logger.info("iginx node {} update active fragment statistics during resharding", id);
                     updateMaxActiveFragmentEndTime(cache.getDeltaActiveFragmentStatistics().values());
-                    storage.lockReshardInactiveFragmentStatistics();
-                    storage.addReshardInactiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
-                    storage.releaseReshardInactiveFragmentStatistics();
+                    storage.lockActiveFragmentStatistics();
+                    storage.addOrUpdateActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                    storage.releaseActiveFragmentStatistics();
                     cache.clearDeltaActiveFragmentStatistics();
                     hasPushedStatistics = true;
                 }
@@ -409,6 +400,9 @@ public class DefaultMetaManager implements IMetaManager {
                     hasCommittedCreatingTask = false;
                     statisticsCounter.set(0);
                     cache.clearActiveFragmentStatistics();
+                    storage.lockActiveFragmentStatistics();
+                    storage.removeActiveFragmentStatistics();
+                    storage.releaseActiveFragmentStatistics();
                 }
             } catch (MetaStorageException e) {
                 logger.error("update reshard notification error: ", e);
@@ -430,7 +424,7 @@ public class DefaultMetaManager implements IMetaManager {
 
                     storage.lockReshardCounter();
                     storage.removeReshardCounter();
-                    storage.removeReshardCounter();
+                    storage.releaseReshardCounter();
 
                     storage.lockReshardNotification();
                     storage.updateReshardNotification(false);

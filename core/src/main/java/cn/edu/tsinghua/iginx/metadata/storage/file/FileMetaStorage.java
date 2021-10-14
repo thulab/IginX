@@ -6,7 +6,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardInactiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
@@ -410,17 +409,7 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void lockReshardInactiveFragmentStatistics() throws MetaStorageException {
-
-    }
-
-    @Override
     public void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
-
-    }
-
-    @Override
-    public void addReshardInactiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
 
     }
 
@@ -435,22 +424,12 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void releaseReshardInactiveFragmentStatistics() throws MetaStorageException {
-
-    }
-
-    @Override
     public void removeActiveFragmentStatistics() throws MetaStorageException {
 
     }
 
     @Override
     public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
-
-    }
-
-    @Override
-    public void registerReshardInactiveFragmentStatisticsChangeHook(ReshardInactiveFragmentStatisticsChangeHook hook) {
 
     }
 

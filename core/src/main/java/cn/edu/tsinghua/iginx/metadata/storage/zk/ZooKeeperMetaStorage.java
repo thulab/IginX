@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardInactiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
@@ -68,8 +67,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String ACTIVE_FRAGMENT_STATISTICS_NODE = "/statistics/fragment/active/node";
 
-    private static final String RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE = "/statistics/fragment/inactive/reshard/node";
-
     private static final String STORAGE_UNIT_NODE = "/unit/unit";
 
     private static final String IGINX_LOCK_NODE = "/lock/iginx";
@@ -104,8 +101,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive";
 
-    private static final String RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive/reshard";
-
     private static final String RESHARD_NOTIFICATION_NODE_PREFIX = "/notification/reshard";
 
     private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
@@ -118,7 +113,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final Lock fragmentMutexLock = new ReentrantLock();
     private final InterProcessMutex fragmentMutex;
     private final Lock activeFragmentStatisticsMutexLock = new ReentrantLock();
-    private final Lock reshardInactiveFragmentStatisticsMutexLock = new ReentrantLock();
     private final Lock reshardNotificationMutexLock = new ReentrantLock();
     private final InterProcessMutex reshardNotificationMutex;
     private final Lock reshardCounterMutexLock = new ReentrantLock();
@@ -131,7 +125,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     protected TreeCache fragmentCache;
     private TreeCache userCache;
     protected TreeCache activeFragmentStatisticsCache;
-    protected TreeCache reshardInactiveFragmentStatisticsCache;
     protected TreeCache reshardNotificationCache;
     protected TreeCache reshardCounterCache;
 
@@ -142,7 +135,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private FragmentChangeHook fragmentChangeHook = null;
     private UserChangeHook userChangeHook = null;
     private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
-    private ReshardInactiveFragmentStatisticsChangeHook reshardInactiveFragmentStatisticsChangeHook = null;
     private ReshardNotificationHook reshardNotificationHook = null;
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
 
@@ -750,7 +742,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 }
             }
             registerActiveFragmentStatisticsListener();
-            registerReshardInactiveFragmentStatisticsListener();
             registerReshardNotificationListener();
             registerReshardCounterListener();
             return activeFragmentStatisticsMap;
@@ -791,38 +782,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.activeFragmentStatisticsCache.start();
     }
 
-    private void registerReshardInactiveFragmentStatisticsListener() throws Exception {
-        this.reshardInactiveFragmentStatisticsCache= new TreeCache(this.client, RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
-        TreeCacheListener listener = (curatorFramework, event) -> {
-            if (reshardInactiveFragmentStatisticsChangeHook == null) {
-                return;
-            }
-            String path;
-            byte[] data;
-            Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
-            switch (event.getType()) {
-                case NODE_ADDED:
-                case NODE_UPDATED:
-                    path = event.getData().getPath();
-                    data = event.getData().getData();
-                    String[] pathParts = path.split("/");
-                    if (pathParts.length == 6) {
-                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType());
-                        if (statisticsMap != null) {
-                            reshardInactiveFragmentStatisticsChangeHook.onChange(statisticsMap);
-                        } else {
-                            logger.error("resolve reshard inactive fragment statistics from zookeeper error");
-                        }
-                    }
-                    break;
-                default:
-                    break;
-            }
-        };
-        this.reshardInactiveFragmentStatisticsCache.getListenable().addListener(listener);
-        this.reshardInactiveFragmentStatisticsCache.start();
-    }
-
     @Override
     public void lockActiveFragmentStatistics() throws MetaStorageException {
         try {
@@ -834,36 +793,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void lockReshardInactiveFragmentStatistics() throws MetaStorageException {
-        try {
-            reshardInactiveFragmentStatisticsMutexLock.lock();
-        } catch (Exception e) {
-            reshardInactiveFragmentStatisticsMutexLock.unlock();
-            throw new MetaStorageException("lock reshard inactive fragment statistics error: ", e);
-        }
-    }
-
-    @Override
     public void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                     .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE + id + "/update", JsonUtils.toJson(deltaActiveFragmentStatistics));
         } catch (Exception e) {
             throw new MetaStorageException("get error when adding or updating active fragment statistics", e);
-        }
-    }
-
-    @Override
-    public void addReshardInactiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
-        try {
-            if (this.client.checkExists().forPath(RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE + id) == null) {
-                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                        .forPath(RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE + id, JsonUtils.toJson(deltaActiveFragmentStatistics));
-            } else {
-                this.client.setData().forPath(RESHARD_INACTIVE_FRAGMENT_STATISTICS_NODE + id, JsonUtils.toJson(deltaActiveFragmentStatistics));
-            }
-        } catch (Exception e) {
-            throw new MetaStorageException("get error when adding reshard inactive fragment statistics", e);
         }
     }
 
@@ -889,11 +824,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void releaseReshardInactiveFragmentStatistics() throws MetaStorageException {
-        reshardInactiveFragmentStatisticsMutexLock.unlock();
-    }
-
-    @Override
     public void removeActiveFragmentStatistics() throws MetaStorageException {
         try {
             if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) != null) {
@@ -907,11 +837,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     @Override
     public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
         this.activeFragmentStatisticsChangeHook = hook;
-    }
-
-    @Override
-    public void registerReshardInactiveFragmentStatisticsChangeHook(ReshardInactiveFragmentStatisticsChangeHook hook) {
-        this.reshardInactiveFragmentStatisticsChangeHook = hook;
     }
 
     @Override
