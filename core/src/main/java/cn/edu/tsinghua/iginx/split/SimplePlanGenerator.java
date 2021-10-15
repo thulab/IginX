@@ -82,6 +82,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getColumnValuesByDataType;
@@ -115,6 +116,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertColumnRecordsReq.getDataTypeList(),
                         insertColumnRecordsReq.getAttributesList()
                 );
+                if (DefaultMetaManager.getInstance().isResharding()
+                        && insertColumnRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
+                    Thread thread = Thread.currentThread();
+                    DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
+                    logger.info("thread {} is parked", thread.getId());
+                    LockSupport.park();
+                }
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 List<InsertColumnRecordsPlan> insertColumnRecordsPlans = splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
                 Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
@@ -138,6 +146,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertNonAlignedColumnRecordsReq.getDataTypeList(),
                         insertNonAlignedColumnRecordsReq.getAttributesList()
                 );
+                if (DefaultMetaManager.getInstance().isResharding()
+                        && insertNonAlignedColumnRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
+                    Thread thread = Thread.currentThread();
+                    DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
+                    logger.info("thread {} is parked", thread.getId());
+                    LockSupport.park();
+                }
                 splitInfoList = planSplitter.getSplitInsertNonAlignedColumnRecordsPlanResults(insertNonAlignedColumnRecordsPlan);
                 List<InsertNonAlignedColumnRecordsPlan> insertNonAlignedColumnRecordsPlans = splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
                 statisticsMap = new HashMap<>();
@@ -159,6 +174,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertRowRecordsReq.getDataTypeList(),
                         insertRowRecordsReq.getAttributesList()
                 );
+                if (DefaultMetaManager.getInstance().isResharding()
+                        && insertRowRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
+                    Thread thread = Thread.currentThread();
+                    DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
+                    logger.info("thread {} is parked", thread.getId());
+                    LockSupport.park();
+                }
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 List<InsertRowRecordsPlan> insertRowRecordsPlans = splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
                 statisticsMap = new HashMap<>();
@@ -180,6 +202,13 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertNonAlignedRowRecordsReq.getDataTypeList(),
                         insertNonAlignedRowRecordsReq.getAttributesList()
                 );
+                if (DefaultMetaManager.getInstance().isResharding()
+                        && insertNonAlignedRowRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
+                    Thread thread = Thread.currentThread();
+                    DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
+                    logger.info("thread {} is parked", thread.getId());
+                    LockSupport.park();
+                }
                 splitInfoList = planSplitter.getSplitInsertNonAlignedRowRecordsPlanResults(insertNonAlignedRowRecordsPlan);
                 List<InsertNonAlignedRowRecordsPlan> insertNonAlignedRowRecordsPlans = splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
                 statisticsMap = new HashMap<>();

@@ -129,8 +129,6 @@ public class IginxWorker implements IService.Iface {
 
     private final SessionManager sessionManager = SessionManager.getInstance();
 
-    private final Queue<RequestContext> queue = new ConcurrentLinkedQueue<>();
-
     public static IginxWorker getInstance() {
         return instance;
     }
@@ -172,15 +170,6 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
-        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
-        if (DefaultMetaManager.getInstance().isResharding()) {
-            queue.offer(context);
-            return RpcUtils.PARTIAL_SUCCESS;
-        }
-        RequestContext requestContext;
-        while ((requestContext = queue.poll()) != null) {
-            core.processRequest(requestContext);
-        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -191,15 +180,6 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
-        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
-        if (DefaultMetaManager.getInstance().isResharding()) {
-            queue.offer(context);
-            return RpcUtils.PARTIAL_SUCCESS;
-        }
-        RequestContext requestContext;
-        while ((requestContext = queue.poll()) != null) {
-            core.processRequest(requestContext);
-        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -210,15 +190,6 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertRowRecordsContext context = new InsertRowRecordsContext(req);
-        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
-        if (DefaultMetaManager.getInstance().isResharding()) {
-            queue.offer(context);
-            return RpcUtils.PARTIAL_SUCCESS;
-        }
-        RequestContext requestContext;
-        while ((requestContext = queue.poll()) != null) {
-            core.processRequest(requestContext);
-        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -229,15 +200,6 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.ACCESS_DENY;
         }
         InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
-        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
-        if (DefaultMetaManager.getInstance().isResharding()) {
-            queue.offer(context);
-            return RpcUtils.PARTIAL_SUCCESS;
-        }
-        RequestContext requestContext;
-        while ((requestContext = queue.poll()) != null) {
-            core.processRequest(requestContext);
-        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -258,15 +220,6 @@ public class IginxWorker implements IService.Iface {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
         QueryDataContext context = new QueryDataContext(req);
-        logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
-        if (DefaultMetaManager.getInstance().isResharding()) {
-            queue.offer(context);
-            return null;
-        }
-        RequestContext requestContext;
-        while ((requestContext = queue.poll()) != null) {
-            core.processRequest(requestContext);
-        }
         core.processRequest(context);
         return ((QueryDataCombineResult) context.getCombineResult()).getResp();
     }

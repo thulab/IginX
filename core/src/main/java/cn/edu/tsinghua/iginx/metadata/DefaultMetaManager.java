@@ -53,13 +53,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
@@ -71,10 +74,15 @@ public class DefaultMetaManager implements IMetaManager {
     private final IMetaStorage storage;
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
 
+    private Queue<Thread> waitingReshardThreadsQueue = new ConcurrentLinkedQueue<>();
+
+    // 当前活跃分片的最大的结束时间
     private AtomicLong maxActiveFragmentEndTime = new AtomicLong(-1L);
 
+    // 当前活跃分片的开始时间
     private AtomicLong activeFragmentStartTime = new AtomicLong(-1L);
 
+    // 上一次重分片的结束时间
     private AtomicLong lastReshardTime = new AtomicLong(-1L);
 
     private AtomicInteger statisticsCounter = new AtomicInteger(0);
@@ -168,7 +176,7 @@ public class DefaultMetaManager implements IMetaManager {
                             if (storage.proposeToReshard()) {
                                 isResharding = true;
                                 isProposer = true;
-                                logger.info("iginx node {} proposed to reshard", id);
+                                logger.info("iginx node {} propose to reshard", id);
                                 if (!hasPushedStatistics) {
                                     // 该节点提起重分片后，将本地的统计信息推到 zookeeper 上
                                     storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
@@ -402,6 +410,7 @@ public class DefaultMetaManager implements IMetaManager {
                         storage.clearActiveFragmentStatistics();
                         storage.releaseActiveFragmentStatistics();
                         logger.info("iginx node {}(proposer) clear active fragment statistics", id);
+                        logger.info("iginx node {}(proposer) finish to reshard", id);
                     }
                     lastReshardTime.set(System.currentTimeMillis());
                     isProposer = false;
@@ -411,7 +420,7 @@ public class DefaultMetaManager implements IMetaManager {
                     hasCommittedCreatingTask = false;
                     statisticsCounter.set(0);
                     cache.clearActiveFragmentStatistics();
-
+                    releaseWaitingReshardThreads();
                 }
             } catch (MetaStorageException e) {
                 logger.error("update reshard notification error: ", e);
@@ -893,6 +902,10 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
+    public long getMaxActiveFragmentEndTime() {
+        return maxActiveFragmentEndTime.get();
+    }
+
     public long getActiveFragmentStartTime() {
         return activeFragmentStartTime.get();
     }
@@ -918,6 +931,18 @@ public class DefaultMetaManager implements IMetaManager {
             } catch (MetaStorageException e) {
                 logger.error("update reshard counter error: ", e);
             }
+        }
+    }
+
+    public void addWaitingReshardThread(Thread thread) {
+        waitingReshardThreadsQueue.offer(thread);
+    }
+
+    private void releaseWaitingReshardThreads() {
+        Thread thread;
+        while ((thread = waitingReshardThreadsQueue.poll()) != null) {
+            logger.info("thread {} is unparked", thread.getId());
+            LockSupport.unpark(thread);
         }
     }
 }
