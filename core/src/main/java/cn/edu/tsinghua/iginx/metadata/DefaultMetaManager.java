@@ -170,16 +170,19 @@ public class DefaultMetaManager implements IMetaManager {
                                 isProposer = true;
                                 logger.info("iginx node {} proposed to reshard", id);
                                 if (!hasPushedStatistics) {
-                                    storage.addOrUpdateActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                                    // 该节点提起重分片后，将本地的统计信息推到 zookeeper 上
+                                    storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                                    cache.clearDeltaActiveFragmentStatistics();
                                     hasPushedStatistics = true;
-                                    logger.info("iginx node {}(proposer) update active fragment statistics during resharding", id);
+                                    logger.info("iginx node {}(proposer) add active fragment statistics during resharding", id);
                                 }
                             }
                         } else {
-                            storage.addOrUpdateActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                            // 非重分片期间，节点将本地的统计信息推到 zookeeper 上
+                            storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                            cache.clearDeltaActiveFragmentStatistics();
                             logger.info("iginx node {} add active fragment statistics", id);
                         }
-                        cache.clearDeltaActiveFragmentStatistics();
                         storage.releaseReshardNotification();
                         storage.releaseActiveFragmentStatistics();
                     } catch (MetaStorageException e) {
@@ -291,7 +294,7 @@ public class DefaultMetaManager implements IMetaManager {
                     if (isResharding && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
                         hasCreatedStorageUnits = true;
                         if (hasCreatedFragments) {
-                            logger.info("storageUnit.isLastOfBatch() = {} hasCreatedFragments = {} hasCreatedStorageUnits = {}", storageUnit.isLastOfBatch(), hasCreatedFragments, hasCreatedStorageUnits);
+                            logger.info("iginx node {} increment reshard counter during resharding", id);
                             storage.lockReshardCounter();
                             storage.incrementReshardCounter();
                             storage.releaseReshardCounter();
@@ -356,16 +359,18 @@ public class DefaultMetaManager implements IMetaManager {
                 return;
             }
             cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
+            updateMaxActiveFragmentEndTime(statisticsMap.values());
             if (isProposer && isResharding) {
                 int updatedCounter = statisticsCounter.incrementAndGet();
-                logger.info("iginx node {}(proposer) update statistics counter: {}", id, updatedCounter);
+                logger.info("iginx node {}(proposer) increment statistics counter: {}", id, updatedCounter);
                 synchronized (commitCreatingTask) {
                     if (updatedCounter == getIginxList().size() && !hasCommittedCreatingTask) {
                         hasCommittedCreatingTask = true;
                         IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
                                 .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
                         Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.get());
-                        logger.info("fragmentsAndStorageUnits = {}", fragmentsAndStorageUnits);
+                        logger.info("iginx node {}(proposer) add fragments: {}", id, fragmentsAndStorageUnits.k);
+                        logger.info("iginx node {}(proposer) add storage units: {}", id, fragmentsAndStorageUnits.v);
                         createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
                     }
                 }
@@ -383,15 +388,21 @@ public class DefaultMetaManager implements IMetaManager {
             try {
                 isResharding = resharding;
                 if (!isProposer && isResharding && !hasPushedStatistics) {
-                    logger.info("iginx node {} update active fragment statistics during resharding", id);
                     updateMaxActiveFragmentEndTime(cache.getDeltaActiveFragmentStatistics().values());
                     storage.lockActiveFragmentStatistics();
-                    storage.addOrUpdateActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
+                    storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
                     storage.releaseActiveFragmentStatistics();
                     cache.clearDeltaActiveFragmentStatistics();
                     hasPushedStatistics = true;
+                    logger.info("iginx node {} add active fragment statistics during resharding", id);
                 }
                 if (!isResharding) {
+                    if (isProposer) {
+                        storage.lockActiveFragmentStatistics();
+                        storage.clearActiveFragmentStatistics();
+                        storage.releaseActiveFragmentStatistics();
+                        logger.info("iginx node {}(proposer) clear active fragment statistics", id);
+                    }
                     lastReshardTime.set(System.currentTimeMillis());
                     isProposer = false;
                     hasCreatedFragments = false;
@@ -400,9 +411,7 @@ public class DefaultMetaManager implements IMetaManager {
                     hasCommittedCreatingTask = false;
                     statisticsCounter.set(0);
                     cache.clearActiveFragmentStatistics();
-                    storage.lockActiveFragmentStatistics();
-                    storage.removeActiveFragmentStatistics();
-                    storage.releaseActiveFragmentStatistics();
+
                 }
             } catch (MetaStorageException e) {
                 logger.error("update reshard notification error: ", e);
@@ -420,10 +429,11 @@ public class DefaultMetaManager implements IMetaManager {
                     return;
                 }
                 if (isProposer && counter == getIginxList().size() - 1) {
+                    // 将历史分片统计数据上传到 zookeeper
                     storage.addInactiveFragmentStatistics(cache.getActiveFragmentStatistics());
 
                     storage.lockReshardCounter();
-                    storage.removeReshardCounter();
+                    storage.resetReshardCounter();
                     storage.releaseReshardCounter();
 
                     storage.lockReshardNotification();
@@ -899,6 +909,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (isResharding && fragment.isLastOfBatch() && !hasCreatedFragments) {
                     hasCreatedFragments = true;
                     if (hasCreatedStorageUnits) {
+                        logger.info("iginx node {} increment reshard counter during resharding", id);
                         storage.lockReshardCounter();
                         storage.incrementReshardCounter();
                         storage.releaseReshardCounter();

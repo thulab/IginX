@@ -793,7 +793,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
                     .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE + id + "/update", JsonUtils.toJson(deltaActiveFragmentStatistics));
@@ -824,7 +824,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
+    public void clearActiveFragmentStatistics() throws MetaStorageException {
         try {
             if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) != null) {
                 this.client.delete().deletingChildrenIfNeeded().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
@@ -1088,6 +1088,21 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             }
         } catch (Exception e) {
             throw new MetaStorageException("update reshard countern error: ", e);
+        }
+    }
+
+    @Override
+    public void resetReshardCounter() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_COUNTER_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(0));
+            } else {
+                this.client.setData()
+                        .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(0));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("reset reshard countern error: ", e);
         }
     }
 

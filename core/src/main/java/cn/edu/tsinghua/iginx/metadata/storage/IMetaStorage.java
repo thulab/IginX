@@ -87,13 +87,13 @@ public interface IMetaStorage {
 
     void lockActiveFragmentStatistics() throws MetaStorageException;
 
-    void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException;
+    void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException;
 
     void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException;
 
     void releaseActiveFragmentStatistics() throws MetaStorageException;
 
-    void removeActiveFragmentStatistics() throws MetaStorageException;
+    void clearActiveFragmentStatistics() throws MetaStorageException;
 
     void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook);
 
@@ -122,6 +122,8 @@ public interface IMetaStorage {
     void lockReshardCounter() throws MetaStorageException;
 
     void incrementReshardCounter() throws MetaStorageException;
+
+    void resetReshardCounter() throws MetaStorageException;
 
     void releaseReshardCounter() throws MetaStorageException;
 

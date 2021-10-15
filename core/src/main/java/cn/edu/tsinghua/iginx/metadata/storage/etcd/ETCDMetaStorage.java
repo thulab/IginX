@@ -714,7 +714,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addOrUpdateActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
 
     }
 
@@ -729,7 +729,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
+    public void clearActiveFragmentStatistics() throws MetaStorageException {
 
     }
 
@@ -874,6 +874,11 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     @Override
     public void incrementReshardCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetReshardCounter() throws MetaStorageException {
 
     }
 

@@ -174,13 +174,13 @@ public class IginxWorker implements IService.Iface {
         InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
         logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
         if (DefaultMetaManager.getInstance().isResharding()) {
-//            queue.offer(context);
+            queue.offer(context);
             return RpcUtils.PARTIAL_SUCCESS;
         }
-//        RequestContext requestContext;
-//        while ((requestContext = queue.poll()) != null) {
-//            core.processRequest(requestContext);
-//        }
+        RequestContext requestContext;
+        while ((requestContext = queue.poll()) != null) {
+            core.processRequest(requestContext);
+        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -193,13 +193,13 @@ public class IginxWorker implements IService.Iface {
         InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
         logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
         if (DefaultMetaManager.getInstance().isResharding()) {
-//            queue.offer(context);
+            queue.offer(context);
             return RpcUtils.PARTIAL_SUCCESS;
         }
-//        RequestContext requestContext;
-//        while ((requestContext = queue.poll()) != null) {
-//            core.processRequest(requestContext);
-//        }
+        RequestContext requestContext;
+        while ((requestContext = queue.poll()) != null) {
+            core.processRequest(requestContext);
+        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -212,13 +212,13 @@ public class IginxWorker implements IService.Iface {
         InsertRowRecordsContext context = new InsertRowRecordsContext(req);
         logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
         if (DefaultMetaManager.getInstance().isResharding()) {
-//            queue.offer(context);
+            queue.offer(context);
             return RpcUtils.PARTIAL_SUCCESS;
         }
-//        RequestContext requestContext;
-//        while ((requestContext = queue.poll()) != null) {
-//            core.processRequest(requestContext);
-//        }
+        RequestContext requestContext;
+        while ((requestContext = queue.poll()) != null) {
+            core.processRequest(requestContext);
+        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -231,13 +231,13 @@ public class IginxWorker implements IService.Iface {
         InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
         logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
         if (DefaultMetaManager.getInstance().isResharding()) {
-//            queue.offer(context);
+            queue.offer(context);
             return RpcUtils.PARTIAL_SUCCESS;
         }
-//        RequestContext requestContext;
-//        while ((requestContext = queue.poll()) != null) {
-//            core.processRequest(requestContext);
-//        }
+        RequestContext requestContext;
+        while ((requestContext = queue.poll()) != null) {
+            core.processRequest(requestContext);
+        }
         core.processRequest(context);
         return context.getStatus();
     }
@@ -260,13 +260,13 @@ public class IginxWorker implements IService.Iface {
         QueryDataContext context = new QueryDataContext(req);
         logger.info("status = {}", DefaultMetaManager.getInstance().isResharding());
         if (DefaultMetaManager.getInstance().isResharding()) {
-//            queue.offer(context);
+            queue.offer(context);
             return null;
         }
-//        RequestContext requestContext;
-//        while ((requestContext = queue.poll()) != null) {
-//            core.processRequest(requestContext);
-//        }
+        RequestContext requestContext;
+        while ((requestContext = queue.poll()) != null) {
+            core.processRequest(requestContext);
+        }
         core.processRequest(context);
         return ((QueryDataCombineResult) context.getCombineResult()).getResp();
     }
