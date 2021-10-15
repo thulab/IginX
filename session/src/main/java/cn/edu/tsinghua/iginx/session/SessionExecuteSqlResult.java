@@ -25,9 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -117,6 +115,10 @@ public class SessionExecuteSqlResult {
         } else {
             this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         }
+
+        if (resp.getType() == SqlType.DownsampleQuery) {
+            sortColumns();
+        }
     }
 
     private List<List<Object>> parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
@@ -138,6 +140,34 @@ public class SessionExecuteSqlResult {
         return res;
     }
 
+    private void sortColumns() {
+        Map<String, DataType> typeMap = new TreeMap<>();
+        Map<String, List<Object>> valueMap = new TreeMap<>();
+        for (int i = 0; i < paths.size(); i++) {
+            String path = paths.get(i);
+            typeMap.put(path, dataTypeList.get(i));
+            for (int j = 0; j < values.size(); j++) {
+                List<Object> colValue = valueMap.get(path);
+                if (colValue == null) {
+                    List<Object> list = new ArrayList<>(Collections.singletonList(values.get(j).get(i)));
+                    valueMap.put(path, list);
+                } else {
+                    colValue.add(values.get(j).get(i));
+                }
+            }
+        }
+        this.paths = new ArrayList<>(typeMap.keySet());
+        this.dataTypeList = new ArrayList<>(typeMap.values());
+        List<List<Object>> newValues = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++)
+            newValues.add(new ArrayList<>());
+        for (String key : valueMap.keySet()) {
+            for (int i = 0; i < newValues.size(); i++) {
+                newValues.get(i).add(valueMap.get(key).get(i));
+            }
+        }
+        this.values = newValues;
+    }
 
     public List<List<String>> getResultInList(boolean needFormatTime, String timePrecision) {
         List<List<String>> result = new ArrayList<>();
