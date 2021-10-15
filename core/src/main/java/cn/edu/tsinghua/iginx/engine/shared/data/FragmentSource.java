@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data;
 
-import cn.edu.tsinghua.iginx.engine.shared.TimeSpan;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
 public class FragmentSource extends AbstractSource {
@@ -37,13 +36,4 @@ public class FragmentSource extends AbstractSource {
         return fragment;
     }
 
-    @Override
-    public boolean hasTimestamp() {
-        return true;
-    }
-
-    @Override
-    public TimeSpan getLogicalTimeSpan() {
-        return null;
-    }
 }
