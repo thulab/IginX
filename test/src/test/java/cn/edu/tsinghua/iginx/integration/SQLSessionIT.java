@@ -208,12 +208,12 @@ public class SQLSessionIT {
     public void testLastQuery() {
         String statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time in (0, INF);";
         String expected = "LastQuery ResultSets:\n" +
-                "+-----------------------+--------+-------+\n" +
-                "|                   Time|    Path|  value|\n" +
-                "+-----------------------+--------+-------+\n" +
-                "|1970-01-01T08:00:14.999|us.d1.s2|  15000|\n" +
-                "|1970-01-01T08:00:14.999|us.d1.s4|14999.1|\n" +
-                "+-----------------------+--------+-------+\n" +
+                "+-----+--------+-------+\n" +
+                "| Time|    Path|  value|\n" +
+                "+-----+--------+-------+\n" +
+                "|14999|us.d1.s2|  15000|\n" +
+                "|14999|us.d1.s4|14999.1|\n" +
+                "+-----+--------+-------+\n" +
                 "Total line number = 2\n";
         executeAndCompare(statement, expected);
     }

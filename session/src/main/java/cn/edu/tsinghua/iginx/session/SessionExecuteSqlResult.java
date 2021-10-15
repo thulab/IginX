@@ -200,7 +200,7 @@ public class SessionExecuteSqlResult {
     public String getResultInString(boolean needFormatTime, String timePrecision) {
         if (isQuery()) {
             if (aggregateType == AggregateType.LAST) {
-                return buildLastQueryResult(timePrecision);
+                return buildLastQueryResult(needFormatTime, timePrecision);
             }
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
@@ -352,7 +352,7 @@ public class SessionExecuteSqlResult {
         }
     }
 
-    private String buildLastQueryResult(String timePrecision) {
+    private String buildLastQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
         builder.append("LastQuery ResultSets:").append("\n");
         int num = paths == null ? 0 : paths.size();
@@ -361,7 +361,7 @@ public class SessionExecuteSqlResult {
             cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(
-                        formatTime(timestamps[i], timePrecision),
+                        needFormatTime ? formatTime(timestamps[i], timePrecision) : String.valueOf(timestamps[i]),
                         paths.get(i),
                         valueToString(values.get(0).get(i))
                 )));
