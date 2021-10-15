@@ -18,35 +18,22 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data;
 
-import cn.edu.tsinghua.iginx.engine.shared.TimeSpan;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
 public class OperatorSource extends AbstractSource {
 
     private final Operator operator;
 
-    private final TimeSpan logicalTimeSpan;
-
-    public OperatorSource(Operator operator, TimeSpan logicalTimeSpan) {
+    public OperatorSource(Operator operator) {
         super(SourceType.Operator);
         if (operator == null) {
             throw new IllegalArgumentException("operator shouldn't be null");
         }
         this.operator = operator;
-        this.logicalTimeSpan = logicalTimeSpan;
     }
 
     public Operator getOperator() {
         return operator;
     }
 
-    @Override
-    public boolean hasTimestamp() {
-        return logicalTimeSpan == null;
-    }
-
-    @Override
-    public TimeSpan getLogicalTimeSpan() {
-        return logicalTimeSpan;
-    }
 }

@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared;
 
-public final class TimeSpan {
+public final class TimeRange {
 
     private final long beginTime;
 
@@ -28,11 +28,11 @@ public final class TimeSpan {
 
     private final boolean includeEndTime;
 
-    public TimeSpan(long beginTime, long endTime) {
-        this(beginTime, true, endTime, true);
+    public TimeRange(long beginTime, long endTime) {
+        this(beginTime, true, endTime, false);
     }
 
-    public TimeSpan(long beginTime, boolean includeBeginTime, long endTime, boolean includeEndTime) {
+    public TimeRange(long beginTime, boolean includeBeginTime, long endTime, boolean includeEndTime) {
         this.beginTime = beginTime;
         this.includeBeginTime = includeBeginTime;
         this.endTime = endTime;
