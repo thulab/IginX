@@ -439,7 +439,7 @@ public class DefaultMetaManager implements IMetaManager {
                 }
                 if (isProposer && counter == getIginxList().size() - 1) {
                     // 将历史分片统计数据上传到 zookeeper
-                    storage.addInactiveFragmentStatistics(cache.getActiveFragmentStatistics());
+                    storage.addInactiveFragmentStatistics(cache.getActiveFragmentStatistics(), maxActiveFragmentEndTime.get());
 
                     storage.lockReshardCounter();
                     storage.resetReshardCounter();

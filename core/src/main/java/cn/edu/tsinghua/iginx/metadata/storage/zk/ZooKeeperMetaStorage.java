@@ -803,10 +803,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
         try {
             for (FragmentStatistics statistics : activeFragmentStatistics.values()) {
-                String path = INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + statistics.getTsInterval().toString() + "/" + statistics.getTimeInterval().getStartTime() + "-" + statistics.getTimeInterval().getEndTime();
+                String path = INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + endTime + "/" + statistics.getTsInterval().toString();
                 if (this.client.checkExists().forPath(path) == null) {
                     this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path, JsonUtils.toJson(statistics));
                 } else {

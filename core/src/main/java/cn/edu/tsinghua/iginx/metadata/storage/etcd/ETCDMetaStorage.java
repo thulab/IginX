@@ -719,7 +719,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException {
+    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
 
     }
 

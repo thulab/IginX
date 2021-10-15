@@ -89,7 +89,7 @@ public interface IMetaStorage {
 
     void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException;
 
-    void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics) throws MetaStorageException;
+    void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException;
 
     void releaseActiveFragmentStatistics() throws MetaStorageException;
 
