@@ -121,10 +121,10 @@ public class SQLSessionExample {
         for (int i = 0; i < size; i++) {
             builder.append(", ");
             builder.append("(");
-            builder.append((START_TIMESTAMP + i) + ", ");
-            builder.append(i + ", ");
-            builder.append((i + 1) + ", ");
-            builder.append("\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\", ");
+            builder.append(START_TIMESTAMP + i).append(", ");
+            builder.append(i).append(", ");
+            builder.append(i + 1).append(", ");
+            builder.append("\"").append(new String(RandomStringUtils.randomAlphanumeric(10).getBytes())).append("\", ");
             builder.append((i + 0.1));
             builder.append(")");
         }
