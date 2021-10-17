@@ -166,8 +166,8 @@ jobs:
           "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
