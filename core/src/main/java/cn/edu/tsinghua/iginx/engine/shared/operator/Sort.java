@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
-import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Sort extends AbstractUnaryOperator {
 

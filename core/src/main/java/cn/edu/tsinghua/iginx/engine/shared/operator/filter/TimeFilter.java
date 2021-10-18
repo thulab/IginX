@@ -16,28 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data;
+package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
-import javax.validation.constraints.NotNull;
+public class TimeFilter implements Filter {
 
-public abstract class AbstractSource implements Source {
 
-    private final SourceType type;
-
-    public AbstractSource(SourceType type) {
-        if (type == null) {
-            throw new IllegalArgumentException("source type shouldn't be null");
-        }
-        this.type = type;
-    }
-
-    public AbstractSource() {
-        this.type = SourceType.Unknown;
-    }
-
-    @Override
-    public SourceType getType() {
-        return type;
-    }
 
 }

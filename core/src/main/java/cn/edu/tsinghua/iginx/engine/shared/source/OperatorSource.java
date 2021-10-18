@@ -16,28 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.shared.source;
 
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
-import cn.edu.tsinghua.iginx.engine.shared.function.Function;
-import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-public class RowTransform extends AbstractUnaryOperator {
+public class OperatorSource extends AbstractSource {
 
-    private final Function function;
+    private final Operator operator;
 
-    public RowTransform(Source source, Function function) {
-        super(OperatorType.RowTransform, source);
-        if (function == null) {
-            throw new IllegalArgumentException("function shouldn't be null");
+    public OperatorSource(Operator operator) {
+        super(SourceType.Operator);
+        if (operator == null) {
+            throw new IllegalArgumentException("operator shouldn't be null");
         }
-        if (function.getMappingType() != MappingType.RowMapping) {
-            throw new IllegalArgumentException("function should be row mapping function");
-        }
-        this.function = function;
+        this.operator = operator;
     }
 
-    public Function getFunction() {
-        return function;
+    public Operator getOperator() {
+        return operator;
     }
+
 }

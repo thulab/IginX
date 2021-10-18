@@ -16,24 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data;
+package cn.edu.tsinghua.iginx.engine.shared.source;
 
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+public abstract class AbstractSource implements Source {
 
-public class OperatorSource extends AbstractSource {
+    private final SourceType type;
 
-    private final Operator operator;
-
-    public OperatorSource(Operator operator) {
-        super(SourceType.Operator);
-        if (operator == null) {
-            throw new IllegalArgumentException("operator shouldn't be null");
+    public AbstractSource(SourceType type) {
+        if (type == null) {
+            throw new IllegalArgumentException("source type shouldn't be null");
         }
-        this.operator = operator;
+        this.type = type;
     }
 
-    public Operator getOperator() {
-        return operator;
+    public AbstractSource() {
+        this.type = SourceType.Unknown;
+    }
+
+    @Override
+    public SourceType getType() {
+        return type;
     }
 
 }

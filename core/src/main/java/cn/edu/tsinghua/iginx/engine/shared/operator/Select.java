@@ -1,6 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-import cn.edu.tsinghua.iginx.engine.shared.data.Source;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 // TODO: 行选择方式 @WYL
 public class Select extends AbstractUnaryOperator {
