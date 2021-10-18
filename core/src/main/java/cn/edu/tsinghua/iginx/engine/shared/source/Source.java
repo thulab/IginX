@@ -16,13 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data;
+package cn.edu.tsinghua.iginx.engine.shared.source;
 
-public enum SourceType {
+public interface Source {
 
-    Unknown,
-
-    Fragment,
-    Operator,
+    SourceType getType();
 
 }

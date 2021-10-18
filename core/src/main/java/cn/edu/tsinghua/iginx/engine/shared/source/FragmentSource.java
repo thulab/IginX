@@ -16,28 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.shared.source;
 
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
-import cn.edu.tsinghua.iginx.engine.shared.function.Function;
-import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
-public class RowTransform extends AbstractUnaryOperator {
+public class FragmentSource extends AbstractSource {
 
-    private final Function function;
+    private final FragmentMeta fragment;
 
-    public RowTransform(Source source, Function function) {
-        super(OperatorType.RowTransform, source);
-        if (function == null) {
-            throw new IllegalArgumentException("function shouldn't be null");
+    public FragmentSource(FragmentMeta fragment) {
+        super(SourceType.Fragment);
+        if (fragment == null) {
+            throw new IllegalArgumentException("fragment shouldn't be null");
         }
-        if (function.getMappingType() != MappingType.RowMapping) {
-            throw new IllegalArgumentException("function should be row mapping function");
-        }
-        this.function = function;
+        this.fragment = fragment;
     }
 
-    public Function getFunction() {
-        return function;
+    public FragmentMeta getFragment() {
+        return fragment;
     }
+
 }

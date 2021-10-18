@@ -16,13 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+public interface Filter {
 
-public class Union extends AbstractBinaryOperator {
 
-    public Union(Source sourceA, Source sourceB) {
-        super(OperatorType.Union, sourceA, sourceB);
-    }
+
 }

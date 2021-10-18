@@ -16,14 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data;
+package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-/**
- * 用于标识操作符的输入：
- *  操作符的输入可能是数据源，可能是别的操作符，甚至还可能是网络
- */
-public interface Source {
-
-    SourceType getType();
-
+public interface Row {
 }

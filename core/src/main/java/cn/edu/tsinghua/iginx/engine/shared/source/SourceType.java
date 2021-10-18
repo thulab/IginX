@@ -16,24 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data;
+package cn.edu.tsinghua.iginx.engine.shared.source;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+public enum SourceType {
 
-public class FragmentSource extends AbstractSource {
+    Unknown,
 
-    private final FragmentMeta fragment;
-
-    public FragmentSource(FragmentMeta fragment) {
-        super(SourceType.Fragment);
-        if (fragment == null) {
-            throw new IllegalArgumentException("fragment shouldn't be null");
-        }
-        this.fragment = fragment;
-    }
-
-    public FragmentMeta getFragment() {
-        return fragment;
-    }
+    Fragment,
+    Operator,
 
 }
