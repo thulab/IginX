@@ -111,6 +111,8 @@ public class DefaultMetaManager implements IMetaManager {
     // 在重分片过程中，是否已经创建了存储单元
     private boolean hasCreatedStorageUnits = false;
 
+    private boolean needToCreateStorageUnits = false;
+
     private final Object terminateResharding = new Object();
 
     private DefaultMetaManager() {
@@ -182,7 +184,7 @@ public class DefaultMetaManager implements IMetaManager {
                                     storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
                                     cache.clearDeltaActiveFragmentStatistics();
                                     hasPushedStatistics = true;
-                                    logger.info("iginx node {}(proposer) add active fragment statistics during resharding", id);
+                                    logger.info("iginx node {}(proposer) add active fragment statistics", id);
                                 }
                             }
                         } else {
@@ -260,6 +262,9 @@ public class DefaultMetaManager implements IMetaManager {
             if (!cache.hasStorageUnit()) {
                 return;
             }
+            if (isResharding) {
+                needToCreateStorageUnits = true;
+            }
             StorageUnitMeta originStorageUnitMeta = cache.getStorageUnit(storageUnitId);
             if (originStorageUnitMeta == null) {
                 if (!storageUnit.isMaster()) { // 需要加入到主节点的子节点列表中
@@ -302,7 +307,7 @@ public class DefaultMetaManager implements IMetaManager {
                     if (isResharding && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
                         hasCreatedStorageUnits = true;
                         if (hasCreatedFragments) {
-                            logger.info("iginx node {} increment reshard counter during resharding", id);
+                            logger.info("iginx node {} increment reshard counter", id);
                             storage.lockReshardCounter();
                             storage.incrementReshardCounter();
                             storage.releaseReshardCounter();
@@ -342,6 +347,9 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addReshardFragment(fragment);
                 return;
             }
+            if (isResharding && !needToCreateStorageUnits) {
+                hasCreatedStorageUnits = true;
+            }
             createFragment(cache.getStorageUnit(fragment.getMasterStorageUnitId()), fragment, create);
         });
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = storage.loadFragment();
@@ -376,7 +384,7 @@ public class DefaultMetaManager implements IMetaManager {
                         hasCommittedCreatingTask = true;
                         IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
                                 .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
-                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.get());
+                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.addAndGet(ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
                         logger.info("iginx node {}(proposer) add fragments: {}", id, fragmentsAndStorageUnits.k);
                         logger.info("iginx node {}(proposer) add storage units: {}", id, fragmentsAndStorageUnits.v);
                         createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
@@ -402,14 +410,14 @@ public class DefaultMetaManager implements IMetaManager {
                     storage.releaseActiveFragmentStatistics();
                     cache.clearDeltaActiveFragmentStatistics();
                     hasPushedStatistics = true;
-                    logger.info("iginx node {} add active fragment statistics during resharding", id);
+                    logger.info("iginx node {} add active fragment statistics", id);
                 }
                 if (!isResharding) {
                     if (isProposer) {
                         storage.lockActiveFragmentStatistics();
-                        storage.clearActiveFragmentStatistics();
+                        storage.removeActiveFragmentStatistics();
                         storage.releaseActiveFragmentStatistics();
-                        logger.info("iginx node {}(proposer) clear active fragment statistics", id);
+                        logger.info("iginx node {}(proposer) remove active fragment statistics", id);
                         logger.info("iginx node {}(proposer) finish to reshard", id);
                     }
                     lastReshardTime.set(System.currentTimeMillis());
@@ -418,6 +426,7 @@ public class DefaultMetaManager implements IMetaManager {
                     hasCreatedStorageUnits = false;
                     hasPushedStatistics = false;
                     hasCommittedCreatingTask = false;
+                    needToCreateStorageUnits = false;
                     statisticsCounter.set(0);
                     cache.clearActiveFragmentStatistics();
                     releaseWaitingReshardThreads();
@@ -562,6 +571,7 @@ public class DefaultMetaManager implements IMetaManager {
             storage.lockStorageUnit();
 
             Map<String, StorageUnitMeta> fakeIdToStorageUnit = new HashMap<>(); // 假名翻译工具
+
             for (StorageUnitMeta masterStorageUnit : storageUnits) {
                 masterStorageUnit.setCreatedBy(id);
                 String fakeName = masterStorageUnit.getId();
@@ -581,6 +591,9 @@ public class DefaultMetaManager implements IMetaManager {
                     fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);
                 }
             }
+            if (storageUnits.isEmpty()) {
+                hasCreatedStorageUnits = true;
+            }
 
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta : latestFragments.values()) {
@@ -595,7 +608,12 @@ public class DefaultMetaManager implements IMetaManager {
             for (FragmentMeta fragmentMeta : fragments) {
                 fragmentMeta.setCreatedBy(id);
                 fragmentMeta.setInitialFragment(false);
-                StorageUnitMeta storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
+                StorageUnitMeta storageUnit;
+                if (storageUnits == null || storageUnits.isEmpty()) {
+                    storageUnit = cache.getStorageUnit(fragmentMeta.getMasterStorageUnitId());
+                } else {
+                    storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
+                }
                 if (storageUnit.isMaster()) {
                     fragmentMeta.setMasterStorageUnit(storageUnit);
                 } else {
@@ -896,9 +914,9 @@ public class DefaultMetaManager implements IMetaManager {
         return isResharding;
     }
 
-    private void updateMaxActiveFragmentEndTime(Collection<FragmentStatistics> statisticsList) {
+    public void updateMaxActiveFragmentEndTime(Collection<FragmentStatistics> statisticsList) {
         for (FragmentStatistics statistics: statisticsList) {
-            maxActiveFragmentEndTime.getAndUpdate(e -> Math.max(e, statistics.getTimeInterval().getEndTime()));
+            maxActiveFragmentEndTime.getAndUpdate(e -> Math.max(e, statistics.getTimeInterval().getEndTime() + ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
         }
     }
 
@@ -922,7 +940,7 @@ public class DefaultMetaManager implements IMetaManager {
                 if (isResharding && fragment.isLastOfBatch() && !hasCreatedFragments) {
                     hasCreatedFragments = true;
                     if (hasCreatedStorageUnits) {
-                        logger.info("iginx node {} increment reshard counter during resharding", id);
+                        logger.info("iginx node {} increment reshard counter", id);
                         storage.lockReshardCounter();
                         storage.incrementReshardCounter();
                         storage.releaseReshardCounter();

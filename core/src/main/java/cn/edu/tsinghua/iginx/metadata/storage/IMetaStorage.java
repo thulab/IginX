@@ -93,7 +93,7 @@ public interface IMetaStorage {
 
     void releaseActiveFragmentStatistics() throws MetaStorageException;
 
-    void clearActiveFragmentStatistics() throws MetaStorageException;
+    void removeActiveFragmentStatistics() throws MetaStorageException;
 
     void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook);
 

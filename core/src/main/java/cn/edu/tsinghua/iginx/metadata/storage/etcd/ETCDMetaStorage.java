@@ -729,7 +729,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void clearActiveFragmentStatistics() throws MetaStorageException {
+    public void removeActiveFragmentStatistics() throws MetaStorageException {
 
     }
 

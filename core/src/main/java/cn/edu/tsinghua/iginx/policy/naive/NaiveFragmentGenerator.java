@@ -203,30 +203,50 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime) {
+        // 无新增 storage unit
         List<FragmentMeta> fragments = new ArrayList<>();
         List<StorageUnitMeta> storageUnits = new ArrayList<>();
         Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
         for (FragmentMeta oldFragment : latestFragments.values()) {
             StorageUnitMeta masterStorageUnit = iMetaManager.getStorageUnit(oldFragment.getMasterStorageUnitId());
-            String masterId = RandomStringUtils.randomAlphanumeric(16);
-            StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, masterStorageUnit.getStorageEngineId(), masterId, true);
-            for (StorageUnitMeta replica : masterStorageUnit.getReplicas()) {
-                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), replica.getStorageEngineId(), masterId, false));
-            }
-            storageUnits.add(storageUnit);
-
             FragmentMeta newFragment = new FragmentMeta(
                     oldFragment.getTsInterval().getStartTimeSeries(),
                     oldFragment.getTsInterval().getEndTimeSeries(),
                     startTime,
                     Long.MAX_VALUE,
-                    masterId
+                    masterStorageUnit
             );
             newFragment.setInitialFragment(false);
             fragments.add(newFragment);
         }
         fragments.get(fragments.size() - 1).setLastOfBatch(true);
-        storageUnits.get(storageUnits.size() - 1).setLastOfBatch(true);
+
+//        // 有新增 storage unit
+//        List<FragmentMeta> fragments = new ArrayList<>();
+//        List<StorageUnitMeta> storageUnits = new ArrayList<>();
+//        Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
+//        for (FragmentMeta oldFragment : latestFragments.values()) {
+//            StorageUnitMeta masterStorageUnit = iMetaManager.getStorageUnit(oldFragment.getMasterStorageUnitId());
+//            String masterId = RandomStringUtils.randomAlphanumeric(16);
+//            StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, masterStorageUnit.getStorageEngineId(), masterId, true);
+//            for (StorageUnitMeta replica : masterStorageUnit.getReplicas()) {
+//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), replica.getStorageEngineId(), masterId, false));
+//            }
+//            storageUnits.add(storageUnit);
+//
+//            FragmentMeta newFragment = new FragmentMeta(
+//                    oldFragment.getTsInterval().getStartTimeSeries(),
+//                    oldFragment.getTsInterval().getEndTimeSeries(),
+//                    startTime,
+//                    Long.MAX_VALUE,
+//                    masterId
+//            );
+//            newFragment.setInitialFragment(false);
+//            fragments.add(newFragment);
+//        }
+//        fragments.get(fragments.size() - 1).setLastOfBatch(true);
+//        storageUnits.get(storageUnits.size() - 1).setLastOfBatch(true);
+
         // TODO 利用 FragmentStatistics
 //        for (Map.Entry<FragmentMeta, FragmentStatistics> entry : iMetaManager.getActiveFragmentStatistics().entrySet()) {
 //            FragmentMeta fragment = entry.getKey();

@@ -796,9 +796,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
-                    .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE + id + "/update", JsonUtils.toJson(deltaActiveFragmentStatistics));
+                    .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE + id + "/add", JsonUtils.toJson(deltaActiveFragmentStatistics));
         } catch (Exception e) {
-            throw new MetaStorageException("get error when adding or updating active fragment statistics", e);
+            throw new MetaStorageException("get error when adding active fragment statistics", e);
         }
     }
 
@@ -824,7 +824,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void clearActiveFragmentStatistics() throws MetaStorageException {
+    public void removeActiveFragmentStatistics() throws MetaStorageException {
         try {
             if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) != null) {
                 this.client.delete().deletingChildrenIfNeeded().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);

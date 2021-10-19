@@ -133,6 +133,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
                 return insertColumnRecordsPlans;
             case InsertNonAlignedColumnRecords:
@@ -162,6 +163,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
                 return insertNonAlignedColumnRecordsPlans;
             case InsertRowRecords:
@@ -190,6 +192,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
                 return insertRowRecordsPlans;
             case InsertNonAlignedRowRecords:
@@ -218,6 +221,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         statisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
                 DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
                 return insertNonAlignedRowRecordsPlans;
             case DeleteDataInColumns:
