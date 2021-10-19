@@ -537,9 +537,16 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         } else { // 删除序列
             try {
                 for (String path : plan.getPaths()) {
-                    sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, plan.getStorageUnit().getId() + "." + path));
+                    try {
+                        sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, plan.getStorageUnit().getId() + "." + path));
+                    } catch (StatementExecutionException e) {
+                        if (e.getMessage().endsWith("does not exist;")) { // IoTDB 0.12 版本删除不存在的时间序列也会报错
+                            continue;
+                        }
+                        logger.error(e.getMessage());
+                    }
                 }
-            } catch (IoTDBConnectionException | StatementExecutionException e) {
+            } catch (IoTDBConnectionException e) {
                 logger.error(e.getMessage());
                 return new NonDataPlanExecuteResult(FAILURE, plan);
             }
