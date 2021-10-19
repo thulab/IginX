@@ -35,7 +35,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run IoTDB11
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
@@ -46,7 +46,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBSessionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDB11SessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -60,6 +60,7 @@ jobs:
         java: [ 8 ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
+    needs: IoTDB11-Test
     env:
       VERSION: 0.4.0-SNAPSHOT
     steps:
@@ -78,7 +79,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12
+      - name: Run IoTDB12 and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
@@ -89,7 +90,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBSessionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -103,6 +104,7 @@ jobs:
         java: [ 8 ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
+    needs: [IoTDB11-Test, IoTDB12-Test]
     env:
       VERSION: 0.4.0-SNAPSHOT
     steps:
@@ -121,7 +123,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run InfluxDB
+      - name: Run InfluxDB and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
