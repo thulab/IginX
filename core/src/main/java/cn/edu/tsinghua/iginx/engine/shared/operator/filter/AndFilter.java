@@ -18,5 +18,27 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
-public class AndFilter {
+public class AndFilter implements Filter {
+
+    private final Filter subFilterA;
+
+    private final Filter subFilterB;
+
+    public AndFilter(Filter subFilterA, Filter subFilterB) {
+        this.subFilterA = subFilterA;
+        this.subFilterB = subFilterB;
+    }
+
+    public Filter getSubFilterA() {
+        return subFilterA;
+    }
+
+    public Filter getSubFilterB() {
+        return subFilterB;
+    }
+
+    @Override
+    public FilterType getType() {
+        return FilterType.And;
+    }
 }

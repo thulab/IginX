@@ -20,6 +20,6 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public interface Filter {
 
-
+    FilterType getType();
 
 }

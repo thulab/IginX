@@ -18,5 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-public interface Row {
+public class Row {
+
+    private Object[] values;
+
 }

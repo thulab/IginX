@@ -16,19 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
+package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-public enum FilterType {
+import java.util.Iterator;
 
-    Time,
-    Value,
+public interface RowStream extends Iterator<Row> {
 
-    And,
-    Or,
-    Not;
 
-    public static boolean isCompoundFilter(FilterType filterType) {
-        return filterType != Time && filterType != Value;
-    }
 
 }

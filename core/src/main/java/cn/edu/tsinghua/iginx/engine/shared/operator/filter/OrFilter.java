@@ -19,4 +19,19 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class OrFilter implements Filter {
+
+    private final Filter subFilter;
+
+    public OrFilter(Filter subFilter) {
+        this.subFilter = subFilter;
+    }
+
+    public Filter getSubFilter() {
+        return subFilter;
+    }
+
+    @Override
+    public FilterType getType() {
+        return FilterType.Or;
+    }
 }

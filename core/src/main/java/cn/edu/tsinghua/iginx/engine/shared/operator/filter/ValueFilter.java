@@ -19,4 +19,29 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class ValueFilter implements Filter {
+
+    private final Op op;
+
+    private final Value value;
+
+    public ValueFilter(Op op, Value value) {
+        this.op = op;
+        this.value = value;
+    }
+
+    public Op getOp() {
+        return op;
+    }
+
+    public Value getValue() {
+        return value;
+    }
+
+    @Override
+    public FilterType getType() {
+        return FilterType.Value;
+    }
+
+
+
 }

@@ -18,17 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
-public enum FilterType {
+public enum Op {
 
-    Time,
-    Value,
-
-    And,
-    Or,
-    Not;
-
-    public static boolean isCompoundFilter(FilterType filterType) {
-        return filterType != Time && filterType != Value;
-    }
+    GE,
+    G,
+    LE,
+    L,
+    E;
 
 }
