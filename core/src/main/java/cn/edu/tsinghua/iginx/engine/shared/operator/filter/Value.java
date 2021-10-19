@@ -18,17 +18,24 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
-public enum FilterType {
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-    Time,
-    Value,
+public class Value {
 
-    And,
-    Or,
-    Not;
+    private DataType dataType;
 
-    public static boolean isCompoundFilter(FilterType filterType) {
-        return filterType != Time && filterType != Value;
-    }
+    private boolean boolV;
+
+    private int intV;
+
+    private long longV;
+
+    private float floatV;
+
+    private double doubleV;
+
+    private String textV;
+
+
 
 }

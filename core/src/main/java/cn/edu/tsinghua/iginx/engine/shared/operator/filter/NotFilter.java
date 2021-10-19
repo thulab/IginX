@@ -19,4 +19,20 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class NotFilter implements Filter {
+
+    private final Filter subFilter;
+
+    public NotFilter(Filter subFilter) {
+        this.subFilter = subFilter;
+    }
+
+    public Filter getSubFilter() {
+        return subFilter;
+    }
+
+    @Override
+    public FilterType getType() {
+        return FilterType.Not;
+    }
+
 }
