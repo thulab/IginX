@@ -435,6 +435,27 @@ public class SQLSessionIT {
     }
 
     @Test
+    public void testDeletePath() {
+        String deletePath = "DELETE PATH us.d1.s2, us.d1.s4";
+        execute(deletePath);
+
+        String showTimeSeries = "SHOW TIME SERIES;";
+        String excepted = "Time series:\n" +
+                "+--------+--------+\n" +
+                "|    Path|DataType|\n" +
+                "+--------+--------+\n" +
+                "|us.d1.s1|    LONG|\n" +
+                "|us.d1.s3|  BINARY|\n" +
+                "+--------+--------+\n" +
+                "Total line number = 2\n";
+        executeAndCompare(showTimeSeries, excepted);
+
+        String countPoints = "COUNT POINTS";
+        excepted = "Points num: 30000\n";
+        executeAndCompare(countPoints, excepted);
+    }
+
+    @Test
     public void testClearData() {
         String clearData = "CLEAR DATA;";
         execute(clearData);

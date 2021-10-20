@@ -7,6 +7,7 @@ sqlStatement
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
+    | DELETE PATH path (COMMA path)* #deletePathStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
@@ -184,6 +185,7 @@ nodeName
     | REPLICA
     | IOTDB
     | INFLUXDB
+    | PATH
     ;
 
 ip
@@ -387,6 +389,10 @@ CLEAR
 
 SERIES
     : S E R I E S
+    ;
+
+PATH
+    : P A T H
     ;
 
 DESC

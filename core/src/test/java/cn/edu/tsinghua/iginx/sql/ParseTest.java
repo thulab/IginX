@@ -1,12 +1,7 @@
 package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.operator.AddStorageEngineOperator;
-import cn.edu.tsinghua.iginx.sql.operator.DeleteOperator;
-import cn.edu.tsinghua.iginx.sql.operator.InsertOperator;
-import cn.edu.tsinghua.iginx.sql.operator.Operator;
-import cn.edu.tsinghua.iginx.sql.operator.SelectOperator;
-import cn.edu.tsinghua.iginx.sql.operator.ShowReplicationOperator;
+import cn.edu.tsinghua.iginx.sql.operator.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import org.antlr.v4.runtime.CharStreams;
@@ -31,8 +26,7 @@ public class ParseTest {
         SqlParser parser = new SqlParser(tokens);
         IginXSqlVisitor visitor = new IginXSqlVisitor();
         ParseTree tree = parser.sqlStatement();
-        Operator operator = visitor.visit(tree);
-        return operator;
+        return visitor.visit(tree);
     }
 
     @Test
@@ -89,10 +83,10 @@ public class ParseTest {
 
         assertEquals("a.b.d == \"abc\" || a.b.c >= \"666\" || !(a.b.e < 10 && !(a.b.f < 10))", op.getBooleanExpression());
 
-        assertEquals(1670833102000l, op.getStartTime());
-        assertEquals(1670833104000l, op.getEndTime());
+        assertEquals(1670833102000L, op.getStartTime());
+        assertEquals(1670833104000L, op.getEndTime());
 
-        assertEquals(1000l, op.getPrecision());
+        assertEquals(1000L, op.getPrecision());
     }
 
     @Test
@@ -140,6 +134,14 @@ public class ParseTest {
 
         assertEquals(1627464728862L, op.getStartTime());
         assertEquals(1670833104000L, op.getEndTime());
+    }
+
+    @Test
+    public void testParseDeletePath() {
+        String deletePathStr = "DELETE PATH a.b.c, a.b.d;";
+        DeletePathOperator op = (DeletePathOperator) buildOperator(deletePathStr);
+        List<String> paths = Arrays.asList("a.b.c", "a.b.d");
+        assertEquals(paths, op.getPaths());
     }
 
     @Test
