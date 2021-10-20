@@ -137,9 +137,9 @@ public class ParseTest {
     }
 
     @Test
-    public void testParseDeletePath() {
-        String deletePathStr = "DELETE PATH a.b.c, a.b.d;";
-        DeletePathOperator op = (DeletePathOperator) buildOperator(deletePathStr);
+    public void testParseDeleteTimeSeries() {
+        String deleteTimeSeriesStr = "DELETE TIME SERIES a.b.c, a.b.d;";
+        DeleteTimeSeriesOperator op = (DeleteTimeSeriesOperator) buildOperator(deleteTimeSeriesStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, op.getPaths());
     }

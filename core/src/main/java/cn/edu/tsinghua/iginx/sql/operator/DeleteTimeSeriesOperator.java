@@ -9,12 +9,12 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeletePathOperator extends Operator {
+public class DeleteTimeSeriesOperator extends Operator {
 
     private List<String> paths;
 
-    public DeletePathOperator() {
-        this.operatorType = OperatorType.DELETE_PATH;
+    public DeleteTimeSeriesOperator() {
+        this.operatorType = OperatorType.DELETE_TIME_SERIES;
         paths = new ArrayList<>();
     }
 
@@ -30,6 +30,6 @@ public class DeletePathOperator extends Operator {
     public ExecuteSqlResp doOperation(long sessionId) {
         IginxWorker worker = IginxWorker.getInstance();
         DeleteColumnsReq req = new DeleteColumnsReq(sessionId, SortUtils.mergeAndSortPaths(paths));
-        return new ExecuteSqlResp(worker.deleteColumns(req), SqlType.DeletePath);
+        return new ExecuteSqlResp(worker.deleteColumns(req), SqlType.DeleteTimeSeries);
     }
 }

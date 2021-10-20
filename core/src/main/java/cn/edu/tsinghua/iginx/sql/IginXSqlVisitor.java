@@ -134,10 +134,10 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     }
 
     @Override
-    public Operator visitDeletePathStatement(SqlParser.DeletePathStatementContext ctx) {
-        DeletePathOperator deletePathOp = new DeletePathOperator();
-        ctx.path().stream().forEach(e -> deletePathOp.addPath(e.getText()));
-        return deletePathOp;
+    public Operator visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
+        DeleteTimeSeriesOperator deleteTimeSeriesOp = new DeleteTimeSeriesOperator();
+        ctx.path().stream().forEach(e -> deleteTimeSeriesOp.addPath(e.getText()));
+        return deleteTimeSeriesOp;
     }
 
     @Override

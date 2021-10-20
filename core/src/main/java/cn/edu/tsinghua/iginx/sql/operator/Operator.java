@@ -20,7 +20,7 @@ public abstract class Operator {
         SHOW_REPLICATION,
         COUNT_POINTS,
         CLEAR_DATA,
-        DELETE_PATH,
+        DELETE_TIME_SERIES,
         SHOW_TIME_SERIES,
         SHOW_CLUSTER_INFO
     }
