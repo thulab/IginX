@@ -323,7 +323,7 @@ public class IginxClient {
         List<List<String>> withNullCompleters = Arrays.asList(
                 Arrays.asList("insert", "into"),
                 Arrays.asList("delete", "from"),
-                Arrays.asList("delete", "path"),
+                Arrays.asList("delete", "time", "series"),
                 Arrays.asList("select"),
                 Arrays.asList("add", "storageengine"),
                 Arrays.asList("set", "timeunit", "in")
