@@ -60,7 +60,6 @@ jobs:
         java: [ 8 ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
-    needs: IoTDB11-Test
     env:
       VERSION: 0.4.0-SNAPSHOT
     steps:
@@ -104,7 +103,6 @@ jobs:
         java: [ 8 ]
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
-    needs: [IoTDB11-Test, IoTDB12-Test]
     env:
       VERSION: 0.4.0-SNAPSHOT
     steps:
