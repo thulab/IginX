@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +34,8 @@ public class SQLSessionExample {
     private static String lastQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, INF);";
     private static String countAll = "SELECT COUNT(*) FROM us.d1;";
 
-    private static String addStorageEnginesStr = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb11\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key: val\");";
+    private static String deleteTimeSeries = "DELETE TIME SERIES us.d1.s2, us.d1.s4;";
+    private static String addStorageEngines = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb11\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key: val\");";
 
     private static String countPoints = "COUNT POINTS;";
     private static String showReplication = "SHOW REPLICA NUMBER;";
@@ -73,6 +73,12 @@ public class SQLSessionExample {
         execute(delete, false);
         // 再次查询数据
         execute(simpleQuery, true);
+        // 删除序列
+        execute(deleteTimeSeries, false);
+        // 查询点数
+        execute(countPoints, true);
+        // 查询时间序列
+        execute(showTimeSeries, true);
         // 清空数据
         execute(clearData, false);
         // 查询点数

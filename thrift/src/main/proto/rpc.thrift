@@ -34,6 +34,7 @@ enum SqlType {
     AddStorageEngines,
     CountPoints,
     ClearData,
+    DeleteTimeSeries,
     ShowTimeSeries,
     ShowClusterInfo,
 }

@@ -7,6 +7,7 @@ sqlStatement
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
+    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
