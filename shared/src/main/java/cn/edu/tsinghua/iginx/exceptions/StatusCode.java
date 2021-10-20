@@ -28,7 +28,8 @@ public enum StatusCode {
     REDIRECT(300),
 
     SESSION_ERROR(400),
-    STATEMENT_EXECUTION_ERROR(401);
+    STATEMENT_EXECUTION_ERROR(401),
+    STATEMENT_PARSE_ERROR(402);
 
     private int statusCode;
 

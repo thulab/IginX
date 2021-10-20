@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.client;
 
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
@@ -293,6 +295,8 @@ public class IginxClient {
             } else {
                 System.out.println("success");
             }
+        } catch (SessionException | ExecutionException e) {
+            System.out.println(e.getMessage());
         } catch (Exception e) {
             System.out.println("encounter error when executing sql statement.");
         }
