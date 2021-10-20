@@ -435,6 +435,25 @@ public class SQLSessionIT {
     }
 
     @Test
+    public void testDeleteTimeSeries() {
+        String deleteTimeSeries = "DELETE TIME SERIES us.*";
+        execute(deleteTimeSeries);
+
+        String showTimeSeries = "SHOW TIME SERIES;";
+        String excepted = "Time series:\n" +
+                "+----+--------+\n" +
+                "|Path|DataType|\n" +
+                "+----+--------+\n" +
+                "+----+--------+\n" +
+                "Empty set.\n";
+        executeAndCompare(showTimeSeries, excepted);
+
+        String countPoints = "COUNT POINTS";
+        excepted = "Points num: 0\n";
+        executeAndCompare(countPoints, excepted);
+    }
+
+    @Test
     public void testClearData() {
         String clearData = "CLEAR DATA;";
         execute(clearData);
