@@ -58,7 +58,7 @@ public class SessionManager {
         if (userMeta == null) {
             throw new IllegalArgumentException("non-existed user: " + username);
         }
-        long sessionId = (username.hashCode() + SnowFlakeUtils.getInstance().nextId()) << 4;
+        long sessionId = (username.hashCode() + System.currentTimeMillis() + SnowFlakeUtils.getInstance().nextId()) << 4;
         for (AuthType auth : userMeta.getAuths()) {
             sessionId += (1L << auth.getValue());
         }

@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
-import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
+import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
@@ -49,15 +48,13 @@ public class DeleteOperator extends Operator {
 
     @Override
     public ExecuteSqlResp doOperation(long sessionId) {
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(
                 sessionId,
                 SortUtils.mergeAndSortPaths(paths),
                 startTime,
                 endTime
         );
-        DeleteDataInColumnsContext ctx = new DeleteDataInColumnsContext(req);
-        core.processRequest(ctx);
-        return new ExecuteSqlResp(ctx.getStatus(), SqlType.Delete);
+        return new ExecuteSqlResp(worker.deleteDataInColumns(req), SqlType.Delete);
     }
 }

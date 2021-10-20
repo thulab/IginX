@@ -144,6 +144,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
 
+    private static final String SHOW_STORAGE_GROUP = "SHOW STORAGE GROUP";
+
     private final Map<Long, SessionPool> sessionPools;
 
     public IoTDBPlanExecutor(List<StorageEngineMeta> storageEngineMetaList) {
@@ -514,20 +516,40 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     @Override
     public NonDataPlanExecuteResult syncExecuteDeleteColumnsPlan(DeleteColumnsPlan plan) {
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
-        try {
-            if (plan.getPaths().size() == 1 && plan.getPaths().get(0).equals("*")) {
-                sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, plan.getStorageUnit().getId()));
-            } else {
-                for (String path : plan.getPaths()) {
-                    sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, plan.getStorageUnit().getId() + "." + path));
+        if (plan.getPaths().size() == 1 && plan.getPaths().get(0).equals("*")) { // 删除存储组
+            try (SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_STORAGE_GROUP)) {
+                while(dataSet.hasNext()) {
+                    RowRecord record = dataSet.next();
+                    if (record == null) {
+                        continue;
+                    }
+                    String storageUnitId = record.getFields().get(0).getStringValue().substring(PREFIX.length());
+                    if (storageUnitId.equals(plan.getStorageUnit().getId())) {
+                        sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, plan.getStorageUnit().getId()));
+                        logger.info("delete storage unit: " + storageUnitId);
+                        break;
+                    }
                 }
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
             }
-        } catch (IoTDBConnectionException | StatementExecutionException e) {
-            if (e.getMessage().endsWith("does not exist;")) {
-                return new NonDataPlanExecuteResult(SUCCESS, plan);
+        } else { // 删除序列
+            try {
+                for (String path : plan.getPaths()) {
+                    try {
+                        sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, plan.getStorageUnit().getId() + "." + path));
+                    } catch (StatementExecutionException e) {
+                        if (e.getMessage().endsWith("does not exist;")) { // IoTDB 0.12 版本删除不存在的时间序列也会报错
+                            continue;
+                        }
+                        logger.error(e.getMessage());
+                    }
+                }
+            } catch (IoTDBConnectionException e) {
+                logger.error(e.getMessage());
+                return new NonDataPlanExecuteResult(FAILURE, plan);
             }
-            logger.error(e.getMessage());
-            return new NonDataPlanExecuteResult(FAILURE, plan);
         }
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -562,7 +584,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     if (rowRecord == null || rowRecord.getFields().isEmpty()) {
                         break;
                     }
-                    if (rowRecord.getFields().size() != 2) {
+                    if (rowRecord.getFields().size() != 3) {
                         break;
                     }
                     if (rowRecord.getFields().get(1) != null && !rowRecord.getFields().get(1).getStringValue().equals("null")) {

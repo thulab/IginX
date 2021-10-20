@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.AndExpressionContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.ConstantContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.DateExpressionContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.EngineTypeContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.ExpressionContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.InsertMultiValueContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.InsertValuesSpecContext;
@@ -116,7 +115,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         for (StorageEngineContext engine : engines) {
             String ip = engine.ip().getText();
             int port = Integer.parseInt(engine.port.getText());
-            String type = parseStorageEngineType(engine.engineType());
+            String typeStr = engine.engineType.getText().trim();
+            String type = typeStr.substring(typeStr.indexOf(SQLConstant.QUOTE) + 1, typeStr.lastIndexOf(SQLConstant.QUOTE));
             Map<String, String> extra = parseExtra(engine.extra);
             addStorageEngineOp.setEngines(new StorageEngine(ip, port, type, extra));
         }
@@ -241,10 +241,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             builder.append(ctx.constant().getText());
             return builder.toString();
         }
-    }
-
-    private String parseStorageEngineType(EngineTypeContext ctx) {
-        return ctx.getText().toLowerCase();
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

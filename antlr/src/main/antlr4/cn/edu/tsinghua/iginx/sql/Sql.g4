@@ -117,7 +117,7 @@ storageEngineSpec
     ;
 
 storageEngine
-    : LR_BRACKET ip COMMA port=INT COMMA engineType COMMA extra=stringLiteral RR_BRACKET
+    : LR_BRACKET ip COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
     ;
 
 timeInterval
@@ -188,11 +188,6 @@ nodeName
 
 ip
     : INT (DOT INT)*
-    ;
-
-engineType
-    : IOTDB
-    | INFLUXDB
     ;
 
 dateFormat

@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.mqtt;
 
+import cn.edu.tsinghua.iginx.auth.SessionManager;
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -49,8 +50,12 @@ public class PublishHandler extends AbstractInterceptHandler {
 
     private final IPayloadFormatter payloadFormat;
 
+    private final long sessionId;
+
     public PublishHandler(Config config) {
         payloadFormat = PayloadFormatManager.getInstance().getFormatter(config.getMqttPayloadFormatter());
+        // open session as root user
+        sessionId = SessionManager.getInstance().openSession(config.getUsername());
     }
 
     @Override
@@ -131,7 +136,7 @@ public class PublishHandler extends AbstractInterceptHandler {
 
         // 采用行接口写入数据
         InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
-        req.setSessionId(0L);
+        req.setSessionId(sessionId);
         req.setTimestamps(ByteUtils.getColumnByteBuffer(timestamps.toArray(), DataType.LONG));
         req.setPaths(paths);
         req.setDataTypeList(dataTypeList);
@@ -140,5 +145,6 @@ public class PublishHandler extends AbstractInterceptHandler {
 
         Status status = worker.insertNonAlignedRowRecords(req);
         logger.debug("event process result: {}", status);
+        msg.getPayload().release();
     }
 }
