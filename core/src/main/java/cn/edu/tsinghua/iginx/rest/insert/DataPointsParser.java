@@ -146,9 +146,7 @@ public class DataPointsParser {
                 needUpdate = true;
                 metricschema = new ConcurrentHashMap<>();
             }
-            Iterator<Map.Entry<String, String>> iter = metric.getTags().entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry<String, String> entry = iter.next();
+            for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
                     int pos = metricschema.size() + 1;
@@ -262,8 +260,9 @@ public class DataPointsParser {
                 return str.getBytes();
             case DOUBLE:
                 return Double.parseDouble(str);
+            default:
+                return null;
         }
-        return null;
     }
 
     DataType findType(List<String> values) {

@@ -119,14 +119,14 @@ public class QueryParser {
         if (timerange == null) {
             return null;
         }
-        JsonNode start_absolute = timerange.get("from");
+        JsonNode startAbsolute = timerange.get("from");
         JsonNode end_absolute = timerange.get("to");
 
-        if (start_absolute == null || end_absolute == null) {
+        if (startAbsolute == null || end_absolute == null) {
             return null;
         }
 
-        Long start = dealDateFormat(start_absolute.asText());
+        Long start = dealDateFormat(startAbsolute.asText());
         Long end = dealDateFormat(end_absolute.asText());
         ret.setStartAbsolute(start);
         ret.setEndAbsolute(end);
@@ -163,23 +163,8 @@ public class QueryParser {
             ret.setStartAbsolute(start_absolute.asLong());
             ret.setEndAbsolute(end_absolute.asLong());
         } else if (start_absolute != null) {
-            ret.setStartAbsolute(start_absolute.asLong());
-            JsonNode end_relative = node.get("end_relative");
-            if (end_relative == null) {
-                ret.setEndAbsolute(now);
-            }
-            else {
-                JsonNode value = end_relative.get("value");
-                if (value == null) {
-                    return null;
-                }
-                long v = value.asLong();
-                JsonNode unit = end_relative.get("unit");
-                if (unit == null) {
-                    return null;
-                }
-                Long time = transTimeFromString(unit.asText());
-                ret.setEndAbsolute(now - v * time);
+            if (setEndAbsolute(node, ret, start_absolute, now)) {
+                return null;
             }
         } else {
             ret.setEndAbsolute(end_absolute.asLong());
@@ -213,27 +198,54 @@ public class QueryParser {
         JsonNode metrics = node.get("metrics");
         if (metrics != null && metrics.isArray()) {
             for (JsonNode dpnode : metrics) {
-                QueryMetric ins = new QueryMetric();
-                JsonNode name = dpnode.get("name");
-                if (name != null) {
-                    ins.setName(name.asText());
-                }
-                JsonNode tags = dpnode.get("tags");
-                if (tags != null) {
-                    Iterator<String> fieldNames = tags.fieldNames();
-                    Iterator<JsonNode> elements = tags.elements();
-                    while (elements.hasNext() && fieldNames.hasNext()) {
-                        String key = fieldNames.next();
-                        for (JsonNode valuenode : elements.next()) {
-                            ins.addTag(key, valuenode.asText());
-                        }
-                    }
-                }
+                QueryMetric ins = setQueryMetric(dpnode);
                 addAggregators(ins, dpnode);
                 ret.addQueryMetrics(ins);
             }
         }
         return ret;
+    }
+
+    private QueryMetric setQueryMetric(JsonNode dpnode) {
+        QueryMetric ret = new QueryMetric();
+        JsonNode name = dpnode.get("name");
+        if (name != null) {
+            ret.setName(name.asText());
+        }
+        JsonNode tags = dpnode.get("tags");
+        if (tags != null) {
+            Iterator<String> fieldNames = tags.fieldNames();
+            Iterator<JsonNode> elements = tags.elements();
+            while (elements.hasNext() && fieldNames.hasNext()) {
+                String key = fieldNames.next();
+                for (JsonNode valuenode : elements.next()) {
+                    ret.addTag(key, valuenode.asText());
+                }
+            }
+        }
+        return ret;
+    }
+
+    private boolean setEndAbsolute(JsonNode node, Query ret, JsonNode start_absolute, long now) {
+        ret.setStartAbsolute(start_absolute.asLong());
+        JsonNode end_relative = node.get("end_relative");
+        if (end_relative == null) {
+            ret.setEndAbsolute(now);
+        }
+        else {
+            JsonNode value = end_relative.get("value");
+            if (value == null) {
+                return true;
+            }
+            long v = value.asLong();
+            JsonNode unit = end_relative.get("unit");
+            if (unit == null) {
+                return true;
+            }
+            Long time = transTimeFromString(unit.asText());
+            ret.setEndAbsolute(now - v * time);
+        }
+        return false;
     }
 
     private Query getAnnotationQuery(JsonNode node, boolean isGrafana) throws JsonProcessingException {
@@ -279,22 +291,7 @@ public class QueryParser {
                     }
                 }
             }
-            AnnotationLimit annotationLimit = new AnnotationLimit();
-            JsonNode category = query.get("category");
-            if (category != null) {
-                annotationLimit.setTag(category.asText());
-            }
-            JsonNode text = query.get("text");
-            if (text != null) {
-                annotationLimit.setText(text.asText());
-            }
-            JsonNode description = query.get("description");
-            if (description != null) {
-                annotationLimit.setTitle(description.asText());
-            }
-            ins.setAnnotationLimit(annotationLimit);
-            ins.setAnnotation(true);
-            ret.addQueryMetrics(ins);
+            setAnnotationLimit(ret, ins, query);
         } else {
             JsonNode start_absolute = node.get("start_absolute");
             JsonNode end_absolute = node.get("end_absolute");
@@ -306,23 +303,8 @@ public class QueryParser {
                 ret.setStartAbsolute(start_absolute.asLong());
                 ret.setEndAbsolute(end_absolute.asLong());
             } else if (start_absolute != null) {
-                ret.setStartAbsolute(start_absolute.asLong());
-                JsonNode end_relative = node.get("end_relative");
-                if (end_relative == null) {
-                    ret.setEndAbsolute(now);
-                }
-                else {
-                    JsonNode value = end_relative.get("value");
-                    if (value == null) {
-                        return null;
-                    }
-                    long v = value.asLong();
-                    JsonNode unit = end_relative.get("unit");
-                    if (unit == null) {
-                        return null;
-                    }
-                    Long time = transTimeFromString(unit.asText());
-                    ret.setEndAbsolute(now - v * time);
+                if (setEndAbsolute(node, ret, start_absolute, now)) {
+                    return null;
                 }
             } else {
                 ret.setEndAbsolute(end_absolute.asLong());
@@ -347,42 +329,31 @@ public class QueryParser {
             JsonNode metrics = node.get("metrics");
             if (metrics != null && metrics.isArray()) {
                 for (JsonNode dpnode : metrics) {
-                    QueryMetric ins = new QueryMetric();
-                    JsonNode name = dpnode.get("name");
-                    if (name != null) {
-                        ins.setName(name.asText());
-                    }
-                    JsonNode tags = dpnode.get("tags");
-                    if (tags != null) {
-                        Iterator<String> fieldNames = tags.fieldNames();
-                        Iterator<JsonNode> elements = tags.elements();
-                        while (elements.hasNext() && fieldNames.hasNext()) {
-                            String key = fieldNames.next();
-                            for (JsonNode valuenode : elements.next()) {
-                                ins.addTag(key, valuenode.asText());
-                            }
-                        }
-                    }
-                    AnnotationLimit annotationLimit = new AnnotationLimit();
-                    JsonNode category = dpnode.get("category");
-                    if (category != null) {
-                        annotationLimit.setTag(category.asText());
-                    }
-                    JsonNode text = dpnode.get("text");
-                    if (text != null) {
-                        annotationLimit.setText(text.asText());
-                    }
-                    JsonNode description = dpnode.get("description");
-                    if (description != null) {
-                        annotationLimit.setTitle(description.asText());
-                    }
-                    ins.setAnnotationLimit(annotationLimit);
-                    ins.setAnnotation(true);
-                    ret.addQueryMetrics(ins);
+                    QueryMetric ins = setQueryMetric(dpnode);
+                    setAnnotationLimit(ret, ins, dpnode);
                 }
             }
         }
         return ret;
+    }
+
+    private void setAnnotationLimit(Query ret, QueryMetric ins, JsonNode query) {
+        AnnotationLimit annotationLimit = new AnnotationLimit();
+        JsonNode category = query.get("category");
+        if (category != null) {
+            annotationLimit.setTag(category.asText());
+        }
+        JsonNode text = query.get("text");
+        if (text != null) {
+            annotationLimit.setText(text.asText());
+        }
+        JsonNode description = query.get("description");
+        if (description != null) {
+            annotationLimit.setTitle(description.asText());
+        }
+        ins.setAnnotationLimit(annotationLimit);
+        ins.setAnnotation(true);
+        ret.addQueryMetrics(ins);
     }
 
 

@@ -89,74 +89,28 @@ public class QueryResult {
             for (int i = 1; i < siz; i++) {
                 if (values.get(i).isEqual(values.get(i - 1))) {
                     if (values.get(i - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
-                        ret.append("{");
-                        ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).getText()));
-                        ret.append(String.format("\"title\": \"%s\",", values.get(i - 1).getTitle()));
-                        ret.append("\"isRegion\": true,");
-                        ret.append(String.format("\"time\": \"%d\",", values.get(now).getTimestamp()));
-                        ret.append(String.format("\"timeEnd\": \"%d\",", values.get(i - 1).getTimestamp()));
-                        ret.append("\"tags\": [");
-                        for (String tag : values.get(i - 1).getTags()) {
-                            ret.append(String.format("\"%s\",", tag));
-                        }
-                        if (ret.charAt(ret.length() - 1) == ',') {
-                            ret.deleteCharAt(ret.length() - 1);
-                        }
+                        buildGrafanaString(ret, values, i, now);
                         ret.append("]},");
                     }
                     now = i;
                 }
             }
             if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
-                ret.append("{");
-                ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).getText()));
-                ret.append(String.format("\"title\": \"%s\",", values.get(siz - 1).getTitle()));
-                ret.append("\"isRegion\": true,");
-                ret.append(String.format("\"time\": \"%d\",", values.get(now).getTimestamp()));
-                ret.append(String.format("\"timeEnd\": \"%d\",", values.get(siz - 1).getTimestamp()));
-                ret.append("\"tags\": [");
-                for (String tag : values.get(siz - 1).getTags()) {
-                    ret.append(String.format("\"%s\",", tag));
-                }
-                if (ret.charAt(ret.length() - 1) == ',') {
-                    ret.deleteCharAt(ret.length() - 1);
-                }
+                buildGrafanaString(ret, values, siz, now);
                 ret.append("]}");
             }
         } else {
             for (int i = 1; i < siz; i++) {
                 if (values.get(i).isEqual(values.get(i - 1))) {
                     if (values.get(i - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
-                        ret.append("{");
-                        ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).getText()));
-                        ret.append(String.format("\"description\": \"%s\",", values.get(i - 1).getTitle()));
-                        ret.append(String.format("\"time\": \"%d\",", values.get(now).getTimestamp()));
-                        ret.append(String.format("\"timeEnd\": \"%d\",", values.get(i - 1).getTimestamp()));
-                        ret.append("\"category\": [");
-                        for (String tag : values.get(i - 1).getTags()) {
-                            ret.append(String.format("\"%s\",", tag));
-                        }
-                        if (ret.charAt(ret.length() - 1) == ',') {
-                            ret.deleteCharAt(ret.length() - 1);
-                        }
+                        buildAnnotationString(ret, values, now, i);
                         ret.append("]},");
                     }
                     now = i;
                 }
             }
             if (values.get(siz - 1).match(queryMetrics.get(0).getAnnotationLimit())) {
-                ret.append("{");
-                ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).getText()));
-                ret.append(String.format("\"description\": \"%s\",", values.get(siz - 1).getTitle()));
-                ret.append(String.format("\"time\": \"%d\",", values.get(now).getTimestamp()));
-                ret.append(String.format("\"timeEnd\": \"%d\",", values.get(siz - 1).getTimestamp()));
-                ret.append("\"category\": [");
-                for (String tag : values.get(siz - 1).getTags()) {
-                    ret.append(String.format("\"%s\",", tag));
-                }
-                if (ret.charAt(ret.length() - 1) == ',') {
-                    ret.deleteCharAt(ret.length() - 1);
-                }
+                buildAnnotationString(ret, values, now, siz);
                 ret.append("]}");
             }
         }
@@ -164,6 +118,37 @@ public class QueryResult {
             ret.deleteCharAt(ret.length() - 1);
         }
         return ret.toString();
+    }
+
+    private void buildAnnotationString(StringBuilder ret, List<Annotation> values, int now, int i) {
+        ret.append("{");
+        ret.append(String.format("\"text\": \"%s\",", values.get(i - 1).getText()));
+        ret.append(String.format("\"description\": \"%s\",", values.get(i - 1).getTitle()));
+        ret.append(String.format("\"time\": \"%d\",", values.get(now).getTimestamp()));
+        ret.append(String.format("\"timeEnd\": \"%d\",", values.get(i - 1).getTimestamp()));
+        ret.append("\"category\": [");
+        for (String tag : values.get(i - 1).getTags()) {
+            ret.append(String.format("\"%s\",", tag));
+        }
+        if (ret.charAt(ret.length() - 1) == ',') {
+            ret.deleteCharAt(ret.length() - 1);
+        }
+    }
+
+    private void buildGrafanaString(StringBuilder ret, List<Annotation> values, int siz, int now) {
+        ret.append("{");
+        ret.append(String.format("\"text\": \"%s\",", values.get(siz - 1).getText()));
+        ret.append(String.format("\"title\": \"%s\",", values.get(siz - 1).getTitle()));
+        ret.append("\"isRegion\": true,");
+        ret.append(String.format("\"time\": \"%d\",", values.get(now).getTimestamp()));
+        ret.append(String.format("\"timeEnd\": \"%d\",", values.get(siz - 1).getTimestamp()));
+        ret.append("\"tags\": [");
+        for (String tag : values.get(siz - 1).getTags()) {
+            ret.append(String.format("\"%s\",", tag));
+        }
+        if (ret.charAt(ret.length() - 1) == ',') {
+            ret.deleteCharAt(ret.length() - 1);
+        }
     }
 
     private String nameToString(int num) {
