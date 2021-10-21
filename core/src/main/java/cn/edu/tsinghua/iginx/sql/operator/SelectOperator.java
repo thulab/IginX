@@ -155,7 +155,7 @@ public class SelectOperator extends Operator {
     }
 
     public void setSelectedFuncsAndPaths(String func, String path) {
-        String fullPath = fromPath.equals("") ? path : fromPath + SQLConstant.DOT + path;
+        String fullPath = fromPath + SQLConstant.DOT + path;
         this.selectedFuncsAndPaths.add(new Pair<>(func, fullPath));
         this.funcTypeSet.add(str2FuncType(func));
     }
