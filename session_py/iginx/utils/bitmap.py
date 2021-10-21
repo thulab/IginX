@@ -15,6 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+import struct
 
 class Bitmap(object):
     BIT_UTIL = [1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7]
@@ -29,9 +30,13 @@ class Bitmap(object):
             self.bits = bits
 
 
-    def mark(self, position):
+    def set(self, position):
         self.bits[position // 8] |= Bitmap.BIT_UTIL[position % 8]
 
 
     def get(self, position):
         return (self.bits[position // 8] & Bitmap.BIT_UTIL[position % 8]) == Bitmap.BIT_UTIL[position % 8]
+
+
+    def get_bytes(self):
+        return self.bits

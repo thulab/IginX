@@ -50,6 +50,88 @@ def get_values_by_data_type(bytes, types):
     return values
 
 
+def row_values_to_bytes(values, types):
+    format_str_list = [">"]
+    values_to_be_packed = []
+    for value, type in zip(values, types):
+        if value is None:
+            continue
+        if type == DataType.BOOLEAN:
+            format_str_list.append("?")
+            values_to_be_packed.append(value)
+        elif type == DataType.INTEGER:
+            format_str_list.append("i")
+            values_to_be_packed.append(value)
+        elif type == DataType.LONG:
+            format_str_list.append("q")
+            values_to_be_packed.append(value)
+        elif type == DataType.FLOAT:
+            format_str_list.append("f")
+            values_to_be_packed.append(value)
+        elif type == DataType.DOUBLE:
+            format_str_list.append("d")
+            values_to_be_packed.append(value)
+        elif type == DataType.BINARY:
+            value_bytes = bytes(value, "utf-8")
+            format_str_list.append("i")
+            format_str_list.append(str(len(value_bytes)))
+            format_str_list.append("s")
+            values_to_be_packed.append(len(value_bytes))
+            values_to_be_packed.append(value_bytes)
+        else:
+            raise RuntimeError("unknown data type " + type)
+    format_str = "".join(format_str_list)
+    return struct.pack(format_str, *values_to_be_packed)
+
+
+def column_values_to_bytes(values, type):
+    format_str_list = [">"]
+    values_to_be_packed = []
+    for value in values:
+        if value is None:
+            continue
+        if type == DataType.BOOLEAN:
+            format_str_list.append("?")
+            values_to_be_packed.append(value)
+        elif type == DataType.INTEGER:
+            format_str_list.append("i")
+            values_to_be_packed.append(value)
+        elif type == DataType.LONG:
+            format_str_list.append("q")
+            values_to_be_packed.append(value)
+        elif type == DataType.FLOAT:
+            format_str_list.append("f")
+            values_to_be_packed.append(value)
+        elif type == DataType.DOUBLE:
+            format_str_list.append("d")
+            values_to_be_packed.append(value)
+        elif type == DataType.BINARY:
+            value_bytes = bytes(value, "utf-8")
+            format_str_list.append("i")
+            format_str_list.append(str(len(value_bytes)))
+            format_str_list.append("s")
+            values_to_be_packed.append(len(value_bytes))
+            values_to_be_packed.append(value_bytes)
+        else:
+            raise RuntimeError("unknown data type " + type)
+    format_str = "".join(format_str_list)
+    return struct.pack(format_str, *values_to_be_packed)
+
+
+def bitmap_to_bytes(values):
+    format_str_list = [">"]
+    values_to_be_packed = []
+    for i in range(len(values)):
+        format_str_list.append("c")
+        values_to_be_packed.append(bytes([values[i]]))
+    format_str = "".join(format_str_list)
+    return struct.pack(format_str, *values_to_be_packed)
+
+
+def timestamps_to_bytes(values):
+    return row_values_to_bytes(values, [DataType.LONG for i in range(len(values))])
+
+
 class BytesParser(object):
 
     def __init__(self, bytes):
