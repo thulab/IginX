@@ -202,7 +202,12 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             }
             if (ctx.orderByClause().path() != null) {
                 String suffixPath = ctx.orderByClause().path().getText();
-                selectOp.setOrderByPath(selectOp.getFromPath() + SQLConstant.DOT + suffixPath);
+                String prefixPath = selectOp.getFromPath();
+                String orderByPath = prefixPath + SQLConstant.DOT + suffixPath;
+                if (orderByPath.contains("*")) {
+                    throw new SQLParserException(String.format("ORDER BY path '%s' has '*', which is not supported.", orderByPath));
+                }
+                selectOp.setOrderByPath(orderByPath);
             } else {
                 selectOp.setOrderByPath(SQLConstant.TIME);
             }
@@ -243,7 +248,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             return "!(" + parseOrExpression(ctx.orExpression(), selectOp) + ")";
         } else {
             StringBuilder builder = new StringBuilder();
-            builder.append(selectOp.getFromPath()).append(SQLConstant.DOT).append(ctx.path().getText()).append(" ");
+            String prefixPath = selectOp.getFromPath();
+            builder.append(prefixPath).append(SQLConstant.DOT).append(ctx.path().getText()).append(" ");
             builder.append(ctx.comparisonOperator().getText()).append(" ");
             builder.append(ctx.constant().getText());
             return builder.toString();

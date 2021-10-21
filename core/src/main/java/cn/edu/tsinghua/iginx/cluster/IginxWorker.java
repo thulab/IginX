@@ -43,6 +43,7 @@ import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
+import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -343,7 +344,9 @@ public class IginxWorker implements IService.Iface {
             Operator operator = visitor.visit(tree);
             return operator.doOperation(req.getSessionId());
         } catch (SQLParserException | ParseCancellationException e) {
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
+            StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
+            String errMsg = e.getMessage();
+            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.status(statusCode, errMsg), SqlType.Unknown);
             resp.setParseErrorMsg(e.getMessage());
             return resp;
         } catch (Exception e) {

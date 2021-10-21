@@ -116,9 +116,7 @@ public class SessionExecuteSqlResult {
             this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         }
 
-        if (resp.getType() == SqlType.DownsampleQuery) {
-            sortColumns();
-        }
+        sortColumns();
     }
 
     private List<List<Object>> parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
@@ -182,13 +180,13 @@ public class SessionExecuteSqlResult {
                 }
             }
         } else if (sqlType == SqlType.GetReplicaNum) {
-            result.add(new ArrayList<>(Arrays.asList("Replica num")));
-            result.add(new ArrayList<>(Arrays.asList(replicaNum + "")));
+            result.add(new ArrayList<>(Collections.singletonList("Replica num")));
+            result.add(new ArrayList<>(Collections.singletonList(replicaNum + "")));
         } else if (sqlType == SqlType.CountPoints) {
-            result.add(new ArrayList<>(Arrays.asList("Points num")));
-            result.add(new ArrayList<>(Arrays.asList(pointsNum + "")));
+            result.add(new ArrayList<>(Collections.singletonList("Points num")));
+            result.add(new ArrayList<>(Collections.singletonList(pointsNum + "")));
         } else {
-            result.add(new ArrayList<>(Arrays.asList("Empty set")));
+            result.add(new ArrayList<>(Collections.singletonList("Empty set")));
         }
         return result;
     }
