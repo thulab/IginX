@@ -42,6 +42,7 @@ from .thrift.rpc.ttypes import (
     InsertNonAlignedRowRecordsReq,
     InsertColumnRecordsReq,
     InsertNonAlignedColumnRecordsReq,
+    ExecuteSqlReq,
 
     AuthType,
     SqlType,
@@ -443,6 +444,12 @@ class Session(object):
         Session.verify_status(resp.status)
         return ClusterInfo(resp)
 
+
+    def execute_sql(self, statement):
+        req = ExecuteSqlReq(sessionId=self.__session_id, statement=statement)
+        resp = self.__client.executeSql(req)
+        Session.verify_status(resp.status)
+        # TODO:
 
     @staticmethod
     def verify_status(status):

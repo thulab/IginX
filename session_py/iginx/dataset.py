@@ -18,7 +18,7 @@
 from .utils.bitmap import Bitmap
 from .utils.byte_utils import get_long_array, get_values_by_data_type, BytesParser
 
-from .thrift.rpc.ttypes import DataType, AggregateType
+from .thrift.rpc.ttypes import DataType, SqlType, AggregateType, ExecuteSqlResp
 
 
 class Point(object):
@@ -166,3 +166,9 @@ class AggregateQueryDataSet(object):
                 value += str(v) + "\t"
             value += "\n"
         return value
+
+
+class SqlExecuteResult(object):
+
+    def __init__(self, resp=ExecuteSqlResp()):
+        self.__type = resp.type
