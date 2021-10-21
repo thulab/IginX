@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.RestUtils;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
@@ -49,12 +49,13 @@ public class QueryAggregatorAvg extends QueryAggregator {
                     int cnt = 0;
                     double sum = 0;
                     for (int i = 0; i < n; i++) {
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                                 sum += (double) sessionQueryDataSet.getValues().get(i).get(j);
                                 cnt += 1;
                                 datapoints += 1;
                             }
+                        }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
                                 RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), sum / cnt);
