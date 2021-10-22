@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,6 +42,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class DefaultMetaCache implements IMetaCache {
+
+    private static final Logger logger = LoggerFactory.getLogger(DefaultMetaCache.class);
 
     private static DefaultMetaCache INSTANCE = null;
 
@@ -209,7 +213,6 @@ public class DefaultMetaCache implements IMetaCache {
         } else {
             sortedFragmentMetaLists.add(left, pair);
         }
-
     }
 
     @Override

@@ -300,8 +300,8 @@ public class DefaultMetaManager implements IMetaManager {
                 for (FragmentMeta fragment : fragments) {
                     createFragment(storageUnit, fragment, true);
                 }
+                cache.removeReshardFragmentsByStorageUnitId(storageUnitId);
             }
-            cache.removeReshardFragmentsByStorageUnitId(storageUnitId);
             synchronized (terminateResharding) {
                 try {
                     if (isResharding && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
@@ -384,7 +384,7 @@ public class DefaultMetaManager implements IMetaManager {
                         hasCommittedCreatingTask = true;
                         IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
                                 .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
-                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.addAndGet(ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
+                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.get());
                         logger.info("iginx node {}(proposer) add fragments: {}", id, fragmentsAndStorageUnits.k);
                         logger.info("iginx node {}(proposer) add storage units: {}", id, fragmentsAndStorageUnits.v);
                         createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
@@ -410,15 +410,14 @@ public class DefaultMetaManager implements IMetaManager {
                     storage.releaseActiveFragmentStatistics();
                     cache.clearDeltaActiveFragmentStatistics();
                     hasPushedStatistics = true;
+                    logger.info("iginx node {} start to reshard", id);
                     logger.info("iginx node {} add active fragment statistics", id);
                 }
                 if (!isResharding) {
                     if (isProposer) {
-                        storage.lockActiveFragmentStatistics();
-                        storage.removeActiveFragmentStatistics();
-                        storage.releaseActiveFragmentStatistics();
-                        logger.info("iginx node {}(proposer) remove active fragment statistics", id);
                         logger.info("iginx node {}(proposer) finish to reshard", id);
+                    } else {
+                        logger.info("iginx node {} finish to reshard", id);
                     }
                     lastReshardTime.set(System.currentTimeMillis());
                     isProposer = false;
@@ -449,6 +448,11 @@ public class DefaultMetaManager implements IMetaManager {
                 if (isProposer && counter == getIginxList().size() - 1) {
                     // 将历史分片统计数据上传到 zookeeper
                     storage.addInactiveFragmentStatistics(cache.getActiveFragmentStatistics(), maxActiveFragmentEndTime.get());
+
+                    storage.lockActiveFragmentStatistics();
+                    storage.removeActiveFragmentStatistics();
+                    storage.releaseActiveFragmentStatistics();
+                    logger.info("iginx node {}(proposer) remove active fragment statistics", id);
 
                     storage.lockReshardCounter();
                     storage.resetReshardCounter();
@@ -609,7 +613,7 @@ public class DefaultMetaManager implements IMetaManager {
                 fragmentMeta.setCreatedBy(id);
                 fragmentMeta.setInitialFragment(false);
                 StorageUnitMeta storageUnit;
-                if (storageUnits == null || storageUnits.isEmpty()) {
+                if (storageUnits.isEmpty()) {
                     storageUnit = cache.getStorageUnit(fragmentMeta.getMasterStorageUnitId());
                 } else {
                     storageUnit = fakeIdToStorageUnit.get(fragmentMeta.getFakeStorageUnitId());
