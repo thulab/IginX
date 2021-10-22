@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-import struct
 
 class Bitmap(object):
     BIT_UTIL = [1, 1 << 1, 1 << 2, 1 << 3, 1 << 4, 1 << 5, 1 << 6, 1 << 7]
