@@ -54,7 +54,7 @@ from .thrift.rpc.ttypes import (
 
 from .cluster_info import ClusterInfo
 from .time_series import TimeSeries
-from .dataset import LastQueryDataSet, QueryDataSet, AggregateQueryDataSet
+from .dataset import LastQueryDataSet, QueryDataSet, AggregateQueryDataSet, SqlExecuteResult
 from .utils.byte_utils import timestamps_to_bytes, row_values_to_bytes, column_values_to_bytes, bitmap_to_bytes
 from .utils.bitmap import Bitmap
 
@@ -449,7 +449,7 @@ class Session(object):
         req = ExecuteSqlReq(sessionId=self.__session_id, statement=statement)
         resp = self.__client.executeSql(req)
         Session.verify_status(resp.status)
-        # TODO:
+        logger.warning("unsupported function: execute sql")
 
     @staticmethod
     def verify_status(status):

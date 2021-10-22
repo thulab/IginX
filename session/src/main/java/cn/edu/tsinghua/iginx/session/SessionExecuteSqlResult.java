@@ -557,87 +557,12 @@ public class SessionExecuteSqlResult {
         return replicaNum;
     }
 
-    public void setReplicaNum(int replicaNum) {
-        this.replicaNum = replicaNum;
-    }
-
     public long getPointsNum() {
         return pointsNum;
-    }
-
-    public void setPointsNum(long pointsNum) {
-        this.pointsNum = pointsNum;
     }
 
     public String getParseErrorMsg() {
         return parseErrorMsg;
     }
 
-    public void setParseErrorMsg(String parseErrorMsg) {
-        this.parseErrorMsg = parseErrorMsg;
-    }
-
-    public long getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-    public long getOffset() {
-        return offset;
-    }
-
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
-    public String getOrderByPath() {
-        return orderByPath;
-    }
-
-    public void setOrderByPath(String orderByPath) {
-        this.orderByPath = orderByPath;
-    }
-
-    public boolean isAscending() {
-        return ascending;
-    }
-
-    public void setAscending(boolean ascending) {
-        this.ascending = ascending;
-    }
-
-    public List<IginxInfo> getIginxInfos() {
-        return iginxInfos;
-    }
-
-    public void setIginxInfos(List<IginxInfo> iginxInfos) {
-        this.iginxInfos = iginxInfos;
-    }
-
-    public List<StorageEngineInfo> getStorageEngineInfos() {
-        return storageEngineInfos;
-    }
-
-    public void setStorageEngineInfos(List<StorageEngineInfo> storageEngineInfos) {
-        this.storageEngineInfos = storageEngineInfos;
-    }
-
-    public List<MetaStorageInfo> getMetaStorageInfos() {
-        return metaStorageInfos;
-    }
-
-    public void setMetaStorageInfos(List<MetaStorageInfo> metaStorageInfos) {
-        this.metaStorageInfos = metaStorageInfos;
-    }
-
-    public LocalMetaStorageInfo getLocalMetaStorageInfo() {
-        return localMetaStorageInfo;
-    }
-
-    public void setLocalMetaStorageInfo(LocalMetaStorageInfo localMetaStorageInfo) {
-        this.localMetaStorageInfo = localMetaStorageInfo;
-    }
 }

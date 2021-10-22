@@ -170,5 +170,67 @@ class AggregateQueryDataSet(object):
 
 class SqlExecuteResult(object):
 
-    def __init__(self, resp=ExecuteSqlResp()):
+    def __init__(self, resp):
         self.__type = resp.type
+        self.__parse_error_message = resp.parseErrorMsg
+
+        if self.__type == SqlType.GetReplicaNum:
+            self.__replica_num = resp.replicaNum
+        elif self.__type == SqlType.CountPoints:
+            self.__points_num = resp.pointsNum
+        elif self.__type in [SqlType.AggregateQuery, SqlType.SimpleQuery, SqlType.DownsampleQuery, SqlType.ValueFilterQuery]:
+            self._construct_query_result(resp)
+        elif self.__type == SqlType.ShowTimeSeries:
+            self.__paths = resp.paths
+            self.__data_type_list = resp.dataTypeList
+        elif self.__type == SqlType.ShowClusterInfo:
+            self.__iginx_list = resp.iginxInfos
+            self.__storage_engine_list = resp.storageEngineInfos
+            self.__meta_storage_list = resp.metaStorageInfos
+            self.__local_meta_storage = resp.localMetaStorageInfo
+
+
+    def _construct_query_result(self, resp=ExecuteSqlResp()):
+        self.__paths = resp.paths
+        self.__data_type_list = resp.dataTypeList
+        self.__limit = resp.limit
+        self.__offset = resp.offset
+        self.__order_by = resp.orderByPath
+        self.__ascending = resp.ascending
+
+        if resp.timestamps is not None:
+            self.__timestamps = get_long_array(resp.timestamps)
+
+        pass
+
+
+    def is_query(self):
+        return self.__type in [SqlType.AggregateQuery, SqlType.SimpleQuery, SqlType.DownsampleQuery, SqlType.ValueFilterQuery]
+
+
+    def get_replica_num(self):
+        return self.__replica_num
+
+
+    def get_points_num(self):
+        return self.__points_num
+
+
+    def get_parse_error_msg(self):
+        return self.__parse_error_message
+
+
+    def get_iginx_list(self):
+        return self.__iginx_list
+
+
+    def get_storage_engine_list(self):
+        return self.__storage_engine_list
+
+
+    def get_meta_storage_list(self):
+        return self.__meta_storage_list
+
+
+    def get_local_meta_storage(self):
+        return self.__local_meta_storage

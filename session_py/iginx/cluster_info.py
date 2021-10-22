@@ -42,3 +42,12 @@ class ClusterInfo(object):
 
     def is_use_local_meta_storage(self):
         return self.__local_meta_storage is not None
+
+
+    def __str__(self):
+        value = str(self.__iginx_list) + "\n" + str(self.__storage_engine_list) + "\n"
+        if self.__meta_storage_list:
+            value += str(self.__meta_storage_list)
+        else:
+            value += str(self.__local_meta_storage)
+        return value
