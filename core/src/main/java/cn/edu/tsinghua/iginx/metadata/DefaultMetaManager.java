@@ -193,10 +193,6 @@ public class DefaultMetaManager implements IMetaManager {
             }
             cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
         });
-        storage.lockStorageUnit();
-        Map<String, StorageUnitMeta> storageUnits = storage.loadStorageUnit();
-        storage.releaseStorageUnit();
-        cache.initStorageUnit(storageUnits);
     }
 
     private void initFragment() throws MetaStorageException {
@@ -222,10 +218,6 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.updateFragment(fragment);
             }
         });
-        storage.lockFragment();
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = storage.loadFragment();
-        storage.releaseFragment();
-        cache.initFragment(fragmentMap);
     }
 
     private void initSchemaMapping() throws MetaStorageException {
