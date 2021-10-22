@@ -9,7 +9,7 @@ on:
       - main
 
 jobs:
-  IoTDB-Test:
+  IoTDB11-Test:
     strategy:
       fail-fast: false
       max-parallel: 20
@@ -35,10 +35,10 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -46,7 +46,50 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBSessionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDB11SessionIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
+
+  IoTDB12-Test:
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        java: [ 8 ]
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os}}
+    env:
+      VERSION: 0.4.0-SNAPSHOT
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache Maven packages
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Run ZooKeeper
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
+      - name: Run IoTDB12 and change default config
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+      - name: Start IginX
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=IoTDB12SessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -78,7 +121,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run InfluxDB
+      - name: Run InfluxDB and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
@@ -123,8 +166,8 @@ jobs:
           "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX

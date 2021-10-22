@@ -116,9 +116,7 @@ public class SessionExecuteSqlResult {
             this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         }
 
-        if (resp.getType() == SqlType.DownsampleQuery) {
-            sortColumns();
-        }
+        sortColumns();
     }
 
     private List<List<Object>> parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
@@ -182,13 +180,13 @@ public class SessionExecuteSqlResult {
                 }
             }
         } else if (sqlType == SqlType.GetReplicaNum) {
-            result.add(new ArrayList<>(Arrays.asList("Replica num")));
-            result.add(new ArrayList<>(Arrays.asList(replicaNum + "")));
+            result.add(new ArrayList<>(Collections.singletonList("Replica num")));
+            result.add(new ArrayList<>(Collections.singletonList(replicaNum + "")));
         } else if (sqlType == SqlType.CountPoints) {
-            result.add(new ArrayList<>(Arrays.asList("Points num")));
-            result.add(new ArrayList<>(Arrays.asList(pointsNum + "")));
+            result.add(new ArrayList<>(Collections.singletonList("Points num")));
+            result.add(new ArrayList<>(Collections.singletonList(pointsNum + "")));
         } else {
-            result.add(new ArrayList<>(Arrays.asList("Empty set")));
+            result.add(new ArrayList<>(Collections.singletonList("Empty set")));
         }
         return result;
     }
@@ -559,87 +557,12 @@ public class SessionExecuteSqlResult {
         return replicaNum;
     }
 
-    public void setReplicaNum(int replicaNum) {
-        this.replicaNum = replicaNum;
-    }
-
     public long getPointsNum() {
         return pointsNum;
-    }
-
-    public void setPointsNum(long pointsNum) {
-        this.pointsNum = pointsNum;
     }
 
     public String getParseErrorMsg() {
         return parseErrorMsg;
     }
 
-    public void setParseErrorMsg(String parseErrorMsg) {
-        this.parseErrorMsg = parseErrorMsg;
-    }
-
-    public long getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-    public long getOffset() {
-        return offset;
-    }
-
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
-    public String getOrderByPath() {
-        return orderByPath;
-    }
-
-    public void setOrderByPath(String orderByPath) {
-        this.orderByPath = orderByPath;
-    }
-
-    public boolean isAscending() {
-        return ascending;
-    }
-
-    public void setAscending(boolean ascending) {
-        this.ascending = ascending;
-    }
-
-    public List<IginxInfo> getIginxInfos() {
-        return iginxInfos;
-    }
-
-    public void setIginxInfos(List<IginxInfo> iginxInfos) {
-        this.iginxInfos = iginxInfos;
-    }
-
-    public List<StorageEngineInfo> getStorageEngineInfos() {
-        return storageEngineInfos;
-    }
-
-    public void setStorageEngineInfos(List<StorageEngineInfo> storageEngineInfos) {
-        this.storageEngineInfos = storageEngineInfos;
-    }
-
-    public List<MetaStorageInfo> getMetaStorageInfos() {
-        return metaStorageInfos;
-    }
-
-    public void setMetaStorageInfos(List<MetaStorageInfo> metaStorageInfos) {
-        this.metaStorageInfos = metaStorageInfos;
-    }
-
-    public LocalMetaStorageInfo getLocalMetaStorageInfo() {
-        return localMetaStorageInfo;
-    }
-
-    public void setLocalMetaStorageInfo(LocalMetaStorageInfo localMetaStorageInfo) {
-        this.localMetaStorageInfo = localMetaStorageInfo;
-    }
 }
