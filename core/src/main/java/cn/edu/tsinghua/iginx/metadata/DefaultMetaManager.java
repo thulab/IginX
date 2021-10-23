@@ -318,10 +318,6 @@ public class DefaultMetaManager implements IMetaManager {
                 }
             }
         });
-        storage.lockStorageUnit();
-        Map<String, StorageUnitMeta> storageUnits = storage.loadStorageUnit();
-        storage.releaseStorageUnit();
-        cache.initStorageUnit(storageUnits);
     }
 
     private void initFragment() throws MetaStorageException {
@@ -352,8 +348,6 @@ public class DefaultMetaManager implements IMetaManager {
             }
             createFragment(cache.getStorageUnit(fragment.getMasterStorageUnitId()), fragment, create);
         });
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = storage.loadFragment();
-        cache.initFragment(fragments);
     }
 
     private void initSchemaMapping() throws MetaStorageException {
