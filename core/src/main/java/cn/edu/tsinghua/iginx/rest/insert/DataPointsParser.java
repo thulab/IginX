@@ -18,13 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.rest.insert;
 
-import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,22 +31,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataPointsParser {
     public static final String ANNOTATION_SPLIT_STRING = "@@annotation";
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
-    private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private Reader inputStream = null;
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
-    private RestSession session = new RestSession();
+    private final RestSession session = new RestSession();
 
     public DataPointsParser() {
 
@@ -57,7 +51,7 @@ public class DataPointsParser {
         this.inputStream = stream;
     }
 
-    public void parse() throws Exception {
+    public void parse(boolean isAnnotation) throws Exception {
         try {
             session.openSession();
         } catch (SessionException e) {
@@ -68,10 +62,10 @@ public class DataPointsParser {
             JsonNode node = mapper.readTree(inputStream);
             if (node.isArray()) {
                 for (JsonNode objNode : node) {
-                    metricList.add(getMetricObject(objNode));
+                    metricList.add(getMetricObject(objNode, isAnnotation));
                 }
             } else {
-                metricList.add(getMetricObject(node));
+                metricList.add(getMetricObject(node, isAnnotation));
             }
 
         } catch (Exception e) {
@@ -79,7 +73,11 @@ public class DataPointsParser {
             throw e;
         }
         try {
-            sendMetricsData();
+            if (isAnnotation) {
+                sendAnnotationMetricsData();
+            } else {
+                sendMetricsData();
+            }
         } catch (Exception e) {
             LOGGER.debug("Exception occur for create and send ", e);
             throw e;
@@ -88,43 +86,12 @@ public class DataPointsParser {
         }
     }
 
-    public void parseAnnotation() throws Exception {
-        try {
-            session.openSession();
-        } catch (SessionException e) {
-            LOGGER.error("Error occurred during opening session", e);
-            throw e;
-        }
-        try {
-            JsonNode node = mapper.readTree(inputStream);
-            if (node.isArray()) {
-                for (JsonNode objNode : node) {
-                    metricList.add(getAnnotationMetricObject(objNode));
-                }
-            } else {
-                metricList.add(getAnnotationMetricObject(node));
-            }
-
-        } catch (Exception e) {
-            LOGGER.error("Error occurred during parsing data ", e);
-            throw e;
-        }
-        try {
-            sendAnnotationMetricsData();
-        } catch (Exception e) {
-            LOGGER.debug("Exception occur for create and send ", e);
-            throw e;
-        } finally {
-            session.closeSession();
-        }
-    }
-
-    private Metric getAnnotationMetricObject(JsonNode node) {
+    private Metric getMetricObject(JsonNode node, boolean isAnnotation) {
         Metric ret = new Metric();
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
-        while(elements.hasNext() && fieldNames.hasNext()) {
+        while (elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
         JsonNode tim = node.get("timestamp"), val = node.get("value");
@@ -136,37 +103,9 @@ public class DataPointsParser {
         if (dp != null) {
             if (dp.isArray()) {
                 for (JsonNode dpnode : dp) {
-                    ret.addTimestamp(dpnode.asLong());
-                }
-            }
-        }
-        JsonNode anno = node.get("annotation");
-        if (anno != null) {
-            ret.setAnnotation(anno.toString().replace("\n", "")
-                    .replace("\t", "").replace(" ", ""));
-        }
-        return ret;
-    }
-
-
-    private Metric getMetricObject(JsonNode node) {
-        Metric ret = new Metric();
-        ret.setName(node.get("name").asText());
-        Iterator<String> fieldNames = node.get("tags").fieldNames();
-        Iterator<JsonNode> elements = node.get("tags").elements();
-        while(elements.hasNext() && fieldNames.hasNext()) {
-            ret.addTag(fieldNames.next(), elements.next().textValue());
-        }
-        JsonNode tim = node.get("timestamp"), val = node.get("value");
-        if (tim != null && val != null) {
-            ret.addTimestamp(tim.asLong());
-            ret.addValue(val.asText());
-        }
-        JsonNode dp = node.get("datapoints");
-        if (dp != null) {
-            if (dp.isArray()) {
-                for (JsonNode dpnode : dp) {
-                    if (dpnode.isArray()) {
+                    if (isAnnotation) {
+                        ret.addTimestamp(dpnode.asLong());
+                    } else if (dpnode.isArray()) {
                         ret.addTimestamp(dpnode.get(0).asLong());
                         ret.addValue(dpnode.get(1).asText());
                     }
@@ -207,29 +146,28 @@ public class DataPointsParser {
                 needUpdate = true;
                 metricschema = new ConcurrentHashMap<>();
             }
-            Iterator iter = metric.getTags().entrySet().iterator();
-            while(iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
+            for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
                     int pos = metricschema.size() + 1;
-                    metricschema.put((String) entry.getKey(), pos);
+                    metricschema.put(entry.getKey(), pos);
                 }
             }
-            if (needUpdate)
+            if (needUpdate) {
                 metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
+            }
             Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet())
+            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
                 pos2path.put(entry.getValue(), entry.getKey());
-            StringBuilder path = new StringBuilder("");
-            iter = pos2path.entrySet().iterator();
-            while(iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
+            }
+            StringBuilder path = new StringBuilder();
+            for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
                 String ins = metric.getTags().get(entry.getValue());
-                if (ins != null)
-                    path.append(ins + ".");
-                else
+                if (ins != null) {
+                    path.append(ins).append(".");
+                } else {
                     path.append("null.");
+                }
             }
             path.append(metric.getName());
             List<String> paths = new ArrayList<>();
@@ -244,7 +182,7 @@ public class DataPointsParser {
             }
             valuesList[0] = values;
             try {
-                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
                 if (metric.getAnnotation() != null) {
                     for (int i = 0; i < size; i++) {
                         values[i] = metric.getAnnotation().getBytes();
@@ -253,7 +191,7 @@ public class DataPointsParser {
                     path.append(ANNOTATION_SPLIT_STRING);
                     paths.set(0, path.toString());
                     type.set(0, DataType.BINARY);
-                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
                 }
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
@@ -271,7 +209,7 @@ public class DataPointsParser {
                 metricschema = new ConcurrentHashMap<>();
             }
             Iterator iter = metric.getTags().entrySet().iterator();
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
@@ -279,20 +217,24 @@ public class DataPointsParser {
                     metricschema.put((String) entry.getKey(), pos);
                 }
             }
-            if (needUpdate)
+            if (needUpdate) {
                 metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
+            }
             Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet())
+            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
                 pos2path.put(entry.getValue(), entry.getKey());
-            StringBuilder path = new StringBuilder("");
+            }
+            StringBuilder path = new StringBuilder();
             iter = pos2path.entrySet().iterator();
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 String ins = metric.getTags().get(entry.getValue());
-                if (ins != null)
-                    path.append(ins + ".");
-                else
+                if (ins != null) {
+                    path.append(ins).append(".");
+                }
+                else {
                     path.append("null.");
+                }
             }
             path.append(metric.getName());
             path.append(ANNOTATION_SPLIT_STRING);
@@ -307,7 +249,7 @@ public class DataPointsParser {
                 values[i] = metric.getAnnotation().getBytes();
             }
             valuesList[0] = values;
-            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(t -> t.longValue()).toArray(), valuesList, type, null);
+            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
         }
     }
 
@@ -318,14 +260,15 @@ public class DataPointsParser {
                 return str.getBytes();
             case DOUBLE:
                 return Double.parseDouble(str);
+            default:
+                return null;
         }
-        return null;
     }
 
     DataType findType(List<String> values) {
-        for (int i = 0; i < values.size(); i++) {
+        for (String value : values) {
             try {
-                Double.parseDouble(values.get(i));
+                Double.parseDouble(value);
             } catch (NumberFormatException e) {
                 return DataType.BINARY;
             }

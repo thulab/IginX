@@ -16,51 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.rest.insert;
+package cn.edu.tsinghua.iginx.rest.bean;
+
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Data
 public class Metric {
     private String name;
     private Map<String, String> tags = new TreeMap<>();
     private List<Long> timestamps = new ArrayList<>();
     private List<String> values = new ArrayList<>();
     private String annotation = null;
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public List<Long> getTimestamps() {
-        return timestamps;
-    }
-
-    public void setTimestamps(List<Long> timestamps) {
-        this.timestamps = timestamps;
-    }
-
-    public List<String> getValues() {
-        return values;
-    }
-
-    public void setValues(List<String> values) {
-        this.values = values;
-    }
-
-    public Map<String, String> getTags() {
-        return tags;
-    }
-
-    public void setTags(Map<String, String> tags) {
-        this.tags = tags;
-    }
 
     public void addTag(String key, String value) {
         tags.put(key, value);
@@ -72,13 +43,5 @@ public class Metric {
 
     public void addValue(String value) {
         values.add(value);
-    }
-
-    public String getAnnotation() {
-        return annotation;
-    }
-
-    public void setAnnotation(String annotation) {
-        this.annotation = annotation;
     }
 }

@@ -18,31 +18,26 @@
  */
 package cn.edu.tsinghua.iginx.rest.query;
 
-import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.bean.Query;
+import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class QueryExecutor {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryExecutor.class);
-    private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
-    private Query query;
+    private final Query query;
 
-    private RestSession session = new RestSession();
-
+    private final RestSession session = new RestSession();
 
     public QueryExecutor(Query query) {
         this.query = query;
@@ -83,47 +78,54 @@ public class QueryExecutor {
             throw new Exception("No metadata found");
         } else {
             Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet())
+            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
                 pos2path.put(entry.getValue(), entry.getKey());
+            }
             List<Integer> pos = new ArrayList<>();
-            for (int i = 0; i < pos2path.size(); i++)
+            for (int i = 0; i < pos2path.size(); i++) {
                 pos.add(-1);
-            dfsInsert(0, ret, pos2path, queryMetric, pos);
+            }
+            searchPath(0, ret, pos2path, queryMetric, pos);
         }
         return ret;
     }
 
-    void dfsInsert(int depth, List<String> Paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos) {
+    void searchPath(int depth, List<String> paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos) {
         if (depth == pos2path.size()) {
-            StringBuilder path = new StringBuilder("");
+            StringBuilder path = new StringBuilder();
             Iterator iter = pos2path.entrySet().iterator();
             int now = 0;
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 String ins = null;
                 Map.Entry entry = (Map.Entry) iter.next();
                 List<String> tmp = queryMetric.getTags().get(entry.getValue());
-                if (tmp != null)
+                if (tmp != null) {
                     ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
-                if (ins != null)
-                    path.append(ins + ".");
-                else
+                }
+                if (ins != null) {
+                    path.append(ins).append(".");
+                }
+                else {
                     path.append("*.");
+                }
                 now++;
             }
-            if (queryMetric.getAnnotation())
-                path.append(queryMetric.getName() + DataPointsParser.ANNOTATION_SPLIT_STRING);
-            else
+            if (queryMetric.getAnnotation()) {
+                path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
+            }
+            else {
                 path.append(queryMetric.getName());
-            Paths.add(path.toString());
+            }
+            paths.add(path.toString());
             return;
         }
         if (queryMetric.getTags().get(pos2path.get(depth + 1)) == null) {
             pos.set(depth, -1);
-            dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos);
+            searchPath(depth + 1, paths, pos2path, queryMetric, pos);
         } else {
             for (int i = 0; i < queryMetric.getTags().get(pos2path.get(depth + 1)).size(); i++) {
                 pos.set(depth, i);
-                dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos);
+                searchPath(depth + 1, paths, pos2path, queryMetric, pos);
             }
         }
     }

@@ -16,11 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.rest.query;
+package cn.edu.tsinghua.iginx.rest.bean;
+
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Data
 public class Query {
     private Long startAbsolute;
     private Long endAbsolute;
@@ -28,48 +31,7 @@ public class Query {
     private String timeZone;
     private List<QueryMetric> queryMetrics = new ArrayList<>();
 
-    public List<QueryMetric> getQueryMetrics() {
-        return queryMetrics;
-    }
-
-    public void setQueryMetrics(List<QueryMetric> queryMetrics) {
-        this.queryMetrics = queryMetrics;
-    }
-
-    public Long getCacheTime() {
-        return cacheTime;
-    }
-
-    public void setCacheTime(Long cacheTime) {
-        this.cacheTime = cacheTime;
-    }
-
-    public Long getEndAbsolute() {
-        return endAbsolute;
-    }
-
-    public void setEndAbsolute(Long endAbsolute) {
-        this.endAbsolute = endAbsolute;
-    }
-
-    public Long getStartAbsolute() {
-        return startAbsolute;
-    }
-
-    public void setStartAbsolute(Long startAbsolute) {
-        this.startAbsolute = startAbsolute;
-    }
-
-    public String getTimeZone() {
-        return timeZone;
-    }
-
-    public void setTimeZone(String timeZone) {
-        this.timeZone = timeZone;
-    }
-
     public void addQueryMetrics(QueryMetric queryMetric) {
         this.queryMetrics.add(queryMetric);
     }
-
 }
