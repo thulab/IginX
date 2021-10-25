@@ -1,18 +1,18 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
-public class ShowReplicationOperator extends Operator {
+public class ShowReplicationStatement extends Statement {
 
-    public ShowReplicationOperator() {
-        this.operatorType = OperatorType.SHOW_REPLICATION;
+    public ShowReplicationStatement() {
+        this.statementType = StatementType.SHOW_REPLICATION;
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.GetReplicaNum);
         resp.setReplicaNum(ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
         return resp;

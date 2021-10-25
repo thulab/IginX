@@ -54,7 +54,7 @@ import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
 import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
-import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -103,7 +103,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -341,8 +340,8 @@ public class IginxWorker implements IService.Iface {
 
         try {
             ParseTree tree = parser.sqlStatement();
-            Operator operator = visitor.visit(tree);
-            return operator.doOperation(req.getSessionId());
+            Statement statement = visitor.visit(tree);
+            return statement.execute(req.getSessionId());
         } catch (SQLParserException | ParseCancellationException e) {
             StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
             String errMsg = e.getMessage();

@@ -1,17 +1,17 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 
-public abstract class Operator {
+public abstract class Statement {
 
-    public OperatorType operatorType = OperatorType.NULL;
+    public StatementType statementType = StatementType.NULL;
 
-    public ExecuteSqlResp doOperation(long sessionId) {
-        System.out.println("Operator!");
+    public ExecuteSqlResp execute(long sessionId) {
+        System.out.println("Abstract statement do nothing!");
         return null;
     }
 
-    public enum OperatorType {
+    public enum StatementType {
         NULL,
         SELECT,
         INSERT,
