@@ -83,6 +83,16 @@ public interface IMetaStorage {
 
     void registerFragmentChangeHook(FragmentChangeHook hook);
 
+    List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException;
+
+    void registerUserChangeHook(UserChangeHook hook);
+
+    void addUser(UserMeta userMeta) throws MetaStorageException;
+
+    void updateUser(UserMeta userMeta) throws MetaStorageException;
+
+    void removeUser(String username) throws MetaStorageException;
+
     Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException;
 
     void lockActiveFragmentStatistics() throws MetaStorageException;
@@ -98,16 +108,6 @@ public interface IMetaStorage {
     void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook);
 
     boolean proposeToReshard() throws MetaStorageException;
-
-    List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException;
-
-    void registerUserChangeHook(UserChangeHook hook);
-
-    void addUser(UserMeta userMeta) throws MetaStorageException;
-
-    void updateUser(UserMeta userMeta) throws MetaStorageException;
-
-    void removeUser(String username) throws MetaStorageException;
 
     void lockReshardNotification() throws MetaStorageException;
 

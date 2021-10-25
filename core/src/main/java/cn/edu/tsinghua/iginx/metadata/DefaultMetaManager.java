@@ -363,6 +363,19 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
+    private void initUser() throws MetaStorageException {
+        storage.registerUserChangeHook((username, user) -> {
+            if (user == null) {
+                cache.removeUser(username);
+            } else {
+                cache.addOrUpdateUser(user);
+            }
+        });
+        for (UserMeta user : storage.loadUser(resolveUserFromConf())) {
+            cache.addOrUpdateUser(user);
+        }
+    }
+
     private void initActiveFragmentStatistics() throws MetaStorageException {
         storage.registerActiveFragmentStatisticsChangeHook(statisticsMap -> {
             if (statisticsMap == null) {
@@ -463,19 +476,6 @@ public class DefaultMetaManager implements IMetaManager {
         storage.lockReshardCounter();
         storage.removeReshardCounter();
         storage.releaseReshardCounter();
-    }
-
-    private void initUser() throws MetaStorageException {
-        storage.registerUserChangeHook((username, user) -> {
-            if (user == null) {
-                cache.removeUser(username);
-            } else {
-                cache.addOrUpdateUser(user);
-            }
-        });
-        for (UserMeta user : storage.loadUser(resolveUserFromConf())) {
-            cache.addOrUpdateUser(user);
-        }
     }
 
     @Override
