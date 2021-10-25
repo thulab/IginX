@@ -24,6 +24,7 @@ public enum Op {
     G,
     LE,
     L,
-    E;
+    E,
+    NE;
 
 }

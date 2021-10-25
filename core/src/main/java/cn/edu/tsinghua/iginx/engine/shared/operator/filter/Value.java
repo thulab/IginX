@@ -36,6 +36,4 @@ public class Value {
 
     private String textV;
 
-
-
 }

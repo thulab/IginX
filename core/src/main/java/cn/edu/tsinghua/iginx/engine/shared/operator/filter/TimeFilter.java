@@ -24,6 +24,8 @@ public class TimeFilter implements Filter {
 
     private final long value;
 
+    private final FilterType type = FilterType.Time;
+
     public TimeFilter(Op op, long value) {
         this.op = op;
         this.value = value;
@@ -39,6 +41,6 @@ public class TimeFilter implements Filter {
 
     @Override
     public FilterType getType() {
-        return FilterType.Time;
+        return type;
     }
 }

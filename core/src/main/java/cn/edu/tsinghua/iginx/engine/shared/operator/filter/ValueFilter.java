@@ -22,11 +22,20 @@ public class ValueFilter implements Filter {
 
     private final Op op;
 
+    private final String path;
+
     private final Value value;
 
-    public ValueFilter(Op op, Value value) {
+    private FilterType type = FilterType.Value;
+
+    public ValueFilter(String path, Op op, Value value) {
+        this.path = path;
         this.op = op;
         this.value = value;
+    }
+
+    public String getPath() {
+        return path;
     }
 
     public Op getOp() {
@@ -39,9 +48,7 @@ public class ValueFilter implements Filter {
 
     @Override
     public FilterType getType() {
-        return FilterType.Value;
+        return type;
     }
-
-
 
 }

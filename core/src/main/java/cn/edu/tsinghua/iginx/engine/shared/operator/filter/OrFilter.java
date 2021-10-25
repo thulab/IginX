@@ -18,20 +18,24 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
+import java.util.List;
+
 public class OrFilter implements Filter {
 
-    private final Filter subFilter;
+    private final List<Filter> children;
 
-    public OrFilter(Filter subFilter) {
-        this.subFilter = subFilter;
+    private FilterType type = FilterType.Or;
+
+    public OrFilter(List<Filter> children) {
+        this.children = children;
     }
 
-    public Filter getSubFilter() {
-        return subFilter;
+    public List<Filter> getChildren() {
+        return children;
     }
 
     @Override
     public FilterType getType() {
-        return FilterType.Or;
+        return type;
     }
 }

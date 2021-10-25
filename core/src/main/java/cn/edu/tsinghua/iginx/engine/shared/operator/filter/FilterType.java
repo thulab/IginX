@@ -31,4 +31,31 @@ public enum FilterType {
         return filterType != Time && filterType != Value;
     }
 
+    public static boolean isTimeFilter(Filter filter) {
+        switch (filter.getType()) {
+            case Value:
+                return false;
+            case Time:
+                return true;
+            case Not:
+                NotFilter notFilter = (NotFilter)filter;
+                return isTimeFilter(notFilter.getChild());
+            case And:
+                AndFilter andFilter = (AndFilter)filter;
+                for (Filter f: andFilter.getChildren()) {
+                    if (!isTimeFilter(f)) {
+                        return false;
+                    }
+                }
+            case Or:
+                OrFilter orFilter = (OrFilter)filter;
+                for (Filter f: orFilter.getChildren()) {
+                    if (!isTimeFilter(f)) {
+                        return false;
+                    }
+                }
+        }
+        return true;
+    }
+
 }

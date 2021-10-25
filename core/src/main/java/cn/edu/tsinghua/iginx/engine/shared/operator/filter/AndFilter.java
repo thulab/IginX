@@ -18,27 +18,24 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
+import java.util.List;
+
 public class AndFilter implements Filter {
 
-    private final Filter subFilterA;
+    private final List<Filter> children;
 
-    private final Filter subFilterB;
+    private FilterType type = FilterType.And;
 
-    public AndFilter(Filter subFilterA, Filter subFilterB) {
-        this.subFilterA = subFilterA;
-        this.subFilterB = subFilterB;
+    public AndFilter(List<Filter> children) {
+        this.children = children;
     }
 
-    public Filter getSubFilterA() {
-        return subFilterA;
-    }
-
-    public Filter getSubFilterB() {
-        return subFilterB;
+    public List<Filter> getChildren() {
+        return children;
     }
 
     @Override
     public FilterType getType() {
-        return FilterType.And;
+        return type;
     }
 }
