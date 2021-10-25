@@ -16,41 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
+package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.engine.shared.Constants;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-public class ValueFilter implements Filter {
+public final class Field {
 
-    private final Op op;
+    private final String name;
 
-    private final String path;
+    private final DataType type;
 
-    private final Value value;
-
-    private FilterType type = FilterType.Value;
-
-    public ValueFilter(String path, Op op, Value value) {
-        this.path = path;
-        this.op = op;
-        this.value = value;
+    public Field() {
+        this(Constants.TIMESTAMP, DataType.LONG);
     }
 
-    public String getPath() {
-        return path;
+    public Field(String name, DataType type) {
+        this.name = name;
+        this.type = type;
     }
 
-    public Op getOp() {
-        return op;
+    public String getName() {
+        return name;
     }
 
-    public Value getValue() {
-        return value;
-    }
-
-    @Override
-    public FilterType getType() {
+    public DataType getType() {
         return type;
     }
-
 }

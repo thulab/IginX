@@ -18,28 +18,26 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function;
 
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+
 import java.util.List;
 
-public class FunctionManager {
+public class FunctionCall {
 
-    private FunctionManager() {
+    private final Function function;
 
+    private final List<Value> params;
+
+    public FunctionCall(Function function, List<Value> params) {
+        this.function = function;
+        this.params = params;
     }
 
-    public static FunctionManager getInstance() {
-        return FunctionManagerHolder.INSTANCE;
+    public Function getFunction() {
+        return function;
     }
 
-    public List<Function> getFunctions() {
-        return null;
+    public List<Value> getParams() {
+        return params;
     }
-
-    private static class FunctionManagerHolder {
-
-        private static final FunctionManager INSTANCE = new FunctionManager();
-
-        private FunctionManagerHolder() {}
-
-    }
-
 }

@@ -24,7 +24,7 @@ public class AndFilter implements Filter {
 
     private final List<Filter> children;
 
-    private FilterType type = FilterType.And;
+    private final FilterType type = FilterType.And;
 
     public AndFilter(List<Filter> children) {
         this.children = children;

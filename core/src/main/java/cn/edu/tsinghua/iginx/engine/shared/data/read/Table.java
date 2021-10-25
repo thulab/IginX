@@ -16,41 +16,43 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
+package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import java.util.List;
 
-public class ValueFilter implements Filter {
+public class Table implements RowStream {
 
-    private final Op op;
+    private final Header header;
 
-    private final String path;
+    private final List<Row> rows;
 
-    private final Value value;
+    private int index;
 
-    private FilterType type = FilterType.Value;
-
-    public ValueFilter(String path, Op op, Value value) {
-        this.path = path;
-        this.op = op;
-        this.value = value;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public Op getOp() {
-        return op;
-    }
-
-    public Value getValue() {
-        return value;
+    public Table(Header header, List<Row> rows) {
+        this.header = header;
+        this.rows = rows;
+        this.index = 0;
     }
 
     @Override
-    public FilterType getType() {
-        return type;
+    public Header getHeader() {
+        return header;
     }
 
+    @Override
+    public boolean hasNext() {
+        return index < rows.size();
+    }
+
+    @Override
+    public Row next() {
+        Row row = rows.get(index);
+        index++;
+        return row;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return rows.isEmpty();
+    }
 }

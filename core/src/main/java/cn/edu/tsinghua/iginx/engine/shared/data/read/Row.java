@@ -20,6 +20,33 @@ package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
 public class Row {
 
-    private Object[] values;
+    private static final long NON_EXISTED_TIMESTAMP = -1L;
 
+    private final Header header;
+
+    private final long timestamp;
+
+    private final Object[] values;
+
+    public Row(Header header, Object[] values) {
+        this(header, NON_EXISTED_TIMESTAMP, values);
+    }
+
+    public Row(Header header, long timestamp, Object[] values) {
+        this.header = header;
+        this.timestamp = timestamp;
+        this.values = values;
+    }
+
+    public Header getHeader() {
+        return header;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public Object[] getValues() {
+        return values;
+    }
 }

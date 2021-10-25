@@ -18,26 +18,27 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 
 public class RowTransform extends AbstractUnaryOperator {
 
-    private final Function function;
+    private final FunctionCall functionCall;
 
-    public RowTransform(Source source, Function function) {
+    public RowTransform(Source source, FunctionCall functionCall) {
         super(OperatorType.RowTransform, source);
-        if (function == null) {
+        if (functionCall == null || functionCall.getFunction() == null) {
             throw new IllegalArgumentException("function shouldn't be null");
         }
-        if (function.getMappingType() != MappingType.RowMapping) {
-            throw new IllegalArgumentException("function should be row mapping function");
+        if (functionCall.getFunction().getMappingType() != MappingType.RowMapping) {
+            throw new IllegalArgumentException("function should be set mapping function");
         }
-        this.function = function;
+        this.functionCall = functionCall;
     }
 
-    public Function getFunction() {
-        return function;
+    public FunctionCall getFunctionCall() {
+        return functionCall;
     }
 }

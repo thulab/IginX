@@ -16,41 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
+package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
+import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 
-public class ValueFilter implements Filter {
+import java.util.List;
 
-    private final Op op;
+public class Max implements SetMappingFunction {
 
-    private final String path;
+    public static final String MAX = "max";
 
-    private final Value value;
-
-    private FilterType type = FilterType.Value;
-
-    public ValueFilter(String path, Op op, Value value) {
-        this.path = path;
-        this.op = op;
-        this.value = value;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public Op getOp() {
-        return op;
-    }
-
-    public Value getValue() {
-        return value;
+    @Override
+    public FunctionType getFunctionType() {
+        return FunctionType.System;
     }
 
     @Override
-    public FilterType getType() {
-        return type;
+    public MappingType getMappingType() {
+        return MappingType.SetMapping;
     }
 
+    @Override
+    public String getIdentifier() {
+        return MAX;
+    }
+
+    @Override
+    public Row transform(RowStream rows, List<Value> params) {
+        return null;
+    }
 }

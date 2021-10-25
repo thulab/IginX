@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
+import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
@@ -27,26 +28,26 @@ public class Downsample extends AbstractUnaryOperator {
 
     private final long precision;
 
-    private final Function function;
+    private final FunctionCall functionCall;
 
     private final TimeRange timeRange;
 
-    public Downsample(Source source, long precision, Function function, TimeRange timeRange) {
+    public Downsample(Source source, long precision, FunctionCall functionCall, TimeRange timeRange) {
         super(OperatorType.Downsample, source);
         if (precision <= 0) {
             throw new IllegalArgumentException("precision should be greater than zero");
         }
-        if (function == null) {
+        if (functionCall == null || functionCall.getFunction() == null) {
             throw new IllegalArgumentException("function shouldn't be null");
         }
-        if (function.getMappingType() != MappingType.SetMapping) {
+        if (functionCall.getFunction().getMappingType() != MappingType.SetMapping) {
             throw new IllegalArgumentException("function should be set mapping function");
         }
         if (timeRange == null) {
             throw new IllegalArgumentException("timeRange shouldn't be null");
         }
         this.precision = precision;
-        this.function = function;
+        this.functionCall = functionCall;
         this.timeRange = timeRange;
     }
 
@@ -54,8 +55,8 @@ public class Downsample extends AbstractUnaryOperator {
         return precision;
     }
 
-    public Function getFunction() {
-        return function;
+    public FunctionCall getFunctionCall() {
+        return functionCall;
     }
 
     public TimeRange getTimeRange() {

@@ -16,24 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
+package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-import cn.edu.tsinghua.iginx.thrift.DataType;
+import java.util.List;
 
-public class Value {
+public final class Header {
 
-    private DataType dataType;
+    private final Field time;
 
-    private boolean boolV;
+    private final List<Field> fields;
 
-    private int intV;
+    public Header(List<Field> fields) {
+        this.time = null;
+        this.fields = fields;
+    }
 
-    private long longV;
+    public Header(Field time, List<Field> fields) {
+        this.time = time;
+        this.fields = fields;
+    }
 
-    private float floatV;
+    public Field getTime() {
+        return time;
+    }
 
-    private double doubleV;
+    public List<Field> getFields() {
+        return fields;
+    }
 
-    private String textV;
+    public boolean hasTimestamp() {
+        return time == null;
+    }
 
 }

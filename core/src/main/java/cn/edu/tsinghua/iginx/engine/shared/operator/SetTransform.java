@@ -18,26 +18,24 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 
 public class SetTransform extends AbstractUnaryOperator {
 
-    private final Function function;
+    private final FunctionCall functionCall;
 
-    public SetTransform(Source source, Function function) {
+    public SetTransform(Source source, FunctionCall functionCall) {
         super(OperatorType.SetTransform, source);
-        if (function == null) {
+        if (functionCall == null || functionCall.getFunction() == null) {
             throw new IllegalArgumentException("function shouldn't be null");
         }
-        if (function.getMappingType() != MappingType.SetMapping) {
+        if (functionCall.getFunction().getMappingType() != MappingType.SetMapping) {
             throw new IllegalArgumentException("function should be set mapping function");
         }
-        this.function = function;
+        this.functionCall = functionCall;
     }
 
-    public Function getFunction() {
-        return function;
-    }
 }

@@ -22,6 +22,8 @@ import java.util.Iterator;
 
 public interface RowStream extends Iterator<Row> {
 
+    Header getHeader();
 
+    boolean isEmpty();
 
 }
