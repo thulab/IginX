@@ -25,9 +25,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -117,6 +115,8 @@ public class SessionExecuteSqlResult {
         } else {
             this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         }
+
+        sortColumns();
     }
 
     private List<List<Object>> parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
@@ -138,6 +138,34 @@ public class SessionExecuteSqlResult {
         return res;
     }
 
+    private void sortColumns() {
+        Map<String, DataType> typeMap = new TreeMap<>();
+        Map<String, List<Object>> valueMap = new TreeMap<>();
+        for (int i = 0; i < paths.size(); i++) {
+            String path = paths.get(i);
+            typeMap.put(path, dataTypeList.get(i));
+            for (int j = 0; j < values.size(); j++) {
+                List<Object> colValue = valueMap.get(path);
+                if (colValue == null) {
+                    List<Object> list = new ArrayList<>(Collections.singletonList(values.get(j).get(i)));
+                    valueMap.put(path, list);
+                } else {
+                    colValue.add(values.get(j).get(i));
+                }
+            }
+        }
+        this.paths = new ArrayList<>(typeMap.keySet());
+        this.dataTypeList = new ArrayList<>(typeMap.values());
+        List<List<Object>> newValues = new ArrayList<>();
+        for (int i = 0; i < values.size(); i++)
+            newValues.add(new ArrayList<>());
+        for (String key : valueMap.keySet()) {
+            for (int i = 0; i < newValues.size(); i++) {
+                newValues.get(i).add(valueMap.get(key).get(i));
+            }
+        }
+        this.values = newValues;
+    }
 
     public List<List<String>> getResultInList(boolean needFormatTime, String timePrecision) {
         List<List<String>> result = new ArrayList<>();
@@ -152,13 +180,13 @@ public class SessionExecuteSqlResult {
                 }
             }
         } else if (sqlType == SqlType.GetReplicaNum) {
-            result.add(new ArrayList<>(Arrays.asList("Replica num")));
-            result.add(new ArrayList<>(Arrays.asList(replicaNum + "")));
+            result.add(new ArrayList<>(Collections.singletonList("Replica num")));
+            result.add(new ArrayList<>(Collections.singletonList(replicaNum + "")));
         } else if (sqlType == SqlType.CountPoints) {
-            result.add(new ArrayList<>(Arrays.asList("Points num")));
-            result.add(new ArrayList<>(Arrays.asList(pointsNum + "")));
+            result.add(new ArrayList<>(Collections.singletonList("Points num")));
+            result.add(new ArrayList<>(Collections.singletonList(pointsNum + "")));
         } else {
-            result.add(new ArrayList<>(Arrays.asList("Empty set")));
+            result.add(new ArrayList<>(Collections.singletonList("Empty set")));
         }
         return result;
     }
@@ -170,7 +198,7 @@ public class SessionExecuteSqlResult {
     public String getResultInString(boolean needFormatTime, String timePrecision) {
         if (isQuery()) {
             if (aggregateType == AggregateType.LAST) {
-                return buildLastQueryResult(timePrecision);
+                return buildLastQueryResult(needFormatTime, timePrecision);
             }
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
@@ -322,7 +350,7 @@ public class SessionExecuteSqlResult {
         }
     }
 
-    private String buildLastQueryResult(String timePrecision) {
+    private String buildLastQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
         builder.append("LastQuery ResultSets:").append("\n");
         int num = paths == null ? 0 : paths.size();
@@ -331,7 +359,7 @@ public class SessionExecuteSqlResult {
             cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(
-                        formatTime(timestamps[i], timePrecision),
+                        needFormatTime ? formatTime(timestamps[i], timePrecision) : String.valueOf(timestamps[i]),
                         paths.get(i),
                         valueToString(values.get(0).get(i))
                 )));
@@ -529,87 +557,12 @@ public class SessionExecuteSqlResult {
         return replicaNum;
     }
 
-    public void setReplicaNum(int replicaNum) {
-        this.replicaNum = replicaNum;
-    }
-
     public long getPointsNum() {
         return pointsNum;
-    }
-
-    public void setPointsNum(long pointsNum) {
-        this.pointsNum = pointsNum;
     }
 
     public String getParseErrorMsg() {
         return parseErrorMsg;
     }
 
-    public void setParseErrorMsg(String parseErrorMsg) {
-        this.parseErrorMsg = parseErrorMsg;
-    }
-
-    public long getLimit() {
-        return limit;
-    }
-
-    public void setLimit(int limit) {
-        this.limit = limit;
-    }
-
-    public long getOffset() {
-        return offset;
-    }
-
-    public void setOffset(int offset) {
-        this.offset = offset;
-    }
-
-    public String getOrderByPath() {
-        return orderByPath;
-    }
-
-    public void setOrderByPath(String orderByPath) {
-        this.orderByPath = orderByPath;
-    }
-
-    public boolean isAscending() {
-        return ascending;
-    }
-
-    public void setAscending(boolean ascending) {
-        this.ascending = ascending;
-    }
-
-    public List<IginxInfo> getIginxInfos() {
-        return iginxInfos;
-    }
-
-    public void setIginxInfos(List<IginxInfo> iginxInfos) {
-        this.iginxInfos = iginxInfos;
-    }
-
-    public List<StorageEngineInfo> getStorageEngineInfos() {
-        return storageEngineInfos;
-    }
-
-    public void setStorageEngineInfos(List<StorageEngineInfo> storageEngineInfos) {
-        this.storageEngineInfos = storageEngineInfos;
-    }
-
-    public List<MetaStorageInfo> getMetaStorageInfos() {
-        return metaStorageInfos;
-    }
-
-    public void setMetaStorageInfos(List<MetaStorageInfo> metaStorageInfos) {
-        this.metaStorageInfos = metaStorageInfos;
-    }
-
-    public LocalMetaStorageInfo getLocalMetaStorageInfo() {
-        return localMetaStorageInfo;
-    }
-
-    public void setLocalMetaStorageInfo(LocalMetaStorageInfo localMetaStorageInfo) {
-        this.localMetaStorageInfo = localMetaStorageInfo;
-    }
 }

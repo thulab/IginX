@@ -18,7 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class SnowFlakeUtils {
+
+    private static final Logger logger = LoggerFactory.getLogger(SnowFlakeUtils.class);
 
     // 起始的时间戳
     private final static long START_STAMP = 0L;
@@ -70,7 +75,8 @@ public class SnowFlakeUtils {
         long currStamp = getNewTimestamp();
         //如果当前时间小于上一次ID生成的时间戳，说明系统时钟回退过  这个时候应当抛出异常
         if (currStamp < lastStamp) {
-            throw new RuntimeException("Clock moved backwards.  Refusing to generate id");
+            logger.error("Clock moved backwards. Refusing to generate id");
+            return 0L;
         }
 
         if (currStamp == lastStamp) {

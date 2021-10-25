@@ -34,13 +34,13 @@ public class RestServer implements Runnable {
     private static Config config = ConfigDescriptor.getInstance().getConfig();
     private static URI baseURI;
 
-    private static URI getBaseURI() {
+    private static URI getbaseuri() {
         return UriBuilder.fromUri("http://" + config.getRestIp() + "/").port(config.getRestPort()).build();
     }
 
     private static HttpServer startServer() {
         config = ConfigDescriptor.getInstance().getConfig();
-        baseURI = getBaseURI();
+        baseURI = getbaseuri();
         final ResourceConfig rc = new ResourceConfig().packages("cn.edu.tsinghua.iginx.rest");
         return GrizzlyHttpServerFactory.createHttpServer(baseURI, rc);
     }

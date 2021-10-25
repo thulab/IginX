@@ -145,5 +145,6 @@ public class PublishHandler extends AbstractInterceptHandler {
 
         Status status = worker.insertNonAlignedRowRecords(req);
         logger.debug("event process result: {}", status);
+        msg.getPayload().release();
     }
 }

@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
-import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
+import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
@@ -68,7 +67,7 @@ public class InsertOperator extends Operator {
 
     @Override
     public ExecuteSqlResp doOperation(long sessionId) {
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         InsertNonAlignedColumnRecordsReq req = SortUtils.sortAndBuildInsertReq(
                 sessionId,
                 paths,
@@ -77,8 +76,6 @@ public class InsertOperator extends Operator {
                 types,
                 null
         );
-        InsertNonAlignedColumnRecordsContext ctx = new InsertNonAlignedColumnRecordsContext(req);
-        core.processRequest(ctx);
-        return new ExecuteSqlResp(ctx.getStatus(), SqlType.Insert);
+        return new ExecuteSqlResp(worker.insertNonAlignedColumnRecords(req), SqlType.Insert);
     }
 }

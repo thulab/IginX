@@ -35,7 +35,7 @@ public enum QueryAggregatorType {
     SAMPLER("sampler"),
     PERCENTILE("percentile"),
     NONE("");
-    private String type;
+    private final String type;
 
     QueryAggregatorType(String type) {
         this.type = type;

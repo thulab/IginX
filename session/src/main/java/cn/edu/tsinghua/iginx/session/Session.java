@@ -866,6 +866,7 @@ public class Session {
                     lock.readLock().unlock();
                 }
             } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
         } catch (TException e) {
             throw new SessionException(e);
         }
@@ -1011,7 +1012,7 @@ public class Session {
             }
             mergedPaths.add(path);
         }
-        mergedPaths.sort(Comparator.comparing(o -> o.substring(0, o.indexOf("*"))));
+        mergedPaths.sort(String::compareTo);
         return mergedPaths;
     }
 }

@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.RestUtils;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
@@ -45,28 +45,34 @@ public class QueryAggregatorFilter extends QueryAggregator {
                 case LONG:
                     for (int i = 0; i < n; i++) {
                         Long now = null;
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                                if (now == null && filted((long) sessionQueryDataSet.getValues().get(i).get(j), getFilter()))
+                                if (now == null && filted((long) sessionQueryDataSet.getValues().get(i).get(j), getFilter())) {
                                     now = (long) sessionQueryDataSet.getValues().get(i).get(j);
+                                }
                                 datapoints += 1;
                             }
-                        if (now != null)
+                        }
+                        if (now != null) {
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], now);
+                        }
                     }
                     queryResultDataset.setSampleSize(datapoints);
                     break;
                 case DOUBLE:
                     for (int i = 0; i < n; i++) {
                         Double nowd = null;
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                                if (nowd == null && filted((double) sessionQueryDataSet.getValues().get(i).get(j), getFilter()))
+                                if (nowd == null && filted((double) sessionQueryDataSet.getValues().get(i).get(j), getFilter())) {
                                     nowd = (double) sessionQueryDataSet.getValues().get(i).get(j);
+                                }
                                 datapoints += 1;
                             }
-                        if (nowd != null)
+                        }
+                        if (nowd != null) {
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], nowd);
+                        }
                     }
                     queryResultDataset.setSampleSize(datapoints);
                     break;
@@ -82,23 +88,17 @@ public class QueryAggregatorFilter extends QueryAggregator {
     boolean filted(double now, Filter filter) {
         switch (filter.getOp()) {
             case "gt":
-                if (now > filter.getValue()) return true;
-                else return false;
+                return now > filter.getValue();
             case "gte":
-                if (now >= filter.getValue()) return true;
-                else return false;
+                return now >= filter.getValue();
             case "eq":
-                if (now == filter.getValue()) return true;
-                else return false;
+                return now == filter.getValue();
             case "ne":
-                if (now != filter.getValue()) return true;
-                else return false;
+                return now != filter.getValue();
             case "lte":
-                if (now <= filter.getValue()) return true;
-                else return false;
+                return now <= filter.getValue();
             case "lt":
-                if (now < filter.getValue()) return true;
-                else return false;
+                return now < filter.getValue();
             default:
                 return false;
         }

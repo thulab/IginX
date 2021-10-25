@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
@@ -27,9 +27,9 @@ import java.util.List;
 
 public abstract class QueryAggregator {
     private Double divisor;
-    private Long Dur;
-    private double Percentile;
-    private long Unit;
+    private Long dur;
+    private double percentile;
+    private long unit;
     private String metric_name;
     private Filter filter;
     private QueryAggregatorType type;
@@ -48,27 +48,27 @@ public abstract class QueryAggregator {
     }
 
     public Long getDur() {
-        return Dur;
+        return dur;
     }
 
     public void setDur(Long dur) {
-        Dur = dur;
+        this.dur = dur;
     }
 
     public double getPercentile() {
-        return Percentile;
+        return percentile;
     }
 
     public void setPercentile(double percentile) {
-        Percentile = percentile;
+        this.percentile = percentile;
     }
 
     public long getUnit() {
-        return Unit;
+        return unit;
     }
 
     public void setUnit(long unit) {
-        Unit = unit;
+        this.unit = unit;
     }
 
     public String getMetric_name() {
@@ -104,7 +104,7 @@ public abstract class QueryAggregator {
         int datapoints = 0;
         for (int i = 0; i < n; i++) {
             boolean flag = false;
-            for (int j = 0; j < m; j++)
+            for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     if (!flag) {
                         queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
@@ -112,6 +112,7 @@ public abstract class QueryAggregator {
                     }
                     datapoints += 1;
                 }
+            }
         }
         queryResultDataset.setSampleSize(datapoints);
         return queryResultDataset;
@@ -122,17 +123,21 @@ public abstract class QueryAggregator {
         List<Boolean> notNull = new ArrayList<>();
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
-        for (int i = 0; i < m; i++)
+        for (int i = 0; i < m; i++) {
             notNull.add(false);
-        for (int i = 0; i < n; i++)
+        }
+        for (int i = 0; i < n; i++) {
             for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     notNull.set(j, true);
                 }
             }
-        for (int i = 0; i < m; i++)
-            if (notNull.get(i))
+        }
+        for (int i = 0; i < m; i++) {
+            if (notNull.get(i)) {
                 ret.add(sessionQueryDataSet.getPaths().get(i));
+            }
+        }
         return ret;
     }
 }

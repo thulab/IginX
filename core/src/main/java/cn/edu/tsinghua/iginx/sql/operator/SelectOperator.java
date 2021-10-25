@@ -1,16 +1,6 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
-import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
-import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
-import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
-import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
-import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -165,7 +155,8 @@ public class SelectOperator extends Operator {
     }
 
     public void setSelectedFuncsAndPaths(String func, String path) {
-        this.selectedFuncsAndPaths.add(new Pair<>(func, fromPath + SQLConstant.DOT + path));
+        String fullPath = fromPath + SQLConstant.DOT + path;
+        this.selectedFuncsAndPaths.add(new Pair<>(func, fullPath));
         this.funcTypeSet.add(str2FuncType(func));
     }
 
@@ -301,18 +292,18 @@ public class SelectOperator extends Operator {
     }
 
     private ExecuteSqlResp simpleQuery(long sessionId) {
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         QueryDataReq req = new QueryDataReq(
                 sessionId,
                 getSelectedPaths(),
                 startTime,
                 endTime
         );
-        QueryDataContext ctx = new QueryDataContext(req);
-        core.processRequest(ctx);
-        QueryDataResp queryDataResp = ((QueryDataCombineResult) ctx.getCombineResult()).getResp();
+        QueryDataResp queryDataResp = worker.queryData(req);
 
-        ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.SimpleQuery);
+        checkIfHasOrderByPath(queryDataResp.getPaths());
+
+        ExecuteSqlResp resp = new ExecuteSqlResp(queryDataResp.getStatus(), SqlType.SimpleQuery);
         resp.setPaths(queryDataResp.getPaths());
         resp.setDataTypeList(queryDataResp.getDataTypeList());
         resp.setQueryDataSet(queryDataResp.getQueryDataSet());
@@ -335,7 +326,7 @@ public class SelectOperator extends Operator {
             return lastAggregateQuery(sessionId);
         }
 
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         AggregateQueryReq req = new AggregateQueryReq(
                 sessionId,
                 getSelectedPaths(),
@@ -343,11 +334,9 @@ public class SelectOperator extends Operator {
                 endTime,
                 aggregateType
         );
-        AggregateQueryContext ctx = new AggregateQueryContext(req);
-        core.processRequest(ctx);
-        AggregateQueryResp aggregateQueryResp = ((AggregateCombineResult) ctx.getCombineResult()).getResp();
+        AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
 
-        ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.AggregateQuery);
+        ExecuteSqlResp resp = new ExecuteSqlResp(aggregateQueryResp.getStatus(), SqlType.AggregateQuery);
         resp.setPaths(aggregateQueryResp.getPaths());
         resp.setDataTypeList(aggregateQueryResp.getDataTypeList());
         resp.setValuesList(aggregateQueryResp.getValuesList());
@@ -362,13 +351,11 @@ public class SelectOperator extends Operator {
             throw new SQLParserException("End time must be set as INF in aggregate query with last function.");
         }
 
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         LastQueryReq req = new LastQueryReq(sessionId, getSelectedPaths(), startTime);
-        LastQueryContext ctx = new LastQueryContext(req);
-        core.processRequest(ctx);
-        LastQueryResp lastQueryResp = ((LastQueryCombineResult) ctx.getCombineResult()).getResp();
+        LastQueryResp lastQueryResp = worker.lastQuery(req);
 
-        ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.AggregateQuery);
+        ExecuteSqlResp resp = new ExecuteSqlResp(lastQueryResp.getStatus(), SqlType.AggregateQuery);
         resp.setPaths(lastQueryResp.getPaths());
         resp.setDataTypeList(lastQueryResp.getDataTypeList());
         resp.setTimestamps(lastQueryResp.getTimestamps());
@@ -388,7 +375,7 @@ public class SelectOperator extends Operator {
             throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
         }
 
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         DownsampleQueryReq req = new DownsampleQueryReq(
                 sessionId,
                 getSelectedPaths(),
@@ -397,11 +384,9 @@ public class SelectOperator extends Operator {
                 aggregateType,
                 precision
         );
-        DownsampleQueryContext ctx = new DownsampleQueryContext(req);
-        core.processRequest(ctx);
-        DownsampleQueryResp downsampleQueryResp = ((DownsampleQueryCombineResult) ctx.getCombineResult()).getResp();
+        DownsampleQueryResp downsampleQueryResp = worker.downsampleQuery(req);
 
-        ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.DownsampleQuery);
+        ExecuteSqlResp resp = new ExecuteSqlResp(downsampleQueryResp.getStatus(), SqlType.DownsampleQuery);
         resp.setPaths(downsampleQueryResp.getPaths());
         resp.setDataTypeList(downsampleQueryResp.getDataTypeList());
         resp.setQueryDataSet(downsampleQueryResp.getQueryDataSet());
@@ -412,7 +397,7 @@ public class SelectOperator extends Operator {
     }
 
     private ExecuteSqlResp valueFilterQuery(long sessionId) {
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         ValueFilterQueryReq req = new ValueFilterQueryReq(
                 sessionId,
                 getSelectedPaths(),
@@ -420,11 +405,11 @@ public class SelectOperator extends Operator {
                 endTime,
                 booleanExpression
         );
-        ValueFilterQueryContext ctx = new ValueFilterQueryContext(req);
-        core.processRequest(ctx);
-        ValueFilterQueryResp valueFilterQueryResp = ((ValueFilterCombineResult) ctx.getCombineResult()).getResp();
+        ValueFilterQueryResp valueFilterQueryResp = worker.valueFilterQuery(req);
 
-        ExecuteSqlResp resp = new ExecuteSqlResp(ctx.getStatus(), SqlType.ValueFilterQuery);
+        checkIfHasOrderByPath(valueFilterQueryResp.getPaths());
+
+        ExecuteSqlResp resp = new ExecuteSqlResp(valueFilterQueryResp.getStatus(), SqlType.ValueFilterQuery);
         resp.setPaths(valueFilterQueryResp.getPaths());
         resp.setDataTypeList(valueFilterQueryResp.getDataTypeList());
         resp.setQueryDataSet(valueFilterQueryResp.getQueryDataSet());
@@ -433,6 +418,12 @@ public class SelectOperator extends Operator {
         resp.setOrderByPath(orderByPath);
         resp.setAscending(ascending);
         return resp;
+    }
+
+    private void checkIfHasOrderByPath(List<String> paths) {
+        if (!orderByPath.equals("") && !paths.contains(orderByPath)) {
+            throw new SQLParserException(String.format("Selected paths did not contain '%s'.", orderByPath));
+        }
     }
 
     public enum FuncType {

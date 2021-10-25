@@ -1,8 +1,6 @@
 package cn.edu.tsinghua.iginx.sql.operator;
 
-import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
-import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
+import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
@@ -24,7 +22,7 @@ public class CountPointsOperator extends Operator {
     @Override
     public ExecuteSqlResp doOperation(long sessionId) {
         List<String> paths = new ArrayList<>(Arrays.asList("*"));
-        Core core = Core.getInstance();
+        IginxWorker worker = IginxWorker.getInstance();
         AggregateQueryReq req = new AggregateQueryReq(
                 sessionId,
                 paths,
@@ -32,9 +30,7 @@ public class CountPointsOperator extends Operator {
                 Long.MAX_VALUE,
                 AggregateType.COUNT
         );
-        AggregateQueryContext ctx = new AggregateQueryContext(req);
-        core.processRequest(ctx);
-        AggregateQueryResp aggregateQueryResp = ((AggregateCombineResult) ctx.getCombineResult()).getResp();
+        AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
         SessionAggregateQueryDataSet dataSet = new SessionAggregateQueryDataSet(aggregateQueryResp, AggregateType.COUNT);
 
         long count = 0;
