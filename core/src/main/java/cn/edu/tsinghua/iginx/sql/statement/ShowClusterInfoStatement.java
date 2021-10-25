@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
@@ -6,14 +6,14 @@ import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 
-public class ShowClusterInfoOperator extends Operator {
+public class ShowClusterInfoStatement extends Statement {
 
-    public ShowClusterInfoOperator() {
-        this.operatorType = OperatorType.SHOW_CLUSTER_INFO;
+    public ShowClusterInfoStatement() {
+        this.statementType = StatementType.SHOW_CLUSTER_INFO;
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         IginxWorker worker = IginxWorker.getInstance();
         GetClusterInfoReq req = new GetClusterInfoReq(sessionId);
         GetClusterInfoResp getClusterInfoResp = worker.getClusterInfo(req);
