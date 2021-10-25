@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
@@ -9,13 +9,13 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddStorageEngineOperator extends Operator {
+public class AddStorageEngineStatement extends Statement {
 
     private List<StorageEngine> engines;
 
-    public AddStorageEngineOperator() {
+    public AddStorageEngineStatement() {
         engines = new ArrayList<>();
-        this.operatorType = OperatorType.ADD_STORAGE_ENGINE;
+        this.statementType = StatementType.ADD_STORAGE_ENGINE;
     }
 
     public List<StorageEngine> getEngines() {
@@ -27,7 +27,7 @@ public class AddStorageEngineOperator extends Operator {
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         IginxWorker worker = IginxWorker.getInstance();
         AddStorageEnginesReq req = new AddStorageEnginesReq(sessionId, engines);
         return new ExecuteSqlResp(worker.addStorageEngines(req), SqlType.AddStorageEngines);
