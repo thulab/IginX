@@ -38,4 +38,7 @@ public class SetTransform extends AbstractUnaryOperator {
         this.functionCall = functionCall;
     }
 
+    public FunctionCall getFunctionCall() {
+        return functionCall;
+    }
 }

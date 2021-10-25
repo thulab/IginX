@@ -24,12 +24,21 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 
 import java.util.List;
 
 public class Count implements SetMappingFunction {
 
     public static final String COUNT = "count";
+
+    private static final Count INSTANCE = new Count();
+
+    private Count() {}
+
+    static {
+        FunctionManager.getInstance().registerFunction(INSTANCE);
+    }
 
     @Override
     public FunctionType getFunctionType() {

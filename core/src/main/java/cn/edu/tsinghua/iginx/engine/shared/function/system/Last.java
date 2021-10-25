@@ -28,13 +28,13 @@ import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 
 import java.util.List;
 
-public class Max implements SetMappingFunction {
+public class Last implements SetMappingFunction {
 
-    public static final String MAX = "max";
+    public static final String LAST = "last";
 
-    private static final Max INSTANCE = new Max();
+    private static final Last INSTANCE = new Last();
 
-    private Max() {}
+    private Last() {}
 
     static {
         FunctionManager.getInstance().registerFunction(INSTANCE);
@@ -52,11 +52,12 @@ public class Max implements SetMappingFunction {
 
     @Override
     public String getIdentifier() {
-        return MAX;
+        return LAST;
     }
 
     @Override
     public Row transform(RowStream rows, List<Value> params) {
         return null;
     }
+
 }

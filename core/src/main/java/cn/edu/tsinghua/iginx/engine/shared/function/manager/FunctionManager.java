@@ -32,12 +32,11 @@ public class FunctionManager {
         this.functions = new HashMap<>();
     }
 
-    public boolean registerFunction(Function function) {
+    public void registerFunction(Function function) {
         if (functions.containsKey(function.getIdentifier())) {
-            return false;
+            return;
         }
         functions.put(function.getIdentifier(), function);
-        return true;
     }
 
     public static FunctionManager getInstance() {

@@ -24,12 +24,21 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 
 import java.util.List;
 
 public class Min implements SetMappingFunction {
 
     public static final String MIN = "min";
+
+    private static final Min INSTANCE = new Min();
+
+    private Min() {}
+
+    static {
+        FunctionManager.getInstance().registerFunction(INSTANCE);
+    }
 
     @Override
     public FunctionType getFunctionType() {
