@@ -33,8 +33,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run IoTDB11
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
@@ -76,8 +76,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run IoTDB12 and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
@@ -119,8 +119,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run InfluxDB and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
@@ -162,8 +162,8 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/etcd.sh"
-          "${GITHUB_WORKSPACE}/.github/etcd.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run IoTDB
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
