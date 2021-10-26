@@ -100,7 +100,6 @@ public class IginXResultSet implements ResultSet {
         columnTypes = result.getDataTypeList();
         values = result.getValues();
 
-
         if (result.getSqlType() == SqlType.AggregateQuery ||
                 result.getSqlType() == SqlType.DownsampleQuery) {
             columnNames = new ArrayList<>();
