@@ -16,27 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.metadata.utils;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 
-import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
-public class JsonUtils {
+public interface ActiveFragmentStatisticsChangeHook {
 
-    private static final Gson gson = new GsonBuilder().enableComplexMapKeySerialization()
-            .create();
+    void onChange(Map<FragmentMeta, FragmentStatistics> statisticsMap);
 
-    public static byte[] toJson(Object o) {
-        return gson.toJson(o).getBytes(StandardCharsets.UTF_8);
-    }
-
-    public static <T> T fromJson(byte[] data, Class<T> clazz) {
-        return gson.fromJson(new String(data), clazz);
-    }
-
-    public static Gson getGson() {
-        return gson;
-    }
 }

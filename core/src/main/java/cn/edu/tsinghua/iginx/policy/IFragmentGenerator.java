@@ -34,4 +34,6 @@ public interface IFragmentGenerator {
 
     void init(IMetaManager iMetaManager);
 
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime);
+
 }

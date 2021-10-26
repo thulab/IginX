@@ -40,6 +40,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -103,7 +104,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,7 +111,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class IginxWorker implements IService.Iface {
@@ -244,7 +246,6 @@ public class IginxWorker implements IService.Iface {
                 return RpcUtils.FAILURE;
             }
             storageEngineMetas.add(meta);
-
         }
         Status status = RpcUtils.SUCCESS;
         // 检测是否与已有的存储单元冲突

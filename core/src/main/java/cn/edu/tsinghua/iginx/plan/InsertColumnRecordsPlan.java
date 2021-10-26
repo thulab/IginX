@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -39,9 +40,14 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
     private static final Logger logger = LoggerFactory.getLogger(InsertColumnRecordsPlan.class);
 
     public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
-                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
+                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit, FragmentMeta fragment) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit, fragment);
         this.setIginxPlanType(INSERT_COLUMN_RECORDS);
+    }
+
+    public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                   List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
+        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit, null);
     }
 
     public InsertColumnRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
@@ -102,5 +108,19 @@ public class InsertColumnRecordsPlan extends InsertRecordsPlan {
             tempBitmaps.add(tempBitmap);
         }
         return new Pair<>(tempValues, tempBitmaps);
+    }
+
+    @Override
+    protected long getCount() {
+        List<Bitmap> bitmaps = getBitmapList();
+        long count = 0L;
+        for (Bitmap bitmap: bitmaps) {
+            for (int i = 0; i < bitmap.getSize(); i++) {
+                if (bitmap.get(i)) {
+                    count++;
+                }
+            }
+        }
+        return count;
     }
 }
