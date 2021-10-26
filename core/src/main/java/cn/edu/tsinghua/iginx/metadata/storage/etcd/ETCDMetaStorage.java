@@ -202,12 +202,12 @@ public class ETCDMetaStorage implements IMetaStorage {
                     switch (event.getEventType()) {
                         case PUT:
                             iginx = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), IginxMeta.class);
-                            logger.info("new iginx comes to cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
+                            logger.info("new iginx comes to cluster: id = " + iginx.getId() + " ip = " + iginx.getIp() + " port = " + iginx.getPort());
                             iginxChangeHook.onChange(iginx.getId(), iginx);
                             break;
                         case DELETE:
                             iginx = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), IginxMeta.class);
-                            logger.info("iginx leave from cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
+                            logger.info("iginx leave from cluster: id = " + iginx.getId() + " ip = " + iginx.getIp() + " port = " + iginx.getPort());
                             iginxChangeHook.onChange(iginx.getId(), null);
                             break;
                         default:
@@ -1069,10 +1069,6 @@ public class ETCDMetaStorage implements IMetaStorage {
         } catch (ExecutionException | InterruptedException e) {
             logger.error("encounter error when removing reshard notification: ", e);
             throw new MetaStorageException(e);
-        } finally {
-            if (reshardNotificationLease != -1) {
-                releaseReshardNotification();
-            }
         }
     }
 
@@ -1147,10 +1143,6 @@ public class ETCDMetaStorage implements IMetaStorage {
         } catch (ExecutionException | InterruptedException e) {
             logger.error("encounter error when removing reshard counter: ", e);
             throw new MetaStorageException(e);
-        } finally {
-            if (reshardCounterLease != -1) {
-                releaseReshardCounter();
-            }
         }
     }
 

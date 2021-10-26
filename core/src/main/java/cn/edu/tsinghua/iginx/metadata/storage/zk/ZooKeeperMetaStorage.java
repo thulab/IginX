@@ -339,7 +339,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     data = event.getData().getData();
                     iginxMeta = JsonUtils.fromJson(data, IginxMeta.class);
                     if (iginxMeta != null) {
-                        logger.info("new iginx comes to cluster: id = " + iginxMeta.getId() + " , ip = " + iginxMeta.getIp() + " , port = " + iginxMeta.getPort());
+                        logger.info("new iginx comes to cluster: id = " + iginxMeta.getId() + " ip = " + iginxMeta.getIp() + " port = " + iginxMeta.getPort());
                         iginxChangeHook.onChange(iginxMeta.getId(), iginxMeta);
                     } else {
                         logger.error("encounter error when resolving iginx meta from zookeeper");
