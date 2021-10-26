@@ -100,6 +100,9 @@ public class ConfigDescriptor {
 
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
+            config.setRestReqSplitNum(Integer.parseInt(properties.getProperty("restReqSplitNum", "10")));
+
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

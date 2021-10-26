@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.rest.insert;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -33,15 +35,22 @@ import org.slf4j.LoggerFactory;
 import java.io.Reader;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class DataPointsParser {
     public static final String ANNOTATION_SPLIT_STRING = "@@annotation";
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
+    private static Config config = ConfigDescriptor.getInstance().getConfig();
     private Reader inputStream = null;
     private final ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
     private final RestSession session = new RestSession();
+    private Map<TimeAndPrefixPath, Map<String, String>> batchMap = new HashMap<>();
+    private int restReqSplitNum = config.getRestReqSplitNum();
+
+
 
     public DataPointsParser() {
 
@@ -72,17 +81,36 @@ public class DataPointsParser {
             LOGGER.error("Error occurred during parsing data ", e);
             throw e;
         }
-        try {
-            if (isAnnotation) {
-                sendAnnotationMetricsData();
-            } else {
-                sendMetricsData();
+        // sub tread execute and await.
+        LOGGER.info(String.format("restReqSplitNum: %s", restReqSplitNum));
+
+        if (restReqSplitNum > 1) {
+            long batchInsertStartTime = System.currentTimeMillis();
+            List<List<Metric>> splitMetricList = averageAssign(metricList, restReqSplitNum);
+            CountDownLatch latch = new CountDownLatch(restReqSplitNum);
+            for (List<Metric> list : splitMetricList) {
+                SenderManager.getInstance().addSender(new Sender(latch, list));
             }
-        } catch (Exception e) {
-            LOGGER.debug("Exception occur for create and send ", e);
-            throw e;
-        } finally {
-            session.closeSession();
+            try {
+                latch.await(5, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                LOGGER.error("Request partial sub threads time out");
+            }
+            long batchInsertEndTime = System.currentTimeMillis();
+            LOGGER.info(String.format("Batch insert cost time: %s ms", batchInsertEndTime - batchInsertStartTime));
+        } else {
+            try {
+                if (isAnnotation) {
+                    sendAnnotationMetricsData();
+                } else {
+                    sendMetricsDataInBatch();
+                }
+            } catch (Exception e) {
+                LOGGER.debug("Exception occur for create and send ", e);
+                throw e;
+            } finally {
+                session.closeSession();
+            }
         }
     }
 
@@ -123,7 +151,7 @@ public class DataPointsParser {
     public void sendData() {
         try {
             session.openSession();
-            sendMetricsData();
+            sendMetricsDataInBatch();
         } catch (Exception e) {
             LOGGER.error("Error occurred during sending data ", e);
         }
@@ -138,67 +166,6 @@ public class DataPointsParser {
         this.metricList = metricList;
     }
 
-    private void sendMetricsData() throws Exception {
-        for (Metric metric : metricList) {
-            boolean needUpdate = false;
-            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
-            if (metricschema == null) {
-                needUpdate = true;
-                metricschema = new ConcurrentHashMap<>();
-            }
-            for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
-                if (metricschema.get(entry.getKey()) == null) {
-                    needUpdate = true;
-                    int pos = metricschema.size() + 1;
-                    metricschema.put(entry.getKey(), pos);
-                }
-            }
-            if (needUpdate) {
-                metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-            }
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-            }
-            StringBuilder path = new StringBuilder();
-            for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
-                String ins = metric.getTags().get(entry.getValue());
-                if (ins != null) {
-                    path.append(ins).append(".");
-                } else {
-                    path.append("null.");
-                }
-            }
-            path.append(metric.getName());
-            List<String> paths = new ArrayList<>();
-            paths.add(path.toString());
-            int size = metric.getTimestamps().size();
-            List<DataType> type = new ArrayList<>();
-            type.add(findType(metric.getValues()));
-            Object[] valuesList = new Object[1];
-            Object[] values = new Object[size];
-            for (int i = 0; i < size; i++) {
-                values[i] = getType(metric.getValues().get(i), type.get(0));
-            }
-            valuesList[0] = values;
-            try {
-                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
-                if (metric.getAnnotation() != null) {
-                    for (int i = 0; i < size; i++) {
-                        values[i] = metric.getAnnotation().getBytes();
-                    }
-                    valuesList[0] = values;
-                    path.append(ANNOTATION_SPLIT_STRING);
-                    paths.set(0, path.toString());
-                    type.set(0, DataType.BINARY);
-                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
-                }
-            } catch (ExecutionException e) {
-                LOGGER.error("Error occurred during insert ", e);
-                throw e;
-            }
-        }
-    }
 
     private void sendAnnotationMetricsData() throws Exception {
         for (Metric metric : metricList) {
@@ -274,5 +241,132 @@ public class DataPointsParser {
             }
         }
         return DataType.DOUBLE;
+    }
+
+    private static <T> List<List<T>> averageAssign(List<T> source, int n) {
+        List<List<T>> result = new ArrayList<>();
+
+        int remainder = source.size() % n;
+        int number = source.size() / n;
+        int offset = 0;
+
+        for (int i = 0; i < n; i++) {
+            List<T> value;
+            if (remainder > 0) {
+                value = source.subList(i * number + offset, (i + 1) * number + offset + 1);
+                remainder--;
+                offset++;
+            } else {
+                value = source.subList(i * number + offset, (i + 1) * number + offset);
+            }
+            result.add(value);
+        }
+        return result;
+    }
+
+    private void sendMetricsDataInBatch() {
+        long umamdTime = System.currentTimeMillis();
+        LOGGER.info(String.format("Going in to meta data updates"));
+        updateMetaAndMergeData();
+        LOGGER.info(String.format("MetaData cost time: %s ms", System.currentTimeMillis() - umamdTime));
+
+        for (Map.Entry<TimeAndPrefixPath, Map<String, String>> entry : batchMap.entrySet()) {
+            List<String> paths = new ArrayList<>();
+            List<DataType> types = new ArrayList<>();
+            Object[] values = new Object[1];
+            long[] timestamps = new long[1];
+
+            String prefixPath = entry.getKey().getPrefixPath();
+            long timestamp = entry.getKey().getTimestamp();
+            List<Object> valueList = new ArrayList<>();
+            timestamps[0] = timestamp;
+
+            for (Map.Entry<String, String> subEntry : entry.getValue().entrySet()) {
+                String suffixPath = subEntry.getKey();
+                String value = subEntry.getValue();
+
+                DataType type = findType(new ArrayList<>(Collections.singletonList(value)));
+                types.add(type);
+                paths.add(prefixPath + suffixPath);
+                valueList.add(getType(value, type));
+            }
+
+            values[0] = valueList.toArray();
+
+            try {
+                long sessionInsertStartTime =  System.currentTimeMillis();
+//                session.insertNonAlignedRowRecords(paths, timestamps, values, types, null);
+                session.insertRowRecords(paths, timestamps, values, types, null);
+                long sessionInsertEndTime =  System.currentTimeMillis();
+                LOGGER.info(String.format("Session insert cost time: %s ms", sessionInsertEndTime - sessionInsertStartTime));
+            } catch (Exception e) {
+                LOGGER.error("Error occurred during insert ", e);
+            }
+        }
+    }
+
+    private void updateMetaAndMergeData() {
+        for (Metric metric : metricList) {
+            // update meta
+            boolean needUpdate = false;
+            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
+            if (metricschema == null) {
+                needUpdate = true;
+                metricschema = new ConcurrentHashMap<>();
+            }
+            Iterator iter = metric.getTags().entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry entry = (Map.Entry) iter.next();
+                if (metricschema.get(entry.getKey()) == null) {
+                    needUpdate = true;
+                    int pos = metricschema.size() + 1;
+                    metricschema.put((String) entry.getKey(), pos);
+                }
+            }
+            if (needUpdate) {
+                metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
+            }
+            Map<Integer, String> pos2path = new TreeMap<>();
+            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
+                pos2path.put(entry.getValue(), entry.getKey());
+            }
+            StringBuilder path = new StringBuilder("");
+            iter = pos2path.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry entry = (Map.Entry) iter.next();
+                String ins = metric.getTags().get(entry.getValue());
+                if (ins != null) {
+                    path.append(ins + ".");
+                }
+                else {
+                    path.append("null.");
+                }
+            }
+            // merge data in time and prefix path
+            String prefixPath = path.toString();
+            for (int i = 0; i < metric.getTimestamps().size(); i++) {
+                long timestamp = metric.getTimestamps().get(i);
+                String value = metric.getValues().get(i);
+                TimeAndPrefixPath tpKey = new TimeAndPrefixPath(timestamp, prefixPath);
+                if (batchMap.containsKey(tpKey)) {
+                    batchMap.get(tpKey).put(metric.getName(), value);
+                } else {
+                    Map<String, String> metricValueMap = new HashMap<>();
+                    metricValueMap.put(metric.getName(), value);
+                    batchMap.put(tpKey, metricValueMap);
+                }
+
+                if (metric.getAnnotation() != null) {
+                    if (batchMap.containsKey(tpKey)) {
+                        batchMap.get(tpKey).put(metric.getName() + ANNOTATION_SPLIT_STRING,
+                                Arrays.toString(metric.getAnnotation().getBytes()));
+                    } else {
+                        Map<String, String> metricValueMap = new HashMap<>();
+                        metricValueMap.put(metric.getName() + ANNOTATION_SPLIT_STRING, value);
+                        batchMap.put(tpKey, metricValueMap);
+                    }
+                }
+            }
+        }
     }
 }
