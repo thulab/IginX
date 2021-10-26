@@ -12,6 +12,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
+import cn.edu.tsinghua.iginx.rest.bean.Metric;
 
 public class Sender extends Thread {
 

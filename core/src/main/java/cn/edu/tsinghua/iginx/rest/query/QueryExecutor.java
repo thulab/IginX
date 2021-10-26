@@ -18,30 +18,28 @@
  */
 package cn.edu.tsinghua.iginx.rest.query;
 
-import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.bean.Query;
+import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class QueryExecutor {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryExecutor.class);
-    private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
-    private Query query;
+    private final Query query;
+
+    private final RestSession session = new RestSession();
+
     private Integer maxPathLength = 3;
-    private RestSession session = new RestSession();
 
 
     public QueryExecutor(Query query) {
@@ -85,13 +83,14 @@ public class QueryExecutor {
             pos2path.put(now, entry.getKey());
         }
         List<Integer> pos = new ArrayList<>();
-        for (int i = 0; i < maxPathLength; i++)
+        for (int i = 0; i < maxPathLength; i++) {
             pos.add(-1);
-        dfsInsert(0, ret, pos2path, queryMetric, pos, 0);
+        }
+        searchPath(0, ret, pos2path, queryMetric, pos, 0);
         return ret;
     }
 
-    void dfsInsert(int depth, List<String> Paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos, int nowPos) {
+    void searchPath(int depth, List<String> Paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos, int nowPos) {
         if (nowPos == pos2path.size()) {
             StringBuilder path = new StringBuilder("");
             int tmpPos = 0;
@@ -120,12 +119,12 @@ public class QueryExecutor {
             return;
         }
         pos.set(depth, -1);
-        dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos, nowPos);
-        if (pos2path.size() > nowPos)
+        searchPath(depth + 1, Paths, pos2path, queryMetric, pos, nowPos);
+        if (pos2path.size() > nowPos) {
             for (int i = 0; i < queryMetric.getTags().get(pos2path.get(nowPos + 1)).size(); i++) {
                 pos.set(depth, i);
-                dfsInsert(depth + 1, Paths, pos2path, queryMetric, pos, nowPos + 1);
+                searchPath(depth + 1, Paths, pos2path, queryMetric, pos, nowPos + 1);
             }
-
+        }
     }
 }

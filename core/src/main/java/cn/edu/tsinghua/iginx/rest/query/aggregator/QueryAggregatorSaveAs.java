@@ -19,9 +19,9 @@
 package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.bean.Metric;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
-import cn.edu.tsinghua.iginx.rest.insert.Metric;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class QueryAggregatorSaveAs extends QueryAggregator {
         int datapoints = 0;
         for (int i = 0; i < n; i++) {
             boolean flag = false;
-            for (int j = 0; j < m; j++)
+            for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     if (!flag) {
                         queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
@@ -58,6 +58,7 @@ public class QueryAggregatorSaveAs extends QueryAggregator {
                     }
                     datapoints += 1;
                 }
+            }
         }
         queryResultDataset.setSampleSize(datapoints);
         metrics.add(ins);

@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.RestUtils;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
@@ -47,11 +47,12 @@ public class QueryAggregatorPercentile extends QueryAggregator {
                 case LONG:
                     List<Long> tmp = new ArrayList<>();
                     for (int i = 0; i < n; i++) {
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                                 datapoints += 1;
                                 tmp.add((long) sessionQueryDataSet.getValues().get(i).get(j));
                             }
+                        }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
                                 RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmp);
@@ -64,11 +65,12 @@ public class QueryAggregatorPercentile extends QueryAggregator {
                 case DOUBLE:
                     List<Double> tmpd = new ArrayList<>();
                     for (int i = 0; i < n; i++) {
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                                 datapoints += 1;
                                 tmpd.add((double) sessionQueryDataSet.getValues().get(i).get(j));
                             }
+                        }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
                                 RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmpd);
