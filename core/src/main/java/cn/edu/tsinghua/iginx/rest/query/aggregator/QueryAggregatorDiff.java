@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.RestUtils;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
@@ -47,12 +47,14 @@ public class QueryAggregatorDiff extends QueryAggregator {
                     Long last = null;
                     Long now = null;
                     for (int i = 0; i < n; i++) {
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                                if (now == null)
+                                if (now == null) {
                                     now = (long) sessionQueryDataSet.getValues().get(i).get(j);
+                                }
                                 datapoints += 1;
                             }
+                        }
                         if (i != 0) {
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], now - last);
                         }
@@ -66,12 +68,14 @@ public class QueryAggregatorDiff extends QueryAggregator {
                     Double lastd = null;
                     Double nowd = null;
                     for (int i = 0; i < n; i++) {
-                        for (int j = 0; j < m; j++)
+                        for (int j = 0; j < m; j++) {
                             if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                                if (nowd == null)
+                                if (nowd == null) {
                                     nowd = (double) sessionQueryDataSet.getValues().get(i).get(j);
+                                }
                                 datapoints += 1;
                             }
+                        }
                         if (i != 0) {
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], nowd - lastd);
                         }

@@ -16,79 +16,31 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.rest.query;
+package cn.edu.tsinghua.iginx.rest.bean;
 
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+@Data
 public class QueryMetric {
     private String name;
     private Long limit;
-    private Map<String, List<String>> tags = new TreeMap();
+    private Map<String, List<String>> tags = new TreeMap<>();
     private List<QueryAggregator> aggregators = new ArrayList<>();
     private Boolean annotation = false;
     private AnnotationLimit annotationLimit;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public Long getLimit() {
-        return limit;
-    }
-
-    public void setLimit(Long limit) {
-        this.limit = limit;
-    }
-
-    public Map<String, List<String>> getTags() {
-        return tags;
-    }
-
-    public void setTags(Map<String, List<String>> tags) {
-        this.tags = tags;
-    }
-
-    public List<QueryAggregator> getAggregators() {
-        return aggregators;
-    }
-
-    public void setAggregators(
-            List<QueryAggregator> aggregators) {
-        this.aggregators = aggregators;
-    }
-
     public void addTag(String key, String value) {
-        if (tags.get(key) == null)
-            tags.put(key, new ArrayList<>());
+        tags.computeIfAbsent(key, k -> new ArrayList<>());
         tags.get(key).add(value);
     }
 
     public void addAggregator(QueryAggregator qa) {
         aggregators.add(qa);
-    }
-
-    public Boolean getAnnotation() {
-        return annotation;
-    }
-
-    public void setAnnotation(Boolean annotation) {
-        this.annotation = annotation;
-    }
-
-    public AnnotationLimit getAnnotationLimit() {
-        return annotationLimit;
-    }
-
-    public void setAnnotationLimit(AnnotationLimit annotationLimit) {
-        this.annotationLimit = annotationLimit;
     }
 }
