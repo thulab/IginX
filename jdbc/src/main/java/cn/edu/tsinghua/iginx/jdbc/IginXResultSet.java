@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.jdbc;
 
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import com.google.common.primitives.Ints;
@@ -31,6 +32,7 @@ import java.sql.Types;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -74,9 +76,30 @@ public class IginXResultSet implements ResultSet {
         this.metadata = new IginXResultMetadata(columnNames, columnTypes, hasTime);
     }
 
+    private void constructLastQueryResult(SessionExecuteSqlResult result) {
+        columnNames = Arrays.asList("time", "path", "value");
+        columnTypes = Arrays.asList(DataType.LONG, DataType.BINARY, DataType.BINARY);
+        hasTime = true;
+        List<String> paths = result.getPaths();
+        long[] timestamps = result.getTimestamps();
+        values = new ArrayList<>();
+        for (int i = 0; i < paths.size(); i++) {
+            List<Object> row = new ArrayList<>();
+            row.add(timestamps[i]);
+            row.add(paths.get(i));
+            row.add(result.getValues().get(0).get(i));
+            values.add(row);
+        }
+    }
+
     private void constructQueryResult(SessionExecuteSqlResult result) {
+        if (result.isQuery() && result.getAggregateType() == AggregateType.LAST) {
+            constructLastQueryResult(result);
+            return;
+        }
         columnTypes = result.getDataTypeList();
         values = result.getValues();
+
 
         if (result.getSqlType() == SqlType.AggregateQuery ||
                 result.getSqlType() == SqlType.DownsampleQuery) {
