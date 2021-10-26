@@ -156,7 +156,7 @@ public class DefaultMetaManager implements IMetaManager {
             initReshardNotification();
             initReshardCounter();
         } catch (MetaStorageException e) {
-            logger.error("init meta manager error: ", e);
+            logger.error("encounter error when initiating meta manager: ", e);
             System.exit(-1);
         }
 
@@ -196,7 +196,7 @@ public class DefaultMetaManager implements IMetaManager {
                         storage.releaseReshardNotification();
                         storage.releaseActiveFragmentStatistics();
                     } catch (MetaStorageException e) {
-                        logger.error("update active fragment statistics error: ", e);
+                        logger.error("encounter error when updating active fragment statistics: ", e);
                     }
                 },
                 ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
@@ -314,7 +314,7 @@ public class DefaultMetaManager implements IMetaManager {
                         }
                     }
                 } catch (MetaStorageException e) {
-                    logger.error("update reshard counter error: ", e);
+                    logger.error("encounter error when updating reshard counter: ", e);
                 }
             }
         });
@@ -438,7 +438,7 @@ public class DefaultMetaManager implements IMetaManager {
                     releaseWaitingReshardThreads();
                 }
             } catch (MetaStorageException e) {
-                logger.error("update reshard notification error: ", e);
+                logger.error("encounter error when updating reshard notification: ", e);
             }
         });
         storage.lockReshardNotification();
@@ -470,7 +470,7 @@ public class DefaultMetaManager implements IMetaManager {
                     storage.releaseReshardNotification();
                 }
             } catch (MetaStorageException e) {
-                logger.error("update reshard counter error: ", e);
+                logger.error("encounter error when updating reshard counter: ", e);
             }
         });
         storage.lockReshardCounter();
@@ -487,7 +487,7 @@ public class DefaultMetaManager implements IMetaManager {
             }
             return true;
         } catch (MetaStorageException e) {
-            logger.error("add storage engines error:", e);
+            logger.error("encounter error when adding storage engines:", e);
         }
         return false;
     }
@@ -623,13 +623,13 @@ public class DefaultMetaManager implements IMetaManager {
             }
             return true;
         } catch (MetaStorageException e) {
-            logger.error("create fragment error: ", e);
+            logger.error("encounter error when creating fragment: ", e);
         } finally {
             try {
                 storage.releaseFragment();
                 storage.releaseStorageUnit();
             } catch (MetaStorageException e) {
-                logger.error("release fragment lock error: ", e);
+                logger.error("encounter error when releasing fragment lock: ", e);
             }
         }
         return false;
@@ -697,13 +697,13 @@ public class DefaultMetaManager implements IMetaManager {
             cache.initFragment(storage.loadFragment());
             return true;
         } catch (MetaStorageException e) {
-            logger.error("encounter error when init fragment: ", e);
+            logger.error("encounter error when initiating fragment: ", e);
         } finally {
             try {
                 storage.releaseStorageUnit();
                 storage.releaseFragment();
             } catch (MetaStorageException e) {
-                logger.error("encounter error when release fragment lock: ", e);
+                logger.error("encounter error when releasing fragment lock: ", e);
             }
         }
         return false;
@@ -742,7 +742,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addOrUpdateSchemaMapping(schema, schemaMapping);
             }
         } catch (MetaStorageException e) {
-            logger.error("update schema mapping error: ", e);
+            logger.error("encounter error when updating schema mapping: ", e);
         }
     }
 
@@ -765,7 +765,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addOrUpdateSchemaMappingItem(schema, key, value);
             }
         } catch (MetaStorageException e) {
-            logger.error("update schema mapping error: ", e);
+            logger.error("encounter error when updating schema mapping: ", e);
         }
     }
 
@@ -849,7 +849,7 @@ public class DefaultMetaManager implements IMetaManager {
             cache.addOrUpdateUser(user);
             return true;
         } catch (MetaStorageException e) {
-            logger.error("add user error: ", e);
+            logger.error("encounter error when adding user: ", e);
             return false;
         }
     }
@@ -872,7 +872,7 @@ public class DefaultMetaManager implements IMetaManager {
             cache.addOrUpdateUser(user);
             return true;
         } catch (MetaStorageException e) {
-            logger.error("update user error: ", e);
+            logger.error("encounter error when updating user: ", e);
             return false;
         }
     }
@@ -884,7 +884,7 @@ public class DefaultMetaManager implements IMetaManager {
             cache.removeUser(username);
             return true;
         } catch (MetaStorageException e) {
-            logger.error("remove user error: ", e);
+            logger.error("encounter error when removing user: ", e);
             return false;
         }
     }
@@ -945,7 +945,7 @@ public class DefaultMetaManager implements IMetaManager {
                     }
                 }
             } catch (MetaStorageException e) {
-                logger.error("update reshard counter error: ", e);
+                logger.error("encounter error when updating reshard counter: ", e);
             }
         }
     }

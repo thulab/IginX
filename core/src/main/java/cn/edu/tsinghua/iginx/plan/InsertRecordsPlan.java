@@ -195,9 +195,6 @@ public abstract class InsertRecordsPlan extends DataPlan {
     protected abstract long getCount();
 
     public FragmentStatistics getStatistics() {
-//        if (fragment.getTimeInterval().getEndTime() == Long.MAX_VALUE) {
-//            return null;
-//        }
         if (getPathsNum() == 0 || timestamps.length == 0) {
             return null;
         }
