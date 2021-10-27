@@ -16,30 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical.task;
 
-public enum OperatorType {
 
-    Unknown,
-    Binary,
-    Unary,
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform;
+import java.util.List;
 
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
+public abstract class MemoryPhysicalTask implements PhysicalTask {
+
+    protected final List<Operator> operators;
+
+    public MemoryPhysicalTask(List<Operator> operators) {
+        this.operators = operators;
     }
 
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
+    @Override
+    public TaskType getType() {
+        return TaskType.Memory;
     }
+
+    @Override
+    public List<Operator> getOperators() {
+        return operators;
+    }
+
+
+    public abstract TaskExecuteResult execute();
 
 }

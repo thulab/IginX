@@ -16,30 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-public enum OperatorType {
+public class PhysicalException extends Exception {
 
-    Unknown,
-    Binary,
-    Unary,
+    private static final long serialVersionUID = -1547005178512213280L;
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform;
-
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
+    public PhysicalException() {
     }
 
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
+    public PhysicalException(String message) {
+        super(message);
     }
 
+    public PhysicalException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public PhysicalException(Throwable cause) {
+        super(cause);
+    }
+
+    public PhysicalException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

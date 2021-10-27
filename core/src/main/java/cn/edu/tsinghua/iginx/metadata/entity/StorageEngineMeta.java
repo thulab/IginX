@@ -148,4 +148,13 @@ public final class StorageEngineMeta {
     public void setLastOfBatch(boolean lastOfBatch) {
         this.lastOfBatch = lastOfBatch;
     }
+
+    @Override
+    public String toString() {
+        return "StorageEngineMeta{" +
+                "ip='" + ip + '\'' +
+                ", port=" + port +
+                ", type='" + storageEngine + '\'' +
+                '}';
+    }
 }

@@ -16,7 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.execute;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-public class AbstractOperatorExecutor {
+public class NonExecutablePhysicalTaskException extends PhysicalException {
+
+    public NonExecutablePhysicalTaskException(String message) {
+        super(message);
+    }
 }

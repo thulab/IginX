@@ -16,30 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical.optimizer;
 
-public enum OperatorType {
+import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-    Unknown,
-    Binary,
-    Unary,
+public class NaivePhysicalOptimizer implements PhysicalOptimizer {
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform;
-
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
+    @Override
+    public PhysicalTask optimize(Operator root) {
+        return null;
     }
-
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
-    }
-
 }

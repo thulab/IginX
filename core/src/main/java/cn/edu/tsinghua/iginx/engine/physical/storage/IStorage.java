@@ -16,30 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical.storage;
 
-public enum OperatorType {
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 
-    Unknown,
-    Binary,
-    Unary,
+public interface IStorage {
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform;
-
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
-    }
-
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
-    }
+    TaskExecuteResult execute(StoragePhysicalTask task) throws PhysicalException;
 
 }

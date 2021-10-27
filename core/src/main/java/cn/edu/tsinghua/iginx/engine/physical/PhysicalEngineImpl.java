@@ -16,30 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical;
 
-public enum OperatorType {
+import cn.edu.tsinghua.iginx.engine.physical.constraint.ConstraintManagerImpl;
+import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-    Unknown,
-    Binary,
-    Unary,
+public class PhysicalEngineImpl implements PhysicalEngine {
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform;
+    private static final PhysicalEngineImpl INSTANCE = new PhysicalEngineImpl();
 
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
+    private PhysicalEngineImpl() {}
+
+    @Override
+    public RowStream execute(Operator root) {
+        return null;
     }
 
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
+    @Override
+    public ConstraintManager getConstraintManager() {
+        return ConstraintManagerImpl.getInstance();
     }
 
+    public static PhysicalEngineImpl getInstance() {
+        return INSTANCE;
+    }
 }

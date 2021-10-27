@@ -16,30 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical.task;
 
-public enum OperatorType {
+public enum TaskType {
 
-    Unknown,
-    Binary,
-    Unary,
+    Storage,
+    Memory,
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform;
+    BinaryMemory,
+    UnaryMemory;
 
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
-    }
-
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
+    public static boolean isMemoryTask(TaskType type) {
+        return type == BinaryMemory || type == UnaryMemory;
     }
 
 }
