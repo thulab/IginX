@@ -436,12 +436,12 @@ private static void downsampleQuery(Session session) throws SessionException, Ex
         dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 100);
         dataSet.print();
 
-        // FIRST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
+        // FIRST_VALUE
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST_VALUE, ROW_INTERVAL * 100);
         dataSet.print();
 
-        // LAST
-        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST, ROW_INTERVAL * 100);
+        // LAST_VALUE
+        dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.LAST_VALUE, ROW_INTERVAL * 100);
         dataSet.print();
 
         // COUNT
