@@ -11,7 +11,7 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InsertStatement extends Statement {
+public class InsertStatement extends DataStatement {
 
     private String prefixPath;
     private List<String> paths;

@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 
 public class ValueFilter implements Filter {
 
-    private final Op op;
+    private Op op;
 
     private final String path;
 
@@ -34,6 +34,10 @@ public class ValueFilter implements Filter {
         this.path = path;
         this.op = op;
         this.value = value;
+    }
+
+    public void reverseFunc() {
+        this.op = Op.getOpposite(op);
     }
 
     public String getPath() {
@@ -53,4 +57,13 @@ public class ValueFilter implements Filter {
         return type;
     }
 
+    @Override
+    public Filter copy() {
+        return new ValueFilter(path, op, value.copy());
+    }
+
+    @Override
+    public String toString() {
+        return path + " " + Op.op2Str(op) + " " + value.getValue();
+    }
 }

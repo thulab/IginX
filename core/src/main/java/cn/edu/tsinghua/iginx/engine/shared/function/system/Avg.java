@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 
+import java.io.Serializable;
 import java.util.List;
 
 public class Avg implements SetMappingFunction {

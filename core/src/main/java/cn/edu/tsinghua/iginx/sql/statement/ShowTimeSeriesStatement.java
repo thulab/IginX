@@ -6,7 +6,7 @@ import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 
-public class ShowTimeSeriesStatement extends Statement {
+public class ShowTimeSeriesStatement extends DataStatement {
 
     public ShowTimeSeriesStatement() {
         this.statementType = StatementType.SHOW_TIME_SERIES;

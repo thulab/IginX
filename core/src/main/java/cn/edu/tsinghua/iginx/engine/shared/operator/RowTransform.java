@@ -23,6 +23,8 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 
+import java.io.Serializable;
+
 public class RowTransform extends AbstractUnaryOperator {
 
     private final FunctionCall functionCall;
@@ -40,5 +42,10 @@ public class RowTransform extends AbstractUnaryOperator {
 
     public FunctionCall getFunctionCall() {
         return functionCall;
+    }
+
+    @Override
+    public Operator copy() {
+        return new RowTransform(getSource().copy(), functionCall.copy());
     }
 }

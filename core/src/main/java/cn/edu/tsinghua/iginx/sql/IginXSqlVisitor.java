@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.sql;
 
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.AndExpressionContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.ConstantContext;
@@ -23,11 +25,7 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
@@ -41,7 +39,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         insertStatement.setPrefixPath(ctx.path().getText());
         // parse paths
         List<MeasurementNameContext> measurementNames = ctx.insertColumnsSpec().measurementName();
-        measurementNames.stream().forEach(e -> insertStatement.setPath(e.getText()));
+        measurementNames.forEach(e -> insertStatement.setPath(e.getText()));
         // parse times, values and types
         parseInsertValuesSpec(ctx.insertValuesSpec(), insertStatement);
 
@@ -55,7 +53,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     public Statement visitDeleteStatement(SqlParser.DeleteStatementContext ctx) {
         DeleteStatement deleteStatement = new DeleteStatement();
         // parse delete paths
-        ctx.path().stream().forEach(e -> deleteStatement.addPath(e.getText()));
+        ctx.path().forEach(e -> deleteStatement.addPath(e.getText()));
         // parse time range
         Pair<Long, Long> range = parseTimeRange(ctx.timeRange());
         deleteStatement.setStartTime(range.k);
@@ -77,19 +75,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
         // parse where clause
         if (ctx.whereClause() != null) {
-            // parse time range
-            Pair<Long, Long> range = parseTimeRange(ctx.whereClause().timeRange());
-            selectStatement.setStartTime(range.k);
-            selectStatement.setEndTime(range.v);
-
-            // parse booleanExpression
-            if (ctx.whereClause().orExpression() != null) {
-                // can not simply use orExpression().getText()
-                // you may get "a>1andb<2orc>3", and value filter may goes wrong.
-                String ret = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
-                selectStatement.setBooleanExpression(ret);
-                selectStatement.setHasValueFilter(true);
-            }
+//            String ret = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
+//            selectStatement.setBooleanExpression(ret);
+            Filter filter = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
+            selectStatement.setFilter(filter);
+            selectStatement.setHasValueFilter(true);
         }
         // parse special clause
         if (ctx.specialClause() != null) {
@@ -136,7 +126,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
     public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
         DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
-        ctx.path().stream().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
+        ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
         return deleteTimeSeriesStatement;
     }
 
@@ -153,17 +143,19 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {
         List<ExpressionContext> expressions = ctx.expression();
 
-        boolean hasFunc = expressions.get(0).functionName() != null;
-        selectStatement.setHasFunc(hasFunc);
-
         for (ExpressionContext expr : expressions) {
-            if (expr.functionName() != null && hasFunc) {
+            if (expr.functionName() != null) {
                 selectStatement.setSelectedFuncsAndPaths(expr.functionName().getText(), expr.path().getText());
-            } else if (expr.functionName() == null && !hasFunc) {
-                selectStatement.setSelectedFuncsAndPaths("", expr.path().getText());
             } else {
-                throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
+                selectStatement.setSelectedFuncsAndPaths("", expr.path().getText());
             }
+        }
+
+        if (!selectStatement.getFuncTypeSet().isEmpty()) {
+            selectStatement.setHasFunc(true);
+            Set<String> funcSet = selectStatement.getSelectedFuncsAndPaths().keySet();
+            if (funcSet.contains("") && funcSet.size() > 1)
+                throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
         }
     }
 
@@ -197,7 +189,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
         // parse order by
         if (ctx.orderByClause() != null) {
-            if (selectStatement.isHasFunc()) {
+            if (selectStatement.hasFunc()) {
                 throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
             }
             if (ctx.orderByClause().path() != null) {
@@ -217,43 +209,50 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
     }
 
-    private String parseOrExpression(OrExpressionContext ctx, SelectStatement selectStatement) {
-        List<AndExpressionContext> list = ctx.andExpression();
-        if (list.size() > 1) {
-            String ret = parseAndExpression(list.get(0), selectStatement);
-            for (int i = 1; i < list.size(); i++) {
-                ret += " || " + parseAndExpression(list.get(i), selectStatement);
-            }
-            return ret;
-        } else {
-            return parseAndExpression(list.get(0), selectStatement);
+    private Filter parseOrExpression(OrExpressionContext ctx, SelectStatement statement) {
+        List<Filter> children = new ArrayList<>();
+        for (AndExpressionContext andCtx : ctx.andExpression()) {
+            children.add(parseAndExpression(andCtx, statement));
         }
+        return new OrFilter(children);
     }
 
-    private String parseAndExpression(AndExpressionContext ctx, SelectStatement selectStatement) {
-        List<PredicateContext> list = ctx.predicate();
-        if (list.size() > 1) {
-            String ret = parsePredicate(list.get(0), selectStatement);
-            for (int i = 1; i < list.size(); i++) {
-                ret += " && " + parsePredicate(list.get(i), selectStatement);
-            }
-            return ret;
-        } else {
-            return parsePredicate(list.get(0), selectStatement);
+    private Filter parseAndExpression(AndExpressionContext ctx, SelectStatement statement) {
+        List<Filter> children = new ArrayList<>();
+        for (PredicateContext predicateCtx : ctx.predicate()) {
+            children.add(parsePredicate(predicateCtx, statement));
         }
+        return new AndFilter(children);
     }
 
-    private String parsePredicate(PredicateContext ctx, SelectStatement selectStatement) {
+    private Filter parsePredicate(PredicateContext ctx, SelectStatement statement) {
         if (ctx.orExpression() != null) {
-            return "!(" + parseOrExpression(ctx.orExpression(), selectStatement) + ")";
+            Filter filter = parseOrExpression(ctx.orExpression(), statement);
+            return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
-            StringBuilder builder = new StringBuilder();
-            String prefixPath = selectStatement.getFromPath();
-            builder.append(prefixPath).append(SQLConstant.DOT).append(ctx.path().getText()).append(" ");
-            builder.append(ctx.comparisonOperator().getText()).append(" ");
-            builder.append(ctx.constant().getText());
-            return builder.toString();
+            return ctx.path() == null ? parseTimeFilter(ctx) : parseValueFilter(ctx, statement);
         }
+    }
+
+    private TimeFilter parseTimeFilter(PredicateContext ctx) {
+        Op op = Op.str2Op(ctx.comparisonOperator().getText());
+        // deal with sub clause like 100 < time
+        if (ctx.children.get(0) instanceof ConstantContext) {
+            op = Op.getDirectionOpposite(op);
+        }
+        long time = (long) parseValue(ctx.constant());
+        return new TimeFilter(op, time);
+    }
+
+    private ValueFilter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
+        String path = statement.getFromPath() + SQLConstant.DOT + ctx.path().getText();
+        Op op = Op.str2Op(ctx.comparisonOperator().getText());
+        // deal with sub clause like 100 < path
+        if (ctx.children.get(0) instanceof ConstantContext) {
+            op = Op.getDirectionOpposite(op);
+        }
+        Value value = new Value(parseValue(ctx.constant()));
+        return new ValueFilter(path, op, value);
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

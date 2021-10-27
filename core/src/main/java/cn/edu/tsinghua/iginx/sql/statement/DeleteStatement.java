@@ -9,7 +9,7 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteStatement extends Statement {
+public class DeleteStatement extends DataStatement {
 
     private List<String> paths;
     private long startTime;

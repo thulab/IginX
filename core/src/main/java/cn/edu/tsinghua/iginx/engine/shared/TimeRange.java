@@ -54,4 +54,8 @@ public final class TimeRange {
     public boolean isIncludeEndTime() {
         return includeEndTime;
     }
+
+    public TimeRange copy() {
+        return new TimeRange(beginTime, includeBeginTime, endTime, includeEndTime);
+    }
 }

@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class TimeFilter implements Filter {
 
-    private final Op op;
+    private Op op;
 
     private final long value;
 
@@ -29,6 +29,10 @@ public class TimeFilter implements Filter {
     public TimeFilter(Op op, long value) {
         this.op = op;
         this.value = value;
+    }
+
+    public void reverseFunc() {
+        this.op = Op.getOpposite(op);
     }
 
     public Op getOp() {
@@ -42,5 +46,15 @@ public class TimeFilter implements Filter {
     @Override
     public FilterType getType() {
         return type;
+    }
+
+    @Override
+    public Filter copy() {
+        return new TimeFilter(op, value);
+    }
+
+    @Override
+    public String toString() {
+        return "time " + Op.op2Str(op) + " " + value;
     }
 }

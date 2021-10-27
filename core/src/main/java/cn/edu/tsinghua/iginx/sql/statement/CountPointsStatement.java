@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CountPointsStatement extends Statement {
+public class CountPointsStatement extends DataStatement {
 
     public CountPointsStatement() {
         this.statementType = StatementType.COUNT_POINTS;

@@ -2,6 +2,8 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Project extends AbstractUnaryOperator {
@@ -18,5 +20,10 @@ public class Project extends AbstractUnaryOperator {
 
     public List<String> getPatterns() {
         return patterns;
+    }
+
+    @Override
+    public Operator copy() {
+        return new Project(getSource().copy(), new ArrayList<>(patterns));
     }
 }

@@ -36,4 +36,8 @@ public class OperatorSource extends AbstractSource {
         return operator;
     }
 
+    @Override
+    public Source copy() {
+        return new OperatorSource(operator.copy());
+    }
 }
