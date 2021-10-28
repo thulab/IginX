@@ -26,4 +26,8 @@ public interface IStorage {
 
     TaskExecuteResult execute(StoragePhysicalTask task) throws PhysicalException;
 
+    boolean supportsProject();
+
+    boolean supportsProjectAndSelect();
+
 }

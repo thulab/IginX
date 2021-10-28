@@ -43,4 +43,12 @@ public final class Field {
     public DataType getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return "Field{" +
+                "name='" + name + '\'' +
+                ", type=" + type +
+                '}';
+    }
 }

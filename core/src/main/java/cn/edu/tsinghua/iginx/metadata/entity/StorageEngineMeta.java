@@ -151,7 +151,7 @@ public final class StorageEngineMeta {
 
     @Override
     public String toString() {
-        return "StorageEngineMeta{" +
+        return "StorageEngineMeta {" +
                 "ip='" + ip + '\'' +
                 ", port=" + port +
                 ", type='" + storageEngine + '\'' +

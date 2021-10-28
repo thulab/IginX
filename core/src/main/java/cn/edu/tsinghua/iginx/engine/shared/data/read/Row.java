@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
+import java.util.Arrays;
+
 public class Row {
 
     private static final long NON_EXISTED_TIMESTAMP = -1L;
@@ -48,5 +50,13 @@ public class Row {
 
     public Object[] getValues() {
         return values;
+    }
+
+    @Override
+    public String toString() {
+        return "Row{" +
+                "timestamp=" + timestamp +
+                ", values=" + Arrays.toString(values) +
+                '}';
     }
 }

@@ -48,4 +48,11 @@ public final class Header {
         return time == null;
     }
 
+    @Override
+    public String toString() {
+        return "Header{" +
+                "time=" + time +
+                ", fields=" + fields +
+                '}';
+    }
 }

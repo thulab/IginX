@@ -18,11 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-public class StorageInitializationException extends PhysicalException {
+public class RowFetchException extends PhysicalException {
 
-    private static final long serialVersionUID = -4791646726338297752L;
+    private static final long serialVersionUID = 649847686271181167L;
 
-    public StorageInitializationException(String message) {
-        super(message);
+    public RowFetchException(Throwable cause) {
+        super(cause);
     }
 }

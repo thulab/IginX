@@ -31,6 +31,8 @@ public class StoragePhysicalTask implements PhysicalTask {
 
     private final FragmentMeta targetFragment;
 
+    private String storageUnit;
+
     public StoragePhysicalTask(List<Operator> operators) {
         this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment());
     }
@@ -52,5 +54,13 @@ public class StoragePhysicalTask implements PhysicalTask {
 
     public FragmentMeta getTargetFragment() {
         return targetFragment;
+    }
+
+    public String getStorageUnit() {
+        return storageUnit;
+    }
+
+    public void setStorageUnit(String storageUnit) {
+        this.storageUnit = storageUnit;
     }
 }

@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+
 import java.util.List;
 
 public class Table implements RowStream {
@@ -52,7 +54,7 @@ public class Table implements RowStream {
     }
 
     @Override
-    public boolean isEmpty() {
-        return rows.isEmpty();
+    public void close() {
+
     }
 }
