@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.rest.insert;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.HttpHeaders;
@@ -32,16 +30,17 @@ import java.util.zip.GZIPInputStream;
 
 public class InsertWorker extends Thread {
     private static final String NO_CACHE = "no-cache";
-    private static final Logger LOGGER = LoggerFactory.getLogger(InsertWorker.class);
-    private HttpHeaders httpheaders;
+    private final HttpHeaders httpheaders;
     private InputStream stream;
-    private AsyncResponse asyncResponse;
+    private final AsyncResponse asyncResponse;
+    private final boolean isAnnotation;
 
     public InsertWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
-                        InputStream stream) {
+                        InputStream stream, boolean isAnnotation) {
         this.asyncResponse = asyncResponse;
         this.httpheaders = httpheaders;
         this.stream = stream;
+        this.isAnnotation = isAnnotation;
     }
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
@@ -49,7 +48,7 @@ public class InsertWorker extends Thread {
         responseBuilder.header("Pragma", NO_CACHE);
         responseBuilder.header("Cache-Control", NO_CACHE);
         responseBuilder.header("Expires", 0);
-        return (responseBuilder);
+        return responseBuilder;
     }
 
     @Override
@@ -63,7 +62,7 @@ public class InsertWorker extends Thread {
                 }
             }
             DataPointsParser parser = new DataPointsParser(new InputStreamReader(stream, StandardCharsets.UTF_8));
-            parser.parse();
+            parser.parse(isAnnotation);
             response = Response.status(Response.Status.OK).build();
         } catch (Exception e) {
             response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();

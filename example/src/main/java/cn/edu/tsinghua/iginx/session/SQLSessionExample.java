@@ -29,6 +29,8 @@ public class SQLSessionExample {
 
     private static String simpleQuery = "SELECT s1 FROM us.d1 WHERE time in (100, 120);";
     private static String valueFilterQuery = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) and s1 > 200 and s1 < 210;";
+    private static String limitQuery = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10;";
+    private static String limitOffsetQuery = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10 offset 5;";
     private static String aggregateQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, %s);";
     private static String downSample = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, %s) GROUP BY %s;";
     private static String lastQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, INF);";
@@ -61,6 +63,9 @@ public class SQLSessionExample {
         execute(showClusterInfo, true);
         // 查询数据
         execute(simpleQuery, true);
+        // limit/offset查询
+        execute(limitQuery, true);
+        execute(limitOffsetQuery, true);
         // 值过滤查询
         execute(valueFilterQuery, true);
         // 最新值查询

@@ -70,6 +70,14 @@ public class Config {
 
     private String etcdEndpoints = "http://localhost:2379";
 
+    private boolean enableGlobalStatistics = false;
+
+    private long globalStatisticsCollectInterval = 60;
+
+    private long insertThreshold = 100000;
+
+    private long reshardFragmentTimeMargin = 60;
+
     private boolean enableMQTT = false;
 
     private String mqttHost = "0.0.0.0";
@@ -284,6 +292,38 @@ public class Config {
 
     public void setEtcdEndpoints(String etcdEndpoints) {
         this.etcdEndpoints = etcdEndpoints;
+    }
+
+    public boolean isEnableGlobalStatistics() {
+        return enableGlobalStatistics;
+    }
+
+    public void setEnableGlobalStatistics(boolean enableGlobalStatistics) {
+        this.enableGlobalStatistics = enableGlobalStatistics;
+    }
+
+    public long getGlobalStatisticsCollectInterval() {
+        return globalStatisticsCollectInterval;
+    }
+
+    public void setGlobalStatisticsCollectInterval(long globalStatisticsCollectInterval) {
+        this.globalStatisticsCollectInterval = globalStatisticsCollectInterval;
+    }
+
+    public long getInsertThreshold() {
+        return insertThreshold;
+    }
+
+    public void setInsertThreshold(long insertThreshold) {
+        this.insertThreshold = insertThreshold;
+    }
+
+    public long getReshardFragmentTimeMargin() {
+        return reshardFragmentTimeMargin;
+    }
+
+    public void setReshardFragmentTimeMargin(long reshardFragmentTimeMargin) {
+        this.reshardFragmentTimeMargin = reshardFragmentTimeMargin;
     }
 
     public boolean isEnableMQTT() {

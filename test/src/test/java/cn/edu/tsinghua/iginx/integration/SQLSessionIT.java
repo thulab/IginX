@@ -114,7 +114,7 @@ public class SQLSessionIT {
         String statement = "SELECT COUNT(*) FROM us.d1;";
         String excepted = "AggregateQuery ResultSets:\n" +
                 "+---------------+---------------+---------------+---------------+\n" +
-                "|COUNT(us.d1.s3)|COUNT(us.d1.s1)|COUNT(us.d1.s2)|COUNT(us.d1.s4)|\n" +
+                "|COUNT(us.d1.s1)|COUNT(us.d1.s2)|COUNT(us.d1.s3)|COUNT(us.d1.s4)|\n" +
                 "+---------------+---------------+---------------+---------------+\n" +
                 "|          15000|          15000|          15000|          15000|\n" +
                 "+---------------+---------------+---------------+---------------+\n" +
@@ -202,6 +202,90 @@ public class SQLSessionIT {
                 "+----+--------+\n" +
                 "Total line number = 9\n";
         executeAndCompare(statement, excepted);
+    }
+
+    @Test
+    public void testLimitAndOffsetQuery() {
+        String statement = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10;";
+        String expected = "SimpleQuery ResultSets:\n" +
+                "+----+--------+\n" +
+                "|Time|us.d1.s1|\n" +
+                "+----+--------+\n" +
+                "|   1|       1|\n" +
+                "|   2|       2|\n" +
+                "|   3|       3|\n" +
+                "|   4|       4|\n" +
+                "|   5|       5|\n" +
+                "|   6|       6|\n" +
+                "|   7|       7|\n" +
+                "|   8|       8|\n" +
+                "|   9|       9|\n" +
+                "|  10|      10|\n" +
+                "+----+--------+\n" +
+                "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10 offset 5;";
+        expected = "SimpleQuery ResultSets:\n" +
+                "+----+--------+\n" +
+                "|Time|us.d1.s1|\n" +
+                "+----+--------+\n" +
+                "|   6|       6|\n" +
+                "|   7|       7|\n" +
+                "|   8|       8|\n" +
+                "|   9|       9|\n" +
+                "|  10|      10|\n" +
+                "|  11|      11|\n" +
+                "|  12|      12|\n" +
+                "|  13|      13|\n" +
+                "|  14|      14|\n" +
+                "|  15|      15|\n" +
+                "+----+--------+\n" +
+                "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testOrderByQuery() {
+        String insert = "INSERT INTO us.d2 (timestamp, s1, s2, s3) values " +
+                "(1, \"apple\", 871, 232.1), (2, \"peach\", 123, 132.5), (3, \"banana\", 356, 317.8);";
+        execute(insert);
+
+        String orderByQuery = "SELECT * FROM us.d2 ORDER BY s1";
+        String expected = "SimpleQuery ResultSets:\n" +
+                "+----+--------+--------+--------+\n" +
+                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+                "+----+--------+--------+--------+\n" +
+                "|   1|   apple|     871|   232.1|\n" +
+                "|   3|  banana|     356|   317.8|\n" +
+                "|   2|   peach|     123|   132.5|\n" +
+                "+----+--------+--------+--------+\n" +
+                "Total line number = 3\n";
+        executeAndCompare(orderByQuery, expected);
+
+        orderByQuery = "SELECT * FROM us.d2 ORDER BY s2";
+        expected = "SimpleQuery ResultSets:\n" +
+                "+----+--------+--------+--------+\n" +
+                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+                "+----+--------+--------+--------+\n" +
+                "|   2|   peach|     123|   132.5|\n" +
+                "|   3|  banana|     356|   317.8|\n" +
+                "|   1|   apple|     871|   232.1|\n" +
+                "+----+--------+--------+--------+\n" +
+                "Total line number = 3\n";
+        executeAndCompare(orderByQuery, expected);
+
+        orderByQuery = "SELECT * FROM us.d2 ORDER BY s3";
+        expected = "SimpleQuery ResultSets:\n" +
+                "+----+--------+--------+--------+\n" +
+                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+                "+----+--------+--------+--------+\n" +
+                "|   2|   peach|     123|   132.5|\n" +
+                "|   1|   apple|     871|   232.1|\n" +
+                "|   3|  banana|     356|   317.8|\n" +
+                "+----+--------+--------+--------+\n" +
+                "Total line number = 3\n";
+        executeAndCompare(orderByQuery, expected);
     }
 
     @Test

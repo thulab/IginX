@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query.aggregator;
 
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.RestUtils;
-import cn.edu.tsinghua.iginx.rest.query.QueryResultDataset;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
@@ -53,7 +53,6 @@ public class QueryAggregatorMin extends QueryAggregator {
                                 minn = min(minn, (long) sessionQueryDataSet.getValues().get(i).get(j));
                                 datapoints += 1;
                             }
-
                         }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
                                 RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {

@@ -155,7 +155,8 @@ public class SelectOperator extends Operator {
     }
 
     public void setSelectedFuncsAndPaths(String func, String path) {
-        this.selectedFuncsAndPaths.add(new Pair<>(func, fromPath + SQLConstant.DOT + path));
+        String fullPath = fromPath + SQLConstant.DOT + path;
+        this.selectedFuncsAndPaths.add(new Pair<>(func, fullPath));
         this.funcTypeSet.add(str2FuncType(func));
     }
 
@@ -300,6 +301,8 @@ public class SelectOperator extends Operator {
         );
         QueryDataResp queryDataResp = worker.queryData(req);
 
+        checkIfHasOrderByPath(queryDataResp.getPaths());
+
         ExecuteSqlResp resp = new ExecuteSqlResp(queryDataResp.getStatus(), SqlType.SimpleQuery);
         resp.setPaths(queryDataResp.getPaths());
         resp.setDataTypeList(queryDataResp.getDataTypeList());
@@ -404,6 +407,8 @@ public class SelectOperator extends Operator {
         );
         ValueFilterQueryResp valueFilterQueryResp = worker.valueFilterQuery(req);
 
+        checkIfHasOrderByPath(valueFilterQueryResp.getPaths());
+
         ExecuteSqlResp resp = new ExecuteSqlResp(valueFilterQueryResp.getStatus(), SqlType.ValueFilterQuery);
         resp.setPaths(valueFilterQueryResp.getPaths());
         resp.setDataTypeList(valueFilterQueryResp.getDataTypeList());
@@ -413,6 +418,12 @@ public class SelectOperator extends Operator {
         resp.setOrderByPath(orderByPath);
         resp.setAscending(ascending);
         return resp;
+    }
+
+    private void checkIfHasOrderByPath(List<String> paths) {
+        if (!orderByPath.equals("") && !paths.contains(orderByPath)) {
+            throw new SQLParserException(String.format("Selected paths did not contain '%s'.", orderByPath));
+        }
     }
 
     public enum FuncType {

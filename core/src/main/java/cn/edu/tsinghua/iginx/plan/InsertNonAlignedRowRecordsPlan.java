@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -34,8 +35,14 @@ public class InsertNonAlignedRowRecordsPlan extends InsertRowRecordsPlan {
     private static final Logger logger = LoggerFactory.getLogger(InsertNonAlignedRowRecordsPlan.class);
 
     public InsertNonAlignedRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                          List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit, FragmentMeta fragment) {
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit, fragment);
+        this.setIginxPlanType(IginxPlanType.INSERT_NON_ALIGNED_ROW_RECORDS);
+    }
+
+    public InsertNonAlignedRowRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                           List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
-        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
+        super(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit, null);
         this.setIginxPlanType(IginxPlanType.INSERT_NON_ALIGNED_ROW_RECORDS);
     }
 
