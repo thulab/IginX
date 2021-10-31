@@ -54,6 +54,7 @@ public class DataPointsParser {
     private boolean needUpdate = false;
 
 
+
     public DataPointsParser() {}
 
     public DataPointsParser(Reader stream) {
@@ -61,12 +62,15 @@ public class DataPointsParser {
     }
 
 
-    public void parse(boolean isAnnotation) throws Exception {
+    public void parse(boolean isAnnotation, boolean needLog, String sign, long startTimeStamp) throws Exception {
         try {
             session.openSession();
         } catch (SessionException e) {
             LOGGER.error("Error occurred during opening session", e);
             throw e;
+        }
+        if (needLog) {
+            LOGGER.info("before deserialization, sign: {}, cost: {}", sign, System.currentTimeMillis() - startTimeStamp);
         }
         try {
             JsonNode node = mapper.readTree(inputStream);
@@ -82,7 +86,9 @@ public class DataPointsParser {
             LOGGER.error("Error occurred during parsing data ", e);
             throw e;
         }
-
+        if (needLog) {
+            LOGGER.info("after deserialization, sign: {}, cost: {}", sign, System.currentTimeMillis() - startTimeStamp);
+        }
         // sub tread execute and await.
         LOGGER.info(String.format("restReqSplitNum: %s", restReqSplitNum));
 
@@ -103,9 +109,8 @@ public class DataPointsParser {
         } else {
             try {
                 if (isAnnotation) {
-                    sendAnnotationMetricsData();
                 } else {
-                    sendMetricsDataInBatch();
+                    sendMetricsDataInBatch(needLog, sign, startTimeStamp);
                 }
             } catch (Exception e) {
                 LOGGER.debug("Exception occur for create and send ", e);
@@ -150,120 +155,7 @@ public class DataPointsParser {
         return ret;
     }
 
-    private void sendMetricsData() throws Exception {
-        for (Metric metric : metricList) {
-            boolean needUpdate = false;
-            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
-            if (metricschema == null) {
-                needUpdate = true;
-                metricschema = new ConcurrentHashMap<>();
-            }
-            for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
-                if (metricschema.get(entry.getKey()) == null) {
-                    needUpdate = true;
-                    int pos = metricschema.size() + 1;
-                    metricschema.put(entry.getKey(), pos);
-                }
-            }
-            if (needUpdate) {
-                metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-            }
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-            }
-            StringBuilder path = new StringBuilder();
-            for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
-                String ins = metric.getTags().get(entry.getValue());
-                if (ins != null) {
-                    path.append(ins).append(".");
-                } else {
-                    path.append("null.");
-                }
-            }
-            path.append(metric.getName());
-            List<String> paths = new ArrayList<>();
-            paths.add(path.toString());
-            int size = metric.getTimestamps().size();
-            List<DataType> type = new ArrayList<>();
-            type.add(findType(metric.getValues()));
-            Object[] valuesList = new Object[1];
-            Object[] values = new Object[size];
-            for (int i = 0; i < size; i++) {
-                values[i] = getType(metric.getValues().get(i), type.get(0));
-            }
-            valuesList[0] = values;
-            try {
-                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
-                if (metric.getAnnotation() != null) {
-                    for (int i = 0; i < size; i++) {
-                        values[i] = metric.getAnnotation().getBytes();
-                    }
-                    valuesList[0] = values;
-                    path.append(ANNOTATION_SPLIT_STRING);
-                    paths.set(0, path.toString());
-                    type.set(0, DataType.BINARY);
-                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
-                }
-            } catch (ExecutionException e) {
-                LOGGER.error("Error occurred during insert ", e);
-                throw e;
-            }
-        }
-    }
 
-    private void sendAnnotationMetricsData() throws Exception {
-        for (Metric metric : metricList) {
-            boolean needUpdate = false;
-            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
-            if (metricschema == null) {
-                needUpdate = true;
-                metricschema = new ConcurrentHashMap<>();
-            }
-            Iterator iter = metric.getTags().entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
-                if (metricschema.get(entry.getKey()) == null) {
-                    needUpdate = true;
-                    int pos = metricschema.size() + 1;
-                    metricschema.put((String) entry.getKey(), pos);
-                }
-            }
-            if (needUpdate) {
-                metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-            }
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-            }
-            StringBuilder path = new StringBuilder();
-            iter = pos2path.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry entry = (Map.Entry) iter.next();
-                String ins = metric.getTags().get(entry.getValue());
-                if (ins != null) {
-                    path.append(ins).append(".");
-                }
-                else {
-                    path.append("null.");
-                }
-            }
-            path.append(metric.getName());
-            path.append(ANNOTATION_SPLIT_STRING);
-            List<String> paths = new ArrayList<>();
-            paths.add(path.toString());
-            List<DataType> type = new ArrayList<>();
-            type.add(DataType.BINARY);
-            int size = metric.getTimestamps().size();
-            Object[] valuesList = new Object[1];
-            Object[] values = new Object[size];
-            for (int i = 0; i < size; i++) {
-                values[i] = metric.getAnnotation().getBytes();
-            }
-            valuesList[0] = values;
-            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
-        }
-    }
 
 
     private static <T> List<List<T>> averageAssign(List<T> source, int n) {
@@ -292,7 +184,7 @@ public class DataPointsParser {
     public void sendData() {
         try {
             session.openSession();
-            sendMetricsDataInBatch();
+            sendMetricsDataInBatch(false, "", 0);
         } catch (Exception e) {
             LOGGER.error("Error occurred during sending data ", e);
         }
@@ -308,11 +200,12 @@ public class DataPointsParser {
     }
 
 
-    private void sendMetricsDataInBatch() {
+    private void sendMetricsDataInBatch(boolean needLog, String sign, long startTimeStamp) {
         long umamdTime = System.currentTimeMillis();
-        LOGGER.info(String.format("Going in to meta data updates"));
         updateMetaAndMergeData();
-        LOGGER.info(String.format("MetaData cost time: %s ms", System.currentTimeMillis() - umamdTime));
+        if (needLog) {
+            LOGGER.info("after updateMeta, sign: {}, cost: {}", sign, System.currentTimeMillis() - startTimeStamp);
+        }
 
         for (Map.Entry<TimeAndPrefixPath, Map<String, String>> entry : batchMap.entrySet()) {
             List<String> paths = new ArrayList<>();
@@ -339,13 +232,16 @@ public class DataPointsParser {
 
             try {
                 long sessionInsertStartTime =  System.currentTimeMillis();
-//                session.insertNonAlignedRowRecords(paths, timestamps, values, types, null);
                 session.insertRowRecords(paths, timestamps, values, types, null);
                 long sessionInsertEndTime =  System.currentTimeMillis();
-                LOGGER.info(String.format("Session insert cost time: %s ms", sessionInsertEndTime - sessionInsertStartTime));
+
+                LOGGER.info("Session insert cost time: {} ms, path num: {}, sign: {}", sessionInsertEndTime - sessionInsertStartTime, paths.size(), sign);
             } catch (Exception e) {
                 LOGGER.error("Error occurred during insert ", e);
             }
+        }
+        if (needLog) {
+            LOGGER.info("after Insert, sign: {}, cost: {}", sign, System.currentTimeMillis() - startTimeStamp);
         }
     }
 

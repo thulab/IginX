@@ -112,8 +112,10 @@ public class QueryExecutor {
                     path.append("*.");
                 }
             }
-            path.append(queryMetric.getName());
-            Paths.add(path.toString());
+            if (depth > 0) {
+                path.append(queryMetric.getName());
+                Paths.add(path.toString());
+            }
         }
         if (depth == maxPathLength) {
             return;

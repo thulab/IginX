@@ -88,6 +88,10 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
+    private double logRestInsertPossibility = 1.0;
+
+    private double logRestQueryPossibility = 1.0;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -358,5 +362,21 @@ public class Config {
 
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
+    }
+
+    public double getLogRestInsertPossibility() {
+        return logRestInsertPossibility;
+    }
+
+    public void setLogRestInsertPossibility(double logRestInsertPossibility) {
+        this.logRestInsertPossibility = logRestInsertPossibility;
+    }
+
+    public double getLogRestQueryPossibility() {
+        return logRestQueryPossibility;
+    }
+
+    public void setLogRestQueryPossibility(double logRestQueryPossibility) {
+        this.logRestQueryPossibility = logRestQueryPossibility;
     }
 }

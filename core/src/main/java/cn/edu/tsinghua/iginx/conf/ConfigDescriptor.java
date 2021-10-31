@@ -96,6 +96,9 @@ public class ConfigDescriptor {
 
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
+
+            config.setLogRestInsertPossibility(Double.parseDouble(properties.getProperty("logRestInsertPossibility", "1.0")));
+            config.setLogRestQueryPossibility(Double.parseDouble(properties.getProperty("logRestQueryPossibility", "1.0")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
