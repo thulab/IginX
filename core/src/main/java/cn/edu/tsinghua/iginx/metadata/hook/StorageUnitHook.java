@@ -16,18 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 
-import java.util.concurrent.ExecutionException;
+public interface StorageUnitHook {
 
-public interface PhysicalEngine {
-
-    RowStream execute(Operator root);
-
-    ConstraintManager getConstraintManager();
+    void onChange(StorageUnitMeta before, StorageUnitMeta after);
 
 }

@@ -18,20 +18,72 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.constraint.ConstraintManagerImpl;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.MemoryPhysicalTaskExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
+import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizerManager;
+import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
+import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.task.BinaryMemoryPhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import cn.edu.tsinghua.iginx.engine.physical.task.TaskType;
+import cn.edu.tsinghua.iginx.engine.physical.task.UnaryMemoryPhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueue;
+import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueueImpl;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class PhysicalEngineImpl implements PhysicalEngine {
 
     private static final PhysicalEngineImpl INSTANCE = new PhysicalEngineImpl();
 
-    private PhysicalEngineImpl() {}
+    private final PhysicalOptimizer optimizer;
+
+    private final MemoryPhysicalTaskExecutor memoryTaskExecutor;
+
+    private final StoragePhysicalTaskExecutor storageTaskExecutor;
+
+    private PhysicalEngineImpl() {
+        optimizer = PhysicalOptimizerManager.getInstance().getOptimizer(ConfigDescriptor.getInstance().getConfig().getPhysicalOptimizer());
+        memoryTaskExecutor = MemoryPhysicalTaskExecutor.getInstance();
+        storageTaskExecutor = StoragePhysicalTaskExecutor.getInstance();
+        storageTaskExecutor.init(memoryTaskExecutor);
+    }
 
     @Override
     public RowStream execute(Operator root) {
-        return null;
+        PhysicalTask task = optimizer.optimize(root);
+        List<StoragePhysicalTask> storageTasks = new ArrayList<>();
+        getStorageTasks(storageTasks, task);
+
+        TaskExecuteResult result = task.getResult();
+        return result.getRowStream();
+    }
+
+    private void getStorageTasks(List<StoragePhysicalTask> tasks, PhysicalTask root) {
+        if (root == null) {
+            return;
+        }
+        if (root.getType() == TaskType.Storage) {
+            tasks.add((StoragePhysicalTask) root);
+        } else if (root.getType() == TaskType.BinaryMemory) {
+            BinaryMemoryPhysicalTask task = (BinaryMemoryPhysicalTask) root;
+            getStorageTasks(tasks, task.getParentTaskA());
+            getStorageTasks(tasks, task.getParentTaskB());
+        } else if (root.getType() == TaskType.UnaryMemory) {
+            UnaryMemoryPhysicalTask task = (UnaryMemoryPhysicalTask) root;
+            getStorageTasks(tasks, task.getParentTask());
+        }
     }
 
     @Override

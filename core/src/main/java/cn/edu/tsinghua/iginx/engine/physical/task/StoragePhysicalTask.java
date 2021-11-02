@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class StoragePhysicalTask implements PhysicalTask {
 
@@ -32,6 +33,12 @@ public class StoragePhysicalTask implements PhysicalTask {
     private final FragmentMeta targetFragment;
 
     private String storageUnit;
+
+    private long storage;
+
+    private TaskExecuteResult result;
+
+    private PhysicalTask followerTask;
 
     public StoragePhysicalTask(List<Operator> operators) {
         this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment());
@@ -62,5 +69,32 @@ public class StoragePhysicalTask implements PhysicalTask {
 
     public void setStorageUnit(String storageUnit) {
         this.storageUnit = storageUnit;
+    }
+
+    @Override
+    public TaskExecuteResult getResult() {
+        return result;
+    }
+
+    public void setResult(TaskExecuteResult result) {
+        this.result = result;
+    }
+
+    public long getStorage() {
+        return storage;
+    }
+
+    public void setStorage(long storage) {
+        this.storage = storage;
+    }
+
+    @Override
+    public PhysicalTask getFollowerTask() {
+        return followerTask;
+    }
+
+    @Override
+    public void setFollowerTask(PhysicalTask task) {
+        this.followerTask = task;
     }
 }

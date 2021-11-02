@@ -95,6 +95,10 @@ public class ConfigDescriptor {
 
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
+
+            config.setPhysicalOptimizer(properties.getProperty("physicalOptimizer", "naive"));
+            config.setMemoryTaskThreadPoolSize(Integer.parseInt(properties.getProperty("memoryTaskThreadPoolSize", "100")));
+            config.setPhysicalTaskThreadPoolSizePerStorage(Integer.parseInt(properties.getProperty("physicalTaskThreadPoolSizePerStorage", "20")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -131,6 +135,9 @@ public class ConfigDescriptor {
         config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
         config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
         config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
+        config.setPhysicalOptimizer(EnvUtils.loadEnv("physicalOptimizer", config.getPhysicalOptimizer()));
+        config.setMemoryTaskThreadPoolSize(EnvUtils.loadEnv("memoryTaskThreadPoolSize", config.getMemoryTaskThreadPoolSize()));
+        config.setPhysicalTaskThreadPoolSizePerStorage(EnvUtils.loadEnv("physicalTaskThreadPoolSizePerStorage", config.getPhysicalTaskThreadPoolSizePerStorage()));
     }
 
 

@@ -114,7 +114,7 @@ public class IoTDBStorage implements IStorage {
     }
 
     @Override
-    public TaskExecuteResult execute(StoragePhysicalTask task) throws PhysicalException {
+    public TaskExecuteResult execute(StoragePhysicalTask task) {
         List<Operator> operators = task.getOperators();
         if (operators.size() != 1) {
             return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));

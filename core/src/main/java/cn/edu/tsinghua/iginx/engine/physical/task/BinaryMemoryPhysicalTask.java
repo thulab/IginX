@@ -51,4 +51,9 @@ public class BinaryMemoryPhysicalTask extends MemoryPhysicalTask {
     public TaskExecuteResult execute() {
         return null;
     }
+
+    @Override
+    public boolean notifyParentReady() {
+        return parentReadyCount.incrementAndGet() == 2;
+    }
 }

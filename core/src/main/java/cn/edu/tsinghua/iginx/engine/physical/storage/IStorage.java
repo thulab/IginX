@@ -18,13 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.storage;
 
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 
 public interface IStorage {
 
-    TaskExecuteResult execute(StoragePhysicalTask task) throws PhysicalException;
+    TaskExecuteResult execute(StoragePhysicalTask task);
 
     boolean supportsProject();
 

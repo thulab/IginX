@@ -26,4 +26,9 @@ public class UnaryMemoryPhysicalTask extends MemoryPhysicalTask {
     public TaskExecuteResult execute() {
         return null;
     }
+
+    @Override
+    public boolean notifyParentReady() {
+        return parentReadyCount.incrementAndGet() == 1;
+    }
 }

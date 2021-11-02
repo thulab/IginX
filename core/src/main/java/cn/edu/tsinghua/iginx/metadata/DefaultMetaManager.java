@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
@@ -642,5 +643,10 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<UserMeta> getUsers(List<String> username) {
         return cache.getUser(username);
+    }
+
+    @Override
+    public void registerStorageUnitHook(StorageUnitHook hook) {
+
     }
 }

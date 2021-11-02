@@ -29,4 +29,10 @@ public interface PhysicalTask {
 
     List<Operator> getOperators();
 
+    TaskExecuteResult getResult();
+
+    PhysicalTask getFollowerTask();
+
+    void setFollowerTask(PhysicalTask task);
+
 }
