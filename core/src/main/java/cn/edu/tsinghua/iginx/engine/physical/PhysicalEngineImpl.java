@@ -58,6 +58,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         memoryTaskExecutor = MemoryPhysicalTaskExecutor.getInstance();
         storageTaskExecutor = StoragePhysicalTaskExecutor.getInstance();
         storageTaskExecutor.init(memoryTaskExecutor);
+        memoryTaskExecutor.startDispatcher();
     }
 
     @Override
@@ -65,7 +66,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         PhysicalTask task = optimizer.optimize(root);
         List<StoragePhysicalTask> storageTasks = new ArrayList<>();
         getStorageTasks(storageTasks, task);
-
+        storageTaskExecutor.commit(storageTasks);
         TaskExecuteResult result = task.getResult();
         return result.getRowStream();
     }

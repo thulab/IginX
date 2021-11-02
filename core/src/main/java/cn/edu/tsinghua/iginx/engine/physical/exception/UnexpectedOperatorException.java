@@ -16,25 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.task;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
+public class UnexpectedOperatorException extends PhysicalException {
 
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+    private static final long serialVersionUID = 7194937044624265575L;
 
-import java.util.List;
-
-public interface PhysicalTask {
-
-    TaskType getType();
-
-    List<Operator> getOperators();
-
-    TaskExecuteResult getResult();
-
-    void setResult(TaskExecuteResult result);
-
-    PhysicalTask getFollowerTask();
-
-    void setFollowerTask(PhysicalTask task);
-
+    public UnexpectedOperatorException(String message) {
+        super(message);
+    }
 }

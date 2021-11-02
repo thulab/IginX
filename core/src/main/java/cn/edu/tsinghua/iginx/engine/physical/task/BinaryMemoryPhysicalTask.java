@@ -18,18 +18,29 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.task;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class BinaryMemoryPhysicalTask extends MemoryPhysicalTask {
+
+    private static final Logger logger = LoggerFactory.getLogger(BinaryMemoryPhysicalTask.class);
 
     private final PhysicalTask parentTaskA;
 
     private final PhysicalTask parentTaskB;
 
     public BinaryMemoryPhysicalTask(List<Operator> operators, PhysicalTask parentTaskA, PhysicalTask parentTaskB) {
-        super(operators);
+        super(TaskType.BinaryMemory, operators);
         this.parentTaskA = parentTaskA;
         this.parentTaskB = parentTaskB;
     }
@@ -43,13 +54,43 @@ public class BinaryMemoryPhysicalTask extends MemoryPhysicalTask {
     }
 
     @Override
-    public TaskType getType() {
-        return TaskType.BinaryMemory;
-    }
-
-    @Override
     public TaskExecuteResult execute() {
-        return null;
+        TaskExecuteResult parentResultA = parentTaskA.getResult();
+        if (parentResultA == null) {
+            return new TaskExecuteResult(new PhysicalException("unexpected parent task execute result for " + this + ": null"));
+        }
+        if (parentResultA.getException() != null) {
+            return parentResultA;
+        }
+        TaskExecuteResult parentResultB = parentTaskB.getResult();
+        if (parentResultB == null) {
+            return new TaskExecuteResult(new PhysicalException("unexpected parent task execute result for " + this + ": null"));
+        }
+        if (parentResultB.getException() != null) {
+            return parentResultB;
+        }
+        List<Operator> operators = getOperators();
+        RowStream streamA = parentResultA.getRowStream();
+        RowStream streamB = parentResultB.getRowStream();
+        RowStream stream;
+        try {
+            Operator op = operators.get(0);
+            if (op.getType() != OperatorType.Binary) {
+                throw new UnexpectedOperatorException("unexpected unary operator " + op + " in unary task");
+            }
+            stream = OperatorMemoryExecutor.executeBinaryOperator((BinaryOperator) op, streamA, streamB);
+            for (int i = 1; i < operators.size(); i++) {
+                op = operators.get(i);
+                if (op.getType() != OperatorType.Unary) {
+                    throw new UnexpectedOperatorException("unexpected binary operator " + op + " in unary task");
+                }
+                stream = OperatorMemoryExecutor.executeUnaryOperator((UnaryOperator) op, stream);
+            }
+        } catch (PhysicalException e) {
+            logger.error("encounter error when execute operator in memory: ", e);
+            return new TaskExecuteResult(e);
+        }
+        return new TaskExecuteResult(stream);
     }
 
     @Override

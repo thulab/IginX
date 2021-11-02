@@ -26,9 +26,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import java.util.List;
 import java.util.concurrent.Future;
 
-public class StoragePhysicalTask implements PhysicalTask {
-
-    private final List<Operator> operators;
+public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     private final FragmentMeta targetFragment;
 
@@ -36,27 +34,13 @@ public class StoragePhysicalTask implements PhysicalTask {
 
     private long storage;
 
-    private TaskExecuteResult result;
-
-    private PhysicalTask followerTask;
-
     public StoragePhysicalTask(List<Operator> operators) {
         this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment());
     }
 
     public StoragePhysicalTask(List<Operator> operators, FragmentMeta targetFragment) {
-        this.operators = operators;
+        super(TaskType.Storage, operators);
         this.targetFragment = targetFragment;
-    }
-
-    @Override
-    public TaskType getType() {
-        return TaskType.Storage;
-    }
-
-    @Override
-    public List<Operator> getOperators() {
-        return operators;
     }
 
     public FragmentMeta getTargetFragment() {
@@ -71,15 +55,6 @@ public class StoragePhysicalTask implements PhysicalTask {
         this.storageUnit = storageUnit;
     }
 
-    @Override
-    public TaskExecuteResult getResult() {
-        return result;
-    }
-
-    public void setResult(TaskExecuteResult result) {
-        this.result = result;
-    }
-
     public long getStorage() {
         return storage;
     }
@@ -88,13 +63,4 @@ public class StoragePhysicalTask implements PhysicalTask {
         this.storage = storage;
     }
 
-    @Override
-    public PhysicalTask getFollowerTask() {
-        return followerTask;
-    }
-
-    @Override
-    public void setFollowerTask(PhysicalTask task) {
-        this.followerTask = task;
-    }
 }
