@@ -20,21 +20,49 @@ package cn.edu.tsinghua.iginx.engine.shared.data;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.Objects;
+
 public class Value {
 
     private final DataType dataType;
 
-    private boolean boolV;
+    private Boolean boolV;
 
-    private int intV;
+    private Integer intV;
 
-    private long longV;
+    private Long longV;
 
-    private float floatV;
+    private Float floatV;
 
-    private double doubleV;
+    private Double doubleV;
 
     private String binaryV;
+
+    public Value(DataType dataType, Object value) {
+        this.dataType = dataType;
+        switch (dataType) {
+            case INTEGER:
+                intV = (Integer) value;
+                break;
+            case LONG:
+                longV = (Long) value;
+                break;
+            case DOUBLE:
+                doubleV = (Double) value;
+                break;
+            case BINARY:
+                binaryV = (String) value;
+                break;
+            case BOOLEAN:
+                boolV = (Boolean) value;
+                break;
+            case FLOAT:
+                floatV = (Float) value;
+                break;
+            default:
+                throw new IllegalArgumentException("unknown data type: " + dataType);
+        }
+    }
 
     public Value(boolean boolV) {
         this.dataType = DataType.BOOLEAN;
@@ -70,28 +98,46 @@ public class Value {
         return dataType;
     }
 
-    public boolean getBoolV() {
+    public Boolean getBoolV() {
         return boolV;
     }
 
-    public int getIntV() {
+    public Integer getIntV() {
         return intV;
     }
 
-    public long getLongV() {
+    public Long getLongV() {
         return longV;
     }
 
-    public float getFloatV() {
+    public Float getFloatV() {
         return floatV;
     }
 
-    public double getDoubleV() {
+    public Double getDoubleV() {
         return doubleV;
     }
 
     public String getBinaryV() {
         return binaryV;
+    }
+
+    public boolean isNull() {
+        switch (dataType) {
+            case INTEGER:
+                return intV == null;
+            case LONG:
+                return longV == null;
+            case BOOLEAN:
+                return boolV == null;
+            case FLOAT:
+                return floatV == null;
+            case DOUBLE:
+                return doubleV == null;
+            case BINARY:
+                return binaryV == null;
+        }
+        return true;
     }
 
 }

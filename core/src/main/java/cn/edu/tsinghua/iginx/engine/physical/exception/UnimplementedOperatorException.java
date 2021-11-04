@@ -16,18 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute;
-
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
-
-public interface OperatorMemoryExecutor {
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
 
-    RowStream executeUnaryOperator(UnaryOperator operator, RowStream stream) throws PhysicalException;
+public class UnimplementedOperatorException extends PhysicalException {
 
-    RowStream executeBinaryOperator(BinaryOperator operator, RowStream streamA, RowStream streamB) throws PhysicalException;
+    private static final long serialVersionUID = -8032237382041338878L;
 
+    public UnimplementedOperatorException(String message) {
+        super(message);
+    }
 }

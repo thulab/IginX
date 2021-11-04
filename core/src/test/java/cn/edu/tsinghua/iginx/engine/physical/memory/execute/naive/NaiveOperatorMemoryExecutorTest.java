@@ -16,45 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data.read;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
-import java.util.List;
+import java.util.Arrays;
 
-public class Table implements RowStream {
+public class NaiveOperatorMemoryExecutorTest {
 
-    private final Header header;
+    private final NaiveOperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
 
-    private final List<Row> rows;
+    private final Source source = new AbstractSource() {};
 
-    private int index;
-
-    public Table(Header header, List<Row> rows) {
-        this.header = header;
-        this.rows = rows;
-        this.index = 0;
+    public void testProject() {
+        Project project = new Project(source, Arrays.asList("a", "b"));
     }
 
-    @Override
-    public Header getHeader() {
-        return header;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return index < rows.size();
-    }
-
-    @Override
-    public Row next() {
-        Row row = rows.get(index);
-        index++;
-        return row;
-    }
-
-    @Override
-    public void close() {
-
-    }
 }

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute;
+package cn.edu.tsinghua.iginx.engine.physical.memory;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueue;
@@ -27,9 +27,9 @@ import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MemoryPhysicalTaskExecutor {
+public class MemoryPhysicalTaskDispatcher {
 
-    private static final MemoryPhysicalTaskExecutor INSTANCE = new MemoryPhysicalTaskExecutor();
+    private static final MemoryPhysicalTaskDispatcher INSTANCE = new MemoryPhysicalTaskDispatcher();
 
     private final MemoryPhysicalTaskQueue taskQueue;
 
@@ -37,13 +37,13 @@ public class MemoryPhysicalTaskExecutor {
 
     private final ExecutorService taskExecuteThreadPool;
 
-    private MemoryPhysicalTaskExecutor() {
+    private MemoryPhysicalTaskDispatcher() {
         taskQueue = new MemoryPhysicalTaskQueueImpl();
         taskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getMemoryTaskThreadPoolSize());
         taskDispatcher = Executors.newSingleThreadExecutor();
     }
 
-    public static MemoryPhysicalTaskExecutor getInstance() {
+    public static MemoryPhysicalTaskDispatcher getInstance() {
         return INSTANCE;
     }
 

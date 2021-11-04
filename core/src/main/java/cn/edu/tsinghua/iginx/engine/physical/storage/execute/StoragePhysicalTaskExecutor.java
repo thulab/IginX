@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.storage.execute;
 
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.MemoryPhysicalTaskExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.physical.storage.queue.StoragePhysicalTaskQueue;
@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
@@ -50,7 +49,7 @@ public class StoragePhysicalTaskExecutor {
 
     private final Map<String, ExecutorService> dispatchers = new ConcurrentHashMap<>();
 
-    private MemoryPhysicalTaskExecutor memoryTaskExecutor;
+    private MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
     private StoragePhysicalTaskExecutor() {
         StorageUnitHook storageUnitHook = (before, after) -> {
@@ -98,7 +97,7 @@ public class StoragePhysicalTaskExecutor {
 
     }
 
-    public void init(MemoryPhysicalTaskExecutor memoryTaskExecutor) {
+    public void init(MemoryPhysicalTaskDispatcher memoryTaskExecutor) {
         this.memoryTaskExecutor = memoryTaskExecutor;
     }
 

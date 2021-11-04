@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.engine.physical.task;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.NaiveOperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
@@ -73,18 +74,19 @@ public class BinaryMemoryPhysicalTask extends MemoryPhysicalTask {
         RowStream streamA = parentResultA.getRowStream();
         RowStream streamB = parentResultB.getRowStream();
         RowStream stream;
+        OperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
         try {
             Operator op = operators.get(0);
-            if (op.getType() != OperatorType.Binary) {
+            if (OperatorType.isUnaryOperator(op.getType())) {
                 throw new UnexpectedOperatorException("unexpected unary operator " + op + " in unary task");
             }
-            stream = OperatorMemoryExecutor.executeBinaryOperator((BinaryOperator) op, streamA, streamB);
+            stream = executor.executeBinaryOperator((BinaryOperator) op, streamA, streamB);
             for (int i = 1; i < operators.size(); i++) {
                 op = operators.get(i);
-                if (op.getType() != OperatorType.Unary) {
+                if (OperatorType.isBinaryOperator(op.getType())) {
                     throw new UnexpectedOperatorException("unexpected binary operator " + op + " in unary task");
                 }
-                stream = OperatorMemoryExecutor.executeUnaryOperator((UnaryOperator) op, stream);
+                stream = executor.executeUnaryOperator((UnaryOperator) op, stream);
             }
         } catch (PhysicalException e) {
             logger.error("encounter error when execute operator in memory: ", e);

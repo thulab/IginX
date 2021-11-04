@@ -16,18 +16,56 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 
-public interface OperatorMemoryExecutor {
+import java.util.List;
 
+public class Table implements RowStream {
 
-    RowStream executeUnaryOperator(UnaryOperator operator, RowStream stream) throws PhysicalException;
+    private final Header header;
 
-    RowStream executeBinaryOperator(BinaryOperator operator, RowStream streamA, RowStream streamB) throws PhysicalException;
+    private final List<Row> rows;
 
+    private int index;
+
+    public Table(Header header, List<Row> rows) {
+        this.header = header;
+        this.rows = rows;
+        this.index = 0;
+    }
+
+    @Override
+    public Header getHeader() {
+        return header;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return index < rows.size();
+    }
+
+    @Override
+    public Row next() {
+        Row row = rows.get(index);
+        index++;
+        return row;
+    }
+
+    public List<Row> getRows() {
+        return rows;
+    }
+
+    public int getRowSize() {
+        return rows.size();
+    }
+
+    @Override
+    public void close() {
+
+    }
 }

@@ -2,6 +2,7 @@ package cn.edu.tsinghua.iginx.engine.physical.task;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.NaiveOperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
@@ -38,12 +39,13 @@ public class UnaryMemoryPhysicalTask extends MemoryPhysicalTask {
         }
         List<Operator> operators = getOperators();
         RowStream stream = parentResult.getRowStream();
+        OperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
         try {
             for (Operator op : operators) {
-                if (op.getType() != OperatorType.Unary) {
+                if (OperatorType.isBinaryOperator(op.getType())) {
                     throw new UnexpectedOperatorException("unexpected binary operator " + op + " in unary task");
                 }
-                stream = OperatorMemoryExecutor.executeUnaryOperator((UnaryOperator) op, stream);
+                stream = executor.executeUnaryOperator((UnaryOperator) op, stream);
             }
         } catch (PhysicalException e) {
             logger.error("encounter error when execute operator in memory: ", e);
