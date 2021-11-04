@@ -449,7 +449,7 @@ class Session(object):
         req = ExecuteSqlReq(sessionId=self.__session_id, statement=statement)
         resp = self.__client.executeSql(req)
         Session.verify_status(resp.status)
-        logger.warning("unsupported function: execute sql")
+        return SqlExecuteResult(resp)
 
     @staticmethod
     def verify_status(status):
