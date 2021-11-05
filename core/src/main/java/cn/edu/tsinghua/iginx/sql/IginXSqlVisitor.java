@@ -149,6 +149,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             } else {
                 selectStatement.setSelectedFuncsAndPaths("", expr.path().getText());
             }
+            selectStatement.setPathSet(expr.path().getText());
         }
 
         if (!selectStatement.getFuncTypeSet().isEmpty()) {
@@ -245,6 +246,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private ValueFilter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
+        statement.setPathSet(ctx.path().getText());
         String path = statement.getFromPath() + SQLConstant.DOT + ctx.path().getText();
         Op op = Op.str2Op(ctx.comparisonOperator().getText());
         // deal with sub clause like 100 < path

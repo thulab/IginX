@@ -14,12 +14,16 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class QueryGenerator implements LogicalGenerator {
+
+    private static final Logger logger = LoggerFactory.getLogger(QueryGenerator.class);
 
     private final static QueryGenerator instance = new QueryGenerator();
 
@@ -58,7 +62,12 @@ public class QueryGenerator implements LogicalGenerator {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPathSet()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+
+        logger.debug("start path={}, end path={}", pathList.get(0), pathList.get(pathList.size() - 1));
+
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+
+        logger.debug("fragment size={}", fragments.size());
 
         List<Operator> joinList = new ArrayList<>();
         fragments.forEach((k, v) -> {
@@ -66,6 +75,8 @@ public class QueryGenerator implements LogicalGenerator {
             v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList)));
             joinList.add(unionOperators(unionList));
         });
+
+        logger.debug("joinList size={}", joinList.size());
 
         Select select = new Select(new OperatorSource(joinOperators(joinList)), statement.getFilter());
 
