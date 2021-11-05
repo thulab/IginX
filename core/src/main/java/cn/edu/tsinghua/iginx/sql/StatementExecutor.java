@@ -2,10 +2,10 @@ package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.physical.DefaultPhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
+import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.Table;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.constraint.DefaultConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
@@ -36,9 +36,9 @@ public class StatementExecutor {
 
     private final static StatementBuilder builder = StatementBuilder.getInstance();
 
-    private final static ConstraintManager constraintManager = new DefaultConstraintManager();
+    private final static PhysicalEngine engine = PhysicalEngineImpl.getInstance();
 
-    private final static PhysicalEngine engine = new DefaultPhysicalEngine();
+    private final static ConstraintManager constraintManager = engine.getConstraintManager();
 
     private final List<LogicalGenerator> generatorList = new ArrayList<>();
 

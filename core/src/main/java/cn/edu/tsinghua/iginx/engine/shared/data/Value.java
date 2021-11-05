@@ -65,19 +65,19 @@ public class Value {
     public Value(Object v) {
         if (v instanceof Boolean) {
             this.dataType = DataType.BOOLEAN;
-            this.boolV = (boolean) v;
+            this.boolV = (Boolean) v;
         } else if (v instanceof Integer) {
             this.dataType = DataType.INTEGER;
-            this.intV = (int) v;
+            this.intV = (Integer) v;
         } else if (v instanceof Long) {
             this.dataType = DataType.LONG;
-            this.longV = (long) v;
+            this.longV = (Long) v;
         } else if (v instanceof Float) {
             this.dataType = DataType.FLOAT;
-            this.floatV = (float) v;
+            this.floatV = (Float) v;
         } else if (v instanceof Double) {
             this.dataType = DataType.DOUBLE;
-            this.doubleV = (double) v;
+            this.doubleV = (Double) v;
         } else {
             this.dataType = DataType.BINARY;
             this.binaryV = new String((byte[]) v);

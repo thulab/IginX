@@ -49,6 +49,10 @@ public class Table implements RowStream {
         return index < rows.size();
     }
 
+    public boolean isEmpty() {
+        return rows == null || rows.isEmpty();
+    }
+
     @Override
     public Row next() {
         Row row = rows.get(index);

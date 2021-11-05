@@ -29,7 +29,12 @@ public class NaiveOperatorMemoryExecutorTest {
 
     private final NaiveOperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
 
-    private final Source source = new AbstractSource() {};
+    private final Source source = new AbstractSource() {
+        @Override
+        public Source copy() {
+            return null;
+        }
+    };
 
     public void testProject() {
         Project project = new Project(source, Arrays.asList("a", "b"));
