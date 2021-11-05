@@ -67,55 +67,55 @@ public final class Core {
     private final List<PostQueryResultCombineProcessor> postQueryResultCombineProcessors = new ArrayList<>();
     private final List<PostQueryProcessor> postQueryProcessors = new ArrayList<>();
     private final List<PreQueryProcessor> preQueryProcessors = new ArrayList<>();
-    private final ExecutorService postQueryProcessThreadPool;
+    private ExecutorService postQueryProcessThreadPool;
     private IPlanGenerator planGenerator;
     private IPlanExecutor queryExecutor;
     private ICombineExecutor combineExecutor;
 
     private Core() {
-        IMetaManager metaManager = DefaultMetaManager.getInstance();
-        registerPlanGenerator(new SimplePlanGenerator());
-        registerCombineExecutor(new CombineExecutor());
-
-        IPlanExecutor planExecutor = new MixIStorageEnginePlanExecutor(metaManager.getStorageEngineList());
-        registerQueryExecutor(planExecutor);
-        StorageEngineChangeHook hook = planExecutor.getStorageEngineChangeHook();
-        if (hook != null) {
-            metaManager.registerStorageEngineChangeHook(hook);
-        }
-
-        try {
-            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
-            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
-                Class<?> statisticsCollectorClass = Core.class.getClassLoader().
-                        loadClass(statisticsCollectorClassName);
-                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
-                        .getConstructor().newInstance();
-                registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
-                registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
-                registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
-                registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
-                registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
-                registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
-                registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
-                registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
-                statisticsCollector.startBroadcasting();
-            }
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
-            logger.error("initial statistics collector error: ", e);
-        }
-
-        IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
-
-        registerPreQueryPlanProcessor(policy.getPreQueryPlanProcessor());
-        registerPreQueryExecuteProcessor(policy.getPreQueryExecuteProcessor());
-        registerPreQueryResultCombineProcessor(policy.getPreQueryResultCombineProcessor());
-        registerPostQueryProcessor(policy.getPostQueryProcessor());
-        registerPostQueryPlanProcessor(policy.getPostQueryPlanProcessor());
-        registerPostQueryExecuteProcessor(policy.getPostQueryExecuteProcessor());
-        registerPostQueryResultCombineProcessor(policy.getPostQueryResultCombineProcessor());
-
-        postQueryProcessThreadPool = Executors.newCachedThreadPool();
+//        IMetaManager metaManager = DefaultMetaManager.getInstance();
+//        registerPlanGenerator(new SimplePlanGenerator());
+//        registerCombineExecutor(new CombineExecutor());
+//
+//        IPlanExecutor planExecutor = new MixIStorageEnginePlanExecutor(metaManager.getStorageEngineList());
+//        registerQueryExecutor(planExecutor);
+//        StorageEngineChangeHook hook = planExecutor.getStorageEngineChangeHook();
+//        if (hook != null) {
+//            metaManager.registerStorageEngineChangeHook(hook);
+//        }
+//
+//        try {
+//            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
+//            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
+//                Class<?> statisticsCollectorClass = Core.class.getClassLoader().
+//                        loadClass(statisticsCollectorClassName);
+//                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
+//                        .getConstructor().newInstance();
+//                registerPreQueryPlanProcessor(statisticsCollector.getPreQueryPlanProcessor());
+//                registerPreQueryExecuteProcessor(statisticsCollector.getPreQueryExecuteProcessor());
+//                registerPreQueryResultCombineProcessor(statisticsCollector.getPreQueryResultCombineProcessor());
+//                registerPreQueryProcessor(statisticsCollector.getPreQueryProcessor());
+//                registerPostQueryPlanProcessor(statisticsCollector.getPostQueryPlanProcessor());
+//                registerPostQueryExecuteProcessor(statisticsCollector.getPostQueryExecuteProcessor());
+//                registerPostQueryResultCombineProcessor(statisticsCollector.getPostQueryResultCombineProcessor());
+//                registerPostQueryProcessor(statisticsCollector.getPostQueryProcessor());
+//                statisticsCollector.startBroadcasting();
+//            }
+//        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+//            logger.error("initial statistics collector error: ", e);
+//        }
+//
+//        IPolicy policy = PolicyManager.getInstance().getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+//
+//        registerPreQueryPlanProcessor(policy.getPreQueryPlanProcessor());
+//        registerPreQueryExecuteProcessor(policy.getPreQueryExecuteProcessor());
+//        registerPreQueryResultCombineProcessor(policy.getPreQueryResultCombineProcessor());
+//        registerPostQueryProcessor(policy.getPostQueryProcessor());
+//        registerPostQueryPlanProcessor(policy.getPostQueryPlanProcessor());
+//        registerPostQueryExecuteProcessor(policy.getPostQueryExecuteProcessor());
+//        registerPostQueryResultCombineProcessor(policy.getPostQueryResultCombineProcessor());
+//
+//        postQueryProcessThreadPool = Executors.newCachedThreadPool();
     }
 
     public static Core getInstance() {
