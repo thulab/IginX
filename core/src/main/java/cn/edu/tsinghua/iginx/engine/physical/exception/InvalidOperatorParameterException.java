@@ -18,15 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-public class PhysicalTaskExecuteFailureException extends PhysicalException {
+public class InvalidOperatorParameterException extends PhysicalException {
 
-    private static final long serialVersionUID = 1535411462205865453L;
+    private static final long serialVersionUID = -6938368673985897392L;
 
-    public PhysicalTaskExecuteFailureException(String message) {
+    public InvalidOperatorParameterException(String message) {
         super(message);
-    }
-
-    public PhysicalTaskExecuteFailureException(String message, Throwable cause) {
-        super(message, cause);
     }
 }

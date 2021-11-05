@@ -18,7 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnimplementedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
@@ -150,19 +152,21 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeSort(Sort sort, Table table) throws PhysicalException {
         if (!sort.getSortBy().equals(Constants.TIMESTAMP)) {
-            throw new UnimplementedOperatorException("sort operator is not supported order by field except for " + Constants.TIMESTAMP);
+            throw new InvalidOperatorParameterException("sort operator is not support for field " + sort.getSortBy() + " except for " + Constants.TIMESTAMP);
         }
         return null;
     }
 
     private RowStream executeLimit(Limit limit, Table table) throws PhysicalException {
-        // 先跳过前 offset 条数据
-
-        // 取 offset 之后的至多 limit 条数据
-
-
-        // 删除数据全空的列
-        return null;
+        int rowSize = table.getRowSize();
+        Header header = table.getHeader();
+        List<Row> rows = new ArrayList<>();
+        if (rowSize > limit.getOffset()) { // 没有把所有的行都跳过
+            for (int i = limit.getOffset(); i < rowSize && i - limit.getOffset() < limit.getLimit(); i++) {
+                rows.add(table.getRow(i));
+            }
+        }
+        return new Table(header, rows);
     }
 
     private RowStream executeDownsample(Downsample downsample, Table table) throws PhysicalException {
@@ -177,12 +181,77 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         return null;
     }
 
-    private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
-        return null;
+    private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException { // 两个 table，都是按照时间升序的
+        // 目前只支持使用时间戳
+        if (!join.getJoinBy().equals(Constants.TIMESTAMP)) {
+            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP);
+        }
+        // 检查时间戳
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("row streams for join operator should have timestamp.");
+        }
+        // 检查 field
+        for (Field field: headerA.getFields()) {
+            if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+                throw new PhysicalTaskExecuteFailureException("two source has shared field");
+            }
+        }
+        List<Field> newFields = new ArrayList<>();
+        newFields.addAll(headerA.getFields());
+        newFields.addAll(headerB.getFields());
+        Header newHeader = new Header(Field.TIME, newFields);
+        List<Row> newRows = new ArrayList<>();
+
+        int index1 = 0, index2 = 0;
+        while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
+            Object[] values = new Object[newHeader.getFieldSize()];
+            long timestamp;
+            if (rowA.getTimestamp() == rowB.getTimestamp()) {
+                timestamp = rowA.getTimestamp();
+                System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+                System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                index1++;
+                index2++;
+            } else if (rowA.getTimestamp() < rowB.getTimestamp()) {
+                timestamp = rowA.getTimestamp();
+                System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+                index1++;
+            } else {
+                timestamp = rowB.getTimestamp();
+                System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                index2++;
+            }
+            newRows.add(new Row(newHeader, timestamp, values));
+        }
+
+        for (; index1 < tableA.getRowSize(); index1++) {
+            Row rowA = tableA.getRow(index1);
+            Object[] values = new Object[newHeader.getFieldSize()];
+            System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+            newRows.add(new Row(newHeader, rowA.getTimestamp(), values));
+        }
+
+        for (; index2 < tableB.getRowSize(); index2++) {
+            Row rowB = tableB.getRow(index2);
+            Object[] values = new Object[newHeader.getFieldSize()];
+            System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+            newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
+        }
+
+        return new Table(headerA, newRows);
     }
 
     private RowStream executeUnion(Union union, Table tableA, Table tableB) throws PhysicalException {
-        return null;
+        // 检查时间戳
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        if (headerA.hasTimestamp() ^ headerB.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("");
+        }
+        throw new UnimplementedOperatorException("unimplemented operator union");
     }
 
 }
