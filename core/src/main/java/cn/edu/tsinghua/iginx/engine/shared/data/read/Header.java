@@ -55,6 +55,10 @@ public final class Header {
         return fields.get(index);
     }
 
+    public int getFieldSize() {
+        return fields.size();
+    }
+
     public boolean hasTimestamp() {
         return time == null;
     }

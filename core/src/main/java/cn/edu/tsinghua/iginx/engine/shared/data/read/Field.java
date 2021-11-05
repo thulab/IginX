@@ -25,6 +25,8 @@ import java.util.Objects;
 
 public final class Field {
 
+    public static final Field TIME = new Field();
+
     private final String name;
 
     private final DataType type;

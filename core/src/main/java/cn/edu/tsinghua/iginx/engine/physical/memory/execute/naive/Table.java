@@ -64,6 +64,10 @@ public class Table implements RowStream {
         return rows;
     }
 
+    public Row getRow(int index) {
+        return rows.get(index);
+    }
+
     public int getRowSize() {
         return rows.size();
     }
