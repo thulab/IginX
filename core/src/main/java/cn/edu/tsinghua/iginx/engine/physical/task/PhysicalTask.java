@@ -16,18 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.task;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-import java.util.concurrent.ExecutionException;
+import java.util.List;
 
-public interface PhysicalEngine {
+public interface PhysicalTask {
 
-    RowStream execute(Operator root);
+    TaskType getType();
 
-    ConstraintManager getConstraintManager();
+    List<Operator> getOperators();
+
+    TaskExecuteResult getResult();
+
+    void setResult(TaskExecuteResult result);
+
+    PhysicalTask getFollowerTask();
+
+    void setFollowerTask(PhysicalTask task);
 
 }

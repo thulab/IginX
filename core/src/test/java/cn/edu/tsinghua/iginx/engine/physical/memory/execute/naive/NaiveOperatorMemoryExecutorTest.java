@@ -16,18 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
-import java.util.concurrent.ExecutionException;
+import java.util.Arrays;
 
-public interface PhysicalEngine {
+public class NaiveOperatorMemoryExecutorTest {
 
-    RowStream execute(Operator root);
+    private final NaiveOperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
 
-    ConstraintManager getConstraintManager();
+    private final Source source = new AbstractSource() {};
+
+    public void testProject() {
+        Project project = new Project(source, Arrays.asList("a", "b"));
+    }
 
 }

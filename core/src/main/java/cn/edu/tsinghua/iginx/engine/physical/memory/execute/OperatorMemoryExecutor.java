@@ -16,18 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 
-import java.util.concurrent.ExecutionException;
+public interface OperatorMemoryExecutor {
 
-public interface PhysicalEngine {
 
-    RowStream execute(Operator root);
+    RowStream executeUnaryOperator(UnaryOperator operator, RowStream stream) throws PhysicalException;
 
-    ConstraintManager getConstraintManager();
+    RowStream executeBinaryOperator(BinaryOperator operator, RowStream streamA, RowStream streamB) throws PhysicalException;
 
 }

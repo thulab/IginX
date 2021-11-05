@@ -16,18 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-import java.util.concurrent.ExecutionException;
+public class UnimplementedOperatorException extends PhysicalException {
 
-public interface PhysicalEngine {
+    private static final long serialVersionUID = -8032237382041338878L;
 
-    RowStream execute(Operator root);
-
-    ConstraintManager getConstraintManager();
-
+    public UnimplementedOperatorException(String message) {
+        super(message);
+    }
 }

@@ -18,7 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public final class Header {
 
@@ -26,14 +28,19 @@ public final class Header {
 
     private final List<Field> fields;
 
+    private final Map<String, Integer> indexMap;
+
     public Header(List<Field> fields) {
-        this.time = null;
-        this.fields = fields;
+        this(null, fields);
     }
 
     public Header(Field time, List<Field> fields) {
         this.time = time;
         this.fields = fields;
+        this.indexMap = new HashMap<>();
+        for (int i = 0; i < fields.size(); i++) {
+            this.indexMap.put(fields.get(i).getName(), i);
+        }
     }
 
     public Field getTime() {
@@ -44,8 +51,37 @@ public final class Header {
         return fields;
     }
 
+    public Field getField(int index) {
+        return fields.get(index);
+    }
+
     public boolean hasTimestamp() {
         return time == null;
     }
 
+    public int indexOf(Field field) {
+        String name = field.getName();
+        int index = indexMap.getOrDefault(name, -1);
+        if (index == -1) {
+            return -1;
+        }
+        Field targetField = fields.get(index);
+        if (targetField.equals(field)) {
+            return index;
+        } else {
+            return -1;
+        }
+    }
+
+    public int indexOf(String name) {
+        return indexMap.getOrDefault(name, -1);
+    }
+
+    @Override
+    public String toString() {
+        return "Header{" +
+                "time=" + time +
+                ", fields=" + fields +
+                '}';
+    }
 }

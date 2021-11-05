@@ -18,12 +18,15 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-import java.util.Iterator;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 
-public interface RowStream extends Iterator<Row> {
+public interface RowStream {
 
     Header getHeader();
 
-    boolean isEmpty();
+    void close() throws PhysicalException;
 
+    boolean hasNext() throws PhysicalException;
+
+    Row next() throws PhysicalException;
 }

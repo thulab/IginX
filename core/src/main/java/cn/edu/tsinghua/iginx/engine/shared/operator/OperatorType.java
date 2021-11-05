@@ -32,6 +32,14 @@ public enum OperatorType {
     Limit,
     Downsample,
     RowTransform,
-    SetTransform
+    SetTransform;
+
+    public static boolean isBinaryOperator(OperatorType op) {
+        return op == Join || op == Union;
+    }
+
+    public static boolean isUnaryOperator(OperatorType op) {
+        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
+    }
 
 }

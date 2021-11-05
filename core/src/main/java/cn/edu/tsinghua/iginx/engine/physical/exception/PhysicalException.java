@@ -16,18 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+public class PhysicalException extends Exception {
 
-import java.util.concurrent.ExecutionException;
+    private static final long serialVersionUID = -1547005178512213280L;
 
-public interface PhysicalEngine {
+    public PhysicalException() {
+    }
 
-    RowStream execute(Operator root);
+    public PhysicalException(String message) {
+        super(message);
+    }
 
-    ConstraintManager getConstraintManager();
+    public PhysicalException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
+    public PhysicalException(Throwable cause) {
+        super(cause);
+    }
+
+    public PhysicalException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

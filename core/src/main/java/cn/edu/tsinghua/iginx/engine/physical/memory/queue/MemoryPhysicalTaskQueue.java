@@ -16,18 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.memory.queue;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 
-import java.util.concurrent.ExecutionException;
+public interface MemoryPhysicalTaskQueue {
 
-public interface PhysicalEngine {
+    /**
+     * 向任务队列中添加任务
+     * @param memoryTask 内存任务
+     * @return 是否成功添加任务
+     */
+    boolean addTask(MemoryPhysicalTask memoryTask);
 
-    RowStream execute(Operator root);
-
-    ConstraintManager getConstraintManager();
+    /**
+     * 如果当前队列中不含未执行的计划，则该方法会阻塞。
+     *
+     * @return 距今最久的未执行的计划
+     */
+    MemoryPhysicalTask getTask();
 
 }

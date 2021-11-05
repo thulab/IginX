@@ -18,9 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+
+import java.util.Arrays;
+
 public class Row {
 
-    private static final long NON_EXISTED_TIMESTAMP = -1L;
+    public static final long NON_EXISTED_TIMESTAMP = -1L;
 
     private final Header header;
 
@@ -48,5 +52,41 @@ public class Row {
 
     public Object[] getValues() {
         return values;
+    }
+
+    public Object getValue(int i) {
+        return values[i];
+    }
+
+    public Object getValue(Field field) {
+        int index = header.indexOf(field);
+        if (index == -1) {
+            return null;
+        }
+        return values[index];
+    }
+
+    public Object getValue(String name) {
+        int index = header.indexOf(name);
+        if (index == -1) {
+            return null;
+        }
+        return values[index];
+    }
+
+    public Value getAsValue(String name) {
+        int index = header.indexOf(name);
+        if (index == -1) {
+            return null;
+        }
+        return new Value(header.getField(index).getType(), values[index]);
+    }
+
+    @Override
+    public String toString() {
+        return "Row{" +
+                "timestamp=" + timestamp +
+                ", values=" + Arrays.toString(values) +
+                '}';
     }
 }

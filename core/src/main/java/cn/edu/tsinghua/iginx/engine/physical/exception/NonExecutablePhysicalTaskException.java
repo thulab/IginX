@@ -16,43 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data.read;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-import java.util.List;
+public class NonExecutablePhysicalTaskException extends PhysicalException {
 
-public class Table implements RowStream {
-
-    private final Header header;
-
-    private final List<Row> rows;
-
-    private int index;
-
-    public Table(Header header, List<Row> rows) {
-        this.header = header;
-        this.rows = rows;
-        this.index = 0;
-    }
-
-    @Override
-    public Header getHeader() {
-        return header;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return index < rows.size();
-    }
-
-    @Override
-    public Row next() {
-        Row row = rows.get(index);
-        index++;
-        return row;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return rows.isEmpty();
+    public NonExecutablePhysicalTaskException(String message) {
+        super(message);
     }
 }

@@ -26,6 +26,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
@@ -174,5 +176,7 @@ public interface IMetaManager {
     List<UserMeta> getUsers();
 
     List<UserMeta> getUsers(List<String> username);
+
+    void registerStorageUnitHook(StorageUnitHook hook);
 
 }

@@ -86,6 +86,12 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
+    private String physicalOptimizer = "naive";
+
+    private int memoryTaskThreadPoolSize = 100;
+
+    private int physicalTaskThreadPoolSizePerStorage = 20;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -348,5 +354,29 @@ public class Config {
 
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
+    }
+
+    public String getPhysicalOptimizer() {
+        return physicalOptimizer;
+    }
+
+    public void setPhysicalOptimizer(String physicalOptimizer) {
+        this.physicalOptimizer = physicalOptimizer;
+    }
+
+    public int getMemoryTaskThreadPoolSize() {
+        return memoryTaskThreadPoolSize;
+    }
+
+    public void setMemoryTaskThreadPoolSize(int memoryTaskThreadPoolSize) {
+        this.memoryTaskThreadPoolSize = memoryTaskThreadPoolSize;
+    }
+
+    public int getPhysicalTaskThreadPoolSizePerStorage() {
+        return physicalTaskThreadPoolSizePerStorage;
+    }
+
+    public void setPhysicalTaskThreadPoolSizePerStorage(int physicalTaskThreadPoolSizePerStorage) {
+        this.physicalTaskThreadPoolSizePerStorage = physicalTaskThreadPoolSizePerStorage;
     }
 }

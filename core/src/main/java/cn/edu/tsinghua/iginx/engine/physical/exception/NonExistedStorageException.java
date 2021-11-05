@@ -16,18 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+public class NonExistedStorageException extends PhysicalException {
 
-import java.util.concurrent.ExecutionException;
+    private static final long serialVersionUID = 2361886892149089975L;
 
-public interface PhysicalEngine {
-
-    RowStream execute(Operator root);
-
-    ConstraintManager getConstraintManager();
-
+    public NonExistedStorageException(long id) {
+        super("non existed storage " + id);
+    }
 }

@@ -16,18 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical;
+package cn.edu.tsinghua.iginx.engine.physical.storage;
 
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 
-import java.util.concurrent.ExecutionException;
+public interface IStorage {
 
-public interface PhysicalEngine {
+    TaskExecuteResult execute(StoragePhysicalTask task);
 
-    RowStream execute(Operator root);
+    boolean supportsProject();
 
-    ConstraintManager getConstraintManager();
+    boolean supportsProjectAndSelect();
 
 }
