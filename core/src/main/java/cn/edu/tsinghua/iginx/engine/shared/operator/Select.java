@@ -18,4 +18,9 @@ public class Select extends AbstractUnaryOperator {
     public Filter getFilter() {
         return filter;
     }
+
+    @Override
+    public Operator copy() {
+        return new Select(getSource().copy(), filter.copy());
+    }
 }

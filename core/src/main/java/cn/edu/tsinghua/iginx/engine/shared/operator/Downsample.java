@@ -24,6 +24,8 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 
+import java.io.Serializable;
+
 public class Downsample extends AbstractUnaryOperator {
 
     private final long precision;
@@ -63,4 +65,8 @@ public class Downsample extends AbstractUnaryOperator {
         return timeRange;
     }
 
+    @Override
+    public Operator copy() {
+        return new Downsample(getSource().copy(), precision, functionCall.copy(), timeRange.copy());
+    }
 }

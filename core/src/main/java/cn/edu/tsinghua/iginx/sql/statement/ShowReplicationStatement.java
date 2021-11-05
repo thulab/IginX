@@ -5,7 +5,7 @@ import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
-public class ShowReplicationStatement extends Statement {
+public class ShowReplicationStatement extends SystemStatement {
 
     public ShowReplicationStatement() {
         this.statementType = StatementType.SHOW_REPLICATION;

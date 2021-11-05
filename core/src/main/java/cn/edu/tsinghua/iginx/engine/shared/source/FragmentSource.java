@@ -36,4 +36,8 @@ public class FragmentSource extends AbstractSource {
         return fragment;
     }
 
+    @Override
+    public Source copy() {
+        return new FragmentSource(fragment);
+    }
 }

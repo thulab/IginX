@@ -37,4 +37,13 @@ public class NotFilter implements Filter {
         return type;
     }
 
+    @Override
+    public Filter copy() {
+        return new NotFilter(child.copy());
+    }
+
+    @Override
+    public String toString() {
+        return "!" + child.toString();
+    }
 }

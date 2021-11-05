@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.engine.shared.function;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionCall {
@@ -39,5 +40,9 @@ public class FunctionCall {
 
     public List<Value> getParams() {
         return params;
+    }
+
+    public FunctionCall copy() {
+        return new FunctionCall(function, new ArrayList<>(params));
     }
 }

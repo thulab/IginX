@@ -50,10 +50,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
-import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
-import cn.edu.tsinghua.iginx.sql.SQLParseError;
-import cn.edu.tsinghua.iginx.sql.SqlLexer;
-import cn.edu.tsinghua.iginx.sql.SqlParser;
+import cn.edu.tsinghua.iginx.sql.*;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
@@ -327,34 +324,36 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
-        SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
-        lexer.removeErrorListeners();
-        lexer.addErrorListener(SQLParseError.INSTANCE);
-
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SqlParser parser = new SqlParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(SQLParseError.INSTANCE);
-
-        IginXSqlVisitor visitor = new IginXSqlVisitor();
-
-        try {
-            ParseTree tree = parser.sqlStatement();
-            Statement statement = visitor.visit(tree);
-            return statement.execute(req.getSessionId());
-        } catch (SQLParserException | ParseCancellationException e) {
-            StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
-            String errMsg = e.getMessage();
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.status(statusCode, errMsg), SqlType.Unknown);
-            resp.setParseErrorMsg(e.getMessage());
-            return resp;
-        } catch (Exception e) {
-            e.printStackTrace();
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
-            resp.setParseErrorMsg("Execute Error: encounter error(s) when executing sql statement, " +
-                    "see server log for more details.");
-            return resp;
-        }
+        StatementExecutor executor = StatementExecutor.getInstance();
+        return executor.execute(req.getStatement(), req.getSessionId());
+//        SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
+//        lexer.removeErrorListeners();
+//        lexer.addErrorListener(SQLParseError.INSTANCE);
+//
+//        CommonTokenStream tokens = new CommonTokenStream(lexer);
+//        SqlParser parser = new SqlParser(tokens);
+//        parser.removeErrorListeners();
+//        parser.addErrorListener(SQLParseError.INSTANCE);
+//
+//        IginXSqlVisitor visitor = new IginXSqlVisitor();
+//
+//        try {
+//            ParseTree tree = parser.sqlStatement();
+//            Statement statement = visitor.visit(tree);
+//            return statement.execute(req.getSessionId());
+//        } catch (SQLParserException | ParseCancellationException e) {
+//            StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
+//            String errMsg = e.getMessage();
+//            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.status(statusCode, errMsg), SqlType.Unknown);
+//            resp.setParseErrorMsg(e.getMessage());
+//            return resp;
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
+//            resp.setParseErrorMsg("Execute Error: encounter error(s) when executing sql statement, " +
+//                    "see server log for more details.");
+//            return resp;
+//        }
     }
 
     @Override

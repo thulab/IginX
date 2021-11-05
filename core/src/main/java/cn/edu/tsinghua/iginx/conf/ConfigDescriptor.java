@@ -67,6 +67,7 @@ public class ConfigDescriptor {
             config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
+            config.setQueryInNewWay(Boolean.parseBoolean(properties.getProperty("queryInNewWay", "false")));
 
             config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
 
@@ -117,6 +118,7 @@ public class ConfigDescriptor {
         config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));
         config.setDatabaseClassNames(EnvUtils.loadEnv("databaseClassNames", config.getDatabaseClassNames()));
         config.setPolicyClassName(EnvUtils.loadEnv("policyClassName", config.getPolicyClassName()));
+        config.setQueryInNewWay(EnvUtils.loadEnv("queryInNewWay", config.isQueryInNewWay()));
         config.setStorageUnitNum(EnvUtils.loadEnv("storageUnitNum", config.getStorageUnitNum()));
         config.setStatisticsCollectorClassName(EnvUtils.loadEnv("statisticsCollectorClassName", config.getStatisticsCollectorClassName()));
         config.setStatisticsLogInterval(EnvUtils.loadEnv("statisticsLogInterval", config.getStatisticsLogInterval()));

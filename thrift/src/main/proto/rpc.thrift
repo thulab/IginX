@@ -56,6 +56,7 @@ enum SqlType {
     DeleteTimeSeries,
     ShowTimeSeries,
     ShowClusterInfo,
+    NewQuery,
 }
 
 enum AuthType {

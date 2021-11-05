@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
+import java.io.Serializable;
+
 public class Limit extends AbstractUnaryOperator {
 
     private final int limit;
@@ -41,5 +43,10 @@ public class Limit extends AbstractUnaryOperator {
 
     public int getOffset() {
         return offset;
+    }
+
+    @Override
+    public Operator copy() {
+        return new Limit(getSource().copy(), limit, offset);
     }
 }

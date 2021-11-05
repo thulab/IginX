@@ -20,8 +20,6 @@ package cn.edu.tsinghua.iginx.engine.shared.data;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
-import java.util.Objects;
-
 public class Value {
 
     private final DataType dataType;
@@ -61,6 +59,47 @@ public class Value {
                 break;
             default:
                 throw new IllegalArgumentException("unknown data type: " + dataType);
+        }
+    }
+
+    public Value(Object v) {
+        if (v instanceof Boolean) {
+            this.dataType = DataType.BOOLEAN;
+            this.boolV = (Boolean) v;
+        } else if (v instanceof Integer) {
+            this.dataType = DataType.INTEGER;
+            this.intV = (Integer) v;
+        } else if (v instanceof Long) {
+            this.dataType = DataType.LONG;
+            this.longV = (Long) v;
+        } else if (v instanceof Float) {
+            this.dataType = DataType.FLOAT;
+            this.floatV = (Float) v;
+        } else if (v instanceof Double) {
+            this.dataType = DataType.DOUBLE;
+            this.doubleV = (Double) v;
+        } else {
+            this.dataType = DataType.BINARY;
+            this.binaryV = new String((byte[]) v);
+        }
+    }
+
+    public Object getValue() {
+        switch (dataType){
+            case BINARY:
+                return binaryV;
+            case BOOLEAN:
+                return boolV;
+            case INTEGER:
+                return intV;
+            case LONG:
+                return longV;
+            case DOUBLE:
+                return doubleV;
+            case FLOAT:
+                return floatV;
+            default:
+                return null;
         }
     }
 
@@ -138,6 +177,10 @@ public class Value {
                 return binaryV == null;
         }
         return true;
+    }
+
+    public Value copy() {
+        return new Value(this.getValue());
     }
 
 }

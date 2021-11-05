@@ -18,7 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrFilter implements Filter {
 
@@ -37,5 +39,17 @@ public class OrFilter implements Filter {
     @Override
     public FilterType getType() {
         return type;
+    }
+
+    @Override
+    public Filter copy() {
+        List<Filter> newChildren = new ArrayList<>();
+        children.forEach(e -> newChildren.add(e.copy()));
+        return new OrFilter(newChildren);
+    }
+
+    @Override
+    public String toString() {
+        return children.stream().map(Object::toString).collect(Collectors.joining(" || ", "(", ")"));
     }
 }

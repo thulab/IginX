@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ClearDataStatement extends Statement {
+public class ClearDataStatement extends DataStatement {
 
     public ClearDataStatement() {
         this.statementType = StatementType.CLEAR_DATA;

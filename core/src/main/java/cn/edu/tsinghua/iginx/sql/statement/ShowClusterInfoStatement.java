@@ -6,7 +6,7 @@ import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 
-public class ShowClusterInfoStatement extends Statement {
+public class ShowClusterInfoStatement extends SystemStatement {
 
     public ShowClusterInfoStatement() {
         this.statementType = StatementType.SHOW_CLUSTER_INFO;

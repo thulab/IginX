@@ -22,4 +22,6 @@ public interface Source {
 
     SourceType getType();
 
+    Source copy();
+
 }

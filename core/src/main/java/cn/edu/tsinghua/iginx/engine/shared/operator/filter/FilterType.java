@@ -27,6 +27,10 @@ public enum FilterType {
     Or,
     Not;
 
+    public static boolean isLeafFilter(FilterType filterType) {
+        return filterType == Time || filterType == Value;
+    }
+
     public static boolean isCompoundFilter(FilterType filterType) {
         return filterType != Time && filterType != Value;
     }
@@ -38,18 +42,18 @@ public enum FilterType {
             case Time:
                 return true;
             case Not:
-                NotFilter notFilter = (NotFilter)filter;
+                NotFilter notFilter = (NotFilter) filter;
                 return isTimeFilter(notFilter.getChild());
             case And:
-                AndFilter andFilter = (AndFilter)filter;
-                for (Filter f: andFilter.getChildren()) {
+                AndFilter andFilter = (AndFilter) filter;
+                for (Filter f : andFilter.getChildren()) {
                     if (!isTimeFilter(f)) {
                         return false;
                     }
                 }
             case Or:
-                OrFilter orFilter = (OrFilter)filter;
-                for (Filter f: orFilter.getChildren()) {
+                OrFilter orFilter = (OrFilter) filter;
+                for (Filter f : orFilter.getChildren()) {
                     if (!isTimeFilter(f)) {
                         return false;
                     }

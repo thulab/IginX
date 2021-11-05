@@ -9,7 +9,7 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AddStorageEngineStatement extends Statement {
+public class AddStorageEngineStatement extends SystemStatement {
 
     private List<StorageEngine> engines;
 

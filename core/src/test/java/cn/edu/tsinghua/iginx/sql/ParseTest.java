@@ -20,19 +20,10 @@ import static org.junit.Assert.assertTrue;
 
 public class ParseTest {
 
-    private Statement buildStatement(String sql) {
-        SqlLexer lexer = new SqlLexer(CharStreams.fromString(sql));
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SqlParser parser = new SqlParser(tokens);
-        IginXSqlVisitor visitor = new IginXSqlVisitor();
-        ParseTree tree = parser.sqlStatement();
-        return visitor.visit(tree);
-    }
-
     @Test
     public void testParseInsert() {
         String insertStr = "INSERT INTO a.b.c (timestamp, status, hardware, num) values (1, NaN, Null, 1627399423055), (2, false, \"v2\", 1627399423056);";
-        InsertStatement statement = (InsertStatement) buildStatement(insertStr);
+        InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
         assertEquals("a.b.c", statement.getPrefixPath());
 
         List<String> paths = Arrays.asList("a.b.c.status", "a.b.c.hardware", "a.b.c.num");
@@ -44,7 +35,7 @@ public class ParseTest {
     @Test
     public void testParseFloatAndInteger() {
         String floatAndIntegerStr = "INSERT INTO us.d1 (timestamp, s1, s2) values (1627464728862, 10i, 1.1f), (1627464728863, 11i, 1.2f)";
-        InsertStatement statement = (InsertStatement) buildStatement(floatAndIntegerStr);
+        InsertStatement statement = (InsertStatement) TestUtils.buildStatement(floatAndIntegerStr);
         assertEquals("us.d1", statement.getPrefixPath());
 
         List<String> paths = Arrays.asList("us.d1.s1", "us.d1.s2");
@@ -63,28 +54,27 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f) FROM a.b WHERE time in [2022-12-12 16:18:23-1s, 2022-12-12 16:18:23+1s) and d == \"abc\" or c >= \"666\" or (e < 10 and not (f < 10)) GROUP BY 1000ms;";
-        SelectStatement statement = (SelectStatement) buildStatement(selectStr);
+        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f), MIN(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP BY 1000ms;";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
-        assertTrue(statement.isHasFunc());
-        assertTrue(statement.isHasValueFilter());
-        assertTrue(statement.isHasGroupBy());
+        assertTrue(statement.hasFunc());
+        assertTrue(statement.hasValueFilter());
+        assertTrue(statement.hasGroupBy());
         assertEquals(SelectStatement.QueryType.MixedQuery, statement.getQueryType());
 
-        assertEquals(4, statement.getSelectedFuncsAndPaths().size());
-        assertEquals(SelectStatement.FuncType.Max.toString().toLowerCase(), statement.getSelectedFuncsAndPaths().get(0).k.toLowerCase());
+        assertEquals(2, statement.getSelectedFuncsAndPaths().size());
+        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("max"));
+        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("min"));
 
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get(0).v);
-        assertEquals("a.b.d", statement.getSelectedFuncsAndPaths().get(1).v);
-        assertEquals("a.b.e", statement.getSelectedFuncsAndPaths().get(2).v);
-        assertEquals("a.b.f", statement.getSelectedFuncsAndPaths().get(3).v);
+        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("max").get(0));
+        assertEquals("a.b.d", statement.getSelectedFuncsAndPaths().get("max").get(1));
+        assertEquals("a.b.e", statement.getSelectedFuncsAndPaths().get("max").get(2));
+        assertEquals("a.b.f", statement.getSelectedFuncsAndPaths().get("max").get(3));
+        assertEquals("a.b.g", statement.getSelectedFuncsAndPaths().get("min").get(0));
 
         assertEquals("a.b", statement.getFromPath());
 
-        assertEquals("a.b.d == \"abc\" || a.b.c >= \"666\" || !(a.b.e < 10 && !(a.b.f < 10))", statement.getBooleanExpression());
-
-        assertEquals(1670833102000L, statement.getStartTime());
-        assertEquals(1670833104000L, statement.getEndTime());
+        assertEquals("((time > 100 && time < 1000) || (a.b.d == abc) || (a.b.c >= 666) || (((a.b.e < 10 && !((a.b.f < 10))))))", statement.getFilter().toString());
 
         assertEquals(1000L, statement.getPrecision());
     }
@@ -92,28 +82,28 @@ public class ParseTest {
     @Test
     public void testParseSpecialClause() {
         String limit = "SELECT a FROM test LIMIT 2, 5;";
-        SelectStatement statement = (SelectStatement) buildStatement(limit);
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(limit);
         assertEquals(5, statement.getLimit());
         assertEquals(2, statement.getOffset());
 
         String orderBy = "SELECT a FROM test ORDER BY timestamp";
-        statement = (SelectStatement) buildStatement(orderBy);
+        statement = (SelectStatement) TestUtils.buildStatement(orderBy);
         assertEquals(SQLConstant.TIME, statement.getOrderByPath());
         assertTrue(statement.isAscending());
 
         String orderByAndLimit = "SELECT a FROM test ORDER BY a DESC LIMIT 10 OFFSET 5;";
-        statement = (SelectStatement) buildStatement(orderByAndLimit);
+        statement = (SelectStatement) TestUtils.buildStatement(orderByAndLimit);
         assertEquals("test.a", statement.getOrderByPath());
         assertFalse(statement.isAscending());
         assertEquals(5, statement.getOffset());
         assertEquals(10, statement.getLimit());
 
         String groupBy = "SELECT max(a) FROM test GROUP BY 5ms";
-        statement = (SelectStatement) buildStatement(groupBy);
+        statement = (SelectStatement) TestUtils.buildStatement(groupBy);
         assertEquals(5L, statement.getPrecision());
 
         String groupByAndLimit = "SELECT max(a) FROM test GROUP BY 10ms LIMIT 5 OFFSET 2;";
-        statement = (SelectStatement) buildStatement(groupByAndLimit);
+        statement = (SelectStatement) TestUtils.buildStatement(groupByAndLimit);
         assertEquals(10L, statement.getPrecision());
         assertEquals(2, statement.getOffset());
         assertEquals(5, statement.getLimit());
@@ -122,13 +112,13 @@ public class ParseTest {
     @Test(expected = SQLParserException.class)
     public void testAggregateAndOrderBy() {
         String aggregateAndOrderBy = "SELECT max(a) FROM test ORDER BY a DESC;";
-        SelectStatement statement = (SelectStatement) buildStatement(aggregateAndOrderBy);
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(aggregateAndOrderBy);
     }
 
     @Test
     public void testParseDelete() {
         String deleteStr = "DELETE FROM a.b.c, a.b.d WHERE time in [1627464728862, 2022-12-12 16:18:23+1s);";
-        DeleteStatement statement = (DeleteStatement) buildStatement(deleteStr);
+        DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(deleteStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, statement.getPaths());
 
@@ -139,35 +129,35 @@ public class ParseTest {
     @Test
     public void testParseDeleteTimeSeries() {
         String deleteTimeSeriesStr = "DELETE TIME SERIES a.b.c, a.b.d;";
-        DeleteTimeSeriesStatement statement = (DeleteTimeSeriesStatement) buildStatement(deleteTimeSeriesStr);
+        DeleteTimeSeriesStatement statement = (DeleteTimeSeriesStatement) TestUtils.buildStatement(deleteTimeSeriesStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, statement.getPaths());
     }
 
     @Test
     public void testTimeRange() {
-        String lsrs = "SELECT a FROM b WHERE TIME IN [10, 15]"; // []
-        String lrrr = "SELECT a FROM b WHERE TIME IN (10, 15)"; // ()
-        String lsrr = "SELECT a FROM b WHERE TIME IN [10, 15)"; // [)
-        String lrrs = "SELECT a FROM b WHERE TIME IN (10, 15]"; // (]
+        String lsrs = "DELETE FROM a, b WHERE TIME IN [10, 15]"; // []
+        String lrrr = "DELETE FROM a, b WHERE TIME IN (10, 15)"; // ()
+        String lsrr = "DELETE FROM a, b WHERE TIME IN [10, 15)"; // [)
+        String lrrs = "DELETE FROM a, b WHERE TIME IN (10, 15]"; // (]
 
         // [10, 15] -> [10, 16)
-        SelectStatement statement = (SelectStatement) buildStatement(lsrs);
+        DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(lsrs);
         assertEquals(10, statement.getStartTime());
         assertEquals(16, statement.getEndTime());
 
         // (10, 15) -> [11, 15)
-        statement = (SelectStatement) buildStatement(lrrr);
+        statement = (DeleteStatement) TestUtils.buildStatement(lrrr);
         assertEquals(11, statement.getStartTime());
         assertEquals(15, statement.getEndTime());
 
         // [10, 15) -> [10, 15)
-        statement = (SelectStatement) buildStatement(lsrr);
+        statement = (DeleteStatement) TestUtils.buildStatement(lsrr);
         assertEquals(10, statement.getStartTime());
         assertEquals(15, statement.getEndTime());
 
         // (10, 15] -> [11, 16)
-        statement = (SelectStatement) buildStatement(lrrs);
+        statement = (DeleteStatement) TestUtils.buildStatement(lrrs);
         assertEquals(11, statement.getStartTime());
         assertEquals(16, statement.getEndTime());
     }
@@ -179,19 +169,19 @@ public class ParseTest {
         String selectWithLimitAndOffset02 = "SELECT * FROM a.b LIMIT 10 OFFSET 2";
         String selectWithLimitAndOffset03 = "SELECT * FROM a.b OFFSET 2 LIMIT 10";
 
-        SelectStatement statement = (SelectStatement) buildStatement(selectWithLimit);
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectWithLimit);
         assertEquals(10, statement.getLimit());
         assertEquals(0, statement.getOffset());
 
-        statement = (SelectStatement) buildStatement(selectWithLimitAndOffset01);
+        statement = (SelectStatement) TestUtils.buildStatement(selectWithLimitAndOffset01);
         assertEquals(10, statement.getLimit());
         assertEquals(2, statement.getOffset());
 
-        statement = (SelectStatement) buildStatement(selectWithLimitAndOffset02);
+        statement = (SelectStatement) TestUtils.buildStatement(selectWithLimitAndOffset02);
         assertEquals(10, statement.getLimit());
         assertEquals(2, statement.getOffset());
 
-        statement = (SelectStatement) buildStatement(selectWithLimitAndOffset03);
+        statement = (SelectStatement) TestUtils.buildStatement(selectWithLimitAndOffset03);
         assertEquals(10, statement.getLimit());
         assertEquals(2, statement.getOffset());
     }
@@ -199,14 +189,14 @@ public class ParseTest {
     @Test
     public void testParseShowReplication() {
         String showReplicationStr = "SHOW REPLICA NUMBER";
-        ShowReplicationStatement statement = (ShowReplicationStatement) buildStatement(showReplicationStr);
+        ShowReplicationStatement statement = (ShowReplicationStatement) TestUtils.buildStatement(showReplicationStr);
         assertEquals(Statement.StatementType.SHOW_REPLICATION, statement.statementType);
     }
 
     @Test
     public void testParseAddStorageEngine() {
         String addStorageEngineStr = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb11\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key1: val1, key2: val2\");";
-        AddStorageEngineStatement statement = (AddStorageEngineStatement) buildStatement(addStorageEngineStr);
+        AddStorageEngineStatement statement = (AddStorageEngineStatement) TestUtils.buildStatement(addStorageEngineStr);
 
         assertEquals(2, statement.getEngines().size());
 

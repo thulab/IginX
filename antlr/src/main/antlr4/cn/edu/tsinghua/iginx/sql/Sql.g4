@@ -39,12 +39,11 @@ functionName
     ;
 
 timeRange
-    : TIME IN timeInterval
+    : (TIME | TIMESTAMP) IN timeInterval
     ;
 
 whereClause
-    : WHERE timeRange (OPERATOR_AND orExpression)?
-    | WHERE orExpression
+    : WHERE orExpression
     ;
 
 orExpression
@@ -56,8 +55,8 @@ andExpression
     ;
 
 predicate
-    : path comparisonOperator constant
-    | constant comparisonOperator path
+    : (TIME | TIMESTAMP | path) comparisonOperator constant
+    | constant comparisonOperator (TIME | TIMESTAMP | path)
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
