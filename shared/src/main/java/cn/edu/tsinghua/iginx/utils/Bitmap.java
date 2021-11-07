@@ -54,4 +54,7 @@ public class Bitmap {
         return this.bitmap;
     }
 
+    public int getSize() {
+        return size;
+    }
 }

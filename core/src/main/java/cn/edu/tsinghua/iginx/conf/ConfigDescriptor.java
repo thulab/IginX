@@ -87,6 +87,11 @@ public class ConfigDescriptor {
             config.setFileDataDir(properties.getProperty("fileDataDir", ""));
             config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
 
+            config.setEnableGlobalStatistics(Boolean.parseBoolean(properties.getProperty("enableGlobalStatistics", "false")));
+            config.setGlobalStatisticsCollectInterval(Long.parseLong(properties.getProperty("globalStatisticsCollectInterval", "60")));
+            config.setInsertThreshold(Long.parseLong(properties.getProperty("insertThreshold", "100000")));
+            config.setReshardFragmentTimeMargin(Long.parseLong(properties.getProperty("reshardFragmentTimeMargin", "60")));
+
             config.setEnableMQTT(Boolean.parseBoolean(properties.getProperty("enable_mqtt", "false")));
             config.setMqttHost(properties.getProperty("mqtt_host", "0.0.0.0"));
             config.setMqttPort(Integer.parseInt(properties.getProperty("mqtt_port", "1883")));
@@ -146,5 +151,4 @@ public class ConfigDescriptor {
     private static class ConfigDescriptorHolder {
         private static final ConfigDescriptor INSTANCE = new ConfigDescriptor();
     }
-
 }

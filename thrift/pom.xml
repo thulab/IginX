@@ -65,8 +65,19 @@
                         </goals>
                         <configuration>
                             <generator>java</generator>
+                            <outputDirectory>${project.build.directory}/generated-sources/thrift</outputDirectory>
                         </configuration>
                     </execution>
+<!--                    <execution>-->
+<!--                        <id>generate-thrift-sources-python</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>compile</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <generator>py</generator>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
                 </executions>
             </plugin>
         </plugins>
@@ -182,6 +193,7 @@
                                 </goals>
                                 <configuration>
                                     <generator>java</generator>
+<!--                                    <generator>py</generator>-->
                                     <thriftExecutable>${thrift.exec.absolute.path}</thriftExecutable>
                                     <thriftSourceRoot>src/main/proto</thriftSourceRoot>
                                 </configuration>

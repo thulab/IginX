@@ -72,6 +72,7 @@ public class MetricsResource {
     private final double logRestQueryPossibility = config.getLogRestQueryPossibility();
     private final double logRestInsertPossibility = config.getLogRestInsertPossibility();
 
+
     @Inject
     public MetricsResource() {
     }
@@ -227,6 +228,7 @@ public class MetricsResource {
             sign = RandomStringUtils.randomAlphanumeric(5);
             LOGGER.info("query input, sign: {}, timestamp: {}, json: {}", sign, startTimestamp, jsonStr);
         }
+
         try {
             if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");

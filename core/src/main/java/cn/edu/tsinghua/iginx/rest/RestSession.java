@@ -55,12 +55,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -74,8 +69,8 @@ public class RestSession {
     private long sessionId;
     private boolean isClosed;
     private int redirectTimes;
-    private String username;
-    private String password;
+    private final String username;
+    private final String password;
 
     public RestSession() {
         this.isClosed = true;
@@ -118,7 +113,7 @@ public class RestSession {
             logger.info("当前请求将被重定向到：" + resp.status.getMessage());
             redirectTimes += 1;
 
-        } while(redirectTimes <= Constants.MAX_REDIRECT_TIME);
+        } while (redirectTimes <= Constants.MAX_REDIRECT_TIME);
 
         if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
             throw new SessionException("重定向次数过多！");

@@ -112,21 +112,21 @@ public final class StorageEngineMeta {
         this.storageEngine = storageEngine;
     }
 
-    public List<StorageUnitMeta> getStorageUnitList() {
+    public synchronized List<StorageUnitMeta> getStorageUnitList() {
         if (storageUnitList == null) {
             storageUnitList = new ArrayList<>();
         }
         return storageUnitList;
     }
 
-    public void removeStorageUnit(String id) {
+    public synchronized void removeStorageUnit(String id) {
         if (storageUnitList == null) {
             storageUnitList = new ArrayList<>();
         }
         storageUnitList.removeIf(e -> e.getId().equals(id));
     }
 
-    public void addStorageUnit(StorageUnitMeta storageUnit) {
+    public synchronized void addStorageUnit(StorageUnitMeta storageUnit) {
         if (storageUnitList == null) {
             storageUnitList = new ArrayList<>();
         }

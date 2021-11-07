@@ -19,14 +19,18 @@
 package cn.edu.tsinghua.iginx.metadata.storage;
 
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
@@ -88,5 +92,43 @@ public interface IMetaStorage {
     void updateUser(UserMeta userMeta) throws MetaStorageException;
 
     void removeUser(String username) throws MetaStorageException;
+
+    Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException;
+
+    void lockActiveFragmentStatistics() throws MetaStorageException;
+
+    void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException;
+
+    void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException;
+
+    void releaseActiveFragmentStatistics() throws MetaStorageException;
+
+    void removeActiveFragmentStatistics() throws MetaStorageException;
+
+    void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook);
+
+    boolean proposeToReshard() throws MetaStorageException;
+
+    void lockReshardNotification() throws MetaStorageException;
+
+    void updateReshardNotification(boolean notification) throws MetaStorageException;
+
+    void releaseReshardNotification() throws MetaStorageException;
+
+    void removeReshardNotification() throws MetaStorageException;
+
+    void registerReshardNotificationHook(ReshardNotificationHook hook);
+
+    void lockReshardCounter() throws MetaStorageException;
+
+    void incrementReshardCounter() throws MetaStorageException;
+
+    void resetReshardCounter() throws MetaStorageException;
+
+    void releaseReshardCounter() throws MetaStorageException;
+
+    void removeReshardCounter() throws MetaStorageException;
+
+    void registerReshardCounterChangeHook(ReshardCounterChangeHook hook);
 
 }

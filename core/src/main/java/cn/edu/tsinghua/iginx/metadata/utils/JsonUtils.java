@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 
 public class JsonUtils {
 
-    private static final Gson gson = new GsonBuilder()
+    private static final Gson gson = new GsonBuilder().enableComplexMapKeySerialization()
             .create();
 
     public static byte[] toJson(Object o) {

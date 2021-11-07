@@ -18,13 +18,12 @@
  */
 package cn.edu.tsinghua.iginx.rest.insert;
 
-import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.RestSession;
+import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,10 +42,9 @@ import cn.edu.tsinghua.iginx.rest.bean.Metric;
 public class DataPointsParser {
     public static final String ANNOTATION_SPLIT_STRING = "@@annotation";
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
-    private static Config config = ConfigDescriptor.getInstance().getConfig();
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private Reader inputStream = null;
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
     private RestSession session = new RestSession();
     private Map<TimeAndPrefixPath, Map<String, String>> batchMap = new HashMap<>();

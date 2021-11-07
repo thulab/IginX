@@ -38,6 +38,13 @@ public class RpcUtils {
 
     public static Status FAILURE = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
 
+    static {
+        WRONG_USERNAME_OR_PASSWORD.setMessage("wrong username or password");
+        ACCESS_DENY.setMessage("access deny");
+        PARTIAL_SUCCESS.setMessage("partial success");
+        FAILURE.setMessage("unexpected error");
+    }
+
     public static void verifySuccess(Status status) throws ExecutionException {
         if (status.code != StatusCode.SUCCESS_STATUS.getStatusCode()) {
             throw new ExecutionException(status);

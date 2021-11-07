@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.client;
 
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
@@ -37,6 +39,10 @@ import org.jline.reader.impl.completer.completer.NullCompleter;
 import org.jline.reader.impl.completer.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
@@ -172,7 +178,7 @@ public class IginxClient {
                 displayLogo("0.4.0-SNAPSHOT");
 
                 String command;
-                while(true) {
+                while (true) {
                     command = reader.readLine(IGINX_CLI_PREFIX);
                     boolean continues = processCommand(command);
                     if (!continues) {
@@ -289,6 +295,8 @@ public class IginxClient {
             } else {
                 System.out.println("success");
             }
+        } catch (SessionException | ExecutionException e) {
+            System.out.println(e.getMessage());
         } catch (Exception e) {
             System.out.println("encounter error when executing sql statement.");
         }
@@ -314,159 +322,58 @@ public class IginxClient {
     }
 
     private static Completer buildIginxCompleter() {
-        Completer upperInsertCompleter = new ArgumentCompleter(
-                new StringsCompleter("INSERT"),
-                new StringsCompleter("INTO"),
-                NullCompleter.INSTANCE
+        List<Completer> iginxCompleters = new ArrayList<>();
+
+        List<List<String>> withNullCompleters = Arrays.asList(
+                Arrays.asList("insert", "into"),
+                Arrays.asList("delete", "from"),
+                Arrays.asList("delete", "time", "series"),
+                Arrays.asList("select"),
+                Arrays.asList("add", "storageengine"),
+                Arrays.asList("set", "timeunit", "in")
         );
+        addArgumentCompleters(iginxCompleters, withNullCompleters, true);
 
-        Completer lowerInsertCompleter = new ArgumentCompleter(
-                new StringsCompleter("insert"),
-                new StringsCompleter("into"),
-                NullCompleter.INSTANCE
+        List<List<String>> withoutNullCompleters = Arrays.asList(
+                Arrays.asList("show", "replica", "number"),
+                Arrays.asList("count", "points"),
+                Arrays.asList("clear", "data"),
+                Arrays.asList("show", "time", "series"),
+                Arrays.asList("show", "cluster", "info")
         );
+        addArgumentCompleters(iginxCompleters, withoutNullCompleters, false);
 
+        List<String> singleCompleters = Arrays.asList("quit", "exit");
+        addSingleCompleters(iginxCompleters, singleCompleters);
 
-        Completer upperDeleteCompleter = new ArgumentCompleter(
-                new StringsCompleter("DELETE"),
-                new StringsCompleter("FROM"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer lowerDeleteCompleter = new ArgumentCompleter(
-                new StringsCompleter("delete"),
-                new StringsCompleter("from"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer upperSelectCompleter = new AggregateCompleter(
-                new StringsCompleter("SELECT"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer lowerSelectCompleter = new AggregateCompleter(
-                new StringsCompleter("select"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer upperShowReplicaCompleter = new ArgumentCompleter(
-                new StringsCompleter("SHOW"),
-                new StringsCompleter("REPLICA"),
-                new StringsCompleter("NUMBER")
-        );
-
-        Completer lowerShowReplicaCompleter = new ArgumentCompleter(
-                new StringsCompleter("show"),
-                new StringsCompleter("replica"),
-                new StringsCompleter("number")
-        );
-
-        Completer upperAddStorageEngineCompleter = new ArgumentCompleter(
-                new StringsCompleter("ADD"),
-                new StringsCompleter("STORAGEENGINE"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer lowerAddStorageEngineCompleter = new ArgumentCompleter(
-                new StringsCompleter("add"),
-                new StringsCompleter("storageengine"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer upperCountPointsCompleter = new ArgumentCompleter(
-                new StringsCompleter("COUNT"),
-                new StringsCompleter("POINTS")
-        );
-
-        Completer lowerCountPointsCompleter = new ArgumentCompleter(
-                new StringsCompleter("count"),
-                new StringsCompleter("points")
-        );
-
-        Completer upperClearDataCompleter = new ArgumentCompleter(
-                new StringsCompleter("CLEAR"),
-                new StringsCompleter("DATA")
-        );
-
-        Completer lowerClearDataCompleter = new ArgumentCompleter(
-                new StringsCompleter("clear"),
-                new StringsCompleter("data")
-        );
-
-        Completer upperSetTimeUnitCompleter = new ArgumentCompleter(
-                new StringsCompleter("SET"),
-                new StringsCompleter("TIMEUNIT"),
-                new StringsCompleter("IN"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer lowerSetTimeUnitCompleter = new ArgumentCompleter(
-                new StringsCompleter("set"),
-                new StringsCompleter("timeunit"),
-                new StringsCompleter("in"),
-                NullCompleter.INSTANCE
-        );
-
-        Completer upperShowTimeSeriesCompleter = new ArgumentCompleter(
-                new StringsCompleter("SHOW"),
-                new StringsCompleter("TIME"),
-                new StringsCompleter("SERIES")
-        );
-
-        Completer lowerShowTimeSeriesCompleter = new ArgumentCompleter(
-                new StringsCompleter("show"),
-                new StringsCompleter("time"),
-                new StringsCompleter("series")
-        );
-
-        Completer upperShowClusterInfoCompleter = new ArgumentCompleter(
-                new StringsCompleter("SHOW"),
-                new StringsCompleter("CLUSTER"),
-                new StringsCompleter("INFO")
-        );
-
-        Completer lowerShowClusterInfoCompleter = new ArgumentCompleter(
-                new StringsCompleter("show"),
-                new StringsCompleter("cluster"),
-                new StringsCompleter("info")
-        );
-
-        Completer upperQuitCompleter = new StringsCompleter("QUIT");
-
-        Completer lowerQuitCompleter = new StringsCompleter("quit");
-
-        Completer upperExitCompleter = new StringsCompleter("EXIT");
-
-        Completer lowerExitCompleter = new StringsCompleter("exit");
-
-        Completer iginxCompleter = new AggregateCompleter(
-                upperInsertCompleter,
-                lowerInsertCompleter,
-                upperDeleteCompleter,
-                lowerDeleteCompleter,
-                upperSelectCompleter,
-                lowerSelectCompleter,
-                upperShowReplicaCompleter,
-                lowerShowReplicaCompleter,
-                upperAddStorageEngineCompleter,
-                lowerAddStorageEngineCompleter,
-                upperCountPointsCompleter,
-                lowerCountPointsCompleter,
-                upperClearDataCompleter,
-                lowerClearDataCompleter,
-                upperSetTimeUnitCompleter,
-                lowerSetTimeUnitCompleter,
-                upperShowTimeSeriesCompleter,
-                lowerShowTimeSeriesCompleter,
-                upperShowClusterInfoCompleter,
-                lowerShowClusterInfoCompleter,
-                upperQuitCompleter,
-                lowerQuitCompleter,
-                upperExitCompleter,
-                lowerExitCompleter
-        );
-
+        Completer iginxCompleter = new AggregateCompleter(iginxCompleters);
         return iginxCompleter;
+    }
+
+    private static void addSingleCompleters(List<Completer> iginxCompleters, List<String> completers) {
+        for (String keyWord : completers) {
+            iginxCompleters.add(new StringsCompleter(keyWord.toLowerCase()));
+            iginxCompleters.add(new StringsCompleter(keyWord.toUpperCase()));
+        }
+    }
+
+    private static void addArgumentCompleters(List<Completer> iginxCompleters, List<List<String>> completers, boolean needNullCompleter) {
+        for (List<String> keyWords : completers) {
+            List<Completer> upperCompleters = new ArrayList<>();
+            List<Completer> lowerCompleters = new ArrayList<>();
+
+            for (String keyWord : keyWords) {
+                upperCompleters.add(new StringsCompleter(keyWord.toUpperCase()));
+                lowerCompleters.add(new StringsCompleter(keyWord.toLowerCase()));
+            }
+            if (needNullCompleter) {
+                upperCompleters.add(NullCompleter.INSTANCE);
+                lowerCompleters.add(NullCompleter.INSTANCE);
+            }
+
+            iginxCompleters.add(new ArgumentCompleter(upperCompleters));
+            iginxCompleters.add(new ArgumentCompleter(lowerCompleters));
+        }
     }
 
     public static void echoStarting() {

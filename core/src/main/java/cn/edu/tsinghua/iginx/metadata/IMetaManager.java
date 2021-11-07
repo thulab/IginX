@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -162,6 +163,15 @@ public interface IMetaManager {
      * @return 数据项的值。如果不存在则返回 -1
      */
     int getSchemaMappingItem(String schema, String key);
+
+    /**
+     * 更新活跃的分片的统计信息
+     *
+     * @param statisticsMap 活跃的分片的关于当前请求的统计信息
+     */
+    void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
+
+    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
 
     boolean addUser(UserMeta user);
 

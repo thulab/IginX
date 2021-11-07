@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.plan;
 
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
@@ -51,6 +53,8 @@ public abstract class InsertRecordsPlan extends DataPlan {
 
     private List<Map<String, String>> attributesList;
 
+    private FragmentMeta fragment;
+
     protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit) {
         super(false, paths, timestamps[0], timestamps[timestamps.length - 1], storageUnit);
@@ -60,6 +64,12 @@ public abstract class InsertRecordsPlan extends DataPlan {
         this.bitmapList = bitmapList;
         this.dataTypeList = dataTypeList;
         this.attributesList = attributesList;
+    }
+
+    protected InsertRecordsPlan(List<String> paths, long[] timestamps, Object[] valuesList, List<Bitmap> bitmapList,
+                                List<DataType> dataTypeList, List<Map<String, String>> attributesList, StorageUnitMeta storageUnit, FragmentMeta fragment) {
+        this(paths, timestamps, valuesList, bitmapList, dataTypeList, attributesList, storageUnit);
+        this.fragment = fragment;
     }
 
     public long getTimestamp(int index) {
@@ -176,5 +186,18 @@ public abstract class InsertRecordsPlan extends DataPlan {
             }
         }
         return attributesList.subList(startIndex, endIndex + 1);
+    }
+
+    public FragmentMeta getFragment() {
+        return fragment;
+    }
+
+    protected abstract long getCount();
+
+    public FragmentStatistics getStatistics() {
+        if (getPathsNum() == 0 || timestamps.length == 0) {
+            return null;
+        }
+        return new FragmentStatistics(getTsInterval(), getTimeInterval(), getCount());
     }
 }
