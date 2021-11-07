@@ -41,7 +41,6 @@ public class QueryExecutor {
 
     private Integer maxPathLength = 3;
 
-    private final RestSession session = new RestSession();
 
     public QueryExecutor(Query query) {
         this.query = query;

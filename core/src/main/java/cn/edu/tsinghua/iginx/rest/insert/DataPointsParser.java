@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.rest.insert;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -37,6 +38,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import cn.edu.tsinghua.iginx.rest.bean.Metric;
+import sun.security.krb5.Config;
 
 
 public class DataPointsParser {
@@ -48,7 +50,7 @@ public class DataPointsParser {
     private List<Metric> metricList = new ArrayList<>();
     private RestSession session = new RestSession();
     private Map<TimeAndPrefixPath, Map<String, String>> batchMap = new HashMap<>();
-    private int restReqSplitNum = config.getRestReqSplitNum();
+    private int restReqSplitNum = ConfigDescriptor.getInstance().getConfig().getRestReqSplitNum();
     private boolean needUpdate = false;
 
 
