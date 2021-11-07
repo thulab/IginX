@@ -104,6 +104,12 @@ public class ConfigDescriptor {
 
             config.setLogRestInsertPossibility(Double.parseDouble(properties.getProperty("logRestInsertPossibility", "1.0")));
             config.setLogRestQueryPossibility(Double.parseDouble(properties.getProperty("logRestQueryPossibility", "1.0")));
+            config.setCachedTimeseriesNum(Integer.parseInt(properties.getProperty("cachedTimeseriesNum", "1000")));
+            config.setRetryCount(Integer.parseInt(properties.getProperty("retryCount", "10")));
+            config.setRetryWait(Integer.parseInt(properties.getProperty("retryWait", "1000")));
+            config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "20000")));
+            config.setFragmentPerEngine(Integer.parseInt(properties.getProperty("fragmentPerEngine", "1")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }

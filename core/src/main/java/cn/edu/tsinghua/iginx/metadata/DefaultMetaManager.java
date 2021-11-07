@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
@@ -38,6 +39,10 @@ import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -114,6 +119,8 @@ public class DefaultMetaManager implements IMetaManager {
     private boolean needToCreateStorageUnits = false;
 
     private final Object terminateResharding = new Object();
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
@@ -151,6 +158,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initPolicy();
             initUser();
             initActiveFragmentStatistics();
             initReshardNotification();
@@ -333,9 +341,9 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
-            if (fragment.isInitialFragment()) { // 初始分片不通过异步事件更新
+        /*    if (fragment.isInitialFragment()) { // 初始分片不通过异步事件更新
                 return;
-            }
+            }*/
             if (!cache.hasFragment()) {
                 return;
             }
@@ -476,6 +484,28 @@ public class DefaultMetaManager implements IMetaManager {
         storage.lockReshardCounter();
         storage.removeReshardCounter();
         storage.releaseReshardCounter();
+    }
+
+    private void initPolicy() throws MetaStorageException {
+        storage.registerTimeseriesChangeHook(cache::timeseriesIsUpdated);
+        storage.registerVersionChangeHook((version, num) -> {
+            Map<String, Double> timeseriesData = cache.getMaxValueTimeSeries(num).stream().
+                    collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
+            try {
+                storage.updateTimeseriesData(timeseriesData, getIginxId(), version);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        int num = config.getCachedTimeseriesNum();
+        try
+        {
+            storage.registerPolicy(getIginxId(), num);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -960,5 +990,36 @@ public class DefaultMetaManager implements IMetaManager {
             logger.info("thread {} is unparked", thread.getId());
             LockSupport.unpark(thread);
         }
+    }
+
+    @Override
+    public boolean election() {
+        return storage.election();
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertRecordsPlan plan) {
+        cache.saveTimeSeriesData(plan);
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
+        return cache.getMaxValueTimeSeries(num);
+    }
+
+    @Override
+    public Map<String, Double> getTimeseriesData() {
+        return storage.getTimeseriesData();
+    }
+
+    @Override
+    public int updateVersion(int num) {
+        return storage.updateVersion(num);
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap()
+    {
+        return cache.getTimeseriesVersionMap();
     }
 }

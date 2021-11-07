@@ -25,11 +25,9 @@ import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -46,14 +44,13 @@ import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.retry.RetryForever;
 import org.apache.zookeeper.CreateMode;
+import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -99,6 +96,26 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/active";
 
+    private static final String POLICY_NODE_PREFIX = "/policy";
+
+    private static final String POLICY_LEADER = "/policy/leader";
+
+    private static final String POLICY_VERSION = "/policy/version";
+
+    private static final String POLICY_LOCK_NODE = "/lock/policy";
+
+    private static final String TIMESERIES_NODE_PREFIX = "/timeseries";
+
+    private boolean isMaster = false;
+
+    private static ZooKeeperMetaStorage INSTANCE = null;
+
+    private final CuratorFramework client;
+
+    private SchemaMappingChangeHook schemaMappingChangeHook = null;
+
+    protected TreeCache schemaMappingsCache;
+
     private static final String SINGLE_ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/add";
 
     private static final String INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive";
@@ -107,9 +124,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
 
-    private static ZooKeeperMetaStorage INSTANCE = null;
-
-    private final CuratorFramework client;
     private final Lock storageUnitMutexLock = new ReentrantLock();
     private final InterProcessMutex storageUnitMutex;
     private final Lock fragmentMutexLock = new ReentrantLock();
@@ -120,7 +134,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final Lock reshardCounterMutexLock = new ReentrantLock();
     private final InterProcessMutex reshardCounterMutex;
 
-    protected TreeCache schemaMappingsCache;
     protected TreeCache iginxCache;
     protected TreeCache storageEngineCache;
     protected TreeCache storageUnitCache;
@@ -130,7 +143,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     protected TreeCache reshardNotificationCache;
     protected TreeCache reshardCounterCache;
 
-    private SchemaMappingChangeHook schemaMappingChangeHook = null;
     private IginxChangeHook iginxChangeHook = null;
     private StorageChangeHook storageChangeHook = null;
     private StorageUnitChangeHook storageUnitChangeHook = null;
@@ -139,6 +151,16 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
     private ReshardNotificationHook reshardNotificationHook = null;
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
+    private TimeseriesChangeHook timeseriesChangeHook = null;
+
+    private VersionChangeHook versionChangeHook = null;
+
+
+    private TreeCache policyCache;
+
+    private TreeCache timeseriesCache;
+
+    private TreeCache versionCache;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -529,7 +551,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
                 }
             }
-            registerStorageUnitListener();
+            if (this.storageUnitCache == null) {
+                registerStorageUnitListener();
+            }
             return storageUnitMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when loading storage unit: ", e);
@@ -632,7 +656,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
                 }
             }
-            registerFragmentListener();
+            if (this.fragmentCache == null) {
+                registerFragmentListener();
+            }
             return fragmentListMap;
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when updating schema mapping: ", e);
@@ -947,6 +973,38 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
     }
 
+    public void registerTimeseriesChangeHook(TimeseriesChangeHook hook) {
+        this.timeseriesChangeHook = hook;
+    }
+
+    @Override
+    public void registerVersionChangeHook(VersionChangeHook hook) {
+        this.versionChangeHook = hook;
+    }
+
+    @Override
+    public boolean election()
+    {
+        if (isMaster) {
+            return true;
+        }
+        try {
+            this.client.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.EPHEMERAL)
+                    .forPath(POLICY_LEADER);
+            logger.info("成功");
+            isMaster = true;
+        } catch (KeeperException.NodeExistsException e) {
+            logger.info("失败");
+            isMaster = false;
+        }
+        finally
+        {
+            return isMaster;
+        }
+    }
+
     @Override
     public void releaseActiveFragmentStatistics() throws MetaStorageException {
         activeFragmentStatisticsMutexLock.unlock();
@@ -960,6 +1018,27 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             }
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when removing active fragment statistics: ", e);
+        }
+    }
+
+    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, POLICY_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (this.client.checkExists().forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT). forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid, tobytes(timeseriesData));
+            } else {
+                this.client.setData().forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid, tobytes(timeseriesData));
+            }
+            this.client.setData().forPath(POLICY_NODE_PREFIX + "/" + iginxid, String.valueOf(version).getBytes());
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when update timeseries", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + POLICY_LOCK_NODE, e);
+            }
         }
     }
 
@@ -1108,6 +1187,178 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
     }
 
+    public Map<String, Double> getTimeseriesData() {
+        Map<String, Double> ret = new HashMap<>();
+        try {
+            List<String> children = client.getChildren().forPath(TIMESERIES_NODE_PREFIX);
+            for (String child: children) {
+                byte[] data = this.client.getData()
+                        .forPath(TIMESERIES_NODE_PREFIX + "/" + child);
+                Map<String, Double> tmp = toMap(data);
+                if (tmp == null) {
+                    logger.error("resolve data from " + TIMESERIES_NODE_PREFIX + "/" + child + " error");
+                    continue;
+                }
+                tmp.forEach((timeseries, value) -> {
+                    double now = 0.0;
+                    if (ret.containsKey(timeseries)) {
+                        now = ret.get(timeseries);
+                    }
+                    ret.put(timeseries, now + value);
+                });
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return ret;
+    }
+
+
+    public byte[] tobytes(Map<String, Double> prefix) {
+        StringBuilder ret = new StringBuilder();
+        for (Map.Entry<String, Double> entry: prefix.entrySet()) {
+            ret.append(entry.getKey());
+            ret.append("~");
+            ret.append(entry.getValue());
+            ret.append("^");
+        }
+        if (ret.length() != 0 && ret.charAt(ret.length() - 1) == '^') {
+            ret.deleteCharAt(ret.length() - 1);
+        }
+        logger.info(ret.toString());
+        return ret.toString().getBytes();
+    }
+
+
+    public Map<String, Double> toMap(byte[] prefix) {
+        logger.info(new String(prefix));
+        Map<String, Double> ret = new HashMap<>();
+        String str = new String(prefix);
+        String[] tmp = str.split("\\^");
+        for (String entry: Arrays.asList(tmp))
+        {
+            String[] tmp2 = entry.split("~");
+            try
+            {
+                ret.put(tmp2[0], Double.parseDouble(tmp2[1]));
+            }
+            catch (Exception e)
+            {
+                logger.error(entry);
+            }
+        }
+        return ret;
+    }
+
+    @Override
+    public void registerPolicy(long iginxId, int num) throws Exception {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, POLICY_LOCK_NODE);
+        try {
+            mutex.acquire();
+            if (client.checkExists().forPath(POLICY_NODE_PREFIX) == null) {
+                this.client.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(POLICY_NODE_PREFIX);
+            }
+
+            if (client.checkExists().forPath(TIMESERIES_NODE_PREFIX) == null) {
+                this.client.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(TIMESERIES_NODE_PREFIX);
+            }
+            if (client.checkExists().forPath(POLICY_VERSION) == null) {
+                this.client.create()
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT)
+                        .forPath(POLICY_VERSION);
+
+                this.client.setData().forPath(POLICY_VERSION, ("0" + "\t" + num).getBytes());
+            }
+
+            this.client.create()
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT)
+                .forPath(POLICY_NODE_PREFIX + "/" + iginxId);
+
+            this.client.setData().forPath(POLICY_NODE_PREFIX + "/" + iginxId, "0".getBytes());
+
+            this.client.create()
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT)
+                .forPath(TIMESERIES_NODE_PREFIX + "/" + iginxId);
+
+            this.policyCache = new TreeCache(this.client, POLICY_LEADER);
+            TreeCacheListener listener = (curatorFramework, event) -> {
+                switch (event.getType()) {
+                    case NODE_REMOVED:
+                        election();
+                        break;
+                    default:
+                        break;
+                }
+            };
+            this.policyCache.getListenable().addListener(listener);
+            this.policyCache.start();
+
+            this.timeseriesCache = new TreeCache(this.client, POLICY_NODE_PREFIX);
+            TreeCacheListener listener2 = (curatorFramework, event) -> {
+                switch (event.getType())
+                {
+                    case NODE_ADDED:
+                    case NODE_UPDATED:
+                        String path = event.getData().getPath();
+                        String[] pathParts = path.split("/");
+                        int version = -1;
+                        int node = -1;
+                        if (pathParts.length == 2 && isNumeric(pathParts[1])) {
+                            version = Integer.parseInt(new String(event.getData().getData()));
+                            node = Integer.parseInt(pathParts[1]);
+                        }
+                        if (version != -1 && node != -1) {
+                            timeseriesChangeHook.onChange(node, version);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            };
+            this.timeseriesCache.getListenable().addListener(listener2);
+            this.timeseriesCache.start();
+
+            this.versionCache = new TreeCache(this.client, POLICY_VERSION);
+            TreeCacheListener listener3 = (curatorFramework, event) -> {
+                switch (event.getType())
+                {
+                    case NODE_UPDATED:
+                        String[] str = new String(event.getData().getData()).split("\t");
+                        int version = Integer.parseInt(str[0]);
+                        int newNum = Integer.parseInt(str[1]);
+                        if (version > 0) {
+                            versionChangeHook.onChange(version, newNum);
+                        } else {
+                            logger.error("resolve prefix from zookeeper error");
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            };
+            this.versionCache.getListenable().addListener(listener3);
+            this.versionCache.start();
+
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when init policy", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + POLICY_LOCK_NODE, e);
+            }
+        }
+    }
+
     @Override
     public void releaseReshardCounter() throws MetaStorageException {
         try {
@@ -1153,5 +1404,29 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         };
         this.reshardCounterCache.getListenable().addListener(listener);
         this.reshardCounterCache.start();
+    }
+
+    public int updateVersion(int num) {
+        int version = -1;
+        try
+        {
+            version = Integer.parseInt(new String(client.getData().forPath(POLICY_VERSION)).split("\t")[0]);
+            this.client.setData().forPath(POLICY_VERSION, ((version + 1) + "\t" + num).getBytes());
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return version + 1;
+    }
+
+    public static boolean isNumeric(String str) {
+        String bigStr;
+        try {
+            bigStr = new BigDecimal(str).toString();
+        } catch (Exception e) {
+            return false;//异常 说明包含非数字。
+        }
+        return true;
     }
 }
