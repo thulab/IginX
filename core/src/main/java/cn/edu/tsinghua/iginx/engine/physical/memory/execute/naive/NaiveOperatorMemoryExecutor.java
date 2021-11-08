@@ -130,9 +130,9 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 objects[i] = row.getValue(targetFields.get(i));
             }
             if (header.hasTimestamp()) {
-                targetRows.add(new Row(targetHeader, objects));
-            } else {
                 targetRows.add(new Row(targetHeader, row.getTimestamp(), objects));
+            } else {
+                targetRows.add(new Row(targetHeader, objects));
             }
         }
         return new Table(targetHeader, targetRows);
