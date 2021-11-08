@@ -60,6 +60,8 @@ public interface IMetaManager {
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
 
+    List<StorageUnitMeta> getStorageUnits();
+
     /**
      * 获取所有活跃的 iginx 节点的元信息
      */

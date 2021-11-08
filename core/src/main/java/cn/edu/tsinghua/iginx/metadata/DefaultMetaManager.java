@@ -61,6 +61,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     private final IMetaStorage storage;
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
+    private final List<StorageUnitHook> storageUnitHooks;
     private long id;
 
     private DefaultMetaManager() {
@@ -92,6 +93,7 @@ public class DefaultMetaManager implements IMetaManager {
         }
 
         storageEngineChangeHooks = Collections.synchronizedList(new ArrayList<>());
+        storageUnitHooks = Collections.synchronizedList(new ArrayList<>());
 
         try {
             initIginx();
@@ -193,6 +195,9 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addStorageUnit(storageUnit);
             }
             cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
+            for (StorageUnitHook storageUnitHook: storageUnitHooks) {
+                storageUnitHook.onChange(originStorageUnitMeta, storageUnit);
+            }
         });
     }
 
@@ -284,6 +289,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
         return cache.getStorageUnits(ids);
+    }
+
+    @Override
+    public List<StorageUnitMeta> getStorageUnits() {
+        return cache.getStorageUnits();
     }
 
     @Override
@@ -403,6 +413,7 @@ public class DefaultMetaManager implements IMetaManager {
         if (cache.hasFragment() && cache.hasStorageUnit()) {
             return false;
         }
+        List<StorageUnitMeta> newStorageUnits = new ArrayList<>();
         try {
             storage.lockFragment();
             storage.lockStorageUnit();
@@ -415,8 +426,15 @@ public class DefaultMetaManager implements IMetaManager {
             Map<String, StorageUnitMeta> globalStorageUnits = storage.loadStorageUnit();
             if (globalStorageUnits != null && !globalStorageUnits.isEmpty()) { // 服务器上已经有人创建过了，本地只需要加载
                 Map<TimeSeriesInterval, List<FragmentMeta>> globalFragmentMap = storage.loadFragment();
+                newStorageUnits.addAll(globalStorageUnits.values());
                 cache.initStorageUnit(globalStorageUnits);
                 cache.initFragment(globalFragmentMap);
+                newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
+                for (StorageUnitHook hook: storageUnitHooks) {
+                    for (StorageUnitMeta meta: newStorageUnits) {
+                        hook.onChange(null, meta);
+                    }
+                }
                 return false;
             }
 
@@ -450,8 +468,16 @@ public class DefaultMetaManager implements IMetaManager {
                 }
                 storage.addFragment(fragmentMeta);
             }
-            cache.initStorageUnit(storage.loadStorageUnit());
+            Map<String, StorageUnitMeta> loadedStorageUnits = storage.loadStorageUnit();
+            newStorageUnits.addAll(loadedStorageUnits.values());
+            cache.initStorageUnit(loadedStorageUnits);
             cache.initFragment(storage.loadFragment());
+            newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
+            for (StorageUnitHook hook: storageUnitHooks) {
+                for (StorageUnitMeta meta: newStorageUnits) {
+                    hook.onChange(null, meta);
+                }
+            }
             return true;
         } catch (MetaStorageException e) {
             logger.error("encounter error when init fragment: ", e);
@@ -647,6 +673,6 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public void registerStorageUnitHook(StorageUnitHook hook) {
-
+        this.storageUnitHooks.add(hook);
     }
 }

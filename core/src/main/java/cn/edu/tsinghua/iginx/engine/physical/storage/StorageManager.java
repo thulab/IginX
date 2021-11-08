@@ -78,15 +78,6 @@ public class StorageManager {
 
     }
 
-    public TaskExecuteResult executeStorageTask(StoragePhysicalTask task) { // 异步执行
-        Pair<IStorage, ExecutorService> storagePair = storageMap.get(task.getStorage());
-        IStorage storage = storageMap.get(task.getStorage()).k;
-        if (storage == null) {
-            return new TaskExecuteResult(new NonExistedStorageException(task.getStorage()));
-        }
-        return storage.execute(task);
-    }
-
     public boolean supportsProject(long id) {
         IStorage storage = storageMap.get(id).k;
         if (storage == null) {

@@ -64,6 +64,8 @@ public interface IMetaCache {
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
 
+    List<StorageUnitMeta> getStorageUnits();
+
     void addStorageUnit(StorageUnitMeta storageUnitMeta);
 
     void updateStorageUnit(StorageUnitMeta storageUnitMeta);

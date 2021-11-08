@@ -27,10 +27,14 @@ import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +42,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class StoragePhysicalTaskExecutor {
+
+    private static final Logger logger = LoggerFactory.getLogger(StoragePhysicalTaskExecutor.class);
 
     private static final StoragePhysicalTaskExecutor INSTANCE = new StoragePhysicalTaskExecutor();
 
@@ -52,6 +58,37 @@ public class StoragePhysicalTaskExecutor {
     private MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
     private StoragePhysicalTaskExecutor() {
+//        // 初始化 du 的任务队列
+//        List<StorageUnitMeta> storageUnits = metaManager.getStorageUnits();
+//        storageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
+//        for (StorageUnitMeta unit : storageUnits) {
+//            if (unit.isMaster()) {
+//                storageTaskQueues.put(unit.getId(), new StoragePhysicalTaskQueue());
+//            }
+//            ExecutorService dispatcher = Executors.newSingleThreadExecutor();
+//            long storageId = unit.getStorageEngineId();
+//            String id = unit.getId();
+//            String masterId = unit.getMasterId();
+//            dispatchers.put(id, dispatcher);
+//            dispatcher.submit(() -> {
+//                StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(masterId);
+//                Pair<IStorage, ExecutorService> pair = storageManager.getStorage(storageId);
+//                while(true) {
+//                    StoragePhysicalTask task = taskQueue.getTask();
+//                    task.setStorageUnit(id);
+//                    pair.v.submit(() -> {
+//                        TaskExecuteResult result = pair.k.execute(task);
+//                        task.setResult(result);
+//                        if (task.getFollowerTask() != null) {
+//                            MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
+//                            if (followerTask.notifyParentReady()) {
+//                                memoryTaskExecutor.addMemoryTask(followerTask);
+//                            }
+//                        }
+//                    });
+//                }
+//            });
+//        }
         StorageUnitHook storageUnitHook = (before, after) -> {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
                 if (after.isMaster()) { // 主 du，新增加一个任务队列
@@ -62,18 +99,21 @@ public class StoragePhysicalTaskExecutor {
                 ExecutorService dispatcher = Executors.newSingleThreadExecutor();
                 long storageId = after.getStorageEngineId();
                 String id = after.getId();
+                String masterId = after.getMasterId();
                 dispatchers.put(id, dispatcher);
                 dispatcher.submit(() -> {
-                    StoragePhysicalTaskQueue taskQueue = new StoragePhysicalTaskQueue();
+                    StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(masterId);
                     Pair<IStorage, ExecutorService> pair = storageManager.getStorage(storageId);
-                    while (true) {
+                    while(true) {
                         StoragePhysicalTask task = taskQueue.getTask();
+                        task.setStorageUnit(id);
                         pair.v.submit(() -> {
                             TaskExecuteResult result = pair.k.execute(task);
                             task.setResult(result);
                             if (task.getFollowerTask() != null) {
                                 MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
-                                if (followerTask.notifyParentReady()) {
+                                boolean isFollowerTaskReady = followerTask.notifyParentReady();
+                                if (isFollowerTaskReady) {
                                     memoryTaskExecutor.addMemoryTask(followerTask);
                                 }
                             }
@@ -94,15 +134,14 @@ public class StoragePhysicalTaskExecutor {
     }
 
     public void commit(List<StoragePhysicalTask> tasks) {
-
+        for (StoragePhysicalTask task : tasks) {
+            storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task);
+        }
     }
 
     public void init(MemoryPhysicalTaskDispatcher memoryTaskExecutor) {
         this.memoryTaskExecutor = memoryTaskExecutor;
     }
-
-
-
 
 
 }

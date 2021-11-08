@@ -30,6 +30,7 @@ public abstract class MemoryPhysicalTask extends AbstractPhysicalTask {
 
     public MemoryPhysicalTask(TaskType type, List<Operator> operators) {
         super(type, operators);
+        parentReadyCount = new AtomicInteger(0);
     }
 
     public abstract TaskExecuteResult execute(); // 在 parent 都完成执行后，可以执行该任务
