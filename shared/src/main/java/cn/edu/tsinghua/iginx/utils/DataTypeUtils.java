@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared;
+package cn.edu.tsinghua.iginx.utils;
 
-public class Constants {
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
-    public static final String TIMESTAMP = "time";
+public class DataTypeUtils {
 
-    public static final String ORDER = "order";
-
-    public static final String ALL_PATH = "*";
+    public static boolean isNumber(DataType dataType) {
+        return dataType == DataType.INTEGER || dataType == DataType.LONG || dataType == DataType.FLOAT || dataType == DataType.DOUBLE;
+    }
 
 }

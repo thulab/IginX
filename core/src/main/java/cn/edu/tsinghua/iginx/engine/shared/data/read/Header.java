@@ -18,11 +18,14 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public final class Header {
+
+    public static final Header EMPTY_HEADER = new Header(Collections.emptyList());
 
     private final Field time;
 
