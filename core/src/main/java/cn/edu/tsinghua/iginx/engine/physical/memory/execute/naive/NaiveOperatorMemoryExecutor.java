@@ -26,10 +26,13 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.UnimplementedOperatorExce
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
+import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
@@ -42,10 +45,20 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
 import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.utils.Pair;
+import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
@@ -154,7 +167,17 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         if (!sort.getSortBy().equals(Constants.TIMESTAMP)) {
             throw new InvalidOperatorParameterException("sort operator is not support for field " + sort.getSortBy() + " except for " + Constants.TIMESTAMP);
         }
-        return null;
+        if (sort.getSortType() == Sort.SortType.ASC) {
+            // 在默认的实现中，每张表都是根据时间已经升序排好的，因此依据时间升序排列的话，已经不需要做任何额外的操作了
+            return table;
+        }
+        // 降序排列的话，只需要将各行反过来就行
+        Header header = table.getHeader();
+        List<Row> rows = new ArrayList<>();
+        for (int i = table.getRowSize() - 1; i >= 0; i--) {
+            rows.add(table.getRow(i));
+        }
+        return new Table(header, rows);
     }
 
     private RowStream executeLimit(Limit limit, Table table) throws PhysicalException {
@@ -170,18 +193,67 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeDownsample(Downsample downsample, Table table) throws PhysicalException {
-        return null;
+        Header header = table.getHeader();
+        if (!header.hasTimestamp()) {
+            throw new InvalidOperatorParameterException("downsample operator is not support for row stream without timestamps.");
+        }
+        List<Row> rows = table.getRows();
+        long bias = downsample.getTimeRange().getBeginTime();
+        long precision = downsample.getPrecision();
+        Map<Long, List<Row>> groups = new TreeMap<>();
+        SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
+        List<Value> params = downsample.getFunctionCall().getParams();
+        for (Row row: rows) {
+            long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
+            groups.getOrDefault(timestamp, new ArrayList<>()).add(row);
+        }
+        List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
+        groups.forEach((time, group) -> {
+            Row row = function.transform(new Table(header, group), params);
+            if (row != null) {
+                transformedRawRows.add(new Pair<>(time, row));
+            }
+        });
+        if (transformedRawRows.size() == 0) {
+            return Table.EMPTY_TABLE;
+        }
+        Header newHeader = new Header(Field.TIME, transformedRawRows.get(0).v.getHeader().getFields());
+        List<Row> transformedRows = new ArrayList<>();
+        for (Pair<Long, Row> pair: transformedRawRows) {
+            transformedRows.add(new Row(newHeader, pair.k, pair.v.getValues()));
+        }
+        return new Table(newHeader, transformedRows);
     }
 
     private RowStream executeRowTransform(RowTransform rowTransform, Table table) throws PhysicalException {
-        return null;
+        RowMappingFunction function = (RowMappingFunction) rowTransform.getFunctionCall().getFunction();
+        List<Value> params = rowTransform.getFunctionCall().getParams();
+        List<Row> rows = new ArrayList<>();
+        while (table.hasNext()) {
+            Row row = function.transform(table.next(), params);
+            if (row != null) {
+                rows.add(row);
+            }
+        }
+        if (rows.size() == 0) {
+            return Table.EMPTY_TABLE;
+        }
+        Header header = rows.get(0).getHeader();
+        return new Table(header, rows);
     }
 
     private RowStream executeSetTransform(SetTransform setTransform, Table table) throws PhysicalException {
-        return null;
+        SetMappingFunction function = (SetMappingFunction) setTransform.getFunctionCall().getFunction();
+        List<Value> params = setTransform.getFunctionCall().getParams();
+        Row row = function.transform(table, params);
+        if (row == null) {
+            return Table.EMPTY_TABLE;
+        }
+        Header header = row.getHeader();
+        return new Table(header, Collections.singletonList(row));
     }
 
-    private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException { // 两个 table，都是按照时间升序的
+    private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
         // 目前只支持使用时间戳
         if (!join.getJoinBy().equals(Constants.TIMESTAMP)) {
             throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP);
@@ -245,12 +317,15 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeUnion(Union union, Table tableA, Table tableB) throws PhysicalException {
-        // 检查时间戳
+        // 检查时间是否一致
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
         if (headerA.hasTimestamp() ^ headerB.hasTimestamp()) {
-            throw new InvalidOperatorParameterException("");
+            throw new InvalidOperatorParameterException("row stream to be union must have same fields");
         }
+        Set<Field> targetFieldSet = new HashSet<>();
+        targetFieldSet.addAll(headerA.getFields());
+        targetFieldSet.addAll(headerB.getFields());
         throw new UnimplementedOperatorException("unimplemented operator union");
     }
 

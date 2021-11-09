@@ -23,9 +23,12 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Table implements RowStream {
+
+    public static final Table EMPTY_TABLE = new Table(Header.EMPTY_HEADER, Collections.emptyList());
 
     private final Header header;
 
