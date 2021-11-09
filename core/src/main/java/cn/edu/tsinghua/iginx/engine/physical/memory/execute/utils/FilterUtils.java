@@ -57,7 +57,8 @@ public class FilterUtils {
                 }
                 return validateTimeFilter(timeFilter, row);
             case Value:
-
+                ValueFilter valueFilter = (ValueFilter) filter;
+                return validateValueFilter(valueFilter, row);
             default:
                 break;
         }
