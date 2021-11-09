@@ -136,6 +136,7 @@ public final class FragmentMeta {
         return "FragmentMeta{" +
                 "timeInterval=" + timeInterval +
                 ", tsInterval=" + tsInterval +
+                ", masterStorageUnitId=" + masterStorageUnitId +
                 '}';
     }
 

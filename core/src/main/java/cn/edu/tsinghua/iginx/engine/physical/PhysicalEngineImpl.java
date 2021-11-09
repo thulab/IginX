@@ -33,11 +33,15 @@ import cn.edu.tsinghua.iginx.engine.physical.task.UnaryMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class PhysicalEngineImpl implements PhysicalEngine {
+
+    private static final Logger logger = LoggerFactory.getLogger(PhysicalEngineImpl.class);
 
     private static final PhysicalEngineImpl INSTANCE = new PhysicalEngineImpl();
 

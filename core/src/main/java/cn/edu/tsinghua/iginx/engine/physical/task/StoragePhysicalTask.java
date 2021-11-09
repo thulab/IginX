@@ -63,4 +63,12 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
         this.storage = storage;
     }
 
+    @Override
+    public String toString() {
+        return "StoragePhysicalTask{" +
+                "targetFragment=" + targetFragment +
+                ", storageUnit='" + storageUnit + '\'' +
+                ", storage=" + storage +
+                '}';
+    }
 }

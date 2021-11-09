@@ -51,6 +51,7 @@ public class SelectStatement extends DataStatement {
         ascending = true;
         selectedFuncsAndPaths = new HashMap<>();
         funcTypeSet = new HashSet<>();
+        pathSet = new HashSet<>();
         fromPath = "";
         orderByPath = "";
 //        startTime = Long.MIN_VALUE;
@@ -186,7 +187,8 @@ public class SelectStatement extends DataStatement {
     }
 
     public void setPathSet(String path) {
-        this.pathSet.add(path);
+        String fullPath = fromPath + SQLConstant.DOT + path;
+        this.pathSet.add(fullPath);
     }
 
     public String getFromPath() {

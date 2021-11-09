@@ -63,7 +63,7 @@ public final class Header {
     }
 
     public boolean hasTimestamp() {
-        return time == null;
+        return time != null;
     }
 
     public int indexOf(Field field) {
