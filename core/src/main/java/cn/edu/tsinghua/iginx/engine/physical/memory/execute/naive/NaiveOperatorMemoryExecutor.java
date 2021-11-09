@@ -309,7 +309,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
         }
 
-        return new Table(headerA, newRows);
+        return new Table(newHeader, newRows);
     }
 
     private RowStream executeUnion(Union union, Table tableA, Table tableB) throws PhysicalException {
