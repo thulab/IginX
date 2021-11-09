@@ -26,6 +26,8 @@ public class Row {
 
     public static final long NON_EXISTED_TIMESTAMP = -1L;
 
+    public static final Row EMPTY_ROW = new Row(Header.EMPTY_HEADER, new Object[0]);
+
     private final Header header;
 
     private final long timestamp;
