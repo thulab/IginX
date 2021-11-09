@@ -155,7 +155,9 @@ public class StatementExecutor {
             resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.AggregateQuery);
             resp.setPaths(paths);
             resp.setDataTypeList(types);
-            resp.setValuesList(valuesList.get(0));
+            if (!valuesList.isEmpty()) {
+                resp.setValuesList(valuesList.get(0));
+            }
             resp.setOffset(0);
             resp.setLimit(Integer.MAX_VALUE);
         }
