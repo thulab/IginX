@@ -127,7 +127,7 @@ class SimplePlanSplitter implements IPlanSplitter {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
                     logger.info("add storage unit id {} to duplicate remove set.", storageUnit.getId());
-                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(new TimeInterval(0L, Long.MAX_VALUE), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -157,7 +157,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -190,7 +190,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -211,7 +211,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, false);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -227,7 +227,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -327,7 +327,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -342,7 +342,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -358,7 +358,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -374,7 +374,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -390,7 +390,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -406,7 +406,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -422,7 +422,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : entry.getValue()) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
         }
@@ -437,7 +437,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : fragmentList) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path, true), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path, true), storageUnit, fragment));
                 }
             }
         }
@@ -452,7 +452,7 @@ class SimplePlanSplitter implements IPlanSplitter {
             for (FragmentMeta fragment : fragmentList) {
                 List<StorageUnitMeta> storageUnitList = selectStorageUnitList(fragment, true);
                 for (StorageUnitMeta storageUnit : storageUnitList) {
-                    infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path, true), storageUnit));
+                    infoList.add(new SplitInfo(fragment.getTimeInterval(), new TimeSeriesInterval(path, path, true), storageUnit, fragment));
                 }
             }
         }
