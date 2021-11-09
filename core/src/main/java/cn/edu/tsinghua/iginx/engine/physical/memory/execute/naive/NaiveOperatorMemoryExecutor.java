@@ -22,8 +22,8 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.InvalidOperatorParameterE
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
-import cn.edu.tsinghua.iginx.engine.physical.exception.UnimplementedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
@@ -46,19 +46,15 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.utils.Pair;
-import com.google.gson.internal.LinkedTreeMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
@@ -323,10 +319,45 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         if (headerA.hasTimestamp() ^ headerB.hasTimestamp()) {
             throw new InvalidOperatorParameterException("row stream to be union must have same fields");
         }
+        boolean hasTimestamp = headerA.hasTimestamp();
         Set<Field> targetFieldSet = new HashSet<>();
         targetFieldSet.addAll(headerA.getFields());
         targetFieldSet.addAll(headerB.getFields());
-        throw new UnimplementedOperatorException("unimplemented operator union");
+        List<Field> targetFields = new ArrayList<>(targetFieldSet);
+        Header targetHeader;
+        List<Row> rows = new ArrayList<>();
+        if (hasTimestamp) {
+            targetHeader = new Header(targetFields);
+            for (Row row: tableA.getRows()) {
+                rows.add(RowUtils.transform(row, targetHeader));
+            }
+            for (Row row: tableB.getRows()) {
+                rows.add(RowUtils.transform(row, targetHeader));
+            }
+        } else {
+            targetHeader = new Header(Field.TIME, targetFields);
+            int index1 = 0, index2 = 0;
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+                Row row1 = tableA.getRow(index1);
+                Row row2 = tableB.getRow(index2);
+                if (row1.getTimestamp() == row2.getTimestamp()) {
+                    throw new InvalidOperatorParameterException("row stream to be union has intersected row");
+                } else if (row1.getTimestamp() < row2.getTimestamp()) {
+                    rows.add(RowUtils.transform(row1, targetHeader));
+                    index1++;
+                } else {
+                    rows.add(RowUtils.transform(row2, targetHeader));
+                    index2++;
+                }
+            }
+            for (; index1 < tableA.getRowSize(); index1++) {
+                rows.add(RowUtils.transform(tableA.getRow(index1), targetHeader));
+            }
+            for (; index2 < tableB.getRowSize(); index2++) {
+                rows.add(RowUtils.transform(tableB.getRow(index2), targetHeader));
+            }
+        }
+        return new Table(targetHeader, rows);
     }
 
 }
