@@ -25,6 +25,6 @@ import java.util.List;
 
 public interface RowMappingFunction extends Function {
 
-    Row transform(Row row, List<Value> params);
+    Row transform(Row row, List<Value> params) throws Exception;
 
 }

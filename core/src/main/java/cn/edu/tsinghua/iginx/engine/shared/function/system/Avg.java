@@ -65,7 +65,7 @@ public class Avg implements SetMappingFunction {
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) {
+    public Row transform(RowStream rows, List<Value> params) throws Exception {
         if (params.size() != 1) {
             throw new IllegalArgumentException("unexpected params for avg.");
         }

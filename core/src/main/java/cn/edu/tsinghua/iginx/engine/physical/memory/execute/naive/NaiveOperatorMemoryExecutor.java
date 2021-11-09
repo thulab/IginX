@@ -196,7 +196,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rows = table.getRows();
         long bias = downsample.getTimeRange().getBeginTime();
         long precision = downsample.getPrecision();
-        Map<Long, List<Row>> groups = new TreeMap<>();
+        TreeMap<Long, List<Row>> groups = new TreeMap<>();
         SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
         List<Value> params = downsample.getFunctionCall().getParams();
         for (Row row: rows) {
@@ -204,12 +204,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             groups.getOrDefault(timestamp, new ArrayList<>()).add(row);
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
-        groups.forEach((time, group) -> {
-            Row row = function.transform(new Table(header, group), params);
-            if (row != null) {
-                transformedRawRows.add(new Pair<>(time, row));
+        try {
+            for (Map.Entry<Long, List<Row>> entry: groups.entrySet()) {
+                long time = entry.getKey();
+                List<Row> group = entry.getValue();
+                Row row = function.transform(new Table(header, group), params);
+                if (row != null) {
+                    transformedRawRows.add(new Pair<>(time, row));
+                }
             }
-        });
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
+        }
         if (transformedRawRows.size() == 0) {
             return Table.EMPTY_TABLE;
         }
@@ -225,11 +231,15 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         RowMappingFunction function = (RowMappingFunction) rowTransform.getFunctionCall().getFunction();
         List<Value> params = rowTransform.getFunctionCall().getParams();
         List<Row> rows = new ArrayList<>();
-        while (table.hasNext()) {
-            Row row = function.transform(table.next(), params);
-            if (row != null) {
-                rows.add(row);
+        try {
+            while (table.hasNext()) {
+                Row row = function.transform(table.next(), params);
+                if (row != null) {
+                    rows.add(row);
+                }
             }
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute row mapping function " + function.getIdentifier() + ".", e);
         }
         if (rows.size() == 0) {
             return Table.EMPTY_TABLE;
@@ -241,12 +251,17 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeSetTransform(SetTransform setTransform, Table table) throws PhysicalException {
         SetMappingFunction function = (SetMappingFunction) setTransform.getFunctionCall().getFunction();
         List<Value> params = setTransform.getFunctionCall().getParams();
-        Row row = function.transform(table, params);
-        if (row == null) {
-            return Table.EMPTY_TABLE;
+        try {
+            Row row = function.transform(table, params);
+            if (row == null) {
+                return Table.EMPTY_TABLE;
+            }
+            Header header = row.getHeader();
+            return new Table(header, Collections.singletonList(row));
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
         }
-        Header header = row.getHeader();
-        return new Table(header, Collections.singletonList(row));
+
     }
 
     private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
