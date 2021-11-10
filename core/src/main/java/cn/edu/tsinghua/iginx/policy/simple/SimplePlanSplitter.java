@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.plan.downsample.*;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.split.SplitInfo;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.checkerframework.checker.units.qual.C;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -160,6 +161,10 @@ class SimplePlanSplitter implements IPlanSplitter {
                     infoList.add(new SplitInfo(fragment.getTimeInterval(), entry.getKey(), storageUnit, fragment));
                 }
             }
+        }
+        String sign = RandomStringUtils.randomAlphanumeric(3);
+        for (SplitInfo splitInfo: infoList) {
+            logger.info("sign: {}, splitinfo: {}", sign, splitInfo);
         }
         return infoList;
     }

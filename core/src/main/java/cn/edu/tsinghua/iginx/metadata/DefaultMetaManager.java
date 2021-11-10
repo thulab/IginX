@@ -341,9 +341,9 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
-        /*    if (fragment.isInitialFragment()) { // 初始分片不通过异步事件更新
+            if (fragment.isInitialFragment() && create) { // 初始分片不通过异步事件更新
                 return;
-            }*/
+            }
             if (!cache.hasFragment()) {
                 return;
             }

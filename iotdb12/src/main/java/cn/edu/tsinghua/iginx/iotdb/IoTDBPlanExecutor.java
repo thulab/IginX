@@ -195,6 +195,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+        boolean isMaster = false;
+        if (plan.isSync()) {
+            isMaster = true;
+        }
         // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
@@ -225,6 +229,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         for (Map.Entry<String, List<MeasurementSchema>> entry : schemasMap.entrySet()) {
             tablets.put(entry.getKey(), new Tablet(entry.getKey(), entry.getValue(), batchSize));
         }
+        String sign = RandomStringUtils.randomAlphanumeric(3);
+        long start = System.currentTimeMillis();
+        logger.info("Start Iotdb Insert, sign : {}, timestamp : {}", sign, start);
 
         int cnt = 0;
         int[] indexes = new int[plan.getPathsNum()];
@@ -254,7 +261,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
 
             try {
+                logger.info("Before insertTablets, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
                 sessionPool.insertTablets(tablets);
+                logger.info("After insertTablets, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
                 return new NonDataPlanExecuteResult(FAILURE, plan);
@@ -265,6 +274,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
             cnt += size;
         } while(cnt < plan.getTimestamps().length);
+        logger.info("End Iotdb Insert, sign : {}, cos : {}, isMaster: {}, size: {}, engine: {}", sign, System.currentTimeMillis() - start, isMaster, plan.getPaths().size(), plan.getStorageEngineId());
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -345,7 +355,6 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         if (plan.isSync()) {
             isMaster = true;
         }
-        logger.debug("debug enable");
         // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();

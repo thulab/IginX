@@ -23,7 +23,10 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.plan.IginxPlan;
+import jdk.jfr.DataAmount;
+import lombok.Data;
 
+@Data
 public class SplitInfo {
 
     private TimeInterval timeInterval;
