@@ -100,6 +100,7 @@ public final class FragmentMeta {
         fragment.setMasterStorageUnit(masterStorageUnit);
         fragment.setMasterStorageUnitId(masterStorageUnitId);
         fragment.setInitialFragment(initialFragment);
+        fragment.setCreatedBy(createdBy);
         return fragment;
     }
 
