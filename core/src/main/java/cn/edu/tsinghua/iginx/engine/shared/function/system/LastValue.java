@@ -18,23 +18,24 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
+import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.List;
 
-public class Max implements SetMappingFunction {
+public class LastValue implements SetMappingFunction {
 
-    public static final String MAX = "max";
+    public static final String LAST_VALUE = "last_value";
 
-    private static final Max INSTANCE = new Max();
+    private static final LastValue INSTANCE = new LastValue();
 
-    private Max() {}
+    private LastValue() {}
 
     @Override
     public FunctionType getFunctionType() {
@@ -48,15 +49,29 @@ public class Max implements SetMappingFunction {
 
     @Override
     public String getIdentifier() {
-        return MAX;
+        return LAST_VALUE;
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) {
+    public Row transform(RowStream rows, List<Value> params) throws Exception {
+        if (params.size() != 1) {
+            throw new IllegalArgumentException("unexpected params for avg.");
+        }
+        Value param = params.get(0);
+        if (param.getDataType() != DataType.BINARY) {
+            throw new IllegalArgumentException("unexpected param type for avg.");
+        }
+        String target = param.getBinaryV();
+        // Header header = new Header(Collections.singletonList(new Field(getIdentifier() + "(" + target + ")", DataType.LONG)));
+        if (target.endsWith(Constants.ALL_PATH)) {
+
+        } else {
+
+        }
         return null;
     }
 
-    public static Max getInstance() {
+    public static LastValue getInstance() {
         return INSTANCE;
     }
 

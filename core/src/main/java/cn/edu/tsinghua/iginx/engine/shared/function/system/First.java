@@ -19,22 +19,20 @@
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
+import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
-import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 
 import java.util.List;
 
-public class Max implements SetMappingFunction {
+public class First implements MappingFunction {
 
-    public static final String MAX = "max";
+    public static final String FIRST = "first";
 
-    private static final Max INSTANCE = new Max();
+    private static final First INSTANCE = new First();
 
-    private Max() {}
+    private First() {}
 
     @Override
     public FunctionType getFunctionType() {
@@ -43,20 +41,20 @@ public class Max implements SetMappingFunction {
 
     @Override
     public MappingType getMappingType() {
-        return MappingType.SetMapping;
+        return MappingType.Mapping;
     }
 
     @Override
     public String getIdentifier() {
-        return MAX;
+        return FIRST;
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) {
+    public RowStream transform(RowStream rows, List<Value> params) throws Exception {
         return null;
     }
 
-    public static Max getInstance() {
+    public static First getInstance() {
         return INSTANCE;
     }
 

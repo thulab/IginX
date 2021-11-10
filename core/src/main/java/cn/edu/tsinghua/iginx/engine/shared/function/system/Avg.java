@@ -45,10 +45,6 @@ public class Avg implements SetMappingFunction {
 
     private Avg() {}
 
-    static {
-        FunctionManager.getInstance().registerFunction(INSTANCE);
-    }
-
     @Override
     public FunctionType getFunctionType() {
         return FunctionType.System;
@@ -74,7 +70,7 @@ public class Avg implements SetMappingFunction {
             throw new IllegalArgumentException("unexpected param type for avg.");
         }
         String target = param.getBinaryV();
-        if (target.equals(Constants.ALL_PATH)) {
+        if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> fields = rows.getHeader().getFields();
             for (Field field: fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
@@ -94,6 +90,11 @@ public class Avg implements SetMappingFunction {
 
         }
         return null;
+    }
+
+
+    public static Avg getInstance() {
+        return INSTANCE;
     }
 
 }

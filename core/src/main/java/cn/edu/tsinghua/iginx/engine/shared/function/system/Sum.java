@@ -36,10 +36,6 @@ public class Sum implements SetMappingFunction {
 
     private Sum() {}
 
-    static {
-        FunctionManager.getInstance().registerFunction(INSTANCE);
-    }
-
     @Override
     public FunctionType getFunctionType() {
         return FunctionType.System;
@@ -58,5 +54,9 @@ public class Sum implements SetMappingFunction {
     @Override
     public Row transform(RowStream rows, List<Value> params) {
         return null;
+    }
+
+    public static Sum getInstance() {
+        return INSTANCE;
     }
 }

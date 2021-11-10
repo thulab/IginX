@@ -16,47 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.function.system;
-
+package cn.edu.tsinghua.iginx.engine.shared.function;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
-import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 
 import java.util.List;
 
-public class Last implements MappingFunction {
+public interface MappingFunction extends Function {
 
-    public static final String LAST = "last";
-
-    private static final Last INSTANCE = new Last();
-
-    private Last() {}
-
-    @Override
-    public FunctionType getFunctionType() {
-        return FunctionType.System;
-    }
-
-    @Override
-    public MappingType getMappingType() {
-        return MappingType.Mapping;
-    }
-
-    @Override
-    public String getIdentifier() {
-        return LAST;
-    }
-
-    @Override
-    public RowStream transform(RowStream rows, List<Value> params) throws Exception {
-        return null;
-    }
-
-    public static Last getInstance() {
-        return INSTANCE;
-    }
+    RowStream transform(RowStream rows, List<Value> params) throws Exception;
 
 }

@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
@@ -46,10 +45,6 @@ public class Count implements SetMappingFunction {
 
     private Count() {}
 
-    static {
-        FunctionManager.getInstance().registerFunction(INSTANCE);
-    }
-
     @Override
     public FunctionType getFunctionType() {
         return FunctionType.System;
@@ -76,14 +71,29 @@ public class Count implements SetMappingFunction {
         }
         String target = param.getBinaryV();
         Header header = new Header(Collections.singletonList(new Field(getIdentifier() + "(" + target + ")", DataType.LONG)));
-        if (target.equals(Constants.ALL_PATH)) {
-            long count = 0L;
+        long count = 0L;
+        if (target.endsWith(Constants.ALL_PATH)) {
             while (rows.hasNext()) {
                 count += 1;
                 rows.next();
             }
         } else {
-
+            int index = rows.getHeader().indexOf(target);
+            if (index != -1) {
+                while (rows.hasNext()) {
+                    Row row = rows.next();
+                    Object value = row.getValue(index);
+                    if (value != null) {
+                        count++;
+                    }
+                }
+            }
         }
+        return new Row(header, new Object[]{count});
     }
+
+    public static Count getInstance() {
+        return INSTANCE;
+    }
+
 }

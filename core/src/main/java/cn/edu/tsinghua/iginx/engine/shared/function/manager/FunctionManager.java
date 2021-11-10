@@ -19,6 +19,12 @@
 package cn.edu.tsinghua.iginx.engine.shared.function.manager;
 
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.Avg;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.Count;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.LastValue;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.Max;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.Min;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.Sum;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,6 +36,16 @@ public class FunctionManager {
 
     private FunctionManager() {
         this.functions = new HashMap<>();
+        this.initSystemFunctions();
+    }
+
+    private void initSystemFunctions() {
+        registerFunction(Avg.getInstance());
+        registerFunction(Count.getInstance());
+        registerFunction(LastValue.getInstance());
+        registerFunction(Max.getInstance());
+        registerFunction(Min.getInstance());
+        registerFunction(Sum.getInstance());
     }
 
     public void registerFunction(Function function) {

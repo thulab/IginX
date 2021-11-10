@@ -36,10 +36,6 @@ public class Min implements SetMappingFunction {
 
     private Min() {}
 
-    static {
-        FunctionManager.getInstance().registerFunction(INSTANCE);
-    }
-
     @Override
     public FunctionType getFunctionType() {
         return FunctionType.System;
@@ -58,6 +54,10 @@ public class Min implements SetMappingFunction {
     @Override
     public Row transform(RowStream rows, List<Value> params) {
         return null;
+    }
+
+    public static Min getInstance() {
+        return INSTANCE;
     }
 
 }
