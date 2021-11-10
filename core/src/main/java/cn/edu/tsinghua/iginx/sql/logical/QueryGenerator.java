@@ -16,7 +16,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
-import cn.edu.tsinghua.iginx.policy.naive.NativePolicy;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -24,10 +23,10 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
 
 public class QueryGenerator implements LogicalGenerator {
 
@@ -94,7 +93,7 @@ public class QueryGenerator implements LogicalGenerator {
 
         logger.debug("joinList size={}", joinList.size());
 
-        Operator root = joinOperators(joinList);
+        Operator root = joinOperatorsByTime(joinList);
 
         if (statement.hasValueFilter()) {
             root = new Select(new OperatorSource(root), statement.getFilter());
@@ -104,9 +103,8 @@ public class QueryGenerator implements LogicalGenerator {
         if (statement.hasGroupBy()) {
             // DownSample Query
             Operator finalRoot = root;
-            statement.getSelectedFuncsAndPaths().forEach((k, v) -> {
-                List<Value> wrappedPath = new ArrayList<>();
-                v.forEach(str -> wrappedPath.add(new Value(str)));
+            statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
+                List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 queryList.add(
                         new Downsample(
@@ -116,13 +114,12 @@ public class QueryGenerator implements LogicalGenerator {
                                 new TimeRange(0, Long.MAX_VALUE)
                         )
                 );
-            });
+            }));
         } else if (statement.hasFunc()) {
             // Aggregate Query
             Operator finalRoot = root;
-            statement.getSelectedFuncsAndPaths().forEach((k, v) -> {
-                List<Value> wrappedPath = new ArrayList<>();
-                v.forEach(str -> wrappedPath.add(new Value(str)));
+            statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
+                List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 queryList.add(
                         new SetTransform(
@@ -130,14 +127,18 @@ public class QueryGenerator implements LogicalGenerator {
                                 new FunctionCall(functionManager.getFunction(k), wrappedPath)
                         )
                 );
-            });
+            }));
         } else {
             List<String> selectedPath = new ArrayList<>();
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> selectedPath.addAll(v));
             queryList.add(new Project(new OperatorSource(root), selectedPath));
         }
 
-        root = joinOperators(queryList);
+        if (statement.hasFunc()) {
+            root = joinOperators(queryList, ORDINAL);
+        } else  {
+            root = joinOperatorsByTime(queryList);
+        }
 
         if (!statement.getOrderByPath().equals("")) {
             root = new Sort(
@@ -168,14 +169,18 @@ public class QueryGenerator implements LogicalGenerator {
         return union;
     }
 
-    private Operator joinOperators(List<Operator> operators) {
+    private Operator joinOperatorsByTime(List<Operator> operators) {
+        return joinOperators(operators, TIMESTAMP);
+    }
+
+    private Operator joinOperators(List<Operator> operators, String joinBy) {
         if (operators == null || operators.isEmpty())
             return null;
         if (operators.size() == 1)
             return operators.get(0);
         Operator join = operators.get(0);
         for (int i = 1; i < operators.size(); i++) {
-            join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)));
+            join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)), joinBy);
         }
         return join;
     }
