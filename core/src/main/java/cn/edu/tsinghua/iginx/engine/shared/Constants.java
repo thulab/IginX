@@ -22,7 +22,7 @@ public class Constants {
 
     public static final String TIMESTAMP = "time";
 
-    public static final String ORDER = "order";
+    public static final String ORDINAL = "ordinal";
 
     public static final String ALL_PATH = "*";
 
