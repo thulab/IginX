@@ -191,7 +191,7 @@ public interface IMetaManager {
 
     void saveTimeSeriesData(InsertRecordsPlan plan);
 
-    List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num);
+    List<TimeSeriesCalDO> getMaxValueFromTimeSeries(Integer num);
 
     Map<String, Double> getTimeseriesData();
 

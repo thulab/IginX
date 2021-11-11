@@ -99,15 +99,20 @@ public class Config {
     private double logRestInsertPossibility = 1.0;
 
     private double logRestQueryPossibility = 1.0;
+
     private int cachedTimeseriesNum = 1000;
 
     private int retryCount = 10;
 
-    private int retryWait = 1000;
+    private int retryWait = 5000;
 
-    private int reAllocatePeriod = 20000;
+    private int reAllocatePeriod = 30000;
 
-    private int fragmentPerEngine = 1;
+    private int fragmentPerEngine = 10;
+
+    private boolean enableStorageGroupValueLimit = true;
+
+    private double storageGroupValueLimit = 100.0;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -461,13 +466,27 @@ public class Config {
         this.reAllocatePeriod = reAllocatePeriod;
     }
 
-    public int getFragmentPerEngine()
-    {
+    public int getFragmentPerEngine() {
         return fragmentPerEngine;
     }
 
-    public void setFragmentPerEngine(int fragmentPerEngine)
-    {
+    public void setFragmentPerEngine(int fragmentPerEngine) {
         this.fragmentPerEngine = fragmentPerEngine;
+    }
+
+    public double getStorageGroupValueLimit() {
+        return storageGroupValueLimit;
+    }
+
+    public boolean isEnableStorageGroupValueLimit() {
+        return enableStorageGroupValueLimit;
+    }
+
+    public void setEnableStorageGroupValueLimit(boolean enableStorageGroupValueLimit) {
+        this.enableStorageGroupValueLimit = enableStorageGroupValueLimit;
+    }
+
+    public void setStorageGroupValueLimit(double storageGroupValueLimit) {
+        this.storageGroupValueLimit = storageGroupValueLimit;
     }
 }

@@ -18,17 +18,25 @@
  */
 package cn.edu.tsinghua.iginx.policy.simple;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.core.processor.*;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.policy.IPlanSplitter;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class SimplePolicy implements IPolicy {
 
@@ -37,6 +45,9 @@ public class SimplePolicy implements IPolicy {
     private IMetaManager iMetaManager;
     private IFragmentGenerator iFragmentGenerator;
     private FragmentCreator fragmentCreator;
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+    private static final Logger logger = LoggerFactory.getLogger(SimplePolicy.class);
+
 
     @Override
     public PostQueryExecuteProcessor getPostQueryExecuteProcessor() {
@@ -115,11 +126,39 @@ public class SimplePolicy implements IPolicy {
     }
 
     boolean isFirst = true;
+
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
-        //todo
+        if (timeseriesData.size() < config.getCachedTimeseriesNum()) {
+            return true;
+        }
+
         Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-        if (timeseriesData.size() < 100 || !isFirst) return true;
-        isFirst = false;
-        return false;
+        Map<TimeSeriesInterval, Double> fragmentValue =  latestFragments.keySet().stream().collect(
+                Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
+        );
+        timeseriesData.forEach((key, value) -> {
+            for (TimeSeriesInterval timeSeriesInterval : fragmentValue.keySet()) {
+                if (timeSeriesInterval.isContain(key)) {
+                    Double tmp = fragmentValue.get(timeSeriesInterval);
+                    fragmentValue.put(timeSeriesInterval, value + tmp);
+                }
+            }
+        });
+        List<Double> value = fragmentValue.values().stream().sorted().collect(Collectors.toList());
+        int num = 0;
+        for (Double v: value) {
+            logger.info("fragment value num : {}, value : {}", num ++, v);
+        }
+        if (value.get(value.size() - 1) > config.getStorageGroupValueLimit() * 2) {
+            return false;
+        }
+
+
+        if (isFirst) {
+            isFirst = false;
+            return false;
+        }
+
+        return true;
     }
 }

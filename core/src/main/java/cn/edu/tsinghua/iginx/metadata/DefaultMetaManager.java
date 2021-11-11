@@ -330,8 +330,9 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initFragment() throws MetaStorageException {
         storage.registerFragmentChangeHook((create, fragment) -> {
-            if (fragment == null)
+            if (fragment == null) {
                 return;
+            }
             if (create) {
                 activeFragmentStartTime.set(fragment.getTimeInterval().getStartTime());
             }
@@ -489,8 +490,13 @@ public class DefaultMetaManager implements IMetaManager {
     private void initPolicy() throws MetaStorageException {
         storage.registerTimeseriesChangeHook(cache::timeseriesIsUpdated);
         storage.registerVersionChangeHook((version, num) -> {
-            Map<String, Double> timeseriesData = cache.getMaxValueTimeSeries(num).stream().
+            double sum = cache.getSumFromTimeSeries();
+            Map<String, Double> timeseriesData = cache.getMaxValueFromTimeSeries(num).stream().
                     collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
+            double countSum = timeseriesData.values().stream().mapToDouble(Double::doubleValue).sum();
+            if (countSum > 1e-9) {
+                timeseriesData.forEach((k, v) -> timeseriesData.put(k, v / countSum * sum));
+            }
             try {
                 storage.updateTimeseriesData(timeseriesData, getIginxId(), version);
             } catch (Exception e) {
@@ -1003,8 +1009,8 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
-        return cache.getMaxValueTimeSeries(num);
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries(Integer num) {
+        return cache.getMaxValueFromTimeSeries(num);
     }
 
     @Override

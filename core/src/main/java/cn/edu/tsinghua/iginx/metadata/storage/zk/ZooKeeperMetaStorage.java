@@ -1406,6 +1406,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.reshardCounterCache.start();
     }
 
+    @Override
     public int updateVersion(int num) {
         int version = -1;
         try

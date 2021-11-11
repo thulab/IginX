@@ -84,7 +84,7 @@ public class FragmentCreator
                 try {
                     CreateFragment();
                 } catch (Exception e) {
-                    LOGGER.error("Error occurs when create fragment : {}", e);
+                    LOGGER.error("Error occurs when create fragment", e);
                     e.printStackTrace();
                 }
             }

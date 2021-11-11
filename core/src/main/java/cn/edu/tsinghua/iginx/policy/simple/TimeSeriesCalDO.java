@@ -29,10 +29,12 @@ public class TimeSeriesCalDO implements Comparable<TimeSeriesCalDO>
     @Override
     public int compareTo(TimeSeriesCalDO timeSeriesCalDO)
     {
-        if (getValue() < timeSeriesCalDO.getValue())
+        if (getValue() < timeSeriesCalDO.getValue()) {
             return -1;
-        else if (getValue() > timeSeriesCalDO.getValue())
+        }
+        else if (getValue() > timeSeriesCalDO.getValue()) {
             return 1;
+        }
         return 0;
     }
 

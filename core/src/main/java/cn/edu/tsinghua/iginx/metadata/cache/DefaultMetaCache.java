@@ -630,18 +630,23 @@ public class DefaultMetaCache implements IMetaCache {
                 }
             }
         }
-        if (timeSeriesCalDOConcurrentHashMap.size() > 1000000L) {
-            //todo
-        }
         insertRecordLock.writeLock().unlock();
     }
 
     @Override
-    public List<TimeSeriesCalDO> getMaxValueTimeSeries(Integer num) {
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries(Integer num) {
         insertRecordLock.readLock().lock();
         num = Math.min(num, timeSeriesCalDOConcurrentHashMap.size());
         List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream().sorted(Comparator.reverseOrder())
                 .collect(Collectors.toList()).subList(0, num);
+        insertRecordLock.readLock().unlock();
+        return ret;
+    }
+
+    @Override
+    public double getSumFromTimeSeries() {
+        insertRecordLock.readLock().lock();
+        double ret = timeSeriesCalDOConcurrentHashMap.values().stream().mapToDouble(TimeSeriesCalDO::getValue).sum();
         insertRecordLock.readLock().unlock();
         return ret;
     }

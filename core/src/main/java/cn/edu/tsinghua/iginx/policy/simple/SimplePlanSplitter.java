@@ -49,12 +49,15 @@ class SimplePlanSplitter implements IPlanSplitter {
 
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
-    private Random random = new Random();
-
     List<String> getNewFragment(Map<String, Double> data) {
         List<String> ret = new ArrayList<>();
         int n = data.size();
         int m = iMetaManager.getStorageEngineNum() * config.getFragmentPerEngine();
+        if (config.isEnableStorageGroupValueLimit()) {
+            double totalValue = data.values().stream().mapToDouble(Double::doubleValue).sum();
+            m = new Double(Math.ceil(totalValue / config.getStorageGroupValueLimit() / iMetaManager.getStorageEngineNum())).
+                    intValue() * iMetaManager.getStorageEngineNum();
+        }
         List<Pair<String, Double>> tmp = data.entrySet().stream().map(entry -> new Pair<String, Double>(entry.getKey(), entry.getValue())).
                 sorted(Comparator.comparing(Pair::getK)).collect(Collectors.toList());
         List<Double> sum = new ArrayList<>();
@@ -64,13 +67,14 @@ class SimplePlanSplitter implements IPlanSplitter {
         }
         double[][] dp = new double[n + 1][m + 1];
         int[][] last = new int[n + 1][m + 1];
-        for (int i = 0; i <= n; i++)
+        for (int i = 0; i <= n; i++) {
             for (int j = 0; j <= m; j++) {
                 dp[i][j] = Double.MAX_VALUE / 10;
                 last[i][j] = -1;
+            }
         }
         dp[0][0] = 0;
-        for (int i = 1; i <= n; i++)
+        for (int i = 1; i <= n; i++) {
             for (int j = 1; j <= m; j++) {
                 for (int k = 0; k < i; k++) {
                     double tmpValue = dp[k][j - 1] + Math.pow(sum.get(i) - sum.get(k), 2);
@@ -80,6 +84,7 @@ class SimplePlanSplitter implements IPlanSplitter {
                     }
                 }
             }
+        }
         int tmpn = n, tmpm = m;
         while (last[tmpn][tmpm] > 0) {
             tmpn = last[tmpn][tmpm];

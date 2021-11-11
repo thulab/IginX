@@ -162,6 +162,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertNonAlignedColumnRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
+            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan));
         }
         return null;
@@ -169,6 +170,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertColumnRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
+            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan));
         }
         return null;
@@ -176,6 +178,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertNonAlignedRowRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
+            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan));
         }
         return null;

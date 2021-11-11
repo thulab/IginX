@@ -38,58 +38,12 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
 
     @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(List<String> paths, TimeInterval timeInterval) {
-        if(ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",")>0){
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair =  generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
+        if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
-        }else
+        } else {
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
-    }
-
-    /**
-     * This storage unit initialization method is used when no information about workloads is provided
-     */
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> paths, TimeInterval timeInterval) {
-        List<FragmentMeta> fragmentList = new ArrayList<>();
-        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-
-        int storageEngineNum = iMetaManager.getStorageEngineNum();
-        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
-        List<Long> storageEngineIdList;
-        Pair<FragmentMeta, StorageUnitMeta> pair;
-        int index = 0;
-
-        // [startTime, +∞) & [startPath, endPath)
-        int splitNum = Math.max(Math.min(storageEngineNum, paths.size() - 1), 0);
-        for (int i = 0; i < splitNum; i++) {
-            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-            fragmentList.add(pair.k);
-            storageUnitList.add(pair.v);
         }
-
-        // [startTime, +∞) & [endPath, null)
-        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-        fragmentList.add(pair.k);
-        storageUnitList.add(pair.v);
-
-        // [0, startTime) & (-∞, +∞)
-        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
-        // TODO 考虑大规模插入历史数据的情况
-        if (timeInterval.getStartTime() != 0) {
-            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
-            fragmentList.add(pair.k);
-            storageUnitList.add(pair.v);
-        }
-
-        // [startTime, +∞) & (null, startPath)
-        storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
-        fragmentList.add(pair.k);
-        storageUnitList.add(pair.v);
-
-        return new Pair<>(fragmentList, storageUnitList);
     }
 
     /**
@@ -151,6 +105,64 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         return new Pair<>(fragmentMap, storageUnitList);
     }
 
+
+
+    /**
+     * This storage unit initialization method is used when no information about workloads is provided
+     */
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> inspaths, TimeInterval timeInterval) {
+        List<FragmentMeta> fragmentList = new ArrayList<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+        List<String> paths = new ArrayList<String>();
+        if (inspaths.size() > 0) {
+            paths.add(inspaths.get(0));
+        }
+
+        if (inspaths.size() > 1) {
+            paths.add(inspaths.get(inspaths.size() - 1));
+        }
+
+        int storageEngineNum = iMetaManager.getStorageEngineNum();
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+        List<Long> storageEngineIdList;
+        Pair<FragmentMeta, StorageUnitMeta> pair;
+        int index = 0;
+
+        // [0, startTime) & (-∞, +∞)
+        // 一般情况下该范围内几乎无数据，因此作为一个分片处理
+        if (timeInterval.getStartTime() != 0) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+            fragmentList.add(pair.k);
+            storageUnitList.add(pair.v);
+        }
+
+        // [startTime, +∞) & (null, startPath)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentList.add(pair.k);
+        storageUnitList.add(pair.v);
+
+
+        // [startTime, +∞) & [startPath, endPath)
+        int splitNum = Math.max(Math.min(storageEngineNum, paths.size() - 1), 0);
+        for (int i = 0; i < splitNum; i++) {
+            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+            fragmentList.add(pair.k);
+            storageUnitList.add(pair.v);
+        }
+
+        // [startTime, +∞) & [endPath, null)
+        storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+        fragmentList.add(pair.k);
+        storageUnitList.add(pair.v);
+
+        return new Pair<>(fragmentList, storageUnitList);
+    }
+
+
     private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true, false);
@@ -161,6 +173,7 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         return new Pair<>(fragment, storageUnit);
     }
 
+    @Override
     public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
@@ -170,6 +183,12 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         List<Long> storageEngineIdList;
         Pair<FragmentMeta, StorageUnitMeta> pair;
         int index = 0;
+
+        // [startTime, +∞) & (null, startPath)
+        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
+        fragmentList.add(pair.k);
+        storageUnitList.add(pair.v);
 
         // [startTime, +∞) & [startPath, endPath)
         int splitNum = Math.max(prefixList.size() - 1, 0);
@@ -181,14 +200,8 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         }
 
         // [startTime, +∞) & [endPath, null)
-        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE, storageEngineIdList);
-        fragmentList.add(pair.k);
-        storageUnitList.add(pair.v);
-
-        // [startTime, +∞) & (null, startPath)
         storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
-        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
+        pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE, storageEngineIdList);
         fragmentList.add(pair.k);
         storageUnitList.add(pair.v);
 
@@ -231,6 +244,5 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         }
         return storageEngineIdList;
     }
-
 
 }
