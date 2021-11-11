@@ -26,4 +26,12 @@ public class DataTypeUtils {
         return dataType == DataType.INTEGER || dataType == DataType.LONG || dataType == DataType.FLOAT || dataType == DataType.DOUBLE;
     }
 
+    public static boolean isFloatingNumber(DataType dataType) {
+        return dataType == DataType.FLOAT || dataType == DataType.DOUBLE;
+    }
+
+    public static boolean isWholeNumber(DataType dataType) {
+        return dataType == DataType.INTEGER || dataType == DataType.LONG;
+    }
+
 }

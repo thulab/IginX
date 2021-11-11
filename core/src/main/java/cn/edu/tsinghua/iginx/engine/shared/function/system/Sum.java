@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.engine.shared.function.system;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
@@ -30,6 +31,8 @@ import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Sum implements SetMappingFunction {
@@ -56,7 +59,7 @@ public class Sum implements SetMappingFunction {
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) {
+    public Row transform(RowStream rows, List<Value> params) throws Exception {
         if (params.size() != 1) {
             throw new IllegalArgumentException("unexpected params for sum.");
         }
@@ -72,7 +75,45 @@ public class Sum implements SetMappingFunction {
                     throw new IllegalArgumentException("only number can calculate sum");
                 }
             }
-
+            List<Field> targetFields = new ArrayList<>();
+            for (Field field: fields) {
+                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
+            }
+            Object[] targetValues = new Object[targetFields.size()];
+            for (int i = 0; i < fields.size(); i++) {
+                Field field = fields.get(i);
+                if (DataTypeUtils.isWholeNumber(field.getType())) {
+                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                    targetValues[i] = 0L;
+                } else {
+                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
+                    targetValues[i] = 0.0D;
+                }
+            }
+            while (rows.hasNext()) {
+                Row row = rows.next();
+                for (int i = 0; i < fields.size(); i++) {
+                    Object value = row.getValue(i);
+                    if (value == null) {
+                        continue;
+                    }
+                    switch (fields.get(i).getType()) {
+                        case INTEGER:
+                            targetValues[i] = ((long) targetValues[i]) + (int) value;
+                            break;
+                        case LONG:
+                            targetValues[i] = ((long) targetValues[i]) + (long) value;
+                            break;
+                        case FLOAT:
+                            targetValues[i] = ((double) targetValues[i]) + (float) value;
+                            break;
+                        case DOUBLE:
+                            targetValues[i] = ((double) targetValues[i]) + (double) value;
+                            break;
+                    }
+                }
+            }
+            return new Row(new Header(targetFields), targetValues);
         } else {
             int index = rows.getHeader().indexOf(target);
             if (index == -1) { // 实际上没有该列
@@ -82,9 +123,38 @@ public class Sum implements SetMappingFunction {
             if (!DataTypeUtils.isNumber(field.getType())) {
                 throw new IllegalArgumentException("only number can calculate sum");
             }
-
+            Field targetField;
+            Object targetValue;
+            if (DataTypeUtils.isWholeNumber(field.getType())) {
+                targetField = new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG);
+                targetValue = 0L;
+            } else {
+                targetField = new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE);
+                targetValue = 0.0D;
+            }
+            while (rows.hasNext()) {
+                Row row = rows.next();
+                Object value = row.getValue(index);
+                if (value == null) {
+                    continue;
+                }
+                switch (field.getType()) {
+                    case INTEGER:
+                        targetValue = ((long) targetValue) + (int) value;
+                        break;
+                    case LONG:
+                        targetValue = ((long) targetValue) + (long) value;
+                        break;
+                    case FLOAT:
+                        targetValue = ((double) targetValue) + (float) value;
+                        break;
+                    case DOUBLE:
+                        targetValue = ((double) targetValue) + (double) value;
+                        break;
+                }
+            }
+            return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
-        return null;
     }
 
     public static Sum getInstance() {

@@ -21,6 +21,9 @@ package cn.edu.tsinghua.iginx.engine.shared.function.manager;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Avg;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Count;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.First;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.FirstValue;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.Last;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.LastValue;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Max;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Min;
@@ -42,7 +45,10 @@ public class FunctionManager {
     private void initSystemFunctions() {
         registerFunction(Avg.getInstance());
         registerFunction(Count.getInstance());
+        registerFunction(FirstValue.getInstance());
         registerFunction(LastValue.getInstance());
+        registerFunction(First.getInstance());
+        registerFunction(Last.getInstance());
         registerFunction(Max.getInstance());
         registerFunction(Min.getInstance());
         registerFunction(Sum.getInstance());
