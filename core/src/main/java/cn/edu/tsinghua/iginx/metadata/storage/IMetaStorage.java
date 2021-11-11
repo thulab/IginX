@@ -135,5 +135,5 @@ public interface IMetaStorage {
 
     void registerPolicy(long iginxId, int num) throws Exception;
 
-    int updateVersion(int num);
+    int updateVersion();
 }

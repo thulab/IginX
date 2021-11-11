@@ -100,7 +100,7 @@ public class Config {
 
     private double logRestQueryPossibility = 1.0;
 
-    private int cachedTimeseriesNum = 1000;
+    private double cachedTimeseriesProb = 0.01;
 
     private int retryCount = 10;
 
@@ -112,7 +112,7 @@ public class Config {
 
     private boolean enableStorageGroupValueLimit = true;
 
-    private double storageGroupValueLimit = 100.0;
+    private double storageGroupValueLimit = 200.0;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -434,12 +434,12 @@ public class Config {
         this.logRestQueryPossibility = logRestQueryPossibility;
     }
 
-    public int getCachedTimeseriesNum() {
-        return cachedTimeseriesNum;
+    public double getCachedTimeseriesProb() {
+        return cachedTimeseriesProb;
     }
 
-    public void setCachedTimeseriesNum(int cachedTimeseriesNum) {
-        this.cachedTimeseriesNum = cachedTimeseriesNum;
+    public void setCachedTimeseriesProb(double cachedTimeseriesProb) {
+        this.cachedTimeseriesProb = cachedTimeseriesProb;
     }
 
     public int getRetryCount() {

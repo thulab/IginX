@@ -105,13 +105,13 @@ public class ConfigDescriptor {
             config.setLogRestInsertPossibility(Double.parseDouble(properties.getProperty("logRestInsertPossibility", "1.0")));
             config.setLogRestQueryPossibility(Double.parseDouble(properties.getProperty("logRestQueryPossibility", "1.0")));
 
-            config.setCachedTimeseriesNum(Integer.parseInt(properties.getProperty("cachedTimeseriesNum", "1000")));
+            config.setCachedTimeseriesProb(Double.parseDouble(properties.getProperty("cachedTimeseriesProb", "0.01")));
             config.setRetryCount(Integer.parseInt(properties.getProperty("retryCount", "10")));
             config.setRetryWait(Integer.parseInt(properties.getProperty("retryWait", "5000")));
             config.setFragmentPerEngine(Integer.parseInt(properties.getProperty("fragmentPerEngine", "10")));
             config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
             config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
-            config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "100.0")));
+            config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);

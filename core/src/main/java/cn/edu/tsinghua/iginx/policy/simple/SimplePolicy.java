@@ -128,10 +128,6 @@ public class SimplePolicy implements IPolicy {
     boolean isFirst = true;
 
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
-        if (timeseriesData.size() < config.getCachedTimeseriesNum()) {
-            return true;
-        }
-
         Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
         Map<TimeSeriesInterval, Double> fragmentValue =  latestFragments.keySet().stream().collect(
                 Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
@@ -149,16 +145,14 @@ public class SimplePolicy implements IPolicy {
         for (Double v: value) {
             logger.info("fragment value num : {}, value : {}", num ++, v);
         }
-        if (value.get(value.size() - 1) > config.getStorageGroupValueLimit() * 2) {
+        if (value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3) {
             return false;
         }
-
 
         if (isFirst) {
             isFirst = false;
             return false;
         }
-
         return true;
     }
 }

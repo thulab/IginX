@@ -1194,7 +1194,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public int updateVersion(int num)
+    public int updateVersion()
     {
         return 0;
     }

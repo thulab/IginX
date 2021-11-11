@@ -39,9 +39,7 @@ import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
-import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
 import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
-import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
@@ -119,6 +117,7 @@ public class DefaultMetaManager implements IMetaManager {
     private boolean needToCreateStorageUnits = false;
 
     private final Object terminateResharding = new Object();
+
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
 
@@ -487,11 +486,11 @@ public class DefaultMetaManager implements IMetaManager {
         storage.releaseReshardCounter();
     }
 
-    private void initPolicy() throws MetaStorageException {
+    private void initPolicy(){
         storage.registerTimeseriesChangeHook(cache::timeseriesIsUpdated);
         storage.registerVersionChangeHook((version, num) -> {
             double sum = cache.getSumFromTimeSeries();
-            Map<String, Double> timeseriesData = cache.getMaxValueFromTimeSeries(num).stream().
+            Map<String, Double> timeseriesData = cache.getMaxValueFromTimeSeries().stream().
                     collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
             double countSum = timeseriesData.values().stream().mapToDouble(Double::doubleValue).sum();
             if (countSum > 1e-9) {
@@ -503,12 +502,10 @@ public class DefaultMetaManager implements IMetaManager {
                 e.printStackTrace();
             }
         });
-        int num = config.getCachedTimeseriesNum();
-        try
-        {
+        int num = 0;
+        try {
             storage.registerPolicy(getIginxId(), num);
-        }
-        catch (Exception e)
+        } catch (Exception e)
         {
             e.printStackTrace();
         }
@@ -1009,8 +1006,8 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries(Integer num) {
-        return cache.getMaxValueFromTimeSeries(num);
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
+        return cache.getMaxValueFromTimeSeries();
     }
 
     @Override
@@ -1019,8 +1016,8 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public int updateVersion(int num) {
-        return storage.updateVersion(num);
+    public int updateVersion() {
+        return storage.updateVersion();
     }
 
     @Override

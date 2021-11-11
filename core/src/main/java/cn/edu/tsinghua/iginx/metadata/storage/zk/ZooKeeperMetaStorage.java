@@ -53,6 +53,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 public class ZooKeeperMetaStorage implements IMetaStorage {
 
@@ -309,7 +310,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     iginxMetaMap.putIfAbsent(iginxMeta.getId(), iginxMeta);
                 }
             }
-            registerIginxListener();
+            if (iginxCache == null) {
+                registerIginxListener();
+            }
             return iginxMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when loading iginx: ", e);
@@ -973,6 +976,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
     }
 
+    @Override
     public void registerTimeseriesChangeHook(TimeseriesChangeHook hook) {
         this.timeseriesChangeHook = hook;
     }
@@ -1021,6 +1025,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
     }
 
+    @Override
     public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception {
         InterProcessMutex mutex = new InterProcessMutex(this.client, POLICY_LOCK_NODE);
         try {
@@ -1187,13 +1192,19 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
     }
 
+    @Override
     public Map<String, Double> getTimeseriesData() {
         Map<String, Double> ret = new HashMap<>();
         try {
+            Set<Integer> idSet = loadIginx().keySet().stream().
+                    map(Long::intValue).collect(Collectors.toSet());
             List<String> children = client.getChildren().forPath(TIMESERIES_NODE_PREFIX);
             for (String child: children) {
                 byte[] data = this.client.getData()
                         .forPath(TIMESERIES_NODE_PREFIX + "/" + child);
+                if (!idSet.contains(Integer.parseInt(child))) {
+                    continue;
+                }
                 Map<String, Double> tmp = toMap(data);
                 if (tmp == null) {
                     logger.error("resolve data from " + TIMESERIES_NODE_PREFIX + "/" + child + " error");
@@ -1407,12 +1418,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public int updateVersion(int num) {
+    public int updateVersion() {
         int version = -1;
         try
         {
             version = Integer.parseInt(new String(client.getData().forPath(POLICY_VERSION)).split("\t")[0]);
-            this.client.setData().forPath(POLICY_VERSION, ((version + 1) + "\t" + num).getBytes());
+            this.client.setData().forPath(POLICY_VERSION, ((version + 1) + "\t" + "0").getBytes());
         }
         catch (Exception e)
         {

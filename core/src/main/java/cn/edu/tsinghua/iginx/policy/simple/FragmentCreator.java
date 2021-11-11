@@ -2,20 +2,12 @@ package cn.edu.tsinghua.iginx.policy.simple;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.policy.IPolicy;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class FragmentCreator
@@ -39,7 +31,10 @@ public class FragmentCreator
         int retry = config.getRetryCount();
         while (retry > 0) {
             Map<Integer, Integer> timeseriesVersionMap = iMetaManager.getTimeseriesVersionMap();
-            if (version <= timeseriesVersionMap.values().stream().min(Integer::compareTo).orElse(Integer.MAX_VALUE)) {
+            Set<Integer> idSet = iMetaManager.getIginxList().stream().map(IginxMeta::getId).
+                    map(Long::intValue).collect(Collectors.toSet());
+            if (version <= timeseriesVersionMap.entrySet().stream().filter(e -> idSet.contains(e.getKey())).
+                    map(Map.Entry::getValue).min(Integer::compareTo).orElse(Integer.MAX_VALUE)) {
                 return true;
             }
             LOGGER.info("retry, remain: {}, version:{}, minversion: {}", retry, version, timeseriesVersionMap.values().stream().min(Integer::compareTo).orElse(Integer.MAX_VALUE));
@@ -53,14 +48,10 @@ public class FragmentCreator
         return false;
     }
 
-
-
-
-    public void CreateFragment() throws Exception {
+    public void createFragment() throws Exception {
         LOGGER.info("start CreateFragment");
         if (iMetaManager.election()) {
-            int num = config.getCachedTimeseriesNum();
-            int version = iMetaManager.updateVersion(num);
+            int version = iMetaManager.updateVersion();
             if (version > 0) {
                 if (!waitforUpdate(version)) {
                     LOGGER.error("update failed");
@@ -75,14 +66,12 @@ public class FragmentCreator
         LOGGER.info("end CreateFragment");
     }
 
-
-
     public void init(int length) {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 try {
-                    CreateFragment();
+                    createFragment();
                 } catch (Exception e) {
                     LOGGER.error("Error occurs when create fragment", e);
                     e.printStackTrace();

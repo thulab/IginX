@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -36,12 +38,7 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -96,7 +93,9 @@ public class DefaultMetaCache implements IMetaCache {
 
     private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
 
+    private Random random = new Random();
 
+    private Config config = ConfigDescriptor.getInstance().getConfig();
 
     public static DefaultMetaCache getInstance() {
         if (INSTANCE == null) {
@@ -634,11 +633,10 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
-    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries(Integer num) {
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
         insertRecordLock.readLock().lock();
-        num = Math.min(num, timeSeriesCalDOConcurrentHashMap.size());
-        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream().sorted(Comparator.reverseOrder())
-                .collect(Collectors.toList()).subList(0, num);
+        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
+                .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
         insertRecordLock.readLock().unlock();
         return ret;
     }

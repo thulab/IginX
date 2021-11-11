@@ -136,7 +136,7 @@ public interface IMetaCache {
 
     void saveTimeSeriesData(InsertRecordsPlan plan);
 
-    List<TimeSeriesCalDO> getMaxValueFromTimeSeries(Integer num);
+    List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
 
     double getSumFromTimeSeries();
 
