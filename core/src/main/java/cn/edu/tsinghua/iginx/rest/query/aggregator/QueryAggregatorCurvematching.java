@@ -45,7 +45,11 @@ public class QueryAggregatorCurvematching extends QueryAggregator {
             double bestResult = Double.MAX_VALUE;
             Long answerTimestamp = 0L;
             String answer = "";
-            List<Double> queryList = RestUtils.calcShapePattern(getCurveQuery(), true, 0.1, 0.05);
+            List<Double> queryList = RestUtils.norm(RestUtils.calcShapePattern(getCurveQuery(), true,true, true, 0.1, 0.05));
+            Integer maxWarpingWindow = queryList.size() / 4;
+            List<Double> upper = RestUtils.getWindow(queryList, maxWarpingWindow, true);
+            List<Double> lower = RestUtils.getWindow(queryList, maxWarpingWindow, false);
+
             switch (type) {
                 case LONG:
                 case DOUBLE:
@@ -59,9 +63,9 @@ public class QueryAggregatorCurvematching extends QueryAggregator {
                             }
                         }
                         List<Double> valueList = RestUtils.calcShapePattern(RestUtils.transToNorm(timestamps, value, getCurveUnit()),
-                                true, 0.1, 0.05);
-                        for (int i = 0; i < valueList.size(); i++) {
-                            double result = RestUtils.calcDTW(queryList, valueList, 50, i);
+                                true, true, true,0.1, 0.05);
+                        for (int i = 0; i < valueList.size() - queryList.size(); i++) {
+                            double result = RestUtils.calcDTW(queryList, valueList.subList(i, i + queryList.size()), maxWarpingWindow, bestResult, upper, lower);
                             if (result < bestResult) {
                                 bestResult = result;
                                 answerTimestamp = timestamps.get(i);
