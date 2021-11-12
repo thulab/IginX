@@ -25,11 +25,6 @@
       <artifactId>iginx-session</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.apache.iotdb</groupId>
-      <artifactId>iotdb-session</artifactId>
-      <version>0.11.4</version>
-    </dependency>
   </dependencies>
 
 </project>

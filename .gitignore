@@ -43,3 +43,4 @@ hs_err_pid*
 
 # snapshot
 **/maven-snapshot-repo/
+/text

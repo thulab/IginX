@@ -1,3 +1,4 @@
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -17,7 +18,9 @@
  * under the License.
  */
 package cn.edu.tsinghua.iginx.rest.insert;
-
+import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.HttpHeaders;
@@ -34,13 +37,21 @@ public class InsertWorker extends Thread {
     private InputStream stream;
     private final AsyncResponse asyncResponse;
     private final boolean isAnnotation;
+    private final boolean needLog;
+    private String sign = "";
+    private final long startTimestamp;
+    private static final Logger LOGGER = LoggerFactory.getLogger(InsertWorker.class);
+
 
     public InsertWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
-                        InputStream stream, boolean isAnnotation) {
+                        InputStream stream, boolean isAnnotation, boolean needLog, String sign, long startTimestamp) {
         this.asyncResponse = asyncResponse;
         this.httpheaders = httpheaders;
         this.stream = stream;
         this.isAnnotation = isAnnotation;
+        this.needLog = needLog;
+        this.sign = sign;
+        this.startTimestamp = startTimestamp;
     }
 
     static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
@@ -54,6 +65,10 @@ public class InsertWorker extends Thread {
     @Override
     public void run() {
         Response response;
+        long restStartTime = System.currentTimeMillis();
+        if (needLog) {
+            LOGGER.info("Thread start, sign: {}, cost: {}", sign, restStartTime - startTimestamp);
+        }
         try {
             if (httpheaders != null) {
                 List<String> requestHeader = httpheaders.getRequestHeader("Content-Encoding");
@@ -62,10 +77,14 @@ public class InsertWorker extends Thread {
                 }
             }
             DataPointsParser parser = new DataPointsParser(new InputStreamReader(stream, StandardCharsets.UTF_8));
-            parser.parse(isAnnotation);
+            parser.parse(isAnnotation, needLog, sign, startTimestamp);
             response = Response.status(Response.Status.OK).build();
         } catch (Exception e) {
             response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+        }
+        long restEndTime = System.currentTimeMillis();
+        if (needLog) {
+            LOGGER.info("Thread cost time: {} ms, sign: {}", restEndTime - restStartTime, sign);
         }
         asyncResponse.resume(response);
     }

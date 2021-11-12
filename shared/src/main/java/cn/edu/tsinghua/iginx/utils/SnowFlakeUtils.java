@@ -29,7 +29,7 @@ public class SnowFlakeUtils {
     private final static long START_STAMP = 0L;
     // 每一部分占用的位数，就三个
     private final static long SEQUENCE_BIT = 12;// 序列号占用的位数
-    private final static long MACHINE_BIT = 5; // 机器标识占用的位数
+    private final static long MACHINE_BIT = 20; // 机器标识占用的位数
     private final static long DATACENTER_BIT = 5;// 数据中心占用的位数
     // 每一部分最大值
     private final static long MAX_DATACENTER_NUM = ~(-1L << DATACENTER_BIT);
@@ -52,6 +52,7 @@ public class SnowFlakeUtils {
         if (datacenterId > MAX_DATACENTER_NUM || datacenterId < 0) {
             throw new IllegalArgumentException("datacenterId can't be greater than MAX_DATACENTER_NUM or less than 0");
         }
+        logger.info("machineId: {}, MAX_MACHINE_NUM:{}", machineId, MAX_MACHINE_NUM);
         if (machineId > MAX_MACHINE_NUM || machineId < 0) {
             throw new IllegalArgumentException("machineId can't be greater than MAX_MACHINE_NUM or less than 0");
         }

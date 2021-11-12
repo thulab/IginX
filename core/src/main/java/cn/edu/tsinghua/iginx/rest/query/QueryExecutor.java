@@ -39,6 +39,9 @@ public class QueryExecutor {
 
     private final RestSession session = new RestSession();
 
+    private Integer maxPathLength = 3;
+
+
     public QueryExecutor(Query query) {
         this.query = query;
     }
@@ -73,59 +76,56 @@ public class QueryExecutor {
 
     public List<String> getPaths(QueryMetric queryMetric) throws Exception {
         List<String> ret = new ArrayList<>();
-        Map<String, Integer> metricschema = metaManager.getSchemaMapping(queryMetric.getName());
-        if (metricschema == null) {
-            throw new Exception("No metadata found");
-        } else {
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-            }
-            List<Integer> pos = new ArrayList<>();
-            for (int i = 0; i < pos2path.size(); i++) {
-                pos.add(-1);
-            }
-            searchPath(0, ret, pos2path, queryMetric, pos);
+        Map<Integer, String> pos2path = new TreeMap<>();
+        int now = 0;
+        for (Map.Entry<String, List<String>> entry : queryMetric.getTags().entrySet()) {
+            now ++;
+            pos2path.put(now, entry.getKey());
         }
+        List<Integer> pos = new ArrayList<>();
+        for (int i = 0; i < maxPathLength; i++) {
+            pos.add(-1);
+        }
+        searchPath(0, ret, pos2path, queryMetric, pos, 0);
         return ret;
     }
 
-    void searchPath(int depth, List<String> paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos) {
-        if (depth == pos2path.size()) {
-            StringBuilder path = new StringBuilder();
-            Iterator iter = pos2path.entrySet().iterator();
-            int now = 0;
-            while (iter.hasNext()) {
+    void searchPath(int depth, List<String> Paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos, int nowPos) {
+        if (nowPos == pos2path.size()) {
+            StringBuilder path = new StringBuilder("");
+            int tmpPos = 0;
+            for (int i = 0; i < depth; i++) {
                 String ins = null;
-                Map.Entry entry = (Map.Entry) iter.next();
-                List<String> tmp = queryMetric.getTags().get(entry.getValue());
+                List<String> tmp = null;
+                if (pos.get(i) != -1) {
+                    tmp = queryMetric.getTags().get(pos2path.get(tmpPos + 1));
+                    tmpPos ++;
+                }
                 if (tmp != null) {
-                    ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
+                    ins = tmp.get(pos.get(i));
                 }
                 if (ins != null) {
-                    path.append(ins).append(".");
-                }
-                else {
+                    path.append(pos2path.get(tmpPos) + ".");
+                    path.append(ins + ".");
+                }else {
+                    path.append("*.");
                     path.append("*.");
                 }
-                now++;
             }
-            if (queryMetric.getAnnotation()) {
-                path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
-            }
-            else {
+            if (depth > 0) {
                 path.append(queryMetric.getName());
+                Paths.add(path.toString());
             }
-            paths.add(path.toString());
+        }
+        if (depth == maxPathLength) {
             return;
         }
-        if (queryMetric.getTags().get(pos2path.get(depth + 1)) == null) {
-            pos.set(depth, -1);
-            searchPath(depth + 1, paths, pos2path, queryMetric, pos);
-        } else {
-            for (int i = 0; i < queryMetric.getTags().get(pos2path.get(depth + 1)).size(); i++) {
+        pos.set(depth, -1);
+        searchPath(depth + 1, Paths, pos2path, queryMetric, pos, nowPos);
+        if (pos2path.size() > nowPos) {
+            for (int i = 0; i < queryMetric.getTags().get(pos2path.get(nowPos + 1)).size(); i++) {
                 pos.set(depth, i);
-                searchPath(depth + 1, paths, pos2path, queryMetric, pos);
+                searchPath(depth + 1, Paths, pos2path, queryMetric, pos, nowPos + 1);
             }
         }
     }

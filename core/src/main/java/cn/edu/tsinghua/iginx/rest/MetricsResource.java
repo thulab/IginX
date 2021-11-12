@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.rest.query.QueryParser;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +45,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -65,6 +67,11 @@ public class MetricsResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(config.getAsyncRestThreadPool());
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
+
+    private final Random random = new Random();
+    private final double logRestQueryPossibility = config.getLogRestQueryPossibility();
+    private final double logRestInsertPossibility = config.getLogRestInsertPossibility();
+
 
     @Inject
     public MetricsResource() {
@@ -99,7 +106,7 @@ public class MetricsResource {
     @POST
     @Path(INSERT_ANNOTATION_URL)
     public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
-        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, true));
+        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, true, false, "", 0));
     }
 
     @POST
@@ -141,7 +148,15 @@ public class MetricsResource {
     @POST
     @Path(INSERT_URL)
     public void add(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
-        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false));
+        boolean needLog = (random.nextDouble() < logRestInsertPossibility);
+        String sign = "";
+        long startTimestamp = 0;
+        if (needLog) {
+            sign = RandomStringUtils.randomAlphanumeric(5);
+            startTimestamp = System.currentTimeMillis();
+            LOGGER.info("insert input, sign: {}, timestamp: {}", sign, startTimestamp);
+        }
+        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false, needLog, sign, startTimestamp));
     }
 
     @POST
@@ -206,15 +221,35 @@ public class MetricsResource {
     }
 
     public Response postQuery(String jsonStr, boolean isAnnotation, boolean isGrafana) {
+        boolean needLog = (random.nextDouble() < logRestQueryPossibility);
+        long startTimestamp = System.currentTimeMillis();
+        String sign = "";
+        if (needLog) {
+            sign = RandomStringUtils.randomAlphanumeric(5);
+            LOGGER.info("query input, sign: {}, timestamp: {}, json: {}", sign, startTimestamp, jsonStr);
+        }
+
         try {
             if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");
             }
             QueryParser parser = new QueryParser();
+            if (needLog) {
+                LOGGER.info("before deserialization, sign: {}, cost: {}", sign, System.currentTimeMillis() - startTimestamp);
+            }
             Query query = isAnnotation ? parser.parseAnnotationQueryMetric(jsonStr, isGrafana) : parser.parseQueryMetric(jsonStr);
+            if (needLog) {
+                LOGGER.info("after deserialization, sign: {}, timestamp: {}", sign, System.currentTimeMillis() - startTimestamp);
+            }
             QueryExecutor executor = new QueryExecutor(query);
             QueryResult result = executor.execute(false);
+            if (needLog) {
+                LOGGER.info("after executing, sign: {}, timestamp: {}", sign, System.currentTimeMillis() - startTimestamp);
+            }
             String entity = isAnnotation ? parser.parseResultToAnnotationJson(result, isGrafana) : parser.parseResultToJson(result, false);
+            if (needLog) {
+                LOGGER.info("after serialization, sign: {}, timestamp: {}", sign, System.currentTimeMillis() - startTimestamp);
+            }
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
 
         } catch (Exception e) {
