@@ -33,7 +33,8 @@ public abstract class QueryAggregator {
     private String metric_name;
     private Filter filter;
     private QueryAggregatorType type;
-
+    private List<Double> curveQuery;
+    private Long curveUnit;
 
     protected QueryAggregator(QueryAggregatorType type) {
         this.type = type;
@@ -93,6 +94,22 @@ public abstract class QueryAggregator {
 
     public void setType(QueryAggregatorType type) {
         this.type = type;
+    }
+
+    public List<Double> getCurveQuery() {
+        return curveQuery;
+    }
+
+    public void setCurveQuery(List<Double> curveQuery) {
+        this.curveQuery = curveQuery;
+    }
+
+    public Long getCurveUnit() {
+        return curveUnit;
+    }
+
+    public void setCurveUnit(Long curveUnit) {
+        this.curveUnit = curveUnit;
     }
 
     public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {

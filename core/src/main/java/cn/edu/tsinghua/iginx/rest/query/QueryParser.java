@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 
@@ -414,6 +415,9 @@ public class QueryParser {
                 case "percentile":
                     qa = new QueryAggregatorPercentile();
                     break;
+                case "curve":
+                    qa = new QueryAggregatorCurvematching();
+                    break;
                 default:
                     continue;
             }
@@ -486,6 +490,21 @@ public class QueryParser {
                     }
                     time = transTimeFromString(unit.asText());
                     qa.setUnit(time);
+                    break;
+                case "curve":
+                    JsonNode curveList = aggregator.get("list");
+                    if (curveList == null || !curveList.isArray()) {
+                        continue;
+                    }
+                    qa.setCurveQuery(new ArrayList<>());
+                    for (JsonNode listValue: curveList) {
+                        qa.getCurveQuery().add(listValue.asDouble());
+                    }
+                    JsonNode curveUnit = aggregator.get("unit");
+                    if (curveUnit == null) {
+                        continue;
+                    }
+                    qa.setCurveUnit(curveUnit.asLong());
                     break;
                 case "diff":
                 default:
