@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueComparator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
@@ -57,7 +58,8 @@ public class FilterUtils {
                 }
                 return validateTimeFilter(timeFilter, row);
             case Value:
-
+                ValueFilter valueFilter = (ValueFilter) filter;
+                return validateValueFilter(valueFilter, row);
             default:
                 break;
         }

@@ -18,27 +18,32 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
+import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.List;
 
 public class Count implements SetMappingFunction {
+
+    private static final Logger logger = LoggerFactory.getLogger(Count.class);
 
     public static final String COUNT = "count";
 
     private static final Count INSTANCE = new Count();
 
     private Count() {}
-
-    static {
-        FunctionManager.getInstance().registerFunction(INSTANCE);
-    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -56,7 +61,39 @@ public class Count implements SetMappingFunction {
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) {
-        return null;
+    public Row transform(RowStream rows, List<Value> params) throws Exception {
+        if (params.size() != 1) {
+            throw new IllegalArgumentException("unexpected params for avg.");
+        }
+        Value param = params.get(0);
+        if (param.getDataType() != DataType.BINARY) {
+            throw new IllegalArgumentException("unexpected param type for avg.");
+        }
+        String target = param.getBinaryV();
+        Header header = new Header(Collections.singletonList(new Field(getIdentifier() + "(" + target + ")", DataType.LONG)));
+        long count = 0L;
+        if (target.endsWith(Constants.ALL_PATH)) {
+            while (rows.hasNext()) {
+                count += 1;
+                rows.next();
+            }
+        } else {
+            int index = rows.getHeader().indexOf(target);
+            if (index != -1) {
+                while (rows.hasNext()) {
+                    Row row = rows.next();
+                    Object value = row.getValue(index);
+                    if (value != null) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return new Row(header, new Object[]{count});
     }
+
+    public static Count getInstance() {
+        return INSTANCE;
+    }
+
 }

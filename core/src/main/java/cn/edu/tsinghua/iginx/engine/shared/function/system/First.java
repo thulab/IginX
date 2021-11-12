@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
-
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
@@ -27,13 +26,13 @@ import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 
 import java.util.List;
 
-public class Last implements MappingFunction {
+public class First implements MappingFunction {
 
-    public static final String LAST = "last";
+    public static final String FIRST = "first";
 
-    private static final Last INSTANCE = new Last();
+    private static final First INSTANCE = new First();
 
-    private Last() {}
+    private First() {}
 
     @Override
     public FunctionType getFunctionType() {
@@ -47,7 +46,7 @@ public class Last implements MappingFunction {
 
     @Override
     public String getIdentifier() {
-        return LAST;
+        return FIRST;
     }
 
     @Override
@@ -55,7 +54,7 @@ public class Last implements MappingFunction {
         return null;
     }
 
-    public static Last getInstance() {
+    public static First getInstance() {
         return INSTANCE;
     }
 

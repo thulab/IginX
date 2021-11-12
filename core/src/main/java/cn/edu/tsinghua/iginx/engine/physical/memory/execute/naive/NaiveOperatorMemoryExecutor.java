@@ -196,7 +196,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rows = table.getRows();
         long bias = downsample.getTimeRange().getBeginTime();
         long precision = downsample.getPrecision();
-        Map<Long, List<Row>> groups = new TreeMap<>();
+        TreeMap<Long, List<Row>> groups = new TreeMap<>();
         SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
         List<Value> params = downsample.getFunctionCall().getParams();
         for (Row row: rows) {
@@ -204,12 +204,18 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             groups.getOrDefault(timestamp, new ArrayList<>()).add(row);
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
-        groups.forEach((time, group) -> {
-            Row row = function.transform(new Table(header, group), params);
-            if (row != null) {
-                transformedRawRows.add(new Pair<>(time, row));
+        try {
+            for (Map.Entry<Long, List<Row>> entry: groups.entrySet()) {
+                long time = entry.getKey();
+                List<Row> group = entry.getValue();
+                Row row = function.transform(new Table(header, group), params);
+                if (row != null) {
+                    transformedRawRows.add(new Pair<>(time, row));
+                }
             }
-        });
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
+        }
         if (transformedRawRows.size() == 0) {
             return Table.EMPTY_TABLE;
         }
@@ -225,11 +231,15 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         RowMappingFunction function = (RowMappingFunction) rowTransform.getFunctionCall().getFunction();
         List<Value> params = rowTransform.getFunctionCall().getParams();
         List<Row> rows = new ArrayList<>();
-        while (table.hasNext()) {
-            Row row = function.transform(table.next(), params);
-            if (row != null) {
-                rows.add(row);
+        try {
+            while (table.hasNext()) {
+                Row row = function.transform(table.next(), params);
+                if (row != null) {
+                    rows.add(row);
+                }
             }
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute row mapping function " + function.getIdentifier() + ".", e);
         }
         if (rows.size() == 0) {
             return Table.EMPTY_TABLE;
@@ -241,75 +251,121 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeSetTransform(SetTransform setTransform, Table table) throws PhysicalException {
         SetMappingFunction function = (SetMappingFunction) setTransform.getFunctionCall().getFunction();
         List<Value> params = setTransform.getFunctionCall().getParams();
-        Row row = function.transform(table, params);
-        if (row == null) {
-            return Table.EMPTY_TABLE;
+        try {
+            Row row = function.transform(table, params);
+            if (row == null) {
+                return Table.EMPTY_TABLE;
+            }
+            Header header = row.getHeader();
+            return new Table(header, Collections.singletonList(row));
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
         }
-        Header header = row.getHeader();
-        return new Table(header, Collections.singletonList(row));
+
     }
 
     private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
-        // 目前只支持使用时间戳
-        if (!join.getJoinBy().equals(Constants.TIMESTAMP)) {
-            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP);
-        }
-        // 检查时间戳
-        Header headerA = tableA.getHeader();
-        Header headerB = tableB.getHeader();
-        if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
-            throw new InvalidOperatorParameterException("row streams for join operator should have timestamp.");
-        }
-        // 检查 field
-        for (Field field: headerA.getFields()) {
-            if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                throw new PhysicalTaskExecuteFailureException("two source has shared field");
+        // 目前只支持使用时间戳和顺序
+        if (join.getJoinBy().equals(Constants.TIMESTAMP)) {
+            // 检查时间戳
+            Header headerA = tableA.getHeader();
+            Header headerB = tableB.getHeader();
+            if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+                throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
-        }
-        List<Field> newFields = new ArrayList<>();
-        newFields.addAll(headerA.getFields());
-        newFields.addAll(headerB.getFields());
-        Header newHeader = new Header(Field.TIME, newFields);
-        List<Row> newRows = new ArrayList<>();
+            // 检查 field
+            for (Field field: headerA.getFields()) {
+                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
+                }
+            }
+            List<Field> newFields = new ArrayList<>();
+            newFields.addAll(headerA.getFields());
+            newFields.addAll(headerB.getFields());
+            Header newHeader = new Header(Field.TIME, newFields);
+            List<Row> newRows = new ArrayList<>();
 
-        int index1 = 0, index2 = 0;
-        while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
-            Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
-            Object[] values = new Object[newHeader.getFieldSize()];
-            long timestamp;
-            if (rowA.getTimestamp() == rowB.getTimestamp()) {
-                timestamp = rowA.getTimestamp();
+            int index1 = 0, index2 = 0;
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+                Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                long timestamp;
+                if (rowA.getTimestamp() == rowB.getTimestamp()) {
+                    timestamp = rowA.getTimestamp();
+                    System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+                    System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                    index1++;
+                    index2++;
+                } else if (rowA.getTimestamp() < rowB.getTimestamp()) {
+                    timestamp = rowA.getTimestamp();
+                    System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+                    index1++;
+                } else {
+                    timestamp = rowB.getTimestamp();
+                    System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                    index2++;
+                }
+                newRows.add(new Row(newHeader, timestamp, values));
+            }
+
+            for (; index1 < tableA.getRowSize(); index1++) {
+                Row rowA = tableA.getRow(index1);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+                newRows.add(new Row(newHeader, rowA.getTimestamp(), values));
+            }
+
+            for (; index2 < tableB.getRowSize(); index2++) {
+                Row rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
+            }
+            return new Table(newHeader, newRows);
+        } else if (join.getJoinBy().equals(Constants.ORDINAL)) {
+            Header headerA = tableA.getHeader();
+            Header headerB = tableB.getHeader();
+            if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
+                throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
+            }
+            for (Field field: headerA.getFields()) {
+                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
+                }
+            }
+            List<Field> newFields = new ArrayList<>();
+            newFields.addAll(headerA.getFields());
+            newFields.addAll(headerB.getFields());
+            Header newHeader = new Header(newFields);
+            List<Row> newRows = new ArrayList<>();
+
+            int index1 = 0, index2 = 0;
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+                Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
                 System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
                 System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
                 index1++;
                 index2++;
-            } else if (rowA.getTimestamp() < rowB.getTimestamp()) {
-                timestamp = rowA.getTimestamp();
-                System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
-                index1++;
-            } else {
-                timestamp = rowB.getTimestamp();
-                System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
-                index2++;
+                newRows.add(new Row(newHeader, values));
             }
-            newRows.add(new Row(newHeader, timestamp, values));
-        }
+            for (; index1 < tableA.getRowSize(); index1++) {
+                Row rowA = tableA.getRow(index1);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
+                newRows.add(new Row(newHeader, values));
+            }
 
-        for (; index1 < tableA.getRowSize(); index1++) {
-            Row rowA = tableA.getRow(index1);
-            Object[] values = new Object[newHeader.getFieldSize()];
-            System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
-            newRows.add(new Row(newHeader, rowA.getTimestamp(), values));
+            for (; index2 < tableB.getRowSize(); index2++) {
+                Row rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                newRows.add(new Row(newHeader, values));
+            }
+            return new Table(newHeader, newRows);
+        } else {
+            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
         }
-
-        for (; index2 < tableB.getRowSize(); index2++) {
-            Row rowB = tableB.getRow(index2);
-            Object[] values = new Object[newHeader.getFieldSize()];
-            System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
-            newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
-        }
-
-        return new Table(newHeader, newRows);
     }
 
     private RowStream executeUnion(Union union, Table tableA, Table tableB) throws PhysicalException {

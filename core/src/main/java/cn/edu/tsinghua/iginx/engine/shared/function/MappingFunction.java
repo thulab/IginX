@@ -19,12 +19,12 @@
 package cn.edu.tsinghua.iginx.engine.shared.function;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 
 import java.util.List;
 
-public interface RowMappingFunction extends Function {
+public interface MappingFunction extends Function {
 
-    Row transform(Row row, List<Value> params) throws Exception;
+    RowStream transform(RowStream rows, List<Value> params) throws Exception;
 
 }

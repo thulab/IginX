@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
+package cn.edu.tsinghua.iginx.engine.shared.function.system.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -42,4 +42,23 @@ public class ValueComparator {
         }
         return 0;
     }
+
+    public static int compare(Object o1, Object o2, DataType dataType) {
+        switch (dataType) {
+            case INTEGER:
+                return Integer.compare((Integer) o1, (Integer) o2);
+            case LONG:
+                return Long.compare((Long) o1, (Long) o2);
+            case BOOLEAN:
+                return Boolean.compare((Boolean) o1, (Boolean) o2);
+            case FLOAT:
+                return Float.compare((Float) o1, (Float) o2);
+            case DOUBLE:
+                return Double.compare((Double) o1, (Double) o2);
+            case BINARY:
+                return ((String) o1).compareTo((String) o2);
+        }
+        return 0;
+    }
+
 }

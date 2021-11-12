@@ -26,6 +26,6 @@ import java.util.List;
 
 public interface SetMappingFunction extends Function {
 
-    Row transform(RowStream rows, List<Value> params);
+    Row transform(RowStream rows, List<Value> params) throws Exception;
 
 }

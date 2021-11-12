@@ -121,6 +121,7 @@ public class QueryGenerator implements LogicalGenerator {
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
                 List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
+                logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
                         new SetTransform(
                                 new OperatorSource(copySelect),

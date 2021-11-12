@@ -16,15 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.function;
+package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
-import cn.edu.tsinghua.iginx.engine.shared.data.Value;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import org.junit.Test;
 
-import java.util.List;
+public class MaxTest {
 
-public interface RowMappingFunction extends Function {
+    @Test
+    public void testMaxTransform() {
 
-    Row transform(Row row, List<Value> params) throws Exception;
+    }
 
 }

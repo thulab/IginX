@@ -16,47 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.function.system;
+package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-
-import cn.edu.tsinghua.iginx.engine.shared.data.Value;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
-import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
-import java.util.List;
+public class MappingTransform extends AbstractUnaryOperator {
 
-public class Last implements MappingFunction {
+    private final FunctionCall functionCall;
 
-    public static final String LAST = "last";
+    public MappingTransform(Source source, FunctionCall functionCall) {
+        super(OperatorType.RowTransform, source);
+        if (functionCall == null || functionCall.getFunction() == null) {
+            throw new IllegalArgumentException("function shouldn't be null");
+        }
+        if (functionCall.getFunction().getMappingType() != MappingType.Mapping) {
+            throw new IllegalArgumentException("function should be mapping function");
+        }
+        this.functionCall = functionCall;
+    }
 
-    private static final Last INSTANCE = new Last();
-
-    private Last() {}
-
-    @Override
-    public FunctionType getFunctionType() {
-        return FunctionType.System;
+    public FunctionCall getFunctionCall() {
+        return functionCall;
     }
 
     @Override
-    public MappingType getMappingType() {
-        return MappingType.Mapping;
-    }
-
-    @Override
-    public String getIdentifier() {
-        return LAST;
-    }
-
-    @Override
-    public RowStream transform(RowStream rows, List<Value> params) throws Exception {
+    public Operator copy() {
         return null;
     }
-
-    public static Last getInstance() {
-        return INSTANCE;
-    }
-
 }

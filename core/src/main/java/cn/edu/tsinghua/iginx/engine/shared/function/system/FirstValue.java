@@ -27,21 +27,19 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueComparator;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class Min implements SetMappingFunction {
+public class FirstValue implements SetMappingFunction {
 
-    public static final String MIN = "min";
+    public static final String FIRST_VALUE = "first_value";
 
-    private static final Min INSTANCE = new Min();
+    private static final FirstValue INSTANCE = new FirstValue();
 
-    private Min() {}
+    private FirstValue() {}
 
     @Override
     public FunctionType getFunctionType() {
@@ -55,36 +53,34 @@ public class Min implements SetMappingFunction {
 
     @Override
     public String getIdentifier() {
-        return MIN;
+        return FIRST_VALUE;
     }
 
     @Override
     public Row transform(RowStream rows, List<Value> params) throws Exception {
         if (params.size() != 1) {
-            throw new IllegalArgumentException("unexpected params for max.");
+            throw new IllegalArgumentException("unexpected params for first value.");
         }
         Value param = params.get(0);
         if (param.getDataType() != DataType.BINARY) {
-            throw new IllegalArgumentException("unexpected param type for max.");
+            throw new IllegalArgumentException("unexpected param type for first value.");
         }
         String target = param.getBinaryV();
         if (target.endsWith(Constants.ALL_PATH)) {
+            List<Field> fields = rows.getHeader().getFields();
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: rows.getHeader().getFields()) {
+            for (Field field: fields) {
                 targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
             }
             Object[] targetValues = new Object[targetFields.size()];
             while (rows.hasNext()) {
                 Row row = rows.next();
-                Object[] values = row.getValues();
-                for (int i = 0; i < targetFields.size(); i++) {
-                    if (targetValues[i] == null) {
-                        targetValues[i] = values[i];
-                    } else {
-                        if (values[i] != null && ValueComparator.compare(targetValues[i], values[i], targetFields.get(i).getType()) > 0) {
-                            targetValues[i] = values[i];
-                        }
+                for (int i = 0; i < fields.size(); i++) {
+                    Object value = row.getValue(i);
+                    if (targetValues[i] != null) { // 找到第一个非空值之后，后续不再找了
+                        continue;
                     }
+                    targetValues[i] = value;
                 }
             }
             return new Row(new Header(targetFields), targetValues);
@@ -93,22 +89,22 @@ public class Min implements SetMappingFunction {
             if (index == -1) {
                 return Row.EMPTY_ROW;
             }
-            Field targetField = new Field(getIdentifier() + "(" + target + ")", rows.getHeader().getField(index).getType());
+            Field field = rows.getHeader().getField(index);
+            Field targetField = new Field(getIdentifier() + "(" + field.getName() + ")", field.getType());
             Object targetValue = null;
             while (rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value != null) {
-                    if (targetValue == null || ValueComparator.compare(targetValue, value, targetField.getType()) > 0) {
-                        targetValue = value;
-                    }
+                    targetValue = value;
+                    break; // 找到第一个不为空的值，后续不需要再处理了
                 }
             }
             return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
     }
 
-    public static Min getInstance() {
+    public static FirstValue getInstance() {
         return INSTANCE;
     }
 
