@@ -125,7 +125,6 @@ public class SimplePolicy implements IPolicy {
         this.needReAllocate.set(needReAllocate);
     }
 
-    boolean isFirst = true;
 
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
         Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
@@ -145,14 +144,7 @@ public class SimplePolicy implements IPolicy {
         for (Double v: value) {
             logger.info("fragment value num : {}, value : {}", num ++, v);
         }
-        if (value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3) {
-            return false;
-        }
 
-        if (isFirst) {
-            isFirst = false;
-            return false;
-        }
-        return true;
+        return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);
     }
 }

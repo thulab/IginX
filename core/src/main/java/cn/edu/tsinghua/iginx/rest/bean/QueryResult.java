@@ -167,7 +167,7 @@ public class QueryResult {
         StringBuilder ret = new StringBuilder(" \"tags\": {");
         Map<String, List<String>> tags = null;
         try {
-            tags = getTagsFromPaths(queryMetrics.get(num).getName(),
+            tags = getTagsFromPaths(queryMetrics.get(num).getTags(),
                     queryResultDatasets.get(num).getPaths());
         } catch (Exception e) {
             LOGGER.error("Error occurred during parsing tags ", e);
@@ -212,29 +212,27 @@ public class QueryResult {
         return "\"sample_size\": " + queryResultDatasets.get(num).getSampleSize();
     }
 
-    private Map<String, List<String>> getTagsFromPaths(String name, List<String> paths) throws Exception {
+    private Map<String, List<String>> getTagsFromPaths(Map<String, List<String>> tags, List<String> paths) throws Exception {
         List<Map<String, Integer>> dup = new ArrayList<>();
         Map<String, List<String>> ret = new TreeMap<>();
         Map<Integer, String> pos2path = new TreeMap<>();
-        Map<String, Integer> metricschema = META_MANAGER.getSchemaMapping(name);
-        if (metricschema == null) {
-            throw new Exception("No metadata found");
-        } else {
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-                dup.add(new HashMap<>());
-            }
+        int now = 0;
+        for (Map.Entry<String, List<String>> entry : tags.entrySet()) {
+            now ++;
+            pos2path.put(now, entry.getKey());
+            dup.add(new HashMap<>());
         }
         for (String path : paths) {
             String[] splitpaths = path.split("\\.");
             for (int i = 0; i < pos2path.size(); i++) {
-                if (dup.get(i).get(splitpaths[i]) == null) {
-                    dup.get(i).put(splitpaths[i], 1);
-                    ret.computeIfAbsent(pos2path.get(i + 1), k -> new ArrayList<>());
-                    ret.get(pos2path.get(i + 1)).add(splitpaths[i]);
+                for (int j = 0; j < splitpaths.length; j += 2) {
+                    if (splitpaths[j].equals(pos2path.get(i + 1)) && dup.get(i).get(splitpaths[j + 1]) == null) {
+                        dup.get(i).put(splitpaths[j + 1], 1);
+                        ret.computeIfAbsent(pos2path.get(i + 1), k -> new ArrayList<>());
+                        ret.get(pos2path.get(i + 1)).add(splitpaths[j + 1]);
+                    }
                 }
             }
-
         }
         return ret;
     }
