@@ -94,6 +94,8 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
+    private int restReqSplitNum = 10;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -389,4 +391,13 @@ public class Config {
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
     }
+
+    public int getRestReqSplitNum() {
+        return restReqSplitNum;
+    }
+
+    public void setRestReqSplitNum(int restReqSplitNum) {
+        this.restReqSplitNum = restReqSplitNum;
+    }
+
 }
