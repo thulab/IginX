@@ -25,6 +25,7 @@ public class RestUtils {
         }
         switch (ret) {
             case 0:
+                return DataType.BOOLEAN;
             case 1:
                 return DataType.LONG;
             case 2:
