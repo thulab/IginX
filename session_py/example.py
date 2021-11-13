@@ -51,6 +51,7 @@ if __name__ == '__main__':
     dataset = session.last_query(["a.a.*"], 0)
     print(dataset)
 
+
     # 删除部分数据
     session.delete_time_series("a.b.b")
 
@@ -62,6 +63,24 @@ if __name__ == '__main__':
 
     # 查询删除全部后剩余的数据
     dataset = session.query(["*"], 0, 10)
+    print(dataset)
+
+
+    # 写入数据
+    paths = ["a.d.a", "a.d.b"]
+    timestamps = [5, 6, 7, 8, 9]
+    values_list = [
+        [1, 10],
+        [3, 8],
+        [5, 6],
+        [7, 4],
+        [9, 2],
+    ]
+    data_type_list = [DataType.INTEGER, DataType.INTEGER]
+    session.insert_row_records(paths, timestamps, values_list, data_type_list)
+
+    # 使用 SQL 语句进行查询
+    dataset = session.execute_sql("select * from a.d where time in [5, 10) order by b desc offset 4 limit 2").get_query_data_set()
     print(dataset)
 
     session.close()
