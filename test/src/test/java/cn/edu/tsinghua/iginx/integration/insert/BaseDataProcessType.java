@@ -38,9 +38,9 @@ public abstract class BaseDataProcessType {
         try {
             generateData();
             if (isColumnInsert) {
-                session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+                session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
             } else {
-                session.insertRowRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+                session.insertNonAlignedRowRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
             }
         } catch (Exception e) {
             System.out.println("Error occurs in baseInsertTime, where isColumnInsert = "+ isColumnInsert);
