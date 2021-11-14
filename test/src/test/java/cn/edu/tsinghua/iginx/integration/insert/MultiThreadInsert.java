@@ -194,7 +194,7 @@ public class MultiThreadInsert extends OrderInsert {
                         dataTypeList.add(DataType.LONG);
                     }
                     try {
-                        localSession.insertColumnRecords(path, timestamps, valuesList, dataTypeList, null);
+                        localSession.insertNonAlignedColumnRecords(path, timestamps, valuesList, dataTypeList, null);
                     } catch (SessionException | ExecutionException e) {
                         System.out.println(e.getMessage());
                     }
