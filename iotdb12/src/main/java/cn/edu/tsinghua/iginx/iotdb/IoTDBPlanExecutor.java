@@ -519,18 +519,30 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     }
 
     public QueryDataPlanExecuteResult syncExecuteQueryDataPlan(QueryDataPlan plan) {
+        boolean isMaster = false;
+        if (plan.isSync()) {
+            isMaster = true;
+        }
+        String sign = RandomStringUtils.randomAlphanumeric(3);
+        long start = System.currentTimeMillis();
+        logger.info("Start Iotdb Query, sign : {}, timestamp : {}", sign, start);
+
+
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         List<QueryExecuteDataSet> sessionDataSets = new ArrayList<>();
         try {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 String statement = String.format(QUERY_DATA, pair.v, pair.k, plan.getStartTime(), plan.getEndTime());
+                logger.info("Before executeQueryStatement, sign : {}, cost : {}, statement: {}", sign, System.currentTimeMillis() - start, statement);
                 sessionDataSets.add(new IoTDBQueryExecuteDataSet(sessionPool.executeQueryStatement(statement)));
+                logger.info("After executeQueryStatement, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
             }
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
             return new QueryDataPlanExecuteResult(FAILURE, plan, null);
         }
+        logger.info("End Iotdb query, sign : {}, cos : {}, isMaster: {}, size: {}, engine: {}", sign, System.currentTimeMillis() - start, isMaster, plan.getPaths().size(), plan.getStorageEngineId());
         return new QueryDataPlanExecuteResult(SUCCESS, plan, sessionDataSets);
     }
 
