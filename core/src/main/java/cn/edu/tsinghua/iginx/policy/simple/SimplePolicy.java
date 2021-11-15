@@ -144,7 +144,10 @@ public class SimplePolicy implements IPolicy {
         for (Double v: value) {
             logger.info("fragment value num : {}, value : {}", num ++, v);
         }
-
-        return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);
+        if (value.size() > 0) {
+            return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);
+        } else {
+            return true;
+        }
     }
 }
