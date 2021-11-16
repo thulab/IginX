@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
@@ -165,13 +166,18 @@ public interface IMetaManager {
     int getSchemaMappingItem(String schema, String key);
 
     /**
-     * 更新活跃的分片的统计信息
-     *
-     * @param statisticsMap 活跃的分片的关于当前请求的统计信息
+     * 更新活跃分片统计信息
      */
-    void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
+    void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> fragmentStatisticsMap);
 
     Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
+
+    /**
+     * 更新活跃时间序列统计信息
+     */
+    void updateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap);
+
+    Map<String, TimeSeriesStatistics> getActiveTimeSeriesStatistics();
 
     boolean addUser(UserMeta user);
 

@@ -24,20 +24,24 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 import com.google.gson.reflect.TypeToken;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -145,7 +149,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
     private long activeFragmentStatisticsLease = -1L;
     private Watch.Watcher reshardNotificationWatcher;
-    private ReshardNotificationHook reshardNotificationHook = null;
+    private ReshardStatusHook reshardStatusHook = null;
     private long reshardNotificationLease = -1L;
     private Watch.Watcher reshardCounterWatcher;
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
@@ -402,19 +406,19 @@ public class ETCDMetaStorage implements IMetaStorage {
             }
         });
 
-        // 注册 reshard notification 的监听
+        // 注册 reshard status 的监听
         this.reshardNotificationWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
             @Override
             public void onNext(WatchResponse watchResponse) {
-                if (reshardNotificationHook == null) {
+                if (reshardStatusHook == null) {
                     return;
                 }
                 for (WatchEvent event : watchResponse.getEvents()) {
-                    boolean notification;
+                    ReshardStatus status;
                     switch (event.getEventType()) {
                         case PUT:
-                            notification = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), Boolean.class);
-                            reshardNotificationHook.onChange(notification);
+                            status = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), ReshardStatus.class);
+                            reshardStatusHook.onChange(status);
                             break;
                         case DELETE:
                             break;
@@ -912,6 +916,26 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void lockActiveStorageEngineStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseActiveStorageEngineStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerActiveStorageEngineStatisticsChangeHook(ActiveStorageEngineStatisticsChangeHook hook) {
+
+    }
+
+    @Override
     public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
         try {
             Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
@@ -1025,7 +1049,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void lockReshardNotification() throws MetaStorageException {
+    public void lockReshardStatus() throws MetaStorageException {
         try {
             reshardNotificationLeaseLock.lock();
             reshardNotificationLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
@@ -1037,11 +1061,11 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateReshardNotification(boolean notification) throws MetaStorageException {
+    public void updateReshardStatus(ReshardStatus status) throws MetaStorageException {
         try {
             this.client.getKVClient().put(
                     ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(notification))
+                    ByteSequence.from(JsonUtils.toJson(status))
             ).get();
         } catch (InterruptedException | ExecutionException e) {
             logger.error("encounter error when updating reshard notification: ", e);
@@ -1050,7 +1074,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void releaseReshardNotification() throws MetaStorageException {
+    public void releaseReshardStatus() throws MetaStorageException {
         try {
             client.getLockClient().unlock(ByteSequence.from(RESHARD_NOTIFICATION_LOCK.getBytes())).get();
             client.getLeaseClient().revoke(reshardNotificationLease).get();
@@ -1063,7 +1087,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void removeReshardNotification() throws MetaStorageException {
+    public void removeReshardStatus() throws MetaStorageException {
         try {
             this.client.getKVClient().delete(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).get();
         } catch (ExecutionException | InterruptedException e) {
@@ -1073,8 +1097,8 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
-        reshardNotificationHook = hook;
+    public void registerReshardStatusHook(ReshardStatusHook hook) {
+        reshardStatusHook = hook;
     }
 
     @Override

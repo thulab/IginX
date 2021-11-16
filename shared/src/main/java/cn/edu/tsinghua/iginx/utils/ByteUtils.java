@@ -23,7 +23,9 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ByteUtils {
 
@@ -419,5 +421,75 @@ public class ByteUtils {
         }
         buffer.flip();
         return buffer;
+    }
+
+    public static Map<String, Long> getColumnBytesOfTimeSeries(List<String> paths, Object[] valuesList, List<DataType> dataTypeList) {
+        Map<String, Long> bytesMap = new HashMap<>();
+        for (int i = 0; i < paths.size(); i++) {
+            long size = 0;
+            Object[] values = (Object[]) valuesList[i];
+            switch (dataTypeList.get(i)) {
+                case BOOLEAN:
+                    size = (long) values.length * (8 + 1);
+                    break;
+                case INTEGER:
+                case FLOAT:
+                    size = (long) values.length * (8 + 4);
+                break;
+                case LONG:
+                case DOUBLE:
+                    size = (long) values.length * (8 + 8);
+                break;
+                case BINARY:
+                    for (Object value : values) {
+                        size += ((byte[]) value).length;
+                    }
+                    size += (long) values.length * 8;
+                    break;
+                default:
+                    throw new UnsupportedOperationException(dataTypeList.get(i).toString());
+            }
+            bytesMap.put(paths.get(i), size);
+        }
+        return bytesMap;
+    }
+
+    public static Map<String, Long> getRowBytesOfTimeSeries(List<String> paths, Object[] valuesList, List<Bitmap> bitmapList, List<DataType> dataTypeList) {
+        Map<String, Long> bytesMap = new HashMap<>();
+        int[] counts = new int[paths.size()];
+        long[] sizes = new long[paths.size()];
+        for (int i = 0; i < bitmapList.size(); i++) {
+            Bitmap bitmap = bitmapList.get(i);
+            Object[] values = (Object[]) valuesList[i];
+            int index = 0;
+            for (int j = 0; j < bitmap.getSize(); j++) {
+                if (bitmap.get(j)) {
+                    counts[j]++;
+                    switch (dataTypeList.get(j)) {
+                        case BOOLEAN:
+                            sizes[j] += 1;
+                            break;
+                        case INTEGER:
+                        case FLOAT:
+                            sizes[j] += 4;
+                            break;
+                        case LONG:
+                        case DOUBLE:
+                            sizes[j] += 8;
+                            break;
+                        case BINARY:
+                            sizes[j] += ((byte[]) values[index]).length;
+                            break;
+                        default:
+                            throw new UnsupportedOperationException(dataTypeList.get(j).toString());
+                    }
+                    index++;
+                }
+            }
+        }
+        for (int i = 0; i < paths.size(); i++) {
+            bytesMap.put(paths.get(i), sizes[i] + counts[i] * 8L);
+        }
+        return bytesMap;
     }
 }

@@ -21,10 +21,16 @@ package cn.edu.tsinghua.iginx.metadata.storage.zk;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveSeparatorStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveTimeSeriesIntervalStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MinimalActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -38,6 +44,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 import com.google.gson.reflect.TypeToken;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -54,8 +61,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
 
 public class ZooKeeperMetaStorage implements IMetaStorage {
 
@@ -66,6 +77,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String STORAGE_ENGINE_NODE = "/storage/node";
 
     private static final String ACTIVE_FRAGMENT_STATISTICS_NODE = "/statistics/fragment/active/node";
+
+    private static final String ACTIVE_SEPARATOR_STATISTICS_NODE = "/statistics/separator/active/node";
+
+    private static final String ACTIVE_STORAGE_ENGINE_STATISTICS_NODE = "/statistics/storage/engine/active/node";
 
     private static final String STORAGE_UNIT_NODE = "/unit/unit";
 
@@ -81,7 +96,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK_NODE = "/lock/user";
 
-    private static final String RESHARD_NOTIFICATION_LOCK_NODE = "/lock/notification/reshard";
+    private static final String RESHARD_STATUS_LOCK_NODE = "/lock/status/reshard";
 
     private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter/reshard";
 
@@ -99,11 +114,21 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/active";
 
+    private static final String MINIMAL_ACTIVE_IGINX_STATISTICS_NODE_PREFIX = "/statistics/iginx/active/minimal";
+
+    private static final String ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX = "/statistics/separator/active";
+
+    private static final String MERGED_ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX = "/statistics/separator/active/merged";
+
+    private static final String ACTIVE_STORAGE_ENGINE_STATISTICS_NODE_PREFIX = "/statistics/storage/engine/active";
+
+    private static final String ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE_PREFIX = "/statistics/time/series/interval/active";
+
     private static final String SINGLE_ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/add";
 
     private static final String INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive";
 
-    private static final String RESHARD_NOTIFICATION_NODE_PREFIX = "/notification/reshard";
+    private static final String RESHARD_STATUS_NODE_PREFIX = "/status/reshard";
 
     private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
 
@@ -115,8 +140,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final Lock fragmentMutexLock = new ReentrantLock();
     private final InterProcessMutex fragmentMutex;
     private final Lock activeFragmentStatisticsMutexLock = new ReentrantLock();
-    private final Lock reshardNotificationMutexLock = new ReentrantLock();
-    private final InterProcessMutex reshardNotificationMutex;
+    private final Lock minimalActiveIginxStatisticsMutexLock = new ReentrantLock();
+    private final Lock activeSeparatorStatisticsMutexLock = new ReentrantLock();
+    private final Lock activeStorageEngineStatisticsMutexLock = new ReentrantLock();
+    private final Lock activeTimeSeriesIntervalStatisticsMutexLock = new ReentrantLock();
+    private final Lock reshardStatusMutexLock = new ReentrantLock();
+    private final InterProcessMutex reshardStatusMutex;
     private final Lock reshardCounterMutexLock = new ReentrantLock();
     private final InterProcessMutex reshardCounterMutex;
 
@@ -127,7 +156,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     protected TreeCache fragmentCache;
     protected TreeCache userCache;
     protected TreeCache activeFragmentStatisticsCache;
-    protected TreeCache reshardNotificationCache;
+    protected TreeCache minimalActiveIginxStatisticsCache;
+    protected TreeCache activeSeparatorStatisticsCache;
+    protected TreeCache activeStorageEngineStatisticsCache;
+    protected TreeCache activeTimeSeriesIntervalStatisticsCache;
+    protected TreeCache reshardStatusCache;
     protected TreeCache reshardCounterCache;
 
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
@@ -137,7 +170,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private FragmentChangeHook fragmentChangeHook = null;
     private UserChangeHook userChangeHook = null;
     private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
-    private ReshardNotificationHook reshardNotificationHook = null;
+    private MinimalActiveIginxStatisticsChangeHook minimalActiveIginxStatisticsChangeHook = null;
+    private ActiveSeparatorStatisticsChangeHook activeSeparatorStatisticsChangeHook = null;
+    private ActiveStorageEngineStatisticsChangeHook activeStorageEngineStatisticsChangeHook = null;
+    private ActiveTimeSeriesIntervalStatisticsChangeHook activeTimeSeriesIntervalStatisticsChangeHook = null;
+    private ReshardStatusHook reshardStatusHook = null;
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
 
     public ZooKeeperMetaStorage() {
@@ -150,7 +187,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
-        reshardNotificationMutex = new InterProcessMutex(client, RESHARD_NOTIFICATION_LOCK_NODE);
+        reshardStatusMutex = new InterProcessMutex(client, RESHARD_STATUS_LOCK_NODE);
         reshardCounterMutex = new InterProcessMutex(client, RESHARD_COUNTER_LOCK_NODE);
     }
 
@@ -462,7 +499,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         break;
                     }
                     data = event.getData().getData();
-                    logger.info("storage engine meta update: " + event.getData().getPath());
+                    logger.info("storage engine meta updateByTimeSeriesStatistics: " + event.getData().getPath());
                     logger.info("storage engine: " + new String(data));
                     storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
                     if (storageEngineMeta != null) {
@@ -871,7 +908,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 }
             }
             registerActiveFragmentStatisticsListener();
-            registerReshardNotificationListener();
+            registerMinimalActiveIginxStatisticsListener();
+            registerActiveSeparatorStatisticsListener();
+            registerActiveStorageEngineStatisticsListener();
+            registerActiveTimeSeriesIntervalStatisticsListener();
+            registerReshardStatusListener();
             registerReshardCounterListener();
             return activeFragmentStatisticsMap;
         } catch (Exception e) {
@@ -913,12 +954,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     @Override
     public void lockActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            activeFragmentStatisticsMutexLock.lock();
-        } catch (Exception e) {
-            activeFragmentStatisticsMutexLock.unlock();
-            throw new MetaStorageException("encounter error when locking active fragment statistics: ", e);
-        }
+        activeFragmentStatisticsMutexLock.lock();
     }
 
     @Override
@@ -968,101 +1004,328 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.activeFragmentStatisticsChangeHook = hook;
     }
 
+    private void registerMinimalActiveIginxStatisticsListener() throws Exception {
+        this.minimalActiveIginxStatisticsCache = new TreeCache(this.client, MINIMAL_ACTIVE_IGINX_STATISTICS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (minimalActiveIginxStatisticsChangeHook == null) {
+                return;
+            }
+            byte[] data;
+            double density;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    density = JsonUtils.fromJson(data, Double.class);
+                    minimalActiveIginxStatisticsChangeHook.onChange(density);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.minimalActiveIginxStatisticsCache.getListenable().addListener(listener);
+        this.minimalActiveIginxStatisticsCache.start();
+    }
+
+    @Override
+    public void lockMinimalActiveIginxStatistics() throws MetaStorageException {
+        minimalActiveIginxStatisticsMutexLock.lock();
+    }
+
+    @Override
+    public void addMinimalActiveIginxStatistics(double density) throws MetaStorageException {
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(MINIMAL_ACTIVE_IGINX_STATISTICS_NODE_PREFIX, JsonUtils.toJson(density));
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when adding active storage engine statistics: ", e);
+        }
+    }
+
+    @Override
+    public void releaseMinimalActiveIginxStatistics() throws MetaStorageException {
+        minimalActiveIginxStatisticsMutexLock.unlock();
+    }
+
+    @Override
+    public void registerMinimalActiveIginxStatisticsChangeHook(MinimalActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
+        minimalActiveIginxStatisticsChangeHook = hook;
+    }
+
+    private void registerActiveSeparatorStatisticsListener() throws Exception {
+        this.activeSeparatorStatisticsCache = new TreeCache(this.client, ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (activeSeparatorStatisticsChangeHook == null) {
+                return;
+            }
+            String path;
+            byte[] data;
+            boolean isMerged;
+            Set<String> separators;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    path = event.getData().getPath();
+                    data = event.getData().getData();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 6) {
+                        isMerged = pathParts[4].equals("merged");
+                        separators = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Set<String>>() {}.getType());
+                        if (separators != null) {
+                            activeSeparatorStatisticsChangeHook.onChange(isMerged, separators);
+                        } else {
+                            logger.error("encounter error when resolving active separator statistics from zookeeper");
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.activeStorageEngineStatisticsCache.getListenable().addListener(listener);
+        this.activeStorageEngineStatisticsCache.start();
+    }
+
+    @Override
+    public void lockActiveSeparatorStatistics() throws MetaStorageException {
+        activeSeparatorStatisticsMutexLock.lock();
+    }
+
+    @Override
+    public void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(ACTIVE_SEPARATOR_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(separators));
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when adding active separator statistics: ", e);
+        }
+    }
+
+    @Override
+    public void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException {
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(MERGED_ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX, JsonUtils.toJson(separators));
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when adding active separator statistics: ", e);
+        }
+    }
+
+    @Override
+    public void releaseActiveSeparatorStatistics() throws MetaStorageException {
+        activeSeparatorStatisticsMutexLock.unlock();
+    }
+
+    @Override
+    public void registerActiveSeparatorStatisticsChangeHook(ActiveSeparatorStatisticsChangeHook hook) {
+        this.activeSeparatorStatisticsChangeHook = hook;
+    }
+
+    private void registerActiveStorageEngineStatisticsListener() throws Exception {
+        this.activeStorageEngineStatisticsCache = new TreeCache(this.client, ACTIVE_STORAGE_ENGINE_STATISTICS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (activeStorageEngineStatisticsChangeHook == null) {
+                return;
+            }
+            String path;
+            byte[] data;
+            long id;
+            Map<Long, StorageEngineStatistics> statisticsMap;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    path = event.getData().getPath();
+                    data = event.getData().getData();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 6) {
+                        id = Long.parseLong(pathParts[5].substring(5));
+                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<Long, StorageEngineStatistics>>() {}.getType());
+                        if (statisticsMap != null) {
+                            activeStorageEngineStatisticsChangeHook.onChange(id, statisticsMap);
+                        } else {
+                            logger.error("encounter error when resolving active storage engine statistics from zookeeper");
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.activeStorageEngineStatisticsCache.getListenable().addListener(listener);
+        this.activeStorageEngineStatisticsCache.start();
+    }
+
+    @Override
+    public void lockActiveStorageEngineStatistics() throws MetaStorageException {
+        activeStorageEngineStatisticsMutexLock.lock();
+    }
+
+    @Override
+    public void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
+        try {
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(ACTIVE_STORAGE_ENGINE_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(activeStorageEngineStatistics));
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when adding active storage engine statistics: ", e);
+        }
+    }
+
+    @Override
+    public void releaseActiveStorageEngineStatistics() throws MetaStorageException {
+        activeStorageEngineStatisticsMutexLock.unlock();
+    }
+
+    @Override
+    public void registerActiveStorageEngineStatisticsChangeHook(ActiveStorageEngineStatisticsChangeHook hook) {
+        this.activeStorageEngineStatisticsChangeHook = hook;
+    }
+
+    private void registerActiveTimeSeriesIntervalStatisticsListener() throws Exception {
+        this.activeTimeSeriesIntervalStatisticsCache = new TreeCache(this.client, ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (activeTimeSeriesIntervalStatisticsChangeHook == null) {
+                return;
+            }
+            String path;
+            byte[] data;
+            Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    path = event.getData().getPath();
+                    data = event.getData().getData();
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 6) {
+                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<TimeSeriesInterval, TimeSeriesIntervalStatistics>>() {}.getType());
+                        if (statisticsMap != null) {
+                            activeTimeSeriesIntervalStatisticsChangeHook.onChange(statisticsMap);
+                        } else {
+                            logger.error("encounter error when resolving active time series interval statistics from zookeeper");
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.activeTimeSeriesIntervalStatisticsCache.getListenable().addListener(listener);
+        this.activeTimeSeriesIntervalStatisticsCache.start();
+    }
+
+    @Override
+    public void lockActiveTimeSeriesIntervalStatistics() throws MetaStorageException {
+        activeTimeSeriesIntervalStatisticsMutexLock.lock();
+    }
+
+    @Override
+    public void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseActiveTimeSeriesIntervalStatistics() throws MetaStorageException {
+        activeTimeSeriesIntervalStatisticsMutexLock.unlock();
+    }
+
+    @Override
+    public void registerActiveTimeSeriesIntervalStatisticsChangeHook(ActiveTimeSeriesIntervalStatisticsChangeHook hook) {
+        this.activeTimeSeriesIntervalStatisticsChangeHook = hook;
+    }
+
     @Override
     public boolean proposeToReshard() throws MetaStorageException {
         try {
-            boolean resharding = true;
-            if (this.client.checkExists().forPath(RESHARD_NOTIFICATION_NODE_PREFIX) == null) {
+            ReshardStatus status;
+            if (this.client.checkExists().forPath(RESHARD_STATUS_NODE_PREFIX) == null) {
                 this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                        .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(true));
+                        .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(JUDGING));
+                return true;
             } else {
-                resharding = JsonUtils.fromJson(
-                        this.client.getData().forPath(RESHARD_NOTIFICATION_NODE_PREFIX), Boolean.class);
-                if (!resharding) {
+                status = JsonUtils.fromJson(
+                        this.client.getData().forPath(RESHARD_STATUS_NODE_PREFIX), ReshardStatus.class);
+                if (status.equals(NON_RESHARDING)) {
                     this.client.setData()
-                            .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(true));
-                    resharding = true;
-                } else {
-                    resharding = false;
+                            .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(JUDGING));
+                    return true;
                 }
+                return false;
             }
-            return resharding;
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when proposing to reshard: ", e);
         }
     }
 
     @Override
-    public void lockReshardNotification() throws MetaStorageException {
+    public void lockReshardStatus() throws MetaStorageException {
         try {
-            reshardNotificationMutexLock.lock();
-            reshardNotificationMutex.acquire();
+            reshardStatusMutexLock.lock();
+            reshardStatusMutex.acquire();
         } catch (Exception e) {
-            reshardNotificationMutexLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring reshard notification mutex: ", e);
+            reshardStatusMutexLock.unlock();
+            throw new MetaStorageException("encounter error when acquiring reshard status mutex: ", e);
         }
     }
 
     @Override
-    public void updateReshardNotification(boolean notification) throws MetaStorageException {
+    public void updateReshardStatus(ReshardStatus status) throws MetaStorageException {
         try {
-            if (this.client.checkExists().forPath(RESHARD_NOTIFICATION_NODE_PREFIX) == null) {
+            if (this.client.checkExists().forPath(RESHARD_STATUS_NODE_PREFIX) == null) {
                 this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                        .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(notification));
+                        .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(status));
             } else {
                 this.client.setData()
-                        .forPath(RESHARD_NOTIFICATION_NODE_PREFIX, JsonUtils.toJson(notification));
+                        .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(status));
             }
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when updating reshard notification: ", e);
+            throw new MetaStorageException("encounter error when updating reshard status: ", e);
         }
     }
 
     @Override
-    public void releaseReshardNotification() throws MetaStorageException {
+    public void releaseReshardStatus() throws MetaStorageException {
         try {
-            reshardNotificationMutex.release();
+            reshardStatusMutex.release();
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing reshard notification mutex: ", e);
+            throw new MetaStorageException("encounter error when releasing reshard status mutex: ", e);
         } finally {
-            reshardNotificationMutexLock.unlock();
+            reshardStatusMutexLock.unlock();
         }
     }
 
     @Override
-    public void removeReshardNotification() throws MetaStorageException {
+    public void removeReshardStatus() throws MetaStorageException {
         try {
-            if (this.client.checkExists().forPath(RESHARD_NOTIFICATION_NODE_PREFIX) != null) {
-                this.client.delete().forPath(RESHARD_NOTIFICATION_NODE_PREFIX);
+            if (this.client.checkExists().forPath(RESHARD_STATUS_NODE_PREFIX) != null) {
+                this.client.delete().forPath(RESHARD_STATUS_NODE_PREFIX);
             }
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when removing reshard notification: ", e);
+            throw new MetaStorageException("encounter error when removing reshard status: ", e);
         }
     }
 
     @Override
-    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
-        this.reshardNotificationHook = hook;
+    public void registerReshardStatusHook(ReshardStatusHook hook) {
+        this.reshardStatusHook = hook;
     }
 
-    private void registerReshardNotificationListener() throws Exception {
-        this.reshardNotificationCache = new TreeCache(this.client, RESHARD_NOTIFICATION_NODE_PREFIX);
+    private void registerReshardStatusListener() throws Exception {
+        this.reshardStatusCache = new TreeCache(this.client, RESHARD_STATUS_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
             byte[] data;
-            boolean notification;
+            ReshardStatus status;
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
                     data = event.getData().getData();
-                    notification = JsonUtils.fromJson(data, Boolean.class);
-                    reshardNotificationHook.onChange(notification);
+                    status = JsonUtils.fromJson(data, ReshardStatus.class);
+                    reshardStatusHook.onChange(status);
                     break;
                 default:
                     break;
             }
         };
-        this.reshardNotificationCache.getListenable().addListener(listener);
-        this.reshardNotificationCache.start();
+        this.reshardStatusCache.getListenable().addListener(listener);
+        this.reshardStatusCache.start();
     }
 
     @Override

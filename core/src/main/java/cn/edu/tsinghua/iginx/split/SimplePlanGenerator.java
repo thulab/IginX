@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -99,6 +100,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
     @Override
     public List<? extends IginxPlan> generateSubPlans(RequestContext requestContext) {
         List<SplitInfo> splitInfoList;
+        Map<FragmentMeta, FragmentStatistics> fragmentStatisticsMap;
+        Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap;
         switch (requestContext.getType()) {
             case DeleteColumns:
                 DeleteColumnsReq deleteColumnsReq = ((DeleteColumnsContext) requestContext).getReq();
@@ -125,16 +128,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 List<InsertColumnRecordsPlan> insertColumnRecordsPlans = splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
-                Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
+                // 更新 FragmentStatistics
+                fragmentStatisticsMap = new HashMap<>();
                 for (InsertColumnRecordsPlan plan: insertColumnRecordsPlans) {
-                    FragmentStatistics statistics = plan.getStatistics();
-                    // TODO 边界条件处理
+                    FragmentStatistics statistics = plan.getFragmentStatistics();
                     if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
-                        statisticsMap.put(plan.getFragment(), statistics);
+                        fragmentStatisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
-                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
-                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(fragmentStatisticsMap.values());
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(fragmentStatisticsMap);
+                // 更新 TimeSeriesStatistics
+                timeSeriesStatisticsMap = insertColumnRecordsPlan.getTimeSeriesStatistics();
+                DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(timeSeriesStatisticsMap);
                 return insertColumnRecordsPlans;
             case InsertNonAlignedColumnRecords:
                 InsertNonAlignedColumnRecordsReq insertNonAlignedColumnRecordsReq = ((InsertNonAlignedColumnRecordsContext) requestContext).getReq();
@@ -156,15 +162,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertNonAlignedColumnRecordsPlanResults(insertNonAlignedColumnRecordsPlan);
                 List<InsertNonAlignedColumnRecordsPlan> insertNonAlignedColumnRecordsPlans = splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
-                statisticsMap = new HashMap<>();
+                // 更新 FragmentStatistics
+                fragmentStatisticsMap = new HashMap<>();
                 for (InsertNonAlignedColumnRecordsPlan plan: insertNonAlignedColumnRecordsPlans) {
-                    FragmentStatistics statistics = plan.getStatistics();
+                    FragmentStatistics statistics = plan.getFragmentStatistics();
                     if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
-                        statisticsMap.put(plan.getFragment(), statistics);
+                        fragmentStatisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
-                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
-                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(fragmentStatisticsMap.values());
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(fragmentStatisticsMap);
+                // 更新 TimeSeriesStatistics
+                timeSeriesStatisticsMap = insertNonAlignedColumnRecordsPlan.getTimeSeriesStatistics();
+                DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(timeSeriesStatisticsMap);
                 return insertNonAlignedColumnRecordsPlans;
             case InsertRowRecords:
                 InsertRowRecordsReq insertRowRecordsReq = ((InsertRowRecordsContext) requestContext).getReq();
@@ -185,15 +195,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 List<InsertRowRecordsPlan> insertRowRecordsPlans = splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
-                statisticsMap = new HashMap<>();
+                // 更新 FragmentStatistics
+                fragmentStatisticsMap = new HashMap<>();
                 for (InsertRowRecordsPlan plan: insertRowRecordsPlans) {
-                    FragmentStatistics statistics = plan.getStatistics();
+                    FragmentStatistics statistics = plan.getFragmentStatistics();
                     if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
-                        statisticsMap.put(plan.getFragment(), statistics);
+                        fragmentStatisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
-                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
-                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(fragmentStatisticsMap.values());
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(fragmentStatisticsMap);
+                // 更新 TimeSeriesStatistics
+                timeSeriesStatisticsMap = insertRowRecordsPlan.getTimeSeriesStatistics();
+                DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(timeSeriesStatisticsMap);
                 return insertRowRecordsPlans;
             case InsertNonAlignedRowRecords:
                 InsertNonAlignedRowRecordsReq insertNonAlignedRowRecordsReq = ((InsertNonAlignedRowRecordsContext) requestContext).getReq();
@@ -214,15 +228,19 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertNonAlignedRowRecordsPlanResults(insertNonAlignedRowRecordsPlan);
                 List<InsertNonAlignedRowRecordsPlan> insertNonAlignedRowRecordsPlans = splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
-                statisticsMap = new HashMap<>();
+                // 更新 FragmentStatistics
+                fragmentStatisticsMap = new HashMap<>();
                 for (InsertNonAlignedRowRecordsPlan plan: insertNonAlignedRowRecordsPlans) {
-                    FragmentStatistics statistics = plan.getStatistics();
+                    FragmentStatistics statistics = plan.getFragmentStatistics();
                     if (statistics != null && plan.getFragment().getTimeInterval().getStartTime() >= DefaultMetaManager.getInstance().getActiveFragmentStartTime()) {
-                        statisticsMap.put(plan.getFragment(), statistics);
+                        fragmentStatisticsMap.put(plan.getFragment(), statistics);
                     }
                 }
-                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(statisticsMap.values());
-                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(statisticsMap);
+                DefaultMetaManager.getInstance().updateMaxActiveFragmentEndTime(fragmentStatisticsMap.values());
+                DefaultMetaManager.getInstance().updateActiveFragmentStatistics(fragmentStatisticsMap);
+                // 更新 TimeSeriesStatistics
+                timeSeriesStatisticsMap = insertNonAlignedRowRecordsPlan.getTimeSeriesStatistics();
+                DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(timeSeriesStatisticsMap);
                 return insertNonAlignedRowRecordsPlans;
             case DeleteDataInColumns:
                 DeleteDataInColumnsReq deleteDataInColumnsReq = ((DeleteDataInColumnsContext) requestContext).getReq();

@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -192,12 +193,12 @@ public abstract class InsertRecordsPlan extends DataPlan {
         return fragment;
     }
 
-    protected abstract long getCount();
+    public abstract Map<String, TimeSeriesStatistics> getTimeSeriesStatistics();
 
-    public FragmentStatistics getStatistics() {
+    public FragmentStatistics getFragmentStatistics() {
         if (getPathsNum() == 0 || timestamps.length == 0) {
             return null;
         }
-        return new FragmentStatistics(getTsInterval(), getTimeInterval(), getCount());
+        return new FragmentStatistics(getTsInterval(), getTimeInterval());
     }
 }

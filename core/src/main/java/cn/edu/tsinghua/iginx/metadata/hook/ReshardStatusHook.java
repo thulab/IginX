@@ -18,8 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.metadata.hook;
 
-public interface ReshardNotificationHook {
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 
-    void onChange(boolean resharding);
+public interface ReshardStatusHook {
+
+    void onChange(ReshardStatus status);
 
 }

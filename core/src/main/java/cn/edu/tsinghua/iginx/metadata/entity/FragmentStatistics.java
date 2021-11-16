@@ -40,22 +40,18 @@ import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 
 public final class FragmentStatistics {
 
-    private final TimeSeriesInterval tsInterval; // 序列区间
+    private final TimeSeriesInterval tsInterval; // 实际时间序列区间
 
-    private final TimeInterval timeInterval; // 时间区间
-
-    private long count; // 近期写入点数
+    private final TimeInterval timeInterval; // 实际时间戳区间
 
     public FragmentStatistics() {
         this.tsInterval = new TimeSeriesInterval(null, null);
         this.timeInterval = new TimeInterval(-1L, -1L);
-        this.count = 0;
     }
 
-    public FragmentStatistics(TimeSeriesInterval tsInterval, TimeInterval timeInterval, long count) {
+    public FragmentStatistics(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
         this.tsInterval = tsInterval;
         this.timeInterval = timeInterval;
-        this.count = count;
     }
 
     public TimeSeriesInterval getTsInterval() {
@@ -66,14 +62,9 @@ public final class FragmentStatistics {
         return timeInterval;
     }
 
-    public long getCount() {
-        return count;
-    }
-
     public synchronized void update(FragmentStatistics fragmentStatistics) {
         updateTsInterval(fragmentStatistics.getTsInterval());
         updateTimeInterval(fragmentStatistics.getTimeInterval());
-        updateCount(fragmentStatistics.getCount());
     }
 
     private void updateTsInterval(TimeSeriesInterval tsInterval) {
@@ -92,10 +83,6 @@ public final class FragmentStatistics {
         if (this.timeInterval.getEndTime() == -1 || this.timeInterval.getEndTime() < timeInterval.getEndTime()) {
             this.timeInterval.setEndTime(timeInterval.getEndTime());
         }
-    }
-
-    private void updateCount(long count) {
-        this.count += count;
     }
 
     @Override

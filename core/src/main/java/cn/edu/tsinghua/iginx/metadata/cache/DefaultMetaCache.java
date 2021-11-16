@@ -21,10 +21,14 @@ package cn.edu.tsinghua.iginx.metadata.cache;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
@@ -36,7 +40,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -68,12 +74,20 @@ public class DefaultMetaCache implements IMetaCache {
     // schemaMapping 的缓存
     private final Map<String, Map<String, Integer>> schemaMappings;
 
-    // 分片统计信息的缓存
+    // 统计信息的缓存
     private final Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap;
 
     private final Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatisticsMap;
 
     private final ReadWriteLock activeFragmentStatisticsLock;
+
+    private final Map<Long, IginxStatistics> activeIginxStatisticsMap;
+
+    private final Set<String> activeSeparatorStatistics;
+
+    private final Map<Long, StorageEngineStatistics> activeStorageEngineStatisticsMap;
+
+    private final Map<String, TimeSeriesStatistics> activeTimeSeriesStatisticsMap;
 
     // user 的缓存
     private final Map<String, UserMeta> userMetaMap;
@@ -98,10 +112,21 @@ public class DefaultMetaCache implements IMetaCache {
         storageEngineMetaMap = new ConcurrentHashMap<>();
         // schemaMapping 相关
         schemaMappings = new ConcurrentHashMap<>();
-        // 分片统计信息相关
+        // 统计信息相关
         activeFragmentStatisticsMap = new ConcurrentHashMap<>();
         deltaActiveFragmentStatisticsMap = new ConcurrentHashMap<>();
         activeFragmentStatisticsLock = new ReentrantReadWriteLock();
+
+        activeIginxStatisticsMap = new ConcurrentHashMap<>();
+
+        activeSeparatorStatistics = new ConcurrentSkipListSet<>();
+
+        activeStorageEngineStatisticsMap = new ConcurrentHashMap<>();
+
+        activeTimeSeriesStatisticsMap = new ConcurrentHashMap<>();
+
+
+
         // user 相关
         userMetaMap = new ConcurrentHashMap<>();
         // 重分片中的 fragment 相关
@@ -468,6 +493,107 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void clearDeltaActiveFragmentStatistics() {
         deltaActiveFragmentStatisticsMap.clear();
+    }
+
+    @Override
+    public void addOrUpdateActiveIginxStatistics(long id, Map<Long, StorageEngineStatistics> statisticsMap) {
+        double totalDensity = statisticsMap.values().stream().mapToDouble(StorageEngineStatistics::getDensity).sum();
+        activeIginxStatisticsMap.put(id, new IginxStatistics(totalDensity));
+    }
+
+    @Override
+    public Map<Long, IginxStatistics> getActiveIginxStatistics() {
+        return new HashMap<>(activeIginxStatisticsMap);
+    }
+
+    @Override
+    public double getMinimalActiveIginxStatistics() {
+        return activeIginxStatisticsMap.values().stream().filter(x -> x.getDensity() != 0.0).mapToDouble(IginxStatistics::getDensity).min().orElse(0.0);
+    }
+
+    @Override
+    public void clearActiveIginxStatistics() {
+        activeIginxStatisticsMap.clear();
+    }
+
+    @Override
+    public void addOrUpdateActiveSeparatorStatistics(Set<String> separators) {
+        activeSeparatorStatistics.addAll(separators);
+    }
+
+    @Override
+    public Set<String> getActiveSeparatorStatistics() {
+        return new TreeSet<>(activeSeparatorStatistics);
+    }
+
+    @Override
+    public void clearActiveSeparatorStatistics() {
+        activeSeparatorStatistics.clear();
+    }
+
+    @Override
+    public Map<String, TimeSeriesStatistics> getActiveTimeSeriesStatistics() {
+        return new HashMap<>(activeTimeSeriesStatisticsMap);
+    }
+
+    @Override
+    public void clearActiveTimeSeriesStatistics() {
+        activeTimeSeriesStatisticsMap.clear();
+    }
+
+    @Override
+    public void addOrUpdateActiveTimeSeriesIntervalStatistics(Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) {
+
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> getActiveTimeSeriesIntervalStatistics() {
+        return null;
+    }
+
+    @Override
+    public void clearActiveTimeSeriesIntervalStatistics() {
+
+    }
+
+    @Override
+    public Set<String> separateActiveTimeSeriesStatisticsByDensity(double density) {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators(Set<String> separators) {
+        return null;
+    }
+
+    @Override
+    public void addOrUpdateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> statisticsMap) {
+        statisticsMap.forEach((key, value) -> activeTimeSeriesStatisticsMap.computeIfAbsent(key, e -> new TimeSeriesStatistics()).update(value));
+        for (TimeSeriesStatistics timeSeriesStatistics : statisticsMap.values()) {
+            long storageEngineId = timeSeriesStatistics.getStorageEngineId();
+            if (activeStorageEngineStatisticsMap.containsKey(storageEngineId)) {
+                activeStorageEngineStatisticsMap.get(storageEngineId).updateByTimeSeriesStatistics(timeSeriesStatistics);
+            } else {
+                // TODO 先只考虑写入，且先不考虑存储后端的计算能力
+                activeStorageEngineStatisticsMap.put(storageEngineId, new StorageEngineStatistics(timeSeriesStatistics.getWriteBytes(), 1.0, timeSeriesStatistics.getWriteBytes()));
+            }
+        }
+    }
+
+    @Override
+    public Map<Long, StorageEngineStatistics> getActiveStorageEngineStatistics() {
+        return new HashMap<>(activeStorageEngineStatisticsMap);
+    }
+
+    @Override
+    public void addOrUpdateActiveStorageEngineStatistics(Map<Long, StorageEngineStatistics> statisticsMap) {
+        statisticsMap.forEach((key, value) -> activeStorageEngineStatisticsMap.computeIfAbsent(key, e -> new StorageEngineStatistics()).updateByStorageEngineStatistics(value));
+    }
+
+    @Override
+    public void clearActiveStorageEngineStatistics() {
+        activeStorageEngineStatisticsMap.clear();
     }
 
     @Override

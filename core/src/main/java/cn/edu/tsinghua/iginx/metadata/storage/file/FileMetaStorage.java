@@ -3,10 +3,13 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MinimalActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -20,6 +23,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +46,9 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.EXECUTING;
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
+
 public class FileMetaStorage implements IMetaStorage {
 
     private static final Logger logger = LoggerFactory.getLogger(FileMetaStorage.class);
@@ -57,7 +64,7 @@ public class FileMetaStorage implements IMetaStorage {
     private static final String RESHRAD_NOTIFICATION_META_FILE = "reshard_notification.log";
     private static final String RESHARD_COUNTER_META_FILE = "reshard_counter.log";
     private static final long ID_INTERVAL = 100000;
-    private static final String UPDATE = "update";
+    private static final String UPDATE = "updateByTimeSeriesStatistics";
     private static final String REMOVE = "remove";
     private static FileMetaStorage INSTANCE = null;
 
@@ -87,7 +94,7 @@ public class FileMetaStorage implements IMetaStorage {
 
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
 
-    private ReshardNotificationHook reshardNotificationHook = null;
+    private ReshardStatusHook reshardStatusHook = null;
 
     private AtomicLong idGenerator = null; // 加载完数据之后赋值
 
@@ -505,6 +512,26 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void lockActiveStorageEngineStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseActiveStorageEngineStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerActiveStorageEngineStatisticsChangeHook(ActiveStorageEngineStatisticsChangeHook hook) {
+
+    }
+
+    @Override
     public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
         Map<FragmentMeta, FragmentStatistics> activeFragmentsStatistics = new HashMap<>();
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile())))) {
@@ -585,14 +612,35 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void lockMinimalActiveIginxStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMinimalActiveIginxStatistics(double density) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseMinimalActiveIginxStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMinimalActiveIginxStatisticsChangeHook(MinimalActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
+
+    }
+
+    @Override
     public boolean proposeToReshard() throws MetaStorageException {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE).toFile())))) {
             String line = reader.readLine();
-            if (line == null || line.equals("false")) {
-                if (reshardNotificationHook != null) {
-                    reshardNotificationHook.onChange(true);
+            ReshardStatus status = JsonUtils.getGson().fromJson(line, ReshardStatus.class);
+            if (line == null || status.equals(NON_RESHARDING)) {
+                if (reshardStatusHook != null) {
+                    reshardStatusHook.onChange(EXECUTING);
                 }
-                updateReshardNotification(true);
+                updateReshardStatus(EXECUTING);
                 return true;
             }
         } catch (IOException e) {
@@ -603,31 +651,31 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void lockReshardNotification() throws MetaStorageException {
+    public void lockReshardStatus() throws MetaStorageException {
         reshardNotificationLock.lock();
     }
 
     @Override
-    public void updateReshardNotification(boolean notification) throws MetaStorageException {
-        removeReshardNotification();
+    public void updateReshardStatus(ReshardStatus status) throws MetaStorageException {
+        removeReshardStatus();
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE).toFile(), true))) {
-            writer.write(String.valueOf(notification));
+            writer.write(String.valueOf(status));
         } catch (IOException e) {
             logger.error("encounter error when writing reshard notification log file: ", e);
             throw new MetaStorageException(e);
         }
-        if (reshardNotificationHook != null) {
-            reshardNotificationHook.onChange(notification);
+        if (reshardStatusHook != null) {
+            reshardStatusHook.onChange(status);
         }
     }
 
     @Override
-    public void releaseReshardNotification() throws MetaStorageException {
+    public void releaseReshardStatus() throws MetaStorageException {
         reshardNotificationLock.unlock();
     }
 
     @Override
-    public void removeReshardNotification() throws MetaStorageException {
+    public void removeReshardStatus() throws MetaStorageException {
         try {
             Files.deleteIfExists(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE));
             Files.createFile(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE));
@@ -638,9 +686,9 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
+    public void registerReshardStatusHook(ReshardStatusHook hook) {
         if (hook != null) {
-            reshardNotificationHook = hook;
+            reshardStatusHook = hook;
         }
     }
 
@@ -663,7 +711,7 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     private void updateReshardCounter(int counter) throws MetaStorageException {
-        removeReshardNotification();
+        removeReshardStatus();
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, RESHARD_COUNTER_META_FILE).toFile(), true))) {
             writer.write(counter);
         } catch (IOException e) {

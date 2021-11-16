@@ -23,21 +23,29 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveSeparatorStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveTimeSeriesIntervalStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MinimalActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public interface IMetaStorage {
 
@@ -107,17 +115,52 @@ public interface IMetaStorage {
 
     void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook);
 
+    void lockMinimalActiveIginxStatistics() throws MetaStorageException;
+
+    void addMinimalActiveIginxStatistics(double density) throws MetaStorageException;
+
+    void releaseMinimalActiveIginxStatistics() throws MetaStorageException;
+
+    void registerMinimalActiveIginxStatisticsChangeHook(MinimalActiveIginxStatisticsChangeHook hook) throws MetaStorageException;
+
+    void lockActiveSeparatorStatistics() throws MetaStorageException;
+
+    void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException;
+
+    void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException;
+
+    void releaseActiveSeparatorStatistics() throws MetaStorageException;
+
+    void registerActiveSeparatorStatisticsChangeHook(ActiveSeparatorStatisticsChangeHook hook);
+
+    void lockActiveStorageEngineStatistics() throws MetaStorageException;
+
+    void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException;
+
+    void releaseActiveStorageEngineStatistics() throws MetaStorageException;
+
+    void registerActiveStorageEngineStatisticsChangeHook(ActiveStorageEngineStatisticsChangeHook hook);
+
+    void lockActiveTimeSeriesIntervalStatistics() throws MetaStorageException;
+
+    void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException;
+
+    void releaseActiveTimeSeriesIntervalStatistics() throws MetaStorageException;
+
+    void registerActiveTimeSeriesIntervalStatisticsChangeHook(ActiveTimeSeriesIntervalStatisticsChangeHook hook);
+
+    // 提议进入重分片流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
     boolean proposeToReshard() throws MetaStorageException;
 
-    void lockReshardNotification() throws MetaStorageException;
+    void lockReshardStatus() throws MetaStorageException;
 
-    void updateReshardNotification(boolean notification) throws MetaStorageException;
+    void updateReshardStatus(ReshardStatus status) throws MetaStorageException;
 
-    void releaseReshardNotification() throws MetaStorageException;
+    void releaseReshardStatus() throws MetaStorageException;
 
-    void removeReshardNotification() throws MetaStorageException;
+    void removeReshardStatus() throws MetaStorageException;
 
-    void registerReshardNotificationHook(ReshardNotificationHook hook);
+    void registerReshardStatusHook(ReshardStatusHook hook);
 
     void lockReshardCounter() throws MetaStorageException;
 

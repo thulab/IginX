@@ -19,8 +19,10 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -29,10 +31,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.INSERT_ROW_RECORDS;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getColumnBytesOfTimeSeries;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowBytesOfTimeSeries;
 
 @ToString
 public class InsertRowRecordsPlan extends InsertRecordsPlan {
@@ -57,7 +62,7 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
 
     public Pair<Object[], List<Bitmap>> getValuesAndBitmapsByIndexes(Pair<Integer, Integer> rowIndexes, TimeSeriesInterval interval) {
         if (getValuesList() == null || getValuesList().length == 0) {
-            logger.error("There are no values in the InsertNonAlignedRowRecordsPlan.");
+            logger.error("There are no values in the InsertRecordsPlan.");
             return null;
         }
         int startIndex;
@@ -111,16 +116,15 @@ public class InsertRowRecordsPlan extends InsertRecordsPlan {
     }
 
     @Override
-    protected long getCount() {
-        List<Bitmap> bitmaps = getBitmapList();
-        long count = 0L;
-        for (Bitmap bitmap: bitmaps) {
-            for (int i = 0; i < bitmap.getSize(); i++) {
-                if (bitmap.get(i)) {
-                    count++;
-                }
-            }
+    public Map<String, TimeSeriesStatistics> getTimeSeriesStatistics() {
+        if (getPathsNum() == 0 || getTimestamps().length == 0) {
+            return null;
         }
-        return count;
+        Map<String, Long> writeBytesMap = getRowBytesOfTimeSeries(getPaths(), getValuesList(), getBitmapList(), getDataTypeList());
+        Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap = new HashMap<>();
+        for (Map.Entry<String, Long> entry : writeBytesMap.entrySet()) {
+            timeSeriesStatisticsMap.put(entry.getKey(), new TimeSeriesStatistics(entry.getValue(), getStorageEngineId()));
+        }
+        return timeSeriesStatisticsMap;
     }
 }

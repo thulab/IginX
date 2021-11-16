@@ -21,10 +21,14 @@ package cn.edu.tsinghua.iginx.metadata.cache;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 
 import java.util.List;
@@ -96,6 +100,7 @@ public interface IMetaCache {
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
+    // 初始化本地缓存的分片的统计信息
     void initActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
 
     // 更新本地缓存的分片的统计信息
@@ -115,6 +120,49 @@ public interface IMetaCache {
 
     // 清空本地缓存的分片的增量统计信息
     void clearDeltaActiveFragmentStatistics();
+
+    /**
+     * @param id IginX 的 ID
+     * @param statisticsMap ID 为 id 的 IginX 本地存储的存储后端统计信息
+     */
+    void addOrUpdateActiveIginxStatistics(long id, Map<Long, StorageEngineStatistics> statisticsMap);
+
+    Map<Long, IginxStatistics> getActiveIginxStatistics();
+
+    double getMinimalActiveIginxStatistics();
+
+    void clearActiveIginxStatistics();
+
+    void addOrUpdateActiveSeparatorStatistics(Set<String> separators);
+
+    Set<String> getActiveSeparatorStatistics();
+
+    void clearActiveSeparatorStatistics();
+
+    Map<Long, StorageEngineStatistics> getActiveStorageEngineStatistics();
+
+    void addOrUpdateActiveStorageEngineStatistics(Map<Long, StorageEngineStatistics> statisticsMap);
+
+    void clearActiveStorageEngineStatistics();
+
+    // 更新本地缓存的时间序列的统计信息
+    void addOrUpdateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> statisticsMap);
+
+    // 获取本地缓存的时间序列的统计信息
+    Map<String, TimeSeriesStatistics> getActiveTimeSeriesStatistics();
+
+    // 清空本地缓存的时间序列的统计信息
+    void clearActiveTimeSeriesStatistics();
+
+    void addOrUpdateActiveTimeSeriesIntervalStatistics(Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap);
+
+    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> getActiveTimeSeriesIntervalStatistics();
+
+    void clearActiveTimeSeriesIntervalStatistics();
+
+    Set<String> separateActiveTimeSeriesStatisticsByDensity(double density);
+
+    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators(Set<String> separators);
 
     void addReshardFragment(FragmentMeta fragment);
 
