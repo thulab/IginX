@@ -997,7 +997,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             }
             String path;
             byte[] data;
-            boolean isMerged;
             Set<String> separators;
             switch (event.getType()) {
                 case NODE_ADDED:
@@ -1006,7 +1005,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     data = event.getData().getData();
                     String[] pathParts = path.split("/");
                     if (pathParts.length == 6) {
-                        isMerged = pathParts[4].equals("merged");
                         separators = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Set<String>>() {}.getType());
                         if (separators != null) {
                             activeSeparatorStatisticsChangeHook.onChange(separators);
@@ -1019,8 +1017,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     break;
             }
         };
-        this.activeStorageEngineStatisticsCache.getListenable().addListener(listener);
-        this.activeStorageEngineStatisticsCache.start();
+        this.activeSeparatorStatisticsCache.getListenable().addListener(listener);
+        this.activeSeparatorStatisticsCache.start();
     }
 
     @Override
