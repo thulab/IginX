@@ -23,7 +23,6 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -31,7 +30,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
@@ -50,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -82,31 +79,28 @@ public class DefaultMetaManager implements IMetaManager {
     private final IMetaStorage storage;
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
 
+    private long id;
+
+    private final ScheduledExecutorService reshardService;
+
     private Queue<Thread> waitingReshardThreadsQueue = new ConcurrentLinkedQueue<>();
 
-    // 当前活跃分片的最大的结束时间
-    private AtomicLong maxActiveFragmentEndTime = new AtomicLong(-1L);
+    // 当前活跃的最大的结束时间
+    private AtomicLong maxActiveEndTime = new AtomicLong(-1L);
 
-    // 当前活跃分片的开始时间
-    private AtomicLong activeFragmentStartTime = new AtomicLong(-1L);
+    // 当前活跃的开始时间
+    private AtomicLong activeStartTime = new AtomicLong(-1L);
 
     // 上一次重分片的结束时间
     private AtomicLong lastReshardTime = new AtomicLong(-1L);
 
-    private AtomicInteger statisticsCounter = new AtomicInteger(0);
+    private AtomicInteger maxActiveEndTimeStatisticsCounter = new AtomicInteger(0);
 
     private AtomicInteger activeSeparatorStatisticsCounter = new AtomicInteger(0);
 
     private AtomicInteger activeStorageEngineStatisticsCounter = new AtomicInteger(0);
 
     private AtomicInteger activeTimeSeriesIntervalStatisticsCounter = new AtomicInteger(0);
-
-    private final ScheduledExecutorService reshardingService;
-
-    private long id;
-
-    // 是否正处在重分片执行过程中
-    private boolean isResharding = false;
 
     // 重分片状态
     private ReshardStatus reshardStatus = NON_RESHARDING;
@@ -115,6 +109,7 @@ public class DefaultMetaManager implements IMetaManager {
     private boolean isProposer = false;
 
     // 在重分片过程中，是否已经推了本地的统计数据的更新
+    // TODO 不确定是否有用
     private boolean hasPushedStatistics = false;
 
     // 在重分片过程中，是否已经进行了重分片判断
@@ -174,8 +169,8 @@ public class DefaultMetaManager implements IMetaManager {
             initFragment();
             initSchemaMapping();
             initUser();
-            initActiveFragmentStatistics();
-            initMinimalActiveIginxStatistics();
+            initMaxActiveEndTimeStatistics();
+            initMinActiveIginxStatistics();
             initActiveSeparatorStatistics();
             initActiveStorageEngineStatistics();
             initActiveTimeSeriesIntervalStatistics();
@@ -186,51 +181,28 @@ public class DefaultMetaManager implements IMetaManager {
             System.exit(-1);
         }
 
-        reshardingService = new ScheduledThreadPoolExecutor(1);
+        reshardService = new ScheduledThreadPoolExecutor(1);
         if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
-            reshardingService.scheduleAtFixedRate(
+            reshardService.scheduleAtFixedRate(
                 () -> {
                     try {
-                        storage.lockReshardStatus();
-                        // 提出进入重分片流程
-                        if (storage.proposeToReshard()) {
-                            reshardStatus = JUDGING;
-                            isProposer = true;
-                            logger.info("iginx node {} propose to reshard", id);
-                        }
-
-                        if (isResharding) {
+                        if (!reshardStatus.equals(NON_RESHARDING)) {
                             return;
                         }
                         if (System.currentTimeMillis() - lastReshardTime.get() < ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval() * 1000) {
                             return;
                         }
-                        storage.lockActiveFragmentStatistics();
                         storage.lockReshardStatus();
-                        updateMaxActiveFragmentEndTime(cache.getDeltaActiveFragmentStatistics().values());
-                        if (needToReshard()) {
-                            if (storage.proposeToReshard()) {
-                                isResharding = true;
-                                isProposer = true;
-                                logger.info("iginx node {} propose to reshard", id);
-                                if (!hasPushedStatistics) {
-                                    // 该节点提起重分片后，将本地的统计信息推到 zookeeper 上
-                                    storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
-                                    cache.clearDeltaActiveFragmentStatistics();
-                                    hasPushedStatistics = true;
-                                    logger.info("iginx node {}(proposer) add active fragment statistics", id);
-                                }
-                            }
-                        } else {
-                            // 非重分片期间，节点将本地的统计信息推到 zookeeper 上
-                            storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
-                            cache.clearDeltaActiveFragmentStatistics();
-                            logger.info("iginx node {} add active fragment statistics", id);
+                        // 提议进入重分片流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
+                        if (storage.proposeToReshard()) {
+                            reshardStatus = JUDGING;
+                            isProposer = true;
+                            logger.info("iginx node {} propose to reshard", id);
+                            // 在重分片判断阶段，proposer 节点不需要推送本地的存储后端统计信息
                         }
                         storage.releaseReshardStatus();
-                        storage.releaseActiveFragmentStatistics();
                     } catch (MetaStorageException e) {
-                        logger.error("encounter error when updating active fragment statistics: ", e);
+                        logger.error("encounter error when proposing to reshard: ", e);
                     }
                 },
                 ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval(),
@@ -296,7 +268,7 @@ public class DefaultMetaManager implements IMetaManager {
             if (!cache.hasStorageUnit()) {
                 return;
             }
-            if (isResharding) {
+            if (reshardStatus.equals(EXECUTING)) {
                 needToCreateStorageUnits = true;
             }
             StorageUnitMeta originStorageUnitMeta = cache.getStorageUnit(storageUnitId);
@@ -338,7 +310,7 @@ public class DefaultMetaManager implements IMetaManager {
             }
             synchronized (terminateResharding) {
                 try {
-                    if (isResharding && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
+                    if (reshardStatus.equals(EXECUTING) && storageUnit.isLastOfBatch() && !hasCreatedStorageUnits) {
                         hasCreatedStorageUnits = true;
                         if (hasCreatedFragments) {
                             logger.info("iginx node {} increment reshard counter", id);
@@ -356,10 +328,11 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initFragment() throws MetaStorageException {
         storage.registerFragmentChangeHook((create, fragment) -> {
-            if (fragment == null)
+            if (fragment == null) {
                 return;
+            }
             if (create) {
-                activeFragmentStartTime.set(fragment.getTimeInterval().getStartTime());
+                activeStartTime.set(fragment.getTimeInterval().getStartTime());
             }
             if (create && fragment.getCreatedBy() == DefaultMetaManager.this.id) {
                 return;
@@ -367,7 +340,7 @@ public class DefaultMetaManager implements IMetaManager {
             if (!create && fragment.getUpdatedBy() == DefaultMetaManager.this.id) {
                 return;
             }
-            if (create && fragment.isInitialFragment()) { // 初始分片不通过异步事件更新
+            if (create && fragment.isInitialFragment()) { // 初始分片的创建不通过异步事件更新
                 return;
             }
             if (!cache.hasFragment()) {
@@ -377,7 +350,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addReshardFragment(fragment);
                 return;
             }
-            if (isResharding && !needToCreateStorageUnits) {
+            if (reshardStatus.equals(EXECUTING) && !needToCreateStorageUnits) {
                 hasCreatedStorageUnits = true;
             }
             createFragment(cache.getStorageUnit(fragment.getMasterStorageUnitId()), fragment, create);
@@ -410,46 +383,37 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
-    private void initActiveFragmentStatistics() throws MetaStorageException {
-        storage.registerActiveFragmentStatisticsChangeHook(statisticsMap -> {
-            if (statisticsMap == null) {
+    private void initMaxActiveEndTimeStatistics() throws MetaStorageException {
+        storage.registerMaxActiveEndTimeStatisticsChangeHook(endTime -> {
+            if (endTime == 0L) {
                 return;
             }
-            cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
-            updateMaxActiveFragmentEndTime(statisticsMap.values());
-            if (isProposer && isResharding) {
-                int updatedCounter = statisticsCounter.incrementAndGet();
-                logger.info("iginx node {}(proposer) increment statistics counter: {}", id, updatedCounter);
-                synchronized (commitCreatingTask) {
-                    if (updatedCounter == getIginxList().size() && !hasCommittedCreatingTask) {
-                        hasCommittedCreatingTask = true;
-                        IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
-                                .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
-                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveFragmentEndTime.get());
-                        logger.info("iginx node {}(proposer) add fragments: {}", id, fragmentsAndStorageUnits.k);
-                        logger.info("iginx node {}(proposer) add storage units: {}", id, fragmentsAndStorageUnits.v);
-                        createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-                    }
-                }
+            updateMaxActiveEndTime(endTime);
+            int updatedCounter = maxActiveEndTimeStatisticsCounter.incrementAndGet();
+            if (isProposer) {
+                logger.info("iginx node {}(proposer) increment max active end time statistics counter: {}", id, updatedCounter);
+            } else {
+                logger.info("iginx node {} increment max active end time statistics counter: {}", id, updatedCounter);
             }
         });
-        storage.lockActiveFragmentStatistics();
-        Map<FragmentMeta, FragmentStatistics> statisticsMap = storage.loadActiveFragmentStatistics();
-        updateMaxActiveFragmentEndTime(statisticsMap.values());
-        storage.releaseActiveFragmentStatistics();
-        cache.initActiveFragmentStatistics(statisticsMap);
     }
 
-    private void initMinimalActiveIginxStatistics() throws MetaStorageException {
-        storage.registerMinimalActiveIginxStatisticsChangeHook(density -> {
+    private void initMinActiveIginxStatistics() throws MetaStorageException {
+        storage.registerMinActiveIginxStatisticsChangeHook(density -> {
             try {
                 if (density == 0.0) {
+                    // TODO 处理密度为0的情况
                     return;
                 }
                 Set<String> separators = cache.separateActiveTimeSeriesStatisticsByDensity(density);
                 storage.lockActiveSeparatorStatistics();
                 storage.addActiveSeparatorStatistics(id, separators);
                 storage.releaseActiveSeparatorStatistics();
+                if (isProposer) {
+                    logger.info("iginx node {}(proposer) push active separator statistics", id);
+                } else {
+                    logger.info("iginx node {} push active separator statistics", id);
+                }
             } catch (MetaStorageException e) {
                 logger.error("encounter error when adding active separator statistics: ", e);
             }
@@ -457,29 +421,26 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     private void initActiveSeparatorStatistics() throws MetaStorageException {
-        storage.registerActiveSeparatorStatisticsChangeHook((isMerged, separators) -> {
+        storage.registerActiveSeparatorStatisticsChangeHook(separators -> {
             try {
                 if (separators == null) {
                     return;
                 }
                 cache.addOrUpdateActiveSeparatorStatistics(separators);
-                if (isMerged && isProposer) {
-                    int updatedCounter = activeSeparatorStatisticsCounter.incrementAndGet();
-                    logger.info("iginx node {}(proposer) increment active separator statistics counter: {}", id, updatedCounter);
-                    if (updatedCounter == getIginxList().size()) {
-                        storage.lockActiveSeparatorStatistics();
-                        storage.addMergedActiveSeparatorStatistics(cache.getActiveSeparatorStatistics());
-                        storage.releaseActiveSeparatorStatistics();
+                int updatedCounter = activeSeparatorStatisticsCounter.incrementAndGet();
+                logger.info("iginx node {}(proposer) increment active separator statistics counter: {}", id, updatedCounter);
+                if (updatedCounter == getIginxList().size()) {
+                    if (isProposer) {
+                        cache.separateActiveTimeSeriesStatisticsBySeparators();
+                    } else {
+                        storage.lockActiveTimeSeriesIntervalStatistics();
+                        storage.addActiveTimeSeriesIntervalStatistics(id, cache.separateActiveTimeSeriesStatisticsBySeparators());
+                        storage.releaseActiveTimeSeriesIntervalStatistics();
+                        logger.info("iginx node {} push active time series interval statistics", id);
                     }
                 }
-                if (!isMerged) {
-                    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> activeTimeSeriesStatisticsMap = cache.separateActiveTimeSeriesStatisticsBySeparators(separators);
-                    storage.lockActiveTimeSeriesIntervalStatistics();
-                    storage.addActiveTimeSeriesIntervalStatistics(id, activeTimeSeriesStatisticsMap);
-                    storage.releaseActiveTimeSeriesIntervalStatistics();
-                }
             } catch (MetaStorageException e) {
-                logger.error("encounter error when adding merged active separator statistics: ", e);
+                logger.error("encounter error when adding active time series interval statistics: ", e);
             }
         });
     }
@@ -490,19 +451,19 @@ public class DefaultMetaManager implements IMetaManager {
                 if (statisticsMap == null) {
                     return;
                 }
-                cache.addOrUpdateActiveStorageEngineStatistics(statisticsMap);
-                cache.addOrUpdateActiveIginxStatistics(iginxId, statisticsMap);
                 if (isProposer && reshardStatus.equals(JUDGING)) {
+                    cache.addOrUpdateActiveStorageEngineStatistics(statisticsMap);
+                    cache.addOrUpdateActiveIginxStatistics(iginxId, statisticsMap);
                     int updatedCounter = activeStorageEngineStatisticsCounter.incrementAndGet();
                     logger.info("iginx node {}(proposer) increment active storage engine statistics counter: {}", id, updatedCounter);
                     synchronized (judgedResharding) {
-                        if (updatedCounter == getIginxList().size() && !hasJudgedResharding) {
+                        if (updatedCounter == getIginxList().size() - 1 && !hasJudgedResharding) {
                             hasJudgedResharding = true;
                             if (needToReshard()) {
                                 storage.lockReshardStatus();
                                 storage.updateReshardStatus(EXECUTING);
                                 storage.releaseReshardStatus();
-                                logger.info("iginx node {}(proposer) decide to enter executing phase", id);
+                                logger.info("iginx node {}(proposer) decide to enter resharding executing phase", id);
                             } else {
                                 storage.lockReshardStatus();
                                 storage.updateReshardStatus(NON_RESHARDING);
@@ -520,23 +481,26 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initActiveTimeSeriesIntervalStatistics() {
         storage.registerActiveTimeSeriesIntervalStatisticsChangeHook(statisticsMap -> {
-            try {
-                if (statisticsMap == null) {
-                    return;
-                }
+            if (statisticsMap == null) {
+                return;
+            }
+            if (isProposer) {
                 cache.addOrUpdateActiveTimeSeriesIntervalStatistics(statisticsMap);
-                if (isProposer) {
-                    int updatedCounter = activeTimeSeriesIntervalStatisticsCounter.incrementAndGet();
-                    logger.info("iginx node {}(proposer) increment active time series interval statistics counter: {}", id, updatedCounter);
-                    if (updatedCounter == getIginxList().size()) {
-                        // TODO
-                        storage.lockActiveSeparatorStatistics();
-                        storage.addMergedActiveSeparatorStatistics(cache.getActiveSeparatorStatistics());
-                        storage.releaseActiveSeparatorStatistics();
+                int updatedCounter = activeTimeSeriesIntervalStatisticsCounter.incrementAndGet();
+                logger.info("iginx node {}(proposer) increment active time series interval statistics counter: {}", id, updatedCounter);
+                synchronized (commitCreatingTask) {
+                    if (maxActiveEndTimeStatisticsCounter.get() == getIginxList().size()
+                            && updatedCounter == getIginxList().size() - 1
+                            && !hasCommittedCreatingTask) {
+                        hasCommittedCreatingTask = true;
+                        IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
+                                .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
+                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveEndTime.get(), cache.getActiveTimeSeriesIntervalStatistics());
+                        logger.info("iginx node {}(proposer) push fragments: {}", id, fragmentsAndStorageUnits.k);
+                        logger.info("iginx node {}(proposer) push storage units: {}", id, fragmentsAndStorageUnits.v);
+                        createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
                     }
                 }
-            } catch (MetaStorageException e) {
-                logger.error("encounter error when updating reshard status: ", e);
             }
         });
     }
@@ -545,52 +509,41 @@ public class DefaultMetaManager implements IMetaManager {
         storage.registerReshardStatusHook(status -> {
             try {
                 reshardStatus = status;
-                if (reshardStatus.equals(JUDGING) && !hasPushedStatistics) {
-                    updateMaxActiveFragmentEndTime(cache.getDeltaActiveFragmentStatistics().values());
-                    // 更新分片统计信息
-                    storage.lockActiveFragmentStatistics();
-                    storage.addActiveFragmentStatistics(id, cache.getDeltaActiveFragmentStatistics());
-                    storage.releaseActiveFragmentStatistics();
-                    cache.clearDeltaActiveFragmentStatistics();
-                    // 更新存储后端统计信息
+                if (!isProposer && reshardStatus.equals(JUDGING) && !hasPushedStatistics) {
+                    // 在重分片判断阶段，accepter 节点推送本地的存储后端统计信息
                     storage.lockActiveStorageEngineStatistics();
                     storage.addActiveStorageEngineStatistics(id, cache.getActiveStorageEngineStatistics());
                     storage.releaseActiveStorageEngineStatistics();
                     hasPushedStatistics = true;
-                    if (isProposer) {
-                        logger.info("iginx node {}(proposer) add active statistics", id);
-                    } else {
-                        logger.info("iginx node {} start to reshard", id);
-                        logger.info("iginx node {} add active statistics", id);
-                    }
+                    logger.info("iginx node {} start to reshard", id);
+                    logger.info("iginx node {} push active storage engine statistics", id);
                 }
-
-                if (reshardStatus.equals(EXECUTING) && isProposer) {
-                    storage.lockMinimalActiveIginxStatistics();
-                    storage.addMinimalActiveIginxStatistics(cache.getMinimalActiveIginxStatistics());
-                    storage.releaseMinimalActiveIginxStatistics();
+                if (isProposer && reshardStatus.equals(EXECUTING)) {
+                    storage.lockMinActiveIginxStatistics();
+                    storage.addMinActiveIginxStatistics(cache.getMinimalActiveIginxStatistics());
+                    storage.releaseMinActiveIginxStatistics();
+                    logger.info("iginx node {}(proposer) push min active iginx statistics", id);
                 }
-
                 if (reshardStatus.equals(NON_RESHARDING)) {
                     if (isProposer) {
                         logger.info("iginx node {}(proposer) finish to reshard", id);
                     } else {
                         logger.info("iginx node {} finish to reshard", id);
                     }
-                    lastReshardTime.set(System.currentTimeMillis());
+
                     isProposer = false;
-                    hasCreatedFragments = false;
-                    hasCreatedStorageUnits = false;
                     hasPushedStatistics = false;
                     hasJudgedResharding = false;
                     hasCommittedCreatingTask = false;
+                    hasCreatedFragments = false;
+                    hasCreatedStorageUnits = false;
                     needToCreateStorageUnits = false;
-                    statisticsCounter.set(0);
 
+                    lastReshardTime.set(System.currentTimeMillis());
+                    maxActiveEndTimeStatisticsCounter.set(0);
                     activeSeparatorStatisticsCounter.set(0);
                     activeStorageEngineStatisticsCounter.set(0);
-
-                    cache.clearActiveFragmentStatistics();
+                    activeTimeSeriesIntervalStatisticsCounter.set(0);
 
                     releaseWaitingReshardThreads();
                 }
@@ -610,14 +563,6 @@ public class DefaultMetaManager implements IMetaManager {
                     return;
                 }
                 if (isProposer && counter == getIginxList().size() - 1) {
-                    // 将历史分片统计数据上传到 zookeeper
-                    storage.addInactiveFragmentStatistics(cache.getActiveFragmentStatistics(), maxActiveFragmentEndTime.get());
-
-                    storage.lockActiveFragmentStatistics();
-                    storage.removeActiveFragmentStatistics();
-                    storage.releaseActiveFragmentStatistics();
-                    logger.info("iginx node {}(proposer) remove active fragment statistics", id);
-
                     storage.lockReshardCounter();
                     storage.resetReshardCounter();
                     storage.releaseReshardCounter();
@@ -752,7 +697,6 @@ public class DefaultMetaManager implements IMetaManager {
 
             Map<TimeSeriesInterval, FragmentMeta> latestFragments = getLatestFragmentMap();
             for (FragmentMeta originalFragmentMeta : latestFragments.values()) {
-                // TODO: 计算分片的
                 FragmentMeta fragmentMeta = originalFragmentMeta.endFragmentMeta(fragments.get(0).getTimeInterval().getStartTime());
                 // 在更新分片时，先更新本地
                 fragmentMeta.setUpdatedBy(id);
@@ -937,17 +881,6 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap) {
-        cache.addOrUpdateActiveFragmentStatistics(statisticsMap);
-        cache.addOrUpdateDeltaActiveFragmentStatistics(statisticsMap);
-    }
-
-    @Override
-    public Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics() {
-        return cache.getActiveFragmentStatistics();
-    }
-
-    @Override
     public void updateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap) {
         cache.addOrUpdateActiveTimeSeriesStatistics(timeSeriesStatisticsMap);
     }
@@ -1079,22 +1012,20 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.getUser(username);
     }
 
-    public boolean isResharding() {
-        return isResharding;
+    public boolean needToParkThreads() {
+        return reshardStatus.equals(EXECUTING);
     }
 
-    public void updateMaxActiveFragmentEndTime(Collection<FragmentStatistics> statisticsList) {
-        for (FragmentStatistics statistics: statisticsList) {
-            maxActiveFragmentEndTime.getAndUpdate(e -> Math.max(e, statistics.getTimeInterval().getEndTime() + ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
-        }
+    public void updateMaxActiveEndTime(long endTime) {
+        maxActiveEndTime.getAndUpdate(e -> Math.max(e, endTime + ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
     }
 
-    public long getMaxActiveFragmentEndTime() {
-        return maxActiveFragmentEndTime.get();
+    public long getMaxActiveEndTime() {
+        return maxActiveEndTime.get();
     }
 
-    public long getActiveFragmentStartTime() {
-        return activeFragmentStartTime.get();
+    public long getActiveStartTime() {
+        return activeStartTime.get();
     }
 
     private void createFragment(StorageUnitMeta storageUnit, FragmentMeta fragment, boolean create) {
@@ -1106,7 +1037,7 @@ public class DefaultMetaManager implements IMetaManager {
         }
         synchronized (terminateResharding) {
             try {
-                if (isResharding && fragment.isLastOfBatch() && !hasCreatedFragments) {
+                if (reshardStatus.equals(EXECUTING) && fragment.isLastOfBatch() && !hasCreatedFragments) {
                     hasCreatedFragments = true;
                     if (hasCreatedStorageUnits) {
                         logger.info("iginx node {} increment reshard counter", id);

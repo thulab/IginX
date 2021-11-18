@@ -2,14 +2,17 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveSeparatorStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveTimeSeriesIntervalStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.MinimalActiveIginxStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MaxActiveEndTimeStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MinActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -42,6 +45,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -94,7 +98,7 @@ public class FileMetaStorage implements IMetaStorage {
 
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
 
-    private ReshardStatusHook reshardStatusHook = null;
+    private ReshardStatusChangeHook reshardStatusChangeHook = null;
 
     private AtomicLong idGenerator = null; // 加载完数据之后赋值
 
@@ -512,6 +516,26 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+
+    }
+
+    @Override
     public void lockActiveStorageEngineStatistics() throws MetaStorageException {
 
     }
@@ -532,102 +556,67 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
-        Map<FragmentMeta, FragmentStatistics> activeFragmentsStatistics = new HashMap<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile())))) {
-            String line;
-            String[] params;
-            while ((line = reader.readLine()) != null) {
-                params = line.split(" ");
-                FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
-                if (params[0].equals(UPDATE)) {
-                    FragmentStatistics statistics = JsonUtils.getGson().fromJson(params[2], FragmentStatistics.class);
-                    activeFragmentsStatistics.put(fragment, statistics);
-                } else if (params[0].equals(REMOVE)) {
-                    activeFragmentsStatistics.remove(fragment);
-                } else {
-                    logger.error("unknown log content: " + line);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when reading active fragment statistics log file: ", e);
-            throw new MetaStorageException(e);
-        }
-        return activeFragmentsStatistics;
-    }
-
-    @Override
-    public void lockActiveFragmentStatistics() throws MetaStorageException {
-        activeFragmentStatisticsLock.lock();
-    }
-
-    @Override
-    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile(), true))) {
-            for (Map.Entry<FragmentMeta, FragmentStatistics> entry : deltaActiveFragmentStatistics.entrySet()) {
-                writer.write(String.format("%s %s %s%n", UPDATE, JsonUtils.getGson().toJson(entry.getKey()), JsonUtils.getGson().toJson(entry.getValue())));
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when writing active fragment statistics file error: ", e);
-            throw new MetaStorageException(e);
-        }
-        if (activeFragmentStatisticsChangeHook != null) {
-            activeFragmentStatisticsChangeHook.onChange(deltaActiveFragmentStatistics);
-        }
-    }
-
-    @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, INACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile(), true))) {
-            for (Map.Entry<FragmentMeta, FragmentStatistics> entry : activeFragmentStatistics.entrySet()) {
-                writer.write(String.format("%s %s %s %s%n", UPDATE, endTime, JsonUtils.getGson().toJson(entry.getKey()), JsonUtils.getGson().toJson(entry.getValue())));
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when writing inactive fragment statistics file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void releaseActiveFragmentStatistics() throws MetaStorageException {
-        activeFragmentStatisticsLock.unlock();
-    }
-
-    @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            Files.deleteIfExists(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE));
-            Files.createFile(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE));
-        } catch (IOException e) {
-            logger.error("encounter error when removing active fragment statistics file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
-        if (hook != null) {
-            activeFragmentStatisticsChangeHook = hook;
-        }
-    }
-
-    @Override
-    public void lockMinimalActiveIginxStatistics() throws MetaStorageException {
+    public void lockActiveTimeSeriesIntervalStatistics() throws MetaStorageException {
 
     }
 
     @Override
-    public void addMinimalActiveIginxStatistics(double density) throws MetaStorageException {
+    public void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
 
     }
 
     @Override
-    public void releaseMinimalActiveIginxStatistics() throws MetaStorageException {
+    public void releaseActiveTimeSeriesIntervalStatistics() throws MetaStorageException {
 
     }
 
     @Override
-    public void registerMinimalActiveIginxStatisticsChangeHook(MinimalActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
+    public void registerActiveTimeSeriesIntervalStatisticsChangeHook(ActiveTimeSeriesIntervalStatisticsChangeHook hook) {
+
+    }
+
+    @Override
+    public void lockMinActiveIginxStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMinActiveIginxStatistics(double density) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseMinActiveIginxStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMinActiveIginxStatisticsChangeHook(MinActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockActiveSeparatorStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseActiveSeparatorStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerActiveSeparatorStatisticsChangeHook(ActiveSeparatorStatisticsChangeHook hook) {
 
     }
 
@@ -637,8 +626,8 @@ public class FileMetaStorage implements IMetaStorage {
             String line = reader.readLine();
             ReshardStatus status = JsonUtils.getGson().fromJson(line, ReshardStatus.class);
             if (line == null || status.equals(NON_RESHARDING)) {
-                if (reshardStatusHook != null) {
-                    reshardStatusHook.onChange(EXECUTING);
+                if (reshardStatusChangeHook != null) {
+                    reshardStatusChangeHook.onChange(EXECUTING);
                 }
                 updateReshardStatus(EXECUTING);
                 return true;
@@ -664,8 +653,8 @@ public class FileMetaStorage implements IMetaStorage {
             logger.error("encounter error when writing reshard notification log file: ", e);
             throw new MetaStorageException(e);
         }
-        if (reshardStatusHook != null) {
-            reshardStatusHook.onChange(status);
+        if (reshardStatusChangeHook != null) {
+            reshardStatusChangeHook.onChange(status);
         }
     }
 
@@ -686,9 +675,9 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerReshardStatusHook(ReshardStatusHook hook) {
+    public void registerReshardStatusHook(ReshardStatusChangeHook hook) {
         if (hook != null) {
-            reshardStatusHook = hook;
+            reshardStatusChangeHook = hook;
         }
     }
 

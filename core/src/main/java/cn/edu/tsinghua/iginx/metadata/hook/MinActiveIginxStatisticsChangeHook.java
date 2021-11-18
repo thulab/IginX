@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.hook;
 
-public interface MinimalActiveIginxStatisticsChangeHook {
+public interface MinActiveIginxStatisticsChangeHook {
 
     void onChange(double density);
 

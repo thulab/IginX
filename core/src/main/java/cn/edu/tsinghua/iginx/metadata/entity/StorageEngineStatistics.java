@@ -44,14 +44,17 @@ public final class StorageEngineStatistics {
 
     private double saturation;
 
+    private long maxEndTime;
+
     public StorageEngineStatistics() {
 
     }
 
-    public StorageEngineStatistics(double density, double capacity, double saturation) {
+    public StorageEngineStatistics(double density, double capacity, double saturation, long maxEndTime) {
         this.density = density;
         this.capacity = capacity;
         this.saturation = saturation;
+        this.maxEndTime = maxEndTime;
     }
 
     public void updateByTimeSeriesStatistics(TimeSeriesStatistics timeSeriesStatistics) {
@@ -62,6 +65,7 @@ public final class StorageEngineStatistics {
     public void updateByStorageEngineStatistics(StorageEngineStatistics storageEngineStatistics) {
         density += storageEngineStatistics.getDensity();
         saturation += storageEngineStatistics.getSaturation();
+        maxEndTime = Math.max(maxEndTime, storageEngineStatistics.getMaxEndTime());
     }
 
     public double getDensity() {
@@ -86,5 +90,13 @@ public final class StorageEngineStatistics {
 
     public void setSaturation(double saturation) {
         this.saturation = saturation;
+    }
+
+    public long getMaxEndTime() {
+        return maxEndTime;
+    }
+
+    public void setMaxEndTime(long maxEndTime) {
+        this.maxEndTime = maxEndTime;
     }
 }

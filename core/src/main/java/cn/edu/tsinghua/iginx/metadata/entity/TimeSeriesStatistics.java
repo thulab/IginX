@@ -44,6 +44,8 @@ public final class TimeSeriesStatistics {
 
     private long totalBytes;
 
+    private double density;
+
     private long storageEngineId;
 
     public TimeSeriesStatistics() {
@@ -97,5 +99,13 @@ public final class TimeSeriesStatistics {
 
     public void setStorageEngineId(long storageEngineId) {
         this.storageEngineId = storageEngineId;
+    }
+
+    public double getDensity() {
+        return density;
+    }
+
+    public void setDensity(double density) {
+        this.density = density;
     }
 }

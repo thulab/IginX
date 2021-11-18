@@ -27,14 +27,18 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveSeparatorStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ActiveTimeSeriesIntervalStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MaxActiveEndTimeStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MinActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
@@ -50,7 +54,6 @@ import io.etcd.jetcd.Lease;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
-import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.options.WatchOption;
@@ -66,6 +69,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -149,7 +153,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
     private long activeFragmentStatisticsLease = -1L;
     private Watch.Watcher reshardNotificationWatcher;
-    private ReshardStatusHook reshardStatusHook = null;
+    private ReshardStatusChangeHook reshardStatusChangeHook = null;
     private long reshardNotificationLease = -1L;
     private Watch.Watcher reshardCounterWatcher;
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
@@ -410,7 +414,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         this.reshardNotificationWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
             @Override
             public void onNext(WatchResponse watchResponse) {
-                if (reshardStatusHook == null) {
+                if (reshardStatusChangeHook == null) {
                     return;
                 }
                 for (WatchEvent event : watchResponse.getEvents()) {
@@ -418,7 +422,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                     switch (event.getEventType()) {
                         case PUT:
                             status = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), ReshardStatus.class);
-                            reshardStatusHook.onChange(status);
+                            reshardStatusChangeHook.onChange(status);
                             break;
                         case DELETE:
                             break;
@@ -916,6 +920,71 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockMinActiveIginxStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMinActiveIginxStatistics(double density) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseMinActiveIginxStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMinActiveIginxStatisticsChangeHook(MinActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockActiveSeparatorStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseActiveSeparatorStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerActiveSeparatorStatisticsChangeHook(ActiveSeparatorStatisticsChangeHook hook) {
+
+    }
+
+    @Override
     public void lockActiveStorageEngineStatistics() throws MetaStorageException {
 
     }
@@ -936,96 +1005,23 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
-            GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes())).build())
-                    .get();
-            response.getKvs().forEach(e -> {
-                Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatisticsMap = JsonUtils.getGson().fromJson(e.getValue().toString(StandardCharsets.UTF_8), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType());
-                deltaActiveFragmentStatisticsMap.forEach((key, value) -> activeFragmentStatisticsMap.computeIfAbsent(key, x -> new FragmentStatistics()).update(value));
-            });
-            return activeFragmentStatisticsMap;
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when loading active fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        }
+    public void lockActiveTimeSeriesIntervalStatistics() throws MetaStorageException {
+
     }
 
     @Override
-    public void lockActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            activeFragmentStatisticsLeaseLock.lock();
-            activeFragmentStatisticsLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
-            client.getLockClient().lock(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_LOCK.getBytes()), activeFragmentStatisticsLease);
-        } catch (Exception e) {
-            activeFragmentStatisticsLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring active fragment statistics mutex: ", e);
-        }
+    public void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
+
     }
 
     @Override
-    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
-        try {
-            long singleId = nextId(ACTIVE_FRAGMENT_STATISTICS_ID + String.format("%06d", id) + "/");
-            this.client.getKVClient().put(
-                    ByteSequence.from((ACTIVE_FRAGMENT_STATISTICS_PREFIX + String.format("%06d", id) + "/" + String.format("%06d", singleId)).getBytes()),
-                    ByteSequence.from(JsonUtils.getGson().toJson(deltaActiveFragmentStatistics, new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType()).getBytes(StandardCharsets.UTF_8))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when adding active fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        }
+    public void releaseActiveTimeSeriesIntervalStatistics() throws MetaStorageException {
+
     }
 
     @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
-        try {
-            this.client.getKVClient().put(
-                    ByteSequence.from((INACTIVE_FRAGMENT_STATISTICS_PREFIX + endTime).getBytes()),
-                    ByteSequence.from(JsonUtils.getGson().toJson(activeFragmentStatistics, new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType()).getBytes(StandardCharsets.UTF_8))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when adding inactive fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
+    public void registerActiveTimeSeriesIntervalStatisticsChangeHook(ActiveTimeSeriesIntervalStatisticsChangeHook hook) {
 
-    @Override
-    public void releaseActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            client.getLockClient().unlock(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(activeFragmentStatisticsLease).get();
-            activeFragmentStatisticsLease = -1L;
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing active fragment statistics: ", e);
-        } finally {
-            activeFragmentStatisticsLeaseLock.unlock();
-        }
-    }
-
-    @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            this.client.getKVClient().delete(
-                    ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes()),
-                    DeleteOption.newBuilder().withPrefix(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes())).build()
-            ).get();
-        } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when removing active fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        } finally {
-            if (activeFragmentStatisticsLease != -1) {
-                releaseActiveFragmentStatistics();
-            }
-        }
-    }
-
-    @Override
-    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
-        this.activeFragmentStatisticsChangeHook = hook;
     }
 
     @Override
@@ -1097,8 +1093,8 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerReshardStatusHook(ReshardStatusHook hook) {
-        reshardStatusHook = hook;
+    public void registerReshardStatusHook(ReshardStatusChangeHook hook) {
+        reshardStatusChangeHook = hook;
     }
 
     @Override

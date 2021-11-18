@@ -18,10 +18,10 @@
  */
 package cn.edu.tsinghua.iginx.metadata.hook;
 
-import java.util.Set;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 
-public interface ActiveSeparatorStatisticsChangeHook {
+public interface ReshardStatusChangeHook {
 
-    void onChange(Set<String> separators);
+    void onChange(ReshardStatus status);
 
 }

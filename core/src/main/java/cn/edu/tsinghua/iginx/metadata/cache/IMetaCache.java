@@ -100,27 +100,6 @@ public interface IMetaCache {
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
-    // 初始化本地缓存的分片的统计信息
-    void initActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    // 更新本地缓存的分片的统计信息
-    void addOrUpdateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    // 获取本地缓存的分片的统计信息
-    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
-
-    // 清空本地缓存的分片的统计信息
-    void clearActiveFragmentStatistics();
-
-    // 更新本地缓存的分片的增量统计信息
-    void addOrUpdateDeltaActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    // 获取本地缓存的分片的增量统计信息
-    Map<FragmentMeta, FragmentStatistics> getDeltaActiveFragmentStatistics();
-
-    // 清空本地缓存的分片的增量统计信息
-    void clearDeltaActiveFragmentStatistics();
-
     /**
      * @param id IginX 的 ID
      * @param statisticsMap ID 为 id 的 IginX 本地存储的存储后端统计信息
@@ -162,7 +141,7 @@ public interface IMetaCache {
 
     Set<String> separateActiveTimeSeriesStatisticsByDensity(double density);
 
-    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators(Set<String> separators);
+    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators();
 
     void addReshardFragment(FragmentMeta fragment);
 

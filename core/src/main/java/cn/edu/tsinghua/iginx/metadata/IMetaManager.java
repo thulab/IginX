@@ -166,13 +166,6 @@ public interface IMetaManager {
     int getSchemaMappingItem(String schema, String key);
 
     /**
-     * 更新活跃分片统计信息
-     */
-    void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> fragmentStatisticsMap);
-
-    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
-
-    /**
      * 更新活跃时间序列统计信息
      */
     void updateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap);

@@ -37,4 +37,18 @@
 package cn.edu.tsinghua.iginx.metadata.entity;
 
 public class TimeSeriesIntervalStatistics {
+
+    private double density;
+
+    public TimeSeriesIntervalStatistics() {
+
+    }
+
+    public TimeSeriesIntervalStatistics(double density) {
+        this.density = density;
+    }
+
+    public void update(TimeSeriesIntervalStatistics timeSeriesIntervalStatistics) {
+
+    }
 }

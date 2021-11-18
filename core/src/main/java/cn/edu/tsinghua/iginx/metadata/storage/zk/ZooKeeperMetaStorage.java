@@ -20,17 +20,16 @@ package cn.edu.tsinghua.iginx.metadata.storage.zk;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
-import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveSeparatorStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveTimeSeriesIntervalStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.MinimalActiveIginxStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MaxActiveEndTimeStatisticsChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.MinActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusHook;
+import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusChangeHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
@@ -76,7 +75,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String STORAGE_ENGINE_NODE = "/storage/node";
 
-    private static final String ACTIVE_FRAGMENT_STATISTICS_NODE = "/statistics/fragment/active/node";
+    private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE = "/statistics/end/time/active/max/node";
 
     private static final String ACTIVE_SEPARATOR_STATISTICS_NODE = "/statistics/separator/active/node";
 
@@ -112,9 +111,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String USER_NODE_PREFIX = "/user";
 
-    private static final String ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/active";
+    private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX = "/statistics/end/time/active/max";
 
-    private static final String MINIMAL_ACTIVE_IGINX_STATISTICS_NODE_PREFIX = "/statistics/iginx/active/minimal";
+    private static final String MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX = "/statistics/iginx/active/min";
 
     private static final String ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX = "/statistics/separator/active";
 
@@ -123,10 +122,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String ACTIVE_STORAGE_ENGINE_STATISTICS_NODE_PREFIX = "/statistics/storage/engine/active";
 
     private static final String ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE_PREFIX = "/statistics/time/series/interval/active";
-
-    private static final String SINGLE_ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/add";
-
-    private static final String INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX = "/statistics/fragment/inactive";
 
     private static final String RESHARD_STATUS_NODE_PREFIX = "/status/reshard";
 
@@ -139,8 +134,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final InterProcessMutex storageUnitMutex;
     private final Lock fragmentMutexLock = new ReentrantLock();
     private final InterProcessMutex fragmentMutex;
-    private final Lock activeFragmentStatisticsMutexLock = new ReentrantLock();
-    private final Lock minimalActiveIginxStatisticsMutexLock = new ReentrantLock();
+    private final Lock maxActiveEndTimeStatisticsMutexLock = new ReentrantLock();
+    private final Lock minActiveIginxStatisticsMutexLock = new ReentrantLock();
     private final Lock activeSeparatorStatisticsMutexLock = new ReentrantLock();
     private final Lock activeStorageEngineStatisticsMutexLock = new ReentrantLock();
     private final Lock activeTimeSeriesIntervalStatisticsMutexLock = new ReentrantLock();
@@ -155,8 +150,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     protected TreeCache storageUnitCache;
     protected TreeCache fragmentCache;
     protected TreeCache userCache;
-    protected TreeCache activeFragmentStatisticsCache;
-    protected TreeCache minimalActiveIginxStatisticsCache;
+    protected TreeCache maxActiveEndTimeStatisticsCache;
+    protected TreeCache minActiveIginxStatisticsCache;
     protected TreeCache activeSeparatorStatisticsCache;
     protected TreeCache activeStorageEngineStatisticsCache;
     protected TreeCache activeTimeSeriesIntervalStatisticsCache;
@@ -169,12 +164,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private StorageUnitChangeHook storageUnitChangeHook = null;
     private FragmentChangeHook fragmentChangeHook = null;
     private UserChangeHook userChangeHook = null;
-    private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
-    private MinimalActiveIginxStatisticsChangeHook minimalActiveIginxStatisticsChangeHook = null;
+    private MaxActiveEndTimeStatisticsChangeHook maxActiveEndTimeStatisticsChangeHook = null;
+    private MinActiveIginxStatisticsChangeHook minActiveIginxStatisticsChangeHook = null;
     private ActiveSeparatorStatisticsChangeHook activeSeparatorStatisticsChangeHook = null;
     private ActiveStorageEngineStatisticsChangeHook activeStorageEngineStatisticsChangeHook = null;
     private ActiveTimeSeriesIntervalStatisticsChangeHook activeTimeSeriesIntervalStatisticsChangeHook = null;
-    private ReshardStatusHook reshardStatusHook = null;
+    private ReshardStatusChangeHook reshardStatusChangeHook = null;
     private ReshardCounterChangeHook reshardCounterChangeHook = null;
 
     public ZooKeeperMetaStorage() {
@@ -447,6 +442,16 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 }
                 storageEngineMetaMap.putIfAbsent(storageEngineMeta.getId(), storageEngineMeta);
             }
+
+            // TODO stash
+            registerMaxActiveEndTimeStatisticsListener();
+            registerMinActiveIginxStatisticsListener();
+            registerActiveSeparatorStatisticsListener();
+            registerActiveStorageEngineStatisticsListener();
+            registerActiveTimeSeriesIntervalStatisticsListener();
+            registerReshardStatusListener();
+            registerReshardCounterListener();
+
             return storageEngineMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when loading schema mapping", e);
@@ -888,126 +893,58 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
     }
 
-    @Override
-    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
-            if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) == null) {
-                client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
-            } else {
-                List<String> children = client.getChildren().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
-                for (String childName : children) {
-                    byte[] data = client.getData()
-                            .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + childName);
-                    Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatisticsMap = JsonUtils.fromJson(data, activeFragmentStatisticsMap.getClass());
-                    if (deltaActiveFragmentStatisticsMap == null) {
-                        logger.error("encounter error when resolving data from " + ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + childName);
-                        continue;
-                    }
-                    deltaActiveFragmentStatisticsMap.forEach((key, value) -> activeFragmentStatisticsMap.computeIfAbsent(key, e -> new FragmentStatistics()).update(value));
-                }
-            }
-            registerActiveFragmentStatisticsListener();
-            registerMinimalActiveIginxStatisticsListener();
-            registerActiveSeparatorStatisticsListener();
-            registerActiveStorageEngineStatisticsListener();
-            registerActiveTimeSeriesIntervalStatisticsListener();
-            registerReshardStatusListener();
-            registerReshardCounterListener();
-            return activeFragmentStatisticsMap;
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when loading active fragment statistics: ", e);
-        }
-    }
-
-    private void registerActiveFragmentStatisticsListener() throws Exception {
-        this.activeFragmentStatisticsCache = new TreeCache(this.client, ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
+    private void registerMaxActiveEndTimeStatisticsListener() throws Exception {
+        this.maxActiveEndTimeStatisticsCache = new TreeCache(this.client, MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
-            if (activeFragmentStatisticsChangeHook == null) {
+            if (maxActiveEndTimeStatisticsChangeHook == null) {
                 return;
             }
-            String path;
             byte[] data;
-            Map<FragmentMeta, FragmentStatistics> statisticsMap;
+            long endTime;
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
-                    path = event.getData().getPath();
                     data = event.getData().getData();
-                    String[] pathParts = path.split("/");
-                    if (pathParts.length == 6) {
-                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType());
-                        if (statisticsMap != null) {
-                            activeFragmentStatisticsChangeHook.onChange(statisticsMap);
-                        } else {
-                            logger.error("encounter error when resolving active fragment statistics from zookeeper");
-                        }
-                    }
+                    endTime = JsonUtils.fromJson(data, Long.class);
+                    maxActiveEndTimeStatisticsChangeHook.onChange(endTime);
                     break;
                 default:
                     break;
             }
         };
-        this.activeFragmentStatisticsCache.getListenable().addListener(listener);
-        this.activeFragmentStatisticsCache.start();
+        this.maxActiveEndTimeStatisticsCache.getListenable().addListener(listener);
+        this.maxActiveEndTimeStatisticsCache.start();
     }
 
     @Override
-    public void lockActiveFragmentStatistics() throws MetaStorageException {
-        activeFragmentStatisticsMutexLock.lock();
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+        maxActiveEndTimeStatisticsMutexLock.lock();
     }
 
     @Override
-    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
+    public void addMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
         try {
-            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT_SEQUENTIAL)
-                    .forPath(ACTIVE_FRAGMENT_STATISTICS_NODE + String.format("%010d", id) + SINGLE_ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX, JsonUtils.toJson(deltaActiveFragmentStatistics));
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding active fragment statistics: ", e);
+            throw new MetaStorageException("encounter error when adding max active end time statistics: ", e);
         }
     }
 
     @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
-        try {
-            for (FragmentStatistics statistics : activeFragmentStatistics.values()) {
-                String path = INACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX + "/" + endTime + "/" + statistics.getTsInterval().toString();
-                if (this.client.checkExists().forPath(path) == null) {
-                    this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path, JsonUtils.toJson(statistics));
-                } else {
-                    this.client.setData().forPath(path, JsonUtils.toJson(statistics));
-                }
-            }
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding inactive fragment statistics: ", e);
-        }
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+        maxActiveEndTimeStatisticsMutexLock.unlock();
     }
 
     @Override
-    public void releaseActiveFragmentStatistics() throws MetaStorageException {
-        activeFragmentStatisticsMutexLock.unlock();
+    public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+        this.maxActiveEndTimeStatisticsChangeHook = hook;
     }
 
-    @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            if (this.client.checkExists().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX) != null) {
-                this.client.delete().deletingChildrenIfNeeded().forPath(ACTIVE_FRAGMENT_STATISTICS_NODE_PREFIX);
-            }
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when removing active fragment statistics: ", e);
-        }
-    }
-
-    @Override
-    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
-        this.activeFragmentStatisticsChangeHook = hook;
-    }
-
-    private void registerMinimalActiveIginxStatisticsListener() throws Exception {
-        this.minimalActiveIginxStatisticsCache = new TreeCache(this.client, MINIMAL_ACTIVE_IGINX_STATISTICS_NODE_PREFIX);
+    private void registerMinActiveIginxStatisticsListener() throws Exception {
+        this.minActiveIginxStatisticsCache = new TreeCache(this.client, MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX);
         TreeCacheListener listener = (curatorFramework, event) -> {
-            if (minimalActiveIginxStatisticsChangeHook == null) {
+            if (minActiveIginxStatisticsChangeHook == null) {
                 return;
             }
             byte[] data;
@@ -1017,39 +954,39 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 case NODE_UPDATED:
                     data = event.getData().getData();
                     density = JsonUtils.fromJson(data, Double.class);
-                    minimalActiveIginxStatisticsChangeHook.onChange(density);
+                    minActiveIginxStatisticsChangeHook.onChange(density);
                     break;
                 default:
                     break;
             }
         };
-        this.minimalActiveIginxStatisticsCache.getListenable().addListener(listener);
-        this.minimalActiveIginxStatisticsCache.start();
+        this.minActiveIginxStatisticsCache.getListenable().addListener(listener);
+        this.minActiveIginxStatisticsCache.start();
     }
 
     @Override
-    public void lockMinimalActiveIginxStatistics() throws MetaStorageException {
-        minimalActiveIginxStatisticsMutexLock.lock();
+    public void lockMinActiveIginxStatistics() throws MetaStorageException {
+        minActiveIginxStatisticsMutexLock.lock();
     }
 
     @Override
-    public void addMinimalActiveIginxStatistics(double density) throws MetaStorageException {
+    public void addMinActiveIginxStatistics(double density) throws MetaStorageException {
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(MINIMAL_ACTIVE_IGINX_STATISTICS_NODE_PREFIX, JsonUtils.toJson(density));
+                    .forPath(MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX, JsonUtils.toJson(density));
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding active storage engine statistics: ", e);
+            throw new MetaStorageException("encounter error when adding min active iginx statistics: ", e);
         }
     }
 
     @Override
-    public void releaseMinimalActiveIginxStatistics() throws MetaStorageException {
-        minimalActiveIginxStatisticsMutexLock.unlock();
+    public void releaseMinActiveIginxStatistics() throws MetaStorageException {
+        minActiveIginxStatisticsMutexLock.unlock();
     }
 
     @Override
-    public void registerMinimalActiveIginxStatisticsChangeHook(MinimalActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
-        minimalActiveIginxStatisticsChangeHook = hook;
+    public void registerMinActiveIginxStatisticsChangeHook(MinActiveIginxStatisticsChangeHook hook) throws MetaStorageException {
+        minActiveIginxStatisticsChangeHook = hook;
     }
 
     private void registerActiveSeparatorStatisticsListener() throws Exception {
@@ -1072,7 +1009,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                         isMerged = pathParts[4].equals("merged");
                         separators = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Set<String>>() {}.getType());
                         if (separators != null) {
-                            activeSeparatorStatisticsChangeHook.onChange(isMerged, separators);
+                            activeSeparatorStatisticsChangeHook.onChange(separators);
                         } else {
                             logger.error("encounter error when resolving active separator statistics from zookeeper");
                         }
@@ -1304,8 +1241,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerReshardStatusHook(ReshardStatusHook hook) {
-        this.reshardStatusHook = hook;
+    public void registerReshardStatusHook(ReshardStatusChangeHook hook) {
+        this.reshardStatusChangeHook = hook;
     }
 
     private void registerReshardStatusListener() throws Exception {
@@ -1318,7 +1255,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 case NODE_UPDATED:
                     data = event.getData().getData();
                     status = JsonUtils.fromJson(data, ReshardStatus.class);
-                    reshardStatusHook.onChange(status);
+                    reshardStatusChangeHook.onChange(status);
                     break;
                 default:
                     break;

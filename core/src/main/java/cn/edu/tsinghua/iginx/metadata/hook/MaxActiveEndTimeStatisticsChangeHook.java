@@ -18,10 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.hook;
 
-import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+public interface MaxActiveEndTimeStatisticsChangeHook {
 
-public interface ReshardStatusHook {
-
-    void onChange(ReshardStatus status);
+    void onChange(long endTime);
 
 }
