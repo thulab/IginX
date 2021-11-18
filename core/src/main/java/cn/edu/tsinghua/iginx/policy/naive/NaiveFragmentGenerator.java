@@ -112,31 +112,31 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
         int storageEngineNum = storageEngineList.size();
 
         String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
-        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
+        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient();
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
-        String[] prefixes = new String[clients.length * instancesNumPerClient];
-        for (int i = 0; i < clients.length; i++) {
-            for (int j = 0; j < instancesNumPerClient; j++) {
-                prefixes[i * instancesNumPerClient + j] = clients[i] + (j + 2);
-            }
+        int fragmentNum = clients.length * 30 / replicaNum;
+        String[] prefixes = new String[fragmentNum + 1];
+        for (int i = 0; i < fragmentNum + 1; i++) {
+            prefixes[i] = "d_" + String.format("%04d", instancesNumPerClient * i / fragmentNum);
         }
         Arrays.sort(prefixes);
 
         List<FragmentMeta> fragmentMetaList;
         String masterId;
         StorageUnitMeta storageUnit;
-        for (int i = 0; i < clients.length * instancesNumPerClient - 1; i++) {
-            fragmentMetaList = new ArrayList<>();
-            masterId = RandomStringUtils.randomAlphanumeric(16);
-            storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
-//            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(i * 2 % getStorageEngineList().size()).getId(), masterId, true);
-            for (int j = i + 1; j < i + replicaNum; j++) {
-                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(j % storageEngineNum).getId(), masterId, false));
-//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get((i * 2 + 1) % getStorageEngineList().size()).getId(), masterId, false));
+        for (int i = 0; i < clients.length; i++) {
+            for (int j = 0; j < 30 / replicaNum; j++) {
+                fragmentMetaList = new ArrayList<>();
+                masterId = RandomStringUtils.randomAlphanumeric(16);
+                storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
+                for (int k = i + 1; k < i + replicaNum; k++) {
+                    storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(k % storageEngineNum).getId(), masterId, false));
+                }
+                storageUnitList.add(storageUnit);
+                int index = i * 30 / replicaNum + j;
+                fragmentMetaList.add(new FragmentMeta(prefixes[index], prefixes[index + 1], 0, Long.MAX_VALUE, masterId));
+                fragmentMap.put(new TimeSeriesInterval(prefixes[index], prefixes[index + 1]), fragmentMetaList);
             }
-            storageUnitList.add(storageUnit);
-            fragmentMetaList.add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, masterId));
-            fragmentMap.put(new TimeSeriesInterval(prefixes[i], prefixes[i + 1]), fragmentMetaList);
         }
 
         fragmentMetaList = new ArrayList<>();
@@ -156,8 +156,8 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
             storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(storageEngineNum - 1 - i).getId(), masterId, false));
         }
         storageUnitList.add(storageUnit);
-        fragmentMetaList.add(new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, masterId));
-        fragmentMap.put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null), fragmentMetaList);
+        fragmentMetaList.add(new FragmentMeta(prefixes[fragmentNum], null, 0, Long.MAX_VALUE, masterId));
+        fragmentMap.put(new TimeSeriesInterval(prefixes[fragmentNum], null), fragmentMetaList);
 
         return new Pair<>(fragmentMap, storageUnitList);
     }
