@@ -116,7 +116,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertColumnRecordsReq.getDataTypeList(),
                         insertColumnRecordsReq.getAttributesList()
                 );
-                if (DefaultMetaManager.getInstance().isResharding()
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()
+                        && DefaultMetaManager.getInstance().isResharding()
                         && insertColumnRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
                     Thread thread = Thread.currentThread();
                     DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
@@ -125,7 +126,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertColumnRecordsPlanResults(insertColumnRecordsPlan);
                 List<InsertColumnRecordsPlan> insertColumnRecordsPlans = splitInsertColumnRecordsPlan(insertColumnRecordsPlan, splitInfoList);
-                if (DefaultMetaManager.getInstance().isResharding()) {
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
                     Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
                     for (InsertColumnRecordsPlan plan: insertColumnRecordsPlans) {
                         FragmentStatistics statistics = plan.getStatistics();
@@ -149,7 +150,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertNonAlignedColumnRecordsReq.getDataTypeList(),
                         insertNonAlignedColumnRecordsReq.getAttributesList()
                 );
-                if (DefaultMetaManager.getInstance().isResharding()
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()
+                        && DefaultMetaManager.getInstance().isResharding()
                         && insertNonAlignedColumnRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
                     Thread thread = Thread.currentThread();
                     DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
@@ -158,7 +160,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertNonAlignedColumnRecordsPlanResults(insertNonAlignedColumnRecordsPlan);
                 List<InsertNonAlignedColumnRecordsPlan> insertNonAlignedColumnRecordsPlans = splitInsertNonAlignedColumnRecordsPlan(insertNonAlignedColumnRecordsPlan, splitInfoList);
-                if (DefaultMetaManager.getInstance().isResharding()) {
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
                     Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
                     for (InsertNonAlignedColumnRecordsPlan plan: insertNonAlignedColumnRecordsPlans) {
                         FragmentStatistics statistics = plan.getStatistics();
@@ -180,7 +182,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertRowRecordsReq.getDataTypeList(),
                         insertRowRecordsReq.getAttributesList()
                 );
-                if (DefaultMetaManager.getInstance().isResharding()
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()
+                        && DefaultMetaManager.getInstance().isResharding()
                         && insertRowRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
                     Thread thread = Thread.currentThread();
                     DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
@@ -189,7 +192,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertRowRecordsPlanResults(insertRowRecordsPlan);
                 List<InsertRowRecordsPlan> insertRowRecordsPlans = splitInsertRowRecordsPlan(insertRowRecordsPlan, splitInfoList);
-                if (DefaultMetaManager.getInstance().isResharding()) {
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
                     Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
                     for (InsertRowRecordsPlan plan: insertRowRecordsPlans) {
                         FragmentStatistics statistics = plan.getStatistics();
@@ -211,7 +214,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         insertNonAlignedRowRecordsReq.getDataTypeList(),
                         insertNonAlignedRowRecordsReq.getAttributesList()
                 );
-                if (DefaultMetaManager.getInstance().isResharding()
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()
+                        && DefaultMetaManager.getInstance().isResharding()
                         && insertNonAlignedRowRecordsPlan.getEndTime() > DefaultMetaManager.getInstance().getMaxActiveFragmentEndTime()) {
                     Thread thread = Thread.currentThread();
                     DefaultMetaManager.getInstance().addWaitingReshardThread(thread);
@@ -220,7 +224,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 }
                 splitInfoList = planSplitter.getSplitInsertNonAlignedRowRecordsPlanResults(insertNonAlignedRowRecordsPlan);
                 List<InsertNonAlignedRowRecordsPlan> insertNonAlignedRowRecordsPlans = splitInsertNonAlignedRowRecordsPlan(insertNonAlignedRowRecordsPlan, splitInfoList);
-                if (DefaultMetaManager.getInstance().isResharding()) {
+                if (ConfigDescriptor.getInstance().getConfig().isEnableGlobalStatistics()) {
                     Map<FragmentMeta, FragmentStatistics> statisticsMap = new HashMap<>();
                     for (InsertNonAlignedRowRecordsPlan plan: insertNonAlignedRowRecordsPlans) {
                         FragmentStatistics statistics = plan.getStatistics();
