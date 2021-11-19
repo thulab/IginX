@@ -460,7 +460,7 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
-    public double getMinimalActiveIginxStatistics() {
+    public double getMinActiveIginxStatistics() {
         return activeIginxStatisticsMap.values().stream().filter(x -> x.getDensity() != 0.0).mapToDouble(IginxStatistics::getDensity).min().orElse(0.0);
     }
 
@@ -511,11 +511,15 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public Set<String> separateActiveTimeSeriesStatisticsByDensity(double density) {
+        logger.info("density = {}", density);
+        logger.info("activeTimeSeriesStatisticsMap = {}", activeTimeSeriesStatisticsMap);
         Set<String> separators = new TreeSet<>();
         double tempSum = 0.0;
         String tempTimeSeries = null;
         for (Map.Entry<String, TimeSeriesStatistics> entry : activeTimeSeriesStatisticsMap.entrySet()) {
+            logger.info("entry = {}", entry);
             double currDensity = entry.getValue().getDensity();
+            logger.info("tempSum + currDensity = {}", tempSum + currDensity);
             if (tempSum + currDensity >= density) {
                 if (tempSum + currDensity - density > density - tempSum && tempTimeSeries != null) {
                     separators.add(tempTimeSeries);

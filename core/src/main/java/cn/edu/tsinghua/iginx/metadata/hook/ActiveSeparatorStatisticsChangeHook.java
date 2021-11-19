@@ -22,6 +22,6 @@ import java.util.Set;
 
 public interface ActiveSeparatorStatisticsChangeHook {
 
-    void onChange(Set<String> separators);
+    void onChange(long iginxId, Set<String> separators);
 
 }

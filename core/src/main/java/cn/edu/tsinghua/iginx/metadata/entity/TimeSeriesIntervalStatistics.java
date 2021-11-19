@@ -51,4 +51,11 @@ public class TimeSeriesIntervalStatistics {
     public void update(TimeSeriesIntervalStatistics timeSeriesIntervalStatistics) {
 
     }
+
+    @Override
+    public String toString() {
+        return "TimeSeriesIntervalStatistics{" +
+                "density=" + density +
+                '}';
+    }
 }

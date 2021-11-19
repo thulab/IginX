@@ -102,7 +102,7 @@ public interface IMetaStorage {
 
     void lockMaxActiveEndTimeStatistics() throws MetaStorageException;
 
-    void addMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException;
+    void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException;
 
     void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
 
@@ -110,7 +110,7 @@ public interface IMetaStorage {
 
     void lockMinActiveIginxStatistics() throws MetaStorageException;
 
-    void addMinActiveIginxStatistics(double density) throws MetaStorageException;
+    void addOrUpdateMinActiveIginxStatistics(double density) throws MetaStorageException;
 
     void releaseMinActiveIginxStatistics() throws MetaStorageException;
 
@@ -118,9 +118,7 @@ public interface IMetaStorage {
 
     void lockActiveSeparatorStatistics() throws MetaStorageException;
 
-    void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException;
-
-    void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException;
+    void addOrUpdateActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException;
 
     void releaseActiveSeparatorStatistics() throws MetaStorageException;
 
@@ -128,7 +126,7 @@ public interface IMetaStorage {
 
     void lockActiveStorageEngineStatistics() throws MetaStorageException;
 
-    void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException;
+    void addOrUpdateActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException;
 
     void releaseActiveStorageEngineStatistics() throws MetaStorageException;
 
@@ -136,7 +134,7 @@ public interface IMetaStorage {
 
     void lockActiveTimeSeriesIntervalStatistics() throws MetaStorageException;
 
-    void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException;
+    void addOrUpdateActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException;
 
     void releaseActiveTimeSeriesIntervalStatistics() throws MetaStorageException;
 

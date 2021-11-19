@@ -925,7 +925,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
+    public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
 
     }
 
@@ -945,7 +945,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addMinActiveIginxStatistics(double density) throws MetaStorageException {
+    public void addOrUpdateMinActiveIginxStatistics(double density) throws MetaStorageException {
 
     }
 
@@ -965,12 +965,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
-
-    }
-
-    @Override
-    public void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException {
+    public void addOrUpdateActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
 
     }
 
@@ -990,7 +985,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
+    public void addOrUpdateActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
 
     }
 
@@ -1010,7 +1005,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
+    public void addOrUpdateActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
 
     }
 

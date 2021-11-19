@@ -99,4 +99,14 @@ public final class StorageEngineStatistics {
     public void setMaxEndTime(long maxEndTime) {
         this.maxEndTime = maxEndTime;
     }
+
+    @Override
+    public String toString() {
+        return "StorageEngineStatistics{" +
+                "density=" + density +
+                ", capacity=" + capacity +
+                ", saturation=" + saturation +
+                ", maxEndTime=" + maxEndTime +
+                '}';
+    }
 }

@@ -54,6 +54,8 @@ public final class TimeSeriesStatistics {
 
     public TimeSeriesStatistics(long writeBytes, long storageEngineId) {
         this.writeBytes = writeBytes;
+        this.totalBytes = writeBytes;
+        this.density = writeBytes;
         this.storageEngineId = storageEngineId;
     }
 
@@ -67,6 +69,7 @@ public final class TimeSeriesStatistics {
         writeBytes += timeSeriesStatistics.getWriteBytes();
         readBytes += timeSeriesStatistics.getReadBytes();
         totalBytes += timeSeriesStatistics.getTotalBytes();
+        density += timeSeriesStatistics.getTotalBytes();
     }
 
     public long getWriteBytes() {
@@ -107,5 +110,16 @@ public final class TimeSeriesStatistics {
 
     public void setDensity(double density) {
         this.density = density;
+    }
+
+    @Override
+    public String toString() {
+        return "TimeSeriesStatistics{" +
+                "writeBytes=" + writeBytes +
+                ", readBytes=" + readBytes +
+                ", totalBytes=" + totalBytes +
+                ", density=" + density +
+                ", storageEngineId=" + storageEngineId +
+                '}';
     }
 }

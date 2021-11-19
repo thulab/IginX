@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxStatistics;
@@ -108,7 +107,7 @@ public interface IMetaCache {
 
     Map<Long, IginxStatistics> getActiveIginxStatistics();
 
-    double getMinimalActiveIginxStatistics();
+    double getMinActiveIginxStatistics();
 
     void clearActiveIginxStatistics();
 

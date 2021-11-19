@@ -81,6 +81,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String ACTIVE_STORAGE_ENGINE_STATISTICS_NODE = "/statistics/storage/engine/active/node";
 
+    private static final String ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE = "/statistics/time/series/interval/active/node";
+
     private static final String STORAGE_UNIT_NODE = "/unit/unit";
 
     private static final String IGINX_LOCK_NODE = "/lock/iginx";
@@ -116,8 +118,6 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private static final String MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX = "/statistics/iginx/active/min";
 
     private static final String ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX = "/statistics/separator/active";
-
-    private static final String MERGED_ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX = "/statistics/separator/active/merged";
 
     private static final String ACTIVE_STORAGE_ENGINE_STATISTICS_NODE_PREFIX = "/statistics/storage/engine/active";
 
@@ -899,14 +899,21 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             if (maxActiveEndTimeStatisticsChangeHook == null) {
                 return;
             }
+            String path;
             byte[] data;
+            long id;
             long endTime;
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
+                    path = event.getData().getPath();
                     data = event.getData().getData();
-                    endTime = JsonUtils.fromJson(data, Long.class);
-                    maxActiveEndTimeStatisticsChangeHook.onChange(endTime);
+                    String[] pathParts = path.split("/");
+                    if (pathParts.length == 7) {
+                        id = Long.parseLong(pathParts[6].substring(5));
+                        endTime = JsonUtils.fromJson(data, Long.class);
+                        maxActiveEndTimeStatisticsChangeHook.onChange(id, endTime);
+                    }
                     break;
                 default:
                     break;
@@ -922,12 +929,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
+    public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
         try {
-            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+            if (this.client.checkExists().forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+            } else {
+                this.client.setData()
+                        .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+            }
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding max active end time statistics: ", e);
+            throw new MetaStorageException("encounter error when adding or updating max active end time statistics: ", e);
         }
     }
 
@@ -970,12 +982,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addMinActiveIginxStatistics(double density) throws MetaStorageException {
+    public void addOrUpdateMinActiveIginxStatistics(double density) throws MetaStorageException {
         try {
-            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX, JsonUtils.toJson(density));
+            if (this.client.checkExists().forPath(MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX, JsonUtils.toJson(density));
+            } else {
+                this.client.setData()
+                        .forPath(MIN_ACTIVE_IGINX_STATISTICS_NODE_PREFIX, JsonUtils.toJson(density));
+            }
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding min active iginx statistics: ", e);
+            throw new MetaStorageException("encounter error when adding or updating min active iginx statistics: ", e);
         }
     }
 
@@ -997,6 +1014,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             }
             String path;
             byte[] data;
+            long id;
             Set<String> separators;
             switch (event.getType()) {
                 case NODE_ADDED:
@@ -1004,10 +1022,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     path = event.getData().getPath();
                     data = event.getData().getData();
                     String[] pathParts = path.split("/");
-                    if (pathParts.length == 6) {
+                    if (pathParts.length == 5) {
+                        id = Long.parseLong(pathParts[4].substring(5));
                         separators = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Set<String>>() {}.getType());
                         if (separators != null) {
-                            activeSeparatorStatisticsChangeHook.onChange(separators);
+                            activeSeparatorStatisticsChangeHook.onChange(id, separators);
                         } else {
                             logger.error("encounter error when resolving active separator statistics from zookeeper");
                         }
@@ -1027,22 +1046,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
+    public void addOrUpdateActiveSeparatorStatistics(long id, Set<String> separators) throws MetaStorageException {
         try {
-            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(ACTIVE_SEPARATOR_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(separators));
+            if (this.client.checkExists().forPath(ACTIVE_SEPARATOR_STATISTICS_NODE + String.format("%010d", id)) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(ACTIVE_SEPARATOR_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(separators));
+            } else {
+                this.client.setData()
+                        .forPath(ACTIVE_SEPARATOR_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(separators));
+            }
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding active separator statistics: ", e);
-        }
-    }
-
-    @Override
-    public void addMergedActiveSeparatorStatistics(Set<String> separators) throws MetaStorageException {
-        try {
-            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(MERGED_ACTIVE_SEPARATOR_STATISTICS_NODE_PREFIX, JsonUtils.toJson(separators));
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding active separator statistics: ", e);
+            throw new MetaStorageException("encounter error when adding or updating active separator statistics: ", e);
         }
     }
 
@@ -1096,12 +1110,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
+    public void addOrUpdateActiveStorageEngineStatistics(long id, Map<Long, StorageEngineStatistics> activeStorageEngineStatistics) throws MetaStorageException {
         try {
-            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(ACTIVE_STORAGE_ENGINE_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(activeStorageEngineStatistics));
+            if (this.client.checkExists().forPath(ACTIVE_STORAGE_ENGINE_STATISTICS_NODE + String.format("%010d", id)) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(ACTIVE_STORAGE_ENGINE_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(activeStorageEngineStatistics));
+            } else {
+                this.client.setData()
+                        .forPath(ACTIVE_STORAGE_ENGINE_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(activeStorageEngineStatistics));
+            }
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when adding active storage engine statistics: ", e);
+            throw new MetaStorageException("encounter error when adding or updating active storage engine statistics: ", e);
         }
     }
 
@@ -1121,22 +1140,17 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             if (activeTimeSeriesIntervalStatisticsChangeHook == null) {
                 return;
             }
-            String path;
             byte[] data;
             Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap;
             switch (event.getType()) {
                 case NODE_ADDED:
                 case NODE_UPDATED:
-                    path = event.getData().getPath();
                     data = event.getData().getData();
-                    String[] pathParts = path.split("/");
-                    if (pathParts.length == 6) {
-                        statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<TimeSeriesInterval, TimeSeriesIntervalStatistics>>() {}.getType());
-                        if (statisticsMap != null) {
-                            activeTimeSeriesIntervalStatisticsChangeHook.onChange(statisticsMap);
-                        } else {
-                            logger.error("encounter error when resolving active time series interval statistics from zookeeper");
-                        }
+                    statisticsMap = JsonUtils.getGson().fromJson(new String(data), new TypeToken<Map<TimeSeriesInterval, TimeSeriesIntervalStatistics>>() {}.getType());
+                    if (statisticsMap != null) {
+                        activeTimeSeriesIntervalStatisticsChangeHook.onChange(statisticsMap);
+                    } else {
+                        logger.error("encounter error when resolving active time series interval statistics from zookeeper");
                     }
                     break;
                 default:
@@ -1153,8 +1167,18 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
-
+    public void addOrUpdateActiveTimeSeriesIntervalStatistics(long id, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE + String.format("%010d", id)) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                        .forPath(ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(statisticsMap));
+            } else {
+                this.client.setData()
+                        .forPath(ACTIVE_TIME_SERIES_INTERVAL_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(statisticsMap));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when adding or updating active time series interval statistics: ", e);
+        }
     }
 
     @Override
