@@ -25,3 +25,5 @@ sed -i "s/#storageEngineList=127.0.0.1#8086/storageEngineList=127.0.0.1#8086/g" 
 sh -c "sudo cp -r influxdb2-2.0.7-linux-amd64/ influxdb2-2.0.7-linux-amd64-2/"
 
 sudo sh -c "cd influxdb2-2.0.7-linux-amd64-2/; nohup ./influxd run --bolt-path=~/.influxdbv2/influxd.bolt --engine-path=~/.influxdbv2/engine --http-bind-address=:8087 --query-memory-bytes=20971520 &"
+
+sed -i "s/iotdb12=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor/influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor/g" conf/config.properties

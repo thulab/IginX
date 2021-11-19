@@ -25,5 +25,3 @@ sh -c "sudo sed -i 's/6667/6668/g' apache-iotdb2-0.12.2-server-bin/conf/iotdb-en
 sudo sh -c "cd apache-iotdb-0.12.2-server-bin/; nohup sbin/start-server.sh &"
 
 sudo sh -c "cd apache-iotdb2-0.12.2-server-bin/; nohup sbin/start-server.sh &"
-
-sed -i "s/iotdb11/iotdb12/g" conf/config.properties
