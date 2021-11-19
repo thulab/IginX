@@ -94,6 +94,16 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
+    private String MachineList = "1701,1702,1703";
+
+    private String MetricList = "ZT13308,ZT13368,ZT13317,CY1";
+
+    private String StartTime = "2021-11-16T00:00:00";
+
+    private String EndTime = "2021-11-18T00:30:00";
+
+    private String ExportFileDir = "/home";
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -388,5 +398,45 @@ public class Config {
 
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
+    }
+
+    public String getExportFileDir() {
+        return ExportFileDir;
+    }
+
+    public void setExportFileDir(String exportFileDir) {
+        ExportFileDir = exportFileDir;
+    }
+
+    public String getEndTime() {
+        return EndTime;
+    }
+
+    public void setEndTime(String endTime) {
+        EndTime = endTime;
+    }
+
+    public String getStartTime() {
+        return StartTime;
+    }
+
+    public void setStartTime(String startTime) {
+        StartTime = startTime;
+    }
+
+    public String getMetricList() {
+        return MetricList;
+    }
+
+    public void setMetricList(String metricList) {
+        MetricList = metricList;
+    }
+
+    public String getMachineList() {
+        return MachineList;
+    }
+
+    public void setMachineList(String machineList) {
+        MachineList = machineList;
     }
 }

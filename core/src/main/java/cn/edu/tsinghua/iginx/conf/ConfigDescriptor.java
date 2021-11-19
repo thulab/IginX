@@ -100,6 +100,13 @@ public class ConfigDescriptor {
 
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
+
+            config.setMachineList(properties.getProperty("MachineList", "1701,1702,1703"));
+            config.setMetricList(properties.getProperty("MetricList", "ZT13308,ZT13368,ZT13317,CY1"));
+            config.setStartTime(properties.getProperty("StartTime", "2021-11-16T00:00:00"));
+            config.setEndTime(properties.getProperty("EndTime", "2021-11-18T00:30:00"));
+            config.setExportFileDir(properties.getProperty("ExportFileDir", "/home"));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
