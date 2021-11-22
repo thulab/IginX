@@ -29,5 +29,10 @@ public class Constants {
     public static final String DIR_NAME = "%s_%s_%s";
 
     public static final String CSV_FILE_NAME = "%s_%s.csv";
+
+    public static final String CONF = "IGINX_CONF";
+
+    public static final String CONFIG_FILE = "conf/config.properties";
+
 }
 
