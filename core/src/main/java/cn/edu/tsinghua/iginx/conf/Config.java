@@ -64,6 +64,8 @@ public class Config {
 
     private int asyncRestThreadPool = 100;
 
+    private int restReqSplitNum = 10;
+
     private boolean enableRestService = true;
 
     private String fileDataDir = "";
@@ -94,15 +96,23 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
-    private String MachineList = "1701,1702,1703";
+    private double logRestInsertPossibility = 1.0;
 
-    private String MetricList = "ZT13308,ZT13368,ZT13317,CY1";
+    private double logRestQueryPossibility = 1.0;
 
-    private String StartTime = "2021-11-16T00:00:00";
+    private double cachedTimeseriesProb = 0.01;
 
-    private String EndTime = "2021-11-18T00:30:00";
+    private int retryCount = 10;
 
-    private String ExportFileDir = "/home";
+    private int retryWait = 5000;
+
+    private int reAllocatePeriod = 30000;
+
+    private int fragmentPerEngine = 10;
+
+    private boolean enableStorageGroupValueLimit = true;
+
+    private double storageGroupValueLimit = 200.0;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -264,6 +274,14 @@ public class Config {
         this.asyncRestThreadPool = asyncRestThreadPool;
     }
 
+    public int getRestReqSplitNum() {
+        return restReqSplitNum;
+    }
+
+    public void setRestReqSplitNum(int restReqSplitNum) {
+        this.restReqSplitNum = restReqSplitNum;
+    }
+
     public boolean isEnableRestService() {
         return enableRestService;
     }
@@ -400,43 +418,76 @@ public class Config {
         this.instancesNumPerClient = instancesNumPerClient;
     }
 
-    public String getExportFileDir() {
-        return ExportFileDir;
+    public double getLogRestInsertPossibility() {
+        return logRestInsertPossibility;
     }
 
-    public void setExportFileDir(String exportFileDir) {
-        ExportFileDir = exportFileDir;
+    public void setLogRestInsertPossibility(double logRestInsertPossibility) {
+        this.logRestInsertPossibility = logRestInsertPossibility;
     }
 
-    public String getEndTime() {
-        return EndTime;
+    public double getLogRestQueryPossibility() {
+        return logRestQueryPossibility;
     }
 
-    public void setEndTime(String endTime) {
-        EndTime = endTime;
+    public void setLogRestQueryPossibility(double logRestQueryPossibility) {
+        this.logRestQueryPossibility = logRestQueryPossibility;
     }
 
-    public String getStartTime() {
-        return StartTime;
+    public double getCachedTimeseriesProb() {
+        return cachedTimeseriesProb;
     }
 
-    public void setStartTime(String startTime) {
-        StartTime = startTime;
+    public void setCachedTimeseriesProb(double cachedTimeseriesProb) {
+        this.cachedTimeseriesProb = cachedTimeseriesProb;
     }
 
-    public String getMetricList() {
-        return MetricList;
+    public int getRetryCount() {
+        return retryCount;
     }
 
-    public void setMetricList(String metricList) {
-        MetricList = metricList;
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
     }
 
-    public String getMachineList() {
-        return MachineList;
+    public int getRetryWait() {
+        return retryWait;
     }
 
-    public void setMachineList(String machineList) {
-        MachineList = machineList;
+    public void setRetryWait(int retryWait) {
+        this.retryWait = retryWait;
+    }
+
+    public int getReAllocatePeriod() {
+        return reAllocatePeriod;
+    }
+
+    public void setReAllocatePeriod(int reAllocatePeriod) {
+        this.reAllocatePeriod = reAllocatePeriod;
+    }
+
+    public int getFragmentPerEngine() {
+        return fragmentPerEngine;
+    }
+
+    public void setFragmentPerEngine(int fragmentPerEngine) {
+        this.fragmentPerEngine = fragmentPerEngine;
+    }
+
+    public double getStorageGroupValueLimit() {
+        return storageGroupValueLimit;
+    }
+
+    public boolean isEnableStorageGroupValueLimit() {
+        return enableStorageGroupValueLimit;
+    }
+
+    public void setEnableStorageGroupValueLimit(boolean enableStorageGroupValueLimit) {
+        this.enableStorageGroupValueLimit = enableStorageGroupValueLimit;
+    }
+
+    public void setStorageGroupValueLimit(double storageGroupValueLimit) {
+        this.storageGroupValueLimit = storageGroupValueLimit;
+
     }
 }
