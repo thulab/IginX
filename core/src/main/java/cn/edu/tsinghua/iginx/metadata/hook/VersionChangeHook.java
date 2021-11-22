@@ -16,34 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.utils;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-public class Pair<K, V> {
-
-    public K k;
-
-    public V v;
-
-    public Pair(K k, V v) {
-        this.k = k;
-        this.v = v;
-    }
-
-    @Override
-    public String toString() {
-        return "Pair{" +
-                "k=" + k +
-                ", v=" + v +
-                '}';
-    }
-
-    public K getK()
-    {
-        return k;
-    }
-
-    public V getV()
-    {
-        return v;
-    }
+public interface VersionChangeHook
+{
+    void onChange(int version, int num);
 }

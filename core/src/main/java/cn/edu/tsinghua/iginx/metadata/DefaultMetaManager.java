@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
@@ -38,6 +39,8 @@ import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -115,6 +118,9 @@ public class DefaultMetaManager implements IMetaManager {
 
     private final Object terminateResharding = new Object();
 
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
+
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
 
@@ -151,6 +157,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initPolicy();
             initUser();
             initActiveFragmentStatistics();
             initReshardNotification();
@@ -322,8 +329,9 @@ public class DefaultMetaManager implements IMetaManager {
 
     private void initFragment() throws MetaStorageException {
         storage.registerFragmentChangeHook((create, fragment) -> {
-            if (fragment == null)
+            if (fragment == null) {
                 return;
+            }
             if (create) {
                 activeFragmentStartTime.set(fragment.getTimeInterval().getStartTime());
             }
@@ -476,6 +484,31 @@ public class DefaultMetaManager implements IMetaManager {
         storage.lockReshardCounter();
         storage.removeReshardCounter();
         storage.releaseReshardCounter();
+    }
+
+    private void initPolicy(){
+        storage.registerTimeseriesChangeHook(cache::timeseriesIsUpdated);
+        storage.registerVersionChangeHook((version, num) -> {
+            double sum = cache.getSumFromTimeSeries();
+            Map<String, Double> timeseriesData = cache.getMaxValueFromTimeSeries().stream().
+                    collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
+            double countSum = timeseriesData.values().stream().mapToDouble(Double::doubleValue).sum();
+            if (countSum > 1e-9) {
+                timeseriesData.forEach((k, v) -> timeseriesData.put(k, v / countSum * sum));
+            }
+            try {
+                storage.updateTimeseriesData(timeseriesData, getIginxId(), version);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        int num = 0;
+        try {
+            storage.registerPolicy(getIginxId(), num);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -960,5 +993,36 @@ public class DefaultMetaManager implements IMetaManager {
             logger.info("thread {} is unparked", thread.getId());
             LockSupport.unpark(thread);
         }
+    }
+
+    @Override
+    public boolean election() {
+        return storage.election();
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertRecordsPlan plan) {
+        cache.saveTimeSeriesData(plan);
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
+        return cache.getMaxValueFromTimeSeries();
+    }
+
+    @Override
+    public Map<String, Double> getTimeseriesData() {
+        return storage.getTimeseriesData();
+    }
+
+    @Override
+    public int updateVersion() {
+        return storage.updateVersion();
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap()
+    {
+        return cache.getTimeseriesVersionMap();
     }
 }
