@@ -11,8 +11,13 @@ public abstract class AbstractMultipleOperator extends AbstractOperator implemen
     public AbstractMultipleOperator(OperatorType type, List<Source> sources) {
         super(type);
         if (sources == null || sources.isEmpty()) {
-            throw new IllegalArgumentException("source shouldn't be null");
+            throw new IllegalArgumentException("sourceList shouldn't be null or empty");
         }
+        sources.forEach(source -> {
+            if (source == null) {
+                throw new IllegalArgumentException("source shouldn't be null");
+            }
+        });
         this.sources = sources;
     }
 
