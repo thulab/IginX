@@ -18,11 +18,14 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+
 public enum OperatorType {
 
     Unknown,
     Binary,
     Unary,
+    Multiple,
 
     Project,
     Select,
@@ -32,7 +35,11 @@ public enum OperatorType {
     Limit,
     Downsample,
     RowTransform,
-    SetTransform;
+    SetTransform,
+
+    Delete,
+    Insert,
+    CombineNonQuery;
 
     public static boolean isBinaryOperator(OperatorType op) {
         return op == Join || op == Union;
