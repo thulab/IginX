@@ -6,7 +6,7 @@ import java.util.List;
 
 public abstract class AbstractMultipleOperator extends AbstractOperator implements MultipleOperator {
 
-    private List<Source> sources;
+    private final List<Source> sources;
 
     public AbstractMultipleOperator(OperatorType type, List<Source> sources) {
         super(type);

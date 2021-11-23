@@ -34,35 +34,52 @@ public class DataSection {
     }
 
     public int getPathsSize() {
-        return data.getPaths().subList(startPathIndex, endPathIndex).size();
+        return endPathIndex - startPathIndex;
     }
 
     public int getTypesSize() {
-        return data.getTypes().subList(startPathIndex, endPathIndex).size();
+        return endPathIndex - startPathIndex;
     }
 
     public int getTimesSize() {
-        return data.getTimes().subList(startTimeIndex, endTimeIndex).size();
+        return endTimeIndex - startTimeIndex;
     }
 
     public String getPath(int pathIndex) {
-        return data.getPaths().subList(startPathIndex, endPathIndex).get(pathIndex);
+        checkPathIndexRange(pathIndex);
+        return data.getPaths().get(startPathIndex + pathIndex);
     }
 
+
     public DataType getType(int typeIndex) {
-        return data.getTypes().subList(startPathIndex, endPathIndex).get(typeIndex);
+        checkTypeIndexRange(typeIndex);
+        return data.getTypes().get(startPathIndex + typeIndex);
     }
 
     public Long getTime(int timeIndex) {
-        return data.getTimes().subList(startTimeIndex, endTimeIndex).get(timeIndex);
+        checkTimeIndexRange(timeIndex);
+        return data.getTimes().get(startTimeIndex + timeIndex);
     }
 
     public Object getValue(int pathIndex, int timeIndex) {
+        checkPathIndexRange(pathIndex);
+        checkTimeIndexRange(timeIndex);
+        return data.getValues()[startPathIndex + pathIndex][startTimeIndex + timeIndex];
+    }
+
+    private void checkPathIndexRange(int pathIndex) {
         if (pathIndex < 0 || pathIndex >= endPathIndex - startPathIndex)
             throw new IllegalArgumentException(String.format("path index out of range [%d, %d)", 0, endPathIndex - startPathIndex));
+    }
+
+    // startPathIndex equals to startTypeIndex, endPathIndex equals to endTypeIndex
+    private void checkTypeIndexRange(int typeIndex) {
+        if (typeIndex < 0 || typeIndex >= endPathIndex - startPathIndex)
+            throw new IllegalArgumentException(String.format("type index out of range [%d, %d)", 0, endPathIndex - startPathIndex));
+    }
+
+    private void checkTimeIndexRange(int timeIndex) {
         if (timeIndex < 0 || timeIndex >= endTimeIndex - startTimeIndex)
             throw new IllegalArgumentException(String.format("time index out of range [%d, %d)", 0, endTimeIndex - startTimeIndex));
-
-        return data.getValues()[startPathIndex + pathIndex][startTimeIndex + timeIndex];
     }
 }
