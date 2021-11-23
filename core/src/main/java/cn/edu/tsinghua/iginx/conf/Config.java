@@ -488,6 +488,5 @@ public class Config {
 
     public void setStorageGroupValueLimit(double storageGroupValueLimit) {
         this.storageGroupValueLimit = storageGroupValueLimit;
-
     }
 }
