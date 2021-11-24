@@ -36,6 +36,8 @@ public abstract class PlanExecuteResult {
     public PlanExecuteResult(int statusCode, IginxPlan plan) {
         this.statusCode = statusCode;
         this.plan = plan;
-        this.plan.setPlanExecuteResult(this);
+        if (plan != null) {
+            this.plan.setPlanExecuteResult(this);
+        }
     }
 }
