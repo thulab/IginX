@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
@@ -10,14 +10,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ClearDataOperator extends Operator {
+public class ClearDataStatement extends Statement {
 
-    public ClearDataOperator() {
-        this.operatorType = OperatorType.CLEAR_DATA;
+    public ClearDataStatement() {
+        this.statementType = StatementType.CLEAR_DATA;
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         List<String> paths = new ArrayList<>(Arrays.asList("*"));
         IginxWorker worker = IginxWorker.getInstance();
         DeleteColumnsReq req = new DeleteColumnsReq(sessionId, SortUtils.mergeAndSortPaths(paths));

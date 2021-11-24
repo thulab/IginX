@@ -15,6 +15,10 @@ statement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
+    | ADD USER username=nodeName PASSWORD password=nodeName permissionSpec? #addUserStatement
+    | UPDATE USER username=nodeName PASSWORD password=nodeName permissionSpec? #updateUserStatement
+    | DELETE USER username=nodeName #deleteUserStatement
+    | SHOW USER userSpec? #showUserStatement
     ;
 
 selectClause
@@ -87,6 +91,18 @@ offsetClause
     : OFFSET INT
     ;
 
+permissionSpec
+    : ON LR_BRACKET permission (COMMA permission)* RR_BRACKET
+    ;
+
+userSpec
+    : nodeName (COMMA nodeName)*
+    ;
+
+permission
+    : READ | WRITE | ADMIN | CLUSTER
+    ;
+
 comparisonOperator
     : type = OPERATOR_GT
     | type = OPERATOR_GTE
@@ -153,6 +169,7 @@ nodeName
     | SELECT
     | SHOW
     | INTO
+    | ON
     | WHERE
     | FROM
     | BY
@@ -164,6 +181,7 @@ nodeName
     | GROUP
     | ORDER
     | ADD
+    | UPDATE
     | VALUE
     | VALUES
     | NOW
@@ -185,6 +203,12 @@ nodeName
     | REPLICA
     | IOTDB
     | INFLUXDB
+    | USER
+    | PASSWORD
+    | CLUSTER
+    | ADMIN
+    | WRITE
+    | READ
     ;
 
 ip
@@ -254,6 +278,18 @@ CLUSTER
     : C L U S T E R
     ;
 
+ADMIN
+    : A D M I N
+    ;
+
+READ
+    : R E A D
+    ;
+
+WRITE
+    : W R I T E
+    ;
+
 INFO
     : I N F O
     ;
@@ -264,6 +300,10 @@ WHERE
 
 IN
     : I N
+    ;
+
+ON
+    : O N
     ;
 
 INTO
@@ -312,6 +352,14 @@ NOW
 
 TIME
     : T I M E
+    ;
+
+USER
+    : U S E R
+    ;
+
+PASSWORD
+    : P A S S W O R D
     ;
 
 TRUE
@@ -372,6 +420,10 @@ DATA
 
 ADD
     : A D D
+    ;
+
+UPDATE
+    : U P D A T E
     ;
 
 STORAGEENGINE

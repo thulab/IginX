@@ -45,6 +45,11 @@ public class SQLSessionExample {
     private static String showClusterInfo = "SHOW CLUSTER INFO;";
     private static String clearData = "CLEAR DATA;";
 
+    private static String addUser = "ADD USER root1 PASSWORD root1 ON (READ, WRITE);";
+    private static String updateUser = "UPDATE USER root1 PASSWORD root1 ON (READ, WRITE, ADMIN);";
+    private static String showUser = "SHOW USER;";
+    private static String deleteUser = "DELETE USER root1;";
+
     public static void main(String[] args) throws SessionException, ExecutionException {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
@@ -92,6 +97,15 @@ public class SQLSessionExample {
         execute(showTimeSeries, true);
         // 增加存储引擎，测试该项前保证本地启动了对应的数据库实例
 //        execute(addStorageEnginesStr);
+        // 新增用户
+        execute(addUser, false);
+        execute(showUser, true);
+        // 更新用户
+        execute(updateUser, false);
+        execute(showUser, true);
+        // 删除用户
+        execute(deleteUser, false);
+        execute(showUser, true);
         // 关闭 Session
         session.openSession();
     }
