@@ -34,6 +34,7 @@ import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.plan.AvgQueryPlan;
 import cn.edu.tsinghua.iginx.plan.CountQueryPlan;
 import cn.edu.tsinghua.iginx.plan.DeleteColumnsPlan;
@@ -452,6 +453,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
+        // 设置异步 plan 对应的同步计划
+        setCorrespondingSyncPlan(plans);
         return plans;
     }
 
@@ -480,6 +483,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
+        // 设置异步 plan 对应的同步计划
+        setCorrespondingSyncPlan(plans);
         return plans;
     }
 
@@ -508,6 +513,8 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
+        // 设置异步 plan 对应的同步计划
+        setCorrespondingSyncPlan(plans);
         return plans;
     }
 
@@ -536,7 +543,23 @@ public class SimplePlanGenerator implements IPlanGenerator {
             subPlan.setSync(info.getStorageUnit().isMaster());
             plans.add(subPlan);
         }
+        // 设置异步 plan 对应的同步计划
+        setCorrespondingSyncPlan(plans);
         return plans;
+    }
+
+    private void setCorrespondingSyncPlan(List<? extends IginxPlan> plans) {
+        Map<String, IginxPlan> syncPlans = new HashMap<>();
+        for (IginxPlan plan: plans) {
+            if (plan.isSync()) {
+                syncPlans.put(plan.getStorageUnit().getId(), plan);
+            }
+        }
+        for (IginxPlan plan: plans) {
+            if (!plan.isSync()) { // 异步的任务才有对应的同步任务
+                plan.setCorrespondingSyncPlan(syncPlans.getOrDefault(plan.getStorageUnit().getMasterId(), null));
+            }
+        }
     }
 
     public List<DeleteDataInColumnsPlan> splitDeleteDataInColumnsPlan(DeleteDataInColumnsPlan plan, List<SplitInfo> infoList) {

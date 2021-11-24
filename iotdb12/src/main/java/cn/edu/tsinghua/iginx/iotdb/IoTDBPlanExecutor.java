@@ -688,7 +688,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     logger.error("Unsupported data type in aggregation SUM : TEXT");
                 }
                 logger.error(e.getMessage());
-                return new AvgAggregateQueryPlanExecuteResult(FAILURE, null);
+                return new AvgAggregateQueryPlanExecuteResult(FAILURE, plan);
             }
         }
         AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -764,7 +764,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     logger.error("Unsupported data type in aggregation SUM : TEXT");
                 }
                 logger.error(e.getMessage());
-                return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, null);
+                return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, plan);
             }
             if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                 for (int i = 0; i < rowRecord.getFields().size(); i++) {

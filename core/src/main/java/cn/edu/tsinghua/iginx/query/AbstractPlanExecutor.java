@@ -96,24 +96,30 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
                         case INSERT_COLUMN_RECORDS:
                             logger.info("execute async insert column records task");
                             planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case INSERT_NON_ALIGNED_COLUMN_RECORDS:
                             logger.info("execute async insert non-aligned column records task");
                             planExecuteResult = syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case INSERT_ROW_RECORDS:
                             logger.info("execute async insert row records task");
                             planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case INSERT_NON_ALIGNED_ROW_RECORDS:
                             logger.info("execute async insert non-aligned row records task");
                             planExecuteResult = syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case DELETE_COLUMNS:
                             planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case DELETE_DATA_IN_COLUMNS:
                             planExecuteResult = syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         default:
                             logger.info("unimplemented method: " + plan.getIginxPlanType());
@@ -162,7 +168,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertNonAlignedColumnRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan));
         }
         return null;
@@ -170,7 +175,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertColumnRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan));
         }
         return null;
@@ -178,7 +182,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertNonAlignedRowRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan));
         }
         return null;
@@ -186,7 +189,6 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     protected Future<? extends PlanExecuteResult> executeInsertRowRecordsPlan(IginxPlan plan) {
         if (plan.isSync()) {
-            logger.info("sync Thread Pool: {}", ((ThreadPoolExecutor)syncExecuteThreadPool).getActiveCount());
             return syncExecuteThreadPool.submit(() -> syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan));
         }
         return null;
@@ -333,6 +335,11 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     }
 
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
+        PlanExecuteResult correspondingSyncPlanExecuteResult = iginxPlan.getCorrespondingSyncPlan().getPlanExecuteResult();
+        if (correspondingSyncPlanExecuteResult == null || correspondingSyncPlanExecuteResult.getStatusCode() != PlanExecuteResult.SUCCESS) {
+            logger.warn("async task doesn't execute for the sake of the failure of corresponding sync task");
+            return AsyncPlanExecuteResult.getInstance(false);
+        }
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));
     }
 
