@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
@@ -9,14 +9,14 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DeleteOperator extends Operator {
+public class DeleteStatement extends Statement {
 
     private List<String> paths;
     private long startTime;
     private long endTime;
 
-    public DeleteOperator() {
-        this.operatorType = OperatorType.DELETE;
+    public DeleteStatement() {
+        this.statementType = StatementType.DELETE;
         paths = new ArrayList<>();
         startTime = Long.MIN_VALUE;
         endTime = Long.MAX_VALUE;
@@ -47,7 +47,7 @@ public class DeleteOperator extends Operator {
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         IginxWorker worker = IginxWorker.getInstance();
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(
                 sessionId,

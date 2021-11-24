@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SelectOperator extends Operator {
+public class SelectStatement extends Statement {
 
     private QueryType queryType;
 
@@ -44,8 +44,8 @@ public class SelectOperator extends Operator {
     private int limit;
     private int offset;
 
-    public SelectOperator() {
-        operatorType = OperatorType.SELECT;
+    public SelectStatement() {
+        statementType = StatementType.SELECT;
         queryType = QueryType.Unknown;
         ascending = true;
         selectedFuncsAndPaths = new ArrayList<>();
@@ -274,7 +274,7 @@ public class SelectOperator extends Operator {
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         switch (queryType) {
             case SimpleQuery:
                 return simpleQuery(sessionId);

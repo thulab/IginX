@@ -286,6 +286,8 @@ public class IginxClient {
                 res.print(false, "");
             } else if (res.getSqlType() == SqlType.ShowClusterInfo) {
                 res.print(false, "");
+            } else if (res.getSqlType() == SqlType.ShowUser) {
+                res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
                 System.out.println("success");
@@ -330,7 +332,11 @@ public class IginxClient {
                 Arrays.asList("delete", "time", "series"),
                 Arrays.asList("select"),
                 Arrays.asList("add", "storageengine"),
-                Arrays.asList("set", "timeunit", "in")
+                Arrays.asList("set", "timeunit", "in"),
+                Arrays.asList("add", "user"),
+                Arrays.asList("update", "user"),
+                Arrays.asList("delete", "user"),
+                Arrays.asList("show", "user")
         );
         addArgumentCompleters(iginxCompleters, withNullCompleters, true);
 
