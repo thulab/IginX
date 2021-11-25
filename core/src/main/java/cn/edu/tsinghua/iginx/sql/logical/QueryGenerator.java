@@ -18,6 +18,7 @@ import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
+import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
@@ -29,6 +30,8 @@ import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
 
 public class QueryGenerator implements LogicalGenerator {
+
+    private final GeneratorType type = GeneratorType.Query;
 
     private static final Logger logger = LoggerFactory.getLogger(QueryGenerator.class);
 
@@ -56,10 +59,15 @@ public class QueryGenerator implements LogicalGenerator {
     }
 
     @Override
+    public GeneratorType getType() {
+        return type;
+    }
+
+    @Override
     public Operator generate(Statement statement) {
         if (statement == null)
             return null;
-        if (statement.getType() != Statement.StatementType.SELECT)
+        if (statement.getType() != StatementType.SELECT)
             return null;
         Operator root = generateRoot((SelectStatement) statement);
         for (Optimizer optimizer : optimizerList) {
@@ -149,11 +157,13 @@ public class QueryGenerator implements LogicalGenerator {
             );
         }
 
-        root = new Limit(
-                new OperatorSource(root),
-                (int) statement.getLimit(),
-                (int) statement.getOffset()
-        );
+        if (statement.getLimit() != Long.MAX_VALUE || statement.getOffset() != 0) {
+            root = new Limit(
+                    new OperatorSource(root),
+                    (int) statement.getLimit(),
+                    (int) statement.getOffset()
+            );
+        }
 
         return root;
     }

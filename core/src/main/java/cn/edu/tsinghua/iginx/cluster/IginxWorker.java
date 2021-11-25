@@ -42,8 +42,6 @@ import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
-import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -51,7 +49,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.sql.*;
-import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -87,7 +84,6 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
@@ -96,10 +92,6 @@ import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -326,34 +318,6 @@ public class IginxWorker implements IService.Iface {
     public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
         StatementExecutor executor = StatementExecutor.getInstance();
         return executor.execute(req.getStatement(), req.getSessionId());
-//        SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
-//        lexer.removeErrorListeners();
-//        lexer.addErrorListener(SQLParseError.INSTANCE);
-//
-//        CommonTokenStream tokens = new CommonTokenStream(lexer);
-//        SqlParser parser = new SqlParser(tokens);
-//        parser.removeErrorListeners();
-//        parser.addErrorListener(SQLParseError.INSTANCE);
-//
-//        IginXSqlVisitor visitor = new IginXSqlVisitor();
-//
-//        try {
-//            ParseTree tree = parser.sqlStatement();
-//            Statement statement = visitor.visit(tree);
-//            return statement.execute(req.getSessionId());
-//        } catch (SQLParserException | ParseCancellationException e) {
-//            StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
-//            String errMsg = e.getMessage();
-//            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.status(statusCode, errMsg), SqlType.Unknown);
-//            resp.setParseErrorMsg(e.getMessage());
-//            return resp;
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
-//            resp.setParseErrorMsg("Execute Error: encounter error(s) when executing sql statement, " +
-//                    "see server log for more details.");
-//            return resp;
-//        }
     }
 
     @Override
