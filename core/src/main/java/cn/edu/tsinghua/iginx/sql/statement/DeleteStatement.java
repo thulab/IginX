@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.sql.logical.ExprUtils;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 
 import java.util.ArrayList;
@@ -35,18 +34,18 @@ public class DeleteStatement extends DataStatement {
         paths.add(path);
     }
 
-    public void setTimeRangesByFilter(Filter filter) {
-        if (filter != null) {
-            this.timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
-        }
-    }
-
     public List<TimeRange> getTimeRanges() {
         return timeRanges;
     }
 
     public void setTimeRanges(List<TimeRange> timeRanges) {
         this.timeRanges = timeRanges;
+    }
+
+    public void setTimeRangesByFilter(Filter filter) {
+        if (filter != null) {
+            this.timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
+        }
     }
 
     @Override
