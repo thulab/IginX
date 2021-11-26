@@ -42,6 +42,7 @@ import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
+import cn.edu.tsinghua.iginx.engine.shared.data.RawDataType;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -49,58 +50,20 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.sql.*;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
-import cn.edu.tsinghua.iginx.thrift.AddUserReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
-import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
-import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
-import cn.edu.tsinghua.iginx.thrift.GetUserReq;
-import cn.edu.tsinghua.iginx.thrift.GetUserResp;
-import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.IginxInfo;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
-import cn.edu.tsinghua.iginx.thrift.LocalMetaStorageInfo;
-import cn.edu.tsinghua.iginx.thrift.MetaStorageInfo;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
-import cn.edu.tsinghua.iginx.thrift.Status;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
-import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
-import cn.edu.tsinghua.iginx.thrift.UserType;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
+import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
+import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesByDataType;
 
 public class IginxWorker implements IService.Iface {
 
@@ -115,6 +78,8 @@ public class IginxWorker implements IService.Iface {
     private final UserManager userManager = UserManager.getInstance();
 
     private final SessionManager sessionManager = SessionManager.getInstance();
+
+    private final StatementExecutor executor = StatementExecutor.getInstance();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -156,9 +121,26 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+//        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
+//        core.processRequest(context);
+//        return context.getStatus();
+        List<String> paths = req.getPaths();
+        List<DataType> types = req.getDataTypeList();
+        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
+        List<Long> times = new ArrayList<>();
+        Arrays.stream(timeArray).forEach(times::add);
+        Object[] values = ByteUtils.getColumnValuesByDataType(req.getValuesList(), types, req.getBitmapList(), times.size());
+        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
+
+        InsertStatement statement = new InsertStatement(
+                RawDataType.Column,
+                paths,
+                times,
+                values,
+                types,
+                bitmaps
+        );
+        return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
 
     @Override
@@ -166,9 +148,26 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+//        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
+//        core.processRequest(context);
+//        return context.getStatus();
+        List<String> paths = req.getPaths();
+        List<DataType> types = req.getDataTypeList();
+        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
+        List<Long> times = new ArrayList<>();
+        Arrays.stream(timeArray).forEach(times::add);
+        Object[] values = ByteUtils.getColumnValuesByDataType(req.getValuesList(), types, req.getBitmapList(), times.size());
+        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
+
+        InsertStatement statement = new InsertStatement(
+                RawDataType.NonAlignedColumn,
+                paths,
+                times,
+                values,
+                types,
+                bitmaps
+        );
+        return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
 
     @Override
@@ -176,9 +175,26 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+//        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
+//        core.processRequest(context);
+//        return context.getStatus();
+        List<String> paths = req.getPaths();
+        List<DataType> types = req.getDataTypeList();
+        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
+        List<Long> times = new ArrayList<>();
+        Arrays.stream(timeArray).forEach(times::add);
+        Object[] values = ByteUtils.getRowValuesByDataType(req.getValuesList(), types, req.getBitmapList());
+        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
+
+        InsertStatement statement = new InsertStatement(
+                RawDataType.Row,
+                paths,
+                times,
+                values,
+                types,
+                bitmaps
+        );
+        return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
 
     @Override
@@ -186,9 +202,26 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+//        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
+//        core.processRequest(context);
+//        return context.getStatus();
+        List<String> paths = req.getPaths();
+        List<DataType> types = req.getDataTypeList();
+        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
+        List<Long> times = new ArrayList<>();
+        Arrays.stream(timeArray).forEach(times::add);
+        Object[] values = ByteUtils.getRowValuesByDataType(req.getValuesList(), types, req.getBitmapList());
+        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
+
+        InsertStatement statement = new InsertStatement(
+                RawDataType.NonAlignedRow,
+                paths,
+                times,
+                values,
+                types,
+                bitmaps
+        );
+        return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
 
     @Override
@@ -196,9 +229,11 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+//        DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
+//        core.processRequest(context);
+//        return context.getStatus();
+        DeleteStatement statement = new DeleteStatement(req.getPaths(), req.getStartTime(), req.getEndTime());
+        return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
 
     @Override

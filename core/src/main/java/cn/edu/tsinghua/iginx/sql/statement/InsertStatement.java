@@ -25,9 +25,20 @@ public class InsertStatement extends DataStatement {
     public InsertStatement() {
         this.statementType = StatementType.INSERT;
         this.rawDataType = RawDataType.NonAlignedColumn;
-        paths = new ArrayList<>();
-        types = new ArrayList<>();
-        bitmaps = new ArrayList<>();
+        this.paths = new ArrayList<>();
+        this.types = new ArrayList<>();
+        this.bitmaps = new ArrayList<>();
+    }
+
+    public InsertStatement(RawDataType rawDataType, List<String> paths, List<Long> times,
+                           Object[] values, List<DataType> types, List<Bitmap> bitmaps) {
+        this.statementType = StatementType.INSERT;
+        this.rawDataType = rawDataType;
+        this.paths = paths;
+        this.times = times;
+        this.values = values;
+        this.types = types;
+        this.bitmaps = bitmaps;
     }
 
     public String getPrefixPath() {
