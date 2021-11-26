@@ -1,28 +1,33 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.engine.shared.data.RawData;
+import cn.edu.tsinghua.iginx.engine.shared.data.RawDataType;
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
-import cn.edu.tsinghua.iginx.utils.SortUtils;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
+import org.apache.commons.lang3.ArrayUtils;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class InsertStatement extends DataStatement {
 
+    private final RawDataType rawDataType;
+
     private String prefixPath;
     private List<String> paths;
-    private long[] times;
+    private List<Long> times;
     private Object[] values;
     private List<DataType> types;
+    private List<Bitmap> bitmaps;
 
     public InsertStatement() {
         this.statementType = StatementType.INSERT;
+        this.rawDataType = RawDataType.NonAlignedColumn;
         paths = new ArrayList<>();
         types = new ArrayList<>();
+        bitmaps = new ArrayList<>();
     }
 
     public String getPrefixPath() {
@@ -37,15 +42,19 @@ public class InsertStatement extends DataStatement {
         return paths;
     }
 
+    public void setPaths(List<String> paths) {
+        this.paths = paths;
+    }
+
     public void setPath(String path) {
         this.paths.add(prefixPath + SQLConstant.DOT + path);
     }
 
-    public long[] getTimes() {
+    public List<Long> getTimes() {
         return times;
     }
 
-    public void setTimes(long[] times) {
+    public void setTimes(List<Long> times) {
         this.times = times;
     }
 
@@ -65,17 +74,63 @@ public class InsertStatement extends DataStatement {
         this.types = types;
     }
 
+    public List<Bitmap> getBitmaps() {
+        return bitmaps;
+    }
+
+    public void setBitmaps(List<Bitmap> bitmaps) {
+        this.bitmaps = bitmaps;
+    }
+
+    public void sortData() {
+        Integer[] index = new Integer[times.size()];
+        for (int i = 0; i < times.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparingLong(times::get));
+        Collections.sort(times);
+        for (int i = 0; i < values.length; i++) {
+            Object[] values = new Object[index.length];
+            for (int j = 0; j < index.length; j++) {
+                values[j] = ((Object[]) values[i])[index[j]];
+            }
+            values[i] = values;
+        }
+
+        index = new Integer[paths.size()];
+        for (int i = 0; i < paths.size(); i++) {
+            index[i] = i;
+        }
+        Arrays.sort(index, Comparator.comparing(paths::get));
+        Collections.sort(paths);
+        Object[] sortedValuesList = new Object[values.length];
+        List<DataType> sortedDataTypeList = new ArrayList<>();
+        for (int i = 0; i < values.length; i++) {
+            sortedValuesList[i] = values[index[i]];
+            sortedDataTypeList.add(types.get(index[i]));
+        }
+
+        for (int i = 0; i < sortedValuesList.length; i++) {
+            Object[] values = (Object[]) sortedValuesList[i];
+            Bitmap bitmap = new Bitmap(times.size());
+            for (int j = 0; j < times.size(); j++) {
+                if (values[j] != null) {
+                    bitmap.mark(j);
+                }
+            }
+            bitmaps.add(bitmap);
+        }
+
+        values = sortedValuesList;
+        types = sortedDataTypeList;
+    }
+
+    public RawData getRawData() {
+        return new RawData(paths, times, values, types, bitmaps, rawDataType);
+    }
+
     @Override
-    public ExecuteSqlResp execute(long sessionId) {
-        IginxWorker worker = IginxWorker.getInstance();
-        InsertNonAlignedColumnRecordsReq req = SortUtils.sortAndBuildInsertReq(
-                sessionId,
-                paths,
-                times,
-                values,
-                types,
-                null
-        );
-        return new ExecuteSqlResp(worker.insertNonAlignedColumnRecords(req), SqlType.Insert);
+    public ExecuteSqlResp execute(long sessionId) throws ExecutionException {
+        throw new ExecutionException("Select statement can not be executed directly.");
     }
 }

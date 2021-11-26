@@ -64,7 +64,28 @@ public class DataSection {
     public Object getValue(int pathIndex, int timeIndex) {
         checkPathIndexRange(pathIndex);
         checkTimeIndexRange(timeIndex);
-        return data.getValues()[startPathIndex + pathIndex][startTimeIndex + timeIndex];
+
+        RawDataType type = data.getRawDataType();
+        int timeOffset = startTimeIndex + timeIndex;
+        int pathOffset = startPathIndex + pathIndex;
+
+        if (type == RawDataType.Column || type == RawDataType.NonAlignedColumn) {
+            Object colData = data.getValues()[pathOffset];
+            if (data.getBitmaps().get(pathOffset).get(timeOffset)) {
+                // TODO @zy
+                return null;
+            } else {
+                return null;
+            }
+        } else {
+            Object rowData = data.getValues()[timeOffset];
+            if (data.getBitmaps().get(timeOffset).get(pathOffset)) {
+                // TODO @zy
+                return null;
+            } else {
+                return null;
+            }
+        }
     }
 
     private void checkPathIndexRange(int pathIndex) {

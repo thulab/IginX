@@ -1,9 +1,11 @@
 package cn.edu.tsinghua.iginx.sql.logical;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -84,15 +86,38 @@ public class DeleteGenerator implements LogicalGenerator {
         }
 
         List<Delete> deleteList = new ArrayList<>();
-        fragments.forEach((k, v) -> {
-            v.forEach(fragmentMeta -> {
-                TimeInterval timeInterval = fragmentMeta.getTimeInterval();
-
-            });
-        });
+        fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
+            TimeInterval timeInterval = fragmentMeta.getTimeInterval();
+            List<String> overlapPath = getOverlapPaths(k, pathList);
+            List<TimeRange> overlapTimeRange = getOverlapTimeRange(timeInterval, statement.getTimeRanges());
+            if (!overlapTimeRange.isEmpty() && !overlapPath.isEmpty()) {
+                deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, overlapPath));
+            }
+        }));
 
         List<Source> sources = new ArrayList<>();
         deleteList.forEach(operator -> sources.add(new OperatorSource(operator)));
         return new CombineNonQuery(sources);
+    }
+
+    private List<String> getOverlapPaths(TimeSeriesInterval interval, List<String> paths) {
+        List<String> res = new ArrayList<>();
+        paths.forEach(path -> {
+            if (interval.getStartTimeSeries().compareTo(path) <= 0 &&
+                    interval.getEndTimeSeries().compareTo(path) >= 0)
+                res.add(path);
+        });
+        return res;
+    }
+
+    private List<TimeRange> getOverlapTimeRange(TimeInterval interval, List<TimeRange> timeRanges) {
+        List<TimeRange> res = new ArrayList<>();
+        for (TimeRange range : timeRanges) {
+            if (interval.getStartTime() > range.getEndTime() ||
+                    interval.getEndTime() < range.getBeginTime())
+                continue;
+            res.add(range);
+        }
+        return res;
     }
 }

@@ -44,6 +44,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (insertStatement.getPaths().size() != insertStatement.getValues().length) {
             throw new SQLParserException("Insert path size and value size must be equal.");
         }
+        insertStatement.sortData();
+
         return insertStatement;
     }
 
@@ -288,7 +290,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
         int size = insertMultiValues.size();
         int vSize = insertMultiValues.get(0).constant().size();
-        long[] times = new long[size];
+        Long[] times = new Long[size];
         Object[][] values = new Object[vSize][size];
         DataType[] types = new DataType[vSize];
 
@@ -318,7 +320,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             }
         }
 
-        insertStatement.setTimes(times);
+        insertStatement.setTimes(new ArrayList<>(Arrays.asList(times)));
         insertStatement.setValues(values);
         insertStatement.setTypes(new ArrayList<>(Arrays.asList(types)));
     }

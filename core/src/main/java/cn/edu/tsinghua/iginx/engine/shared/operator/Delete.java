@@ -1,6 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 
 import java.util.ArrayList;
@@ -8,17 +8,17 @@ import java.util.List;
 
 public class Delete extends AbstractUnaryOperator {
 
-    private final Filter filter;
+    private final List<TimeRange> timeRanges;
     private final List<String> patterns;
 
-    public Delete(FragmentSource source, Filter filter, List<String> patterns) {
+    public Delete(FragmentSource source, List<TimeRange> timeRanges, List<String> patterns) {
         super(OperatorType.Delete, source);
-        this.filter = filter;
+        this.timeRanges = timeRanges;
         this.patterns = patterns;
     }
 
-    public Filter getFilter() {
-        return filter;
+    public List<TimeRange> getTimeRanges() {
+        return timeRanges;
     }
 
     public List<String> getPatterns() {
@@ -27,6 +27,6 @@ public class Delete extends AbstractUnaryOperator {
 
     @Override
     public Operator copy() {
-        return new Delete((FragmentSource) getSource().copy(), filter.copy(), new ArrayList<>(patterns));
+        return new Delete((FragmentSource) getSource().copy(), new ArrayList<>(timeRanges), new ArrayList<>(patterns));
     }
 }

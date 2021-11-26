@@ -26,7 +26,7 @@ public class ParseTest {
         List<String> paths = Arrays.asList("a.b.c.status", "a.b.c.hardware", "a.b.c.num");
         assertEquals(paths, statement.getPaths());
 
-        assertEquals(2, statement.getTimes().length);
+        assertEquals(2, statement.getTimes().size());
     }
 
     @Test
@@ -38,7 +38,7 @@ public class ParseTest {
         List<String> paths = Arrays.asList("us.d1.s1", "us.d1.s2");
         assertEquals(paths, statement.getPaths());
 
-        assertEquals(2, statement.getTimes().length);
+        assertEquals(2, statement.getTimes().size());
 
         List<DataType> types = Arrays.asList(DataType.INTEGER, DataType.FLOAT);
         assertEquals(types, statement.getTypes());

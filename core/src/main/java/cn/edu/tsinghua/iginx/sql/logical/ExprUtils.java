@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.sql.logical;
 
+import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 
@@ -9,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class ExprUtils {
+
     public static Filter toDNF(Filter filter) {
         filter = removeNot(filter);
         filter = removeSingleFilter(filter);
@@ -193,5 +195,117 @@ public class ExprUtils {
             default:
                 throw new SQLParserException(String.format("Unknown token [%s] in reverse filter.", type));
         }
+    }
+
+    public static List<TimeRange> getTimeRangesFromFilter(Filter filter) {
+        filter = toDNF(filter);
+        List<TimeRange> timeRanges = new ArrayList<>();
+        extractTimeRange(timeRanges, filter);
+        return unionTimeRanges(timeRanges);
+    }
+
+    private static void extractTimeRange(List<TimeRange> timeRanges, Filter f) {
+        FilterType type = f.getType();
+        switch (type) {
+            case Time:
+                timeRanges.add(getTimeRangesFromTimeFilter((TimeFilter) f));
+                break;
+            case And:
+                TimeRange range = getTimeRangeFromAndFilter((AndFilter) f);
+                if (range != null)
+                    timeRanges.add(range);
+                break;
+            case Or:
+                List<TimeRange> ranges = getTimeRangeFromOrFilter((OrFilter) f);
+                if (ranges != null && !ranges.isEmpty()) {
+                    timeRanges.addAll(ranges);
+                }
+                break;
+            default:
+                throw new SQLParserException(String.format("Illegal token [%s] in getTimeRangeFromAndFilter.", type));
+        }
+    }
+
+    private static List<TimeRange> getTimeRangeFromOrFilter(OrFilter filter) {
+        List<TimeRange> timeRanges = new ArrayList<>();
+        filter.getChildren().forEach(f -> extractTimeRange(timeRanges, f));
+        return unionTimeRanges(timeRanges);
+    }
+
+    private static TimeRange getTimeRangeFromAndFilter(AndFilter filter) {
+        List<TimeRange> timeRanges = new ArrayList<>();
+        filter.getChildren().forEach(f -> extractTimeRange(timeRanges, f));
+        return intersectTimeRanges(timeRanges);
+    }
+
+    private static TimeRange getTimeRangesFromTimeFilter(TimeFilter filter) {
+        switch (filter.getOp()) {
+            case L:
+                return new TimeRange(0, filter.getValue());
+            case LE:
+                return new TimeRange(0, filter.getValue() + 1);
+            case G:
+                return new TimeRange(filter.getValue() + 1, Long.MAX_VALUE);
+            case GE:
+                return new TimeRange(filter.getValue(), Long.MAX_VALUE);
+            case E:
+                return new TimeRange(filter.getValue(), filter.getValue() + 1);
+            case NE:
+                throw new SQLParserException("Not support [!=] in delete clause.");
+            default:
+                throw new SQLParserException(String.format("Unknown op [%s] in getTimeRangeFromTimeFilter.", filter.getOp()));
+        }
+    }
+
+    private static List<TimeRange> unionTimeRanges(List<TimeRange> timeRanges) {
+        if (timeRanges == null || timeRanges.isEmpty())
+            return new ArrayList<>();
+        timeRanges.sort((tr1, tr2) -> {
+            long diff = tr1.getBeginTime() - tr2.getBeginTime();
+            return diff == 0 ? 0 : diff > 0 ? 1 : -1;
+        });
+
+        List<TimeRange> res = new ArrayList<>();
+
+        TimeRange cur = timeRanges.get(0);
+        for (int i = 1; i < timeRanges.size(); i++) {
+            TimeRange union = unionTwoTimeRanges(cur, timeRanges.get(i));
+            if (union == null) {
+                res.add(cur);
+                cur = timeRanges.get(i);
+            } else {
+                cur = union;
+            }
+        }
+        res.add(cur);
+        return res;
+    }
+
+    private static TimeRange unionTwoTimeRanges(TimeRange first, TimeRange second) {
+        if (first.getEndTime() < second.getBeginTime() || first.getBeginTime() > second.getEndTime()) {
+            return null;
+        }
+        long begin = Math.min(first.getBeginTime(), second.getBeginTime());
+        long end = Math.max(first.getEndTime(), second.getEndTime());
+        return new TimeRange(begin, end);
+    }
+
+    private static TimeRange intersectTimeRanges(List<TimeRange> timeRanges) {
+        if (timeRanges == null || timeRanges.isEmpty())
+            return null;
+        TimeRange ret = timeRanges.get(0);
+        for (int i = 1; i < timeRanges.size(); i++) {
+            ret = intersectTwoTimeRanges(ret, timeRanges.get(i));
+        }
+        return ret;
+    }
+
+    private static TimeRange intersectTwoTimeRanges(TimeRange first, TimeRange second) {
+        if (first.getEndTime() < second.getBeginTime() || first.getBeginTime() > second.getEndTime()) {
+            return null;
+        }
+        long begin = Math.max(first.getBeginTime(), second.getBeginTime());
+        long end = Math.min(first.getEndTime(), second.getEndTime());
+        return new TimeRange(begin, end);
     }
 }

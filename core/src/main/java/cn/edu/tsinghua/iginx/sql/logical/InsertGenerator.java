@@ -1,14 +1,33 @@
 package cn.edu.tsinghua.iginx.sql.logical;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.shared.data.DataSection;
+import cn.edu.tsinghua.iginx.engine.shared.data.RawData;
+import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
+import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
+import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.policy.IPolicy;
+import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
+import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class InsertGenerator implements LogicalGenerator {
 
@@ -19,6 +38,11 @@ public class InsertGenerator implements LogicalGenerator {
     private final static InsertGenerator instance = new InsertGenerator();
 
     private final List<Optimizer> optimizerList = new ArrayList<>();
+
+    private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
+
+    private final IPolicy policy = PolicyManager.getInstance()
+            .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private InsertGenerator() {
     }
@@ -51,7 +75,52 @@ public class InsertGenerator implements LogicalGenerator {
     }
 
     private Operator generateRoot(InsertStatement statement) {
+        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
-        return null;
+        TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+        if (fragments.isEmpty()) {
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateInitialFragmentsAndStorageUnits(pathList, new TimeInterval(0, Long.MAX_VALUE));
+            metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
+            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+        }
+
+        RawData rawData = statement.getRawData();
+        List<Insert> insertList = new ArrayList<>();
+        fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
+            DataSection section = getDataSection(fragmentMeta, rawData);
+            if (section != null) {
+                insertList.add(new Insert(new FragmentSource(fragmentMeta), section));
+            }
+        }));
+
+        List<Source> sources = new ArrayList<>();
+        insertList.forEach(operator -> sources.add(new OperatorSource(operator)));
+        return new CombineNonQuery(sources);
+    }
+
+    private DataSection getDataSection(FragmentMeta meta, RawData rawData) {
+        TimeInterval timeInterval = meta.getTimeInterval();
+        TimeSeriesInterval tsInterval = meta.getTsInterval();
+        List<Long> insertTimes = rawData.getTimes();
+        List<String> paths = rawData.getPaths();
+        if (timeInterval.getStartTime() > insertTimes.get(insertTimes.size()-1) ||
+                timeInterval.getEndTime() < insertTimes.get(0)) {
+            return null;
+        }
+
+        int startTimeIndex = 0;
+        while (timeInterval.getStartTime() > insertTimes.get(startTimeIndex)) startTimeIndex++;
+        int endTimeIndex = startTimeIndex;
+        while (timeInterval.getEndTime() > insertTimes.get(endTimeIndex)) endTimeIndex++;
+
+
+        int startPathIndex = 0;
+        while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0) startPathIndex++;
+        int endPathIndex = startPathIndex;
+        while (tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0) endPathIndex++;
+
+        return new DataSection(rawData, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);
     }
 }

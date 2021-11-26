@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared;
 
+import java.util.Objects;
+
 public final class TimeRange {
 
     private final long beginTime;
@@ -57,5 +59,18 @@ public final class TimeRange {
 
     public TimeRange copy() {
         return new TimeRange(beginTime, includeBeginTime, endTime, includeEndTime);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        TimeRange range = (TimeRange) o;
+        return beginTime == range.beginTime && includeBeginTime == range.includeBeginTime && endTime == range.endTime && includeEndTime == range.includeEndTime;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(beginTime, includeBeginTime, endTime, includeEndTime);
     }
 }
