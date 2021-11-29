@@ -1,13 +1,12 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-import cn.edu.tsinghua.iginx.engine.shared.data.RawData;
-import cn.edu.tsinghua.iginx.engine.shared.data.RawDataType;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
-import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.*;
 

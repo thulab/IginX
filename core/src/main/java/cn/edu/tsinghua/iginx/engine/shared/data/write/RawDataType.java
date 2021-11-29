@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.engine.shared.data;
+package cn.edu.tsinghua.iginx.engine.shared.data.write;
 
 public enum RawDataType {
     Column,

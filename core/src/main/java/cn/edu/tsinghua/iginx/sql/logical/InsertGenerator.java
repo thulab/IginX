@@ -1,8 +1,10 @@
 package cn.edu.tsinghua.iginx.sql.logical;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.shared.data.DataSection;
-import cn.edu.tsinghua.iginx.engine.shared.data.RawData;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
@@ -89,7 +91,7 @@ public class InsertGenerator implements LogicalGenerator {
         RawData rawData = statement.getRawData();
         List<Insert> insertList = new ArrayList<>();
         fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
-            DataSection section = getDataSection(fragmentMeta, rawData);
+            DataView section = getDataSection(fragmentMeta, rawData);
             if (section != null) {
                 insertList.add(new Insert(new FragmentSource(fragmentMeta), section));
             }
@@ -100,10 +102,10 @@ public class InsertGenerator implements LogicalGenerator {
         return new CombineNonQuery(sources);
     }
 
-    private DataSection getDataSection(FragmentMeta meta, RawData rawData) {
+    private DataView getDataSection(FragmentMeta meta, RawData rawData) {
         TimeInterval timeInterval = meta.getTimeInterval();
         TimeSeriesInterval tsInterval = meta.getTsInterval();
-        List<Long> insertTimes = rawData.getTimes();
+        List<Long> insertTimes = rawData.getTimestamps();
         List<String> paths = rawData.getPaths();
         if (timeInterval.getStartTime() > insertTimes.get(insertTimes.size()-1) ||
                 timeInterval.getEndTime() < insertTimes.get(0)) {
@@ -121,6 +123,10 @@ public class InsertGenerator implements LogicalGenerator {
         int endPathIndex = startPathIndex;
         while (tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0) endPathIndex++;
 
-        return new DataSection(rawData, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);
+        if (rawData.isRowData()) {
+            return new RowDataView(rawData, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);
+        } else {
+            return new ColumnDataView(rawData, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);
+        }
     }
 }

@@ -32,17 +32,12 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
-import cn.edu.tsinghua.iginx.engine.shared.data.RawDataType;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
@@ -62,8 +57,6 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getRowValuesByDataType;
 
 public class IginxWorker implements IService.Iface {
 

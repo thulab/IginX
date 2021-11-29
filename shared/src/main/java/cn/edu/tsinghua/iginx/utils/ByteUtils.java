@@ -182,6 +182,19 @@ public class ByteUtils {
         return getLongArrayFromByteBuffer(ByteBuffer.wrap(array));
     }
 
+    public static List<Long> getLongListFromByteBuffer(ByteBuffer buffer) {
+        int size = buffer.array().length / 8;
+        List<Long> list = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            list.add(buffer.getLong());
+        }
+        return list;
+    }
+
+    public static List<Long> getLongListFromByteArray(byte[] array) {
+        return getLongListFromByteBuffer(ByteBuffer.wrap(array));
+    }
+
     public static ByteBuffer getByteBufferFromLongArray(Long[] array) {
         ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
         for (long value : array) {

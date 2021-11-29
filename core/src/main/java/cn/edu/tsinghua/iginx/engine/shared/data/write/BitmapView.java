@@ -16,45 +16,42 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.utils;
+package cn.edu.tsinghua.iginx.engine.shared.data.write;
 
-public class Bitmap {
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 
-    private final int size;
+import java.util.Objects;
 
-    private final byte[] bitmap;
+public class BitmapView {
 
-    public Bitmap(int size) {
-        this.size = size;
-        this.bitmap = new byte[(int) Math.ceil(this.size * 1.0 / 8)];
-    }
+    private final Bitmap bitmap;
 
-    public Bitmap(int size, byte[] bitmap) {
-        this.size = size;
+    private final int start;
+
+    private final int end;
+
+    public BitmapView(Bitmap bitmap, int start, int end) {
+        Objects.requireNonNull(bitmap);
         this.bitmap = bitmap;
-    }
-
-    public void mark(int i) {
-        if (i < 0 || i >= size)
-            throw new IllegalArgumentException("unexpected index");
-        int index = i / 8;
-        int indexWithinByte = i % 8;
-        bitmap[index] |= (1 << indexWithinByte);
+        if (end <= start) {
+            throw new IllegalArgumentException("end index should greater than start index");
+        }
+        if (end > bitmap.getSize()) {
+            throw new IllegalArgumentException("end index shouldn't greater than the size of bitmap");
+        }
+        this.start = start;
+        this.end = end;
     }
 
     public boolean get(int i) {
-        if (i < 0 || i >= size)
+        if (i < 0 || i >= end - start) {
             throw new IllegalArgumentException("unexpected index");
-        int index = i / 8;
-        int indexWithinByte = i % 8;
-        return (bitmap[index] & (1 << indexWithinByte)) != 0;
-    }
-
-    public byte[] getBytes() {
-        return this.bitmap;
+        }
+        return bitmap.get(i + start);
     }
 
     public int getSize() {
-        return size;
+        return end - start;
     }
+
 }
