@@ -6,7 +6,7 @@ sqlStatement
 
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
-    | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
+    | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
     | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
@@ -36,10 +36,6 @@ functionName
     | AVG
     | COUNT
     | SUM
-    ;
-
-timeRange
-    : (TIME | TIMESTAMP) IN timeInterval
     ;
 
 whereClause
@@ -118,13 +114,6 @@ storageEngineSpec
 
 storageEngine
     : LR_BRACKET ip COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
-    ;
-
-timeInterval
-    : LS_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
-    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
-    | LS_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
-    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
     ;
 
 timeValue

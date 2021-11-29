@@ -17,12 +17,10 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.ShowTimeSeriesStatementContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.SpecialClauseContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.TimeRangeContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
 import java.util.*;
@@ -46,6 +44,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (insertStatement.getPaths().size() != insertStatement.getValues().length) {
             throw new SQLParserException("Insert path size and value size must be equal.");
         }
+        insertStatement.sortData();
+
         return insertStatement;
     }
 
@@ -55,9 +55,10 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         // parse delete paths
         ctx.path().forEach(e -> deleteStatement.addPath(e.getText()));
         // parse time range
-        Pair<Long, Long> range = parseTimeRange(ctx.timeRange());
-        deleteStatement.setStartTime(range.k);
-        deleteStatement.setEndTime(range.v);
+        if (ctx.whereClause() != null) {
+            Filter filter = parseOrExpression(ctx.whereClause().orExpression(), deleteStatement);
+            deleteStatement.setTimeRangesByFilter(filter);
+        }
         return deleteStatement;
     }
 
@@ -75,8 +76,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
         // parse where clause
         if (ctx.whereClause() != null) {
-//            String ret = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
-//            selectStatement.setBooleanExpression(ret);
             Filter filter = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
             selectStatement.setFilter(filter);
             selectStatement.setHasValueFilter(true);
@@ -210,7 +209,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
     }
 
-    private Filter parseOrExpression(OrExpressionContext ctx, SelectStatement statement) {
+    private Filter parseOrExpression(OrExpressionContext ctx, Statement statement) {
         List<Filter> children = new ArrayList<>();
         for (AndExpressionContext andCtx : ctx.andExpression()) {
             children.add(parseAndExpression(andCtx, statement));
@@ -218,7 +217,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new OrFilter(children);
     }
 
-    private Filter parseAndExpression(AndExpressionContext ctx, SelectStatement statement) {
+    private Filter parseAndExpression(AndExpressionContext ctx, Statement statement) {
         List<Filter> children = new ArrayList<>();
         for (PredicateContext predicateCtx : ctx.predicate()) {
             children.add(parsePredicate(predicateCtx, statement));
@@ -226,12 +225,23 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new AndFilter(children);
     }
 
-    private Filter parsePredicate(PredicateContext ctx, SelectStatement statement) {
+    private Filter parsePredicate(PredicateContext ctx, Statement statement) {
         if (ctx.orExpression() != null) {
             Filter filter = parseOrExpression(ctx.orExpression(), statement);
             return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
-            return ctx.path() == null ? parseTimeFilter(ctx) : parseValueFilter(ctx, statement);
+            if (ctx.path() == null) {
+                return parseTimeFilter(ctx);
+            } else {
+                StatementType type = statement.getType();
+                if (type == StatementType.SELECT) {
+                    return parseValueFilter(ctx, (SelectStatement) statement);
+                } else {
+                    throw new SQLParserException(
+                            String.format("[%s] clause can not use value filter.", type.toString().toLowerCase())
+                    );
+                }
+            }
         }
     }
 
@@ -280,7 +290,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
         int size = insertMultiValues.size();
         int vSize = insertMultiValues.get(0).constant().size();
-        long[] times = new long[size];
+        Long[] times = new Long[size];
         Object[][] values = new Object[vSize][size];
         DataType[] types = new DataType[vSize];
 
@@ -310,7 +320,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             }
         }
 
-        insertStatement.setTimes(times);
+        insertStatement.setTimes(new ArrayList<>(Arrays.asList(times)));
         insertStatement.setValues(values);
         insertStatement.setTypes(new ArrayList<>(Arrays.asList(types)));
     }
@@ -362,35 +372,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         } else {
             return null;
         }
-    }
-
-    private Pair<Long, Long> parseTimeRange(TimeRangeContext timeRange) {
-        long startTime, endTime;
-
-        if (timeRange == null) {
-            startTime = Long.MIN_VALUE;
-            endTime = Long.MAX_VALUE;
-        } else {
-            // use index +- 1 to implement [start, end], [start, end),
-            // (start, end), (start, end] range in [start, end) interface.
-            if (timeRange.timeInterval().LR_BRACKET() != null) { // (
-                startTime = parseTime(timeRange.timeInterval().startTime) + 1;
-            } else {
-                startTime = parseTime(timeRange.timeInterval().startTime);
-            }
-
-            if (timeRange.timeInterval().RR_BRACKET() != null) { // )
-                endTime = parseTime(timeRange.timeInterval().endTime);
-            } else {
-                endTime = parseTime(timeRange.timeInterval().endTime) + 1;
-            }
-        }
-
-        if (startTime > endTime) {
-            throw new SQLParserException("Start time should be smaller than endTime in time interval");
-        }
-
-        return new Pair<>(startTime, endTime);
     }
 
     private long parseTime(TimeValueContext time) {

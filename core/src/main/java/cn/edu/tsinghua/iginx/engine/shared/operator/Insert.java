@@ -1,13 +1,13 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator;
 
-import cn.edu.tsinghua.iginx.engine.shared.data.DataSection;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 
 public class Insert extends AbstractUnaryOperator {
 
-    private final DataSection data;
+    private final DataView data;
 
-    public Insert(FragmentSource source, DataSection data) {
+    public Insert(FragmentSource source, DataView data) {
         super(OperatorType.Insert, source);
         if (data == null) {
             throw new IllegalArgumentException("raw data shouldn't be null");
@@ -15,7 +15,7 @@ public class Insert extends AbstractUnaryOperator {
         this.data = data;
     }
 
-    public DataSection getData() {
+    public DataView getData() {
         return data;
     }
 

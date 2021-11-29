@@ -1,25 +1,11 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
-import cn.edu.tsinghua.iginx.utils.Pair;
-import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
 import java.util.*;
 
@@ -38,9 +24,6 @@ public class SelectStatement extends DataStatement {
     private String fromPath;
     private String orderByPath;
     private Filter filter;
-    //    private String booleanExpression;
-//    private long startTime;
-//    private long endTime;
     private long precision;
     private int limit;
     private int offset;
@@ -54,8 +37,6 @@ public class SelectStatement extends DataStatement {
         pathSet = new HashSet<>();
         fromPath = "";
         orderByPath = "";
-//        startTime = Long.MIN_VALUE;
-//        endTime = Long.MAX_VALUE;
         limit = Integer.MAX_VALUE;
         offset = 0;
     }
@@ -215,29 +196,6 @@ public class SelectStatement extends DataStatement {
     public void setFilter(Filter filter) {
         this.filter = filter;
     }
-//    public String getBooleanExpression() {
-//        return booleanExpression;
-//    }
-
-//    public void setBooleanExpression(String booleanExpression) {
-//        this.booleanExpression = booleanExpression;
-//    }
-
-//    public long getStartTime() {
-//        return startTime;
-//    }
-//
-//    public void setStartTime(long startTime) {
-//        this.startTime = startTime;
-//    }
-//
-//    public long getEndTime() {
-//        return endTime;
-//    }
-//
-//    public void setEndTime(long endTime) {
-//        this.endTime = endTime;
-//    }
 
     public long getPrecision() {
         return precision;
@@ -306,156 +264,7 @@ public class SelectStatement extends DataStatement {
     @Override
     public ExecuteSqlResp execute(long sessionId) throws ExecutionException {
         throw new ExecutionException("Select statement can not be executed directly.");
-//        switch (queryType) {
-//            case SimpleQuery:
-//                return simpleQuery(sessionId);
-//            case AggregateQuery:
-//                return aggregateQuery(sessionId);
-//            case DownSampleQuery:
-//                return downSampleQuery(sessionId);
-//            case ValueFilterQuery:
-//                return valueFilterQuery(sessionId);
-//            default:
-//                ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.NotSupportQuery);
-//                resp.setParseErrorMsg(String.format("Not support %s for now.", queryType.toString()));
-//                return resp;
-//        }
     }
-
-//    private ExecuteSqlResp simpleQuery(long sessionId) {
-//        IginxWorker worker = IginxWorker.getInstance();
-//        QueryDataReq req = new QueryDataReq(
-//                sessionId,
-//                getSelectedPaths(),
-//                startTime,
-//                endTime
-//        );
-//        QueryDataResp queryDataResp = worker.queryData(req);
-//
-//        checkIfHasOrderByPath(queryDataResp.getPaths());
-//
-//        ExecuteSqlResp resp = new ExecuteSqlResp(queryDataResp.getStatus(), SqlType.SimpleQuery);
-//        resp.setPaths(queryDataResp.getPaths());
-//        resp.setDataTypeList(queryDataResp.getDataTypeList());
-//        resp.setQueryDataSet(queryDataResp.getQueryDataSet());
-//        resp.setLimit(limit);
-//        resp.setOffset(offset);
-//        resp.setOrderByPath(orderByPath);
-//        resp.setAscending(ascending);
-//        return resp;
-//    }
-
-//    private ExecuteSqlResp aggregateQuery(long sessionId) {
-//        String funcName = selectedFuncsAndPaths.get(0).k;
-//        FuncType funcType = str2FuncType(funcName);
-//        AggregateType aggregateType = funcType2AggregateType(funcType);
-//
-//        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST)) {
-//            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
-//        }
-//        if (aggregateType.equals(AggregateType.LAST)) {
-//            return lastAggregateQuery(sessionId);
-//        }
-//
-//        IginxWorker worker = IginxWorker.getInstance();
-//        AggregateQueryReq req = new AggregateQueryReq(
-//                sessionId,
-//                getSelectedPaths(),
-//                startTime,
-//                endTime,
-//                aggregateType
-//        );
-//        AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
-//
-//        ExecuteSqlResp resp = new ExecuteSqlResp(aggregateQueryResp.getStatus(), SqlType.AggregateQuery);
-//        resp.setPaths(aggregateQueryResp.getPaths());
-//        resp.setDataTypeList(aggregateQueryResp.getDataTypeList());
-//        resp.setValuesList(aggregateQueryResp.getValuesList());
-//        resp.setAggregateType(aggregateType);
-//        resp.setLimit(limit);
-//        resp.setOffset(offset);
-//        return resp;
-//    }
-
-//    private ExecuteSqlResp lastAggregateQuery(long sessionId) {
-//        if (endTime != Long.MAX_VALUE) {
-//            throw new SQLParserException("End time must be set as INF in aggregate query with last function.");
-//        }
-//
-//        IginxWorker worker = IginxWorker.getInstance();
-//        LastQueryReq req = new LastQueryReq(sessionId, getSelectedPaths(), startTime);
-//        LastQueryResp lastQueryResp = worker.lastQuery(req);
-//
-//        ExecuteSqlResp resp = new ExecuteSqlResp(lastQueryResp.getStatus(), SqlType.AggregateQuery);
-//        resp.setPaths(lastQueryResp.getPaths());
-//        resp.setDataTypeList(lastQueryResp.getDataTypeList());
-//        resp.setTimestamps(lastQueryResp.getTimestamps());
-//        resp.setValuesList(lastQueryResp.getValuesList());
-//        resp.setAggregateType(AggregateType.LAST);
-//        resp.setLimit(limit);
-//        resp.setOffset(offset);
-//        return resp;
-//    }
-
-//    private ExecuteSqlResp downSampleQuery(long sessionId) {
-//        String funcName = selectedFuncsAndPaths.get(0).k;
-//        FuncType funcType = str2FuncType(funcName);
-//        AggregateType aggregateType = funcType2AggregateType(funcType);
-//
-//        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST) || aggregateType.equals(AggregateType.LAST)) {
-//            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
-//        }
-//
-//        IginxWorker worker = IginxWorker.getInstance();
-//        DownsampleQueryReq req = new DownsampleQueryReq(
-//                sessionId,
-//                getSelectedPaths(),
-//                startTime,
-//                endTime,
-//                aggregateType,
-//                precision
-//        );
-//        DownsampleQueryResp downsampleQueryResp = worker.downsampleQuery(req);
-//
-//        ExecuteSqlResp resp = new ExecuteSqlResp(downsampleQueryResp.getStatus(), SqlType.DownsampleQuery);
-//        resp.setPaths(downsampleQueryResp.getPaths());
-//        resp.setDataTypeList(downsampleQueryResp.getDataTypeList());
-//        resp.setQueryDataSet(downsampleQueryResp.getQueryDataSet());
-//        resp.setAggregateType(aggregateType);
-//        resp.setLimit(limit);
-//        resp.setOffset(offset);
-//        return resp;
-//    }
-
-//    private ExecuteSqlResp valueFilterQuery(long sessionId) {
-//        IginxWorker worker = IginxWorker.getInstance();
-//        ValueFilterQueryReq req = new ValueFilterQueryReq(
-//                sessionId,
-//                getSelectedPaths(),
-//                startTime,
-//                endTime,
-//                booleanExpression
-//        );
-//        ValueFilterQueryResp valueFilterQueryResp = worker.valueFilterQuery(req);
-//
-//        checkIfHasOrderByPath(valueFilterQueryResp.getPaths());
-//
-//        ExecuteSqlResp resp = new ExecuteSqlResp(valueFilterQueryResp.getStatus(), SqlType.ValueFilterQuery);
-//        resp.setPaths(valueFilterQueryResp.getPaths());
-//        resp.setDataTypeList(valueFilterQueryResp.getDataTypeList());
-//        resp.setQueryDataSet(valueFilterQueryResp.getQueryDataSet());
-//        resp.setLimit(limit);
-//        resp.setOffset(offset);
-//        resp.setOrderByPath(orderByPath);
-//        resp.setAscending(ascending);
-//        return resp;
-//    }
-
-//    private void checkIfHasOrderByPath(List<String> paths) {
-//        if (!orderByPath.equals("") && !paths.contains(orderByPath)) {
-//            throw new SQLParserException(String.format("Selected paths did not contain '%s'.", orderByPath));
-//        }
-//    }
 
     public enum FuncType {
         Null,

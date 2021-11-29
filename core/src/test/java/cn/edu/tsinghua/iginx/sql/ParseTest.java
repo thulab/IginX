@@ -4,9 +4,6 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -29,7 +26,7 @@ public class ParseTest {
         List<String> paths = Arrays.asList("a.b.c.status", "a.b.c.hardware", "a.b.c.num");
         assertEquals(paths, statement.getPaths());
 
-        assertEquals(2, statement.getTimes().length);
+        assertEquals(2, statement.getTimes().size());
     }
 
     @Test
@@ -41,7 +38,7 @@ public class ParseTest {
         List<String> paths = Arrays.asList("us.d1.s1", "us.d1.s2");
         assertEquals(paths, statement.getPaths());
 
-        assertEquals(2, statement.getTimes().length);
+        assertEquals(2, statement.getTimes().size());
 
         List<DataType> types = Arrays.asList(DataType.INTEGER, DataType.FLOAT);
         assertEquals(types, statement.getTypes());
@@ -117,13 +114,10 @@ public class ParseTest {
 
     @Test
     public void testParseDelete() {
-        String deleteStr = "DELETE FROM a.b.c, a.b.d WHERE time in [1627464728862, 2022-12-12 16:18:23+1s);";
+        String deleteStr = "DELETE FROM a.b.c, a.b.d WHERE time > 1627464728862 AND time < 2022-12-12 16:18:23+1s;";
         DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(deleteStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, statement.getPaths());
-
-        assertEquals(1627464728862L, statement.getStartTime());
-        assertEquals(1670833104000L, statement.getEndTime());
     }
 
     @Test
@@ -132,34 +126,6 @@ public class ParseTest {
         DeleteTimeSeriesStatement statement = (DeleteTimeSeriesStatement) TestUtils.buildStatement(deleteTimeSeriesStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, statement.getPaths());
-    }
-
-    @Test
-    public void testTimeRange() {
-        String lsrs = "DELETE FROM a, b WHERE TIME IN [10, 15]"; // []
-        String lrrr = "DELETE FROM a, b WHERE TIME IN (10, 15)"; // ()
-        String lsrr = "DELETE FROM a, b WHERE TIME IN [10, 15)"; // [)
-        String lrrs = "DELETE FROM a, b WHERE TIME IN (10, 15]"; // (]
-
-        // [10, 15] -> [10, 16)
-        DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(lsrs);
-        assertEquals(10, statement.getStartTime());
-        assertEquals(16, statement.getEndTime());
-
-        // (10, 15) -> [11, 15)
-        statement = (DeleteStatement) TestUtils.buildStatement(lrrr);
-        assertEquals(11, statement.getStartTime());
-        assertEquals(15, statement.getEndTime());
-
-        // [10, 15) -> [10, 15)
-        statement = (DeleteStatement) TestUtils.buildStatement(lsrr);
-        assertEquals(10, statement.getStartTime());
-        assertEquals(15, statement.getEndTime());
-
-        // (10, 15] -> [11, 16)
-        statement = (DeleteStatement) TestUtils.buildStatement(lrrs);
-        assertEquals(11, statement.getStartTime());
-        assertEquals(16, statement.getEndTime());
     }
 
     @Test
@@ -190,7 +156,7 @@ public class ParseTest {
     public void testParseShowReplication() {
         String showReplicationStr = "SHOW REPLICA NUMBER";
         ShowReplicationStatement statement = (ShowReplicationStatement) TestUtils.buildStatement(showReplicationStr);
-        assertEquals(Statement.StatementType.SHOW_REPLICATION, statement.statementType);
+        assertEquals(StatementType.SHOW_REPLICATION, statement.statementType);
     }
 
     @Test
