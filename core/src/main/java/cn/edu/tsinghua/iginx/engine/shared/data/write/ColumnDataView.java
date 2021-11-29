@@ -40,7 +40,7 @@ public final class ColumnDataView extends DataView {
     @Override
     public Object getValue(int index1, int index2) { // 第一个维度为序列，第二个维度为数组中的偏移量
         checkPathIndexRange(index1);
-        return ((Object[]) data.getValuesList()[index1])[biases[index1] + index2];
+        return ((Object[]) data.getValuesList()[index1 + startPathIndex])[biases[index1] + index2];
     }
 
     @Override
