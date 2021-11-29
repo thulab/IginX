@@ -60,4 +60,12 @@ public class RawData {
     public boolean isColumnData() {
         return type == RawDataType.Column || type == RawDataType.NonAlignedColumn;
     }
+
+    public enum RawDataType {
+        Column,
+        Row,
+        NonAlignedColumn,
+        NonAlignedRow
+    }
+
 }
