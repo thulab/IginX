@@ -40,7 +40,7 @@ public class RowDataView extends DataView {
     @Override
     public Object getValue(int index1, int index2) {
         checkTimeIndexRange(index1);
-        return ((Object[]) data.getValuesList()[index1])[biases[index1] + index2];
+        return ((Object[]) data.getValuesList()[index1 + startTimeIndex])[biases[index1] + index2];
     }
 
     @Override
