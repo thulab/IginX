@@ -63,17 +63,29 @@ public abstract class DataView {
         return endTimeIndex - startTimeIndex;
     }
 
+    public boolean isRowData() {
+        return data.isRowData();
+    }
+
+    public RawDataType getRawDataType() {
+        return data.getType();
+    }
+
+    public boolean isColumnData() {
+        return data.isColumnData();
+    }
+
     public String getPath(int index) {
         checkPathIndexRange(index);
         return data.getPaths().get(startPathIndex + index);
     }
 
-    public DataType getType(int index) {
+    public DataType getDataType(int index) {
         checkTypeIndexRange(index);
         return data.getDataTypeList().get(startPathIndex + index);
     }
 
-    public Long getTime(int index) {
+    public Long getTimestamp(int index) {
         checkTimeIndexRange(index);
         return data.getTimestamps().get(startTimeIndex + index);
     }

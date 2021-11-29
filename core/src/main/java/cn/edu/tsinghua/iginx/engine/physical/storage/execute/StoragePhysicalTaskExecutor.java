@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 public class StoragePhysicalTaskExecutor {
 
@@ -58,37 +59,6 @@ public class StoragePhysicalTaskExecutor {
     private MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
     private StoragePhysicalTaskExecutor() {
-//        // 初始化 du 的任务队列
-//        List<StorageUnitMeta> storageUnits = metaManager.getStorageUnits();
-//        storageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
-//        for (StorageUnitMeta unit : storageUnits) {
-//            if (unit.isMaster()) {
-//                storageTaskQueues.put(unit.getId(), new StoragePhysicalTaskQueue());
-//            }
-//            ExecutorService dispatcher = Executors.newSingleThreadExecutor();
-//            long storageId = unit.getStorageEngineId();
-//            String id = unit.getId();
-//            String masterId = unit.getMasterId();
-//            dispatchers.put(id, dispatcher);
-//            dispatcher.submit(() -> {
-//                StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(masterId);
-//                Pair<IStorage, ExecutorService> pair = storageManager.getStorage(storageId);
-//                while(true) {
-//                    StoragePhysicalTask task = taskQueue.getTask();
-//                    task.setStorageUnit(id);
-//                    pair.v.submit(() -> {
-//                        TaskExecuteResult result = pair.k.execute(task);
-//                        task.setResult(result);
-//                        if (task.getFollowerTask() != null) {
-//                            MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
-//                            if (followerTask.notifyParentReady()) {
-//                                memoryTaskExecutor.addMemoryTask(followerTask);
-//                            }
-//                        }
-//                    });
-//                }
-//            });
-//        }
         StorageUnitHook storageUnitHook = (before, after) -> {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
                 if (after.isMaster()) { // 主 du，新增加一个任务队列
@@ -110,11 +80,19 @@ public class StoragePhysicalTaskExecutor {
                         pair.v.submit(() -> {
                             TaskExecuteResult result = pair.k.execute(task);
                             task.setResult(result);
-                            if (task.getFollowerTask() != null) {
+                            if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
                                 MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();
                                 boolean isFollowerTaskReady = followerTask.notifyParentReady();
                                 if (isFollowerTaskReady) {
                                     memoryTaskExecutor.addMemoryTask(followerTask);
+                                }
+                            }
+                            if (task.isNeedBroadcasting()) { // 需要传播
+                                List<String> replicaIds = task.getTargetFragment().getMasterStorageUnit().getReplicas()
+                                        .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
+                                for (String replicaId: replicaIds) {
+                                    StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
+                                    storageTaskQueues.get(replicaId).addTask(replicaTask);
                                 }
                             }
                         });

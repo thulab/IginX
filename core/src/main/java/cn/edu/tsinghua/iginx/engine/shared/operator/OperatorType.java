@@ -49,4 +49,8 @@ public enum OperatorType {
         return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
     }
 
+    public static boolean isNeedBroadcasting(OperatorType op) {
+        return op == Delete || op == Insert;
+    }
+
 }

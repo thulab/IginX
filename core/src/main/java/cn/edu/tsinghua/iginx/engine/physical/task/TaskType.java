@@ -23,11 +23,12 @@ public enum TaskType {
     Storage,
     Memory,
 
+    MultipleMemory,
     BinaryMemory,
     UnaryMemory;
 
     public static boolean isMemoryTask(TaskType type) {
-        return type == BinaryMemory || type == UnaryMemory;
+        return type == MultipleMemory || type == BinaryMemory || type == UnaryMemory;
     }
 
 }

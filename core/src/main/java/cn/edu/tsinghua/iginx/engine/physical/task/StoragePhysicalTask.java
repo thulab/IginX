@@ -34,13 +34,23 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     private long storage;
 
+    private final boolean sync;
+
+    private final boolean needBroadcasting;
+
     public StoragePhysicalTask(List<Operator> operators) {
-        this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment());
+        this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment(), true, false);
     }
 
-    public StoragePhysicalTask(List<Operator> operators, FragmentMeta targetFragment) {
+    public StoragePhysicalTask(List<Operator> operators, boolean sync, boolean needBroadcasting) {
+        this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment(), sync, needBroadcasting);
+    }
+
+    public StoragePhysicalTask(List<Operator> operators, FragmentMeta targetFragment, boolean sync, boolean needBroadcasting) {
         super(TaskType.Storage, operators);
         this.targetFragment = targetFragment;
+        this.sync = sync;
+        this.needBroadcasting = needBroadcasting;
     }
 
     public FragmentMeta getTargetFragment() {
@@ -61,6 +71,14 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     public void setStorage(long storage) {
         this.storage = storage;
+    }
+
+    public boolean isSync() {
+        return sync;
+    }
+
+    public boolean isNeedBroadcasting() {
+        return needBroadcasting;
     }
 
     @Override
