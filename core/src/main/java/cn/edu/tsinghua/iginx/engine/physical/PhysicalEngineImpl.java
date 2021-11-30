@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.engine.physical;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.constraint.ConstraintManagerImpl;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizerManager;
@@ -60,12 +61,15 @@ public class PhysicalEngineImpl implements PhysicalEngine {
     }
 
     @Override
-    public RowStream execute(Operator root) {
+    public RowStream execute(Operator root) throws PhysicalException {
         PhysicalTask task = optimizer.optimize(root);
         List<StoragePhysicalTask> storageTasks = new ArrayList<>();
         getStorageTasks(storageTasks, task);
         storageTaskExecutor.commit(storageTasks);
         TaskExecuteResult result = task.getResult();
+        if (result.getException() != null) {
+            throw result.getException();
+        }
         return result.getRowStream();
     }
 
