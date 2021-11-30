@@ -71,7 +71,9 @@ public class ConstraintManagerImpl implements ConstraintManager {
             return false;
         }
         if (source.getType() == SourceType.Fragment) {
-            return unaryOperator.getType() == OperatorType.Project; // 现在叶节点操作符必须是 project
+            return unaryOperator.getType() == OperatorType.Project ||
+                    unaryOperator.getType() == OperatorType.Delete ||
+                    unaryOperator.getType() == OperatorType.Insert;
         }
         Operator sourceOperator = ((OperatorSource) source).getOperator();
         return checkOperator(sourceOperator);

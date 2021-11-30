@@ -73,4 +73,19 @@ public final class TimeRange {
     public int hashCode() {
         return Objects.hash(beginTime, includeBeginTime, endTime, includeEndTime);
     }
+
+    public long getActualBeginTime() {
+        if (includeBeginTime) {
+            return beginTime;
+        }
+        return beginTime + 1;
+    }
+
+    public long getActualEndTime() {
+        if (includeEndTime) {
+            return endTime;
+        }
+        return endTime - 1;
+    }
+
 }

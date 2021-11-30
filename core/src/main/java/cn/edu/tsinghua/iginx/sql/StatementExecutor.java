@@ -131,8 +131,8 @@ public class StatementExecutor {
         for (LogicalGenerator generator: deleteGeneratorList) {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
-                // TODO @zy engine.execute(root)
-                return null;
+                engine.execute(root);
+                return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Delete);
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
@@ -142,8 +142,8 @@ public class StatementExecutor {
         for (LogicalGenerator generator: insertGeneratorList) {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
-                // TODO @zy engine.execute(root)
-                return null;
+                engine.execute(root);
+                return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Insert);
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
