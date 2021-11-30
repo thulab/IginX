@@ -24,6 +24,10 @@ public class MultipleMemoryPhysicalTask extends MemoryPhysicalTask {
         this.parentTasks = parentTasks;
     }
 
+    public List<PhysicalTask> getParentTasks() {
+        return parentTasks;
+    }
+
     @Override
     public TaskExecuteResult execute() {
         List<Operator> operators = getOperators();
