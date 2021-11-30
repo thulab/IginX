@@ -46,7 +46,11 @@ public enum OperatorType {
     }
 
     public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform;
+        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == Delete || op == Insert;
+    }
+
+    public static boolean isMultipleOperator(OperatorType op) {
+        return op == CombineNonQuery;
     }
 
     public static boolean isNeedBroadcasting(OperatorType op) {

@@ -20,12 +20,15 @@ package cn.edu.tsinghua.iginx.engine.physical.constraint;
 
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
+
+import java.util.List;
 
 public class ConstraintManagerImpl implements ConstraintManager {
 
@@ -39,6 +42,9 @@ public class ConstraintManagerImpl implements ConstraintManager {
         }
         if (OperatorType.isUnaryOperator(operator.getType())) {
             return checkUnaryOperator((UnaryOperator) operator);
+        }
+        if (OperatorType.isMultipleOperator(operator.getType())) {
+            return checkMultipleOperator((MultipleOperator) operator);
         }
         return false; // 未能识别的操作符
     }
@@ -77,6 +83,20 @@ public class ConstraintManagerImpl implements ConstraintManager {
         }
         Operator sourceOperator = ((OperatorSource) source).getOperator();
         return checkOperator(sourceOperator);
+    }
+
+    public boolean checkMultipleOperator(MultipleOperator multipleOperator) {
+        List<Source> sources = multipleOperator.getSources();
+        for (Source source: sources) {
+            if (source.getType() == SourceType.Fragment) {
+                return false;
+            }
+            Operator sourceOperator = ((OperatorSource) source).getOperator();
+            if (!checkOperator(sourceOperator)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static ConstraintManagerImpl getInstance() {
