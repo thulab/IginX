@@ -107,21 +107,42 @@ public class InsertGenerator implements LogicalGenerator {
         TimeSeriesInterval tsInterval = meta.getTsInterval();
         List<Long> insertTimes = rawData.getTimestamps();
         List<String> paths = rawData.getPaths();
-        if (timeInterval.getStartTime() > insertTimes.get(insertTimes.size()-1) ||
+
+        // time overlap doesn't exist.
+        if (timeInterval.getStartTime() > insertTimes.get(insertTimes.size() - 1) ||
                 timeInterval.getEndTime() < insertTimes.get(0)) {
             return null;
         }
 
+        // path overlap doesn't exist.
+        if (tsInterval.getStartTimeSeries() != null &&
+                tsInterval.getStartTimeSeries().compareTo(paths.get(paths.size() - 1)) > 0)
+            return null;
+        if (tsInterval.getEndTimeSeries() != null &&
+                tsInterval.getEndTimeSeries().compareTo(paths.get(0)) < 0) {
+            return null;
+        }
+
         int startTimeIndex = 0;
-        while (timeInterval.getStartTime() > insertTimes.get(startTimeIndex)) startTimeIndex++;
+        while (timeInterval.getStartTime() > insertTimes.get(startTimeIndex))
+            startTimeIndex++;
         int endTimeIndex = startTimeIndex;
-        while (timeInterval.getEndTime() > insertTimes.get(endTimeIndex)) endTimeIndex++;
+        while (endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
+            endTimeIndex++;
 
 
         int startPathIndex = 0;
-        while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0) startPathIndex++;
+        if (tsInterval.getStartTimeSeries() != null) {
+            while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
+                startPathIndex++;
+        }
         int endPathIndex = startPathIndex;
-        while (tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0) endPathIndex++;
+        if (tsInterval.getEndTimeSeries() != null) {
+            while (endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)
+                endPathIndex++;
+        } else {
+            endPathIndex = paths.size();
+        }
 
         if (rawData.isRowData()) {
             return new RowDataView(rawData, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);

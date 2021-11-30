@@ -58,6 +58,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.whereClause() != null) {
             Filter filter = parseOrExpression(ctx.whereClause().orExpression(), deleteStatement);
             deleteStatement.setTimeRangesByFilter(filter);
+        } else {
+            deleteStatement.setDeleteAll(true);
         }
         return deleteStatement;
     }

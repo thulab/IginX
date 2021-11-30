@@ -89,9 +89,15 @@ public class DeleteGenerator implements LogicalGenerator {
         fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
             TimeInterval timeInterval = fragmentMeta.getTimeInterval();
             List<String> overlapPath = getOverlapPaths(k, pathList);
-            List<TimeRange> overlapTimeRange = getOverlapTimeRange(timeInterval, statement.getTimeRanges());
-            if (!overlapTimeRange.isEmpty() && !overlapPath.isEmpty()) {
-                deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, overlapPath));
+            if (statement.isDeleteAll()) {
+                if (!overlapPath.isEmpty()) {
+                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), null, overlapPath));
+                }
+            } else {
+                List<TimeRange> overlapTimeRange = getOverlapTimeRange(timeInterval, statement.getTimeRanges());
+                if (!overlapTimeRange.isEmpty() && !overlapPath.isEmpty()) {
+                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, overlapPath));
+                }
             }
         }));
 

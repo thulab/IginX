@@ -101,11 +101,11 @@ public class InsertStatement extends DataStatement {
         Arrays.sort(index, Comparator.comparingLong(times::get));
         Collections.sort(times);
         for (int i = 0; i < values.length; i++) {
-            Object[] values = new Object[index.length];
+            Object[] tmpValues = new Object[index.length];
             for (int j = 0; j < index.length; j++) {
-                values[j] = ((Object[]) values[i])[index[j]];
+                tmpValues[j] = ((Object[]) values[i])[index[j]];
             }
-            values[i] = values;
+            values[i] = tmpValues;
         }
 
         index = new Integer[paths.size()];
