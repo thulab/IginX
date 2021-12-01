@@ -13,17 +13,20 @@ public class DeleteStatement extends DataStatement {
 
     private List<String> paths;
     private List<TimeRange> timeRanges;
+    private boolean deleteAll;
 
     public DeleteStatement() {
         this.statementType = StatementType.DELETE;
-        paths = new ArrayList<>();
-        timeRanges = new ArrayList<>();
+        this.paths = new ArrayList<>();
+        this.timeRanges = new ArrayList<>();
+        this.deleteAll = false;
     }
 
     public DeleteStatement(List<String> paths, long startTime, long endTime) {
         this.statementType = StatementType.DELETE;
         this.paths = paths;
         this.timeRanges.add(new TimeRange(startTime, endTime));
+        this.deleteAll = false;
     }
 
     public List<String> getPaths() {
@@ -46,6 +49,14 @@ public class DeleteStatement extends DataStatement {
         if (filter != null) {
             this.timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
         }
+    }
+
+    public boolean isDeleteAll() {
+        return deleteAll;
+    }
+
+    public void setDeleteAll(boolean deleteAll) {
+        this.deleteAll = deleteAll;
     }
 
     @Override

@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizerManager;
 import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.task.BinaryMemoryPhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.MultipleMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
@@ -86,6 +87,11 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         } else if (root.getType() == TaskType.UnaryMemory) {
             UnaryMemoryPhysicalTask task = (UnaryMemoryPhysicalTask) root;
             getStorageTasks(tasks, task.getParentTask());
+        } else if (root.getType() == TaskType.MultipleMemory) {
+            MultipleMemoryPhysicalTask task = (MultipleMemoryPhysicalTask) root;
+            for (PhysicalTask parentTask: task.getParentTasks()) {
+                getStorageTasks(tasks, parentTask);
+            }
         }
     }
 

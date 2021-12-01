@@ -504,7 +504,7 @@ public class IoTDBStorage implements IStorage {
     }
 
     private TaskExecuteResult executeDeleteTask(String storageUnit, Delete delete) {
-        if (delete.getTimeRanges().size() == 0) { // 没有传任何 time range
+        if (delete.getTimeRanges() == null || delete.getTimeRanges().size() == 0) { // 没有传任何 time range
             List<String> paths = delete.getPatterns();
             if (paths.size() == 1 && paths.get(0).equals("*")) {
                 try {
