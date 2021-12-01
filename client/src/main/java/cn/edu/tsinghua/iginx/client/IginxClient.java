@@ -333,9 +333,10 @@ public class IginxClient {
                 Arrays.asList("select"),
                 Arrays.asList("add", "storageengine"),
                 Arrays.asList("set", "timeunit", "in"),
-                Arrays.asList("add", "user"),
-                Arrays.asList("update", "user"),
-                Arrays.asList("delete", "user"),
+                Arrays.asList("create", "user"),
+                Arrays.asList("grant"),
+                Arrays.asList("set", "password", "for"),
+                Arrays.asList("drop", "user"),
                 Arrays.asList("show", "user")
         );
         addArgumentCompleters(iginxCompleters, withNullCompleters, true);
