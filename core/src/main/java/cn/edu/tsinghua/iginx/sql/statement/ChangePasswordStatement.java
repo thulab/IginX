@@ -2,22 +2,19 @@ package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
-import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 
-import java.util.Set;
+public class ChangePasswordStatement extends Statement {
 
-public class UpdateUserStatement extends Statement {
     private String username;
     private String password;
-    private Set<AuthType> authTypes;
 
-    public UpdateUserStatement(String username, String password, Set<AuthType> authTypes) {
+    public ChangePasswordStatement(String username, String password) {
+        this.statementType = StatementType.CHANGE_USER_PASSWORD;
         this.username = username;
         this.password = password;
-        this.authTypes = authTypes;
     }
 
     public String getUsername() {
@@ -28,10 +25,6 @@ public class UpdateUserStatement extends Statement {
         return password;
     }
 
-    public Set<AuthType> getAuthTypes() {
-        return authTypes;
-    }
-
     @Override
     public ExecuteSqlResp execute(long sessionId) throws ExecutionException {
         IginxWorker worker = IginxWorker.getInstance();
@@ -39,9 +32,6 @@ public class UpdateUserStatement extends Statement {
         if (password != null) {
             req.setPassword(password);
         }
-        if (authTypes != null) {
-            req.setAuths(authTypes);
-        }
-        return new ExecuteSqlResp(worker.updateUser(req), SqlType.UpdateUser);
+        return new ExecuteSqlResp(worker.updateUser(req), SqlType.ChangeUserPassword);
     }
 }

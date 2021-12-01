@@ -14,6 +14,7 @@ public class ShowUserStatement extends Statement {
     private List<String> users;
 
     public ShowUserStatement(List<String> users) {
+        this.statementType = StatementType.SHOW_USER;
         this.users = users;
     }
 

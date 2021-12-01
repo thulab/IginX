@@ -15,9 +15,10 @@ statement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
-    | CREATE USER username=nodeName IDENTIFIED BY password=nodeName permissionSpec? #addUserStatement
-    | UPDATE USER username=nodeName PASSWORD password=nodeName permissionSpec? #updateUserStatement
-    | DELETE USER username=nodeName #deleteUserStatement
+    | CREATE USER username=nodeName IDENTIFIED BY password=nodeName #createUserStatement
+    | GRANT permissionSpec TO USER username=nodeName #grantUserStatement
+    | SET PASSWORD FOR username=nodeName OPERATOR_EQ PASSWORD LR_BRACKET password=nodeName RR_BRACKET #changePasswordStatement
+    | DROP USER username=nodeName #dropUserStatement
     | SHOW USER userSpec? #showUserStatement
     ;
 
@@ -92,7 +93,7 @@ offsetClause
     ;
 
 permissionSpec
-    : ON LR_BRACKET permission (COMMA permission)* RR_BRACKET
+    : permission (COMMA permission)*
     ;
 
 userSpec
@@ -266,6 +267,18 @@ CREATE
     : C R E A T E
     ;
 
+DROP
+    : D R O P
+    ;
+
+GRANT
+    : G R A N T
+    ;
+
+SET
+    : S E T
+    ;
+
 SHOW
     : S H O W
     ;
@@ -314,8 +327,16 @@ ON
     : O N
     ;
 
+TO
+    : T O
+    ;
+
 INTO
     : I N T O
+    ;
+
+FOR
+    : F O R
     ;
 
 FROM

@@ -23,9 +23,10 @@ public abstract class Statement {
         DELETE_TIME_SERIES,
         SHOW_TIME_SERIES,
         SHOW_CLUSTER_INFO,
-        ADD_USER,
-        UPDATE_USER,
-        DELETE_USER,
+        CREATE_USER,
+        GRANT_USER,
+        CHANGE_USER_PASSWORD,
+        DROP_USER,
         SHOW_USER
     }
 }
