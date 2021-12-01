@@ -111,8 +111,11 @@ public class ExportToCsv {
     }
 
     private static void exportDataTable(String machine, String[] metrics, long startTime) {
-
-        String csvFileName = dirAbsolutePath + File.separator  + String.format(Constants.CSV_FILE_NAME, machine, startTime);
+        String machinePath = dirAbsolutePath + File.separator + machine;
+        if (!new File(machinePath).exists()) {
+            new File(machinePath).mkdir();
+        }
+        String csvFileName = machinePath + File.separator  + String.format(Constants.CSV_FILE_NAME, machine, startTime);
         File file = new File(csvFileName);
         System.out.printf("正在导出%d列, %d行数据到 %s ...%n", metrics.length, dataTable.size(), csvFileName);
 

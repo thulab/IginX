@@ -24,7 +24,7 @@ public class Constants {
 
     //line_id.14.machine_id.14009.ZT3383
     //machine_id.7057.GZ100
-    public static final String[] PATH = {"line_id.*.machine_id.%s.%s", "machine_id.%s.%s"};
+    public static final String[] PATH = {"line_id.*.machine_id.%s.%s", "machine_id.%s.%s", "device_id.*.machine_id.%s.%s"};
 
     public static final String DIR_NAME = "%s_%s_%s";
 
