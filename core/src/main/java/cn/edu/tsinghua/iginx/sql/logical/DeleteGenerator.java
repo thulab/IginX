@@ -109,9 +109,22 @@ public class DeleteGenerator implements LogicalGenerator {
     private List<String> getOverlapPaths(TimeSeriesInterval interval, List<String> paths) {
         List<String> res = new ArrayList<>();
         paths.forEach(path -> {
-            if (interval.getStartTimeSeries().compareTo(path) <= 0 &&
-                    interval.getEndTimeSeries().compareTo(path) >= 0)
+            if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
                 res.add(path);
+            } else if (interval.getStartTimeSeries() == null) {
+                if (interval.getEndTimeSeries().compareTo(path) >= 0) {
+                    res.add(path);
+                }
+            } else if (interval.getEndTimeSeries() == null) {
+                if (interval.getStartTimeSeries().compareTo(path) <= 0) {
+                    res.add(path);
+                }
+            } else {
+                if (interval.getStartTimeSeries().compareTo(path) <= 0 &&
+                        interval.getEndTimeSeries().compareTo(path) >= 0) {
+                    res.add(path);
+                }
+            }
         });
         return res;
     }
