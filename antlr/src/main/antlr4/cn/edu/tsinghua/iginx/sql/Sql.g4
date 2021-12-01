@@ -15,7 +15,7 @@ statement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
-    | ADD USER username=nodeName PASSWORD password=nodeName permissionSpec? #addUserStatement
+    | CREATE USER username=nodeName IDENTIFIED BY password=nodeName permissionSpec? #addUserStatement
     | UPDATE USER username=nodeName PASSWORD password=nodeName permissionSpec? #updateUserStatement
     | DELETE USER username=nodeName #deleteUserStatement
     | SHOW USER userSpec? #showUserStatement
@@ -262,6 +262,10 @@ SELECT
     : S E L E C T
     ;
 
+CREATE
+    : C R E A T E
+    ;
+
 SHOW
     : S H O W
     ;
@@ -296,6 +300,10 @@ INFO
 
 WHERE
     : W H E R E
+    ;
+
+IDENTIFIED
+    : I D E N T I F I E D
     ;
 
 IN
