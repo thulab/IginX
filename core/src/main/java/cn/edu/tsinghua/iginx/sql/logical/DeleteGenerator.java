@@ -88,12 +88,15 @@ public class DeleteGenerator implements LogicalGenerator {
         List<Delete> deleteList = new ArrayList<>();
         fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
             TimeInterval timeInterval = fragmentMeta.getTimeInterval();
+            List<String> overlapPath = getOverlapPaths(k, pathList);
             if (statement.isDeleteAll()) {
-                deleteList.add(new Delete(new FragmentSource(fragmentMeta), null, pathList));
+                if (!overlapPath.isEmpty()) {
+                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), null, overlapPath));
+                }
             } else {
                 List<TimeRange> overlapTimeRange = getOverlapTimeRange(timeInterval, statement.getTimeRanges());
-                if (!overlapTimeRange.isEmpty()) {
-                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, pathList));
+                if (!overlapTimeRange.isEmpty() && !overlapPath.isEmpty()) {
+                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, overlapPath));
                 }
             }
         }));
@@ -101,6 +104,29 @@ public class DeleteGenerator implements LogicalGenerator {
         List<Source> sources = new ArrayList<>();
         deleteList.forEach(operator -> sources.add(new OperatorSource(operator)));
         return new CombineNonQuery(sources);
+    }
+
+    private List<String> getOverlapPaths(TimeSeriesInterval interval, List<String> paths) {
+        List<String> res = new ArrayList<>();
+        paths.forEach(path -> {
+            if (interval.getStartTimeSeries() == null && interval.getEndTimeSeries() == null) {
+                res.add(path);
+            } else if (interval.getStartTimeSeries() == null) {
+                if (interval.getEndTimeSeries().compareTo(path) >= 0) {
+                    res.add(path);
+                }
+            } else if (interval.getEndTimeSeries() == null) {
+                if (interval.getStartTimeSeries().compareTo(path) <= 0) {
+                    res.add(path);
+                }
+            } else {
+                if (interval.getStartTimeSeries().compareTo(path) <= 0 &&
+                        interval.getEndTimeSeries().compareTo(path) >= 0) {
+                    res.add(path);
+                }
+            }
+        });
+        return res;
     }
 
     private List<TimeRange> getOverlapTimeRange(TimeInterval interval, List<TimeRange> timeRanges) {
