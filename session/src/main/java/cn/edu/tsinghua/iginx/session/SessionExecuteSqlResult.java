@@ -107,13 +107,17 @@ public class SessionExecuteSqlResult {
         }
 
         // parse values
-        if (resp.getType() == SqlType.AggregateQuery) {
-            Object[] aggregateValues = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
-            List<Object> aggregateValueList = new ArrayList<>(Arrays.asList(aggregateValues));
-            this.values = new ArrayList<>();
-            this.values.add(aggregateValueList);
+        if (resp.getQueryDataSet() != null || resp.getValuesList() != null) {
+            if (resp.getType() == SqlType.AggregateQuery) {
+                Object[] aggregateValues = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
+                List<Object> aggregateValueList = new ArrayList<>(Arrays.asList(aggregateValues));
+                this.values = new ArrayList<>();
+                this.values.add(aggregateValueList);
+            } else {
+                this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+            }
         } else {
-            this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+            this.values = new ArrayList<>();
         }
 
         sortColumns();

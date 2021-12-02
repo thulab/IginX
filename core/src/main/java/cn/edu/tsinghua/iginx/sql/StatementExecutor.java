@@ -193,27 +193,28 @@ public class StatementExecutor {
         logger.debug("value row num: {}", valuesList.size());
 
         ExecuteSqlResp resp;
-        if (!timestampList.isEmpty()) {
+        if (!valuesList.isEmpty()) {
+            if (!timestampList.isEmpty()) {
+                resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
+
+                Long[] timestamps = timestampList.toArray(new Long[timestampList.size()]);
+                ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
+                resp.setTimestamps(timeBuffer);
+
+                QueryDataSet set = new QueryDataSet(timeBuffer, valuesList, bitmapList);
+                resp.setQueryDataSet(set);
+            } else {
+                resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.AggregateQuery);
+                resp.setValuesList(valuesList.get(0));
+            }
+        } else {  // empty result
             resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
-            resp.setPaths(paths);
-            resp.setDataTypeList(types);
-            resp.setOffset(0);
-            resp.setLimit(Integer.MAX_VALUE);
-
-            Long[] timestamps = timestampList.toArray(new Long[timestampList.size()]);
-            ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
-            resp.setTimestamps(timeBuffer);
-
-            QueryDataSet set = new QueryDataSet(timeBuffer, valuesList, bitmapList);
-            resp.setQueryDataSet(set);
-        } else {
-            resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.AggregateQuery);
-            resp.setPaths(paths);
-            resp.setDataTypeList(types);
-            resp.setValuesList(valuesList.get(0));
-            resp.setOffset(0);
-            resp.setLimit(Integer.MAX_VALUE);
         }
+
+        resp.setPaths(paths);
+        resp.setDataTypeList(types);
+        resp.setOffset(0);
+        resp.setLimit(Integer.MAX_VALUE);
         return resp;
     }
 }
