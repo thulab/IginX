@@ -133,7 +133,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
     public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
         DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
-        ctx.path().stream().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
+        ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
         return deleteTimeSeriesStatement;
     }
 
@@ -148,31 +148,33 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
-    public Statement visitAddUserStatement(SqlParser.AddUserStatementContext ctx) {
+    public Statement visitCreateUserStatement(SqlParser.CreateUserStatementContext ctx) {
         String username = ctx.username.getChild(0).toString();
         String password = ctx.password.getChild(0).toString();
-        Set<AuthType> authTypes = new HashSet<>();
-        if (ctx.permissionSpec() != null) {
-            ctx.permissionSpec().permission().stream().forEach(e -> authTypes.add(parseAuthType(e.getText())));
-        }
-        return new AddUserStatement(username, password, authTypes);
+        return new CreateUserStatement(username, password);
     }
 
     @Override
-    public Statement visitUpdateUserStatement(SqlParser.UpdateUserStatementContext ctx) {
+    public Statement visitGrantUserStatement(SqlParser.GrantUserStatementContext ctx) {
         String username = ctx.username.getChild(0).toString();
-        String password = ctx.password.getChild(0).toString();
         Set<AuthType> authTypes = new HashSet<>();
         if (ctx.permissionSpec() != null) {
-            ctx.permissionSpec().permission().stream().forEach(e -> authTypes.add(parseAuthType(e.getText())));
+            ctx.permissionSpec().permission().forEach(e -> authTypes.add(parseAuthType(e.getText())));
         }
-        return new UpdateUserStatement(username, password, authTypes);
+        return new GrantUserStatement(username, authTypes);
     }
 
     @Override
-    public Statement visitDeleteUserStatement(SqlParser.DeleteUserStatementContext ctx) {
+    public Statement visitChangePasswordStatement(SqlParser.ChangePasswordStatementContext ctx) {
         String username = ctx.username.getChild(0).toString();
-        return new DeleteUserStatement(username);
+        String password = ctx.password.getChild(0).toString();
+        return new ChangePasswordStatement(username, password);
+    }
+
+    @Override
+    public Statement visitDropUserStatement(SqlParser.DropUserStatementContext ctx) {
+        String username = ctx.username.getChild(0).toString();
+        return new DropUserStatement(username);
     }
 
     @Override
