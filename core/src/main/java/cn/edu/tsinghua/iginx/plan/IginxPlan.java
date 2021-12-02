@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
 
@@ -37,6 +38,10 @@ public abstract class IginxPlan {
     private StorageUnitMeta storageUnit;
 
     private int combineGroup;
+
+    private IginxPlan correspondingSyncPlan;
+
+    private PlanExecuteResult planExecuteResult;
 
     protected IginxPlan(boolean isQuery) {
         this.iginxPlanType = IGINX;
@@ -101,6 +106,22 @@ public abstract class IginxPlan {
 
     public void setCombineGroup(int combineGroup) {
         this.combineGroup = combineGroup;
+    }
+
+    public IginxPlan getCorrespondingSyncPlan() {
+        return correspondingSyncPlan;
+    }
+
+    public void setCorrespondingSyncPlan(IginxPlan correspondingSyncPlan) {
+        this.correspondingSyncPlan = correspondingSyncPlan;
+    }
+
+    public PlanExecuteResult getPlanExecuteResult() {
+        return planExecuteResult;
+    }
+
+    public void setPlanExecuteResult(PlanExecuteResult planExecuteResult) {
+        this.planExecuteResult = planExecuteResult;
     }
 
     public enum IginxPlanType {

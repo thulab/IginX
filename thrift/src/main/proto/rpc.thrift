@@ -56,6 +56,11 @@ enum SqlType {
     DeleteTimeSeries,
     ShowTimeSeries,
     ShowClusterInfo,
+    CreateUser,
+    GrantUser,
+    ChangeUserPassword,
+    DropUser,
+    ShowUser
 }
 
 enum AuthType {
@@ -280,6 +285,9 @@ struct ExecuteSqlResp {
     17: optional list<StorageEngineInfo> storageEngineInfos
     18: optional list<MetaStorageInfo>  metaStorageInfos
     19: optional LocalMetaStorageInfo localMetaStorageInfo
+    20: optional list<string> usernames
+    21: optional list<UserType> userTypes
+    22: optional list<set<AuthType>> auths
 }
 
 struct UpdateUserReq {

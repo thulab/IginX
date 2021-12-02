@@ -23,7 +23,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
 public abstract class PlanExecuteResult {
 
     public static final int SUCCESS = 200;
@@ -34,4 +33,11 @@ public abstract class PlanExecuteResult {
 
     private IginxPlan plan;
 
+    public PlanExecuteResult(int statusCode, IginxPlan plan) {
+        this.statusCode = statusCode;
+        this.plan = plan;
+        if (plan != null) {
+            this.plan.setPlanExecuteResult(this);
+        }
+    }
 }

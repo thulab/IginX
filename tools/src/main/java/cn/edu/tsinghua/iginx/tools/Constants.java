@@ -16,29 +16,23 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.tools;
 
-public enum StatusCode {
-    WRONG_USERNAME_OR_PASSWORD(100),
-    ACCESS_DENY(101),
+public class Constants {
 
-    SUCCESS_STATUS(200),
-    PARTIAL_SUCCESS(204),
+    public static final Long MILLS_PER_DAY = 86400000L;
 
-    REDIRECT(300),
+    //line_id.14.machine_id.14009.ZT3383
+    //machine_id.7057.GZ100
+    public static final String[] PATH = {"line_id.*.machine_id.%s.%s", "machine_id.%s.%s", "device_id.*.machine_id.%s.%s"};
 
-    SESSION_ERROR(400),
-    STATEMENT_EXECUTION_ERROR(401),
-    STATEMENT_PARSE_ERROR(402),
-    DELETE_ROOT_USER(403);
+    public static final String DIR_NAME = "%s_%s_%s";
 
-    private int statusCode;
+    public static final String CSV_FILE_NAME = "%s_%s.csv";
 
-    StatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
+    public static final String CONF = "IGINX_CONF";
 
-    public int getStatusCode() {
-        return statusCode;
-    }
+    public static final String CONFIG_FILE = "conf/config.properties";
+
 }
+

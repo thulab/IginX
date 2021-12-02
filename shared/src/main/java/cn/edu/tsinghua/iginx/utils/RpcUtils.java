@@ -32,6 +32,8 @@ public class RpcUtils {
 
     public static Status ACCESS_DENY = new Status(StatusCode.ACCESS_DENY.getStatusCode());
 
+    public static Status DELETE_ROOT_USER = new Status(StatusCode.DELETE_ROOT_USER.getStatusCode());
+
     public static Status SUCCESS = new Status(StatusCode.SUCCESS_STATUS.getStatusCode());
 
     public static Status PARTIAL_SUCCESS = new Status(StatusCode.PARTIAL_SUCCESS.getStatusCode());
@@ -41,6 +43,7 @@ public class RpcUtils {
     static {
         WRONG_USERNAME_OR_PASSWORD.setMessage("wrong username or password");
         ACCESS_DENY.setMessage("access deny");
+        DELETE_ROOT_USER.setMessage("Administrator user can not be deleted");
         PARTIAL_SUCCESS.setMessage("partial success");
         FAILURE.setMessage("unexpected error");
     }

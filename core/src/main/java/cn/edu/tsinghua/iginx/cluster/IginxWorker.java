@@ -40,7 +40,6 @@ import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -55,7 +54,7 @@ import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
 import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
-import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -111,14 +110,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class IginxWorker implements IService.Iface {
 
     private static final Logger logger = LoggerFactory.getLogger(IginxWorker.class);
+
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
     private static final IginxWorker instance = new IginxWorker();
 
@@ -342,8 +341,8 @@ public class IginxWorker implements IService.Iface {
 
         try {
             ParseTree tree = parser.sqlStatement();
-            Operator operator = visitor.visit(tree);
-            return operator.doOperation(req.getSessionId());
+            Statement statement = visitor.visit(tree);
+            return statement.execute(req.getSessionId());
         } catch (SQLParserException | ParseCancellationException e) {
             StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
             String errMsg = e.getMessage();
@@ -392,6 +391,9 @@ public class IginxWorker implements IService.Iface {
     public Status deleteUser(DeleteUserReq req) {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Admin)) {
             return RpcUtils.ACCESS_DENY;
+        }
+        if (config.getUsername().equals(req.getUsername())) {
+            return RpcUtils.DELETE_ROOT_USER;
         }
         if (userManager.deleteUser(req.username)) {
             return RpcUtils.SUCCESS;
