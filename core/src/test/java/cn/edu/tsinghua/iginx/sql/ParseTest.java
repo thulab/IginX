@@ -224,29 +224,31 @@ public class ParseTest {
 
     @Test
     public void testAuth() {
-        String addUser = "add user root1 password root1 on (read, write);";
-        AddUserStatement addUserStatement = (AddUserStatement) buildStatement(addUser);
-        assertEquals("root1", addUserStatement.getUsername());
-        assertEquals("root1", addUserStatement.getPassword());
-        assertEquals(new HashSet<>(Arrays.asList(AuthType.Read, AuthType.Write)), addUserStatement.getAuthTypes());
+        String createUser = "CREATE USER root1 IDENTIFIED BY root1;";
+        CreateUserStatement createUserStatement = (CreateUserStatement) buildStatement(createUser);
+        assertEquals("root1", createUserStatement.getUsername());
+        assertEquals("root1", createUserStatement.getPassword());
 
-        addUser = "add user root2 password root2;";
-        addUserStatement = (AddUserStatement) buildStatement(addUser);
-        assertEquals("root2", addUserStatement.getUsername());
-        assertEquals("root2", addUserStatement.getPassword());
-        assertEquals(new HashSet<>(), addUserStatement.getAuthTypes());
+        createUser = "CREATE USER root2 IDENTIFIED BY root2;";
+        createUserStatement = (CreateUserStatement) buildStatement(createUser);
+        assertEquals("root2", createUserStatement.getUsername());
+        assertEquals("root2", createUserStatement.getPassword());
 
-        String updateUser = "update user root1 password root1 on (read, write);";
-        UpdateUserStatement updateUserStatement = (UpdateUserStatement) buildStatement(updateUser);
-        assertEquals("root1", updateUserStatement.getUsername());
-        assertEquals("root1", updateUserStatement.getPassword());
-        assertEquals(new HashSet<>(Arrays.asList(AuthType.Read, AuthType.Write)), updateUserStatement.getAuthTypes());
+        String updateUser = "GRANT WRITE, READ TO USER root1;";
+        GrantUserStatement grantUserStatement = (GrantUserStatement) buildStatement(updateUser);
+        assertEquals("root1", grantUserStatement.getUsername());
+        assertEquals(new HashSet<>(Arrays.asList(AuthType.Read, AuthType.Write)), grantUserStatement.getAuthTypes());
 
-        String deleteUser = "delete user root1;";
-        DeleteUserStatement deleteUserStatement = (DeleteUserStatement) buildStatement(deleteUser);
-        assertEquals("root1", deleteUserStatement.getUsername());
+        String changePassword = "SET PASSWORD FOR root1 = PASSWORD(root3);";
+        ChangePasswordStatement changePasswordStatement = (ChangePasswordStatement) buildStatement(changePassword);
+        assertEquals("root1", changePasswordStatement.getUsername());
+        assertEquals("root3", changePasswordStatement.getPassword());
 
-        String showUser = "show user root1, root2;";
+        String deleteUser = "DROP USER root1;";
+        DropUserStatement dropUserStatement = (DropUserStatement) buildStatement(deleteUser);
+        assertEquals("root1", dropUserStatement.getUsername());
+
+        String showUser = "SHOW USER root1, root2;";
         ShowUserStatement showUserStatement = (ShowUserStatement) buildStatement(showUser);
         assertEquals(new ArrayList<>(Arrays.asList("root1", "root2")), showUserStatement.getUsers());
     }
