@@ -138,9 +138,9 @@ public interface IMetaCache {
 
     void clearActiveTimeSeriesIntervalStatistics();
 
-    Set<String> separateActiveTimeSeriesStatisticsByDensity(double density);
+    Set<String> separateActiveTimeSeriesStatisticsByDensity(double density, Map<String, TimeSeriesStatistics> statisticsMap);
 
-    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators();
+    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap, Set<String> separatorStatistics);
 
     void addReshardFragment(FragmentMeta fragment);
 

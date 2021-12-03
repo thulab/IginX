@@ -454,7 +454,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
             return storageEngineMetaMap;
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when loading schema mapping", e);
+            throw new MetaStorageException("encounter error when loading storage engine", e);
         } finally {
             try {
                 mutex.release();
@@ -661,23 +661,22 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
                 this.client.create().withMode(CreateMode.PERSISTENT).forPath(FRAGMENT_NODE_PREFIX);
             } else {
-                List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
-                for (String tsIntervalName : tsIntervalNames) {
-                    TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
-                    List<FragmentMeta> fragmentMetaList = new ArrayList<>();
-                    List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
-                    for (String timeIntervalName : timeIntervalNames) {
+                List<String> startTimeNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
+                for (String startTimeName : startTimeNames) {
+                    List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + startTimeName);
+                    for (String tsIntervalName : tsIntervalNames) {
+                        TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
                         FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
-                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + startTimeName + "/" + tsIntervalName), FragmentMeta.class);
+                        List<FragmentMeta> fragmentMetaList = fragmentListMap.computeIfAbsent(fragmentTimeSeries, x -> new ArrayList<>());
                         fragmentMetaList.add(fragmentMeta);
                     }
-                    fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
                 }
             }
             registerFragmentListener();
             return fragmentListMap;
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when updating schema mapping: ", e);
+            throw new MetaStorageException("encounter error when loading fragment: ", e);
         }
     }
 
@@ -734,7 +733,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.setData()
-                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTimeInterval().toString() + "/" + fragmentMeta.getTsInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when updating fragment: ", e);
         }
@@ -744,7 +743,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTimeInterval().toString() + "/" + fragmentMeta.getTsInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
             throw new MetaStorageException("encounter error when adding fragment: ", e);
         }

@@ -49,7 +49,15 @@ public class TimeSeriesIntervalStatistics {
     }
 
     public void update(TimeSeriesIntervalStatistics timeSeriesIntervalStatistics) {
+        density += timeSeriesIntervalStatistics.getDensity();
+    }
 
+    public double getDensity() {
+        return density;
+    }
+
+    public void setDensity(double density) {
+        this.density = density;
     }
 
     @Override

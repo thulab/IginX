@@ -45,6 +45,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
@@ -115,7 +116,7 @@ public class DefaultMetaCache implements IMetaCache {
         activeSeparatorStatistics = new ConcurrentSkipListSet<>();
         activeStorageEngineStatisticsMap = new ConcurrentHashMap<>();
         activeTimeSeriesStatisticsMap = new ConcurrentSkipListMap<>();
-        activeTimeSeriesIntervalStatisticsMap = new ConcurrentHashMap<>();
+        activeTimeSeriesIntervalStatisticsMap = new ConcurrentSkipListMap<>();
         // user 相关
         userMetaMap = new ConcurrentHashMap<>();
         // 重分片中的 fragment 相关
@@ -378,7 +379,8 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public List<IginxMeta> getIginxList() {
-        return new ArrayList<>(iginxMetaMap.values());
+//        return Collections.unmodifiableList(new ArrayList<>(iginxMetaMap.values()));
+        return new CopyOnWriteArrayList<>(iginxMetaMap.values());
     }
 
     @Override
@@ -388,6 +390,7 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public void removeIginx(long id) {
+        logger.info("remove iginx {}", id);
         iginxMetaMap.remove(id);
     }
 
@@ -471,6 +474,7 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public void addOrUpdateActiveSeparatorStatistics(Set<String> separators) {
+        logger.info("separators = {}", separators);
         activeSeparatorStatistics.addAll(separators);
     }
 
@@ -497,11 +501,13 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public void addOrUpdateActiveTimeSeriesIntervalStatistics(Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) {
         statisticsMap.forEach((key, value) -> activeTimeSeriesIntervalStatisticsMap.computeIfAbsent(key, e -> new TimeSeriesIntervalStatistics()).update(value));
+        logger.info("1 activeTimeSeriesIntervalStatisticsMap = {}", activeTimeSeriesIntervalStatisticsMap);
     }
 
     @Override
     public Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> getActiveTimeSeriesIntervalStatistics() {
-        return new HashMap<>(activeTimeSeriesIntervalStatisticsMap);
+        logger.info("activeTimeSeriesIntervalStatisticsMap = {}", activeTimeSeriesIntervalStatisticsMap);
+        return new TreeMap<>(activeTimeSeriesIntervalStatisticsMap);
     }
 
     @Override
@@ -510,16 +516,16 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
-    public Set<String> separateActiveTimeSeriesStatisticsByDensity(double density) {
-        logger.info("density = {}", density);
-        logger.info("activeTimeSeriesStatisticsMap = {}", activeTimeSeriesStatisticsMap);
+    public Set<String> separateActiveTimeSeriesStatisticsByDensity(double density, Map<String, TimeSeriesStatistics> statisticsMap) {
+        logger.info("1 density = {}", density);
+        logger.info("1 statisticsMap = {}", statisticsMap);
         Set<String> separators = new TreeSet<>();
         double tempSum = 0.0;
         String tempTimeSeries = null;
-        for (Map.Entry<String, TimeSeriesStatistics> entry : activeTimeSeriesStatisticsMap.entrySet()) {
-            logger.info("entry = {}", entry);
+        for (Map.Entry<String, TimeSeriesStatistics> entry : statisticsMap.entrySet()) {
+            logger.info("1 entry = {}", entry);
             double currDensity = entry.getValue().getDensity();
-            logger.info("tempSum + currDensity = {}", tempSum + currDensity);
+            logger.info("1 tempSum + currDensity = {}", tempSum + currDensity);
             if (tempSum + currDensity >= density) {
                 if (tempSum + currDensity - density > density - tempSum && tempTimeSeries != null) {
                     separators.add(tempTimeSeries);
@@ -536,16 +542,18 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
-    public Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators() {
+    public Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> separateActiveTimeSeriesStatisticsBySeparators(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap, Set<String> separatorStatistics) {
+        logger.info("timeSeriesStatisticsMap = {}", timeSeriesStatisticsMap);
+        logger.info("separatorStatistics = {}", separatorStatistics);
         Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap = new TreeMap<>();
         String prevTimeSeries = null;
         String nextTimeSeries = null;
         double tempSum = 0.0;
         boolean needToGetNext = true;
         int tempCount = 0;
-        Iterator<Map.Entry<String, TimeSeriesStatistics>> it = activeTimeSeriesStatisticsMap.entrySet().iterator();
+        Iterator<Map.Entry<String, TimeSeriesStatistics>> it = timeSeriesStatisticsMap.entrySet().iterator();
         Map.Entry<String, TimeSeriesStatistics> currEntry = null;
-        for (String separator : activeSeparatorStatistics) {
+        for (String separator : separatorStatistics) {
             nextTimeSeries = separator;
             while (it.hasNext()) {
                 if (needToGetNext) {
@@ -586,14 +594,14 @@ public class DefaultMetaCache implements IMetaCache {
                 activeStorageEngineStatisticsMap.get(storageEngineId).updateByTimeSeriesStatistics(timeSeriesStatistics);
             } else {
                 // TODO 先只考虑写入，且先不考虑存储后端的计算能力
-                activeStorageEngineStatisticsMap.put(storageEngineId, new StorageEngineStatistics(timeSeriesStatistics.getWriteBytes(), 1.0, timeSeriesStatistics.getWriteBytes(), Long.MAX_VALUE));
+                activeStorageEngineStatisticsMap.put(storageEngineId, new StorageEngineStatistics(timeSeriesStatistics.getWriteBytes(), 1.0, timeSeriesStatistics.getWriteBytes()));
             }
         }
     }
 
     @Override
     public Map<Long, StorageEngineStatistics> getActiveStorageEngineStatistics() {
-        return new HashMap<>(activeStorageEngineStatisticsMap);
+        return new ConcurrentHashMap<>(activeStorageEngineStatisticsMap);
     }
 
     @Override

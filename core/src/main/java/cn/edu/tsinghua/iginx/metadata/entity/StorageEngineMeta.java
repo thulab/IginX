@@ -58,6 +58,8 @@ public final class StorageEngineMeta {
 
     private boolean lastOfBatch;
 
+    private double capacity;
+
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy) {
         this(id, ip, port, extraParams, storageEngine, createdBy, false);
     }
@@ -70,6 +72,8 @@ public final class StorageEngineMeta {
         this.storageEngine = storageEngine;
         this.createdBy = createdBy;
         this.lastOfBatch = lastOfBatch;
+        // TODO
+        this.capacity = 1.0;
     }
 
     public long getId() {
@@ -147,5 +151,13 @@ public final class StorageEngineMeta {
 
     public void setLastOfBatch(boolean lastOfBatch) {
         this.lastOfBatch = lastOfBatch;
+    }
+
+    public double getCapacity() {
+        return capacity;
+    }
+
+    public void setCapacity(double capacity) {
+        this.capacity = capacity;
     }
 }

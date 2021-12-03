@@ -37,6 +37,6 @@ public interface IFragmentGenerator {
 
     void init(IMetaManager iMetaManager);
 
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap);
+    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap, double density);
 
 }

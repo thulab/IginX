@@ -29,15 +29,21 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 class NaiveFragmentGenerator implements IFragmentGenerator {
+
+    private static final Logger logger = LoggerFactory.getLogger(NaiveFragmentGenerator.class);
 
     private IMetaManager iMetaManager;
 
@@ -202,24 +208,24 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
     }
 
     @Override
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap) {
-        // 无新增 storage unit
-        List<FragmentMeta> fragments = new ArrayList<>();
-        List<StorageUnitMeta> storageUnits = new ArrayList<>();
-        Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-        for (FragmentMeta oldFragment : latestFragments.values()) {
-            StorageUnitMeta masterStorageUnit = iMetaManager.getStorageUnit(oldFragment.getMasterStorageUnitId());
-            FragmentMeta newFragment = new FragmentMeta(
-                    oldFragment.getTsInterval().getStartTimeSeries(),
-                    oldFragment.getTsInterval().getEndTimeSeries(),
-                    startTime,
-                    Long.MAX_VALUE,
-                    masterStorageUnit
-            );
-            newFragment.setInitialFragment(false);
-            fragments.add(newFragment);
-        }
-        fragments.get(fragments.size() - 1).setLastOfBatch(true);
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap, double density) {
+//        // 无新增 storage unit
+//        List<FragmentMeta> fragments = new ArrayList<>();
+//        List<StorageUnitMeta> storageUnits = new ArrayList<>();
+//        Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
+//        for (FragmentMeta oldFragment : latestFragments.values()) {
+//            StorageUnitMeta masterStorageUnit = iMetaManager.getStorageUnit(oldFragment.getMasterStorageUnitId());
+//            FragmentMeta newFragment = new FragmentMeta(
+//                    oldFragment.getTsInterval().getStartTimeSeries(),
+//                    oldFragment.getTsInterval().getEndTimeSeries(),
+//                    startTime,
+//                    Long.MAX_VALUE,
+//                    masterStorageUnit
+//            );
+//            newFragment.setInitialFragment(false);
+//            fragments.add(newFragment);
+//        }
+//        fragments.get(fragments.size() - 1).setLastOfBatch(true);
 
 //        // 有新增 storage unit
 //        List<FragmentMeta> fragments = new ArrayList<>();
@@ -247,27 +253,35 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
 //        fragments.get(fragments.size() - 1).setLastOfBatch(true);
 //        storageUnits.get(storageUnits.size() - 1).setLastOfBatch(true);
 
-        // TODO 利用 FragmentStatistics
-//        for (Map.Entry<FragmentMeta, FragmentStatistics> entry : iMetaManager.getActiveFragmentStatistics().entrySet()) {
-//            FragmentMeta fragment = entry.getKey();
-//            StorageUnitMeta masterStorageUnit = iMetaManager.getStorageUnit(fragment.getMasterStorageUnitId());
-//            String masterId = RandomStringUtils.randomAlphanumeric(16);
-//            StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, masterStorageUnit.getStorageEngineId(), masterId, true);
-//            for (StorageUnitMeta replica : masterStorageUnit.getReplicas()) {
-//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), replica.getStorageEngineId(), masterId, false));
-//            }
-//            storageUnits.add(storageUnit);
-//
-//            FragmentMeta newFragment = new FragmentMeta(
-//                    fragment.getTsInterval().getStartTimeSeries(),
-//                    fragment.getTsInterval().getEndTimeSeries(),
-//                    startTime,
-//                    Long.MAX_VALUE,
-//                    masterId
-//            );
-//            newFragment.setInitialFragment(false);
-//            fragments.add(newFragment);
-//        }
+        List<FragmentMeta> fragments = new ArrayList<>();
+        List<StorageUnitMeta> storageUnits = new ArrayList<>();
+        Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> firstMergeResult = firstMergeTimeSeriesIntervalStatistics(statisticsMap, density);
+        logger.info("firstMergeResult = {}", firstMergeResult);
+        Map<Long, TimeSeriesInterval> secondMergeResult = secondMergeTimeSeriesIntervalStatistics(firstMergeResult, iMetaManager.getStorageEngineList());
+        logger.info("secondMergeResult = {}", secondMergeResult);
+        Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
+        for (Map.Entry<Long, TimeSeriesInterval> entry : secondMergeResult.entrySet()) {
+            StorageUnitMeta masterStorageUnit = null;
+            for (FragmentMeta fragment : latestFragments.values()) {
+                if (fragment.getMasterStorageUnit().getStorageEngineId() == entry.getKey()) {
+                    masterStorageUnit = fragment.getMasterStorageUnit();
+                    break;
+                }
+            }
+            if (masterStorageUnit != null) {
+                FragmentMeta newFragment = new FragmentMeta(
+                        entry.getValue().getStartTimeSeries(),
+                        entry.getValue().getEndTimeSeries(),
+                        startTime,
+                        Long.MAX_VALUE,
+                        masterStorageUnit
+                );
+                newFragment.setInitialFragment(false);
+                fragments.add(newFragment);
+            }
+        }
+        fragments.get(fragments.size() - 1).setLastOfBatch(true);
+
         return new Pair<>(fragments, storageUnits);
     }
 
@@ -290,4 +304,66 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
         return new Pair<>(fragment, storageUnit);
     }
 
+    private Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> firstMergeTimeSeriesIntervalStatistics(Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap, double density) {
+        logger.info("2 density = {}", density);
+        logger.info("2 statisticsMap = {}", statisticsMap);
+        Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> resultMap = new TreeMap<>();
+        double tempSum = 0.0;
+        String startTimeSeries = null;
+        String endTimeSeries = null;
+        for (Map.Entry<TimeSeriesInterval, TimeSeriesIntervalStatistics> entry : statisticsMap.entrySet()) {
+            logger.info("2 entry = {}", entry);
+            double currDensity = entry.getValue().getDensity();
+            logger.info("2 tempSum + currDensity = {}", tempSum + currDensity);
+            if (tempSum + currDensity >= density) {
+                if (tempSum + currDensity - density > density - tempSum) {
+                    resultMap.put(new TimeSeriesInterval(startTimeSeries, endTimeSeries), new TimeSeriesIntervalStatistics(tempSum));
+                    tempSum = currDensity;
+                    startTimeSeries = endTimeSeries;
+                } else {
+                    resultMap.put(new TimeSeriesInterval(startTimeSeries, entry.getKey().getEndTimeSeries()), new TimeSeriesIntervalStatistics(tempSum + currDensity));
+                    tempSum = 0.0;
+                    startTimeSeries = entry.getKey().getEndTimeSeries();
+                }
+            } else {
+                tempSum += currDensity;
+            }
+            endTimeSeries = entry.getKey().getEndTimeSeries();
+        }
+        if (tempSum != 0.0) {
+            resultMap.put(new TimeSeriesInterval(startTimeSeries, null), new TimeSeriesIntervalStatistics(tempSum));
+        }
+        return resultMap;
+    }
+
+    private Map<Long, TimeSeriesInterval> secondMergeTimeSeriesIntervalStatistics(Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap, List<StorageEngineMeta> storageEngineList) {
+        Map<Long, TimeSeriesInterval> resultMap = new HashMap<>();
+        Iterator<Map.Entry<TimeSeriesInterval, TimeSeriesIntervalStatistics>> iterator = statisticsMap.entrySet().iterator();
+        int totalCount = 0;
+        double totalCapacity = storageEngineList.stream().mapToDouble(StorageEngineMeta::getCapacity).sum();
+        logger.info("totalCapacity = {}", totalCapacity);
+        String startTimeSeries = null;
+        String endTimeSeries = null;
+        double tempSum = 0.0;
+        for (int i = 0; i < storageEngineList.size(); i++) {
+            StorageEngineMeta storageEngine = storageEngineList.get(i);
+            int tempCount;
+            if (i != storageEngineList.size() - 1) {
+                tempCount = Math.min((int) Math.round(storageEngine.getCapacity() * statisticsMap.size() / totalCapacity), statisticsMap.size() - totalCount);
+            } else {
+                tempCount = statisticsMap.size() - totalCount;
+            }
+            for (int j = 0; j < tempCount; j++) {
+                Map.Entry<TimeSeriesInterval, TimeSeriesIntervalStatistics> entry = iterator.next();
+                tempSum += entry.getValue().getDensity();
+                endTimeSeries = entry.getKey().getEndTimeSeries();
+            }
+            logger.info("storageEngine.getId() = {} startTimeSeries = {} endTimeSeries = {} tempSum = {}", storageEngine.getId(), startTimeSeries, endTimeSeries, tempSum);
+            tempSum = 0.0;
+            resultMap.put(storageEngine.getId(), new TimeSeriesInterval(startTimeSeries, endTimeSeries));
+            startTimeSeries = endTimeSeries;
+            totalCount += tempCount;
+        }
+        return resultMap;
+    }
 }

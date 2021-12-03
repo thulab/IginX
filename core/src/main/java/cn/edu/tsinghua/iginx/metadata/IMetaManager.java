@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -168,7 +167,7 @@ public interface IMetaManager {
     /**
      * 更新活跃时间序列统计信息
      */
-    void updateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap);
+    void addOrUpdateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap);
 
     Map<String, TimeSeriesStatistics> getActiveTimeSeriesStatistics();
 

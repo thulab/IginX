@@ -126,7 +126,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     DefaultMetaManager.getInstance().updateMaxActiveEndTime(insertColumnRecordsPlan.getEndTime());
                     for (InsertColumnRecordsPlan plan : insertColumnRecordsPlans) {
                         // 更新 TimeSeriesStatistics
-                        DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
+                        DefaultMetaManager.getInstance().addOrUpdateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
                     }
                 }
                 return insertColumnRecordsPlans;
@@ -155,7 +155,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     DefaultMetaManager.getInstance().updateMaxActiveEndTime(insertNonAlignedColumnRecordsPlan.getEndTime());
                     for (InsertNonAlignedColumnRecordsPlan plan : insertNonAlignedColumnRecordsPlans) {
                         // 更新 TimeSeriesStatistics
-                        DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
+                        DefaultMetaManager.getInstance().addOrUpdateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
                     }
                 }
                 return insertNonAlignedColumnRecordsPlans;
@@ -183,7 +183,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     DefaultMetaManager.getInstance().updateMaxActiveEndTime(insertRowRecordsPlan.getEndTime());
                     for (InsertRowRecordsPlan plan : insertRowRecordsPlans) {
                         // 更新 TimeSeriesStatistics
-                        DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
+                        DefaultMetaManager.getInstance().addOrUpdateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
                     }
                 }
                 return insertRowRecordsPlans;
@@ -211,7 +211,7 @@ public class SimplePlanGenerator implements IPlanGenerator {
                     DefaultMetaManager.getInstance().updateMaxActiveEndTime(insertNonAlignedRowRecordsPlan.getEndTime());
                     for (InsertNonAlignedRowRecordsPlan plan : insertNonAlignedRowRecordsPlans) {
                         // 更新 TimeSeriesStatistics
-                        DefaultMetaManager.getInstance().updateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
+                        DefaultMetaManager.getInstance().addOrUpdateActiveTimeSeriesStatistics(plan.getTimeSeriesStatistics());
                     }
                 }
                 return insertNonAlignedRowRecordsPlans;

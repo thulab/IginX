@@ -64,4 +64,14 @@ public final class IginxMeta {
     public Map<String, String> getExtraParams() {
         return extraParams;
     }
+
+    @Override
+    public String toString() {
+        return "IginxMeta{" +
+                "id=" + id +
+                ", ip='" + ip + '\'' +
+                ", port=" + port +
+                ", extraParams=" + extraParams +
+                '}';
+    }
 }

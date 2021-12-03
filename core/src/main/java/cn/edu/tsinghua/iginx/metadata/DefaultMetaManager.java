@@ -59,6 +59,7 @@ import java.util.Queue;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -108,10 +109,6 @@ public class DefaultMetaManager implements IMetaManager {
 
     // 在重分片过程中，是否为提出者
     private boolean isProposer = false;
-
-    // 在重分片过程中，是否已经推了本地的统计数据的更新
-    // TODO 不确定是否有用
-    private boolean hasPushedStatistics = false;
 
     // 在重分片过程中，是否已经进行了重分片判断
     private boolean hasJudgedResharding = false;
@@ -190,7 +187,6 @@ public class DefaultMetaManager implements IMetaManager {
                         if (!reshardStatus.equals(NON_RESHARDING)) {
                             return;
                         }
-                        logger.info("System.currentTimeMillis() = {} lastReshardTime.get() = {} ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval() * 1000 = {}", System.currentTimeMillis(), lastReshardTime.get(), ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval() * 1000);
                         if (System.currentTimeMillis() - lastReshardTime.get() < ConfigDescriptor.getInstance().getConfig().getGlobalStatisticsCollectInterval() * 1000) {
                             return;
                         }
@@ -410,8 +406,8 @@ public class DefaultMetaManager implements IMetaManager {
                     // TODO 处理密度为0的情况
                     return;
                 }
-                Set<String> separators = cache.separateActiveTimeSeriesStatisticsByDensity(0.5 * density / getStorageEngineNum());
-                cache.addOrUpdateActiveSeparatorStatistics(separators);
+                Set<String> separators = cache.separateActiveTimeSeriesStatisticsByDensity(0.25 * 0.5 * density / getStorageEngineNum(), cache.getActiveTimeSeriesStatistics());
+                logger.info("local separators = {}", separators);
                 storage.lockActiveSeparatorStatistics();
                 storage.addOrUpdateActiveSeparatorStatistics(id, separators);
                 storage.releaseActiveSeparatorStatistics();
@@ -429,10 +425,8 @@ public class DefaultMetaManager implements IMetaManager {
     private void initActiveSeparatorStatistics() throws MetaStorageException {
         storage.registerActiveSeparatorStatisticsChangeHook((iginxId, separators) -> {
             try {
+                logger.info("iginxId = {} separators = {}", iginxId, separators);
                 if (separators == null) {
-                    return;
-                }
-                if (iginxId == DefaultMetaManager.this.id) {
                     return;
                 }
                 cache.addOrUpdateActiveSeparatorStatistics(separators);
@@ -442,13 +436,17 @@ public class DefaultMetaManager implements IMetaManager {
                 } else {
                     logger.info("iginx node {} increment active separator statistics counter: {}", id, updatedCounter);
                 }
-                if (updatedCounter == getIginxList().size() - 1) {
-                    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap = cache.separateActiveTimeSeriesStatisticsBySeparators();
-                    cache.addOrUpdateActiveTimeSeriesIntervalStatistics(statisticsMap);
-                    if (!isProposer) {
-                        storage.lockActiveTimeSeriesIntervalStatistics();
-                        storage.addOrUpdateActiveTimeSeriesIntervalStatistics(id, statisticsMap);
-                        storage.releaseActiveTimeSeriesIntervalStatistics();
+                if (updatedCounter == getIginxList().size()) {
+                    Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap = cache.separateActiveTimeSeriesStatisticsBySeparators(
+                            cache.getActiveTimeSeriesStatistics(),
+                            cache.getActiveSeparatorStatistics()
+                    );
+                    storage.lockActiveTimeSeriesIntervalStatistics();
+                    storage.addOrUpdateActiveTimeSeriesIntervalStatistics(id, statisticsMap);
+                    storage.releaseActiveTimeSeriesIntervalStatistics();
+                    if (isProposer) {
+                        logger.info("iginx node {}(proposer) push active time series interval statistics", id);
+                    } else {
                         logger.info("iginx node {} push active time series interval statistics", id);
                     }
                 }
@@ -465,6 +463,7 @@ public class DefaultMetaManager implements IMetaManager {
                     return;
                 }
                 if (isProposer && reshardStatus.equals(JUDGING)) {
+                    logger.info("cache.getActiveStorageEngineStatistics() = {}", cache.getActiveStorageEngineStatistics());
                     cache.addOrUpdateActiveStorageEngineStatistics(statisticsMap);
                     cache.addOrUpdateActiveIginxStatistics(iginxId, statisticsMap);
                     int updatedCounter = activeStorageEngineStatisticsCounter.incrementAndGet();
@@ -503,13 +502,25 @@ public class DefaultMetaManager implements IMetaManager {
                 int updatedCounter = activeTimeSeriesIntervalStatisticsCounter.incrementAndGet();
                 logger.info("iginx node {}(proposer) increment active time series interval statistics counter: {}", id, updatedCounter);
                 synchronized (commitCreatingTask) {
+                    logger.info("maxActiveEndTimeStatisticsCounter.get() = {}", maxActiveEndTimeStatisticsCounter.get());
+                    logger.info("hasCommittedCreatingTask = {}", hasCommittedCreatingTask);
+                    logger.info("updatedCounter = {}", updatedCounter);
+                    logger.info("getIginxList().size() - 1 = {}", getIginxList().size() - 1);
+                    logger.info("getIginxList() = {}", getIginxList());
                     if (maxActiveEndTimeStatisticsCounter.get() == getIginxList().size() - 1
-                            && updatedCounter == getIginxList().size() - 1
+                            && updatedCounter == getIginxList().size()
                             && !hasCommittedCreatingTask) {
+                        logger.info("1111111111111");
                         hasCommittedCreatingTask = true;
                         IFragmentGenerator fragmentGenerator = PolicyManager.getInstance()
                                 .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName()).getIFragmentGenerator();
-                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(maxActiveEndTime.get(), cache.getActiveTimeSeriesIntervalStatistics());
+                        // TODO
+                        logger.info("cache.getActiveTimeSeriesIntervalStatistics() = {}", cache.getActiveTimeSeriesIntervalStatistics());
+                        Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = fragmentGenerator.generateFragmentsAndStorageUnitsForResharding(
+                                maxActiveEndTime.get(),
+                                cache.getActiveTimeSeriesIntervalStatistics(),
+                                0.5 * cache.getMinActiveIginxStatistics() * 0.25
+                        );
                         logger.info("iginx node {}(proposer) push fragments: {}", id, fragmentsAndStorageUnits.k);
                         logger.info("iginx node {}(proposer) push storage units: {}", id, fragmentsAndStorageUnits.v);
                         createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
@@ -528,7 +539,6 @@ public class DefaultMetaManager implements IMetaManager {
                     storage.lockActiveStorageEngineStatistics();
                     storage.addOrUpdateActiveStorageEngineStatistics(id, cache.getActiveStorageEngineStatistics());
                     storage.releaseActiveStorageEngineStatistics();
-//                    hasPushedStatistics = true;
                     logger.info("iginx node {} start to reshard", id);
                     logger.info("iginx node {} push active storage engine statistics", id);
                 }
@@ -554,7 +564,6 @@ public class DefaultMetaManager implements IMetaManager {
                     }
 
                     isProposer = false;
-                    hasPushedStatistics = false;
                     hasJudgedResharding = false;
                     hasCommittedCreatingTask = false;
                     hasCreatedFragments = false;
@@ -568,6 +577,12 @@ public class DefaultMetaManager implements IMetaManager {
                     activeTimeSeriesIntervalStatisticsCounter.set(0);
 
                     releaseWaitingReshardThreads();
+
+                    cache.clearActiveIginxStatistics();
+                    cache.clearActiveSeparatorStatistics();
+                    cache.clearActiveStorageEngineStatistics();
+                    cache.clearActiveTimeSeriesStatistics();
+                    cache.clearActiveTimeSeriesIntervalStatistics();
                 }
             } catch (MetaStorageException e) {
                 logger.error("encounter error when switching reshard status: ", e);
@@ -643,7 +658,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public List<IginxMeta> getIginxList() {
-        return new ArrayList<>(cache.getIginxList());
+        return cache.getIginxList();
     }
 
     @Override
@@ -903,7 +918,7 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public void updateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap) {
+    public void addOrUpdateActiveTimeSeriesStatistics(Map<String, TimeSeriesStatistics> timeSeriesStatisticsMap) {
         cache.addOrUpdateActiveTimeSeriesStatistics(timeSeriesStatisticsMap);
     }
 
@@ -944,13 +959,11 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     private boolean needToReshard() {
-        logger.info("cache.getActiveStorageEngineStatistics() = {}", cache.getActiveStorageEngineStatistics());
-        double totalDensity = 0.0;
-        for (StorageEngineStatistics statistics : cache.getActiveStorageEngineStatistics().values()) {
-            totalDensity += statistics.getDensity();
-        }
-        for (StorageEngineStatistics statistics : cache.getActiveStorageEngineStatistics().values()) {
-            if (totalDensity != 0.0 && statistics.getDensity() / (totalDensity / cache.getActiveStorageEngineStatistics().size()) >= 1) {
+        Map<Long, StorageEngineStatistics> storageEngineStatisticsMap = cache.getActiveStorageEngineStatistics();
+        logger.info("storageEngineStatisticsMap = {}", storageEngineStatisticsMap);
+        double totalDensity = storageEngineStatisticsMap.values().stream().mapToDouble(StorageEngineStatistics::getDensity).sum();
+        for (StorageEngineStatistics statistics : storageEngineStatisticsMap.values()) {
+            if (totalDensity != 0.0 && statistics.getDensity() / (totalDensity / storageEngineStatisticsMap.size()) >= 1) {
                 return true;
             }
         }
