@@ -64,6 +64,8 @@ public class Config {
 
     private int asyncRestThreadPool = 100;
 
+    private int restReqSplitNum = 10;
+
     private boolean enableRestService = true;
 
     private String fileDataDir = "";
@@ -93,6 +95,24 @@ public class Config {
     private String clients = "";
 
     private int instancesNumPerClient = 0;
+
+    private double logRestInsertPossibility = 1.0;
+
+    private double logRestQueryPossibility = 1.0;
+
+    private double cachedTimeseriesProb = 0.01;
+
+    private int retryCount = 10;
+
+    private int retryWait = 5000;
+
+    private int reAllocatePeriod = 30000;
+
+    private int fragmentPerEngine = 10;
+
+    private boolean enableStorageGroupValueLimit = true;
+
+    private double storageGroupValueLimit = 200.0;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -254,6 +274,14 @@ public class Config {
         this.asyncRestThreadPool = asyncRestThreadPool;
     }
 
+    public int getRestReqSplitNum() {
+        return restReqSplitNum;
+    }
+
+    public void setRestReqSplitNum(int restReqSplitNum) {
+        this.restReqSplitNum = restReqSplitNum;
+    }
+
     public boolean isEnableRestService() {
         return enableRestService;
     }
@@ -388,5 +416,77 @@ public class Config {
 
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
+    }
+
+    public double getLogRestInsertPossibility() {
+        return logRestInsertPossibility;
+    }
+
+    public void setLogRestInsertPossibility(double logRestInsertPossibility) {
+        this.logRestInsertPossibility = logRestInsertPossibility;
+    }
+
+    public double getLogRestQueryPossibility() {
+        return logRestQueryPossibility;
+    }
+
+    public void setLogRestQueryPossibility(double logRestQueryPossibility) {
+        this.logRestQueryPossibility = logRestQueryPossibility;
+    }
+
+    public double getCachedTimeseriesProb() {
+        return cachedTimeseriesProb;
+    }
+
+    public void setCachedTimeseriesProb(double cachedTimeseriesProb) {
+        this.cachedTimeseriesProb = cachedTimeseriesProb;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public int getRetryWait() {
+        return retryWait;
+    }
+
+    public void setRetryWait(int retryWait) {
+        this.retryWait = retryWait;
+    }
+
+    public int getReAllocatePeriod() {
+        return reAllocatePeriod;
+    }
+
+    public void setReAllocatePeriod(int reAllocatePeriod) {
+        this.reAllocatePeriod = reAllocatePeriod;
+    }
+
+    public int getFragmentPerEngine() {
+        return fragmentPerEngine;
+    }
+
+    public void setFragmentPerEngine(int fragmentPerEngine) {
+        this.fragmentPerEngine = fragmentPerEngine;
+    }
+
+    public double getStorageGroupValueLimit() {
+        return storageGroupValueLimit;
+    }
+
+    public boolean isEnableStorageGroupValueLimit() {
+        return enableStorageGroupValueLimit;
+    }
+
+    public void setEnableStorageGroupValueLimit(boolean enableStorageGroupValueLimit) {
+        this.enableStorageGroupValueLimit = enableStorageGroupValueLimit;
+    }
+
+    public void setStorageGroupValueLimit(double storageGroupValueLimit) {
+        this.storageGroupValueLimit = storageGroupValueLimit;
     }
 }

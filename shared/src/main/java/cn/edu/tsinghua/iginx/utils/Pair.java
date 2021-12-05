@@ -36,4 +36,14 @@ public class Pair<K, V> {
                 ", v=" + v +
                 '}';
     }
+
+    public K getK()
+    {
+        return k;
+    }
+
+    public V getV()
+    {
+        return v;
+    }
 }

@@ -9,15 +9,18 @@ import cn.edu.tsinghua.iginx.metadata.hook.ActiveSeparatorStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveStorageEngineStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ActiveTimeSeriesIntervalStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.MaxActiveEndTimeStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.MinActiveIginxStatisticsChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusChangeHook;
-import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.TimeseriesChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.VersionChangeHook;
+import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -635,6 +638,17 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void registerVersionChangeHook(VersionChangeHook hook) {
+
+    }
+
+    @Override
+    public boolean election()
+    {
+        return false;
+    }
+
+    @Override
     public void lockReshardStatus() throws MetaStorageException {
         reshardNotificationLock.lock();
     }
@@ -725,5 +739,32 @@ public class FileMetaStorage implements IMetaStorage {
         if (hook != null) {
             reshardCounterChangeHook = hook;
         }
+    }
+
+    @Override
+    public void registerTimeseriesChangeHook(TimeseriesChangeHook hook) {
+
+    }
+
+    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception
+    {
+
+    }
+
+    @Override
+    public Map<String, Double> getTimeseriesData()
+    {
+        return null;
+    }
+
+    @Override
+    public void registerPolicy(long iginxId, int num) throws Exception {
+
+    }
+
+    @Override
+    public int updateVersion()
+    {
+        return 0;
     }
 }

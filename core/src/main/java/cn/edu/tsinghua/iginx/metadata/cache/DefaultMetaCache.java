@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxStatistics;
@@ -29,6 +31,12 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesIntervalStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.plan.InsertColumnRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.plan.InsertRowRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +47,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -96,6 +105,27 @@ public class DefaultMetaCache implements IMetaCache {
     private final Map<String, List<FragmentMeta>> reshardFragmentListMap;
 
     private final ReadWriteLock reshardFragmentLock;
+    // 时序列信息版本号的缓存
+    private final Map<Integer, Integer> timeseriesVersionMap;
+
+    private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
+
+    private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
+
+    private Random random = new Random();
+
+    private Config config = ConfigDescriptor.getInstance().getConfig();
+
+    public static DefaultMetaCache getInstance() {
+        if (INSTANCE == null) {
+            synchronized (DefaultMetaCache.class) {
+                if (INSTANCE == null) {
+                    INSTANCE = new DefaultMetaCache();
+                }
+            }
+        }
+        return INSTANCE;
+    }
 
     private DefaultMetaCache() {
         // 分片相关
@@ -122,17 +152,7 @@ public class DefaultMetaCache implements IMetaCache {
         // 重分片中的 fragment 相关
         reshardFragmentListMap = new ConcurrentHashMap<>();
         reshardFragmentLock = new ReentrantReadWriteLock();
-    }
-
-    public static DefaultMetaCache getInstance() {
-        if (INSTANCE == null) {
-            synchronized (DefaultMetaCache.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DefaultMetaCache();
-                }
-            }
-        }
-        return INSTANCE;
+        timeseriesVersionMap = new ConcurrentHashMap<>();
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -287,12 +307,15 @@ public class DefaultMetaCache implements IMetaCache {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         resultList = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
+            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null) {
                 return 0;
-            else if (o1.getTsInterval().getStartTimeSeries() == null)
+            }
+            else if (o1.getTsInterval().getStartTimeSeries() == null) {
                 return -1;
-            else if (o2.getTsInterval().getStartTimeSeries() == null)
+            }
+            else if (o2.getTsInterval().getStartTimeSeries() == null) {
                 return 1;
+            }
             return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
         }).collect(Collectors.toList());
         fragmentLock.readLock().unlock();
@@ -666,4 +689,118 @@ public class DefaultMetaCache implements IMetaCache {
         }
         return users;
     }
+
+    @Override
+    public void timeseriesIsUpdated(int node, int version) {
+        timeseriesVersionMap.put(node, version);
+    }
+
+    long transDatatypeToByte(DataType dataType) {
+        switch (dataType) {
+            case BOOLEAN:
+                return 1;
+            case INTEGER:
+            case FLOAT:
+                return 4;
+            case LONG:
+            case DOUBLE:
+                return 8;
+            default:
+                return 0;
+        }
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertRecordsPlan plan) {
+        insertRecordLock.writeLock().lock();
+        Long now = System.currentTimeMillis();
+        List<String> timeseries = plan.getPaths();
+        List<Bitmap> bitmaps = plan.getBitmapList();
+        int n = plan.getTimestamps().length;
+        int m = plan.getPathsNum();
+        if (plan instanceof InsertColumnRecordsPlan) {
+            for (int i = 0; i < m; i++) {
+                Long minn = Long.MAX_VALUE;
+                Long maxx = Long.MIN_VALUE;
+                Long totalbyte = 0L;
+                Integer count = 0;
+                for (int j = 0; j < n; j++) {
+                    if (bitmaps.get(i).get(j)) {
+                        minn = Math.min(minn, plan.getTimestamp(j));
+                        maxx = Math.max(maxx, plan.getTimestamp(j));
+                        if (plan.getDataType(i) == DataType.BINARY) {
+                            totalbyte += ((byte[]) plan.getValues(i)[count]).length;
+                        } else {
+                            totalbyte += transDatatypeToByte(plan.getDataType(i));
+                        }
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
+                    timeSeriesCalDO.setTimeSeries(timeseries.get(i));
+                    if (timeSeriesCalDOConcurrentHashMap.containsKey(timeseries.get(i))) {
+                        timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(timeseries.get(i));
+                    }
+                    timeSeriesCalDO.merge(now, minn, maxx, count, totalbyte);
+                    timeSeriesCalDOConcurrentHashMap.put(timeseries.get(i), timeSeriesCalDO);
+                }
+            }
+        } else if (plan instanceof InsertRowRecordsPlan) {
+            for (int i = 0; i < m; i++)
+            {
+                Long minn = Long.MAX_VALUE;
+                Long maxx = Long.MIN_VALUE;
+                Long totalbyte = 0L;
+                Integer count = 0;
+                for (int j = 0; j < n; j++) {
+                    if (bitmaps.get(j).get(i)) {
+                        minn = Math.min(minn, plan.getTimestamp(j));
+                        maxx = Math.max(maxx, plan.getTimestamp(j));
+                        count++;
+                        if (plan.getDataType(i) == DataType.BINARY) {
+                            totalbyte += ((byte[]) plan.getValues(j)[i]).length;
+                        } else {
+                            totalbyte += transDatatypeToByte(plan.getDataType(i));
+                        }
+                    }
+                }
+                if (count > 0)
+                {
+                    TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
+                    timeSeriesCalDO.setTimeSeries(timeseries.get(i));
+                    if (timeSeriesCalDOConcurrentHashMap.containsKey(timeseries.get(i)))
+                    {
+                        timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(timeseries.get(i));
+                    }
+                    timeSeriesCalDO.merge(now, minn, maxx, count, totalbyte);
+                    timeSeriesCalDOConcurrentHashMap.put(timeseries.get(i), timeSeriesCalDO);
+                }
+            }
+        }
+        insertRecordLock.writeLock().unlock();
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
+        insertRecordLock.readLock().lock();
+        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
+                .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
+        insertRecordLock.readLock().unlock();
+        return ret;
+    }
+
+    @Override
+    public double getSumFromTimeSeries() {
+        insertRecordLock.readLock().lock();
+        double ret = timeSeriesCalDOConcurrentHashMap.values().stream().mapToDouble(TimeSeriesCalDO::getValue).sum();
+        insertRecordLock.readLock().unlock();
+        return ret;
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap() {
+        return timeseriesVersionMap;
+    }
+
 }

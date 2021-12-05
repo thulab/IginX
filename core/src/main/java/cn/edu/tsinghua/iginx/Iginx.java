@@ -57,6 +57,7 @@ public class Iginx {
                 .minWorkerThreads(20);
         args.protocolFactory(new TBinaryProtocol.Factory());
         TServer server = new TThreadPoolServer(args);
+        logger.info("iginx starts success!");
         server.serve();
     }
 

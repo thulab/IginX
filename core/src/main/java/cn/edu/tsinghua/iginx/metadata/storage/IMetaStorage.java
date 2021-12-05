@@ -39,7 +39,9 @@ import cn.edu.tsinghua.iginx.metadata.hook.ReshardStatusChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.TimeseriesChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.VersionChangeHook;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 
 import java.util.List;
@@ -164,4 +166,17 @@ public interface IMetaStorage {
 
     void registerReshardCounterChangeHook(ReshardCounterChangeHook hook);
 
+    void registerTimeseriesChangeHook(TimeseriesChangeHook hook);
+
+    void registerVersionChangeHook(VersionChangeHook hook);
+
+    boolean election();
+
+    void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception;
+
+    Map<String, Double> getTimeseriesData();
+
+    void registerPolicy(long iginxId, int num) throws Exception;
+
+    int updateVersion();
 }

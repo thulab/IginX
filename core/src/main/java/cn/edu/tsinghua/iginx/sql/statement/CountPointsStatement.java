@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
@@ -13,14 +13,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class CountPointsOperator extends Operator {
+public class CountPointsStatement extends Statement {
 
-    public CountPointsOperator() {
-        this.operatorType = OperatorType.COUNT_POINTS;
+    public CountPointsStatement() {
+        this.statementType = StatementType.COUNT_POINTS;
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         List<String> paths = new ArrayList<>(Arrays.asList("*"));
         IginxWorker worker = IginxWorker.getInstance();
         AggregateQueryReq req = new AggregateQueryReq(

@@ -15,6 +15,11 @@ statement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
+    | CREATE USER username=nodeName IDENTIFIED BY password=nodeName #createUserStatement
+    | GRANT permissionSpec TO USER username=nodeName #grantUserStatement
+    | SET PASSWORD FOR username=nodeName OPERATOR_EQ PASSWORD LR_BRACKET password=nodeName RR_BRACKET #changePasswordStatement
+    | DROP USER username=nodeName #dropUserStatement
+    | SHOW USER userSpec? #showUserStatement
     ;
 
 selectClause
@@ -87,6 +92,18 @@ offsetClause
     : OFFSET INT
     ;
 
+permissionSpec
+    : permission (COMMA permission)*
+    ;
+
+userSpec
+    : nodeName (COMMA nodeName)*
+    ;
+
+permission
+    : READ | WRITE | ADMIN | CLUSTER
+    ;
+
 comparisonOperator
     : type = OPERATOR_GT
     | type = OPERATOR_GTE
@@ -153,6 +170,7 @@ nodeName
     | SELECT
     | SHOW
     | INTO
+    | ON
     | WHERE
     | FROM
     | BY
@@ -164,6 +182,7 @@ nodeName
     | GROUP
     | ORDER
     | ADD
+    | UPDATE
     | VALUE
     | VALUES
     | NOW
@@ -185,6 +204,12 @@ nodeName
     | REPLICA
     | IOTDB
     | INFLUXDB
+    | USER
+    | PASSWORD
+    | CLUSTER
+    | ADMIN
+    | WRITE
+    | READ
     ;
 
 ip
@@ -238,6 +263,22 @@ SELECT
     : S E L E C T
     ;
 
+CREATE
+    : C R E A T E
+    ;
+
+DROP
+    : D R O P
+    ;
+
+GRANT
+    : G R A N T
+    ;
+
+SET
+    : S E T
+    ;
+
 SHOW
     : S H O W
     ;
@@ -254,6 +295,18 @@ CLUSTER
     : C L U S T E R
     ;
 
+ADMIN
+    : A D M I N
+    ;
+
+READ
+    : R E A D
+    ;
+
+WRITE
+    : W R I T E
+    ;
+
 INFO
     : I N F O
     ;
@@ -262,12 +315,28 @@ WHERE
     : W H E R E
     ;
 
+IDENTIFIED
+    : I D E N T I F I E D
+    ;
+
 IN
     : I N
     ;
 
+ON
+    : O N
+    ;
+
+TO
+    : T O
+    ;
+
 INTO
     : I N T O
+    ;
+
+FOR
+    : F O R
     ;
 
 FROM
@@ -312,6 +381,14 @@ NOW
 
 TIME
     : T I M E
+    ;
+
+USER
+    : U S E R
+    ;
+
+PASSWORD
+    : P A S S W O R D
     ;
 
 TRUE
@@ -372,6 +449,10 @@ DATA
 
 ADD
     : A D D
+    ;
+
+UPDATE
+    : U P D A T E
     ;
 
 STORAGEENGINE
