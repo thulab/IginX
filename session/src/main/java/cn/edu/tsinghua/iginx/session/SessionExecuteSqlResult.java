@@ -220,7 +220,7 @@ public class SessionExecuteSqlResult {
 
     private String buildQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("%s ResultSets:", sqlType.toString())).append("\n");
+        builder.append("Query ResultSets:").append("\n");
 
         List<Integer> maxSizeList = new ArrayList<>();
         List<List<String>> cache = cacheResult(needFormatTime, timePrecision, maxSizeList);
