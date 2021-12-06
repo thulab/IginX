@@ -214,7 +214,7 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
     }
 
     @Override
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime) {
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsForResharding(long startTime, Map<TimeSeriesInterval, TimeSeriesIntervalStatistics> statisticsMap, double density) {
         // 无新增 storage unit
         List<FragmentMeta> fragments = new ArrayList<>();
         List<StorageUnitMeta> storageUnits = new ArrayList<>();
@@ -235,7 +235,6 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         return new Pair<>(fragments, storageUnits);
     }
 
-
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {
         List<Long> storageEngineIdList = new ArrayList<>();
         List<StorageEngineMeta> storageEngines = iMetaManager.getStorageEngineList();
@@ -244,5 +243,4 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         }
         return storageEngineIdList;
     }
-
 }
