@@ -226,6 +226,11 @@
                             <directory>${project.build.directory}</directory>
                             <include>${project.build.finalName}.jar</include>
                         </resource>
+                        <resource>
+                            <targetPath>/ROOT/driver</targetPath>
+                            <directory>${project.build.directory}/iginx-core-${version}/driver</directory>
+                            <include>*</include>
+                        </resource>
                     </resources>
                 </configuration>
             </plugin>
