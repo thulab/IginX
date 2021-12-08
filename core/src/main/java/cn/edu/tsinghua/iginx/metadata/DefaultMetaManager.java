@@ -551,7 +551,7 @@ public class DefaultMetaManager implements IMetaManager {
     private void checkInitialFragmentAndStorageUnit() {
         if (!hasInitialFragmentAndStorageUnit) {
             fragmentAndStorageUnitLock.lock();
-            if (latestCheckFragmentAndStorageUnitTime - System.currentTimeMillis() > config.getCheckFragmentInterval()) {
+            if (System.currentTimeMillis() - latestCheckFragmentAndStorageUnitTime > config.getCheckFragmentInterval()) {
                 latestCheckFragmentAndStorageUnitTime = System.currentTimeMillis();
                 if (!hasInitialFragmentAndStorageUnit) {
                     try {
