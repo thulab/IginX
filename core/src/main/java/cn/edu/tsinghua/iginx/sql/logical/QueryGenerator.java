@@ -130,12 +130,21 @@ public class QueryGenerator implements LogicalGenerator {
                 List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
-                queryList.add(
-                        new SetTransform(
-                                new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), wrappedPath)
-                        )
-                );
+                if (k.equals("last")) {
+                    queryList.add(
+                            new MappingTransform(
+                                    new OperatorSource(copySelect),
+                                    new FunctionCall(functionManager.getFunction(k), wrappedPath)
+                            )
+                    );
+                } else {
+                    queryList.add(
+                            new SetTransform(
+                                    new OperatorSource(copySelect),
+                                    new FunctionCall(functionManager.getFunction(k), wrappedPath)
+                            )
+                    );
+                }
             }));
         } else {
             List<String> selectedPath = new ArrayList<>();
