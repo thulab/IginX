@@ -228,8 +228,8 @@
                         </resource>
                         <resource>
                             <targetPath>/ROOT/driver</targetPath>
-                            <directory>${project.build.directory}/iginx-core-${version}/driver</directory>
-                            <include>*</include>
+                            <directory>${project.build.directory}/${project.build.finalName}/driver</directory>
+                            <include>**/*</include>
                         </resource>
                     </resources>
                 </configuration>
