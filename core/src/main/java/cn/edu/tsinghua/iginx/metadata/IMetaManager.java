@@ -102,7 +102,6 @@ public interface IMetaManager {
      */
     FragmentMeta getLatestFragmentByTimeSeriesName(String tsName);
 
-
     /**
      * 获取某个时间序列在某个时间区间的所有分片（按照分片时间戳排序）
      */

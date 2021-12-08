@@ -114,6 +114,8 @@ public class Config {
 
     private double storageGroupValueLimit = 200.0;
 
+    private long checkFragmentInterval = 10000L;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -488,5 +490,13 @@ public class Config {
 
     public void setStorageGroupValueLimit(double storageGroupValueLimit) {
         this.storageGroupValueLimit = storageGroupValueLimit;
+    }
+
+    public long getCheckFragmentInterval() {
+        return checkFragmentInterval;
+    }
+
+    public void setCheckFragmentInterval(long checkFragmentInterval) {
+        this.checkFragmentInterval = checkFragmentInterval;
     }
 }

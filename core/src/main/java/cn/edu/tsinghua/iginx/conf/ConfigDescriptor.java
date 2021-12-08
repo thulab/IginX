@@ -112,6 +112,7 @@ public class ConfigDescriptor {
             config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
             config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
+            config.setCheckFragmentInterval(Long.parseLong(properties.getProperty("checkFragmentInterval", "1000")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
@@ -150,6 +151,7 @@ public class ConfigDescriptor {
         config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
         config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
         config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
+        config.setCheckFragmentInterval(EnvUtils.loadEnv("checkFragmentInterval", config.getCheckFragmentInterval()));
     }
 
 
