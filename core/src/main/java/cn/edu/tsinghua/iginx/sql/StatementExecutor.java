@@ -49,6 +49,8 @@ public class StatementExecutor {
 
     private final List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
 
+    private final List<LogicalGenerator> showTSGeneratorList = new ArrayList<>();
+
     private final static Config config = ConfigDescriptor.getInstance().getConfig();
 
     private StatementExecutor() {
@@ -73,6 +75,9 @@ public class StatementExecutor {
                 case Insert:
                     insertGeneratorList.add(generator);
                     break;
+                case ShowTimeSeries:
+                    showTSGeneratorList.add(generator);
+                    break;
                 default:
                     throw new IllegalArgumentException("unknown generator type");
             }
@@ -95,6 +100,8 @@ public class StatementExecutor {
                         return processDelete((DeleteStatement) statement);
                     case INSERT:
                         return processInsert((InsertStatement) statement);
+                    case SHOW_TIME_SERIES:
+                        return processShowTimeSeries((ShowTimeSeriesStatement) statement);
                     default:
                         return statement.execute(sessionId);
                 }
@@ -117,7 +124,7 @@ public class StatementExecutor {
     }
 
     private ExecuteSqlResp processQuery(SelectStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator: queryGeneratorList) {
+        for (LogicalGenerator generator : queryGeneratorList) {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
                 RowStream stream = engine.execute(root);
@@ -128,7 +135,7 @@ public class StatementExecutor {
     }
 
     private ExecuteSqlResp processDelete(DeleteStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator: deleteGeneratorList) {
+        for (LogicalGenerator generator : deleteGeneratorList) {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
                 engine.execute(root);
@@ -139,11 +146,22 @@ public class StatementExecutor {
     }
 
     private ExecuteSqlResp processInsert(InsertStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator: insertGeneratorList) {
+        for (LogicalGenerator generator : insertGeneratorList) {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
                 engine.execute(root);
                 return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Insert);
+            }
+        }
+        throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
+    }
+
+    private ExecuteSqlResp processShowTimeSeries(ShowTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
+        for (LogicalGenerator generator : showTSGeneratorList) {
+            Operator root = generator.generate(statement);
+            if (constraintManager.check(root)) {
+                RowStream stream = engine.execute(root);
+                return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.ShowTimeSeries);
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
