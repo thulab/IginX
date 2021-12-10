@@ -59,8 +59,6 @@ public class IoTDBSessionExample {
         insertNonAlignedRowRecords();
         // 查询数据
         queryData();
-        // 值过滤查询
-        valueFilterQuery();
         // 聚合查询
         aggregateQuery();
         // Last 查询
@@ -242,19 +240,19 @@ public class IoTDBSessionExample {
         dataSet.print();
     }
 
-    private static void valueFilterQuery() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
-
-        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
-        long endTime = ROW_START_TIMESTAMP + 100L;
-        String booleanExpression = S2 + " < " + 9930 + " && " + S1 + " > " + 9910;
-        SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
-        dataSet.print();
-    }
+//    private static void valueFilterQuery() throws SessionException, ExecutionException {
+//        List<String> paths = new ArrayList<>();
+//        paths.add(S1);
+//        paths.add(S2);
+//        paths.add(S3);
+//        paths.add(S4);
+//
+//        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
+//        long endTime = ROW_START_TIMESTAMP + 100L;
+//        String booleanExpression = S2 + " < " + 9930 + " && " + S1 + " > " + 9910;
+//        SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
+//        dataSet.print();
+//    }
 
     private static void aggregateQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();

@@ -47,6 +47,7 @@ import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
 import cn.edu.tsinghua.iginx.sql.*;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
+import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
@@ -234,9 +235,20 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
-        QueryDataContext context = new QueryDataContext(req);
-        core.processRequest(context);
-        return ((QueryDataCombineResult) context.getCombineResult()).getResp();
+//        QueryDataContext context = new QueryDataContext(req);
+//        core.processRequest(context);
+//        return ((QueryDataCombineResult) context.getCombineResult()).getResp();
+        SelectStatement statement = new SelectStatement(
+                req.getPaths(),
+                req.getStartTime(),
+                req.getEndTime());
+        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
+
+        QueryDataResp resp = new QueryDataResp(sqlResp.getStatus());
+        resp.setPaths(sqlResp.getPaths());
+        resp.setDataTypeList(sqlResp.getDataTypeList());
+        resp.setQueryDataSet(sqlResp.getQueryDataSet());
+        return resp;
     }
 
     @Override
@@ -297,9 +309,21 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new AggregateQueryResp(RpcUtils.ACCESS_DENY);
         }
-        AggregateQueryContext context = new AggregateQueryContext(req);
-        core.processRequest(context);
-        return ((AggregateCombineResult) context.getCombineResult()).getResp();
+//        AggregateQueryContext context = new AggregateQueryContext(req);
+//        core.processRequest(context);
+//        return ((AggregateCombineResult) context.getCombineResult()).getResp();
+        SelectStatement statement = new SelectStatement(
+                req.getPaths(),
+                req.getStartTime(),
+                req.getEndTime(),
+                req.getAggregateType());
+        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
+
+        AggregateQueryResp resp = new AggregateQueryResp(sqlResp.getStatus());
+        resp.setPaths(sqlResp.getPaths());
+        resp.setDataTypeList(sqlResp.getDataTypeList());
+        resp.setValuesList(sqlResp.getValuesList());
+        return resp;
     }
 
     @Override
@@ -317,9 +341,22 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new DownsampleQueryResp(RpcUtils.ACCESS_DENY);
         }
-        DownsampleQueryContext context = new DownsampleQueryContext(req);
-        core.processRequest(context);
-        return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
+//        DownsampleQueryContext context = new DownsampleQueryContext(req);
+//        core.processRequest(context);
+//        return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
+        SelectStatement statement = new SelectStatement(
+                req.getPaths(),
+                req.getStartTime(),
+                req.getEndTime(),
+                req.getAggregateType(),
+                req.getPrecision());
+        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
+
+        DownsampleQueryResp resp = new DownsampleQueryResp(sqlResp.getStatus());
+        resp.setPaths(sqlResp.getPaths());
+        resp.setDataTypeList(sqlResp.getDataTypeList());
+        resp.setQueryDataSet(sqlResp.getQueryDataSet());
+        return resp;
     }
 
     @Override

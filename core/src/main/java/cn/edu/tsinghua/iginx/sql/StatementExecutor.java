@@ -11,17 +11,12 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.sql.logical.DeleteGenerator;
-import cn.edu.tsinghua.iginx.sql.logical.InsertGenerator;
-import cn.edu.tsinghua.iginx.sql.logical.LogicalGenerator;
-import cn.edu.tsinghua.iginx.sql.logical.QueryGenerator;
+import cn.edu.tsinghua.iginx.sql.logical.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.slf4j.Logger;
@@ -29,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class StatementExecutor {
@@ -57,6 +54,7 @@ public class StatementExecutor {
         registerGenerator(QueryGenerator.getInstance());
         registerGenerator(DeleteGenerator.getInstance());
         registerGenerator(InsertGenerator.getInstance());
+        registerGenerator(ShowTimeSeriesGenerator.getInstance());
     }
 
     public static StatementExecutor getInstance() {
@@ -91,22 +89,20 @@ public class StatementExecutor {
 
     public ExecuteSqlResp executeStatement(Statement statement, long sessionId) {
         try {
-            if (config.isQueryInNewWay()) {
-                StatementType type = statement.getType();
-                switch (type) {
-                    case SELECT:
-                        return processQuery((SelectStatement) statement);
-                    case DELETE:
-                        return processDelete((DeleteStatement) statement);
-                    case INSERT:
-                        return processInsert((InsertStatement) statement);
-                    case SHOW_TIME_SERIES:
-                        return processShowTimeSeries((ShowTimeSeriesStatement) statement);
-                    default:
-                        return statement.execute(sessionId);
-                }
-            } else {
-                return statement.execute(sessionId);
+            StatementType type = statement.getType();
+            switch (type) {
+                case SELECT:
+                    return processQuery((SelectStatement) statement);
+                case DELETE:
+                    return processDelete((DeleteStatement) statement);
+                case INSERT:
+                    return processInsert((InsertStatement) statement);
+                case SHOW_TIME_SERIES:
+                    return processShowTimeSeries((ShowTimeSeriesStatement) statement);
+                case COUNT_POINTS:
+                    return processCountPoints();
+                default:
+                    return ((SystemStatement) statement).execute(sessionId);
             }
         } catch (SQLParserException | ParseCancellationException e) {
             StatusCode statusCode = StatusCode.STATEMENT_PARSE_ERROR;
@@ -128,7 +124,7 @@ public class StatementExecutor {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
                 RowStream stream = engine.execute(root);
-                return buildRowStreamResp(stream, statement);
+                return buildQueryRowStreamResp(stream, statement);
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
@@ -161,10 +157,29 @@ public class StatementExecutor {
             Operator root = generator.generate(statement);
             if (constraintManager.check(root)) {
                 RowStream stream = engine.execute(root);
-                return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.ShowTimeSeries);
+                return buildShowTSRowStreamResp(stream);
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
+    }
+
+    private ExecuteSqlResp processCountPoints() throws ExecutionException, PhysicalException {
+        SelectStatement statement = new SelectStatement(
+                Collections.singletonList("*"),
+                0,
+                Long.MAX_VALUE,
+                AggregateType.COUNT);
+        ExecuteSqlResp countResp = processQuery(statement);
+        int pointsNum = 0;
+        if (countResp.getValuesList() != null) {
+            Object[] row = ByteUtils.getValuesByDataType(countResp.valuesList, countResp.dataTypeList);
+            for (Object count : row) {
+                pointsNum += (Integer) count;
+            }
+        }
+        ExecuteSqlResp resp = new ExecuteSqlResp(countResp.getStatus(), SqlType.CountPoints);
+        resp.setPointsNum(pointsNum);
+        return resp;
     }
 
     private ExecuteSqlResp buildErrResp(StatusCode statusCode, String errMsg) {
@@ -173,7 +188,7 @@ public class StatementExecutor {
         return resp;
     }
 
-    private ExecuteSqlResp buildRowStreamResp(RowStream stream, SelectStatement statement) throws PhysicalException {
+    private ExecuteSqlResp buildQueryRowStreamResp(RowStream stream, SelectStatement statement) throws PhysicalException {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         stream.getHeader().getFields().forEach(field -> {
@@ -233,6 +248,32 @@ public class StatementExecutor {
         resp.setDataTypeList(types);
         resp.setOffset(0);
         resp.setLimit(Integer.MAX_VALUE);
+        return resp;
+    }
+
+    private ExecuteSqlResp buildShowTSRowStreamResp(RowStream stream) throws PhysicalException {
+        List<String> paths = new ArrayList<>();
+        List<DataType> types = new ArrayList<>();
+
+        while (stream.hasNext()) {
+            Row row = stream.next();
+            Object[] rowValues = row.getValues();
+
+            if (rowValues.length == 2) {
+                paths.add((String) rowValues[0]);
+                DataType type = DataTypeUtils.strToDataType((String) rowValues[1]);
+                if (type == null) {
+                    logger.warn("unknown data type [{}]", rowValues[1]);
+                }
+                types.add(type);
+            } else {
+                logger.warn("show time series result col size = {}", rowValues.length);
+            }
+        }
+
+        ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.ShowTimeSeries);
+        resp.setPaths(paths);
+        resp.setDataTypeList(types);
         return resp;
     }
 }

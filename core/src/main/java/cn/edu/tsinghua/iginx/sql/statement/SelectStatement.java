@@ -1,6 +1,9 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
@@ -29,16 +32,76 @@ public class SelectStatement extends DataStatement {
     private int offset;
 
     public SelectStatement() {
-        statementType = StatementType.SELECT;
-        queryType = QueryType.Unknown;
-        ascending = true;
-        selectedFuncsAndPaths = new HashMap<>();
-        funcTypeSet = new HashSet<>();
-        pathSet = new HashSet<>();
-        fromPath = "";
-        orderByPath = "";
-        limit = Integer.MAX_VALUE;
-        offset = 0;
+        this.statementType = StatementType.SELECT;
+        this.queryType = QueryType.Unknown;
+        this.ascending = true;
+        this.selectedFuncsAndPaths = new HashMap<>();
+        this.funcTypeSet = new HashSet<>();
+        this.pathSet = new HashSet<>();
+        this.fromPath = "";
+        this.orderByPath = "";
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
+    }
+
+    // simple query
+    public SelectStatement(List<String> paths, long startTime, long endTime) {
+        this.queryType = QueryType.SimpleQuery;
+
+        this.selectedFuncsAndPaths = new HashMap<>();
+        this.selectedFuncsAndPaths.put("", paths);
+
+        this.funcTypeSet = new HashSet<>();
+
+        this.setFromSession(paths, startTime, endTime);
+    }
+
+    // aggregate query
+    public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType) {
+        this.queryType = QueryType.AggregateQuery;
+
+        String func = aggregateType.toString().toLowerCase();
+        this.selectedFuncsAndPaths = new HashMap<>();
+        selectedFuncsAndPaths.put(func, paths);
+
+        this.funcTypeSet = new HashSet<>();
+        this.funcTypeSet.add(str2FuncType(func));
+
+        this.setFromSession(paths, startTime, endTime);
+    }
+
+    // downSample query
+    public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) {
+        this.queryType = QueryType.DownSampleQuery;
+
+        String func = aggregateType.toString().toLowerCase();
+        this.selectedFuncsAndPaths = new HashMap<>();
+        this.selectedFuncsAndPaths.put(func, paths);
+
+        this.funcTypeSet = new HashSet<>();
+        this.funcTypeSet.add(str2FuncType(func));
+
+        this.precision = precision;
+
+        this.setFromSession(paths, startTime, endTime);
+    }
+
+    private void setFromSession(List<String> paths, long startTime, long endTime) {
+        this.statementType = StatementType.SELECT;
+
+        this.ascending = true;
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
+        this.orderByPath = "";
+
+        this.pathSet = new HashSet<>();
+        this.pathSet.addAll(paths);
+
+        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
+                new TimeFilter(Op.GE, startTime),
+                new TimeFilter(Op.L, endTime)
+        )));
+        this.hasValueFilter = true;
     }
 
     public static FuncType str2FuncType(String str) {
@@ -153,6 +216,8 @@ public class SelectStatement extends DataStatement {
         if (type != null) {
             this.funcTypeSet.add(type);
         }
+
+        this.pathSet.add(fullPath);
     }
 
     public Set<FuncType> getFuncTypeSet() {
@@ -259,11 +324,6 @@ public class SelectStatement extends DataStatement {
                 this.queryType = QueryType.SimpleQuery;
             }
         }
-    }
-
-    @Override
-    public ExecuteSqlResp execute(long sessionId) throws ExecutionException {
-        throw new ExecutionException("Select statement can not be executed directly.");
     }
 
     public enum FuncType {
