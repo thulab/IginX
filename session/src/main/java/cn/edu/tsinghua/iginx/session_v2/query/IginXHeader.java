@@ -47,4 +47,11 @@ public class IginXHeader {
         return this.time != null;
     }
 
+    @Override
+    public String toString() {
+        return "IginXHeader{" +
+                "time=" + time +
+                ", columns=" + columns +
+                '}';
+    }
 }

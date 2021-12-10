@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.session_v2;
 
 import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
+import cn.edu.tsinghua.iginx.session_v2.query.DownsampleQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
 import cn.edu.tsinghua.iginx.session_v2.query.Query;
@@ -33,6 +34,8 @@ public interface QueryClient {
     IginXTable simpleQuery(final SimpleQuery query);
 
     IginXTable aggregateQuery(final AggregateQuery query);
+
+    IginXTable downsampleQuery(final DownsampleQuery query);
 
     <M>List<M> query(final Query query, final Class<M> measurementType);
 

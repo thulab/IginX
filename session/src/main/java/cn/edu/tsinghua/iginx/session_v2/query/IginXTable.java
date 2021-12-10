@@ -34,8 +34,8 @@ public class IginXTable {
         this.records = records;
     }
 
-    public static IginXTable getEmptyTable() {
-        return EMPTY_TABLE;
+    public IginXHeader getHeader() {
+        return header;
     }
 
     public List<IginXRecord> getRecords() {

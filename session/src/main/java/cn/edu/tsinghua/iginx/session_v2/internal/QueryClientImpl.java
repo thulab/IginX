@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.session_v2.internal;
 
 import cn.edu.tsinghua.iginx.session_v2.QueryClient;
 import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
+import cn.edu.tsinghua.iginx.session_v2.query.DownsampleQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXColumn;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXHeader;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
@@ -76,6 +77,11 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
 
     @Override
     public IginXTable aggregateQuery(AggregateQuery query) {
+        return null;
+    }
+
+    @Override
+    public IginXTable downsampleQuery(DownsampleQuery query) {
         return null;
     }
 
