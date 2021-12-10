@@ -123,7 +123,7 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
 
         for (int i = 0; i < clients.length; i++) {
             for (int j = 0; j < instancesNumPerClient; j++) {
-                prefixes[i * instancesNumPerClient + j] = String.format(clients[i], instancesIndexStart + instancesIndexStep * (i * instancesNumPerClient + j);
+                prefixes[i * instancesNumPerClient + j] = String.format(clients[i], instancesIndexStart + instancesIndexStep * (i * instancesNumPerClient + j));
             }
         }
 
