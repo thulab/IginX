@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.policy.naive;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -122,7 +123,7 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
 
         for (int i = 0; i < clients.length; i++) {
             for (int j = 0; j < instancesNumPerClient; j++) {
-                prefixes[i * instancesNumPerClient + j] = String.format(clients[i], instancesIndexStart + instancesIndexStep * j);
+                prefixes[i * instancesNumPerClient + j] = String.format(clients[i], instancesIndexStart + instancesIndexStep * (i * instancesNumPerClient + j);
             }
         }
 
@@ -153,7 +154,7 @@ class NaiveFragmentGenerator implements IFragmentGenerator {
                     storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get((k + (isClientBindEngine ? i : index)) % storageEngineNum).getId(), masterId, false));
                 }
                 storageUnitList.add(storageUnit);
-                if (index == fragmentNum) {
+                if (index == fragmentNum - 1) {
                     fragmentMetaList.add(new FragmentMeta(prefixes[index], null, 0, Long.MAX_VALUE, masterId));
                     fragmentMap.put(new TimeSeriesInterval(prefixes[index], null), fragmentMetaList);
                 } else {
