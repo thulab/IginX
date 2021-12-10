@@ -251,6 +251,17 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                 selectStatement.setAscending(false);
             }
         }
+        if (ctx.groupByLevelClause() != null) {
+            if (!selectStatement.isHasFunc()) {
+                throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+            }
+            if (!selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Count) &&
+                    !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Avg) &&
+                    !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Sum)) {
+                throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+            }
+            ctx.groupByLevelClause().INT().forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
+        }
     }
 
     private String parseOrExpression(OrExpressionContext ctx, SelectStatement selectStatement) {

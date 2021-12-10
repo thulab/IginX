@@ -185,6 +185,7 @@ struct AggregateQueryReq {
     3: required i64 startTime
     4: required i64 endTime
     5: required AggregateType aggregateType
+    6: optional list<i32> layers
 }
 
 struct AggregateQueryResp {

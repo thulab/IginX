@@ -115,6 +115,10 @@ public class ParseTest {
         assertEquals(10L, statement.getPrecision());
         assertEquals(2, statement.getOffset());
         assertEquals(5, statement.getLimit());
+
+        String groupByLevel = "SELECT count(a) FROM test GROUP BY LEVEL = 2,3";
+        statement = (SelectStatement) buildStatement(groupByLevel);
+        assertEquals(Arrays.asList(2, 3), statement.getLayers());
     }
 
     @Test(expected = SQLParserException.class)

@@ -72,6 +72,7 @@ fromClause
 
 specialClause
     : limitClause
+    | groupByLevelClause
     | groupByTimeClause limitClause?
     | orderByClause limitClause?
     ;
@@ -80,6 +81,10 @@ orderByClause : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?;
 
 groupByTimeClause
     : GROUP BY DURATION
+    ;
+
+groupByLevelClause
+    : GROUP BY LEVEL OPERATOR_EQ INT (COMMA INT)*
     ;
 
 limitClause
@@ -345,6 +350,10 @@ FROM
 
 TIMESTAMP
     : T I M E S T A M P
+    ;
+
+LEVEL
+    : L E V E L
     ;
 
 GROUP
