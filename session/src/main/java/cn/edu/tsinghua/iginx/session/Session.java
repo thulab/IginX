@@ -760,33 +760,6 @@ public class Session {
         return new SessionQueryDataSet(resp);
     }
 
-    public SessionQueryDataSet valueFilterQuery(List<String> paths, long startTime, long endTime, String booleanExpression)
-            throws SessionException, ExecutionException {
-        if (paths.isEmpty() || startTime > endTime) {
-            logger.error("Invalid query request!");
-            return null;
-        }
-        ValueFilterQueryReq req = new ValueFilterQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, booleanExpression);
-
-        ValueFilterQueryResp resp;
-
-        try {
-            do {
-                lock.readLock().lock();
-                try {
-                    resp = client.valueFilterQuery(req);
-                } finally {
-                    lock.readLock().unlock();
-                }
-            } while (checkRedirect(resp.status));
-            RpcUtils.verifySuccess(resp.status);
-        } catch (TException e) {
-            throw new SessionException(e);
-        }
-
-        return new SessionQueryDataSet(resp);
-    }
-
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
             throws SessionException, ExecutionException {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, aggregateType);

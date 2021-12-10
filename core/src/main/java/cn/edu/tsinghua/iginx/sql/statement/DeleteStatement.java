@@ -2,9 +2,7 @@ package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.sql.logical.ExprUtils;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,10 +55,5 @@ public class DeleteStatement extends DataStatement {
 
     public void setDeleteAll(boolean deleteAll) {
         this.deleteAll = deleteAll;
-    }
-
-    @Override
-    public ExecuteSqlResp execute(long sessionId) throws ExecutionException {
-        throw new ExecutionException("Delete statement can not be executed directly.");
     }
 }

@@ -1,12 +1,9 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
 import java.util.*;
@@ -138,10 +135,5 @@ public class InsertStatement extends DataStatement {
 
     public RawData getRawData() {
         return new RawData(paths, times, values, types, bitmaps, rawDataType);
-    }
-
-    @Override
-    public ExecuteSqlResp execute(long sessionId) throws ExecutionException {
-        throw new ExecutionException("Select statement can not be executed directly.");
     }
 }

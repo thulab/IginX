@@ -24,5 +24,5 @@ public enum SourceType {
 
     Fragment,
     Operator,
-
+    Global,
 }

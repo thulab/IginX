@@ -39,7 +39,9 @@ public enum OperatorType {
 
     Delete,
     Insert,
-    CombineNonQuery;
+    CombineNonQuery,
+
+    ShowTimeSeries;
 
     public static boolean isBinaryOperator(OperatorType op) {
         return op == Join || op == Union;

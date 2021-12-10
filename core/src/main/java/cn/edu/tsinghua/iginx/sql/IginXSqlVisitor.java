@@ -115,23 +115,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
-    public Statement visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
-        return new CountPointsStatement();
-    }
-
-    @Override
-    public Statement visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
-        return new ClearDataStatement();
-    }
-
-    @Override
-    public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
-        DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
-        ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
-        return deleteTimeSeriesStatement;
-    }
-
-    @Override
     public Statement visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
         return new ShowTimeSeriesStatement();
     }
@@ -150,7 +133,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             } else {
                 selectStatement.setSelectedFuncsAndPaths("", expr.path().getText());
             }
-            selectStatement.setPathSet(expr.path().getText());
         }
 
         if (!selectStatement.getFuncTypeSet().isEmpty()) {

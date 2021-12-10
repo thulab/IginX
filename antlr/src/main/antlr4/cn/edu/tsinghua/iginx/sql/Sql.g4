@@ -7,12 +7,10 @@ sqlStatement
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
-    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | COUNT POINTS #countPointsStatement
-    | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
     ;
