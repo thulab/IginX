@@ -83,7 +83,7 @@ public class IginXClientImpl implements IginXClient {
 
     @Override
     public QueryClient getQueryClient() {
-        return null;
+        return new QueryClientImpl(this);
     }
 
     @Override

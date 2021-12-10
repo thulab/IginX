@@ -21,32 +21,30 @@ package cn.edu.tsinghua.iginx.session_v2.query;
 import java.util.Collections;
 import java.util.List;
 
-public class IginXTable {
+public class IginXHeader {
 
-    public static final IginXTable EMPTY_TABLE = new IginXTable(IginXHeader.EMPTY_HEADER, Collections.emptyList());
+    public static final IginXHeader EMPTY_HEADER = new IginXHeader(Collections.emptyList());
 
-    private final IginXHeader header;
+    private final IginXColumn time;
 
-    private final List<IginXRecord> records;
+    private final List<IginXColumn> columns;
 
-    public IginXTable(IginXHeader header, List<IginXRecord> records) {
-        this.header = header;
-        this.records = records;
+    public IginXHeader(List<IginXColumn> columns) {
+        this.time = null;
+        this.columns = columns;
     }
 
-    public static IginXTable getEmptyTable() {
-        return EMPTY_TABLE;
+    public IginXHeader(IginXColumn time, List<IginXColumn> columns) {
+        this.time = time;
+        this.columns = columns;
     }
 
-    public List<IginXRecord> getRecords() {
-        return records;
+    public List<IginXColumn> getColumns() {
+        return columns;
     }
 
-    @Override
-    public String toString() {
-        return "IginXTable{" +
-                "header=" + header +
-                ", records=" + records +
-                '}';
+    public boolean hasTimestamp() {
+        return this.time != null;
     }
+
 }

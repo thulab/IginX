@@ -22,6 +22,8 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 public class IginXColumn {
 
+    public static final IginXColumn TIME = new IginXColumn("timestamp", DataType.LONG);
+
     private final String name;
 
     private final DataType dataType;
@@ -37,5 +39,13 @@ public class IginXColumn {
 
     public DataType getDataType() {
         return dataType;
+    }
+
+    @Override
+    public String toString() {
+        return "IginXColumn{" +
+                "name='" + name + '\'' +
+                ", dataType=" + dataType +
+                '}';
     }
 }

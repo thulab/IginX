@@ -21,7 +21,10 @@ package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
+import cn.edu.tsinghua.iginx.session_v2.QueryClient;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
+import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
+import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
 
 public class NewSessionExample {
@@ -36,6 +39,24 @@ public class NewSessionExample {
                         .intValue(2333)
                         .build()
         );
+        writeClient.writePoint(
+                Point.builder()
+                        .timestamp(System.currentTimeMillis() - 1000L)
+                        .measurement("a.b.b")
+                        .doubleValue(2333.2)
+                        .build()
+        );
+
+        QueryClient queryClient = client.getQueryClient();
+        IginXTable table = queryClient.simpleQuery(
+                SimpleQuery.builder()
+                        .addMeasurement("a.a.a")
+                        .addMeasurement("a.b.b")
+                        .endTime(System.currentTimeMillis() + 1000L)
+                        .build()
+        );
+        System.out.println(table);
+
         client.close();
     }
 

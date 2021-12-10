@@ -18,15 +18,21 @@
  */
 package cn.edu.tsinghua.iginx.session_v2;
 
+import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
 import cn.edu.tsinghua.iginx.session_v2.query.Query;
+import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
 import org.apache.http.concurrent.Cancellable;
 
 import java.util.List;
 import java.util.function.BiConsumer;
 
 public interface QueryClient {
+
+    IginXTable simpleQuery(final SimpleQuery query);
+
+    IginXTable aggregateQuery(final AggregateQuery query);
 
     <M>List<M> query(final Query query, final Class<M> measurementType);
 
