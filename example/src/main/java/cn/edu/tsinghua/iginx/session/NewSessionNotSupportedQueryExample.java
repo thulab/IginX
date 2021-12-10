@@ -18,25 +18,41 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-
 import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
-import cn.edu.tsinghua.iginx.session_v2.WriteClient;
-import cn.edu.tsinghua.iginx.session_v2.write.Point;
+import cn.edu.tsinghua.iginx.session_v2.QueryClient;
+import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
+import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 
-public class NewSessionExample {
+public class NewSessionNotSupportedQueryExample {
 
     public static void main(String[] args) {
         IginXClient client = IginXClientFactory.create();
-        WriteClient writeClient = client.getWriteClient();
-        writeClient.writePoint(
-                Point.builder()
-                        .now()
-                        .measurement("a.a.a")
-                        .intValue(2333)
-                        .build()
-        );
+        QueryClient queryClient = client.getQueryClient();
+
+
+
         client.close();
+
+    }
+
+    @Measurement(name = "demo.pojo")
+    static class POJO {
+
+        @Field(timestamp = true)
+        long timestamp;
+
+        @Field
+        int a;
+
+        @Field
+        int b;
+
+        POJO(long timestamp, int a, int b) {
+            this.timestamp = timestamp;
+            this.a = a;
+            this.b = b;
+        }
     }
 
 }

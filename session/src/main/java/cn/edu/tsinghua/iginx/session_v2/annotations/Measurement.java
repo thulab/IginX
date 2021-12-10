@@ -16,27 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.session;
+package cn.edu.tsinghua.iginx.session_v2.annotations;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import cn.edu.tsinghua.iginx.session_v2.IginXClient;
-import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
-import cn.edu.tsinghua.iginx.session_v2.WriteClient;
-import cn.edu.tsinghua.iginx.session_v2.write.Point;
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.TYPE})
+public @interface Measurement {
 
-public class NewSessionExample {
-
-    public static void main(String[] args) {
-        IginXClient client = IginXClientFactory.create();
-        WriteClient writeClient = client.getWriteClient();
-        writeClient.writePoint(
-                Point.builder()
-                        .now()
-                        .measurement("a.a.a")
-                        .intValue(2333)
-                        .build()
-        );
-        client.close();
-    }
+    String name();
 
 }

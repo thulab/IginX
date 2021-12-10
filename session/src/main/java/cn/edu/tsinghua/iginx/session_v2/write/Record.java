@@ -18,8 +18,178 @@
  */
 package cn.edu.tsinghua.iginx.session_v2.write;
 
+import cn.edu.tsinghua.iginx.session_v2.Arguments;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public class Record {
 
+    private final long timestamp;
 
+    private final List<String> measurements;
+
+    private final List<DataType> dataTypes;
+
+    private final List<Object> values;
+
+    private Record(long timestamp, List<String> measurements, List<DataType> dataTypes, List<Object> values) {
+        this.timestamp = timestamp;
+        this.measurements = Collections.unmodifiableList(measurements);
+        this.dataTypes = Collections.unmodifiableList(dataTypes);
+        this.values = Collections.unmodifiableList(values);
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public List<String> getMeasurements() {
+        return measurements;
+    }
+
+    public List<DataType> getDataTypes() {
+        return dataTypes;
+    }
+
+    public List<Object> getValues() {
+        return values;
+    }
+
+    public static Record.Builder builder() {
+        return new Record.Builder();
+    }
+
+    public static class Builder {
+
+        private long timestamp;
+
+        private String measurement;
+
+        private final Map<String, Integer> fieldIndexMap;
+
+        private final List<Object> values;
+
+        private final List<DataType> dataTypes;
+
+        private final List<String> fields;
+
+        private Builder() {
+            this.timestamp = -1;
+            this.measurement = null;
+            this.fields = new ArrayList<>();
+            this.values = new ArrayList<>();
+            this.dataTypes = new ArrayList<>();
+            this.fieldIndexMap = new HashMap<>();
+        }
+
+        public Record.Builder timestamp(long timestamp) {
+            this.timestamp = timestamp;
+            return this;
+        }
+
+        public Record.Builder now() {
+            this.timestamp = System.currentTimeMillis();
+            return this;
+        }
+
+        public Record.Builder measurement(String measurement) {
+            Arguments.checkNotNull(measurement, "measurement");
+            this.measurement = measurement;
+            return this;
+        }
+
+        public Record.Builder addIntField(String field, int value) {
+            Arguments.checkNotNull(field, "field");
+            int index = fieldIndexMap.getOrDefault(field, -1);
+            if (index == -1) {
+                this.fieldIndexMap.put(field, this.fields.size());
+                this.fields.add(field);
+                this.values.add(value);
+                this.dataTypes.add(DataType.INTEGER);
+            } else {
+                this.values.set(index, value);
+                this.dataTypes.set(index, DataType.INTEGER);
+            }
+            return this;
+        }
+
+        public Record.Builder addLongField(String field, long value) {
+            Arguments.checkNotNull(field, "field");
+            int index = fieldIndexMap.getOrDefault(field, -1);
+            if (index == -1) {
+                this.fieldIndexMap.put(field, this.fields.size());
+                this.fields.add(field);
+                this.values.add(value);
+                this.dataTypes.add(DataType.LONG);
+            } else {
+                this.values.set(index, value);
+                this.dataTypes.set(index, DataType.LONG);
+            }
+            return this;
+        }
+
+        public Record.Builder addFloatField(String field, float value) {
+            Arguments.checkNotNull(field, "field");
+            int index = fieldIndexMap.getOrDefault(field, -1);
+            if (index == -1) {
+                this.fieldIndexMap.put(field, this.fields.size());
+                this.fields.add(field);
+                this.values.add(value);
+                this.dataTypes.add(DataType.FLOAT);
+            } else {
+                this.values.set(index, value);
+                this.dataTypes.set(index, DataType.FLOAT);
+            }
+            return this;
+        }
+
+        public Record.Builder addDoubleField(String field, double value) {
+            Arguments.checkNotNull(field, "field");
+            int index = fieldIndexMap.getOrDefault(field, -1);
+            if (index == -1) {
+                this.fieldIndexMap.put(field, this.fields.size());
+                this.fields.add(field);
+                this.values.add(value);
+                this.dataTypes.add(DataType.DOUBLE);
+            } else {
+                this.values.set(index, value);
+                this.dataTypes.set(index, DataType.DOUBLE);
+            }
+            return this;
+        }
+
+        public Record.Builder addBinaryField(String field, byte[] value) {
+            Arguments.checkNotNull(field, "field");
+            int index = fieldIndexMap.getOrDefault(field, -1);
+            if (index == -1) {
+                this.fieldIndexMap.put(field, this.fields.size());
+                this.fields.add(field);
+                this.values.add(value);
+                this.dataTypes.add(DataType.BINARY);
+            } else {
+                this.values.set(index, value);
+                this.dataTypes.set(index, DataType.BINARY);
+            }
+            return this;
+        }
+
+        public Record build() {
+            if (timestamp < 0) {
+                timestamp = System.currentTimeMillis();
+            }
+            List<String> measurements = fields;
+            if (measurement != null) {
+                measurements = fields.stream().map(e -> measurement + e).collect(Collectors.toList());
+            }
+            return new Record(timestamp, measurements, dataTypes, values);
+        }
+
+    }
 
 }
