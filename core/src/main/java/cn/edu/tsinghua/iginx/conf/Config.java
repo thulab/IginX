@@ -520,6 +520,7 @@ public class Config {
 
     public void setInstancesIndexStep(int instancesIndexStep) {
         this.instancesIndexStep = instancesIndexStep;
+    }
 
     public long getCheckFragmentInterval() {
         return checkFragmentInterval;
