@@ -120,6 +120,7 @@ public class Config {
 
     private boolean isClientBindEngine = false;
 
+    private long checkFragmentInterval = 10000L;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -519,5 +520,12 @@ public class Config {
 
     public void setInstancesIndexStep(int instancesIndexStep) {
         this.instancesIndexStep = instancesIndexStep;
+
+    public long getCheckFragmentInterval() {
+        return checkFragmentInterval;
+    }
+
+    public void setCheckFragmentInterval(long checkFragmentInterval) {
+        this.checkFragmentInterval = checkFragmentInterval;
     }
 }
