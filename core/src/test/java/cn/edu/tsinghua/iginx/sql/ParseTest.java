@@ -23,7 +23,7 @@ public class ParseTest {
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
         assertEquals("a.b.c", statement.getPrefixPath());
 
-        List<String> paths = Arrays.asList("a.b.c.status", "a.b.c.hardware", "a.b.c.num");
+        List<String> paths = Arrays.asList("a.b.c.hardware", "a.b.c.num", "a.b.c.status");
         assertEquals(paths, statement.getPaths());
 
         assertEquals(2, statement.getTimes().size());

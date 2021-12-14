@@ -101,6 +101,8 @@ public class StatementExecutor {
                     return processShowTimeSeries((ShowTimeSeriesStatement) statement);
                 case COUNT_POINTS:
                     return processCountPoints();
+                case CLEAR_DATA:
+                    return processClearData();
                 default:
                     return ((SystemStatement) statement).execute(sessionId);
             }
@@ -180,6 +182,11 @@ public class StatementExecutor {
         ExecuteSqlResp resp = new ExecuteSqlResp(countResp.getStatus(), SqlType.CountPoints);
         resp.setPointsNum(pointsNum);
         return resp;
+    }
+
+    private ExecuteSqlResp processClearData() throws ExecutionException, PhysicalException {
+        DeleteStatement statement = new DeleteStatement(Collections.singletonList("*"));
+        return processDelete(statement);
     }
 
     private ExecuteSqlResp buildErrResp(StatusCode statusCode, String errMsg) {
