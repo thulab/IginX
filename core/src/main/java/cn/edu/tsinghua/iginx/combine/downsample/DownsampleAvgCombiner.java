@@ -16,24 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.result;
+package cn.edu.tsinghua.iginx.combine.downsample;
 
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.List;
+public class DownsampleAvgCombiner {
 
-public class DownsampleQueryPlanExecuteResult extends SyncPlanExecuteResult {
+    private static final Logger logger = LoggerFactory.getLogger(DownsampleAvgCombiner.class);
 
-    private final List<QueryExecuteDataSet> queryExecuteDataSets; // 每个序列一个元素
 
-    public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
-        super(statusCode, plan);
-        this.queryExecuteDataSets = queryExecuteDataSets;
-    }
-
-    public List<QueryExecuteDataSet> getQueryExecuteDataSets() {
-        return queryExecuteDataSets;
-    }
 
 }

@@ -150,7 +150,7 @@ public class CombineExecutor implements ICombineExecutor {
                 }
                 try {
                     DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
-                            downsampleQueryReq.aggregateType);
+                            downsampleQueryReq.aggregateType, downsampleGroupByLevels);
                 } catch (Exception e) {
                     logger.error("encounter error when combine downsample data results: ", e);
                     statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;

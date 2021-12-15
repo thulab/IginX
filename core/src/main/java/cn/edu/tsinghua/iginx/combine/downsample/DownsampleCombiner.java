@@ -54,7 +54,7 @@ public class DownsampleCombiner {
 
     private static final Logger logger = LoggerFactory.getLogger(DownsampleCombiner.class);
 
-    public static void combineDownsampleQueryResult(DownsampleQueryResp resp, List<PlanExecuteResult> planExecuteResults, AggregateType aggregateType)
+    public static void combineDownsampleQueryResult(DownsampleQueryResp resp, List<PlanExecuteResult> planExecuteResults, AggregateType aggregateType, List<Integer> groupByLevels)
             throws ExecutionException {
         Map<Integer, List<PlanExecuteResult>> aggregateResultGroups = planExecuteResults.stream().filter(e -> e.getPlan().getIginxPlanType().isAggregateQuery()).collect(Collectors
                 .groupingBy(e -> e.getPlan().getCombineGroup()));
