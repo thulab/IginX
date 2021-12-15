@@ -227,11 +227,24 @@ public class AggregateCombiner {
     }
 
     public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
-        combineAvgResult(resp, planExecuteResults, true);
+        combineAvgResult(resp, planExecuteResults, true, new ArrayList<>());
+    }
+
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, List<Integer> groupByLevels) {
+        combineAvgResult(resp, planExecuteResults, true, groupByLevels);
     }
 
     public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, boolean processNull) {
+        combineAvgResult(resp, planExecuteResults, processNull, new ArrayList<>());
+    }
+
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, boolean processNull, List<Integer> groupByLevels) {
         constructPathAndTypeList(resp, planExecuteResults);
+        boolean needGroup = groupByLevels != null && groupByLevels.size() != 0;
+        Map<String, String> transformMap = new HashMap<>();
+        if (needGroup) {
+            transformMap = groupPathByLevels(resp, groupByLevels);
+        }
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
         Map<String, Pair<DataType, List<Pair<Long, Object>>>> pathsRawData = new HashMap<>();
@@ -244,7 +257,11 @@ public class AggregateCombiner {
                 DataType dataType = subDataTypes.get(i);
                 Long subCount = subCounts.get(i);
                 Object subSum = subSums.get(i);
-                pathsRawData.computeIfAbsent(subPaths.get(i), e -> new Pair<>(dataType, new ArrayList<>()))
+                String path = subPaths.get(i);
+                if (needGroup) {
+                    path = transformMap.get(path);
+                }
+                pathsRawData.computeIfAbsent(path, e -> new Pair<>(dataType, new ArrayList<>()))
                         .v.add(new Pair<>(subCount, subSum));
             }
         }
