@@ -339,14 +339,35 @@ public class SimplePlanGenerator implements IPlanGenerator {
                         splitInfoList = planSplitter.getSplitDownsampleMinQueryPlanResults(downsampleMinQueryPlan);
                         return splitDownsampleMinQueryPlan(downsampleMinQueryPlan, splitInfoList);
                     case AVG:
-                        DownsampleAvgQueryPlan downsampleAvgQueryPlan = new DownsampleAvgQueryPlan(
-                                downsampleQueryReq.getPaths(),
-                                downsampleQueryReq.getStartTime(),
-                                downsampleQueryReq.getEndTime(),
-                                downsampleQueryReq.getPrecision()
-                        );
-                        splitInfoList = planSplitter.getSplitDownsampleAvgQueryPlanResults(downsampleAvgQueryPlan);
-                        return splitDownsampleAvgQueryPlan(downsampleAvgQueryPlan, splitInfoList);
+                        boolean needGroup = downsampleQueryReq.groupByLevels != null && !downsampleQueryReq.groupByLevels.isEmpty();
+                        if (!needGroup) {
+                            DownsampleAvgQueryPlan downsampleAvgQueryPlan = new DownsampleAvgQueryPlan(
+                                    downsampleQueryReq.getPaths(),
+                                    downsampleQueryReq.getStartTime(),
+                                    downsampleQueryReq.getEndTime(),
+                                    downsampleQueryReq.getPrecision()
+                            );
+                            splitInfoList = planSplitter.getSplitDownsampleAvgQueryPlanResults(downsampleAvgQueryPlan);
+                            return splitDownsampleAvgQueryPlan(downsampleAvgQueryPlan, splitInfoList);
+                        } else {
+                            DownsampleSumQueryPlan downsampleSumQueryPlan = new DownsampleSumQueryPlan(
+                                    downsampleQueryReq.getPaths(),
+                                    downsampleQueryReq.getStartTime(),
+                                    downsampleQueryReq.getEndTime(),
+                                    downsampleQueryReq.getPrecision()
+                            );
+                            splitInfoList = planSplitter.getSplitDownsampleSumQueryPlanResults(downsampleSumQueryPlan);
+                            List<IginxPlan> plans = splitDownsampleSumQueryPlan(downsampleSumQueryPlan, splitInfoList);
+                            DownsampleCountQueryPlan downsampleCountQueryPlan = new DownsampleCountQueryPlan(
+                                    downsampleQueryReq.getPaths(),
+                                    downsampleQueryReq.getStartTime(),
+                                    downsampleQueryReq.getEndTime(),
+                                    downsampleQueryReq.getPrecision()
+                            );
+                            splitInfoList = planSplitter.getSplitDownsampleCountQueryPlanResults(downsampleCountQueryPlan);
+                            plans.addAll(splitDownsampleCountQueryPlan(downsampleCountQueryPlan, splitInfoList));
+                            return plans;
+                        }
                     case SUM:
                         DownsampleSumQueryPlan downsampleSumQueryPlan = new DownsampleSumQueryPlan(
                                 downsampleQueryReq.getPaths(),

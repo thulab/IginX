@@ -402,6 +402,9 @@ public class SelectStatement extends Statement {
                 aggregateType,
                 precision
         );
+        if (!layers.isEmpty()) {
+            req.setGroupByLevels(layers);
+        }
         DownsampleQueryResp downsampleQueryResp = worker.downsampleQuery(req);
 
         ExecuteSqlResp resp = new ExecuteSqlResp(downsampleQueryResp.getStatus(), SqlType.DownsampleQuery);

@@ -39,6 +39,7 @@ import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteRes
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
@@ -149,8 +150,13 @@ public class CombineExecutor implements ICombineExecutor {
                     downsampleGroupByLevels.sort(Integer::compareTo);
                 }
                 try {
-                    DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
-                            downsampleQueryReq.aggregateType, downsampleGroupByLevels);
+                    if (downsampleQueryReq.aggregateType == AggregateType.AVG) {
+                        DownsampleCombiner.combineDownsampleAvgQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
+                                downsampleGroupByLevels);
+                    } else {
+                        DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
+                                downsampleQueryReq.aggregateType, downsampleGroupByLevels);
+                    }
                 } catch (Exception e) {
                     logger.error("encounter error when combine downsample data results: ", e);
                     statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
