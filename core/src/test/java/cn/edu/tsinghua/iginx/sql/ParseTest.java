@@ -121,6 +121,14 @@ public class ParseTest {
     }
 
     @Test
+    public void testParseDeleteTimeSeries() {
+        String deleteTimeSeriesStr = "DELETE TIME SERIES a.b.c, a.b.d;";
+        DeleteTimeSeriesStatement statement = (DeleteTimeSeriesStatement) TestUtils.buildStatement(deleteTimeSeriesStr);
+        List<String> paths = Arrays.asList("a.b.c", "a.b.d");
+        assertEquals(paths, statement.getPaths());
+    }
+
+    @Test
     public void testParseLimitClause() {
         String selectWithLimit = "SELECT * FROM a.b LIMIT 10";
         String selectWithLimitAndOffset01 = "SELECT * FROM a.b LIMIT 2, 10";

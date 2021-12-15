@@ -101,6 +101,8 @@ public class StatementExecutor {
                     return processShowTimeSeries((ShowTimeSeriesStatement) statement);
                 case COUNT_POINTS:
                     return processCountPoints();
+                case DELETE_TIME_SERIES:
+                    return processDeleteTimeSeries((DeleteTimeSeriesStatement) statement);
                 case CLEAR_DATA:
                     return processClearData();
                 default:
@@ -184,9 +186,14 @@ public class StatementExecutor {
         return resp;
     }
 
+    private ExecuteSqlResp processDeleteTimeSeries(DeleteTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
+        DeleteStatement deleteStatement = new DeleteStatement(statement.getPaths());
+        return processDelete(deleteStatement);
+    }
+
     private ExecuteSqlResp processClearData() throws ExecutionException, PhysicalException {
-        DeleteStatement statement = new DeleteStatement(Collections.singletonList("*"));
-        return processDelete(statement);
+        DeleteStatement deleteStatement = new DeleteStatement(Collections.singletonList("*"));
+        return processDelete(deleteStatement);
     }
 
     private ExecuteSqlResp buildErrResp(StatusCode statusCode, String errMsg) {

@@ -92,6 +92,18 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
+    public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
+        DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
+        ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
+        return deleteTimeSeriesStatement;
+    }
+
+    @Override
+    public Statement visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
+        return new ClearDataStatement();
+    }
+
+    @Override
     public Statement visitShowReplicationStatement(SqlParser.ShowReplicationStatementContext ctx) {
         return new ShowReplicationStatement();
     }
