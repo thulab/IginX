@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.logical;
+package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 public enum GeneratorType {
     Insert,

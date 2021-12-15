@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.logical;
+package cn.edu.tsinghua.iginx.engine.logical.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
