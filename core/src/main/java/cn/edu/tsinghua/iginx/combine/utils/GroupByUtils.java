@@ -16,31 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.conf;
+package cn.edu.tsinghua.iginx.combine.utils;
 
-import java.io.File;
+import cn.edu.tsinghua.iginx.conf.Constants;
 
-public class Constants {
+import java.util.List;
 
-    public static final int MAX_REDIRECT_TIME = 5;
+public class GroupByUtils {
 
-    public static final String CONF = "IGINX_CONF";
-
-    public static final String DRIVER = "IGINX_DRIVER";
-
-    public static final String CONFIG_FILE = "conf/config.properties";
-
-    public static final String DRIVER_DIR = "driver/";
-
-    public static final String FILE_META = "file";
-
-    public static final String ZOOKEEPER_META = "zookeeper";
-
-    public static final String ETCD_META = "etcd";
-
-    public static final String LEVEL_SEPARATOR = ".";
-
-    public static final String LEVEL_PLACEHOLDER = "*";
+    public static String transformPath(String path, List<Integer> groupByLevels) {
+        String[] levels = path.split("\\" + Constants.LEVEL_SEPARATOR);
+        boolean[] retain = new boolean[levels.length];
+        for (int groupByLevel: groupByLevels) {
+            if (groupByLevel < levels.length) {
+                retain[groupByLevel] = true;
+            }
+        }
+        for (int i = 0; i < levels.length; i++) {
+            if (!retain[i]) {
+                levels[i] = Constants.LEVEL_PLACEHOLDER;
+            }
+        }
+        return String.join(Constants.LEVEL_SEPARATOR, levels);
+    }
 
 }
-

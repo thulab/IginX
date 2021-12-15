@@ -16,31 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.conf;
+package cn.edu.tsinghua.iginx.combine.utils;
 
-import java.io.File;
+import org.checkerframework.checker.units.qual.A;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class Constants {
+import java.util.Arrays;
+import java.util.Collections;
 
-    public static final int MAX_REDIRECT_TIME = 5;
+public class GroupByUtilsTest {
 
-    public static final String CONF = "IGINX_CONF";
+    @Before
+    public void setUp() {
+    }
 
-    public static final String DRIVER = "IGINX_DRIVER";
+    @After
+    public void tearDown() {
+    }
 
-    public static final String CONFIG_FILE = "conf/config.properties";
-
-    public static final String DRIVER_DIR = "driver/";
-
-    public static final String FILE_META = "file";
-
-    public static final String ZOOKEEPER_META = "zookeeper";
-
-    public static final String ETCD_META = "etcd";
-
-    public static final String LEVEL_SEPARATOR = ".";
-
-    public static final String LEVEL_PLACEHOLDER = "*";
+    @Test
+    public void testTransformPath() {
+        String path = "a.a.a.a";
+        Assert.assertEquals("a.*.*.*", GroupByUtils.transformPath(path, Collections.singletonList(0)));
+        Assert.assertEquals("a.*.a.*", GroupByUtils.transformPath(path, Arrays.asList(0, 2)));
+        Assert.assertEquals("*.*.*.*", GroupByUtils.transformPath(path, Arrays.asList(4, 5, 100)));
+    }
 
 }
-

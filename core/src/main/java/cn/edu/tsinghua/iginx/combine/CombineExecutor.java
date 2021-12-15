@@ -98,12 +98,16 @@ public class CombineExecutor implements ICombineExecutor {
             case AggregateQuery:
                 AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
                 aggregateQueryResp.setStatus(RpcUtils.SUCCESS);
-                AggregateQueryReq req = ((AggregateQueryContext) requestContext).getReq();
-                switch (req.aggregateType) {
+                AggregateQueryReq aggregateQueryReq = ((AggregateQueryContext) requestContext).getReq();
+                List<Integer> aggregateGroupByLevels = aggregateQueryReq.getGroupByLevels();
+                if (aggregateGroupByLevels != null) {
+                    aggregateGroupByLevels.sort(Integer::compareTo);
+                }
+                switch (aggregateQueryReq.aggregateType) {
                     case COUNT:
                     case SUM:
                         aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
-                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()), aggregateGroupByLevels);
                         break;
                     case MAX:
                         aggregateCombiner.combineMaxResult(aggregateQueryResp, planExecuteResults.stream()
@@ -131,6 +135,10 @@ public class CombineExecutor implements ICombineExecutor {
                 DownsampleQueryResp downsampleQueryResp = new DownsampleQueryResp();
                 downsampleQueryResp.setStatus(RpcUtils.SUCCESS);
                 DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
+                List<Integer> downsampleGroupByLevels = downsampleQueryReq.getGroupByLevels();
+                if (downsampleGroupByLevels != null) {
+                    downsampleGroupByLevels.sort(Integer::compareTo);
+                }
                 try {
                     DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
                             downsampleQueryReq.aggregateType);

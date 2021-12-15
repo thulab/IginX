@@ -350,7 +350,7 @@ public class SelectStatement extends Statement {
                 aggregateType
         );
         if (!layers.isEmpty()) {
-            req.setLayers(layers);
+            req.setGroupByLevels(layers);
         }
         AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
 
