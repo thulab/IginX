@@ -81,6 +81,7 @@ orderByClause : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?;
 
 groupByTimeClause
     : GROUP BY DURATION
+    | GROUP BY DURATION COMMA LEVEL OPERATOR_EQ INT (COMMA INT)*
     ;
 
 groupByLevelClause
