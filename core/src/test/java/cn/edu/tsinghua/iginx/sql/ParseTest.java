@@ -23,7 +23,7 @@ public class ParseTest {
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
         assertEquals("a.b.c", statement.getPrefixPath());
 
-        List<String> paths = Arrays.asList("a.b.c.status", "a.b.c.hardware", "a.b.c.num");
+        List<String> paths = Arrays.asList("a.b.c.hardware", "a.b.c.num", "a.b.c.status");
         assertEquals(paths, statement.getPaths());
 
         assertEquals(2, statement.getTimes().size());
@@ -116,6 +116,14 @@ public class ParseTest {
     public void testParseDelete() {
         String deleteStr = "DELETE FROM a.b.c, a.b.d WHERE time > 1627464728862 AND time < 2022-12-12 16:18:23+1s;";
         DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(deleteStr);
+        List<String> paths = Arrays.asList("a.b.c", "a.b.d");
+        assertEquals(paths, statement.getPaths());
+    }
+
+    @Test
+    public void testParseDeleteTimeSeries() {
+        String deleteTimeSeriesStr = "DELETE TIME SERIES a.b.c, a.b.d;";
+        DeleteTimeSeriesStatement statement = (DeleteTimeSeriesStatement) TestUtils.buildStatement(deleteTimeSeriesStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, statement.getPaths());
     }

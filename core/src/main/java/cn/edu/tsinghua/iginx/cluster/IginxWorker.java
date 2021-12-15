@@ -20,22 +20,12 @@ package cn.edu.tsinghua.iginx.cluster;
 
 import cn.edu.tsinghua.iginx.auth.SessionManager;
 import cn.edu.tsinghua.iginx.auth.UserManager;
-import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
-import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
-import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
 import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
-import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -48,6 +38,7 @@ import cn.edu.tsinghua.iginx.sql.*;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
+import cn.edu.tsinghua.iginx.sql.statement.ShowTimeSeriesStatement;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
@@ -364,9 +355,16 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new ShowColumnsResp(RpcUtils.ACCESS_DENY);
         }
-        ShowColumnsContext context = new ShowColumnsContext(req);
-        core.processRequest(context);
-        return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
+//        ShowColumnsContext context = new ShowColumnsContext(req);
+//        core.processRequest(context);
+//        return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
+        ShowTimeSeriesStatement statement = new ShowTimeSeriesStatement();
+        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
+
+        ShowColumnsResp resp = new ShowColumnsResp(sqlResp.getStatus());
+        resp.setPaths(sqlResp.getPaths());
+        resp.setDataTypeList(sqlResp.getDataTypeList());
+        return resp;
     }
 
     @Override
@@ -387,9 +385,24 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public LastQueryResp lastQuery(LastQueryReq req) {
-        LastQueryContext context = new LastQueryContext(req);
-        core.processRequest(context);
-        return ((LastQueryCombineResult) context.getCombineResult()).getResp();
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new LastQueryResp(RpcUtils.ACCESS_DENY);
+        }
+//        LastQueryContext context = new LastQueryContext(req);
+//        core.processRequest(context);
+//        return ((LastQueryCombineResult) context.getCombineResult()).getResp();
+        SelectStatement statement = new SelectStatement(
+                req.getPaths(),
+                req.getStartTime(),
+                Long.MAX_VALUE,
+                AggregateType.LAST);
+        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
+
+        LastQueryResp resp = new LastQueryResp(sqlResp.getStatus());
+        resp.setPaths(sqlResp.getPaths());
+        resp.setDataTypeList(sqlResp.getDataTypeList());
+        resp.setValuesList(sqlResp.getValuesList());
+        return resp;
     }
 
     @Override

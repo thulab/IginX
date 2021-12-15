@@ -58,8 +58,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.whereClause() != null) {
             Filter filter = parseOrExpression(ctx.whereClause().orExpression(), deleteStatement);
             deleteStatement.setTimeRangesByFilter(filter);
-        } else {
-            deleteStatement.setDeleteAll(true);
         }
         return deleteStatement;
     }
@@ -91,6 +89,18 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         selectStatement.setQueryType();
 
         return selectStatement;
+    }
+
+    @Override
+    public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
+        DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
+        ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
+        return deleteTimeSeriesStatement;
+    }
+
+    @Override
+    public Statement visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
+        return new ClearDataStatement();
     }
 
     @Override
