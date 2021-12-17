@@ -16,24 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.result;
+package cn.edu.tsinghua.iginx.combine.utils;
 
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
+import org.checkerframework.checker.units.qual.A;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collections;
 
-public class DownsampleQueryPlanExecuteResult extends SyncPlanExecuteResult {
+public class GroupByUtilsTest {
 
-    private final List<QueryExecuteDataSet> queryExecuteDataSets; // 每个序列一个元素
-
-    public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
-        super(statusCode, plan);
-        this.queryExecuteDataSets = queryExecuteDataSets;
+    @Before
+    public void setUp() {
     }
 
-    public List<QueryExecuteDataSet> getQueryExecuteDataSets() {
-        return queryExecuteDataSets;
+    @After
+    public void tearDown() {
+    }
+
+    @Test
+    public void testTransformPath() {
+        String path = "a.a.a.a";
+        Assert.assertEquals("a.*.*.*", GroupByUtils.transformPath(path, Collections.singletonList(0)));
+        Assert.assertEquals("a.*.a.*", GroupByUtils.transformPath(path, Arrays.asList(0, 2)));
+        Assert.assertEquals("*.*.*.*", GroupByUtils.transformPath(path, Arrays.asList(4, 5, 100)));
     }
 
 }

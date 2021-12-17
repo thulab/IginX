@@ -211,6 +211,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             long precision = TimeUtils.convertDurationStrToLong(0, duration);
             selectStatement.setPrecision(precision);
             selectStatement.setHasGroupBy(true);
+            if (!ctx.groupByTimeClause().INT().isEmpty()) {
+                if (!selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Count) &&
+                        !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Avg) &&
+                        !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Sum)) {
+                    throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+                }
+                ctx.groupByTimeClause().INT().forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
+            }
         }
         // parse limit & offset
         // like standard SQL, limit N, M means limit M offset N
@@ -250,6 +258,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             if (ctx.orderByClause().DESC() != null) {
                 selectStatement.setAscending(false);
             }
+        }
+        if (ctx.groupByLevelClause() != null) {
+            if (!selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Count) &&
+                    !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Avg) &&
+                    !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Sum)) {
+                throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+            }
+            ctx.groupByLevelClause().INT().forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
         }
     }
 

@@ -44,6 +44,8 @@ public class SelectStatement extends Statement {
     private int limit;
     private int offset;
 
+    private List<Integer> layers;
+
     public SelectStatement() {
         statementType = StatementType.SELECT;
         queryType = QueryType.Unknown;
@@ -56,6 +58,7 @@ public class SelectStatement extends Statement {
         endTime = Long.MAX_VALUE;
         limit = Integer.MAX_VALUE;
         offset = 0;
+        layers = new ArrayList<>();
     }
 
     public static FuncType str2FuncType(String str) {
@@ -241,6 +244,18 @@ public class SelectStatement extends Statement {
         this.offset = offset;
     }
 
+    public void setSelectedFuncsAndPaths(List<Pair<String, String>> selectedFuncsAndPaths) {
+        this.selectedFuncsAndPaths = selectedFuncsAndPaths;
+    }
+
+    public List<Integer> getLayers() {
+        return layers;
+    }
+
+    public void setLayer(int layer) {
+        this.layers.add(layer);
+    }
+
     public void setQueryType() {
         if (hasFunc) {
             if (hasGroupBy && hasValueFilter) {
@@ -334,6 +349,9 @@ public class SelectStatement extends Statement {
                 endTime,
                 aggregateType
         );
+        if (!layers.isEmpty()) {
+            req.setGroupByLevels(layers);
+        }
         AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
 
         ExecuteSqlResp resp = new ExecuteSqlResp(aggregateQueryResp.getStatus(), SqlType.AggregateQuery);
@@ -384,6 +402,9 @@ public class SelectStatement extends Statement {
                 aggregateType,
                 precision
         );
+        if (!layers.isEmpty()) {
+            req.setGroupByLevels(layers);
+        }
         DownsampleQueryResp downsampleQueryResp = worker.downsampleQuery(req);
 
         ExecuteSqlResp resp = new ExecuteSqlResp(downsampleQueryResp.getStatus(), SqlType.DownsampleQuery);
