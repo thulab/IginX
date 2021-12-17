@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.engine.shared.data;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.nio.charset.StandardCharsets;
+
 public class Value {
 
     private final DataType dataType;
@@ -34,7 +36,7 @@ public class Value {
 
     private Double doubleV;
 
-    private String binaryV;
+    private byte[] binaryV;
 
     public Value(DataType dataType, Object value) {
         this.dataType = dataType;
@@ -49,7 +51,7 @@ public class Value {
                 doubleV = (Double) value;
                 break;
             case BINARY:
-                binaryV = (String) value;
+                binaryV = (byte[]) value;
                 break;
             case BOOLEAN:
                 boolV = (Boolean) value;
@@ -80,7 +82,7 @@ public class Value {
             this.doubleV = (Double) v;
         } else {
             this.dataType = DataType.BINARY;
-            this.binaryV = new String((byte[]) v);
+            this.binaryV = (byte[]) v;
         }
     }
 
@@ -130,6 +132,11 @@ public class Value {
 
     public Value(String binaryV) {
         this.dataType = DataType.BINARY;
+        this.binaryV = binaryV.getBytes(StandardCharsets.UTF_8);
+    }
+
+    public Value(byte[] binaryV) {
+        this.dataType = DataType.BINARY;
         this.binaryV = binaryV;
     }
 
@@ -157,8 +164,12 @@ public class Value {
         return doubleV;
     }
 
-    public String getBinaryV() {
+    public byte[] getBinaryV() {
         return binaryV;
+    }
+
+    public String getBinaryVAsString() {
+        return new String(binaryV);
     }
 
     public boolean isNull() {

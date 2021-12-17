@@ -69,7 +69,7 @@ public class Count implements SetMappingFunction {
         if (param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for avg.");
         }
-        String target = param.getBinaryV();
+        String target = param.getBinaryVAsString();
         Header header = new Header(Collections.singletonList(new Field(getIdentifier() + "(" + target + ")", DataType.LONG)));
         long count = 0L;
         if (target.endsWith(Constants.ALL_PATH)) {

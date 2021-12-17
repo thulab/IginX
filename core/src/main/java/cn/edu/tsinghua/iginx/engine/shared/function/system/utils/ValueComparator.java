@@ -38,7 +38,7 @@ public class ValueComparator {
             case DOUBLE:
                 return Double.compare(o1.getDoubleV(), o2.getDoubleV());
             case BINARY:
-                return o1.getBinaryV().compareTo(o2.getBinaryV());
+                return o1.getBinaryVAsString().compareTo(o2.getBinaryVAsString());
         }
         return 0;
     }
@@ -56,7 +56,7 @@ public class ValueComparator {
             case DOUBLE:
                 return Double.compare((Double) o1, (Double) o2);
             case BINARY:
-                return ((String) o1).compareTo((String) o2);
+                return (new String((byte[]) o1)).compareTo(new String((byte[]) o2));
         }
         return 0;
     }
