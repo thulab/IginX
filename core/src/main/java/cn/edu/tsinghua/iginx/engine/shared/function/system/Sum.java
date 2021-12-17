@@ -67,7 +67,7 @@ public class Sum implements SetMappingFunction {
         if (param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for sum.");
         }
-        String target = param.getBinaryV();
+        String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) { // 对于任意序列均统计
             List<Field> fields = rows.getHeader().getFields();
             for (Field field: fields) {
