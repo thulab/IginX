@@ -112,6 +112,7 @@ public class DownsampleCombiner {
         boolean needGroup = groupByLevels != null && !groupByLevels.isEmpty();
         if (!needGroup) {
             DownsampleCombiner.combineDownsampleQueryResult(resp, planExecuteResults, AggregateType.AVG, null);
+            return;
         }
         List<PlanExecuteResult> sumPlanExecuteResults = planExecuteResults.stream()
                 .filter(e -> e.getPlan().getIginxPlanType() == IginxPlan.IginxPlanType.SUM || e.getPlan().getIginxPlanType() == IginxPlan.IginxPlanType.DOWNSAMPLE_SUM)
@@ -392,7 +393,9 @@ public class DownsampleCombiner {
         for (Object[] values: table.valuesList) {
             Bitmap bitmap = new Bitmap(table.columnTypeList.size());
             for (int i = 0; i < values.length; i++) {
-                bitmap.mark(i);
+                if (values[i] != null) {
+                    bitmap.mark(i);
+                }
             }
             ByteBuffer buffer = ByteUtils.getRowByteBuffer(values, table.columnTypeList);
             valuesList.add(buffer);
