@@ -32,6 +32,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -70,14 +71,29 @@ public class Count implements SetMappingFunction {
             throw new IllegalArgumentException("unexpected param type for avg.");
         }
         String target = param.getBinaryVAsString();
-        Header header = new Header(Collections.singletonList(new Field(getIdentifier() + "(" + target + ")", DataType.LONG)));
-        long count = 0L;
         if (target.endsWith(Constants.ALL_PATH)) {
-            while (rows.hasNext()) {
-                count += 1;
-                rows.next();
+            List<Field> targetFields = new ArrayList<>();
+            for (Field field: rows.getHeader().getFields()) {
+                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
             }
+            long[] counts = new long[targetFields.size()];
+            while (rows.hasNext()) {
+                Row row = rows.next();
+                Object[] values = row.getValues();
+                for (int i = 0; i < targetFields.size(); i++) {
+                    if (values[i] != null) {
+                        counts[i]++;
+                    }
+                }
+            }
+            Object[] targetValues = new Object[targetFields.size()];
+            for (int i = 0; i < counts.length; i++) {
+                targetValues[i] = counts[i];
+            }
+            return new Row(new Header(targetFields), targetValues);
         } else {
+            Header header = new Header(Collections.singletonList(new Field(getIdentifier() + "(" + target + ")", DataType.LONG)));
+            long count = 0L;
             int index = rows.getHeader().indexOf(target);
             if (index != -1) {
                 while (rows.hasNext()) {
@@ -88,8 +104,8 @@ public class Count implements SetMappingFunction {
                     }
                 }
             }
+            return new Row(header, new Object[]{count});
         }
-        return new Row(header, new Object[]{count});
     }
 
     public static Count getInstance() {
