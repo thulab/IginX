@@ -31,11 +31,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import sun.security.krb5.Config;
@@ -67,6 +70,7 @@ public class DataPointsParser {
             session.openSession();
         } catch (SessionException e) {
             LOGGER.error("Error occurred during opening session", e);
+            session.closeSession();
             throw e;
         }
         if (needLog) {
@@ -83,7 +87,15 @@ public class DataPointsParser {
             }
 
         } catch (Exception e) {
+            BufferedReader bufferedReader = new BufferedReader(inputStream);
+            StringBuffer sb = new StringBuffer();
+            String temp;
+            while ((temp = bufferedReader.readLine()) != null) {
+                sb.append(temp);
+            }
+            LOGGER.error(sb.toString());
             LOGGER.error("Error occurred during parsing data ", e);
+            session.closeSession();
             throw e;
         }
         if (needLog) {
