@@ -99,6 +99,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
+    public Statement visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
+        return new CountPointsStatement();
+    }
+
+    @Override
     public Statement visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
         return new ClearDataStatement();
     }

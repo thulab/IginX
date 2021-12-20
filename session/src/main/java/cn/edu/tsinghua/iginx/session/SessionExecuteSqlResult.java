@@ -220,7 +220,7 @@ public class SessionExecuteSqlResult {
 
     private String buildQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("%s ResultSets:", sqlType.toString())).append("\n");
+        builder.append("ResultSets:").append("\n");
 
         List<Integer> maxSizeList = new ArrayList<>();
         List<List<String>> cache = cacheResult(needFormatTime, timePrecision, maxSizeList);
@@ -356,7 +356,7 @@ public class SessionExecuteSqlResult {
 
     private String buildLastQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
-        builder.append("LastQuery ResultSets:").append("\n");
+        builder.append("ResultSets:").append("\n");
         int num = paths == null ? 0 : paths.size();
         if (values != null && !values.isEmpty()) {
             List<List<String>> cache = new ArrayList<>();
