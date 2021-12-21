@@ -50,6 +50,8 @@ public class NewSessionNotSupportedWriteExample {
                         .build()
         );
 
+        System.out.println("写入数据点成功");
+
         // 写入一些有相同时间戳的数据点
         writeClient.writeRecord(
                 Record.builder()
@@ -62,6 +64,8 @@ public class NewSessionNotSupportedWriteExample {
                         .addBinaryField("e", "hello, world".getBytes())
                         .build()
         );
+
+        System.out.println("写入行成功");
 
         // 写入一张二维表
         writeClient.writeTable(
@@ -78,9 +82,13 @@ public class NewSessionNotSupportedWriteExample {
                         .build()
         );
 
+        System.out.println("写入二维表成功");
+
         // 写入数据对象
         POJO pojo = new POJO(System.currentTimeMillis(), 10, 11);
         writeClient.writeMeasurement(pojo); // 实际会将对象转化为两个序列：demo.pojo.a 和 demo.pojo.b
+
+        System.out.println("写入数据对象成功");
 
         client.close();
     }

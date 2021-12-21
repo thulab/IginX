@@ -53,12 +53,28 @@ public class Record {
         return measurements;
     }
 
+    public String getMeasurement(int index) {
+        return measurements.get(index);
+    }
+
     public List<DataType> getDataTypes() {
         return dataTypes;
     }
 
+    public DataType getDataType(int index) {
+        return dataTypes.get(index);
+    }
+
     public List<Object> getValues() {
         return values;
+    }
+
+    public Object getValue(int index) {
+        return values.get(index);
+    }
+
+    public int getLength() {
+        return measurements.size();
     }
 
     public static Record.Builder builder() {
@@ -104,7 +120,7 @@ public class Record {
             return this;
         }
 
-        public Record.Builder addIntField(String field, int value) {
+        public Record.Builder addIntField(String field, Integer value) {
             Arguments.checkNotNull(field, "field");
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -119,7 +135,7 @@ public class Record {
             return this;
         }
 
-        public Record.Builder addLongField(String field, long value) {
+        public Record.Builder addLongField(String field, Long value) {
             Arguments.checkNotNull(field, "field");
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -134,7 +150,7 @@ public class Record {
             return this;
         }
 
-        public Record.Builder addFloatField(String field, float value) {
+        public Record.Builder addFloatField(String field, Float value) {
             Arguments.checkNotNull(field, "field");
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -149,7 +165,7 @@ public class Record {
             return this;
         }
 
-        public Record.Builder addDoubleField(String field, double value) {
+        public Record.Builder addDoubleField(String field, Double value) {
             Arguments.checkNotNull(field, "field");
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -160,6 +176,21 @@ public class Record {
             } else {
                 this.values.set(index, value);
                 this.dataTypes.set(index, DataType.DOUBLE);
+            }
+            return this;
+        }
+
+        public Record.Builder addBooleanField(String field, Boolean value) {
+            Arguments.checkNotNull(field, "field");
+            int index = fieldIndexMap.getOrDefault(field, -1);
+            if (index == -1) {
+                this.fieldIndexMap.put(field, this.fields.size());
+                this.fields.add(field);
+                this.values.add(value);
+                this.dataTypes.add(DataType.BOOLEAN);
+            } else {
+                this.values.set(index, value);
+                this.dataTypes.set(index, DataType.BOOLEAN);
             }
             return this;
         }
@@ -185,7 +216,7 @@ public class Record {
             }
             List<String> measurements = fields;
             if (measurement != null) {
-                measurements = fields.stream().map(e -> measurement + e).collect(Collectors.toList());
+                measurements = fields.stream().map(e -> measurement + "." + e).collect(Collectors.toList());
             }
             return new Record(timestamp, measurements, dataTypes, values);
         }

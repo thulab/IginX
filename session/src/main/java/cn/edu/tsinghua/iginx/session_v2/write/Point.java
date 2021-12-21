@@ -104,6 +104,12 @@ public class Point {
             return this;
         }
 
+        public Point.Builder booleanValue(boolean value) {
+            this.value = value;
+            this.dataType = DataType.BOOLEAN;
+            return this;
+        }
+
         public Point.Builder intValue(int value) {
             this.value = value;
             this.dataType = DataType.INTEGER;

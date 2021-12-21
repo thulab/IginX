@@ -25,6 +25,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 public class Table {
@@ -60,6 +62,26 @@ public class Table {
         return valuesList;
     }
 
+    public int getLength() {
+        return timestamps.size();
+    }
+
+    public long getTimestamp(int index) {
+        return timestamps.get(index);
+    }
+
+    public Object[] getValues(int index) {
+        return valuesList.get(index);
+    }
+
+    public String getMeasurement(int index) {
+        return measurements.get(index);
+    }
+
+    public DataType getDataType(int index) {
+        return dataTypes.get(index);
+    }
+
     public static Table.Builder builder() {
         return new Table.Builder();
     }
@@ -68,9 +90,7 @@ public class Table {
 
         private String measurement;
 
-        private final Map<String, Integer> fieldIndexMap;
-
-        private final List<String> fields;
+        private final SortedMap<String, Integer> fieldIndexMap;
 
         private final List<DataType> dataTypes;
 
@@ -84,8 +104,7 @@ public class Table {
 
         private Builder() {
             this.measurement = null;
-            this.fieldIndexMap = new HashMap<>();
-            this.fields = new ArrayList<>();
+            this.fieldIndexMap = new TreeMap<>();
             this.dataTypes = new ArrayList<>();
             this.timestamps = new ArrayList<>();
             this.valuesList = new ArrayList<>();
@@ -104,8 +123,8 @@ public class Table {
             Arguments.checkNotNull(field, "field");
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
-                this.fieldIndexMap.put(field, this.fields.size());
-                this.fields.add(field);
+                index = fieldIndexMap.size();
+                this.fieldIndexMap.put(field, index);
                 this.dataTypes.add(dataType);
             } else {
                 if (dataType != this.dataTypes.get(index)) {
@@ -206,13 +225,13 @@ public class Table {
         }
 
         public Table build() {
-            if (currentTimestamp != -1 && currentValues.isEmpty()) {
+            if (currentTimestamp != -1 && !currentValues.isEmpty()) {
                 this.timestamps.add(currentTimestamp);
                 this.valuesList.add(currentValues);
             }
-            List<String> measurements = fields;
+            List<String> measurements = new ArrayList<>(fieldIndexMap.keySet());
             if (measurement != null) {
-                measurements = fields.stream().map(e -> measurement + e).collect(Collectors.toList());
+                measurements = measurements.stream().map(e -> measurement + "." + e).collect(Collectors.toList());
             }
             List<Object[]> valuesList = new ArrayList<>();
             for (Map<Integer, Object> rowMap: this.valuesList) {
