@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.session_v2;
 
+import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.DownsampleQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
@@ -31,24 +32,24 @@ import java.util.function.BiConsumer;
 
 public interface QueryClient {
 
-    IginXTable simpleQuery(final SimpleQuery query);
+    IginXTable simpleQuery(final SimpleQuery query) throws IginXException;
 
-    IginXTable aggregateQuery(final AggregateQuery query);
+    IginXTable aggregateQuery(final AggregateQuery query) throws IginXException;
 
-    IginXTable downsampleQuery(final DownsampleQuery query);
+    IginXTable downsampleQuery(final DownsampleQuery query) throws IginXException;
 
-    <M>List<M> query(final Query query, final Class<M> measurementType);
+    <M> List<M> query(final Query query, final Class<M> measurementType) throws IginXException;
 
-    IginXTable query(final String query);
+    IginXTable query(final String query) throws IginXException;
 
-    IginXTable query(final Query query);
+    IginXTable query(final Query query) throws IginXException;
 
-    void query(final String query, final BiConsumer<Cancellable, IginXRecord> onNext);
+    void query(final String query, final BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException;
 
-    void query(final Query query, final BiConsumer<Cancellable, IginXRecord> onNext);
+    void query(final Query query, final BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException;
 
-    <M> void query(final String query, final Class<M> measurementType, final BiConsumer<Cancellable, M> onNext);
+    <M> void query(final String query, final Class<M> measurementType, final BiConsumer<Cancellable, M> onNext) throws IginXException;
 
-    <M> void query(final Query query, final Class<M> measurementType, final BiConsumer<Cancellable, M> onNext);
+    <M> void query(final Query query, final Class<M> measurementType, final BiConsumer<Cancellable, M> onNext) throws IginXException;
 
 }

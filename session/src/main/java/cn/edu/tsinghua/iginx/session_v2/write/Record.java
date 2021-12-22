@@ -45,6 +45,10 @@ public class Record {
         this.values = Collections.unmodifiableList(values);
     }
 
+    public static Record.Builder builder() {
+        return new Record.Builder();
+    }
+
     public long getTimestamp() {
         return timestamp;
     }
@@ -77,23 +81,14 @@ public class Record {
         return measurements.size();
     }
 
-    public static Record.Builder builder() {
-        return new Record.Builder();
-    }
-
     public static class Builder {
 
-        private long timestamp;
-
-        private String measurement;
-
         private final Map<String, Integer> fieldIndexMap;
-
         private final List<Object> values;
-
         private final List<DataType> dataTypes;
-
         private final List<String> fields;
+        private long timestamp;
+        private String measurement;
 
         private Builder() {
             this.timestamp = -1;

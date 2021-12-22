@@ -16,34 +16,30 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.session_v2.query;
+package cn.edu.tsinghua.iginx.session_v2;
 
-public class Query {
+import cn.edu.tsinghua.iginx.session_v2.write.Point;
+import cn.edu.tsinghua.iginx.session_v2.write.Record;
+import cn.edu.tsinghua.iginx.session_v2.write.Table;
 
-    private final String query;
+import java.util.List;
 
-    public Query(String query) {
-        this.query = query;
-    }
+public interface AsyncWriteClient extends AutoCloseable {
 
-    public static Query.Builder builder() {
-        return new Builder();
-    }
+    void writePoint(final Point point);
 
-    public String getQuery() {
-        return query;
-    }
+    void writePoints(final List<Point> points);
 
-    public static class Builder {
+    void writeRecord(final Record record);
 
-        private Builder() {
+    void writeRecords(final List<Record> records);
 
-        }
+    <M> void writeMeasurement(final M measurement);
 
-        public Query build() {
-            return new Query("");
-        }
+    <M> void writeMeasurements(final List<M> measurements);
 
-    }
+    void writeTable(final Table table) throws InterruptedException;
 
+    @Override
+    void close() throws Exception;
 }

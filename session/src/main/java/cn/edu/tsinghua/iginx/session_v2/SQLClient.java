@@ -16,34 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.session_v2.query;
+package cn.edu.tsinghua.iginx.session_v2;
 
-public class Query {
 
-    private final String query;
-
-    public Query(String query) {
-        this.query = query;
-    }
-
-    public static Query.Builder builder() {
-        return new Builder();
-    }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public static class Builder {
-
-        private Builder() {
-
-        }
-
-        public Query build() {
-            return new Query("");
-        }
-
-    }
-
+public interface SQLClient {
 }

@@ -42,6 +42,10 @@ public class Point {
         this(builder.timestamp, builder.value, builder.dataType, builder.measurement);
     }
 
+    public static Point.Builder builder() {
+        return new Point.Builder();
+    }
+
     public long getTimestamp() {
         return timestamp;
     }
@@ -56,10 +60,6 @@ public class Point {
 
     public String getMeasurement() {
         return measurement;
-    }
-
-    public static Point.Builder builder() {
-        return new Point.Builder();
     }
 
     public static class Builder {

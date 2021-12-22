@@ -46,6 +46,10 @@ public class Table {
         this.valuesList = valuesList;
     }
 
+    public static Table.Builder builder() {
+        return new Table.Builder();
+    }
+
     public List<Long> getTimestamps() {
         return timestamps;
     }
@@ -82,22 +86,13 @@ public class Table {
         return dataTypes.get(index);
     }
 
-    public static Table.Builder builder() {
-        return new Table.Builder();
-    }
-
     public static class Builder {
 
-        private String measurement;
-
         private final SortedMap<String, Integer> fieldIndexMap;
-
         private final List<DataType> dataTypes;
-
         private final List<Long> timestamps;
-
         private final List<Map<Integer, Object>> valuesList;
-
+        private String measurement;
         private long currentTimestamp;
 
         private Map<Integer, Object> currentValues;
@@ -128,7 +123,7 @@ public class Table {
                 this.dataTypes.add(dataType);
             } else {
                 if (dataType != this.dataTypes.get(index)) {
-                    throw new IllegalStateException("field " + field +  " has add to table, but has different dataType");
+                    throw new IllegalStateException("field " + field + " has add to table, but has different dataType");
                 }
             }
             return this;
@@ -234,9 +229,9 @@ public class Table {
                 measurements = measurements.stream().map(e -> measurement + "." + e).collect(Collectors.toList());
             }
             List<Object[]> valuesList = new ArrayList<>();
-            for (Map<Integer, Object> rowMap: this.valuesList) {
+            for (Map<Integer, Object> rowMap : this.valuesList) {
                 Object[] values = new Object[measurements.size()];
-                for (Map.Entry<Integer, Object> entry: rowMap.entrySet()) {
+                for (Map.Entry<Integer, Object> entry : rowMap.entrySet()) {
                     values[entry.getKey()] = entry.getValue();
                 }
                 valuesList.add(values);

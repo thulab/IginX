@@ -18,11 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.session_v2;
 
-import cn.edu.tsinghua.iginx.session_v2.domain.Ready;
-
 public interface IginXClient extends AutoCloseable {
 
     WriteClient getWriteClient();
+
+    AsyncWriteClient getAsyncWriteClient();
+
+    SQLClient getSQLClient();
 
     QueryClient getQueryClient();
 
@@ -31,8 +33,6 @@ public interface IginXClient extends AutoCloseable {
     UserClient getUserClient();
 
     ClusterClient getClusterClient();
-
-    Ready ready();
 
     void close();
 }

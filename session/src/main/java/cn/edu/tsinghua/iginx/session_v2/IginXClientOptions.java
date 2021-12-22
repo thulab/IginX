@@ -40,6 +40,10 @@ public final class IginXClientOptions {
         this.password = builder.password;
     }
 
+    public static IginXClientOptions.Builder builder() {
+        return new IginXClientOptions.Builder();
+    }
+
     public String getHost() {
         return host;
     }
@@ -54,10 +58,6 @@ public final class IginXClientOptions {
 
     public String getPassword() {
         return password;
-    }
-
-    public static IginXClientOptions.Builder builder() {
-        return new IginXClientOptions.Builder();
     }
 
     public static class Builder {

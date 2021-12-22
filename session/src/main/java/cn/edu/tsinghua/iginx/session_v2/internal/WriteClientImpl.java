@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.session_v2.internal;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
+import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
 import cn.edu.tsinghua.iginx.session_v2.write.Record;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
@@ -29,7 +30,6 @@ import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
@@ -37,9 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +61,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
     }
 
     @Override
-    public void writePoint(Point point){
+    public void writePoint(Point point) {
         writePoints(Collections.singletonList(point));
     }
 
@@ -71,7 +69,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
     public void writePoints(List<Point> points) {
         SortedMap<String, DataType> measurementMap = new TreeMap<>();
         Set<Long> timestampSet = new HashSet<>();
-        for (Point point: points) {
+        for (Point point : points) {
             String measurement = point.getMeasurement();
             DataType dataType = point.getDataType();
             if (measurementMap.getOrDefault(measurement, dataType) != dataType) {
@@ -84,7 +82,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         List<DataType> dataTypeList = new ArrayList<>();
         Map<String, Integer> measurementIndexMap = new HashMap<>();
         int index = 0;
-        for (String measurement: measurementMap.keySet()) {
+        for (String measurement : measurementMap.keySet()) {
             measurementIndexMap.put(measurement, index);
             index++;
             measurements.add(measurement);
@@ -101,7 +99,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         for (int i = 0; i < valuesList.length; i++) {
             valuesList[i] = new Object[timestamps.length];
         }
-        for (Point point: points) {
+        for (Point point : points) {
             String measurement = point.getMeasurement();
             long timestamp = point.getTimestamp();
             int measurementIndex = measurementIndexMap.get(measurement);
@@ -119,7 +117,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
     @Override
     public void writeRecords(List<Record> records) {
         SortedMap<String, DataType> measurementMap = new TreeMap<>();
-        for (Record record: records) {
+        for (Record record : records) {
             for (int index = 0; index < record.getLength(); index++) {
                 String measurement = record.getMeasurement(index);
                 DataType dataType = record.getDataType(index);
@@ -134,7 +132,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         List<DataType> dataTypeList = new ArrayList<>();
         Map<String, Integer> measurementIndexMap = new HashMap<>(); // measurement 对应的 index
         int index = 0;
-        for (String measurement: measurementMap.keySet()) {
+        for (String measurement : measurementMap.keySet()) {
             measurementIndexMap.put(measurement, index);
             index++;
             measurements.add(measurement);
@@ -143,7 +141,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
 
 
         SortedMap<Long, Object[]> valuesMap = new TreeMap<>();
-        for (Record record: records) {
+        for (Record record : records) {
             long timestamp = record.getTimestamp();
             Object[] values = valuesMap.getOrDefault(timestamp, new Object[measurements.size()]);
             for (int i = 0; i < record.getValues().size(); i++) {
@@ -157,7 +155,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         long[] timestamps = new long[valuesMap.size()];
         Object[][] valuesList = new Object[valuesMap.size()][];
         index = 0;
-        for (Map.Entry<Long, Object[]> entry: valuesMap.entrySet()) {
+        for (Map.Entry<Long, Object[]> entry : valuesMap.entrySet()) {
             timestamps[index] = entry.getKey();
             valuesList[index] = entry.getValue();
             index++;
@@ -211,15 +209,16 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setDataTypeList(dataTypeList);
         req.setAttributesList(new ArrayList<>());
 
-        try {
-            lock.lock();
-            Status status = client.insertNonAlignedColumnRecords(req);
-            RpcUtils.verifySuccess(status);
-        } catch (TException | ExecutionException e) {
-            logger.error("insert data failure: ", e);
-        } finally {
-            lock.unlock();
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+            try {
+                Status status = client.insertNonAlignedColumnRecords(req);
+                RpcUtils.verifySuccess(status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("insert data failure: ", e);
+            }
         }
+
     }
 
     private void writeRowData(List<String> paths, long[] timestamps, Object[][] valuesList,
@@ -246,14 +245,14 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setDataTypeList(dataTypeList);
         req.setAttributesList(new ArrayList<>());
 
-        try {
-            lock.lock();
-            Status status = client.insertNonAlignedRowRecords(req);
-            RpcUtils.verifySuccess(status);
-        } catch (TException | ExecutionException e) {
-            logger.error("insert data failure: ", e);
-        } finally {
-            lock.unlock();
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+            try {
+                Status status = client.insertNonAlignedRowRecords(req);
+                RpcUtils.verifySuccess(status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("insert data failure: ", e);
+            }
         }
 
     }

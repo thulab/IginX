@@ -38,6 +38,10 @@ public class SimpleQuery {
         this.endTime = endTime;
     }
 
+    public static SimpleQuery.Builder builder() {
+        return new Builder();
+    }
+
     public Set<String> getMeasurements() {
         return measurements;
     }
@@ -48,10 +52,6 @@ public class SimpleQuery {
 
     public long getEndTime() {
         return endTime;
-    }
-
-    public static SimpleQuery.Builder builder() {
-        return new Builder();
     }
 
     public static class Builder {

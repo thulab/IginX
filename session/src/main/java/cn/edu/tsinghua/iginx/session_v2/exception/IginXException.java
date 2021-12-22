@@ -26,14 +26,19 @@ public class IginXException extends RuntimeException {
         this.message = message;
     }
 
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
     public IginXException(Throwable cause) {
         super(cause);
         this.message = cause.getMessage();
+    }
+
+    public IginXException(String message, Throwable cause) {
+        super(cause);
+        this.message = message + cause.getMessage();
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
     }
 
 }

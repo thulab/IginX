@@ -104,7 +104,7 @@ public class MeasurementMapper {
         }
         ConcurrentMap<String, java.lang.reflect.Field> map = new ConcurrentHashMap<>();
         Class<?> currentMeasurementType = measurementType;
-        while (currentMeasurementType != null) {
+        while(currentMeasurementType != null) {
             for (java.lang.reflect.Field field : currentMeasurementType.getDeclaredFields()) {
                 Field fieldAnnotation =
                         field.getAnnotation(Field.class);

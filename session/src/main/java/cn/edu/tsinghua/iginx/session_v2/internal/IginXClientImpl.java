@@ -20,14 +20,16 @@ package cn.edu.tsinghua.iginx.session_v2.internal;
 
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
+import cn.edu.tsinghua.iginx.session_v2.AsyncWriteClient;
 import cn.edu.tsinghua.iginx.session_v2.ClusterClient;
 import cn.edu.tsinghua.iginx.session_v2.DeleteClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientOptions;
 import cn.edu.tsinghua.iginx.session_v2.QueryClient;
+import cn.edu.tsinghua.iginx.session_v2.SQLClient;
 import cn.edu.tsinghua.iginx.session_v2.UserClient;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
-import cn.edu.tsinghua.iginx.session_v2.domain.Ready;
+import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
@@ -35,87 +37,145 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
+import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 
 public class IginXClientImpl implements IginXClient {
 
     private static final Logger logger = LoggerFactory.getLogger(IginXClientImpl.class);
 
-    private IService.Iface client;
+    private final IService.Iface client;
 
     private final TTransport transport;
 
     private final Lock lock; // IService.Iface 的 lock，保证多个线程在使用 client 时候不会互相影响
 
-    private long sessionId;
+    private final long sessionId;
 
     private boolean isClosed;
+
+    private final Collection<AutoCloseable> autoCloseables = new CopyOnWriteArrayList<>();
 
     public IginXClientImpl(IginXClientOptions options) {
         Arguments.checkNotNull(options, "IginXClientOptions");
 
-        this.lock = new ReentrantLock();
+        lock = new ReentrantLock();
         transport = new TSocket(options.getHost(), options.getPort());
 
         try {
             transport.open();
             client = new IService.Client(new TBinaryProtocol(transport));
+        } catch (TTransportException e) {
+            throw new IginXException("Open socket error: ", e);
+        }
 
+        try {
             OpenSessionReq req = new OpenSessionReq();
             req.setUsername(options.getUsername());
             req.setPassword(options.getPassword());
-
             sessionId = client.openSession(req).getSessionId();
+
         } catch (TException e) {
-            e.printStackTrace();
+            throw new IginXException("Open session error: ", e);
         }
 
     }
 
     @Override
-    public WriteClient getWriteClient() {
+    public synchronized WriteClient getWriteClient() {
+        checkIsClosed();
         return new WriteClientImpl(this);
     }
 
     @Override
-    public QueryClient getQueryClient() {
+    public synchronized AsyncWriteClient getAsyncWriteClient() {
+        checkIsClosed();
+        return new AsyncWriteClientImpl(this, autoCloseables);
+    }
+
+    @Override
+    public synchronized SQLClient getSQLClient() {
+        checkIsClosed();
+        return null;
+    }
+
+    @Override
+    public synchronized QueryClient getQueryClient() {
+        checkIsClosed();
         return new QueryClientImpl(this);
     }
 
     @Override
-    public DeleteClient getDeleteClient() {
+    public synchronized DeleteClient getDeleteClient() {
+        checkIsClosed();
         return null;
     }
 
     @Override
-    public UserClient getUserClient() {
+    public synchronized UserClient getUserClient() {
+        checkIsClosed();
         return null;
     }
 
     @Override
-    public ClusterClient getClusterClient() {
+    public synchronized ClusterClient getClusterClient() {
+        checkIsClosed();
         return null;
     }
 
-    @Override
-    public Ready ready() {
-        return null;
+    void checkIsClosed() {
+        if (isClosed) {
+            throw new IginXException("Session has been closed.");
+        }
     }
+
+    public synchronized boolean isClosed() {
+        return isClosed;
+    }
+
+    IService.Iface getClient() {
+        return client;
+    }
+
+    Lock getLock() {
+        return lock;
+    }
+
+    long getSessionId() {
+        return sessionId;
+    }
+
+
 
     @Override
     public void close() {
         if (isClosed) {
+            logger.warn("Client has been closed.");
             return;
         }
+
+        autoCloseables.stream().filter(Objects::nonNull).forEach(resource -> {
+            try {
+                resource.close();
+            } catch (Exception e) {
+                logger.warn(String.format("Exception was thrown while closing: %s", resource), e);
+            }
+        });
+
         CloseSessionReq req = new CloseSessionReq(sessionId);
         try {
             client.closeSession(req);
         } catch (TException e) {
-            logger.error("close session failure: ", e);
+            throw new IginXException("Close session error: ", e);
         } finally {
             if (transport != null) {
                 transport.close();
@@ -124,15 +184,4 @@ public class IginXClientImpl implements IginXClient {
         }
     }
 
-    public IService.Iface getClient() {
-        return client;
-    }
-
-    public Lock getLock() {
-        return lock;
-    }
-
-    public long getSessionId() {
-        return sessionId;
-    }
 }

@@ -20,22 +20,17 @@ package cn.edu.tsinghua.iginx.session_v2.internal;
 
 import cn.edu.tsinghua.iginx.thrift.IService;
 
-import java.util.concurrent.locks.Lock;
-
 public abstract class AbstractFunctionClient {
 
     protected final IginXClientImpl iginXClient;
 
     protected final IService.Iface client;
 
-    protected final Lock lock;
-
     protected final long sessionId;
 
     public AbstractFunctionClient(IginXClientImpl iginXClient) {
         this.iginXClient = iginXClient;
         this.client = iginXClient.getClient();
-        this.lock = iginXClient.getLock();
         this.sessionId = iginXClient.getSessionId();
     }
 
