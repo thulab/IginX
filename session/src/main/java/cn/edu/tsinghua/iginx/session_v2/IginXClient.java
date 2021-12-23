@@ -30,7 +30,7 @@ public interface IginXClient extends AutoCloseable {
 
     DeleteClient getDeleteClient();
 
-    UserClient getUserClient();
+    UsersClient getUserClient();
 
     ClusterClient getClusterClient();
 

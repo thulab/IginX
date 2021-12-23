@@ -27,7 +27,7 @@ import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientOptions;
 import cn.edu.tsinghua.iginx.session_v2.QueryClient;
 import cn.edu.tsinghua.iginx.session_v2.SQLClient;
-import cn.edu.tsinghua.iginx.session_v2.UserClient;
+import cn.edu.tsinghua.iginx.session_v2.UsersClient;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
@@ -42,12 +42,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
 
 public class IginXClientImpl implements IginXClient {
 
@@ -121,7 +119,7 @@ public class IginXClientImpl implements IginXClient {
     }
 
     @Override
-    public synchronized UserClient getUserClient() {
+    public synchronized UsersClient getUserClient() {
         checkIsClosed();
         return null;
     }
@@ -154,10 +152,8 @@ public class IginXClientImpl implements IginXClient {
         return sessionId;
     }
 
-
-
     @Override
-    public void close() {
+    public synchronized void close() {
         if (isClosed) {
             logger.warn("Client has been closed.");
             return;
