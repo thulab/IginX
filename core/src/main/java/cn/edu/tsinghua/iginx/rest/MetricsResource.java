@@ -158,6 +158,7 @@ public class MetricsResource {
             LOGGER.info("insert input, sign: {}, timestamp: {}", sign, startTimestamp);
         }
         LOGGER.info("rest Thread Pool: {}", ((ThreadPoolExecutor)threadPool).getActiveCount());
+        LOGGER.info("rest Thread Pool Queue: {}", ((ThreadPoolExecutor)threadPool).getQueue().size());
         threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false, needLog, sign, startTimestamp));
     }
 

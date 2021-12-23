@@ -112,7 +112,9 @@ public class Config {
 
     private boolean enableStorageGroupValueLimit = true;
 
-    private double storageGroupValueLimit = 200.0;
+    private double storageGroupValueLimit = 200;
+
+    private int asyncQueueSize = 1000;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -488,5 +490,13 @@ public class Config {
 
     public void setStorageGroupValueLimit(double storageGroupValueLimit) {
         this.storageGroupValueLimit = storageGroupValueLimit;
+    }
+
+    public int getAsyncQueueSize() {
+        return asyncQueueSize;
+    }
+
+    public void setAsyncQueueSize(int asyncQueueSize) {
+        this.asyncQueueSize = asyncQueueSize;
     }
 }

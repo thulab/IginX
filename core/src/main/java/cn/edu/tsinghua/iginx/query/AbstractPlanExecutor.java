@@ -88,6 +88,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         asyncTaskDispatcher.submit(() -> {
             while(true) {
                 logger.info("async Thread Pool: {}", ((ThreadPoolExecutor)asyncTaskExecuteThreadPool).getActiveCount());
+                logger.info("async Thread Pool Queue: {}", ((ThreadPoolExecutor)asyncTaskExecuteThreadPool).getQueue().size());
                 AsyncTask asyncTask = asyncTaskQueue.getAsyncTask();
                 asyncTaskExecuteThreadPool.submit(() -> {
                     IginxPlan plan = asyncTask.getIginxPlan();
