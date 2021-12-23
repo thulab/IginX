@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.rest.MetricsResource;
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -38,6 +39,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import cn.edu.tsinghua.iginx.rest.bean.Metric;
@@ -56,6 +59,10 @@ public class DataPointsParser {
     private int restReqSplitNum = ConfigDescriptor.getInstance().getConfig().getRestReqSplitNum();
     private boolean needUpdate = false;
 
+
+    private static Map<Long, cal> longcalMap = new ConcurrentHashMap<>();
+    private static Map<Long, Boolean> longBooleanMap = new ConcurrentHashMap<>();
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
 
     public DataPointsParser() {}
@@ -86,14 +93,29 @@ public class DataPointsParser {
                 metricList.add(getMetricObject(node, isAnnotation));
             }
 
-        } catch (Exception e) {
-            BufferedReader bufferedReader = new BufferedReader(inputStream);
-            StringBuffer sb = new StringBuffer();
-            String temp;
-            while ((temp = bufferedReader.readLine()) != null) {
-                sb.append(temp);
+
+            lock.writeLock().lock();
+            long minute = startTimeStamp / 60000;
+            if (longBooleanMap.getOrDefault(minute - 1, true)) {
+                cal tmp = longcalMap.getOrDefault(minute - 1, new cal());
+                if (minute > 0) {
+                    LOGGER.info("minute: {}, request: {}, timeseries: {}, datapoints: {}", minute - 1, tmp.request, tmp.timeseries, tmp.datapoints);
+                }
+                longBooleanMap.put(minute - 1, false);
             }
-            LOGGER.error(sb.toString());
+            lock.writeLock().unlock();
+
+            long datapoints = metricList.stream().mapToLong(e -> e.getTimestamps().size()).sum();
+            long timeseries = metricList.size();
+            LOGGER.info("timeseries: {}, datapoints: {}, sign: {}, ", timeseries, datapoints, sign);
+            lock.writeLock().lock();
+            cal tmp = longcalMap.getOrDefault(minute, new cal());
+            tmp.request += 1;
+            tmp.timeseries += timeseries;
+            tmp.datapoints += datapoints;
+            longcalMap.put(minute, tmp);
+            lock.writeLock().unlock();
+        } catch (Exception e) {
             LOGGER.error("Error occurred during parsing data ", e);
             session.closeSession();
             throw e;
@@ -314,5 +336,12 @@ public class DataPointsParser {
             }
         }
         return DataType.DOUBLE;
+    }
+
+
+    class  cal {
+        public long request = 0;
+        public long timeseries = 0;
+        public long datapoints = 0;
     }
 }
