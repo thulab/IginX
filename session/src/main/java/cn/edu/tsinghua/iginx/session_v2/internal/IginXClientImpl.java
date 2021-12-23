@@ -61,6 +61,10 @@ public class IginXClientImpl implements IginXClient {
 
     private boolean isClosed;
 
+    private final MeasurementMapper measurementMapper;
+
+    private final ResultMapper resultMapper;
+
     private final Collection<AutoCloseable> autoCloseables = new CopyOnWriteArrayList<>();
 
     public IginXClientImpl(IginXClientOptions options) {
@@ -68,6 +72,8 @@ public class IginXClientImpl implements IginXClient {
 
         lock = new ReentrantLock();
         transport = new TSocket(options.getHost(), options.getPort());
+        measurementMapper = new MeasurementMapper();
+        resultMapper = new ResultMapper();
 
         try {
             transport.open();
@@ -91,13 +97,13 @@ public class IginXClientImpl implements IginXClient {
     @Override
     public synchronized WriteClient getWriteClient() {
         checkIsClosed();
-        return new WriteClientImpl(this);
+        return new WriteClientImpl(this, measurementMapper);
     }
 
     @Override
     public synchronized AsyncWriteClient getAsyncWriteClient() {
         checkIsClosed();
-        return new AsyncWriteClientImpl(this, autoCloseables);
+        return new AsyncWriteClientImpl(this, measurementMapper, autoCloseables);
     }
 
     @Override
@@ -115,7 +121,7 @@ public class IginXClientImpl implements IginXClient {
     @Override
     public synchronized DeleteClient getDeleteClient() {
         checkIsClosed();
-        return null;
+        return new DeleteClientImpl(this, measurementMapper);
     }
 
     @Override

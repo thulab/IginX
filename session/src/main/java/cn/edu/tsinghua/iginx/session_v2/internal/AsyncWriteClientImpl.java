@@ -46,12 +46,13 @@ public class AsyncWriteClientImpl extends AbstractFunctionClient implements Asyn
 
     private final MeasurementMapper measurementMapper;
 
-    public AsyncWriteClientImpl(IginXClientImpl iginXClient, Collection<AutoCloseable> autoCloseables) {
+    public AsyncWriteClientImpl(IginXClientImpl iginXClient, MeasurementMapper measurementMapper, Collection<AutoCloseable> autoCloseables) {
         super(iginXClient);
 
-        this.syncWriteClient = new WriteClientImpl(iginXClient);
         this.autoCloseables = autoCloseables;
-        this.measurementMapper = new MeasurementMapper();
+        this.measurementMapper = measurementMapper;
+
+        this.syncWriteClient = new WriteClientImpl(iginXClient, measurementMapper);
 
         this.asyncWriteService = Executors.newSingleThreadExecutor();
         autoCloseables.add(this);

@@ -27,6 +27,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -96,6 +101,28 @@ public class MeasurementMapper {
         logger.debug("Mapped measurement: {} to record: {}", measurement, record);
 
         return record;
+    }
+
+    Collection<String> toMeasurements(final Class<?> measurementType) throws IginXException {
+        cacheMeasurementClass(measurementType);
+
+        if (measurementType.getAnnotation(Measurement.class) == null) {
+            String message = String
+                    .format("Measurement type '%s' does not have a @Measurement annotation.", measurementType);
+            throw new IginXException(message);
+        }
+
+        Set<String> measurements = new HashSet<>();
+        String measurement = getMeasurementName(measurementType);
+        CLASS_FIELD_CACHE.get(measurementType.getName()).forEach((name, field) -> {
+            Field fieldAnnotation = field.getAnnotation(Field.class);
+
+            if (!fieldAnnotation.timestamp()) {
+                measurements.add(measurement + "." + name);
+            }
+
+        });
+        return measurements;
     }
 
     private void cacheMeasurementClass(final Class<?> measurementType) {

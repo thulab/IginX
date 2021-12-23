@@ -42,12 +42,10 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -63,7 +61,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
     @Override
     public IginXTable simpleQuery(SimpleQuery query) {
         List<String> measurements = new ArrayList<>(query.getMeasurements());
-        QueryDataReq req = new QueryDataReq(sessionId, mergeAndSortMeasurements(measurements), query.getStartTime(), query.getEndTime());
+        QueryDataReq req = new QueryDataReq(sessionId, MeasurementUtils.mergeAndSortMeasurements(measurements), query.getStartTime(), query.getEndTime());
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();
@@ -120,37 +118,6 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
     @Override
     public <M> void query(Query query, Class<M> measurementType, BiConsumer<Cancellable, M> onNext) throws IginXException {
 
-    }
-
-    private List<String> mergeAndSortMeasurements(List<String> measurements) {
-        if (measurements.stream().anyMatch(x -> x.equals("*"))) {
-            List<String> tempPaths = new ArrayList<>();
-            tempPaths.add("*");
-            return tempPaths;
-        }
-        List<String> prefixes = measurements.stream().filter(x -> x.contains("*")).map(x -> x.substring(0, x.indexOf("*"))).collect(Collectors.toList());
-        if (prefixes.isEmpty()) {
-            Collections.sort(measurements);
-            return measurements;
-        }
-        List<String> mergedMeasurements = new ArrayList<>();
-        for (String measurement : measurements) {
-            if (!measurement.contains("*")) {
-                boolean skip = false;
-                for (String prefix : prefixes) {
-                    if (measurement.startsWith(prefix)) {
-                        skip = true;
-                        break;
-                    }
-                }
-                if (skip) {
-                    continue;
-                }
-            }
-            mergedMeasurements.add(measurement);
-        }
-        mergedMeasurements.sort(String::compareTo);
-        return mergedMeasurements;
     }
 
     private IginXTable buildIginXTable(QueryDataSet dataSet, List<String> measurements, List<DataType> dataTypes) {

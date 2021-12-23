@@ -55,9 +55,9 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
 
     private final MeasurementMapper measurementMapper;
 
-    public WriteClientImpl(IginXClientImpl iginXClient) {
+    public WriteClientImpl(IginXClientImpl iginXClient, MeasurementMapper measurementMapper) {
         super(iginXClient);
-        measurementMapper = new MeasurementMapper();
+        this.measurementMapper = measurementMapper;
     }
 
     @Override

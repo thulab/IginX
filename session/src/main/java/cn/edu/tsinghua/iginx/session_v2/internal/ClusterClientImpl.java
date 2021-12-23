@@ -25,6 +25,8 @@ import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
 import cn.edu.tsinghua.iginx.session_v2.domain.Storage;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
+import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -42,7 +44,21 @@ public class ClusterClientImpl extends AbstractFunctionClient implements Cluster
 
     @Override
     public ClusterInfo getClusterInfo() throws IginXException {
-        return null;
+        GetClusterInfoReq req = new GetClusterInfoReq(sessionId);
+
+        GetClusterInfoResp resp;
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+
+            try {
+                resp = client.getClusterInfo(req);
+                RpcUtils.verifySuccess(resp.status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("get cluster info failure: ", e);
+            }
+        }
+
+        return new ClusterInfo(resp.getIginxInfos(), resp.getStorageEngineInfos(), resp.getLocalMetaStorageInfo(), resp.getMetaStorageInfos());
     }
 
     @Override
