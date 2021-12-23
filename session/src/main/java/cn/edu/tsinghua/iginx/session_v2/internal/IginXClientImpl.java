@@ -121,13 +121,13 @@ public class IginXClientImpl implements IginXClient {
     @Override
     public synchronized UsersClient getUserClient() {
         checkIsClosed();
-        return null;
+        return new UsersClientImpl(this);
     }
 
     @Override
     public synchronized ClusterClient getClusterClient() {
         checkIsClosed();
-        return null;
+        return new ClusterClientImpl(this);
     }
 
     void checkIsClosed() {

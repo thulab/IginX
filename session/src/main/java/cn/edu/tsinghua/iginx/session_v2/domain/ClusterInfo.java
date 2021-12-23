@@ -16,20 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.session_v2;
+package cn.edu.tsinghua.iginx.session_v2.domain;
 
-import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
-import cn.edu.tsinghua.iginx.session_v2.domain.Storage;
-import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
+public final class ClusterInfo {
 
-import java.util.List;
 
-public interface ClusterClient {
-
-    ClusterInfo getClusterInfo() throws IginXException;
-
-    void scaleOutStorage(final Storage storage) throws IginXException;
-
-    void scaleOutStorages(final List<Storage> storages) throws IginXException;
 
 }

@@ -16,20 +16,40 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.session_v2;
+package cn.edu.tsinghua.iginx.session_v2.domain;
 
-import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
-import cn.edu.tsinghua.iginx.session_v2.domain.Storage;
-import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
+import java.util.Map;
 
-import java.util.List;
+public final class Storage {
 
-public interface ClusterClient {
+    private final String ip;
 
-    ClusterInfo getClusterInfo() throws IginXException;
+    private final int port;
 
-    void scaleOutStorage(final Storage storage) throws IginXException;
+    private final String type;
 
-    void scaleOutStorages(final List<Storage> storages) throws IginXException;
+    private final Map<String, String> extraParams;
 
+    public Storage(String ip, int port, String type, Map<String, String> extraParams) {
+        this.ip = ip;
+        this.port = port;
+        this.type = type;
+        this.extraParams = extraParams;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public Map<String, String> getExtraParams() {
+        return extraParams;
+    }
 }
