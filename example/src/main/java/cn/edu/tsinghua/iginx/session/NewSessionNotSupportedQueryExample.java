@@ -47,14 +47,14 @@ public class NewSessionNotSupportedQueryExample {
         IginXClient client = IginXClientFactory.create();
         QueryClient queryClient = client.getQueryClient();
 
-        IginXTable table = queryClient.simpleQuery( // 查询 a.a.a 序列最近一秒内的数据
+        IginXTable table = queryClient.query( // 查询 a.a.a 序列最近一秒内的数据
                 SimpleQuery.builder()
                         .addMeasurement("a.a.a")
                         .startTime(System.currentTimeMillis() - 1000L)
                         .endTime(System.currentTimeMillis())
                         .build()
         );
-        List<POJO> pojoList = queryClient.query(new Query("select * from demo.pojo where time < now() and time > now() - 1000"), POJO.class); // 查询最近一秒内的 pojo 对象
+        List<POJO> pojoList = queryClient.query("select * from demo.pojo where time < now() and time > now() - 1000", POJO.class); // 查询最近一秒内的 pojo 对象
         client.close();
     }
 

@@ -64,7 +64,7 @@ public class NewSessionExample {
         writeClient.writePoints(Arrays.asList(point1, point2));
 
         QueryClient queryClient = client.getQueryClient();
-        IginXTable table = queryClient.simpleQuery(
+        IginXTable table = queryClient.query(
                 SimpleQuery.builder()
                         .addMeasurement("a.a.a")
                         .addMeasurement("a.b.b")

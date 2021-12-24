@@ -35,27 +35,32 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
+import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
-import org.apache.http.concurrent.Cancellable;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValuesByDataType;
 
 public class QueryClientImpl extends AbstractFunctionClient implements QueryClient {
 
@@ -83,7 +88,6 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
                 throw new IginXException("simple query failure: ", e);
             }
         }
-
         return buildIginXTable(resp.getQueryDataSet(), resp.getPaths(), resp.getDataTypeList());
     }
 
@@ -103,7 +107,20 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
             }
         }
 
-        return null;
+        // 构造结果集
+        measurements = resp.getPaths();
+        List<DataType> dataTypes = resp.getDataTypeList();
+        Object[] values = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
+        List<IginXColumn> columns = new ArrayList<>();
+        Map<String, Object> recordValues = new HashMap<>();
+        for (int i = 0; i < measurements.size(); i++) {
+            IginXColumn column = new IginXColumn(measurements.get(i), dataTypes.get(i));
+            columns.add(column);
+            recordValues.put(measurements.get(i), values[i]);
+        }
+        IginXHeader header = new IginXHeader(columns);
+        IginXRecord record = new IginXRecord(header, recordValues);
+        return new IginXTable(header, Collections.singletonList(record));
     }
 
     private IginXTable downsampleQuery(DownsampleQuery query) throws IginXException {
@@ -124,7 +141,40 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
     }
 
     private IginXTable lastQuery(LastQuery query) throws IginXException {
-        return null;
+        List<String> measurements = new ArrayList<>(query.getMeasurements());
+        LastQueryReq req = new LastQueryReq(sessionId, MeasurementUtils.mergeAndSortMeasurements(measurements), query.getStartTime());
+
+        LastQueryResp resp;
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+            try {
+                resp = client.lastQuery(req);
+                RpcUtils.verifySuccess(resp.status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("last query failure: ", e);
+            }
+        }
+
+        List<IginXColumn> columns = Arrays.asList(new IginXColumn("Measurement", DataType.BINARY), new IginXColumn("Value", DataType.BINARY));
+        IginXHeader header = new IginXHeader(IginXColumn.TIME, columns);
+        List<IginXRecord> records = new ArrayList<>();
+        long[] timestamps = getLongArrayFromByteBuffer(resp.timestamps);
+        Object[] values = getValuesByDataType(resp.valuesList, resp.dataTypeList);
+
+        for (int i = 0; i < timestamps.length; i++) {
+            long timestamp = timestamps[i];
+            Map<String, Object> recordValues = new HashMap<>();
+            recordValues.put(columns.get(0).getName(), resp.getPaths().get(i));
+            byte[] value = null;
+            if (values[i] instanceof byte[]) {
+                value = (byte[]) values[i];
+            } else {
+                value = values[i].toString().getBytes();
+            }
+            recordValues.put(columns.get(1).getName(), value);
+            records.add(new IginXRecord(timestamp, header, recordValues));
+        }
+        return new IginXTable(header, records);
     }
 
     @Override
@@ -135,33 +185,56 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
 
     @Override
     public IginXTable query(Query query) throws IginXException {
-        return null;
+        IginXTable table;
+        if (query instanceof SimpleQuery) {
+            table = simpleQuery((SimpleQuery) query);
+        } else if (query instanceof LastQuery) {
+            table = lastQuery((LastQuery) query);
+        } else if (query instanceof DownsampleQuery) {
+            table = downsampleQuery((DownsampleQuery) query);
+        } else if (query instanceof AggregateQuery) {
+            table = aggregateQuery((AggregateQuery) query);
+        } else {
+            throw new IllegalArgumentException("unknown query type: " + query.getClass());
+        }
+        return table;
     }
 
     @Override
-    public void query(Query query, BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException {
-
+    public void query(Query query, Consumer<IginXRecord> onNext) throws IginXException {
+        IginXTable table = query(query);
+        new ConsumerControlThread(table, onNext).start();
     }
 
     @Override
-    public <M> void query(Query query, Class<M> measurementType, BiConsumer<Cancellable, M> onNext) throws IginXException {
-
+    public <M> void query(Query query, Class<M> measurementType, Consumer<M> onNext) throws IginXException {
+        IginXTable table = query(query);
+        new ConsumerMapperControlThread<M>(table, onNext, measurementType, resultMapper).start();
     }
 
 
     @Override
     public IginXTable query(String query) throws IginXException {
+        // TODO: 执行查询 SQL
         return null;
     }
 
     @Override
-    public <M> void query(String query, Class<M> measurementType, BiConsumer<Cancellable, M> onNext) throws IginXException {
-
+    public <M> void query(String query, Class<M> measurementType, Consumer<M> onNext) throws IginXException {
+        IginXTable table = query(query);
+        new ConsumerMapperControlThread<M>(table, onNext, measurementType, resultMapper).start();
     }
 
     @Override
-    public void query(String query, BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException {
+    public void query(String query, Consumer<IginXRecord> onNext) throws IginXException {
+        IginXTable table = query(query);
+        new ConsumerControlThread(table, onNext).start();
+    }
 
+    @Override
+    public <M> List<M> query(String query, Class<M> measurementType) throws IginXException {
+        IginXTable table = query(query);
+        return table.getRecords().stream().map(e -> resultMapper.toPOJO(e, measurementType)).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     private IginXTable buildIginXTable(QueryDataSet dataSet, List<String> measurements, List<DataType> dataTypes) {
@@ -194,6 +267,54 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
             records.add(new IginXRecord(hasTimestamp ? timestamps[i] : 0L, header, values));
         }
         return new IginXTable(header, records);
+    }
+
+    private static class ConsumerControlThread extends Thread {
+
+        private final IginXTable table;
+
+        private final Consumer<IginXRecord> onNext;
+
+        public ConsumerControlThread(IginXTable table, Consumer<IginXRecord> onNext) {
+            this.table = table;
+            this.onNext = onNext;
+        }
+
+        @Override
+        public void run() {
+            List<IginXRecord> records = table.getRecords();
+            for (IginXRecord record : records) {
+                onNext.accept(record);
+            }
+        }
+    }
+
+    private static class ConsumerMapperControlThread<M> extends Thread {
+
+
+        private final IginXTable table;
+
+        private final Consumer<M> onNext;
+
+        private final Class<M> measurementType;
+
+        private final ResultMapper resultMapper;
+
+        public ConsumerMapperControlThread(IginXTable table, Consumer<M> onNext, Class<M> measurementType, ResultMapper resultMapper) {
+            this.table = table;
+            this.onNext = onNext;
+            this.measurementType = measurementType;
+            this.resultMapper = resultMapper;
+        }
+
+        @Override
+        public void run() {
+            List<IginXRecord> records = table.getRecords();
+            for (IginXRecord record : records) {
+                onNext.accept(resultMapper.toPOJO(record, measurementType));
+            }
+        }
+
     }
 
 }
