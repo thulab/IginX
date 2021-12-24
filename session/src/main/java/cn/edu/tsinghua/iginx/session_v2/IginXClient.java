@@ -24,8 +24,6 @@ public interface IginXClient extends AutoCloseable {
 
     AsyncWriteClient getAsyncWriteClient();
 
-    SQLClient getSQLClient();
-
     QueryClient getQueryClient();
 
     DeleteClient getDeleteClient();

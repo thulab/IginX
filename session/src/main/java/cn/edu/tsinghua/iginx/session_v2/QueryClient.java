@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.DownsampleQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
+import cn.edu.tsinghua.iginx.session_v2.query.LastQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.Query;
 import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
 import org.apache.http.concurrent.Cancellable;
@@ -32,21 +33,15 @@ import java.util.function.BiConsumer;
 
 public interface QueryClient {
 
-    IginXTable simpleQuery(final SimpleQuery query) throws IginXException;
-
-    IginXTable aggregateQuery(final AggregateQuery query) throws IginXException;
-
-    IginXTable downsampleQuery(final DownsampleQuery query) throws IginXException;
+    IginXTable query(final Query query) throws IginXException;
 
     <M> List<M> query(final Query query, final Class<M> measurementType) throws IginXException;
 
     IginXTable query(final String query) throws IginXException;
 
-    IginXTable query(final Query query) throws IginXException;
+    void query(final Query query, final BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException;
 
     void query(final String query, final BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException;
-
-    void query(final Query query, final BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException;
 
     <M> void query(final String query, final Class<M> measurementType, final BiConsumer<Cancellable, M> onNext) throws IginXException;
 

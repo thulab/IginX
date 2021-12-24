@@ -27,9 +27,14 @@ import cn.edu.tsinghua.iginx.session_v2.query.IginXColumn;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXHeader;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
+import cn.edu.tsinghua.iginx.session_v2.query.LastQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.Query;
 import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
@@ -45,7 +50,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -54,60 +61,97 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
 
     private static final Logger logger = LoggerFactory.getLogger(QueryClientImpl.class);
 
-    public QueryClientImpl(IginXClientImpl iginXClient) {
+    private final ResultMapper resultMapper;
+
+    public QueryClientImpl(IginXClientImpl iginXClient, ResultMapper resultMapper) {
         super(iginXClient);
+        this.resultMapper = resultMapper;
     }
 
-    @Override
-    public IginXTable simpleQuery(SimpleQuery query) {
+    private IginXTable simpleQuery(SimpleQuery query) {
         List<String> measurements = new ArrayList<>(query.getMeasurements());
         QueryDataReq req = new QueryDataReq(sessionId, MeasurementUtils.mergeAndSortMeasurements(measurements), query.getStartTime(), query.getEndTime());
+
+        QueryDataResp resp;
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();
             try {
-                QueryDataResp resp = client.queryData(req);
+                resp = client.queryData(req);
                 RpcUtils.verifySuccess(resp.status);
-                return buildIginXTable(resp.getQueryDataSet(), resp.getPaths(), resp.getDataTypeList());
             } catch (TException | ExecutionException e) {
-                throw new IginXException("insert data failure: ", e);
+                throw new IginXException("simple query failure: ", e);
             }
         }
+
+        return buildIginXTable(resp.getQueryDataSet(), resp.getPaths(), resp.getDataTypeList());
     }
 
-    @Override
-    public IginXTable aggregateQuery(AggregateQuery query) throws IginXException {
+    private IginXTable aggregateQuery(AggregateQuery query) throws IginXException {
+        List<String> measurements = new ArrayList<>(query.getMeasurements());
+        AggregateQueryReq req = new AggregateQueryReq(sessionId, MeasurementUtils.mergeAndSortMeasurements(measurements), query.getStartTime(), query.getEndTime(), query.getAggregateType());
+
+        AggregateQueryResp resp;
+
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+            try {
+                resp = client.aggregateQuery(req);
+                RpcUtils.verifySuccess(resp.status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("aggregate query failure: ", e);
+            }
+        }
+
         return null;
     }
 
-    @Override
-    public IginXTable downsampleQuery(DownsampleQuery query) throws IginXException {
+    private IginXTable downsampleQuery(DownsampleQuery query) throws IginXException {
+        List<String> measurements = new ArrayList<>(query.getMeasurements());
+        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, MeasurementUtils.mergeAndSortMeasurements(measurements), query.getStartTime(), query.getEndTime(), query.getAggregateType(), query.getPrecision());
+
+        DownsampleQueryResp resp;
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+            try {
+                resp = client.downsampleQuery(req);
+                RpcUtils.verifySuccess(resp.status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("downsample query failure: ", e);
+            }
+        }
+        return buildIginXTable(resp.getQueryDataSet(), resp.getPaths(), resp.getDataTypeList());
+    }
+
+    private IginXTable lastQuery(LastQuery query) throws IginXException {
         return null;
     }
 
     @Override
     public <M> List<M> query(Query query, Class<M> measurementType) throws IginXException {
-        return null;
-    }
-
-    @Override
-    public IginXTable query(String query) throws IginXException {
-        return null;
+        IginXTable table = query(query);
+        return table.getRecords().stream().map(e -> resultMapper.toPOJO(e, measurementType)).filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     @Override
     public IginXTable query(Query query) throws IginXException {
-        return query(query.getQuery());
-    }
-
-    @Override
-    public void query(String query, BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException {
-
+        return null;
     }
 
     @Override
     public void query(Query query, BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException {
-        query(query.getQuery(), onNext);
+
+    }
+
+    @Override
+    public <M> void query(Query query, Class<M> measurementType, BiConsumer<Cancellable, M> onNext) throws IginXException {
+
+    }
+
+
+    @Override
+    public IginXTable query(String query) throws IginXException {
+        return null;
     }
 
     @Override
@@ -116,7 +160,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
     }
 
     @Override
-    public <M> void query(Query query, Class<M> measurementType, BiConsumer<Cancellable, M> onNext) throws IginXException {
+    public void query(String query, BiConsumer<Cancellable, IginXRecord> onNext) throws IginXException {
 
     }
 

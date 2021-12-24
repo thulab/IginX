@@ -32,4 +32,6 @@ public interface ClusterClient {
 
     void scaleOutStorages(final List<Storage> storages) throws IginXException;
 
+    int getReplicaNum() throws IginXException;
+
 }

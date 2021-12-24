@@ -107,15 +107,9 @@ public class IginXClientImpl implements IginXClient {
     }
 
     @Override
-    public synchronized SQLClient getSQLClient() {
-        checkIsClosed();
-        return null;
-    }
-
-    @Override
     public synchronized QueryClient getQueryClient() {
         checkIsClosed();
-        return new QueryClientImpl(this);
+        return new QueryClientImpl(this, resultMapper);
     }
 
     @Override

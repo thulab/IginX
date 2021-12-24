@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
+import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -86,6 +88,23 @@ public class ClusterClientImpl extends AbstractFunctionClient implements Cluster
             }
         }
 
+    }
+
+    @Override
+    public int getReplicaNum() throws IginXException {
+        GetReplicaNumReq req = new GetReplicaNumReq(sessionId);
+
+        GetReplicaNumResp resp;
+        synchronized (iginXClient) {
+            iginXClient.checkIsClosed();
+            try {
+                resp = client.getReplicaNum(req);
+                RpcUtils.verifySuccess(resp.status);
+            } catch (TException | ExecutionException e) {
+                throw new IginXException("get replica num failure: ", e);
+            }
+        }
+        return resp.getReplicaNum();
     }
 
     private static StorageEngine toStorageEngine(Storage storage) {

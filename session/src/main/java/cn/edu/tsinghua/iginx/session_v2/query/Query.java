@@ -18,32 +18,17 @@
  */
 package cn.edu.tsinghua.iginx.session_v2.query;
 
-public class Query {
+import java.util.Set;
 
-    private final String query;
+public abstract class Query {
 
-    public Query(String query) {
-        this.query = query;
+    protected final Set<String> measurements;
+
+    public Query(Set<String> measurements) {
+        this.measurements = measurements;
     }
 
-    public static Query.Builder builder() {
-        return new Builder();
+    public Set<String> getMeasurements() {
+        return measurements;
     }
-
-    public String getQuery() {
-        return query;
-    }
-
-    public static class Builder {
-
-        private Builder() {
-
-        }
-
-        public Query build() {
-            return new Query("");
-        }
-
-    }
-
 }
