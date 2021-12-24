@@ -19,10 +19,13 @@
 package cn.edu.tsinghua.iginx.session_v2.internal;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
+import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 public class ResultMapper {
 
@@ -35,6 +38,26 @@ public class ResultMapper {
         try {
             T pojo = clazz.newInstance();
 
+            Class<?> currentClazz = clazz;
+
+            while (currentClazz != null) {
+
+                java.lang.reflect.Field[] fields = currentClazz.getDeclaredFields();
+                for (java.lang.reflect.Field field: fields) {
+                    Field anno = field.getAnnotation(Field.class);
+                    String fieldName = field.getName();
+                    if (anno != null && !anno.name().isEmpty()) {
+                        fieldName = anno.name();
+                    }
+                    Map<String, Object> recordValues = record.getValues();
+                    if (recordValues.containsKey(fieldName)) {
+                        Object value = recordValues.get(fieldName);
+                        setFieldValue(pojo, field, value);
+                    }
+                }
+
+                currentClazz = clazz.getSuperclass();
+            }
 
             return pojo;
         } catch (Exception e) {
@@ -42,31 +65,56 @@ public class ResultMapper {
         }
     }
 
-    private double toDoubleValue(final Object value) {
+    private void setFieldValue(final Object object,
+                               final java.lang.reflect.Field field,
+                               final Object value) {
+        if (field == null || value == null) {
+            return;
+        }
+        String msg =
+                "Class '%s' field '%s' was defined with a different field type and caused a ClassCastException. "
+                        + "The correct type is '%s' (current field value: '%s').";
 
-        if (double.class.isAssignableFrom(value.getClass()) || Double.class.isAssignableFrom(value.getClass())) {
-            return (double) value;
+        try {
+            if (!field.isAccessible()) {
+                field.setAccessible(true);
+            }
+            Class<?> fieldType = field.getType();
+
+            if (fieldType.equals(value.getClass())) {
+                field.set(object, value);
+                return;
+            }
+            if (double.class.isAssignableFrom(fieldType)) {
+                field.setDouble(object, (double) value);
+                return;
+            }
+            if (float.class.isAssignableFrom(fieldType)) {
+                field.setFloat(object, (float) value);
+                return;
+            }
+            if (long.class.isAssignableFrom(fieldType)) {
+                field.setLong(object, (long) value);
+                return;
+            }
+            if (int.class.isAssignableFrom(fieldType)) {
+                field.setInt(object, (int) value);
+                return;
+            }
+            if (boolean.class.isAssignableFrom(fieldType)) {
+                field.setBoolean(object, Boolean.parseBoolean(String.valueOf(value)));
+                return;
+            }
+            if (String.class.isAssignableFrom(fieldType)) {
+                field.set(object, new String((byte[]) value));
+                return;
+            }
+            field.set(object, value);
+        } catch (ClassCastException | IllegalAccessException e) {
+            throw new IginXException(String.format(msg, object.getClass().getName(), field.getName(),
+                    value.getClass().getName(), value));
         }
 
-        return (Double) value;
-    }
-
-    private long toLongValue(final Object value) {
-
-        if (long.class.isAssignableFrom(value.getClass()) || Long.class.isAssignableFrom(value.getClass())) {
-            return (long) value;
-        }
-
-        return ((Double) value).longValue();
-    }
-
-    private int toIntValue(final Object value) {
-
-        if (int.class.isAssignableFrom(value.getClass()) || Integer.class.isAssignableFrom(value.getClass())) {
-            return (int) value;
-        }
-
-        return ((Double) value).intValue();
     }
 
 
