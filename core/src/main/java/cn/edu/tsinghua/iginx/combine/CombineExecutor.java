@@ -70,7 +70,7 @@ public class CombineExecutor implements ICombineExecutor {
         StatusCode statusCode = StatusCode.SUCCESS_STATUS;
         String statusMessage = null;
 
-        boolean notExecute = (int) planExecuteResults.stream().map(e -> e.getStatusCode() == PlanExecuteResult.NON_EXECUTED).count() > 0;
+        boolean notExecute = (int) planExecuteResults.stream().filter(e -> e.getStatusCode() == PlanExecuteResult.NON_EXECUTED).count() > 0;
         if (notExecute) {
             statusCode = StatusCode.OVERLOAD;
             statusMessage = RpcUtils.OVERLOAD.message;
