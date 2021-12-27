@@ -16,31 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.query.result;
 
-public enum StatusCode {
-    WRONG_USERNAME_OR_PASSWORD(100),
-    ACCESS_DENY(101),
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
-    SUCCESS_STATUS(200),
-    PARTIAL_SUCCESS(204),
+public class NonExecuteResult extends PlanExecuteResult {
 
-    REDIRECT(300),
-
-    SESSION_ERROR(400),
-    STATEMENT_EXECUTION_ERROR(401),
-    STATEMENT_PARSE_ERROR(402),
-    DELETE_ROOT_USER(403),
-
-    OVERLOAD(503);
-
-    private final int statusCode;
-
-    StatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
+    public NonExecuteResult(IginxPlan plan) {
+        super(PlanExecuteResult.NON_EXECUTED, plan);
     }
 }
