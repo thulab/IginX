@@ -59,10 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -91,49 +88,54 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         asyncTaskDispatcher.submit(() -> {
             while(true) {
                 logger.info("async Thread Pool: {}", asyncTaskExecuteThreadPool.getActiveCount());
+                logger.info("async Thread Pool Queue: {}", ((ThreadPoolExecutor)asyncTaskExecuteThreadPool).getQueue().size());
                 AsyncTask asyncTask = asyncTaskQueue.getAsyncTask();
-                asyncTaskExecuteThreadPool.submit(() -> {
-                    IginxPlan plan = asyncTask.getIginxPlan();
-                    SyncPlanExecuteResult planExecuteResult = null;
-                    switch (plan.getIginxPlanType()) {
-                        case INSERT_COLUMN_RECORDS:
-                            logger.info("execute async insert column records task");
-                            planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
-                            plan.setPlanExecuteResult(planExecuteResult);
-                            break;
-                        case INSERT_NON_ALIGNED_COLUMN_RECORDS:
-                            logger.info("execute async insert non-aligned column records task");
-                            planExecuteResult = syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
-                            plan.setPlanExecuteResult(planExecuteResult);
-                            break;
-                        case INSERT_ROW_RECORDS:
-                            logger.info("execute async insert row records task");
-                            planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
-                            plan.setPlanExecuteResult(planExecuteResult);
-                            break;
-                        case INSERT_NON_ALIGNED_ROW_RECORDS:
-                            logger.info("execute async insert non-aligned row records task");
-                            planExecuteResult = syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
-                            plan.setPlanExecuteResult(planExecuteResult);
-                            break;
-                        case DELETE_COLUMNS:
-                            planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
-                            plan.setPlanExecuteResult(planExecuteResult);
-                            break;
-                        case DELETE_DATA_IN_COLUMNS:
-                            planExecuteResult = syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan);
-                            plan.setPlanExecuteResult(planExecuteResult);
-                            break;
-                        default:
-                            logger.info("unimplemented method: " + plan.getIginxPlanType());
-                    }
-                    if (planExecuteResult == null || planExecuteResult.getStatusCode() != PlanExecuteResult.SUCCESS) { // 异步任务执行失败后再次执行，直到到达预设的最大执行次数
-                        asyncTask.addRetryTimes();
-                        if (asyncTask.getRetryTimes() < ConfigDescriptor.getInstance().getConfig().getMaxAsyncRetryTimes()) {
-                            asyncTaskQueue.addAsyncTask(asyncTask);
+                try {
+                    asyncTaskExecuteThreadPool.submit(() -> {
+                        IginxPlan plan = asyncTask.getIginxPlan();
+                        SyncPlanExecuteResult planExecuteResult = null;
+                        switch (plan.getIginxPlanType()) {
+                            case INSERT_COLUMN_RECORDS:
+                                logger.info("execute async insert column records task");
+                                planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
+                                plan.setPlanExecuteResult(planExecuteResult);
+                                break;
+                            case INSERT_NON_ALIGNED_COLUMN_RECORDS:
+                                logger.info("execute async insert non-aligned column records task");
+                                planExecuteResult = syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+                                plan.setPlanExecuteResult(planExecuteResult);
+                                break;
+                            case INSERT_ROW_RECORDS:
+                                logger.info("execute async insert row records task");
+                                planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
+                                plan.setPlanExecuteResult(planExecuteResult);
+                                break;
+                            case INSERT_NON_ALIGNED_ROW_RECORDS:
+                                logger.info("execute async insert non-aligned row records task");
+                                planExecuteResult = syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
+                                plan.setPlanExecuteResult(planExecuteResult);
+                                break;
+                            case DELETE_COLUMNS:
+                                planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
+                                plan.setPlanExecuteResult(planExecuteResult);
+                                break;
+                            case DELETE_DATA_IN_COLUMNS:
+                                planExecuteResult = syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan);
+                                plan.setPlanExecuteResult(planExecuteResult);
+                                break;
+                            default:
+                                logger.info("unimplemented method: " + plan.getIginxPlanType());
                         }
-                    }
-                });
+                        if (planExecuteResult == null || planExecuteResult.getStatusCode() != PlanExecuteResult.SUCCESS) { // 异步任务执行失败后再次执行，直到到达预设的最大执行次数
+                            asyncTask.addRetryTimes();
+                            if (asyncTask.getRetryTimes() < ConfigDescriptor.getInstance().getConfig().getMaxAsyncRetryTimes()) {
+                                asyncTaskQueue.addAsyncTask(asyncTask);
+                            }
+                        }
+                    });
+                } catch (Exception e) {
+                    logger.error("Too much async tasks!");
+                }
             }
         });
         syncExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getSyncExecuteThreadPool());

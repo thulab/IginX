@@ -113,6 +113,7 @@ public class ConfigDescriptor {
             config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
             config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
+            config.setAsyncQueueSize(Integer.parseInt(properties.getProperty("asyncQueueSize", "1000")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);

@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.query.async.queue;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,11 +30,13 @@ public class MemoryAsyncTaskQueue implements AsyncTaskQueue {
 
     private static final Logger logger = LoggerFactory.getLogger(MemoryAsyncTaskQueue.class);
 
-    private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>();
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
+    private final LinkedBlockingQueue<AsyncTask> asyncTasks = new LinkedBlockingQueue<>(config.getAsyncQueueSize());
 
     @Override
     public boolean addAsyncTask(AsyncTask asyncTask) {
-        return asyncTasks.add(asyncTask);
+        return asyncTasks.offer(asyncTask);
     }
 
     @Override

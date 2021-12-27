@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Path("/")
 public class MetricsResource {
@@ -156,6 +157,8 @@ public class MetricsResource {
             startTimestamp = System.currentTimeMillis();
             LOGGER.info("insert input, sign: {}, timestamp: {}", sign, startTimestamp);
         }
+        LOGGER.info("rest Thread Pool: {}", ((ThreadPoolExecutor)threadPool).getActiveCount());
+        LOGGER.info("rest Thread Pool Queue: {}", ((ThreadPoolExecutor)threadPool).getQueue().size());
         threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false, needLog, sign, startTimestamp));
     }
 
