@@ -61,6 +61,7 @@ public class ConfigDescriptor {
             config.setStorageEngineList(properties.getProperty("storageEngineList",
                     "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100"));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
+            config.setMaxAsyncTasks(Integer.parseInt(properties.getProperty("maxAsyncTasks", "1000")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
@@ -127,6 +128,7 @@ public class ConfigDescriptor {
         config.setZookeeperConnectionString(EnvUtils.loadEnv("zookeeperConnectionString", config.getZookeeperConnectionString()));
         config.setStorageEngineList(EnvUtils.loadEnv("storageEngineList", config.getStorageEngineList()));
         config.setMaxAsyncRetryTimes(EnvUtils.loadEnv("maxAsyncRetryTimes", config.getMaxAsyncRetryTimes()));
+        config.setMaxAsyncTasks(EnvUtils.loadEnv("maxAsyncTasks", config.getMaxAsyncTasks()));
         config.setSyncExecuteThreadPool(EnvUtils.loadEnv("syncExecuteThreadPool", config.getSyncExecuteThreadPool()));
         config.setAsyncExecuteThreadPool(EnvUtils.loadEnv("asyncExecuteThreadPool", config.getAsyncExecuteThreadPool()));
         config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));

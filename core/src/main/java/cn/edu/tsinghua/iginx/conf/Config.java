@@ -36,6 +36,8 @@ public class Config {
 
     private int maxAsyncRetryTimes = 2;
 
+    private int maxAsyncTasks = 1000;
+
     private int syncExecuteThreadPool = 60;
 
     private int asyncExecuteThreadPool = 20;
@@ -178,6 +180,14 @@ public class Config {
 
     public void setMaxAsyncRetryTimes(int maxAsyncRetryTimes) {
         this.maxAsyncRetryTimes = maxAsyncRetryTimes;
+    }
+
+    public int getMaxAsyncTasks() {
+        return maxAsyncTasks;
+    }
+
+    public void setMaxAsyncTasks(int maxAsyncTasks) {
+        this.maxAsyncTasks = maxAsyncTasks;
     }
 
     public int getSyncExecuteThreadPool() {
