@@ -518,10 +518,18 @@ class NaivePlanSplitter implements IPlanSplitter {
     @Override
     public List<StorageUnitMeta> selectStorageUnitList(FragmentMeta fragment, boolean isQuery) {
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-        // TODO 暂时设置为只查主
-        storageUnitList.add(fragment.getMasterStorageUnit());
-        if (!isQuery) {
+        if (!isQuery) { // 写入的情况下，所有的分片都要发
+            storageUnitList.add(fragment.getMasterStorageUnit());
             storageUnitList.addAll(fragment.getMasterStorageUnit().getReplicas());
+        } else {
+            // 随机选一个进行查询
+            List<StorageUnitMeta> replicaUnits = fragment.getMasterStorageUnit().getReplicas();
+            int index = random.nextInt(replicaUnits.size() + 1);
+            if (index < replicaUnits.size()) {
+                storageUnitList.add(replicaUnits.get(index));
+            } else {
+                storageUnitList.add(fragment.getMasterStorageUnit());
+            }
         }
         return storageUnitList;
     }

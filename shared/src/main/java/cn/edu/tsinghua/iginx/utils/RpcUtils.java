@@ -40,12 +40,15 @@ public class RpcUtils {
 
     public static Status FAILURE = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
 
+    public static Status OVERLOAD = new Status(StatusCode.OVERLOAD.getStatusCode());
+
     static {
         WRONG_USERNAME_OR_PASSWORD.setMessage("wrong username or password");
         ACCESS_DENY.setMessage("access deny");
-        DELETE_ROOT_USER.setMessage("Administrator user can not be deleted");
+        DELETE_ROOT_USER.setMessage("administrator user can not be deleted");
         PARTIAL_SUCCESS.setMessage("partial success");
         FAILURE.setMessage("unexpected error");
+        OVERLOAD.setMessage("service is overloaded");
     }
 
     public static void verifySuccess(Status status) throws ExecutionException {

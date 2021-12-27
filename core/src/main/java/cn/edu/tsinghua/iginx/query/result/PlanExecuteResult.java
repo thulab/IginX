@@ -29,6 +29,8 @@ public abstract class PlanExecuteResult {
 
     public static final int FAILURE = 400;
 
+    public static final int NON_EXECUTED = 500;
+
     private int statusCode;
 
     private IginxPlan plan;

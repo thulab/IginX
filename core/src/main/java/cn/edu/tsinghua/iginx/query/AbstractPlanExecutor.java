@@ -50,6 +50,7 @@ import cn.edu.tsinghua.iginx.query.async.queue.AsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.async.queue.MemoryAsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 import cn.edu.tsinghua.iginx.query.result.AsyncPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.NonExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SyncPlanExecuteResult;
 import org.slf4j.Logger;
@@ -75,19 +76,21 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     private final ExecutorService asyncTaskDispatcher;
 
-    private final ExecutorService asyncTaskExecuteThreadPool;
+    private final ThreadPoolExecutor asyncTaskExecuteThreadPool;
 
     private final ExecutorService syncExecuteThreadPool;
 
     private final Map<IginxPlan.IginxPlanType, Function<IginxPlan, Future<? extends PlanExecuteResult>>> functionMap = new HashMap<>();
 
+    private final int maxAsyncTasks = ConfigDescriptor.getInstance().getConfig().getMaxAsyncTasks();
+
     protected AbstractPlanExecutor() {
         asyncTaskQueue = new MemoryAsyncTaskQueue();
-        asyncTaskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPool());
+        asyncTaskExecuteThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPool());
         asyncTaskDispatcher = Executors.newSingleThreadExecutor();
         asyncTaskDispatcher.submit(() -> {
             while(true) {
-                logger.info("async Thread Pool: {}", ((ThreadPoolExecutor)asyncTaskExecuteThreadPool).getActiveCount());
+                logger.info("async Thread Pool: {}", asyncTaskExecuteThreadPool.getActiveCount());
                 AsyncTask asyncTask = asyncTaskQueue.getAsyncTask();
                 asyncTaskExecuteThreadPool.submit(() -> {
                     IginxPlan plan = asyncTask.getIginxPlan();
@@ -349,6 +352,10 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     @Override
     public List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext) {
+        if (asyncTaskExecuteThreadPool.getQueue().size() >= maxAsyncTasks) { // 异步任务发生大规模堆积
+            logger.warn("too many async task, reject to execute current request.");
+            return requestContext.getIginxPlans().stream().map(NonExecuteResult::new).collect(Collectors.toList());
+        }
         List<PlanExecuteResult> planExecuteResults = requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(e -> functionMap.get(e.getIginxPlanType()).apply(e)).map(wrap(Future::get)).collect(Collectors.toList());
         logger.info(requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans, there are " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
         planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(e -> !e.isSync()).map(this::executeAsyncTask).collect(Collectors.toList()));
