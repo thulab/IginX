@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.query.result.NonExecuteResult;
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
 import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
@@ -49,10 +50,12 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.stream.Collectors;
 
 @Path("/")
 public class MetricsResource {
 
+    private static final String NO_CACHE = "no-cache";
     private static final String INSERT_URL = "api/v1/datapoints";
     private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotations";
     private static final String QUERY_URL = "api/v1/datapoints/query";
@@ -72,6 +75,7 @@ public class MetricsResource {
     private final Random random = new Random();
     private final double logRestQueryPossibility = config.getLogRestQueryPossibility();
     private final double logRestInsertPossibility = config.getLogRestInsertPossibility();
+    private final int restQueueSize = config.getRestQueueSize();
 
 
     @Inject
@@ -159,7 +163,14 @@ public class MetricsResource {
         }
         LOGGER.info("rest Thread Pool: {}", ((ThreadPoolExecutor)threadPool).getActiveCount());
         LOGGER.info("rest Thread Pool Queue: {}", ((ThreadPoolExecutor)threadPool).getQueue().size());
-        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false, needLog, sign, startTimestamp));
+        if (((ThreadPoolExecutor)threadPool).getQueue().size() >= restQueueSize) {
+            LOGGER.warn("too many request");
+            Response response;
+            response = setHeaders(Response.status(Response.Status.SERVICE_UNAVAILABLE).entity("too many request\n")).build();
+            asyncResponse.resume(response);
+        } else {
+            threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false, needLog, sign, startTimestamp));
+        }
     }
 
     @POST

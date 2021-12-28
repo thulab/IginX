@@ -118,6 +118,8 @@ public class Config {
 
     private int asyncQueueSize = 1000;
 
+    private int restQueueSize = 1000;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -508,5 +510,13 @@ public class Config {
 
     public void setAsyncQueueSize(int asyncQueueSize) {
         this.asyncQueueSize = asyncQueueSize;
+    }
+
+    public int getRestQueueSize() {
+        return restQueueSize;
+    }
+
+    public void setRestQueueSize(int restQueueSize) {
+        this.restQueueSize = restQueueSize;
     }
 }

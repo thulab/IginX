@@ -114,6 +114,7 @@ public class ConfigDescriptor {
             config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
             config.setAsyncQueueSize(Integer.parseInt(properties.getProperty("asyncQueueSize", "1000")));
+            config.setRestQueueSize(Integer.parseInt(properties.getProperty("restQueueSize", "1000")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
