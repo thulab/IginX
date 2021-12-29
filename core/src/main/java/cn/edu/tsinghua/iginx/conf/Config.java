@@ -120,6 +120,8 @@ public class Config {
 
     private int restQueueSize = 1000;
 
+    private long maxReAllocateTimeInterval = 1000 * 60 * 60 * 24 * 7;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -518,5 +520,13 @@ public class Config {
 
     public void setRestQueueSize(int restQueueSize) {
         this.restQueueSize = restQueueSize;
+    }
+
+    public void setMaxReAllocateTimeInterval(long maxReAllocateTimeInterval) {
+        this.maxReAllocateTimeInterval = maxReAllocateTimeInterval;
+    }
+
+    public long getMaxReAllocateTimeInterval() {
+        return maxReAllocateTimeInterval;
     }
 }

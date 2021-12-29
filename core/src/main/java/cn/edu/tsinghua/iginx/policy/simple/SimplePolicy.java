@@ -47,6 +47,7 @@ public class SimplePolicy implements IPolicy {
     private FragmentCreator fragmentCreator;
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger logger = LoggerFactory.getLogger(SimplePolicy.class);
+    private static long lastCreateFragment;
 
 
     @Override
@@ -100,6 +101,7 @@ public class SimplePolicy implements IPolicy {
         this.iPlanSplitter = new SimplePlanSplitter(this, this.iMetaManager);
         this.iFragmentGenerator = new SimpleFragmentGenerator(this.iMetaManager);
         this.fragmentCreator = new FragmentCreator(this, this.iMetaManager);
+        lastCreateFragment = System.currentTimeMillis();
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);
@@ -145,7 +147,12 @@ public class SimplePolicy implements IPolicy {
             logger.info("fragment value num : {}, value : {}", num ++, v);
         }
         if (value.size() > 0) {
-            return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);
+            if (System.currentTimeMillis() - lastCreateFragment > config.getMaxReAllocateTimeInterval()) {
+                lastCreateFragment = System.currentTimeMillis();
+                return false;
+            } else {
+                return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);
+            }
         } else {
             return true;
         }
