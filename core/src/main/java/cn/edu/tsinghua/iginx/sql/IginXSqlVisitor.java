@@ -21,6 +21,7 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
 import java.util.*;
@@ -164,6 +165,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.groupByTimeClause() != null) {
             String duration = ctx.groupByTimeClause().DURATION().getText();
             long precision = TimeUtils.convertDurationStrToLong(0, duration);
+            Pair<Long, Long> timeInterval = parseTimeInterval(ctx.groupByTimeClause().timeInterval());
+            selectStatement.setStartTime(timeInterval.k);
+            selectStatement.setEndTime(timeInterval.v);
             selectStatement.setPrecision(precision);
             selectStatement.setHasGroupBy(true);
         }
@@ -206,6 +210,35 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                 selectStatement.setAscending(false);
             }
         }
+    }
+
+    private Pair<Long, Long> parseTimeInterval(SqlParser.TimeIntervalContext interval) {
+        long startTime, endTime;
+
+        if (interval == null) {
+            startTime = 0;
+            endTime = Long.MAX_VALUE;
+        } else {
+            // use index +- 1 to implement [start, end], [start, end),
+            // (start, end), (start, end] range in [start, end) interface.
+            if (interval.LR_BRACKET() != null) { // (
+                startTime = parseTime(interval.startTime) + 1;
+            } else {
+                startTime = parseTime(interval.startTime);
+            }
+
+            if (interval.RR_BRACKET() != null) { // )
+                endTime = parseTime(interval.endTime);
+            } else {
+                endTime = parseTime(interval.endTime) + 1;
+            }
+        }
+
+        if (startTime > endTime) {
+            throw new SQLParserException("Start time should be smaller than endTime in time interval");
+        }
+
+        return new Pair<>(startTime, endTime);
     }
 
     private Filter parseOrExpression(OrExpressionContext ctx, Statement statement) {

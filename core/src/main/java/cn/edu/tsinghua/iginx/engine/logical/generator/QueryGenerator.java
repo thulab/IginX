@@ -120,7 +120,7 @@ public class QueryGenerator implements LogicalGenerator {
                                 new OperatorSource(copySelect),
                                 statement.getPrecision(),
                                 new FunctionCall(functionManager.getFunction(k), wrappedPath),
-                                new TimeRange(0, Long.MAX_VALUE)
+                                new TimeRange(statement.getStartTime(), statement.getEndTime())
                         )
                 );
             }));

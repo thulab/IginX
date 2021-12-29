@@ -51,7 +51,7 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f), MIN(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP BY 1000ms;";
+        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f), MIN(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 1000ms;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
         assertTrue(statement.hasFunc());
@@ -71,8 +71,10 @@ public class ParseTest {
 
         assertEquals("a.b", statement.getFromPath());
 
-        assertEquals("((time > 100 && time < 1000) || (a.b.d == abc) || (a.b.c >= 666) || (((a.b.e < 10 && !((a.b.f < 10))))))", statement.getFilter().toString());
+//        assertEquals("((time > 100 && time < 1000) || (a.b.d == abc) || (a.b.c >= 666) || (((a.b.e < 10 && !((a.b.f < 10))))))", statement.getFilter().toString());
 
+        assertEquals(10, statement.getStartTime());
+        assertEquals(100, statement.getEndTime());
         assertEquals(1000L, statement.getPrecision());
     }
 
@@ -95,12 +97,17 @@ public class ParseTest {
         assertEquals(5, statement.getOffset());
         assertEquals(10, statement.getLimit());
 
-        String groupBy = "SELECT max(a) FROM test GROUP BY 5ms";
+        String groupBy = "SELECT max(a) FROM test GROUP (10, 120] BY 5ms";
         statement = (SelectStatement) TestUtils.buildStatement(groupBy);
+
+        assertEquals(11, statement.getStartTime());
+        assertEquals(121, statement.getEndTime());
         assertEquals(5L, statement.getPrecision());
 
-        String groupByAndLimit = "SELECT max(a) FROM test GROUP BY 10ms LIMIT 5 OFFSET 2;";
+        String groupByAndLimit = "SELECT max(a) FROM test GROUP (10, 120) BY 10ms LIMIT 5 OFFSET 2;";
         statement = (SelectStatement) TestUtils.buildStatement(groupByAndLimit);
+        assertEquals(11, statement.getStartTime());
+        assertEquals(120, statement.getEndTime());
         assertEquals(10L, statement.getPrecision());
         assertEquals(2, statement.getOffset());
         assertEquals(5, statement.getLimit());

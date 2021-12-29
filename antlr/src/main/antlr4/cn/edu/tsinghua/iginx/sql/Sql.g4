@@ -74,9 +74,9 @@ groupByTimeClause
 
 timeInterval
     : LS_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
-    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
     | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
     | LS_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
+    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
     ;
 
 limitClause
