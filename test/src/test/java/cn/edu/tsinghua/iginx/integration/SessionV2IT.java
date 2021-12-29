@@ -96,7 +96,7 @@ public class SessionV2IT {
                         .endTime(endTimestamp)
                         .build()
         );
-        
+
     }
 
     @Test
