@@ -177,7 +177,7 @@ public class StatementExecutor {
         if (countResp.getValuesList() != null) {
             Object[] row = ByteUtils.getValuesByDataType(countResp.valuesList, countResp.dataTypeList);
             for (Object count : row) {
-                pointsNum += (Integer) count;
+                pointsNum += (Long) count;
             }
         }
         ExecuteSqlResp resp = new ExecuteSqlResp(countResp.getStatus(), SqlType.CountPoints);

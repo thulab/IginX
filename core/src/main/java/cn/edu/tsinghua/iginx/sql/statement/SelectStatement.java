@@ -66,6 +66,7 @@ public class SelectStatement extends DataStatement {
 
         this.funcTypeSet = new HashSet<>();
         this.funcTypeSet.add(str2FuncType(func));
+        this.hasFunc = true;
 
         this.setFromSession(paths, startTime, endTime);
     }
@@ -80,8 +81,10 @@ public class SelectStatement extends DataStatement {
 
         this.funcTypeSet = new HashSet<>();
         this.funcTypeSet.add(str2FuncType(func));
+        this.hasFunc = true;
 
         this.precision = precision;
+        this.hasGroupBy = true;
 
         this.setFromSession(paths, startTime, endTime);
     }
