@@ -46,6 +46,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -123,10 +124,17 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<String> patterns = project.getPatterns();
         Header header = table.getHeader();
         List<Field> targetFields = new ArrayList<>();
+
         for (Field field: header.getFields()) {
             for (String pattern: patterns) {
-                if (Pattern.matches(pattern, field.getName())) {
-                    targetFields.add(field);
+                if (!StringUtils.isPattern(pattern)) {
+                    if (pattern.equals(field.getName())) {
+                        targetFields.add(field);
+                    }
+                } else {
+                    if (Pattern.matches(StringUtils.reformatPath(pattern), field.getName())) {
+                        targetFields.add(field);
+                    }
                 }
             }
         }
