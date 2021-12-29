@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.Arrays;
 
@@ -58,6 +59,18 @@ public class Row {
 
     public Object getValue(int i) {
         return values[i];
+    }
+
+    public Field getField(int i) {
+        return header.getField(i);
+    }
+
+    public String getName(int i) {
+        return header.getField(i).getName();
+    }
+
+    public DataType getType(int i) {
+        return header.getField(i).getType();
     }
 
     public Object getValue(Field field) {

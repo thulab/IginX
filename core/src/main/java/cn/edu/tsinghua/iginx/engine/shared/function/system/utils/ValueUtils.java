@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
 
-public class ValueComparator {
+public class ValueUtils {
 
     public static int compare(Value o1, Value o2) {
         DataType dataType = o1.getDataType();
@@ -59,6 +59,20 @@ public class ValueComparator {
                 return (new String((byte[]) o1)).compareTo(new String((byte[]) o2));
         }
         return 0;
+    }
+
+    public static String toString(Object value, DataType dataType) {
+        switch (dataType) {
+            case INTEGER:
+            case LONG:
+            case BOOLEAN:
+            case FLOAT:
+            case DOUBLE:
+                return value.toString();
+            case BINARY:
+                return new String((byte[]) value);
+        }
+        return "";
     }
 
 }

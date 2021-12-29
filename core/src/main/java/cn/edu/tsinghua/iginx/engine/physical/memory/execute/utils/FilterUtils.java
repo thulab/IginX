@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueComparator;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
@@ -96,17 +96,17 @@ public class FilterUtils {
         }
         switch (valueFilter.getOp()) {
             case E:
-                return ValueComparator.compare(value, targetValue) == 0;
+                return ValueUtils.compare(value, targetValue) == 0;
             case G:
-                return ValueComparator.compare(value, targetValue) > 0;
+                return ValueUtils.compare(value, targetValue) > 0;
             case L:
-                return ValueComparator.compare(value, targetValue) < 0;
+                return ValueUtils.compare(value, targetValue) < 0;
             case GE:
-                return ValueComparator.compare(value, targetValue) >= 0;
+                return ValueUtils.compare(value, targetValue) >= 0;
             case LE:
-                return ValueComparator.compare(value, targetValue) <= 0;
+                return ValueUtils.compare(value, targetValue) <= 0;
             case NE:
-                return ValueComparator.compare(value, targetValue) != 0;
+                return ValueUtils.compare(value, targetValue) != 0;
         }
         return false;
     }

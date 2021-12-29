@@ -29,6 +29,7 @@ public class SQLSessionIT {
         try {
             session.openSession();
             insertData();
+            System.out.println("OK");
         } catch (SessionException | ExecutionException e) {
             logger.error(e.getMessage());
         }
