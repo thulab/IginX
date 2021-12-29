@@ -28,6 +28,8 @@ public class SelectStatement extends DataStatement {
     private String orderByPath;
     private Filter filter;
     private long precision;
+    private long startTime;
+    private long endTime;
     private int limit;
     private int offset;
 
@@ -84,6 +86,8 @@ public class SelectStatement extends DataStatement {
         this.hasFunc = true;
 
         this.precision = precision;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.hasGroupBy = true;
 
         this.setFromSession(paths, startTime, endTime);
@@ -263,6 +267,22 @@ public class SelectStatement extends DataStatement {
 
     public void setFilter(Filter filter) {
         this.filter = filter;
+    }
+
+    public long getStartTime() {
+        return startTime;
+    }
+
+    public void setStartTime(long startTime) {
+        this.startTime = startTime;
+    }
+
+    public long getEndTime() {
+        return endTime;
+    }
+
+    public void setEndTime(long endTime) {
+        this.endTime = endTime;
     }
 
     public long getPrecision() {
