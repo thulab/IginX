@@ -1,10 +1,14 @@
 package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.session_v2.*;
+import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
 import cn.edu.tsinghua.iginx.session_v2.domain.User;
+import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
+import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.IginxInfo;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -21,14 +25,13 @@ public class SessionV2IT {
 
     private static WriteClient writeClient;
     private static AsyncWriteClient asyncWriteClient;
-
     private static DeleteClient deleteClient;
-
     private static QueryClient queryClient;
-
     private static UsersClient usersClient;
-
     private static ClusterClient clusterClient;
+
+    private final static long startTimestamp = 0L;
+    private final static long endTimestamp = 15000L;
 
     @BeforeClass
     public static void setUp() {
@@ -59,9 +62,6 @@ public class SessionV2IT {
                 .addField("double", DataType.DOUBLE)
                 .addField("string", DataType.BINARY);
 
-        long startTimestamp = 0L;
-        long endTimestamp = 15000L;
-
         for (long i = startTimestamp; i < endTimestamp; i++) {
             builder = builder.timestamp(i)
                     .boolValue("bool", i % 2 == 0 ? true : false)
@@ -89,7 +89,24 @@ public class SessionV2IT {
 
     @Test
     public void testQueryClient() {
+        IginXTable table = queryClient.query(
+                SimpleQuery.builder()
+                        .addMeasurement("test.session.v2.*")
+                        .startTime(endTimestamp - 1000L)
+                        .endTime(endTimestamp)
+                        .build()
+        );
+        
+    }
 
+    @Test
+    public void testClusterInfo() {
+        int expectedReplicaNum = 2;
+        assertEquals(expectedReplicaNum, clusterClient.getReplicaNum());
+
+        IginxInfo info = new IginxInfo();
+        ClusterInfo actualInfo = clusterClient.getClusterInfo();
+        System.out.println();
     }
 
     @Test
@@ -133,10 +150,20 @@ public class SessionV2IT {
         expectedUsers.remove(user1);
         actualUsers = usersClient.findUsers();
         assertEqualUsers(expectedUsers, actualUsers);
+
+        // test find user by name
+        User user = usersClient.findUserByName("user2");
+        assertEqualUser(user1, user);
     }
 
     private void assertEqualUsers(List<User> users1, List<User> users2) {
         if (!isEqualUsers(users1, users2)) {
+            fail();
+        }
+    }
+
+    private void assertEqualUser(User user1, User user2) {
+        if (isEqualUser(user1, user2)) {
             fail();
         }
     }
@@ -148,7 +175,7 @@ public class SessionV2IT {
 
         for (User user1 : users1) {
             boolean isMatch = false;
-            for (User user2: users2) {
+            for (User user2 : users2) {
                 if (user1.getUsername().equals(user2.getUsername())) {
                     isMatch = true;
                     if (!isEqualUser(user1, user2)) {
