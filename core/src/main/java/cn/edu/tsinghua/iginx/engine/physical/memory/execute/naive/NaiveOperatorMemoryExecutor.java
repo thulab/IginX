@@ -209,7 +209,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Value> params = downsample.getFunctionCall().getParams();
         for (Row row: rows) {
             long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
-            groups.getOrDefault(timestamp, new ArrayList<>()).add(row);
+            groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>(): v).add(row);
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
         try {
