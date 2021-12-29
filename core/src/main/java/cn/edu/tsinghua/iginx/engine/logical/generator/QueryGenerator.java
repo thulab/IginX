@@ -153,7 +153,7 @@ public class QueryGenerator implements LogicalGenerator {
             queryList.add(new Project(new OperatorSource(root), selectedPath));
         }
 
-        if (statement.hasFunc()) {
+        if (statement.hasFunc() && !statement.hasGroupBy()) {
             root = joinOperators(queryList, ORDINAL);
         } else  {
             root = joinOperatorsByTime(queryList);
