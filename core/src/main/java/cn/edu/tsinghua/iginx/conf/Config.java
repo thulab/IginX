@@ -122,6 +122,8 @@ public class Config {
 
     private long maxReAllocateTimeInterval = 1000 * 60 * 60 * 24 * 7;
 
+    private long checkFragmentInterval = 10000L;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -528,5 +530,13 @@ public class Config {
 
     public long getMaxReAllocateTimeInterval() {
         return maxReAllocateTimeInterval;
+    }
+
+    public long getCheckFragmentInterval() {
+        return checkFragmentInterval;
+    }
+
+    public void setCheckFragmentInterval(long checkFragmentInterval) {
+        this.checkFragmentInterval = checkFragmentInterval;
     }
 }

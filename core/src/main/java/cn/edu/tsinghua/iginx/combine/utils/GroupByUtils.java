@@ -16,24 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query.result;
+package cn.edu.tsinghua.iginx.combine.utils;
 
-import cn.edu.tsinghua.iginx.plan.IginxPlan;
-import cn.edu.tsinghua.iginx.query.entity.QueryExecuteDataSet;
+import cn.edu.tsinghua.iginx.conf.Constants;
 
 import java.util.List;
 
-public class DownsampleQueryPlanExecuteResult extends SyncPlanExecuteResult {
+public class GroupByUtils {
 
-    private final List<QueryExecuteDataSet> queryExecuteDataSets; // 每个序列一个元素
-
-    public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
-        super(statusCode, plan);
-        this.queryExecuteDataSets = queryExecuteDataSets;
-    }
-
-    public List<QueryExecuteDataSet> getQueryExecuteDataSets() {
-        return queryExecuteDataSets;
+    public static String transformPath(String path, List<Integer> groupByLevels) {
+        String[] levels = path.split("\\" + Constants.LEVEL_SEPARATOR);
+        boolean[] retain = new boolean[levels.length];
+        for (int groupByLevel: groupByLevels) {
+            if (groupByLevel < levels.length) {
+                retain[groupByLevel] = true;
+            }
+        }
+        for (int i = 0; i < levels.length; i++) {
+            if (!retain[i]) {
+                levels[i] = Constants.LEVEL_PLACEHOLDER;
+            }
+        }
+        return String.join(Constants.LEVEL_SEPARATOR, levels);
     }
 
 }

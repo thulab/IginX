@@ -116,6 +116,7 @@ public class ConfigDescriptor {
             config.setAsyncQueueSize(Integer.parseInt(properties.getProperty("asyncQueueSize", "1000")));
             config.setRestQueueSize(Integer.parseInt(properties.getProperty("restQueueSize", "1000")));
             config.setMaxReAllocateTimeInterval(Long.parseLong(properties.getProperty("maxReAllocateTimeInterval", "604800000")));
+            config.setCheckFragmentInterval(Long.parseLong(properties.getProperty("checkFragmentInterval", "1000")));
 
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
@@ -155,6 +156,7 @@ public class ConfigDescriptor {
         config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
         config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
         config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
+        config.setCheckFragmentInterval(EnvUtils.loadEnv("checkFragmentInterval", config.getCheckFragmentInterval()));
     }
 
 

@@ -63,9 +63,13 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
@@ -76,6 +80,15 @@ public class DefaultMetaManager implements IMetaManager {
 
     private final IMetaStorage storage;
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
+
+    // 是否初始化缓存
+    private volatile boolean hasInitialFragmentAndStorageUnit = false;
+
+    // 上次查询 fragment 和 storage 的时间
+    private volatile long latestCheckFragmentAndStorageUnitTime = 0;
+
+    // 初始化缓存用的锁
+    private final Lock fragmentAndStorageUnitLock = new ReentrantLock();
 
     private Queue<Thread> waitingReshardThreadsQueue = new ConcurrentLinkedQueue<>();
 
@@ -535,18 +548,59 @@ public class DefaultMetaManager implements IMetaManager {
         return cache.getStorageEngineList().size();
     }
 
+    private void checkInitialFragmentAndStorageUnit() {
+        if (!hasInitialFragmentAndStorageUnit) {
+            fragmentAndStorageUnitLock.lock();
+            if (System.currentTimeMillis() - latestCheckFragmentAndStorageUnitTime > config.getCheckFragmentInterval()) {
+                latestCheckFragmentAndStorageUnitTime = System.currentTimeMillis();
+                if (!hasInitialFragmentAndStorageUnit) {
+                    try {
+                        storage.lockFragment();
+                        storage.lockStorageUnit();
+
+                        if (cache.hasFragment() && cache.hasStorageUnit()) {
+                            hasInitialFragmentAndStorageUnit = true;
+                        } else {
+                            // 查看一下服务器上是不是已经有了
+                            Map<String, StorageUnitMeta> globalStorageUnits = storage.loadStorageUnit();
+                            if (globalStorageUnits != null && !globalStorageUnits.isEmpty()) { // 服务器上已经有人创建过了，本地只需要加载
+                                Map<TimeSeriesInterval, List<FragmentMeta>> globalFragmentMap = storage.loadFragment();
+                                cache.initStorageUnit(globalStorageUnits);
+                                cache.initFragment(globalFragmentMap);
+                                hasInitialFragmentAndStorageUnit = true;
+                            }
+                        }
+                    } catch (MetaStorageException e) {
+                        logger.error("encounter error when try load initial fragment: ", e);
+                    } finally {
+                        try {
+                            storage.releaseStorageUnit();
+                            storage.releaseFragment();
+                        } catch (MetaStorageException e) {
+                            logger.error("encounter error when releasing storage unit or fragment lock: ", e);
+                        }
+                    }
+                }
+            }
+            fragmentAndStorageUnitLock.unlock();
+        }
+    }
+
     @Override
     public StorageEngineMeta getStorageEngine(long id) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getStorageEngine(id);
     }
 
     @Override
     public StorageUnitMeta getStorageUnit(String id) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getStorageUnit(id);
     }
 
     @Override
     public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getStorageUnits(ids);
     }
 
@@ -562,36 +616,43 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getFragmentMapByTimeSeriesInterval(tsInterval);
     }
 
     @Override
     public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getLatestFragmentMapByTimeSeriesInterval(tsInterval);
     }
 
     @Override
     public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap() {
+        checkInitialFragmentAndStorageUnit();
         return cache.getLatestFragmentMap();
     }
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
     }
 
     @Override
     public List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getFragmentListByTimeSeriesName(tsName);
     }
 
     @Override
     public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getLatestFragmentByTimeSeriesName(tsName);
     }
 
     @Override
     public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
+        checkInitialFragmentAndStorageUnit();
         return cache.getFragmentListByTimeSeriesNameAndTimeInterval(tsName, timeInterval);
     }
 
@@ -670,6 +731,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public boolean hasFragment() {
+        checkInitialFragmentAndStorageUnit();
         return cache.hasFragment();
     }
 
@@ -679,6 +741,7 @@ public class DefaultMetaManager implements IMetaManager {
             return false;
         }
         try {
+            fragmentAndStorageUnitLock.lock();
             storage.lockFragment();
             storage.lockStorageUnit();
 
@@ -692,6 +755,7 @@ public class DefaultMetaManager implements IMetaManager {
                 Map<TimeSeriesInterval, List<FragmentMeta>> globalFragmentMap = storage.loadFragment();
                 cache.initStorageUnit(globalStorageUnits);
                 cache.initFragment(globalFragmentMap);
+                hasInitialFragmentAndStorageUnit = true;
                 return false;
             }
 
@@ -728,6 +792,7 @@ public class DefaultMetaManager implements IMetaManager {
             }
             cache.initStorageUnit(storage.loadStorageUnit());
             cache.initFragment(storage.loadFragment());
+            hasInitialFragmentAndStorageUnit = true;
             return true;
         } catch (MetaStorageException e) {
             logger.error("encounter error when initiating fragment: ", e);
@@ -738,6 +803,7 @@ public class DefaultMetaManager implements IMetaManager {
             } catch (MetaStorageException e) {
                 logger.error("encounter error when releasing fragment lock: ", e);
             }
+            fragmentAndStorageUnitLock.unlock();
         }
         return false;
     }
