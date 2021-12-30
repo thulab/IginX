@@ -1,2 +1,0 @@
-2021-12-30 22:29:31 [ERROR] org.apache.thrift.transport.TTransportException: java.net.ConnectException: Connection refused: connect
-2021-12-30 22:29:54 [ERROR] org.apache.thrift.transport.TTransportException: java.net.ConnectException: Connection refused: connect
