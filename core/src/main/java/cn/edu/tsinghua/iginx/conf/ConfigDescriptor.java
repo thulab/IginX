@@ -59,7 +59,7 @@ public class ConfigDescriptor {
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
                     "127.0.0.1:2181"));
             config.setStorageEngineList(properties.getProperty("storageEngineList",
-                    "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100"));
+                    "127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100"));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
             config.setMaxAsyncTasks(Integer.parseInt(properties.getProperty("maxAsyncTasks", "1000")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
