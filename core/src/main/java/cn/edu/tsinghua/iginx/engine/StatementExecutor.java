@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql;
+package cn.edu.tsinghua.iginx.engine;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
@@ -11,7 +11,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.sql.logical.*;
+import cn.edu.tsinghua.iginx.engine.logical.generator.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -24,7 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -101,6 +100,10 @@ public class StatementExecutor {
                     return processShowTimeSeries((ShowTimeSeriesStatement) statement);
                 case COUNT_POINTS:
                     return processCountPoints();
+                case DELETE_TIME_SERIES:
+                    return processDeleteTimeSeries((DeleteTimeSeriesStatement) statement);
+                case CLEAR_DATA:
+                    return processClearData();
                 default:
                     return ((SystemStatement) statement).execute(sessionId);
             }
@@ -174,12 +177,22 @@ public class StatementExecutor {
         if (countResp.getValuesList() != null) {
             Object[] row = ByteUtils.getValuesByDataType(countResp.valuesList, countResp.dataTypeList);
             for (Object count : row) {
-                pointsNum += (Integer) count;
+                pointsNum += (Long) count;
             }
         }
         ExecuteSqlResp resp = new ExecuteSqlResp(countResp.getStatus(), SqlType.CountPoints);
         resp.setPointsNum(pointsNum);
         return resp;
+    }
+
+    private ExecuteSqlResp processDeleteTimeSeries(DeleteTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
+        DeleteStatement deleteStatement = new DeleteStatement(statement.getPaths());
+        return processDelete(deleteStatement);
+    }
+
+    private ExecuteSqlResp processClearData() throws ExecutionException, PhysicalException {
+        DeleteStatement deleteStatement = new DeleteStatement(Collections.singletonList("*"));
+        return processDelete(deleteStatement);
     }
 
     private ExecuteSqlResp buildErrResp(StatusCode statusCode, String errMsg) {

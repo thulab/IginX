@@ -18,6 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class StringUtils {
 
     /**
@@ -44,5 +47,23 @@ public class StringUtils {
         } else {
             return ts.compareTo(border);
         }
+    }
+
+    public static boolean isPattern(String path) {
+        return path.contains("*");
+    }
+
+    public static List<String> reformatPaths(List<String> paths) {
+        List<String> ret = new ArrayList<>();
+        paths.forEach(path -> ret.add(reformatPath(path)));
+        return ret;
+    }
+
+    public static String reformatPath(String path) {
+        if (!path.contains("*"))
+            return path;
+        path = path.replaceAll("[.]", "[.]");
+        path = path.replaceAll("[*]", ".*");
+        return path;
     }
 }

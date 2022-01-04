@@ -31,12 +31,14 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.operator.RowTransform;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
@@ -46,6 +48,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -77,6 +80,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeRowTransform((RowTransform) operator, transformToTable(stream));
             case SetTransform:
                 return executeSetTransform((SetTransform) operator, transformToTable(stream));
+            case MappingTransform:
+                return executeMappingTransform((MappingTransform) operator, transformToTable(stream));
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -123,10 +128,17 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<String> patterns = project.getPatterns();
         Header header = table.getHeader();
         List<Field> targetFields = new ArrayList<>();
+
         for (Field field: header.getFields()) {
             for (String pattern: patterns) {
-                if (Pattern.matches(pattern, field.getName())) {
-                    targetFields.add(field);
+                if (!StringUtils.isPattern(pattern)) {
+                    if (pattern.equals(field.getName())) {
+                        targetFields.add(field);
+                    }
+                } else {
+                    if (Pattern.matches(StringUtils.reformatPath(pattern), field.getName())) {
+                        targetFields.add(field);
+                    }
                 }
             }
         }
@@ -201,7 +213,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Value> params = downsample.getFunctionCall().getParams();
         for (Row row: rows) {
             long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
-            groups.getOrDefault(timestamp, new ArrayList<>()).add(row);
+            groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>(): v).add(row);
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
         try {
@@ -262,6 +274,17 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
         }
 
+    }
+
+
+    private RowStream executeMappingTransform(MappingTransform mappingTransform, Table table) throws PhysicalException {
+        MappingFunction function = (MappingFunction) mappingTransform.getFunctionCall().getFunction();
+        List<Value> params = mappingTransform.getFunctionCall().getParams();
+        try {
+            return function.transform(table, params);
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when execute mapping function " + function.getIdentifier() + ".", e);
+        }
     }
 
     private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {

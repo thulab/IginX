@@ -8,10 +8,12 @@ statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
+    | COUNT POINTS #countPointsStatement
+    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
+    | CLEAR DATA #clearDataStatement
+    | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
-    | COUNT POINTS #countPointsStatement
-    | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
     ;
 
@@ -67,7 +69,14 @@ specialClause
 orderByClause : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?;
 
 groupByTimeClause
-    : GROUP BY DURATION
+    : GROUP timeInterval BY DURATION
+    ;
+
+timeInterval
+    : LS_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
+    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
+    | LS_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
+    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
     ;
 
 limitClause

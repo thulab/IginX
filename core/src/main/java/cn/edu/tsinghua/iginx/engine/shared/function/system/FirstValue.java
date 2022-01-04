@@ -65,7 +65,7 @@ public class FirstValue implements SetMappingFunction {
         if (param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for first value.");
         }
-        String target = param.getBinaryV();
+        String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> fields = rows.getHeader().getFields();
             List<Field> targetFields = new ArrayList<>();

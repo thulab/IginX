@@ -112,9 +112,9 @@ public class SQLSessionIT {
     @Test
     public void testCountPath() {
         String statement = "SELECT COUNT(*) FROM us.d1;";
-        String excepted = "AggregateQuery ResultSets:\n" +
+        String excepted = "ResultSets:\n" +
                 "+---------------+---------------+---------------+---------------+\n" +
-                "|COUNT(us.d1.s1)|COUNT(us.d1.s2)|COUNT(us.d1.s3)|COUNT(us.d1.s4)|\n" +
+                "|count(us.d1.s1)|count(us.d1.s2)|count(us.d1.s3)|count(us.d1.s4)|\n" +
                 "+---------------+---------------+---------------+---------------+\n" +
                 "|          15000|          15000|          15000|          15000|\n" +
                 "+---------------+---------------+---------------+---------------+\n" +
@@ -154,8 +154,8 @@ public class SQLSessionIT {
 
     @Test
     public void testTimeRangeQuery() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time in (100, 120);";
-        String excepted = "SimpleQuery ResultSets:\n" +
+        String statement = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
+        String excepted = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
                 "+----+--------+\n" +
@@ -185,8 +185,8 @@ public class SQLSessionIT {
 
     @Test
     public void testValueFilter() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) and s1 > 200 and s1 < 210;";
-        String excepted = "ValueFilterQuery ResultSets:\n" +
+        String statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
+        String excepted = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
                 "+----+--------+\n" +
@@ -206,8 +206,8 @@ public class SQLSessionIT {
 
     @Test
     public void testLimitAndOffsetQuery() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10;";
-        String expected = "SimpleQuery ResultSets:\n" +
+        String statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 limit 10;";
+        String expected = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
                 "+----+--------+\n" +
@@ -225,8 +225,8 @@ public class SQLSessionIT {
                 "Total line number = 10\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10 offset 5;";
-        expected = "SimpleQuery ResultSets:\n" +
+        statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 limit 10 offset 5;";
+        expected = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
                 "+----+--------+\n" +
@@ -251,109 +251,121 @@ public class SQLSessionIT {
                 "(1, \"apple\", 871, 232.1), (2, \"peach\", 123, 132.5), (3, \"banana\", 356, 317.8);";
         execute(insert);
 
-        String orderByQuery = "SELECT * FROM us.d2 ORDER BY s1";
-        String expected = "SimpleQuery ResultSets:\n" +
+        String orderByQuery = "SELECT * FROM us.d2 ORDER BY TIME";
+        String expected = "ResultSets:\n" +
                 "+----+--------+--------+--------+\n" +
                 "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
                 "+----+--------+--------+--------+\n" +
                 "|   1|   apple|     871|   232.1|\n" +
-                "|   3|  banana|     356|   317.8|\n" +
                 "|   2|   peach|     123|   132.5|\n" +
+                "|   3|  banana|     356|   317.8|\n" +
                 "+----+--------+--------+--------+\n" +
                 "Total line number = 3\n";
         executeAndCompare(orderByQuery, expected);
 
-        orderByQuery = "SELECT * FROM us.d2 ORDER BY s2";
-        expected = "SimpleQuery ResultSets:\n" +
-                "+----+--------+--------+--------+\n" +
-                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
-                "+----+--------+--------+--------+\n" +
-                "|   2|   peach|     123|   132.5|\n" +
-                "|   3|  banana|     356|   317.8|\n" +
-                "|   1|   apple|     871|   232.1|\n" +
-                "+----+--------+--------+--------+\n" +
-                "Total line number = 3\n";
-        executeAndCompare(orderByQuery, expected);
-
-        orderByQuery = "SELECT * FROM us.d2 ORDER BY s3";
-        expected = "SimpleQuery ResultSets:\n" +
-                "+----+--------+--------+--------+\n" +
-                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
-                "+----+--------+--------+--------+\n" +
-                "|   2|   peach|     123|   132.5|\n" +
-                "|   1|   apple|     871|   232.1|\n" +
-                "|   3|  banana|     356|   317.8|\n" +
-                "+----+--------+--------+--------+\n" +
-                "Total line number = 3\n";
-        executeAndCompare(orderByQuery, expected);
+//        orderByQuery = "SELECT * FROM us.d2 ORDER BY s1";
+//        expected = "ResultSets:\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "|   1|   apple|     871|   232.1|\n" +
+//                "|   3|  banana|     356|   317.8|\n" +
+//                "|   2|   peach|     123|   132.5|\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "Total line number = 3\n";
+//        executeAndCompare(orderByQuery, expected);
+//
+//        orderByQuery = "SELECT * FROM us.d2 ORDER BY s2";
+//        expected = "ResultSets:\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "|   2|   peach|     123|   132.5|\n" +
+//                "|   3|  banana|     356|   317.8|\n" +
+//                "|   1|   apple|     871|   232.1|\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "Total line number = 3\n";
+//        executeAndCompare(orderByQuery, expected);
+//
+//        orderByQuery = "SELECT * FROM us.d2 ORDER BY s3";
+//        expected = "ResultSets:\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "|Time|us.d2.s1|us.d2.s2|us.d2.s3|\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "|   2|   peach|     123|   132.5|\n" +
+//                "|   1|   apple|     871|   232.1|\n" +
+//                "|   3|  banana|     356|   317.8|\n" +
+//                "+----+--------+--------+--------+\n" +
+//                "Total line number = 3\n";
+//        executeAndCompare(orderByQuery, expected);
     }
 
-    @Test
-    public void testLastQuery() {
-        String statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time in (0, INF);";
-        String expected = "LastQuery ResultSets:\n" +
-                "+-----+--------+-------+\n" +
-                "| Time|    Path|  value|\n" +
-                "+-----+--------+-------+\n" +
-                "|14999|us.d1.s2|  15000|\n" +
-                "|14999|us.d1.s4|14999.1|\n" +
-                "+-----+--------+-------+\n" +
-                "Total line number = 2\n";
-        executeAndCompare(statement, expected);
-    }
+//    @Test
+//    public void testLastQuery() {
+//        String statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time > 0;";
+//        String expected = "ResultSets:\n" +
+//                "+-----+--------+-------+\n" +
+//                "| Time|    Path|  value|\n" +
+//                "+-----+--------+-------+\n" +
+//                "|14999|us.d1.s2|  15000|\n" +
+//                "|14999|us.d1.s4|14999.1|\n" +
+//                "+-----+--------+-------+\n" +
+//                "Total line number = 2\n";
+//        executeAndCompare(statement, expected);
+//    }
 
     @Test
     public void testAggregateQuery() {
-        String statement = "SELECT %s(s1), %s(s2) FROM us.d1 WHERE time in (0, 1000);";
+        String statement = "SELECT %s(s1), %s(s2) FROM us.d1 WHERE time > 0 AND time < 1000;";
         List<String> funcTypeList = Arrays.asList(
                 "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
         List<String> exceptedList = Arrays.asList(
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+-------------+-------------+\n" +
-                        "|MAX(us.d1.s1)|MAX(us.d1.s2)|\n" +
+                        "|max(us.d1.s1)|max(us.d1.s2)|\n" +
                         "+-------------+-------------+\n" +
                         "|          999|         1000|\n" +
                         "+-------------+-------------+\n" +
                         "Total line number = 1\n",
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+-------------+-------------+\n" +
-                        "|MIN(us.d1.s1)|MIN(us.d1.s2)|\n" +
+                        "|min(us.d1.s1)|min(us.d1.s2)|\n" +
                         "+-------------+-------------+\n" +
                         "|            1|            2|\n" +
                         "+-------------+-------------+\n" +
                         "Total line number = 1\n",
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+---------------------+---------------------+\n" +
-                        "|FIRST_VALUE(us.d1.s1)|FIRST_VALUE(us.d1.s2)|\n" +
+                        "|first_value(us.d1.s1)|first_value(us.d1.s2)|\n" +
                         "+---------------------+---------------------+\n" +
                         "|                    1|                    2|\n" +
                         "+---------------------+---------------------+\n" +
                         "Total line number = 1\n",
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+--------------------+--------------------+\n" +
-                        "|LAST_VALUE(us.d1.s1)|LAST_VALUE(us.d1.s2)|\n" +
+                        "|last_value(us.d1.s1)|last_value(us.d1.s2)|\n" +
                         "+--------------------+--------------------+\n" +
                         "|                 999|                1000|\n" +
                         "+--------------------+--------------------+\n" +
                         "Total line number = 1\n",
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+-------------+-------------+\n" +
-                        "|SUM(us.d1.s1)|SUM(us.d1.s2)|\n" +
+                        "|sum(us.d1.s1)|sum(us.d1.s2)|\n" +
                         "+-------------+-------------+\n" +
-                        "|     499500.0|     500499.0|\n" +
+                        "|       499500|       500499|\n" +
                         "+-------------+-------------+\n" +
                         "Total line number = 1\n",
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+-------------+-------------+\n" +
-                        "|AVG(us.d1.s1)|AVG(us.d1.s2)|\n" +
+                        "|avg(us.d1.s1)|avg(us.d1.s2)|\n" +
                         "+-------------+-------------+\n" +
                         "|        500.0|        501.0|\n" +
                         "+-------------+-------------+\n" +
                         "Total line number = 1\n",
-                "AggregateQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+---------------+---------------+\n" +
-                        "|COUNT(us.d1.s1)|COUNT(us.d1.s2)|\n" +
+                        "|count(us.d1.s1)|count(us.d1.s2)|\n" +
                         "+---------------+---------------+\n" +
                         "|            999|            999|\n" +
                         "+---------------+---------------+\n" +
@@ -368,14 +380,14 @@ public class SQLSessionIT {
 
     @Test
     public void testDownSampleQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time in (0, 1000) GROUP BY 100ms;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 GROUP (0, 1000) BY 100ms;";
         List<String> funcTypeList = Arrays.asList(
                 "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
         List<String> exceptedList = Arrays.asList(
-                "DownsampleQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+----+-------------+-------------+\n" +
-                        "|Time|MAX(us.d1.s1)|MAX(us.d1.s4)|\n" +
+                        "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
                         "+----+-------------+-------------+\n" +
                         "|   1|          100|        100.1|\n" +
                         "| 101|          200|        200.1|\n" +
@@ -389,9 +401,9 @@ public class SQLSessionIT {
                         "| 901|          999|        999.1|\n" +
                         "+----+-------------+-------------+\n" +
                         "Total line number = 10\n",
-                "DownsampleQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+----+-------------+-------------+\n" +
-                        "|Time|MIN(us.d1.s1)|MIN(us.d1.s4)|\n" +
+                        "|Time|min(us.d1.s1)|min(us.d1.s4)|\n" +
                         "+----+-------------+-------------+\n" +
                         "|   1|            1|          1.1|\n" +
                         "| 101|          101|        101.1|\n" +
@@ -405,9 +417,9 @@ public class SQLSessionIT {
                         "| 901|          901|        901.1|\n" +
                         "+----+-------------+-------------+\n" +
                         "Total line number = 10\n",
-                "DownsampleQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+----+---------------------+---------------------+\n" +
-                        "|Time|FIRST_VALUE(us.d1.s1)|FIRST_VALUE(us.d1.s4)|\n" +
+                        "|Time|first_value(us.d1.s1)|first_value(us.d1.s4)|\n" +
                         "+----+---------------------+---------------------+\n" +
                         "|   1|                    1|                  1.1|\n" +
                         "| 101|                  101|                101.1|\n" +
@@ -421,9 +433,9 @@ public class SQLSessionIT {
                         "| 901|                  901|                901.1|\n" +
                         "+----+---------------------+---------------------+\n" +
                         "Total line number = 10\n",
-                "DownsampleQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+----+--------------------+--------------------+\n" +
-                        "|Time|LAST_VALUE(us.d1.s1)|LAST_VALUE(us.d1.s4)|\n" +
+                        "|Time|last_value(us.d1.s1)|last_value(us.d1.s4)|\n" +
                         "+----+--------------------+--------------------+\n" +
                         "|   1|                 100|               100.1|\n" +
                         "| 101|                 200|               200.1|\n" +
@@ -437,41 +449,41 @@ public class SQLSessionIT {
                         "| 901|                 999|               999.1|\n" +
                         "+----+--------------------+--------------------+\n" +
                         "Total line number = 10\n",
-                "DownsampleQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+----+-------------+------------------+\n" +
-                        "|Time|SUM(us.d1.s1)|     SUM(us.d1.s4)|\n" +
+                        "|Time|sum(us.d1.s1)|     sum(us.d1.s4)|\n" +
                         "+----+-------------+------------------+\n" +
-                        "|   1|       5050.0|            5060.0|\n" +
-                        "| 101|      15050.0|15060.000000000022|\n" +
-                        "| 201|      25050.0| 25059.99999999997|\n" +
-                        "| 301|      35050.0| 35059.99999999994|\n" +
-                        "| 401|      45050.0| 45059.99999999992|\n" +
-                        "| 501|      55050.0| 55059.99999999991|\n" +
-                        "| 601|      65050.0|  65059.9999999999|\n" +
-                        "| 701|      75050.0| 75059.99999999999|\n" +
-                        "| 801|      85050.0| 85060.00000000004|\n" +
-                        "| 901|      94050.0|  94059.9000000001|\n" +
+                        "|   1|         5050|            5060.0|\n" +
+                        "| 101|        15050|15060.000000000022|\n" +
+                        "| 201|        25050| 25059.99999999997|\n" +
+                        "| 301|        35050| 35059.99999999994|\n" +
+                        "| 401|        45050| 45059.99999999992|\n" +
+                        "| 501|        55050| 55059.99999999991|\n" +
+                        "| 601|        65050|  65059.9999999999|\n" +
+                        "| 701|        75050| 75059.99999999999|\n" +
+                        "| 801|        85050| 85060.00000000004|\n" +
+                        "| 901|        94050|  94059.9000000001|\n" +
                         "+----+-------------+------------------+\n" +
                         "Total line number = 10\n",
-                "DownsampleQuery ResultSets:\n" +
-                        "+----+------------------+------------------+\n" +
-                        "|Time|     AVG(us.d1.s1)|     AVG(us.d1.s4)|\n" +
-                        "+----+------------------+------------------+\n" +
-                        "|   1|              50.5|              50.6|\n" +
-                        "| 101|150.50000000000006|150.60000000000002|\n" +
-                        "| 201| 250.4999999999999|250.59999999999997|\n" +
-                        "| 301|             350.5|350.60000000000014|\n" +
-                        "| 401| 450.4999999999998| 450.6000000000001|\n" +
-                        "| 501| 550.5000000000003| 550.6000000000001|\n" +
-                        "| 601|             650.5| 650.6000000000001|\n" +
-                        "| 701| 750.5000000000002| 750.6000000000004|\n" +
-                        "| 801| 850.4999999999995| 850.6000000000001|\n" +
-                        "| 901|             950.0| 950.1000000000009|\n" +
-                        "+----+------------------+------------------+\n" +
+                "ResultSets:\n" +
+                        "+----+-------------+------------------+\n" +
+                        "|Time|avg(us.d1.s1)|     avg(us.d1.s4)|\n" +
+                        "+----+-------------+------------------+\n" +
+                        "|   1|         50.5|              50.6|\n" +
+                        "| 101|        150.5|150.60000000000022|\n" +
+                        "| 201|        250.5| 250.5999999999997|\n" +
+                        "| 301|        350.5| 350.5999999999994|\n" +
+                        "| 401|        450.5| 450.5999999999992|\n" +
+                        "| 501|        550.5| 550.5999999999991|\n" +
+                        "| 601|        650.5|  650.599999999999|\n" +
+                        "| 701|        750.5| 750.5999999999999|\n" +
+                        "| 801|        850.5| 850.6000000000005|\n" +
+                        "| 901|        950.0| 950.1000000000009|\n" +
+                        "+----+-------------+------------------+\n" +
                         "Total line number = 10\n",
-                "DownsampleQuery ResultSets:\n" +
+                "ResultSets:\n" +
                         "+----+---------------+---------------+\n" +
-                        "|Time|COUNT(us.d1.s1)|COUNT(us.d1.s4)|\n" +
+                        "|Time|count(us.d1.s1)|count(us.d1.s4)|\n" +
                         "+----+---------------+---------------+\n" +
                         "|   1|            100|            100|\n" +
                         "| 101|            100|            100|\n" +
@@ -495,11 +507,11 @@ public class SQLSessionIT {
 
     @Test
     public void testDelete() {
-        String delete = "DELETE FROM us.d1.s1 WHERE time in (105, 115);";
+        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time in (100, 120);";
-        String excepted = "SimpleQuery ResultSets:\n" +
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
+        String excepted = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
                 "+----+--------+\n" +
@@ -523,12 +535,12 @@ public class SQLSessionIT {
         String deleteTimeSeries = "DELETE TIME SERIES us.*";
         execute(deleteTimeSeries);
 
-        String showTimeSeries = "SHOW TIME SERIES;";
-        String excepted = "Time series:\n" +
-                "+----+--------+\n" +
-                "|Path|DataType|\n" +
-                "+----+--------+\n" +
-                "+----+--------+\n" +
+        String showTimeSeries = "SELECT * FROM *;";
+        String excepted = "ResultSets:\n" +
+                "+\n" +
+                "|\n" +
+                "+\n" +
+                "+\n" +
                 "Empty set.\n";
         executeAndCompare(showTimeSeries, excepted);
 
@@ -546,12 +558,12 @@ public class SQLSessionIT {
         String excepted = "Points num: 0\n";
         executeAndCompare(countPoints, excepted);
 
-        String showTimeSeries = "SHOW TIME SERIES;";
-        excepted = "Time series:\n" +
-                "+----+--------+\n" +
-                "|Path|DataType|\n" +
-                "+----+--------+\n" +
-                "+----+--------+\n" +
+        String showTimeSeries = "SELECT * FROM *;";
+        excepted = "ResultSets:\n" +
+                "+\n" +
+                "|\n" +
+                "+\n" +
+                "+\n" +
                 "Empty set.\n";
         executeAndCompare(showTimeSeries, excepted);
     }

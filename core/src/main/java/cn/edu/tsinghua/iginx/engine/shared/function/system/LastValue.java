@@ -65,7 +65,7 @@ public class LastValue implements SetMappingFunction {
         if (param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for last value.");
         }
-        String target = param.getBinaryV();
+        String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> fields = rows.getHeader().getFields();
             List<Field> targetFields = new ArrayList<>();
