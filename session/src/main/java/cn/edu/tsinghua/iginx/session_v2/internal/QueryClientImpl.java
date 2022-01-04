@@ -155,26 +155,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
             }
         }
 
-        List<IginXColumn> columns = Arrays.asList(new IginXColumn("Measurement", DataType.BINARY), new IginXColumn("Value", DataType.BINARY));
-        IginXHeader header = new IginXHeader(IginXColumn.TIME, columns);
-        List<IginXRecord> records = new ArrayList<>();
-        long[] timestamps = getLongArrayFromByteBuffer(resp.timestamps);
-        Object[] values = getValuesByDataType(resp.valuesList, resp.dataTypeList);
-
-        for (int i = 0; i < timestamps.length; i++) {
-            long timestamp = timestamps[i];
-            Map<String, Object> recordValues = new HashMap<>();
-            recordValues.put(columns.get(0).getName(), resp.getPaths().get(i).getBytes());
-            byte[] value;
-            if (values[i] instanceof byte[]) {
-                value = (byte[]) values[i];
-            } else {
-                value = values[i].toString().getBytes();
-            }
-            recordValues.put(columns.get(1).getName(), value);
-            records.add(new IginXRecord(timestamp, header, recordValues));
-        }
-        return new IginXTable(header, records);
+        return buildIginXTable(resp.getQueryDataSet(), resp.getPaths(), resp.getDataTypeList());
     }
 
     @Override

@@ -375,12 +375,12 @@ public class SessionV2IT {
         assertEquals(6, columns.size());
         for (IginXColumn column: columns) {
             switch (column.getName()) {
-                case "test.session.v2.bool":
-                case "test.session.v2.int":
-                case "test.session.v2.double":
-                case "test.session.v2.float":
-                case "test.session.v2.long":
-                case "test.session.v2.string":
+                case "count(test.session.v2.bool)":
+                case "count(test.session.v2.int)":
+                case "count(test.session.v2.double)":
+                case "count(test.session.v2.float)":
+                case "count(test.session.v2.long)":
+                case "count(test.session.v2.string)":
                     assertEquals(DataType.LONG, column.getDataType());
                     break;
                 default:
@@ -393,7 +393,7 @@ public class SessionV2IT {
         IginXRecord record = records.get(0);
         for (Map.Entry<String, Object> entry: record.getValues().entrySet()) {
             long value = (long) entry.getValue();
-            if (entry.getKey().equals("test.session.v2.string")) {
+            if (entry.getKey().equals("count(test.session.v2.string)")) {
                 assertEquals((endTimestamp - startTimestamp) / 2, value);
             } else {
                 assertEquals(endTimestamp - startTimestamp, value);
@@ -418,11 +418,11 @@ public class SessionV2IT {
         assertEquals(2, records.size());
 
         for (IginXRecord record: records) {
-            String value = new String((byte[]) record.getValue("Value"));
-            if ((new String((byte[])record.getValue("Measurement"))).equals("test.session.v2.string")) {
+            String value = new String((byte[]) record.getValue("value"));
+            if ((new String((byte[])record.getValue("path"))).equals("test.session.v2.string")) {
                 assertEquals(endTimestamp - 2, record.getTimestamp());
                 assertEquals(String.valueOf(endTimestamp - 2), value);
-            } else if ((new String((byte[])record.getValue("Measurement"))).equals("test.session.v2.int")) {
+            } else if ((new String((byte[])record.getValue("path"))).equals("test.session.v2.int")) {
                 assertEquals(endTimestamp - 1, record.getTimestamp());
                 assertEquals(String.valueOf(endTimestamp - 1), value);
             } else {
@@ -449,8 +449,10 @@ public class SessionV2IT {
         assertEquals(2, columns.size());
         for (IginXColumn column: columns) {
             switch (column.getName()) {
-                case "test.session.v2.long":
-                case "test.session.v2.double":
+                case "sum(test.session.v2.long)":
+                    assertEquals(DataType.LONG, column.getDataType());
+                    break;
+                case "sum(test.session.v2.double)":
                     assertEquals(DataType.DOUBLE, column.getDataType());
                     break;
                 default:
@@ -458,18 +460,17 @@ public class SessionV2IT {
             }
         }
         List<IginXRecord> records = table.getRecords();
-        assertEquals(20, records.size());
+        assertEquals(10, records.size());
         for (IginXRecord record: records) {
             long timestamp = record.getTimestamp();
             if (timestamp >= endTimestamp) {
-                assertEquals(0.0, (double) record.getValue("test.session.v2.long"), 0.01);
-                assertEquals(0.0, (double) record.getValue("test.session.v2.double"), 0.01);
+                fail();
             } else {
                 long nextTimestamps = timestamp + (endTimestamp - startTimestamp) / 10;
-                double longSum = (nextTimestamps + timestamp - 1) * (endTimestamp - startTimestamp) / 20.0;
+                long longSum = (nextTimestamps + timestamp - 1) * (endTimestamp - startTimestamp) / 20;
                 double doubleSum = longSum + 0.2 * (endTimestamp - startTimestamp) / 10.0;
-                assertEquals(longSum, (double) record.getValue("test.session.v2.long"), 0.01);
-                assertEquals(doubleSum, (double) record.getValue("test.session.v2.double"), 0.01);
+                assertEquals(longSum, record.getValue("sum(test.session.v2.long)"));
+                assertEquals(doubleSum, (double) record.getValue("sum(test.session.v2.double)"), 0.01);
             }
         }
     }
