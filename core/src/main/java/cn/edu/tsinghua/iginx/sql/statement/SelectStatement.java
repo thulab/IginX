@@ -4,11 +4,9 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
-import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
 
 import java.util.*;
 
@@ -60,7 +58,11 @@ public class SelectStatement extends DataStatement {
 
     // aggregate query
     public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType) {
-        this.queryType = QueryType.AggregateQuery;
+        if (aggregateType == AggregateType.LAST || aggregateType == AggregateType.FIRST) {
+            this.queryType = QueryType.LastFirstQuery;
+        } else {
+            this.queryType = QueryType.AggregateQuery;
+        }
 
         String func = aggregateType.toString().toLowerCase();
         this.selectedFuncsAndPaths = new HashMap<>();
@@ -319,32 +321,24 @@ public class SelectStatement extends DataStatement {
 
     public void setQueryType() {
         if (hasFunc) {
-            if (hasGroupBy && hasValueFilter) {
-                this.queryType = QueryType.MixedQuery;
-            } else if (hasGroupBy) {
-                if (funcTypeSet.size() > 1) {
-                    this.queryType = QueryType.MultiDownSampleQuery;
-                } else {
-                    this.queryType = QueryType.DownSampleQuery;
-                }
-            } else if (hasValueFilter) {
-                this.queryType = QueryType.ValueFilterAndAggregateQuery;
+            if (hasGroupBy) {
+                this.queryType = QueryType.DownSampleQuery;
             } else {
-                if (funcTypeSet.size() > 1) {
-                    this.queryType = QueryType.MultiAggregateQuery;
-                } else {
-                    this.queryType = QueryType.AggregateQuery;
-                }
+                this.queryType = QueryType.AggregateQuery;
             }
         } else {
-            if (hasGroupBy && hasValueFilter) {
-                this.queryType = QueryType.ValueFilterAndDownSampleQuery;
-            } else if (hasGroupBy) {
+            if (hasGroupBy) {
                 throw new SQLParserException("Group by clause cannot be used without aggregate function.");
-            } else if (hasValueFilter) {
-                this.queryType = QueryType.ValueFilterQuery;
             } else {
                 this.queryType = QueryType.SimpleQuery;
+            }
+        }
+
+        if (queryType == QueryType.AggregateQuery
+                && (funcTypeSet.contains(FuncType.First) || funcTypeSet.contains(FuncType.Last))) {
+            this.queryType = QueryType.LastFirstQuery;
+            if (funcTypeSet.size() > 1) {
+                throw new SQLParserException("First/Last query and other aggregate queries can not be mixed.");
             }
         }
     }
@@ -367,12 +361,7 @@ public class SelectStatement extends DataStatement {
         Unknown,
         SimpleQuery,
         AggregateQuery,
-        MultiAggregateQuery,
+        LastFirstQuery,
         DownSampleQuery,
-        MultiDownSampleQuery,
-        ValueFilterQuery,
-        ValueFilterAndDownSampleQuery,
-        ValueFilterAndAggregateQuery,
-        MixedQuery,
     }
 }

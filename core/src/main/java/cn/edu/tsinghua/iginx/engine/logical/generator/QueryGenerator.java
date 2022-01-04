@@ -109,7 +109,7 @@ public class QueryGenerator implements LogicalGenerator {
         }
 
         List<Operator> queryList = new ArrayList<>();
-        if (statement.hasGroupBy()) {
+        if (statement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
             // DownSample Query
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
@@ -124,28 +124,32 @@ public class QueryGenerator implements LogicalGenerator {
                         )
                 );
             }));
-        } else if (statement.hasFunc()) {
+        } else if (statement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
             // Aggregate Query
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
                 List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
-                if (k.equals("last") || k.equals("first")) {
-                    queryList.add(
-                            new MappingTransform(
-                                    new OperatorSource(copySelect),
-                                    new FunctionCall(functionManager.getFunction(k), wrappedPath)
-                            )
-                    );
-                } else {
-                    queryList.add(
-                            new SetTransform(
-                                    new OperatorSource(copySelect),
-                                    new FunctionCall(functionManager.getFunction(k), wrappedPath)
-                            )
-                    );
-                }
+                queryList.add(
+                        new SetTransform(
+                                new OperatorSource(copySelect),
+                                new FunctionCall(functionManager.getFunction(k), wrappedPath)
+                        )
+                );
+            }));
+        } else if (statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
+            Operator finalRoot = root;
+            statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
+                List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
+                Operator copySelect = finalRoot.copy();
+                logger.info("function: " + k + ", wrapped path: " + v);
+                queryList.add(
+                        new MappingTransform(
+                                new OperatorSource(copySelect),
+                                new FunctionCall(functionManager.getFunction(k), wrappedPath)
+                        )
+                );
             }));
         } else {
             List<String> selectedPath = new ArrayList<>();
@@ -153,10 +157,12 @@ public class QueryGenerator implements LogicalGenerator {
             queryList.add(new Project(new OperatorSource(root), selectedPath));
         }
 
-        if (statement.hasFunc() && !statement.hasGroupBy()) {
-            root = joinOperators(queryList, ORDINAL);
-        } else  {
+        if (statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
+            root = unionOperators(queryList);
+        } else if (statement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
             root = joinOperatorsByTime(queryList);
+        } else {
+            root = joinOperators(queryList, ORDINAL);
         }
 
         if (!statement.getOrderByPath().equals("")) {
@@ -204,5 +210,9 @@ public class QueryGenerator implements LogicalGenerator {
             join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)), joinBy);
         }
         return join;
+    }
+
+    private boolean needJoinByTime(SelectStatement statement) {
+        return statement.hasGroupBy() || statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery;
     }
 }

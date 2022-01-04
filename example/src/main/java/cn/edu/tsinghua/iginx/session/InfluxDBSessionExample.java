@@ -303,7 +303,7 @@ public class InfluxDBSessionExample {
         paths.add(S3);
         paths.add(S4);
 
-        LastQueryDataSet dataSet = session.queryLast(paths, 0L);
+        SessionQueryDataSet dataSet = session.queryLast(paths, 0L);
         dataSet.print();
     }
 
