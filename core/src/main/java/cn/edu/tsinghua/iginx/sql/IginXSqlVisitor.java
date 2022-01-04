@@ -163,52 +163,76 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseSpecialClause(SpecialClauseContext ctx, SelectStatement selectStatement) {
         // parse group by precision
         if (ctx.groupByTimeClause() != null) {
-            String duration = ctx.groupByTimeClause().DURATION().getText();
-            long precision = TimeUtils.convertDurationStrToLong(0, duration);
-            Pair<Long, Long> timeInterval = parseTimeInterval(ctx.groupByTimeClause().timeInterval());
-            selectStatement.setStartTime(timeInterval.k);
-            selectStatement.setEndTime(timeInterval.v);
-            selectStatement.setPrecision(precision);
-            selectStatement.setHasGroupBy(true);
+            parseGroupByTimeClause(ctx.groupByTimeClause(), selectStatement);
         }
         // parse limit & offset
-        // like standard SQL, limit N, M means limit M offset N
         if (ctx.limitClause() != null) {
-            if (ctx.limitClause().INT().size() == 1) {
-                int limit = Integer.parseInt(ctx.limitClause().INT(0).getText());
-                selectStatement.setLimit(limit);
-                if (ctx.limitClause().offsetClause() != null) {
-                    int offset = Integer.parseInt(ctx.limitClause().offsetClause().INT().getText());
-                    selectStatement.setOffset(offset);
-                }
-            } else if (ctx.limitClause().INT().size() == 2) {
-                int offset = Integer.parseInt(ctx.limitClause().INT(0).getText());
-                int limit = Integer.parseInt(ctx.limitClause().INT(1).getText());
-                selectStatement.setOffset(offset);
-                selectStatement.setLimit(limit);
-            } else {
-                throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
-            }
+            parseLimitClause(ctx.limitClause(), selectStatement);
         }
         // parse order by
         if (ctx.orderByClause() != null) {
-            if (selectStatement.hasFunc()) {
-                throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
+            parseOrderByClause(ctx.orderByClause(), selectStatement);
+        }
+    }
+
+    private void parseGroupByTimeClause(SqlParser.GroupByTimeClauseContext ctx, SelectStatement selectStatement) {
+        String duration = ctx.DURATION().getText();
+        long precision = TimeUtils.convertDurationStrToLong(0, duration);
+        Pair<Long, Long> timeInterval = parseTimeInterval(ctx.timeInterval());
+        selectStatement.setStartTime(timeInterval.k);
+        selectStatement.setEndTime(timeInterval.v);
+        selectStatement.setPrecision(precision);
+        selectStatement.setHasGroupBy(true);
+
+        // merge value filter and group time range filter
+        TimeFilter startTime = new TimeFilter(Op.GE, timeInterval.k);
+        TimeFilter endTime = new TimeFilter(Op.L, timeInterval.v);
+        Filter mergedFilter;
+        if (selectStatement.hasValueFilter()) {
+            mergedFilter = new AndFilter(new ArrayList<>(Arrays.asList(selectStatement.getFilter(), startTime, endTime)));
+        } else {
+            mergedFilter = new AndFilter(new ArrayList<>(Arrays.asList(startTime, endTime)));
+            selectStatement.setHasValueFilter(true);
+        }
+        selectStatement.setFilter(mergedFilter);
+    }
+
+    // like standard SQL, limit N, M means limit M offset N
+    private void parseLimitClause(SqlParser.LimitClauseContext ctx, SelectStatement selectStatement) {
+        if (ctx.INT().size() == 1) {
+            int limit = Integer.parseInt(ctx.INT(0).getText());
+            selectStatement.setLimit(limit);
+            if (ctx.offsetClause() != null) {
+                int offset = Integer.parseInt(ctx.offsetClause().INT().getText());
+                selectStatement.setOffset(offset);
             }
-            if (ctx.orderByClause().path() != null) {
-                String suffixPath = ctx.orderByClause().path().getText();
-                String prefixPath = selectStatement.getFromPath();
-                String orderByPath = prefixPath + SQLConstant.DOT + suffixPath;
-                if (orderByPath.contains("*")) {
-                    throw new SQLParserException(String.format("ORDER BY path '%s' has '*', which is not supported.", orderByPath));
-                }
-                selectStatement.setOrderByPath(orderByPath);
-            } else {
-                selectStatement.setOrderByPath(SQLConstant.TIME);
+        } else if (ctx.INT().size() == 2) {
+            int offset = Integer.parseInt(ctx.INT(0).getText());
+            int limit = Integer.parseInt(ctx.INT(1).getText());
+            selectStatement.setOffset(offset);
+            selectStatement.setLimit(limit);
+        } else {
+            throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
+        }
+    }
+
+    private void parseOrderByClause(SqlParser.OrderByClauseContext ctx, SelectStatement selectStatement) {
+        if (selectStatement.hasFunc()) {
+            throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
+        }
+        if (ctx.path() != null) {
+            String suffixPath = ctx.path().getText();
+            String prefixPath = selectStatement.getFromPath();
+            String orderByPath = prefixPath + SQLConstant.DOT + suffixPath;
+            if (orderByPath.contains("*")) {
+                throw new SQLParserException(String.format("ORDER BY path '%s' has '*', which is not supported.", orderByPath));
             }
-            if (ctx.orderByClause().DESC() != null) {
-                selectStatement.setAscending(false);
-            }
+            selectStatement.setOrderByPath(orderByPath);
+        } else {
+            selectStatement.setOrderByPath(SQLConstant.TIME);
+        }
+        if (ctx.DESC() != null) {
+            selectStatement.setAscending(false);
         }
     }
 
