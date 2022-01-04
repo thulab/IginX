@@ -191,10 +191,10 @@ public class IoTDBStorage implements IStorage {
                 e = insertRowRecords((RowDataView) dataView, storageUnit);
                 break;
             case Column:
-                e = insertNonAlignedRowRecords((RowDataView) dataView, storageUnit);
+                e = insertColumnRecords((ColumnDataView) dataView, storageUnit);
                 break;
             case NonAlignedRow:
-                e = insertColumnRecords((ColumnDataView) dataView, storageUnit);
+                e = insertNonAlignedRowRecords((RowDataView) dataView, storageUnit);
                 break;
             case NonAlignedColumn:
                 e = insertNonAlignedColumnRecords((ColumnDataView) dataView, storageUnit);
