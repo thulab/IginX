@@ -147,7 +147,7 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -222,12 +222,12 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
-        return syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedColumnRecordsPlan(InsertNonAlignedColumnRecordsPlan plan) {
+        return syncExecuteInsertColumnRecordsPlan(plan);
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
+    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
         InfluxDBClient client = storageEngineIdToClient.get(plan.getStorageEngineId());
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
@@ -306,8 +306,8 @@ public class InfluxDBPlanExecutor implements IStorageEngine {
     }
 
     @Override
-    public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
-        return syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
+    public NonDataPlanExecuteResult syncExecuteInsertNonAlignedRowRecordsPlan(InsertNonAlignedRowRecordsPlan plan) {
+        return syncExecuteInsertRowRecordsPlan(plan);
     }
 
     @Override
