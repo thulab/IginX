@@ -1,10 +1,17 @@
 package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.session_v2.*;
+import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
+import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
 import cn.edu.tsinghua.iginx.session_v2.domain.User;
+import cn.edu.tsinghua.iginx.session_v2.query.IginXColumn;
+import cn.edu.tsinghua.iginx.session_v2.query.IginXHeader;
+import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
 import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
+import cn.edu.tsinghua.iginx.session_v2.write.Point;
+import cn.edu.tsinghua.iginx.session_v2.write.Record;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -17,6 +24,9 @@ import org.junit.Test;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 public class SessionV2IT {
@@ -31,7 +41,49 @@ public class SessionV2IT {
     private static ClusterClient clusterClient;
 
     private final static long startTimestamp = 0L;
-    private final static long endTimestamp = 15000L;
+    private final static long endTimestamp = 10000L;
+
+    private static final long SLEEP_TIME = 1000L;
+
+    @Measurement(name = "test.session.v2")
+    public static class POJO {
+
+        @Field(timestamp = true)
+        long timestamp;
+
+        @Field(name = "bool")
+        boolean boolValue;
+
+        @Field(name = "int")
+        int intValue;
+
+        @Field(name = "long")
+        long longValue;
+
+        @Field(name = "float")
+        float floatValue;
+
+        @Field(name = "double")
+        double doubleValue;
+
+        @Field(name = "string")
+        byte[] binaryValue;
+
+        public POJO() {
+
+        }
+
+        public POJO(long timestamp, boolean boolValue, int intValue, long longValue, float floatValue, double doubleValue, byte[] binaryValue) {
+            this.timestamp = timestamp;
+            this.boolValue = boolValue;
+            this.intValue = intValue;
+            this.longValue = longValue;
+            this.floatValue = floatValue;
+            this.doubleValue = doubleValue;
+            this.binaryValue = binaryValue;
+        }
+
+    }
 
     @BeforeClass
     public static void setUp() {
@@ -44,7 +96,17 @@ public class SessionV2IT {
         usersClient = iginXClient.getUserClient();
         clusterClient = iginXClient.getClusterClient();
 
-        insertData();
+//        insertDataByPoints();
+//        asyncInsertDataByPoints();
+//
+//        insertDataByRecords();
+//        asyncInsertDataByRecords();
+//
+        insertDataByTable();
+//        asyncInsertDataByTable();
+//
+//        insertDataByMeasurements();
+//        asyncInsertDataByMeasurements();
     }
 
     @AfterClass
@@ -53,7 +115,95 @@ public class SessionV2IT {
         iginXClient.close();
     }
 
-    private static void insertData() {
+    private static List<Point> buildInsertDataPoints() {
+        List<Point> points = new ArrayList<>();
+        for (long i = startTimestamp; i < endTimestamp; i++) {
+            points.add(Point.builder()
+                    .timestamp(i)
+                    .measurement("test.session.v2.bool")
+                    .booleanValue(i % 2 == 0)
+                    .build());
+            points.add(Point.builder()
+                    .timestamp(i)
+                    .measurement("test.session.v2.int")
+                    .intValue((int) i)
+                    .build());
+            points.add(Point.builder()
+                    .timestamp(i)
+                    .measurement("test.session.v2.long")
+                    .longValue(i)
+                    .build());
+            points.add(Point.builder()
+                    .timestamp(i)
+                    .measurement("test.session.v2.float")
+                    .floatValue((float) (i + 0.1))
+                    .build());
+            points.add(Point.builder()
+                    .timestamp(i)
+                    .measurement("test.session.v2.double")
+                    .doubleValue(i + 0.2)
+                    .build());
+            if (i % 2 == 0) {
+                points.add(Point.builder()
+                        .timestamp(i)
+                        .measurement("test.session.v2.string")
+                        .binaryValue(String.valueOf(i).getBytes())
+                        .build());
+            }
+        }
+        return points;
+    }
+
+    private static void insertDataByPoints() {
+        List<Point> points = buildInsertDataPoints();
+        writeClient.writePoints(points);
+    }
+
+    private static void asyncInsertDataByPoints() {
+        try {
+            List<Point> points = buildInsertDataPoints();
+            asyncWriteClient.writePoints(points);
+            Thread.sleep(SLEEP_TIME);
+        } catch (InterruptedException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    private static List<Record> buildInsertDataRecords() {
+        List<Record> records = new ArrayList<>();
+        for (long i = startTimestamp; i < endTimestamp; i++) {
+            Record.Builder builder = Record.builder()
+                    .measurement("test.session.v2")
+                    .timestamp(i)
+                    .addBooleanField("bool", i % 2 == 0)
+                    .addLongField("long", i)
+                    .addFloatField("float", (float)(i + 0.1))
+                    .addDoubleField("double", i + 0.2)
+                    .addIntField("int", (int) i);
+            if (i % 2 == 0) {
+                builder.addBinaryField("string", String.valueOf(i).getBytes());
+            }
+            records.add(builder.build());
+        }
+        return records;
+    }
+
+    private static void insertDataByRecords() {
+        List<Record> records = buildInsertDataRecords();
+        writeClient.writeRecords(records);
+    }
+
+    private static void asyncInsertDataByRecords() {
+        try {
+            List<Record> records = buildInsertDataRecords();
+            asyncWriteClient.writeRecords(records);
+            Thread.sleep(SLEEP_TIME);
+        } catch (InterruptedException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    private static Table buildInsertDataTable() {
         Table.Builder builder = Table.builder().measurement("test.session.v2")
                 .addField("bool", DataType.BOOLEAN)
                 .addField("int", DataType.INTEGER)
@@ -63,18 +213,63 @@ public class SessionV2IT {
                 .addField("string", DataType.BINARY);
 
         for (long i = startTimestamp; i < endTimestamp; i++) {
+            if (i % 2 == 0) {
+                builder = builder.binaryValue("string", String.valueOf(i).getBytes());
+            }
             builder = builder.timestamp(i)
-                    .boolValue("bool", i % 2 == 0 ? true : false)
-                    .intValue("int", 1000)
-                    .longValue("long", 232333L)
+                    .boolValue("bool", i % 2 == 0)
+                    .intValue("int", (int) i)
+                    .longValue("long", i)
                     .floatValue("float", (float) (i + 0.1))
                     .doubleValue("double", i + 0.2)
-                    .binaryValue("string", String.valueOf(i).getBytes())
                     .next();
         }
 
-        Table table = builder.build();
+        return builder.build();
+    }
+
+    private static void insertDataByTable() {
+        Table table = buildInsertDataTable();
         writeClient.writeTable(table);
+    }
+
+    private static void asyncInsertDataByTable() {
+        try {
+            Table table = buildInsertDataTable();
+            asyncWriteClient.writeTable(table);
+            Thread.sleep(SLEEP_TIME);
+        } catch (InterruptedException e) {
+            fail(e.getMessage());
+        }
+    }
+
+    private static List<POJO> buildInsertMeasurements() {
+        List<POJO> measurements = new ArrayList<>();
+        for (long i = startTimestamp; i < endTimestamp; i++) {
+            byte[] binaryValue = null;
+            if (i % 2 == 0) {
+                binaryValue = String.valueOf(i).getBytes();
+            }
+            measurements.add(
+                    new POJO(i, i % 2 == 0, (int) i, i, (float) (i + 0.1), i + 0.2, binaryValue)
+            );
+        }
+        return measurements;
+    }
+
+    private static void insertDataByMeasurements() {
+        List<POJO> measurements = buildInsertMeasurements();
+        writeClient.writeMeasurements(measurements);
+    }
+
+    private static void asyncInsertDataByMeasurements() {
+        try {
+            List<POJO> measurements = buildInsertMeasurements();
+            asyncWriteClient.writeMeasurements(measurements);
+            Thread.sleep(SLEEP_TIME);
+        } catch (InterruptedException e) {
+            fail(e.getMessage());
+        }
     }
 
     private static void clearDataAndUser() {
@@ -88,7 +283,7 @@ public class SessionV2IT {
     }
 
     @Test
-    public void testQueryClient() {
+    public void testSimpleQuery() {
         IginXTable table = queryClient.query(
                 SimpleQuery.builder()
                         .addMeasurement("test.session.v2.*")
@@ -96,6 +291,94 @@ public class SessionV2IT {
                         .endTime(endTimestamp)
                         .build()
         );
+        assertNotNull(table);
+        IginXHeader header = table.getHeader();
+        assertTrue(header.hasTimestamp());
+        List<IginXColumn> columns = header.getColumns();
+        assertEquals(6, columns.size());
+        for (IginXColumn column: columns) {
+            switch (column.getName()) {
+                case "test.session.v2.bool":
+                    assertEquals(DataType.BOOLEAN, column.getDataType());
+                    break;
+                case "test.session.v2.int":
+                    assertEquals(DataType.INTEGER, column.getDataType());
+                    break;
+                case "test.session.v2.double":
+                    assertEquals(DataType.DOUBLE, column.getDataType());
+                    break;
+                case "test.session.v2.float":
+                    assertEquals(DataType.FLOAT, column.getDataType());
+                    break;
+                case "test.session.v2.long":
+                    assertEquals(DataType.LONG, column.getDataType());
+                    break;
+                case "test.session.v2.string":
+                    assertEquals(DataType.BINARY, column.getDataType());
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        List<IginXRecord> records = table.getRecords();
+        assertEquals(1000, records.size());
+        for (int i = 0; i < records.size(); i++) {
+            IginXRecord record = records.get(i);
+            long timestamp = endTimestamp - 1000 + i;
+            assertEquals(timestamp, record.getTimestamp());
+            // 核验 bool 值
+            boolean boolValue = (boolean) record.getValue("test.session.v2.bool");
+            assertEquals(timestamp % 2 == 0, boolValue);
+            // 核验 int 值
+            int intValue = (int) record.getValue("test.session.v2.int");
+            assertEquals((int) timestamp, intValue);
+            // 核验 long 值
+            long longValue = (long) record.getValue("test.session.v2.long");
+            assertEquals(timestamp, longValue);
+            // 核验 float 值
+            float floatValue = (float) record.getValue("test.session.v2.float");
+            assertEquals((float)(timestamp + 0.1), floatValue, 0.05);
+            // 核验 double 值
+            double doubleValue = (double) record.getValue("test.session.v2.double");
+            assertEquals(timestamp + 0.2, doubleValue, 0.05);
+            // 核验 string 值
+            Object object = record.getValue("test.session.v2.string");
+            if (timestamp % 2 == 0) {
+                byte[] binaryValue = (byte[]) object;
+                assertEquals(String.valueOf(timestamp), new String(binaryValue));
+            } else {
+                assertNull(object);
+            }
+        }
+    }
+
+    @Test
+    public void testMeasurementQuery() {
+        List<POJO> pojoList = queryClient.query(
+                SimpleQuery.builder()
+                        .addMeasurement("test.session.v2.*")
+                        .startTime(endTimestamp - 1000L)
+                        .endTime(endTimestamp)
+                        .build(),
+                POJO.class
+        );
+        assertEquals(1000, pojoList.size());
+        for (int i = 0; i < pojoList.size(); i++) {
+            POJO pojo = pojoList.get(i);
+            long timestamp = endTimestamp - 1000 + i;
+            assertEquals(timestamp, pojo.timestamp);
+            assertEquals(timestamp % 2 == 0, pojo.boolValue);
+            assertEquals((int) timestamp, pojo.intValue);
+            assertEquals(timestamp, pojo.longValue);
+            assertEquals((float) (timestamp + 0.1), pojo.floatValue, 0.05);
+            assertEquals(timestamp + 0.2, pojo.doubleValue, 0.05);
+            if (timestamp % 2 == 0) {
+                assertEquals(String.valueOf(timestamp), new String(pojo.binaryValue));
+            } else {
+                assertNull(pojo.binaryValue);
+            }
+        }
 
     }
 

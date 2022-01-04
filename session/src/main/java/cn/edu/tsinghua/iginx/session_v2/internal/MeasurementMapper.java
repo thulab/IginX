@@ -78,7 +78,7 @@ public class MeasurementMapper {
                 recordBuilder.timestamp((Long) value);
             } else if (Boolean.class.isAssignableFrom(fieldType) || boolean.class.isAssignableFrom(fieldType)) {
                 recordBuilder.addBooleanField(name, (Boolean) value);
-            } else if (Integer.class.isAssignableFrom(fieldType) || Integer.class.isAssignableFrom(fieldType)) {
+            } else if (Integer.class.isAssignableFrom(fieldType) || int.class.isAssignableFrom(fieldType)) {
                 recordBuilder.addIntField(name, (Integer) value);
             } else if (Long.class.isAssignableFrom(fieldType) || long.class.isAssignableFrom(fieldType)) {
                 recordBuilder.addLongField(name, (Long) value);

@@ -237,6 +237,14 @@ public class Table {
                 this.valuesList.add(currentValues);
             }
             List<String> measurements = new ArrayList<>(fieldIndexMap.keySet());
+            List<DataType> dataTypes = new ArrayList<>();
+            Map<Integer, Integer> indexMap = new HashMap<>();
+            for (int i = 0; i < measurements.size(); i++) {
+                String measurement = measurements.get(i);
+                int index = fieldIndexMap.get(measurement);
+                dataTypes.add(this.dataTypes.get(index));
+                indexMap.put(index, i);
+            }
             if (measurement != null) {
                 measurements = measurements.stream().map(e -> measurement + "." + e).collect(Collectors.toList());
             }
@@ -244,11 +252,11 @@ public class Table {
             for (Map<Integer, Object> rowMap : this.valuesList) {
                 Object[] values = new Object[measurements.size()];
                 for (Map.Entry<Integer, Object> entry : rowMap.entrySet()) {
-                    values[entry.getKey()] = entry.getValue();
+                    values[indexMap.get(entry.getKey())] = entry.getValue();
                 }
                 valuesList.add(values);
             }
-            return new Table(this.timestamps, measurements, this.dataTypes, valuesList);
+            return new Table(this.timestamps, measurements, dataTypes, valuesList);
         }
 
     }

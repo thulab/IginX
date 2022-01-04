@@ -238,7 +238,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
     }
 
     private IginXTable buildIginXTable(QueryDataSet dataSet, List<String> measurements, List<DataType> dataTypes) {
-        boolean hasTimestamp = dataSet.getTimestamps() == null;
+        boolean hasTimestamp = dataSet.getTimestamps() != null;
         long[] timestamps = new long[0];
         if (hasTimestamp) {
             timestamps = getLongArrayFromByteBuffer(dataSet.timestamps);
