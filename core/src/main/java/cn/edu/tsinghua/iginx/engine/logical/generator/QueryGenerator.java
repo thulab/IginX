@@ -120,7 +120,7 @@ public class QueryGenerator implements LogicalGenerator {
                                 new OperatorSource(copySelect),
                                 statement.getPrecision(),
                                 new FunctionCall(functionManager.getFunction(k), wrappedPath),
-                                new TimeRange(0, Long.MAX_VALUE)
+                                new TimeRange(statement.getStartTime(), statement.getEndTime())
                         )
                 );
             }));
@@ -131,7 +131,7 @@ public class QueryGenerator implements LogicalGenerator {
                 List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
-                if (k.equals("last")) {
+                if (k.equals("last") || k.equals("first")) {
                     queryList.add(
                             new MappingTransform(
                                     new OperatorSource(copySelect),
@@ -153,7 +153,7 @@ public class QueryGenerator implements LogicalGenerator {
             queryList.add(new Project(new OperatorSource(root), selectedPath));
         }
 
-        if (statement.hasFunc()) {
+        if (statement.hasFunc() && !statement.hasGroupBy()) {
             root = joinOperators(queryList, ORDINAL);
         } else  {
             root = joinOperatorsByTime(queryList);

@@ -27,7 +27,7 @@ public class MappingTransform extends AbstractUnaryOperator {
     private final FunctionCall functionCall;
 
     public MappingTransform(Source source, FunctionCall functionCall) {
-        super(OperatorType.RowTransform, source);
+        super(OperatorType.MappingTransform, source);
         if (functionCall == null || functionCall.getFunction() == null) {
             throw new IllegalArgumentException("function shouldn't be null");
         }

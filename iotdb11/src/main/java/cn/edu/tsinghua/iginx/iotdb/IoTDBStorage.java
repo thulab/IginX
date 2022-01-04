@@ -90,6 +90,8 @@ public class IoTDBStorage implements IStorage {
 
     private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
 
+    private static final String DOES_NOT_EXISTED = "does not exist";
+
     private final SessionPool sessionPool;
 
     private final StorageEngineMeta meta;
@@ -189,10 +191,10 @@ public class IoTDBStorage implements IStorage {
                 e = insertRowRecords((RowDataView) dataView, storageUnit);
                 break;
             case Column:
-                e = insertNonAlignedRowRecords((RowDataView) dataView, storageUnit);
+                e = insertColumnRecords((ColumnDataView) dataView, storageUnit);
                 break;
             case NonAlignedRow:
-                e = insertColumnRecords((ColumnDataView) dataView, storageUnit);
+                e = insertNonAlignedRowRecords((RowDataView) dataView, storageUnit);
                 break;
             case NonAlignedColumn:
                 e = insertNonAlignedColumnRecords((ColumnDataView) dataView, storageUnit);
@@ -510,17 +512,21 @@ public class IoTDBStorage implements IStorage {
                 try {
                     sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, storageUnit));
                 } catch (IoTDBConnectionException | StatementExecutionException e) {
-                    logger.error(e.getMessage());
-                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete task in iotdb11 failure", e));
+                    logger.warn("encounter error when clear data: " + e.getMessage());
+                    if (!e.getMessage().contains(DOES_NOT_EXISTED)) {
+                        return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute clear data in iotdb11 failure", e));
+                    }
                 }
             } else {
-                try {
-                    for (String path: paths) {
+                for (String path: paths) {
+                    try {
                         sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, storageUnit + "." + path));
+                    } catch (IoTDBConnectionException | StatementExecutionException e) {
+                        logger.warn("encounter error when delete path: " + e.getMessage());
+                        if (!e.getMessage().contains(DOES_NOT_EXISTED)) {
+                            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete path task in iotdb11 failure", e));
+                        }
                     }
-                } catch (IoTDBConnectionException | StatementExecutionException e) {
-                    logger.error(e.getMessage());
-                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete task in iotdb11 failure", e));
                 }
             }
         } else {
@@ -530,8 +536,10 @@ public class IoTDBStorage implements IStorage {
                     sessionPool.deleteData(paths, timeRange.getActualBeginTime(), timeRange.getActualEndTime());
                 }
             } catch (IoTDBConnectionException | StatementExecutionException e) {
-                logger.error(e.getMessage());
-                return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete task in iotdb11 failure", e));
+                logger.warn("encounter error when delete data: " + e.getMessage());
+                if (!e.getMessage().contains(DOES_NOT_EXISTED)) {
+                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete data task in iotdb11 failure", e));
+                }
             }
         }
         return new TaskExecuteResult(null, null);

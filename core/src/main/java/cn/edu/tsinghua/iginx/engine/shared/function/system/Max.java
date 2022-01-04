@@ -27,8 +27,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueComparator;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.ArrayList;
@@ -81,7 +80,7 @@ public class Max implements SetMappingFunction {
                     if (targetValues[i] == null) {
                         targetValues[i] = values[i];
                     } else {
-                        if (values[i] != null && ValueComparator.compare(targetValues[i], values[i], targetFields.get(i).getType()) < 0) {
+                        if (values[i] != null && ValueUtils.compare(targetValues[i], values[i], targetFields.get(i).getType()) < 0) {
                             targetValues[i] = values[i];
                         }
                     }
@@ -99,7 +98,7 @@ public class Max implements SetMappingFunction {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value != null) {
-                    if (targetValue == null || ValueComparator.compare(targetValue, value, targetField.getType()) < 0) {
+                    if (targetValue == null || ValueUtils.compare(targetValue, value, targetField.getType()) < 0) {
                         targetValue = value;
                     }
                 }
