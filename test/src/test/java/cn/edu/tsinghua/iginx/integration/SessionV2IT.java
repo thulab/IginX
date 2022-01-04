@@ -5,14 +5,19 @@ import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
 import cn.edu.tsinghua.iginx.session_v2.domain.User;
+import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
+import cn.edu.tsinghua.iginx.session_v2.query.DownsampleQuery;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXColumn;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXHeader;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
+import cn.edu.tsinghua.iginx.session_v2.query.LastQuery;
+import cn.edu.tsinghua.iginx.session_v2.query.Query;
 import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
 import cn.edu.tsinghua.iginx.session_v2.write.Record;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.IginxInfo;
@@ -24,6 +29,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -349,6 +355,121 @@ public class SessionV2IT {
                 assertEquals(String.valueOf(timestamp), new String(binaryValue));
             } else {
                 assertNull(object);
+            }
+        }
+    }
+
+    @Test
+    public void testAggregateQuery() {
+        Query query = AggregateQuery.builder()
+                .addMeasurements(new HashSet<>(Collections.singletonList("test.session.v2.*")))
+                .aggregate(AggregateType.COUNT)
+                .startTime(startTimestamp)
+                .endTime(endTimestamp)
+                .build();
+        IginXTable table = queryClient.query(query);
+        assertNotNull(table);
+        IginXHeader header = table.getHeader();
+        assertFalse(header.hasTimestamp());
+        List<IginXColumn> columns = header.getColumns();
+        assertEquals(6, columns.size());
+        for (IginXColumn column: columns) {
+            switch (column.getName()) {
+                case "test.session.v2.bool":
+                case "test.session.v2.int":
+                case "test.session.v2.double":
+                case "test.session.v2.float":
+                case "test.session.v2.long":
+                case "test.session.v2.string":
+                    assertEquals(DataType.LONG, column.getDataType());
+                    break;
+                default:
+                    fail();
+            }
+        }
+        List<IginXRecord> records = table.getRecords();
+        assertEquals(1, records.size());
+
+        IginXRecord record = records.get(0);
+        for (Map.Entry<String, Object> entry: record.getValues().entrySet()) {
+            long value = (long) entry.getValue();
+            if (entry.getKey().equals("test.session.v2.string")) {
+                assertEquals((endTimestamp - startTimestamp) / 2, value);
+            } else {
+                assertEquals(endTimestamp - startTimestamp, value);
+            }
+        }
+
+    }
+
+    @Test
+    public void testLastQuery() {
+        Query query = LastQuery.builder()
+                .addMeasurements(new HashSet<>(Arrays.asList("test.session.v2.string", "test.session.v2.int")))
+                .startTime(startTimestamp)
+                .build();
+
+        IginXTable table = queryClient.query(query);
+        assertNotNull(table);
+        IginXHeader header = table.getHeader();
+        assertTrue(header.hasTimestamp());
+
+        List<IginXRecord> records = table.getRecords();
+        assertEquals(2, records.size());
+
+        for (IginXRecord record: records) {
+            String value = new String((byte[]) record.getValue("Value"));
+            if ((new String((byte[])record.getValue("Measurement"))).equals("test.session.v2.string")) {
+                assertEquals(endTimestamp - 2, record.getTimestamp());
+                assertEquals(String.valueOf(endTimestamp - 2), value);
+            } else if ((new String((byte[])record.getValue("Measurement"))).equals("test.session.v2.int")) {
+                assertEquals(endTimestamp - 1, record.getTimestamp());
+                assertEquals(String.valueOf(endTimestamp - 1), value);
+            } else {
+                fail();
+            }
+        }
+    }
+
+    @Test
+    public void testDownsampleQuery() {
+        Query query = DownsampleQuery.builder()
+                .addMeasurement("test.session.v2.long")
+                .addMeasurement("test.session.v2.double")
+                .aggregate(AggregateType.SUM)
+                .precision((endTimestamp - startTimestamp) / 10)
+                .startTime(startTimestamp)
+                .endTime(endTimestamp + (endTimestamp - startTimestamp))
+                .build();
+        IginXTable table = queryClient.query(query);
+        assertNotNull(table);
+        IginXHeader header = table.getHeader();
+        assertTrue(header.hasTimestamp());
+        List<IginXColumn> columns = header.getColumns();
+        assertEquals(2, columns.size());
+        for (IginXColumn column: columns) {
+            switch (column.getName()) {
+                case "test.session.v2.long":
+                case "test.session.v2.double":
+                    assertEquals(DataType.DOUBLE, column.getDataType());
+                    break;
+                default:
+                    fail();
+            }
+        }
+        List<IginXRecord> records = table.getRecords();
+        assertEquals(20, records.size());
+        for (IginXRecord record: records) {
+            long timestamp = record.getTimestamp();
+            if (timestamp >= endTimestamp) {
+                assertEquals(0.0, (double) record.getValue("test.session.v2.long"), 0.01);
+                assertEquals(0.0, (double) record.getValue("test.session.v2.double"), 0.01);
+            } else {
+                long nextTimestamps = timestamp + (endTimestamp - startTimestamp) / 10;
+                double longSum = (nextTimestamps + timestamp - 1) * (endTimestamp - startTimestamp) / 20.0;
+                double doubleSum = longSum + 0.2 * (endTimestamp - startTimestamp) / 10.0;
+                assertEquals(longSum, (double) record.getValue("test.session.v2.long"), 0.01);
+                assertEquals(doubleSum, (double) record.getValue("test.session.v2.double"), 0.01);
             }
         }
     }

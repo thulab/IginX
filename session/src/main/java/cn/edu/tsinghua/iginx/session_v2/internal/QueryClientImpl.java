@@ -164,8 +164,8 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
         for (int i = 0; i < timestamps.length; i++) {
             long timestamp = timestamps[i];
             Map<String, Object> recordValues = new HashMap<>();
-            recordValues.put(columns.get(0).getName(), resp.getPaths().get(i));
-            byte[] value = null;
+            recordValues.put(columns.get(0).getName(), resp.getPaths().get(i).getBytes());
+            byte[] value;
             if (values[i] instanceof byte[]) {
                 value = (byte[]) values[i];
             } else {
