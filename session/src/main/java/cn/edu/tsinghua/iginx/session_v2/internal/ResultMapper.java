@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.session_v2.internal;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
+import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import org.slf4j.Logger;
@@ -35,6 +36,12 @@ public class ResultMapper {
         Arguments.checkNotNull(record, "record");
         Arguments.checkNotNull(clazz, "clazz");
 
+        String measurement = clazz.getName();
+        Measurement measurementAnno = clazz.getAnnotation(Measurement.class);
+        if (measurementAnno != null) {
+            measurement = measurementAnno.name();
+        }
+
         try {
             T pojo = clazz.newInstance();
 
@@ -46,9 +53,20 @@ public class ResultMapper {
                 for (java.lang.reflect.Field field: fields) {
                     Field anno = field.getAnnotation(Field.class);
                     String fieldName = field.getName();
+
+                    if (anno != null && anno.timestamp()) {
+                        setFieldValue(pojo, field, record.getTimestamp());
+                        continue;
+                    }
+
                     if (anno != null && !anno.name().isEmpty()) {
                         fieldName = anno.name();
                     }
+
+                    if (!measurement.isEmpty()) {
+                        fieldName = measurement + "." + fieldName;
+                    }
+
                     Map<String, Object> recordValues = record.getValues();
                     if (recordValues.containsKey(fieldName)) {
                         Object value = recordValues.get(fieldName);
@@ -56,7 +74,7 @@ public class ResultMapper {
                     }
                 }
 
-                currentClazz = clazz.getSuperclass();
+                currentClazz = currentClazz.getSuperclass();
             }
 
             return pojo;
@@ -104,6 +122,9 @@ public class ResultMapper {
             if (boolean.class.isAssignableFrom(fieldType)) {
                 field.setBoolean(object, Boolean.parseBoolean(String.valueOf(value)));
                 return;
+            }
+            if (byte[].class.isAssignableFrom(fieldType)) {
+                field.set(object, value);
             }
             if (String.class.isAssignableFrom(fieldType)) {
                 field.set(object, new String((byte[]) value));

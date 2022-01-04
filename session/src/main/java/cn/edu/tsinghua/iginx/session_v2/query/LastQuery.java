@@ -36,6 +36,10 @@ public class LastQuery extends Query {
         return startTime;
     }
 
+    public static LastQuery.Builder builder() {
+        return new LastQuery.Builder();
+    }
+
     public static class Builder {
 
         private final Set<String> measurements;

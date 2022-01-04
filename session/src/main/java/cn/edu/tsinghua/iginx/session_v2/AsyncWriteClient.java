@@ -38,7 +38,7 @@ public interface AsyncWriteClient extends AutoCloseable {
 
     <M> void writeMeasurements(final List<M> measurements);
 
-    void writeTable(final Table table) throws InterruptedException;
+    void writeTable(final Table table);
 
     @Override
     void close() throws Exception;
