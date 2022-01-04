@@ -76,8 +76,8 @@ public class LastQueryCombiner {
             times[i] = lastPair.k;
             values[i] = lastPair.v;
         }
-        resp.timestamps = ByteUtils.getByteBufferFromLongArray(times);
-        resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
+//        resp.timestamps = ByteUtils.getByteBufferFromLongArray(times);
+//        resp.valuesList = ByteUtils.getRowByteBuffer(values, dataTypes);
     }
 
     private void constructPathAndTypeList(LastQueryResp resp, List<LastQueryPlanExecuteResult> planExecuteResults) {

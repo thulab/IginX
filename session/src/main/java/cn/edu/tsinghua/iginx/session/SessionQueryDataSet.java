@@ -18,10 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
 import java.nio.ByteBuffer;
@@ -36,6 +33,12 @@ public class SessionQueryDataSet {
     private final long[] timestamps;
     private List<String> paths;
     private List<List<Object>> values;
+
+    public SessionQueryDataSet(LastQueryResp resp) {
+        this.paths = resp.getPaths();
+        this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
+        parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+    }
 
     public SessionQueryDataSet(QueryDataResp resp) {
         this.paths = resp.getPaths();

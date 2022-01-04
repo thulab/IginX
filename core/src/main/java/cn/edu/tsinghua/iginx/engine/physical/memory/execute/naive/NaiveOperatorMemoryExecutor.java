@@ -405,7 +405,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Field> targetFields = new ArrayList<>(targetFieldSet);
         Header targetHeader;
         List<Row> rows = new ArrayList<>();
-        if (hasTimestamp) {
+        if (!hasTimestamp) {
             targetHeader = new Header(targetFields);
             for (Row row: tableA.getRows()) {
                 rows.add(RowUtils.transform(row, targetHeader));
@@ -419,9 +419,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row row1 = tableA.getRow(index1);
                 Row row2 = tableB.getRow(index2);
-                if (row1.getTimestamp() == row2.getTimestamp()) {
-                    throw new InvalidOperatorParameterException("row stream to be union has intersected row");
-                } else if (row1.getTimestamp() < row2.getTimestamp()) {
+                if (row1.getTimestamp() <= row2.getTimestamp()) {
                     rows.add(RowUtils.transform(row1, targetHeader));
                     index1++;
                 } else {

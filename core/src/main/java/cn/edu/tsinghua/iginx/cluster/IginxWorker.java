@@ -106,16 +106,13 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-//        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
-//        core.processRequest(context);
-//        return context.getStatus();
         List<String> paths = req.getPaths();
         List<DataType> types = req.getDataTypeList();
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
         List<Long> times = new ArrayList<>();
         Arrays.stream(timeArray).forEach(times::add);
         Object[] values = ByteUtils.getColumnValuesByDataType(req.getValuesList(), types, req.getBitmapList(), times.size());
-        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
+        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(timeArray.length, x.array())).collect(Collectors.toList());
 
         InsertStatement statement = new InsertStatement(
                 RawDataType.Column,
@@ -133,16 +130,13 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-//        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
-//        core.processRequest(context);
-//        return context.getStatus();
         List<String> paths = req.getPaths();
         List<DataType> types = req.getDataTypeList();
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
         List<Long> times = new ArrayList<>();
         Arrays.stream(timeArray).forEach(times::add);
         Object[] values = ByteUtils.getColumnValuesByDataType(req.getValuesList(), types, req.getBitmapList(), times.size());
-        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
+        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(timeArray.length, x.array())).collect(Collectors.toList());
 
         InsertStatement statement = new InsertStatement(
                 RawDataType.NonAlignedColumn,
@@ -160,9 +154,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-//        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
-//        core.processRequest(context);
-//        return context.getStatus();
         List<String> paths = req.getPaths();
         List<DataType> types = req.getDataTypeList();
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
@@ -187,9 +178,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-//        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
-//        core.processRequest(context);
-//        return context.getStatus();
         List<String> paths = req.getPaths();
         List<DataType> types = req.getDataTypeList();
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
@@ -214,9 +202,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-//        DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
-//        core.processRequest(context);
-//        return context.getStatus();
         DeleteStatement statement = new DeleteStatement(req.getPaths(), req.getStartTime(), req.getEndTime());
         return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
@@ -226,9 +211,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
-//        QueryDataContext context = new QueryDataContext(req);
-//        core.processRequest(context);
-//        return ((QueryDataCombineResult) context.getCombineResult()).getResp();
         SelectStatement statement = new SelectStatement(
                 req.getPaths(),
                 req.getStartTime(),
@@ -300,9 +282,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new AggregateQueryResp(RpcUtils.ACCESS_DENY);
         }
-//        AggregateQueryContext context = new AggregateQueryContext(req);
-//        core.processRequest(context);
-//        return ((AggregateCombineResult) context.getCombineResult()).getResp();
         SelectStatement statement = new SelectStatement(
                 req.getPaths(),
                 req.getStartTime(),
@@ -332,9 +311,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new DownsampleQueryResp(RpcUtils.ACCESS_DENY);
         }
-//        DownsampleQueryContext context = new DownsampleQueryContext(req);
-//        core.processRequest(context);
-//        return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
         SelectStatement statement = new SelectStatement(
                 req.getPaths(),
                 req.getStartTime(),
@@ -355,9 +331,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new ShowColumnsResp(RpcUtils.ACCESS_DENY);
         }
-//        ShowColumnsContext context = new ShowColumnsContext(req);
-//        core.processRequest(context);
-//        return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
         ShowTimeSeriesStatement statement = new ShowTimeSeriesStatement();
         ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
 
@@ -388,9 +361,6 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new LastQueryResp(RpcUtils.ACCESS_DENY);
         }
-//        LastQueryContext context = new LastQueryContext(req);
-//        core.processRequest(context);
-//        return ((LastQueryCombineResult) context.getCombineResult()).getResp();
         SelectStatement statement = new SelectStatement(
                 req.getPaths(),
                 req.getStartTime(),
@@ -401,7 +371,9 @@ public class IginxWorker implements IService.Iface {
         LastQueryResp resp = new LastQueryResp(sqlResp.getStatus());
         resp.setPaths(sqlResp.getPaths());
         resp.setDataTypeList(sqlResp.getDataTypeList());
-        resp.setValuesList(sqlResp.getValuesList());
+        resp.setQueryDataSet(sqlResp.getQueryDataSet());
+//        resp.setValuesList(sqlResp.getValuesList());
+//        resp.setTimestamps(sqlResp.getTimestamps());
         return resp;
     }
 

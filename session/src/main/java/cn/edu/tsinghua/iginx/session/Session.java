@@ -847,7 +847,7 @@ public class Session {
         return new SessionExecuteSqlResult(resp);
     }
 
-    public LastQueryDataSet queryLast(List<String> paths, long startTime)
+    public SessionQueryDataSet queryLast(List<String> paths, long startTime)
             throws SessionException, ExecutionException {
         if (paths.isEmpty()) {
             logger.error("Invalid query request!");
@@ -871,7 +871,7 @@ public class Session {
             throw new SessionException(e);
         }
 
-        return new LastQueryDataSet(resp);
+        return new SessionQueryDataSet(resp);
     }
 
     public void addUser(String username, String password, Set<AuthType> auths) throws SessionException, ExecutionException  {

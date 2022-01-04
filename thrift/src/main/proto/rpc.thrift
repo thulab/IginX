@@ -216,8 +216,7 @@ struct LastQueryResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
-    4: optional binary timestamps
-    5: optional binary valuesList
+    4: optional QueryDataSet queryDataSet
 }
 
 struct DownsampleQueryReq {

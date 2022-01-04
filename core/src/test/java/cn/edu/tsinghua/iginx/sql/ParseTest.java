@@ -57,7 +57,7 @@ public class ParseTest {
         assertTrue(statement.hasFunc());
         assertTrue(statement.hasValueFilter());
         assertTrue(statement.hasGroupBy());
-        assertEquals(SelectStatement.QueryType.MixedQuery, statement.getQueryType());
+        assertEquals(SelectStatement.QueryType.DownSampleQuery, statement.getQueryType());
 
         assertEquals(2, statement.getSelectedFuncsAndPaths().size());
         assertTrue(statement.getSelectedFuncsAndPaths().containsKey("max"));
@@ -116,7 +116,7 @@ public class ParseTest {
     @Test(expected = SQLParserException.class)
     public void testAggregateAndOrderBy() {
         String aggregateAndOrderBy = "SELECT max(a) FROM test ORDER BY a DESC;";
-        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(aggregateAndOrderBy);
+        TestUtils.buildStatement(aggregateAndOrderBy);
     }
 
     @Test
