@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
@@ -35,10 +34,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
-import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
-import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
-import cn.edu.tsinghua.iginx.sql.statement.ShowTimeSeriesStatement;
+import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
@@ -96,9 +92,8 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        DeleteColumnsContext context = new DeleteColumnsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        DeleteTimeSeriesStatement statement = new DeleteTimeSeriesStatement(req.getPaths());
+        return executor.executeStatement(statement, req.getSessionId()).getStatus();
     }
 
     @Override
@@ -372,8 +367,6 @@ public class IginxWorker implements IService.Iface {
         resp.setPaths(sqlResp.getPaths());
         resp.setDataTypeList(sqlResp.getDataTypeList());
         resp.setQueryDataSet(sqlResp.getQueryDataSet());
-//        resp.setValuesList(sqlResp.getValuesList());
-//        resp.setTimestamps(sqlResp.getTimestamps());
         return resp;
     }
 

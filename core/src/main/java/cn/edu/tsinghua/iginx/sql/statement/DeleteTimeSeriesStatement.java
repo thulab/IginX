@@ -9,7 +9,12 @@ public class DeleteTimeSeriesStatement extends DataStatement {
 
     public DeleteTimeSeriesStatement() {
         this.statementType = StatementType.DELETE_TIME_SERIES;
-        paths = new ArrayList<>();
+        this.paths = new ArrayList<>();
+    }
+
+    public DeleteTimeSeriesStatement(List<String> paths) {
+        this.statementType = StatementType.DELETE_TIME_SERIES;
+        this.paths = new ArrayList<>();
     }
 
     public List<String> getPaths() {
