@@ -14,7 +14,7 @@ public class DeleteTimeSeriesStatement extends DataStatement {
 
     public DeleteTimeSeriesStatement(List<String> paths) {
         this.statementType = StatementType.DELETE_TIME_SERIES;
-        this.paths = new ArrayList<>();
+        this.paths = paths;
     }
 
     public List<String> getPaths() {
