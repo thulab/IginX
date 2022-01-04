@@ -214,7 +214,7 @@ public abstract class BaseSessionIT {
         for (int i = 0; i < 6; i++) {
             dataTypeList.add(DataType.findByValue(i));
         }
-        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private double changeResultToDouble(Object rawResult) {
