@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.IFragmentGenerator;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.jvnet.hk2.internal.Collector;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -184,8 +185,19 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         Pair<FragmentMeta, StorageUnitMeta> pair;
         int index = 0;
 
+        int totalFragmentReplica = (prefixList.size() + 1) * replicaNum;
+        List<Long> weightFragmentList = new ArrayList<>();
+        List<Double> weight = iMetaManager.getStorageEngineList().stream().map(e -> Double.parseDouble(e.getExtraParams().getOrDefault("weight", "1.0"))).collect(Collectors.toList());
+        List<Long> idList = iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+        Double tmp = totalFragmentReplica / weight.stream().mapToDouble(Double::doubleValue).sum();
+        for (int i = 0; i < idList.size(); i++) {
+            for (int j = 0; j < tmp * weight.get(i); j++) {
+                weightFragmentList.add(idList.get(i));
+            }
+        }
+        Collections.shuffle(weightFragmentList);
         // [startTime, +∞) & (null, startPath)
-        storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+        storageEngineIdList = generateStorageEngineIdListByWeight(weightFragmentList, index++, replicaNum);
         pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
         fragmentList.add(pair.k);
         storageUnitList.add(pair.v);
@@ -193,14 +205,14 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         // [startTime, +∞) & [startPath, endPath)
         int splitNum = Math.max(prefixList.size() - 1, 0);
         for (int i = 0; i < splitNum; i++) {
-            storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
+            storageEngineIdList = generateStorageEngineIdListByWeight(weightFragmentList, index++, replicaNum);
             pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(i), prefixList.get(i + 1), startTime, Long.MAX_VALUE, storageEngineIdList);
             fragmentList.add(pair.k);
             storageUnitList.add(pair.v);
         }
 
         // [startTime, +∞) & [endPath, null)
-        storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
+        storageEngineIdList = generateStorageEngineIdListByWeight(weightFragmentList, index, replicaNum);
         pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE, storageEngineIdList);
         fragmentList.add(pair.k);
         storageUnitList.add(pair.v);
@@ -245,4 +257,12 @@ class SimpleFragmentGenerator implements IFragmentGenerator {
         return storageEngineIdList;
     }
 
+
+    private List<Long> generateStorageEngineIdListByWeight(List<Long> weightFragmentList, int startIndex, int num) {
+        List<Long> storageEngineIdList = new ArrayList<>();
+        for (int i = startIndex; i < startIndex + num; i++) {
+            storageEngineIdList.add(weightFragmentList.get(i % weightFragmentList.size()));
+        }
+        return storageEngineIdList;
+    }
 }
