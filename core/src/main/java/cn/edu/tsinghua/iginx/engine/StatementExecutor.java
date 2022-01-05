@@ -201,6 +201,13 @@ public class StatementExecutor {
         return resp;
     }
 
+    private ExecuteSqlResp buildEmptyQueryResp() {
+        ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
+        resp.setValuesList(new byte[]{});
+        resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
+        return resp;
+    }
+
     private ExecuteSqlResp buildQueryRowStreamResp(RowStream stream, SelectStatement statement) throws PhysicalException {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
@@ -254,7 +261,7 @@ public class StatementExecutor {
                 resp.setValuesList(valuesList.get(0));
             }
         } else {  // empty result
-            resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
+            resp = buildEmptyQueryResp();
         }
 
         resp.setPaths(paths);
