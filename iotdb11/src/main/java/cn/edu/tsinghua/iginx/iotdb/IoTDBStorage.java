@@ -60,8 +60,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
-import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
-import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.SUCCESS;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
 
 public class IoTDBStorage implements IStorage {
@@ -154,16 +152,6 @@ public class IoTDBStorage implements IStorage {
             return executeDeleteTask(storageUnit, delete);
         }
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
-    }
-
-    @Override
-    public boolean supportsProject() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsProjectAndSelect() {
-        return true;
     }
 
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤

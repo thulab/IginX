@@ -16,13 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.storage;
+package cn.edu.tsinghua.iginx.influxdb.query.entity;
 
-import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 
-public interface IStorage {
+public class InfluxDBQueryRowStream implements RowStream {
 
-    TaskExecuteResult execute(StoragePhysicalTask task);
 
+    @Override
+    public Header getHeader() {
+        return null;
+    }
+
+    @Override
+    public void close() throws PhysicalException {
+
+    }
+
+    @Override
+    public boolean hasNext() throws PhysicalException {
+        return false;
+    }
+
+    @Override
+    public Row next() throws PhysicalException {
+        return null;
+    }
 }

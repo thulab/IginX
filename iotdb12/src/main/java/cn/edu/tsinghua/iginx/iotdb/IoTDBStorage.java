@@ -154,16 +154,6 @@ public class IoTDBStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    @Override
-    public boolean supportsProject() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsProjectAndSelect() {
-        return true;
-    }
-
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
         try {
             StringBuilder builder = new StringBuilder();
