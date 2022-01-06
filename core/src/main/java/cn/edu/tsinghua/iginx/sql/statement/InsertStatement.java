@@ -90,6 +90,10 @@ public class InsertStatement extends DataStatement {
         this.bitmaps = bitmaps;
     }
 
+    public long getEndTime() {
+        return times.get(times.size()-1);
+    }
+
     public void sortData() {
         Integer[] index = new Integer[times.size()];
         for (int i = 0; i < times.size(); i++) {
