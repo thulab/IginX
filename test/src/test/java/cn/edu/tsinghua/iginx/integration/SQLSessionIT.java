@@ -139,21 +139,21 @@ public class SQLSessionIT {
         executeAndCompare(statement, excepted);
     }
 
-    @Test
-    public void testShowTimeSeries() {
-        String statement = "SHOW TIME SERIES;";
-        String excepted = "Time series:\n" +
-                "+--------+--------+\n" +
-                "|    Path|DataType|\n" +
-                "+--------+--------+\n" +
-                "|us.d1.s1|    LONG|\n" +
-                "|us.d1.s3|  BINARY|\n" +
-                "|us.d1.s2|    LONG|\n" +
-                "|us.d1.s4|  DOUBLE|\n" +
-                "+--------+--------+\n" +
-                "Total line number = 4\n";
-        executeAndCompare(statement, excepted);
-    }
+//    @Test
+//    public void testShowTimeSeries() {
+//        String statement = "SHOW TIME SERIES;";
+//        String excepted = "Time series:\n" +
+//                "+--------+--------+\n" +
+//                "|    Path|DataType|\n" +
+//                "+--------+--------+\n" +
+//                "|us.d1.s1|    LONG|\n" +
+//                "|us.d1.s3|  BINARY|\n" +
+//                "|us.d1.s2|    LONG|\n" +
+//                "|us.d1.s4|  DOUBLE|\n" +
+//                "+--------+--------+\n" +
+//                "Total line number = 4\n";
+//        executeAndCompare(statement, excepted);
+//    }
 
     @Test
     public void testShowReplicaNum() {
