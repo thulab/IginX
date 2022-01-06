@@ -19,30 +19,103 @@
 package cn.edu.tsinghua.iginx.influxdb.query.entity;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import com.influxdb.query.FluxRecord;
+import com.influxdb.query.FluxTable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInfluxDB;
 
 public class InfluxDBQueryRowStream implements RowStream {
 
+    private final Header header;
+
+    private final List<FluxTable> tables;
+
+    private final int[] indices;
+
+    private int hasMoreRecords;
+
+    public InfluxDBQueryRowStream(List<FluxTable> tables) {
+        this.tables = tables.stream().filter(e -> e.getRecords().size() > 0).collect(Collectors.toList()); // 只保留还有数据的二维表
+
+        List<Field> fields = new ArrayList<>();
+        for (FluxTable table: this.tables) {
+            String path;
+            if (table.getRecords().get(0).getValueByKey("t") == null) {
+                path = table.getRecords().get(0).getMeasurement() + "." + table.getRecords().get(0).getField();
+            } else {
+                path = table.getRecords().get(0).getMeasurement() + "." + table.getRecords().get(0).getValueByKey(InfluxDBSchema.TAG) + "." + table.getRecords().get(0).getField();
+            }
+            DataType dataType = fromInfluxDB(table.getColumns().stream().filter(x -> x.getLabel().equals("_value")).collect(Collectors.toList()).get(0).getDataType());
+            fields.add(new Field(path, dataType));
+        }
+        this.header = new Header(Field.TIME, fields);
+        this.indices = new int[this.tables.size()];
+
+        this.hasMoreRecords = this.tables.size();
+    }
 
     @Override
     public Header getHeader() {
-        return null;
+        return header;
     }
 
     @Override
     public void close() throws PhysicalException {
-
+        // need to do nothing
     }
 
     @Override
     public boolean hasNext() throws PhysicalException {
-        return false;
+        return this.hasMoreRecords != 0;
     }
 
     @Override
     public Row next() throws PhysicalException {
-        return null;
+        long timestamp = Long.MAX_VALUE;
+        for (int i = 0; i < this.tables.size(); i++) {
+            int index = indices[i];
+            FluxTable table = this.tables.get(i);
+            List<FluxRecord> records = table.getRecords();
+            if (index == records.size()) { // 数据已经消费完毕了
+                continue;
+            }
+            FluxRecord record = records.get(index);
+            timestamp = Math.min(record.getTime().toEpochMilli(), timestamp);
+        }
+        if (timestamp == Long.MAX_VALUE) {
+            return null;
+        }
+        Object[] values = new Object[this.tables.size()];
+        for (int i = 0; i < this.tables.size(); i++) {
+            int index = indices[i];
+            FluxTable table = this.tables.get(i);
+            List<FluxRecord> records = table.getRecords();
+            if (index == records.size()) { // 数据已经消费完毕了
+                continue;
+            }
+            FluxRecord record = records.get(index);
+            if (record.getTime().toEpochMilli() == timestamp) {
+                DataType dataType = header.getField(i).getType();
+                Object value = record.getValue();
+                if (dataType == DataType.BINARY) {
+                    value = ((String) value).getBytes();
+                }
+                values[i] = value;
+                indices[i]++;
+                if (indices[i] == records.size()) {
+                    hasMoreRecords--;
+                }
+            }
+        }
+        return new Row(header, timestamp, values);
     }
 }

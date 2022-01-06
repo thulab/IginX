@@ -59,7 +59,7 @@ public class IoTDBQueryRowStream implements RowStream {
             String name = names.get(i);
             TSDataType type = types.get(i);
             if (i == 0 && name.equals("Time")) {
-                time = new Field(Constants.TIMESTAMP, DataType.LONG);
+                time = Field.TIME;
                 continue;
             }
             fields.add(new Field(transformColumnName(name), DataTypeTransformer.fromIoTDB(type)));
