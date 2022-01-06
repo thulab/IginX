@@ -354,6 +354,9 @@ public class DefaultMetaManager implements IMetaManager {
                 String actualName = storage.addStorageUnit();
                 StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
                 cache.updateStorageUnit(actualMasterStorageUnit);
+                for (StorageUnitHook hook: storageUnitHooks) {
+                    hook.onChange(null, actualMasterStorageUnit);
+                }
                 storage.updateStorageUnit(actualMasterStorageUnit);
                 fakeIdToStorageUnit.put(fakeName, actualMasterStorageUnit);
                 for (StorageUnitMeta slaveStorageUnit : masterStorageUnit.getReplicas()) {
@@ -362,6 +365,9 @@ public class DefaultMetaManager implements IMetaManager {
                     String slaveActualName = storage.addStorageUnit();
                     StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
                     actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+                    for (StorageUnitHook hook: storageUnitHooks) {
+                        hook.onChange(null, actualSlaveStorageUnit);
+                    }
                     cache.updateStorageUnit(actualSlaveStorageUnit);
                     storage.updateStorageUnit(actualSlaveStorageUnit);
                     fakeIdToStorageUnit.put(slaveFakeName, actualSlaveStorageUnit);

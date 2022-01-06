@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.core.Core;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.engine.StatementExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -260,6 +261,9 @@ public class IginxWorker implements IService.Iface {
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;
+        }
+        for (StorageEngineMeta meta: storageEngineMetas) {
+            PhysicalEngineImpl.getInstance().getStorageManager().addStorage(meta);
         }
         return status;
     }

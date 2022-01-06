@@ -120,6 +120,8 @@ public class StorageManager {
         if (!initStorage(meta)) {
             logger.error("add storage " + meta + " failure!");
             return false;
+        } else {
+            logger.info("add storage " + meta + " success.");
         }
         return true;
     }

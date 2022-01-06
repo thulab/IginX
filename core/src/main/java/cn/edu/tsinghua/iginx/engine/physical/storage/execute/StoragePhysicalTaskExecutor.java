@@ -62,6 +62,7 @@ public class StoragePhysicalTaskExecutor {
     private StoragePhysicalTaskExecutor() {
         StorageUnitHook storageUnitHook = (before, after) -> {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
+                logger.info("new storage unit " + after.getId() + " come!");
                 String id = after.getId();
                 storageTaskQueues.put(id, new StoragePhysicalTaskQueue());
                 // 为拥有该分片的存储创建一个调度线程，用于调度任务执行
@@ -108,7 +109,9 @@ public class StoragePhysicalTaskExecutor {
         };
         StorageEngineChangeHook storageEngineChangeHook = (before, after) -> {
             if (before == null && after != null) { // 新增加存储，处理这种事件，其他事件暂时不处理
-                storageManager.addStorage(after);
+                if (after.getCreatedBy() != metaManager.getIginxId()) {
+                    storageManager.addStorage(after);
+                }
             }
         };
         metaManager.registerStorageEngineChangeHook(storageEngineChangeHook);
