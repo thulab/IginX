@@ -112,15 +112,10 @@ public class SQLSessionIT {
         logger.info("Execute Statement: \"{}\"", statement);
 
         try {
-            SessionExecuteSqlResult res = session.executeSql(statement);
-
-            if (res.getParseErrorMsg() != null) {
-                assertEquals(exceptErrMsg, res.getParseErrorMsg());
-            } else {
-                fail();
-            }
+            session.executeSql(statement);
         } catch (SessionException | ExecutionException e) {
-            logger.info("Statement: \"{}\" execute fail.", statement);
+            logger.info("Statement: \"{}\" execute fail. Because: {}", statement, e.getMessage());
+            assertEquals(exceptErrMsg, e.getMessage());
         }
     }
 
@@ -789,10 +784,10 @@ public class SQLSessionIT {
     @Test
     public void testErrorClause() {
         String errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND time >= 120 AND time <= 230;";
-        executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter.");
+        executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter again.");
 
         errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND s1 < 10;";
-        executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
+        executeAndCompareErrMsg(errClause, "delete clause can not use value filter.");
 
         errClause = "DELETE FROM us.d1.s1 WHERE time != 105;";
         executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
