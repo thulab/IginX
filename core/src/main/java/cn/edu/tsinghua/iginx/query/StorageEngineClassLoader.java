@@ -30,6 +30,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -38,6 +39,8 @@ public class StorageEngineClassLoader extends ClassLoader {
     private final String path;
 
     private final Map<String, String> nameToJar;
+
+    private final Map<String, Class<?>> classMap = new ConcurrentHashMap<>();
 
     public StorageEngineClassLoader(String path) throws IOException {
         String tPath = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR);
@@ -71,14 +74,20 @@ public class StorageEngineClassLoader extends ClassLoader {
 
     @Override
     protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+        if (classMap.containsKey(name)) {
+            return classMap.get(name);
+        }
+
         Class<?> clazz = findLocalClass(name);
         if (clazz != null) {
             if (resolve) {
                 resolveClass(clazz);
             }
-            return clazz;
+        } else {
+            clazz = super.loadClass(name, resolve);
         }
-        return super.loadClass(name, resolve);
+        classMap.put(name, clazz);
+        return clazz;
     }
 
     private Class<?> findLocalClass(String name) {
