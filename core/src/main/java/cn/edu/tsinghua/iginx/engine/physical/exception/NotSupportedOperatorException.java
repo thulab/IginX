@@ -16,13 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.storage;
+package cn.edu.tsinghua.iginx.engine.physical.exception;
 
-import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-public interface IStorage {
+public class NotSupportedOperatorException extends PhysicalException {
 
-    TaskExecuteResult execute(StoragePhysicalTask task);
+    private static final long serialVersionUID = 2361886892149089975L;
+
+    public NotSupportedOperatorException(Operator operator, String detail) {
+        super("non supported operator " + operator.getType() + ", because " + detail);
+    }
 
 }

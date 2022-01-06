@@ -47,7 +47,7 @@ public class SessionAggregateQueryDataSet {
         System.out.println("Start to Print ResultSets:");
         if (timestamps == null) {
             for (String path : paths) {
-                System.out.print(type.toString() + "(" + path + ")\t");
+                System.out.print(path + "\t");
             }
             System.out.println();
             for (Object value : values) {
@@ -61,7 +61,7 @@ public class SessionAggregateQueryDataSet {
         } else {
             for (int i = 0; i < timestamps.length; i++) {
                 System.out.print("Time\t");
-                System.out.print(type.toString() + "(" + paths.get(i) + ")\t");
+                System.out.print(paths.get(i) + "\t");
                 System.out.println();
                 System.out.print(timestamps[i] + "\t");
                 if (values[i] instanceof byte[]) {
