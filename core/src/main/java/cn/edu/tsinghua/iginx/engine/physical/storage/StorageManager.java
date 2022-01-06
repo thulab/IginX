@@ -19,12 +19,6 @@
 package cn.edu.tsinghua.iginx.engine.physical.storage;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.physical.exception.NonExistedStorageException;
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
-import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
-import cn.edu.tsinghua.iginx.engine.physical.storage.queue.StoragePhysicalTaskQueue;
-import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.query.StorageEngineClassLoader;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -40,7 +34,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-// TODO: 考虑扩容事件的响应
 public class StorageManager {
 
     private static final Logger logger = LoggerFactory.getLogger(StorageManager.class);
@@ -53,29 +46,33 @@ public class StorageManager {
 
     public StorageManager(List<StorageEngineMeta> metaList) {
         initClassLoaderAndDrivers();
-        String engine = "";
-        String driver = "";
-        try {
-            for (StorageEngineMeta meta: metaList) {
-                engine = meta.getStorageEngine();
-                driver = drivers.get(engine);
-                ClassLoader loader = classLoaders.get(engine);
-                IStorage storage = (IStorage) loader.loadClass(driver)
-                        .getConstructor(StorageEngineMeta.class).newInstance(meta);
-                // 启动一个派发线程池
-                ExecutorService dispatcher = new ThreadPoolExecutor(0,
-                        ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
-                        60L, TimeUnit.SECONDS, new SynchronousQueue<>());
-                storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
+        for (StorageEngineMeta meta: metaList) {
+            if (!initStorage(meta)) {
+                System.exit(-1);
             }
+        }
+    }
+
+    private boolean initStorage(StorageEngineMeta meta) {
+        String engine = meta.getStorageEngine();
+        String driver = drivers.get(engine);
+        try {
+            ClassLoader loader = classLoaders.get(engine);
+            IStorage storage = (IStorage) loader.loadClass(driver)
+                    .getConstructor(StorageEngineMeta.class).newInstance(meta);
+            // 启动一个派发线程池
+            ExecutorService dispatcher = new ThreadPoolExecutor(0,
+                    ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
+                    60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+            storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
         } catch (ClassNotFoundException e) {
             logger.error("load class {} for engine {} failure: {}", driver, engine, e);
-            System.exit(-1);
+            return false;
         } catch (Exception e) {
             logger.error("unexpected error when process engine {}: {}", engine, e);
-            System.exit(-1);
+            return false;
         }
-
+        return true;
     }
 
     private void initClassLoaderAndDrivers() {
@@ -117,5 +114,15 @@ public class StorageManager {
 
     public Pair<IStorage, ExecutorService> getStorage(long id) {
         return storageMap.get(id);
+    }
+
+    public boolean addStorage(StorageEngineMeta meta) {
+        if (!initStorage(meta)) {
+            logger.error("add storage " + meta + " failure!");
+            return false;
+        } else {
+            logger.info("add storage " + meta + " success.");
+        }
+        return true;
     }
 }

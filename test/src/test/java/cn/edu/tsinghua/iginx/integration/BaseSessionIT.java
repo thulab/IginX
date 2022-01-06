@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
+import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
@@ -31,10 +32,7 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,6 +84,10 @@ public abstract class BaseSessionIT {
     }
 
     private int getPathNum(String path) {
+        if (path.contains("(") && path.contains(")")) {
+            path = path.substring(path.indexOf("(") + 1, path.indexOf(")"));
+        }
+
         String pattern = "^sg1\\.d(\\d+)\\.s(\\d+)$";
         Pattern p = Pattern.compile(pattern);
         Matcher m = p.matcher(path);
@@ -274,7 +276,22 @@ public abstract class BaseSessionIT {
 
     @After
     public void tearDown() throws SessionException {
-        session.closeSession();
+        try {
+            clearData();
+            session.closeSession();
+        } catch (ExecutionException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+    private void clearData() throws ExecutionException, SessionException {
+        String clearData = "CLEAR DATA;";
+
+        SessionExecuteSqlResult res = session.executeSql(clearData);
+        if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
+            logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
+            fail();
+        }
     }
 
     @Test
@@ -305,7 +322,7 @@ public abstract class BaseSessionIT {
         List<String> maxResPaths = maxDataSet.getPaths();
         Object[] maxResult = maxDataSet.getValues();
         assertEquals(simpleLen, maxResPaths.size());
-        assertEquals(simpleLen, maxDataSet.getTimestamps().length);
+//        assertEquals(simpleLen, maxDataSet.getTimestamps().length);
         assertEquals(simpleLen, maxDataSet.getValues().length);
         for (int i = 0; i < simpleLen; i++) {
             //assertEquals(-1, maxDataSet.getTimestamps()[i]);
@@ -318,7 +335,7 @@ public abstract class BaseSessionIT {
         List<String> minResPaths = minDataSet.getPaths();
         Object[] minResult = minDataSet.getValues();
         assertEquals(simpleLen, minResPaths.size());
-        assertEquals(simpleLen, minDataSet.getTimestamps().length);
+//        assertEquals(simpleLen, minDataSet.getTimestamps().length);
         assertEquals(simpleLen, minDataSet.getValues().length);
         for (int i = 0; i < simpleLen; i++) {
             //assertEquals(-1, minDataSet.getTimestamps()[i]);
@@ -331,7 +348,7 @@ public abstract class BaseSessionIT {
         List<String> firstResPaths = firstDataSet.getPaths();
         Object[] firstResult = firstDataSet.getValues();
         assertEquals(simpleLen, firstResPaths.size());
-        assertEquals(simpleLen, firstDataSet.getTimestamps().length);
+//        assertEquals(simpleLen, firstDataSet.getTimestamps().length);
         assertEquals(simpleLen, firstDataSet.getValues().length);
         for (int i = 0; i < simpleLen; i++) {
             int pathNum = getPathNum(firstResPaths.get(i));
@@ -343,7 +360,7 @@ public abstract class BaseSessionIT {
         List<String> lastResPaths = lastDataSet.getPaths();
         Object[] lastResult = lastDataSet.getValues();
         assertEquals(simpleLen, lastResPaths.size());
-        assertEquals(simpleLen, lastDataSet.getTimestamps().length);
+//        assertEquals(simpleLen, lastDataSet.getTimestamps().length);
         assertEquals(simpleLen, lastDataSet.getValues().length);
         for (int i = 0; i < simpleLen; i++) {
             int pathNum = getPathNum(lastResPaths.get(i));
@@ -611,7 +628,8 @@ public abstract class BaseSessionIT {
                         if (dsStartTime > delEndTime || dsEndTime < delStartTime) {
                             assertEquals(delDsAvg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                         } else if (dsStartTime >= delStartTime && dsEndTime < delEndTime) {
-                            assertNull(dsResult.get(j));
+//                            assertNull(dsResult.get(j));
+                            assertTrue(Double.isNaN((Double) dsResult.get(j)));
                         } else if (dsStartTime < delStartTime) {
                             assertEquals((dsStartTime + delStartTime - 1) / 2.0 + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                         } else {
@@ -687,7 +705,8 @@ public abstract class BaseSessionIT {
                 int pathNum = getPathNum(delDataAvgResPaths.get(i));
                 assertNotEquals(pathNum, -1);
                 if (pathNum < currPath + deleteDataInColumnLen) { // Here is the removed rows
-                    assertEquals("null", new String((byte[]) delDataAvgResult[i]));
+//                    assertEquals("null", new String((byte[]) delDataAvgResult[i]));
+                    assertTrue(Double.isNaN((Double) delDataAvgResult[i]));
                 } else {
                     assertEquals((START_TIME + END_TIME) / 2.0 + pathNum, delDataAvgResult[i]);
                 }
@@ -710,7 +729,8 @@ public abstract class BaseSessionIT {
                     int pathNum = getPathNum(dsDelDataResPaths.get(j));
                     assertNotEquals(pathNum, -1);
                     if (pathNum < currPath + deleteDataInColumnLen) { // Here is the removed rows
-                        assertNull(dsResult.get(j));
+//                        assertNull(dsResult.get(j));
+                        assertTrue(Double.isNaN((Double) dsResult.get(j)));
                     } else {
                         assertEquals(avg + pathNum, changeResultToDouble(dsResult.get(j)), delta);
                     }
@@ -1038,7 +1058,8 @@ public abstract class BaseSessionIT {
             for (int i = 0; i < 4; i++) {
                 int currPathPos = getPathNum(dtDelColAvgPaths.get(i)) - currPath;
                 if (currPathPos < dtDelColumnNum) {
-                    assertEquals("null", new String((byte[]) dtDelColAvgResult[i]));
+//                    assertEquals("null", new String((byte[]) dtDelColAvgResult[i]));
+                    assertTrue(Double.isNaN((Double) dtDelColAvgResult[i]));
                 } else {
                     switch (currPathPos) {
                         case 1:
@@ -1401,7 +1422,8 @@ public abstract class BaseSessionIT {
                     assertEquals(getPathNum(delASAvgResPaths.get(i)) + (START_TIME + END_TIME) / 2.0,
                             changeResultToDouble(delASAvgResult[i]), delta);
                 } else {
-                    assertEquals("null", new String((byte[]) delASAvgResult[i]));
+//                    assertEquals("null", new String((byte[]) delASAvgResult[i]));
+                    assertTrue(Double.isNaN((Double) delASAvgResult[i]));
                 }
             }
             currPath += mulDelASLen;
@@ -1463,7 +1485,8 @@ public abstract class BaseSessionIT {
                     assertEquals(getPathNum(delATAvgResPaths.get(i)) + (START_TIME + END_TIME) / 2.0,
                             changeResultToDouble(delATAvgResult[i]), delta);
                 } else {
-                    assertEquals("null", new String((byte[]) delATAvgResult[i]));
+//                    assertEquals("null", new String((byte[]) delATAvgResult[i]));
+                    assertTrue(Double.isNaN((Double) delATAvgResult[i]));
                 }
             }
 

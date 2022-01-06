@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -26,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -43,6 +45,8 @@ public class DeleteGenerator implements LogicalGenerator {
 
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+
+    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
 
     private DeleteGenerator() {
     }
@@ -77,10 +81,13 @@ public class DeleteGenerator implements LogicalGenerator {
     private Operator generateRoot(DeleteStatement statement) {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
+        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
+
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         if (fragments.isEmpty()) {
+            //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateInitialFragmentsAndStorageUnits(pathList, new TimeInterval(0, Long.MAX_VALUE));
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);

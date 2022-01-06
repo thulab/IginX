@@ -82,8 +82,19 @@ public class StatementExecutor {
     }
 
     public ExecuteSqlResp execute(String sql, long sessionId) {
-        Statement statement = builder.build(sql);
-        return executeStatement(statement, sessionId);
+        try {
+            Statement statement = builder.build(sql);
+            return executeStatement(statement, sessionId);
+        } catch (SQLParserException | ParseCancellationException e) {
+            StatusCode statusCode = StatusCode.STATEMENT_PARSE_ERROR;
+            return buildErrResp(statusCode, e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
+            String errMsg = "Execute Error: encounter error(s) when executing sql statement, " +
+                    "see server log for more details.";
+            return buildErrResp(statusCode, errMsg);
+        }
     }
 
     public ExecuteSqlResp executeStatement(Statement statement, long sessionId) {
@@ -107,18 +118,9 @@ public class StatementExecutor {
                 default:
                     return ((SystemStatement) statement).execute(sessionId);
             }
-        } catch (SQLParserException | ParseCancellationException e) {
-            StatusCode statusCode = StatusCode.STATEMENT_PARSE_ERROR;
-            return buildErrResp(statusCode, e.getMessage());
         } catch (ExecutionException | PhysicalException e) {
             StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
             return buildErrResp(statusCode, e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
-            String errMsg = "Execute Error: encounter error(s) when executing sql statement, " +
-                    "see server log for more details.";
-            return buildErrResp(statusCode, errMsg);
         }
     }
 
@@ -201,6 +203,13 @@ public class StatementExecutor {
         return resp;
     }
 
+    private ExecuteSqlResp buildEmptyQueryResp() {
+        ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
+        resp.setValuesList(new byte[]{});
+        resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
+        return resp;
+    }
+
     private ExecuteSqlResp buildQueryRowStreamResp(RowStream stream, SelectStatement statement) throws PhysicalException {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
@@ -254,7 +263,7 @@ public class StatementExecutor {
                 resp.setValuesList(valuesList.get(0));
             }
         } else {  // empty result
-            resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
+            resp = buildEmptyQueryResp();
         }
 
         resp.setPaths(paths);

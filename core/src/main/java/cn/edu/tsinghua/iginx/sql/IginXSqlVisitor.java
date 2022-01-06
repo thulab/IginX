@@ -218,7 +218,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private void parseOrderByClause(SqlParser.OrderByClauseContext ctx, SelectStatement selectStatement) {
         if (selectStatement.hasFunc()) {
-            throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
+            throw new SQLParserException("Not support ORDER BY clause in aggregate query.");
         }
         if (ctx.path() != null) {
             String suffixPath = ctx.path().getText();
@@ -259,7 +259,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
 
         if (startTime > endTime) {
-            throw new SQLParserException("Start time should be smaller than endTime in time interval");
+            throw new SQLParserException("Start time should be smaller than endTime in time interval.");
         }
 
         return new Pair<>(startTime, endTime);
@@ -294,7 +294,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                     return parseValueFilter(ctx, (SelectStatement) statement);
                 } else {
                     throw new SQLParserException(
-                            String.format("[%s] clause can not use value filter.", type.toString().toLowerCase())
+                            String.format("%s clause can not use value filter.", type.toString().toLowerCase())
                     );
                 }
             }

@@ -301,9 +301,11 @@ public class ExprUtils {
     }
 
     private static TimeRange intersectTwoTimeRanges(TimeRange first, TimeRange second) {
-        if (first.getEndTime() < second.getBeginTime() || first.getBeginTime() > second.getEndTime()) {
+        if (first == null || second == null)
             return null;
-        }
+        if (first.getEndTime() < second.getBeginTime() || first.getBeginTime() > second.getEndTime())
+            return null;
+
         long begin = Math.max(first.getBeginTime(), second.getBeginTime());
         long end = Math.min(first.getEndTime(), second.getEndTime());
         return new TimeRange(begin, end);

@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizerManager;
+import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.task.BinaryMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.MultipleMemoryPhysicalTask;
@@ -98,6 +99,11 @@ public class PhysicalEngineImpl implements PhysicalEngine {
     @Override
     public ConstraintManager getConstraintManager() {
         return ConstraintManagerImpl.getInstance();
+    }
+
+    @Override
+    public StorageManager getStorageManager() {
+        return storageTaskExecutor.getStorageManager();
     }
 
     public static PhysicalEngineImpl getInstance() {

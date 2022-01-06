@@ -52,4 +52,7 @@ public interface IPolicy {
 
     StorageEngineChangeHook getStorageEngineChangeHook();
 
+    boolean isNeedReAllocate();
+
+    void setNeedReAllocate(boolean needReAllocate);
 }
