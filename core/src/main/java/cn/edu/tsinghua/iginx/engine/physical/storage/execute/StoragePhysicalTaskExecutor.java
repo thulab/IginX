@@ -29,13 +29,13 @@ import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,6 +106,12 @@ public class StoragePhysicalTaskExecutor {
                 });
             }
         };
+        StorageEngineChangeHook storageEngineChangeHook = (before, after) -> {
+            if (before == null && after != null) { // 新增加存储，处理这种事件，其他事件暂时不处理
+                storageManager.addStorage(after);
+            }
+        };
+        metaManager.registerStorageEngineChangeHook(storageEngineChangeHook);
         metaManager.registerStorageUnitHook(storageUnitHook);
     }
 
@@ -127,5 +133,7 @@ public class StoragePhysicalTaskExecutor {
         this.memoryTaskExecutor = memoryTaskExecutor;
     }
 
-
+    public StorageManager getStorageManager() {
+        return storageManager;
+    }
 }

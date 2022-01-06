@@ -19,16 +19,17 @@
 package cn.edu.tsinghua.iginx.engine.physical;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-
-import java.util.concurrent.ExecutionException;
 
 public interface PhysicalEngine {
 
     RowStream execute(Operator root) throws PhysicalException;
 
     ConstraintManager getConstraintManager();
+
+    StorageManager getStorageManager();
 
 }
