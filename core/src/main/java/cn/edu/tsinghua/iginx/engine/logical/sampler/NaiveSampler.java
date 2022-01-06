@@ -1,12 +1,12 @@
-package cn.edu.tsinghua.iginx.engine.logical.utils;
+package cn.edu.tsinghua.iginx.engine.logical.sampler;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class SampleUtils {
+public class NaiveSampler {
 
-    private final static SampleUtils instance = new SampleUtils();
+    private final static NaiveSampler instance = new NaiveSampler();
 
     private final Set<String> prefixSet = new HashSet<>();
 
@@ -18,10 +18,10 @@ public class SampleUtils {
 
     private final Random random = new Random();
 
-    private SampleUtils() {
+    private NaiveSampler() {
     }
 
-    public static SampleUtils getInstance() {
+    public static NaiveSampler getInstance() {
         return instance;
     }
 

@@ -1,7 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.utils.SampleUtils;
+import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
@@ -47,7 +47,7 @@ public class InsertGenerator implements LogicalGenerator {
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
-    private final SampleUtils sampleUtils = SampleUtils.getInstance();
+    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
 
     private InsertGenerator() {
     }
@@ -82,7 +82,7 @@ public class InsertGenerator implements LogicalGenerator {
     private Operator generateRoot(InsertStatement statement) {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
-        sampleUtils.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
+        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
@@ -96,9 +96,10 @@ public class InsertGenerator implements LogicalGenerator {
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         } else if (policy.isNeedReAllocate()) {
             //on scale-out or any events requiring reallocation
+            logger.debug("Trig ReAllocate!");
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator()
                     .generateFragmentsAndStorageUnits(
-                            sampleUtils.samplePrefix(metaManager.getStorageEngineList().size() - 1),
+                            naiveSampler.samplePrefix(metaManager.getStorageEngineList().size() - 1),
                             statement.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1
                     );
             metaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
