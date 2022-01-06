@@ -167,7 +167,7 @@ public class IoTDBStorage implements IStorage {
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
-            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in iotdb11 failure", e));
+            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in iotdb12 failure", e));
         }
     }
 
@@ -189,7 +189,7 @@ public class IoTDBStorage implements IStorage {
                 break;
         }
         if (e != null) {
-            return new TaskExecuteResult(null, new PhysicalException("execute insert task in iotdb11 failure", e));
+            return new TaskExecuteResult(null, new PhysicalException("execute insert task in iotdb12 failure", e));
         }
         return new TaskExecuteResult(null, null);
     }
@@ -502,7 +502,7 @@ public class IoTDBStorage implements IStorage {
                 } catch (IoTDBConnectionException | StatementExecutionException e) {
                     logger.warn("encounter error when clear data: " + e.getMessage());
                     if (!e.getMessage().contains(DOES_NOT_EXISTED)) {
-                        return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute clear data in iotdb11 failure", e));
+                        return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute clear data in iotdb12 failure", e));
                     }
                 }
             } else {
