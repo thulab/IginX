@@ -105,6 +105,7 @@ public class IoTDBStorage implements IStorage {
             throw new StorageInitializationException("cannot connect to " + meta.toString());
         }
         sessionPool = createSessionPool();
+        logger.info(meta + " is initialized.");
     }
 
     private boolean testConnection() {

@@ -62,18 +62,14 @@ public class StoragePhysicalTaskExecutor {
     private StoragePhysicalTaskExecutor() {
         StorageUnitHook storageUnitHook = (before, after) -> {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
-                if (after.isMaster()) { // 主 du，新增加一个任务队列
-                    String id = after.getId();
-                    storageTaskQueues.put(id, new StoragePhysicalTaskQueue());
-                }
+                String id = after.getId();
+                storageTaskQueues.put(id, new StoragePhysicalTaskQueue());
                 // 为拥有该分片的存储创建一个调度线程，用于调度任务执行
                 ExecutorService dispatcher = Executors.newSingleThreadExecutor();
                 long storageId = after.getStorageEngineId();
-                String id = after.getId();
-                String masterId = after.getMasterId();
                 dispatchers.put(id, dispatcher);
                 dispatcher.submit(() -> {
-                    StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(masterId);
+                    StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(id);
                     Pair<IStorage, ExecutorService> pair = storageManager.getStorage(storageId);
                     while(true) {
                         StoragePhysicalTask task = taskQueue.getTask();
@@ -102,6 +98,7 @@ public class StoragePhysicalTaskExecutor {
                                 for (String replicaId: replicaIds) {
                                     StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
                                     storageTaskQueues.get(replicaId).addTask(replicaTask);
+                                    logger.info("broadcasting task " + task + " to " + replicaId);
                                 }
                             }
                         });
@@ -122,7 +119,7 @@ public class StoragePhysicalTaskExecutor {
 
     public void commit(List<StoragePhysicalTask> tasks) {
         for (StoragePhysicalTask task : tasks) {
-            storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task);
+            storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task); // 异步写备，查询只查主
         }
     }
 
