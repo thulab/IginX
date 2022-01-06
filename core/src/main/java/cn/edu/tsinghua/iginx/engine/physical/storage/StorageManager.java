@@ -78,22 +78,6 @@ public class StorageManager {
 
     }
 
-    public boolean supportsProject(long id) {
-        IStorage storage = storageMap.get(id).k;
-        if (storage == null) {
-            return false;
-        }
-        return storage.supportsProject();
-    }
-
-    boolean supportsProjectAndSelect(long id) {
-        IStorage storage = storageMap.get(id).k;
-        if (storage == null) {
-            return false;
-        }
-        return storage.supportsProjectAndSelect();
-    }
-
     private void initClassLoaderAndDrivers() {
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String part: parts) {

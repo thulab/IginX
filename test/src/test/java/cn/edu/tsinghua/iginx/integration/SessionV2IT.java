@@ -109,7 +109,7 @@ public class SessionV2IT {
 //        asyncInsertDataByRecords();
 //
         insertDataByTable();
-//        asyncInsertDataByTable();
+        asyncInsertDataByTable();
 //
 //        insertDataByMeasurements();
 //        asyncInsertDataByMeasurements();
@@ -285,7 +285,7 @@ public class SessionV2IT {
                 usersClient.removeUser(user.getUsername());
             }
         });
-        deleteClient.deleteMeasurement("*");
+        // deleteClient.deleteMeasurement("*");
     }
 
     @Test

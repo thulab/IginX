@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.storage.execute;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
@@ -77,8 +78,16 @@ public class StoragePhysicalTaskExecutor {
                     while(true) {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
+                        logger.info("take out new task: " + task);
                         pair.v.submit(() -> {
-                            TaskExecuteResult result = pair.k.execute(task);
+                            TaskExecuteResult result = null;
+                            try {
+                                result = pair.k.execute(task);
+                                logger.info("task " + task + " execute finished");
+                            } catch (Exception e) {
+                                logger.error("execute task error: " + e);
+                                result = new TaskExecuteResult(new PhysicalException(e));
+                            }
                             task.setResult(result);
                             if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
                                 MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();

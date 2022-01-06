@@ -45,7 +45,6 @@ public class IoTDBStorageTest {
     public void testInitialization() throws StorageInitializationException {
         StorageEngineMeta meta = new StorageEngineMeta(1L, "127.0.0.1", 6667, new HashMap<>(), "iotdb11", 1L);
         this.storage = new IoTDBStorage(meta);
-        Assert.assertTrue(this.storage.supportsProject());
     }
 
     @Test

@@ -19,15 +19,20 @@
 package cn.edu.tsinghua.iginx.engine.physical.memory;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueue;
 import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueueImpl;
 import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class MemoryPhysicalTaskDispatcher {
+
+    private static final Logger logger = LoggerFactory.getLogger(MemoryPhysicalTaskDispatcher.class);
 
     private static final MemoryPhysicalTaskDispatcher INSTANCE = new MemoryPhysicalTaskDispatcher();
 
@@ -59,7 +64,13 @@ public class MemoryPhysicalTaskDispatcher {
 
                     MemoryPhysicalTask currentTask = task;
                     while (currentTask != null) {
-                        TaskExecuteResult result = currentTask.execute();
+                        TaskExecuteResult result;
+                        try {
+                            result = currentTask.execute();
+                        } catch (Exception e) {
+                            logger.error("execute memory task failure: ", e);
+                            result = new TaskExecuteResult(new PhysicalException(e));
+                        }
                         currentTask.setResult(result);
                         if (currentTask.getFollowerTask() != null) { // 链式执行可以被执行的任务
                             MemoryPhysicalTask followerTask = (MemoryPhysicalTask) currentTask.getFollowerTask();

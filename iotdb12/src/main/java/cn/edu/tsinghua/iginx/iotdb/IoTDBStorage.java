@@ -154,16 +154,6 @@ public class IoTDBStorage implements IStorage {
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
 
-    @Override
-    public boolean supportsProject() {
-        return true;
-    }
-
-    @Override
-    public boolean supportsProjectAndSelect() {
-        return true;
-    }
-
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
         try {
             StringBuilder builder = new StringBuilder();
@@ -244,8 +234,8 @@ public class IoTDBStorage implements IStorage {
             for (int i = cnt; i < cnt + size; i++) {
                 int index = 0;
                 deviceIdToRow.clear();
+                BitmapView bitmapView = data.getBitmapView(i);
                 for (int j = 0; j < data.getPathNum(); j++) {
-                    BitmapView bitmapView = data.getBitmapView(i);
                     if (bitmapView.get(j)) {
                         String path = data.getPath(j);
                         String deviceId = PREFIX + storageUnit + "." + path.substring(0, path.lastIndexOf('.'));
@@ -313,8 +303,8 @@ public class IoTDBStorage implements IStorage {
             // 插入 timestamps 和 values
             for (int i = cnt; i < cnt + size; i++) {
                 int index = 0;
+                BitmapView bitmapView = data.getBitmapView(i);
                 for (int j = 0; j < data.getPathNum(); j++) {
-                    BitmapView bitmapView = data.getBitmapView(i);
                     if (bitmapView.get(j)) {
                         String path = data.getPath(j);
                         String deviceId = PREFIX + storageUnit + "." + path.substring(0, path.lastIndexOf('.'));
@@ -472,8 +462,8 @@ public class IoTDBStorage implements IStorage {
                     String deviceId = PREFIX + storageUnit + "." + path.substring(0, path.lastIndexOf('.'));
                     String measurement = path.substring(path.lastIndexOf('.') + 1);
                     Tablet tablet = tabletsMap.get(entry.getKey()).get(deviceId);
+                    BitmapView bitmapView = data.getBitmapView(index);
                     for (int j = cnt; j < cnt + size; j++) {
-                        BitmapView bitmapView = data.getBitmapView(index);
                         if (bitmapView.get(j)) {
                             int row = tablet.rowSize++;
                             tablet.addTimestamp(row, data.getTimestamp(j));

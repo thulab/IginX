@@ -23,6 +23,8 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,8 +33,8 @@ public class InfluxDBSessionExample {
 
     private static final String S1 = "sg.d1.s1";
     private static final String S2 = "sg.d1.s2";
-    private static final String S3 = "sg.d2.s1";
-    private static final String S4 = "sg.d3.s1";
+    private static final String S3 = "sg.d2.s3";
+    private static final String S4 = "sg.d3.s4";
     private static final long COLUMN_START_TIMESTAMP = 1L;
     private static final long COLUMN_END_TIMESTAMP = 10000L;
     private static final long NON_ALIGNED_COLUMN_START_TIMESTAMP = 10001L;
