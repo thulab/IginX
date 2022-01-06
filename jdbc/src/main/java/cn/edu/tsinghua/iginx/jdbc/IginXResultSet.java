@@ -78,16 +78,7 @@ public class IginXResultSet implements ResultSet {
         columnTypes = result.getDataTypeList();
         values = result.getValues();
 
-        if (result.getSqlType() == SqlType.AggregateQuery ||
-                result.getSqlType() == SqlType.DownsampleQuery) {
-            columnNames = new ArrayList<>();
-            String type = result.getAggregateType().toString();
-            for (String path : result.getPaths()) {
-                columnNames.add(type + "(" + path + ")");
-            }
-        } else {
-            columnNames = result.getPaths();
-        }
+        columnNames = result.getPaths();
 
         long[] timestamps = result.getTimestamps();
         if (timestamps != null) {
