@@ -391,7 +391,13 @@ public class InfluxDBStorage implements IStorage {
 
     private TaskExecuteResult executeDeleteTask(String storageUnit, Delete delete) {
         if (delete.getTimeRanges() == null || delete.getTimeRanges().size() == 0) { // 没有传任何 time range
-            return new TaskExecuteResult(new NotSupportedOperatorException(delete, "influxdb don't support delete measurements"));
+            Bucket bucket = bucketMap.get(storageUnit);
+            if (bucket == null) {
+                return new TaskExecuteResult(null, null);
+            }
+            bucketMap.remove(storageUnit);
+            client.getBucketsApi().deleteBucket(bucket);
+            return new TaskExecuteResult(null, null);
         }
         // 删除某些序列的某一段数据
         Organization organization = client.getOrganizationsApi()
