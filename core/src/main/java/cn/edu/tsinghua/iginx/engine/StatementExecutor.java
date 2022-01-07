@@ -175,7 +175,7 @@ public class StatementExecutor {
                 Long.MAX_VALUE,
                 AggregateType.COUNT);
         ExecuteSqlResp countResp = processQuery(statement);
-        int pointsNum = 0;
+        long pointsNum = 0;
         if (countResp.getValuesList() != null) {
             Object[] row = ByteUtils.getValuesByDataType(countResp.valuesList, countResp.dataTypeList);
             for (Object count : row) {
