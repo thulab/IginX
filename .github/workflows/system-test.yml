@@ -175,7 +175,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
-        run: mvn test -q -Dtest=SQLSessionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBSQLSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -218,7 +218,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
-        run: mvn test -q -Dtest=SQLSessionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=InfluxDBSQLSessionIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml

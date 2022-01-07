@@ -16,11 +16,13 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
-public class SQLSessionIT {
+public abstract class SQLSessionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
     private static Session session;
+
+    protected boolean isAbleToDelete;
 
     @BeforeClass
     public static void setUp() {
@@ -592,6 +594,9 @@ public class SQLSessionIT {
 
     @Test
     public void testDelete() {
+        if (!isAbleToDelete) {
+            return;
+        }
         String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115;";
         execute(delete);
 
@@ -682,6 +687,9 @@ public class SQLSessionIT {
 
     @Test
     public void testMultiRangeDelete() {
+        if (!isAbleToDelete) {
+            return;
+        }
         String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 OR time >= 120 AND time <= 230;";
         execute(delete);
 
@@ -737,6 +745,9 @@ public class SQLSessionIT {
 
     @Test
     public void testCrossRangeDelete() {
+        if (!isAbleToDelete) {
+            return;
+        }
         String delete = "DELETE FROM us.d1.s1 WHERE time > 205 AND time < 215 OR time >= 210 AND time <= 230;";
         execute(delete);
 
@@ -807,6 +818,9 @@ public class SQLSessionIT {
 
     @Test
     public void testDeleteTimeSeries() {
+        if (!isAbleToDelete) {
+            return;
+        }
         String deleteTimeSeries = "DELETE TIME SERIES us.*";
         execute(deleteTimeSeries);
 
