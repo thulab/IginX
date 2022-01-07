@@ -397,7 +397,7 @@ public class InfluxDBStorage implements IStorage {
             }
             bucketMap.remove(storageUnit);
             client.getBucketsApi().deleteBucket(bucket);
-            return new TaskExecuteResult(new NotSupportedOperatorException(delete, "influxdb don't support delete measurements"));
+            return new TaskExecuteResult(null, null);
         }
         // 删除某些序列的某一段数据
         Organization organization = client.getOrganizationsApi()
