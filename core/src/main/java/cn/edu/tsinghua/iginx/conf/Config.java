@@ -116,6 +116,12 @@ public class Config {
 
     private double storageGroupValueLimit = 200.0;
 
+    private int instancesIndexStart = 1;
+
+    private int instancesIndexStep = 1;
+
+    private boolean isClientBindEngine = false;
+
     private long checkFragmentInterval = 10000L;
 
     public int getMaxTimeseriesLength() {
@@ -500,6 +506,30 @@ public class Config {
 
     public void setStorageGroupValueLimit(double storageGroupValueLimit) {
         this.storageGroupValueLimit = storageGroupValueLimit;
+    }
+
+    public int getInstancesIndexStart() {
+        return instancesIndexStart;
+    }
+
+    public int getInstancesIndexStep() {
+        return instancesIndexStep;
+    }
+
+    public boolean isClientBindEngine() {
+        return isClientBindEngine;
+    }
+
+    public void setClientBindEngine(boolean clientBindEngine) {
+        isClientBindEngine = clientBindEngine;
+    }
+
+    public void setInstancesIndexStart(int instancesIndexStart) {
+        this.instancesIndexStart = instancesIndexStart;
+    }
+
+    public void setInstancesIndexStep(int instancesIndexStep) {
+        this.instancesIndexStep = instancesIndexStep;
     }
 
     public long getCheckFragmentInterval() {

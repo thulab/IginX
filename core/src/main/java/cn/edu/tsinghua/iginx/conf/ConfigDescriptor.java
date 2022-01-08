@@ -115,6 +115,10 @@ public class ConfigDescriptor {
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
             config.setCheckFragmentInterval(Long.parseLong(properties.getProperty("checkFragmentInterval", "1000")));
 
+            config.setClientBindEngine(Boolean.parseBoolean(properties.getProperty("clientBindEngine", "false")));
+            config.setInstancesIndexStart(Integer.parseInt(properties.getProperty("instancesIndexStart", "1")));
+            config.setInstancesIndexStep(Integer.parseInt(properties.getProperty("instancesIndexStep", "1")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
