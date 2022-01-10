@@ -55,10 +55,11 @@ public class NaivePolicy implements IPolicyV2 {
         TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
         if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
-            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients();
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
-        } else
+        } else {
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
+        }
     }
     /**
      * This storage unit initialization method is used when no information about workloads is provided
@@ -110,7 +111,7 @@ public class NaivePolicy implements IPolicyV2 {
     /**
      * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
      */
-    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients() {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
@@ -118,32 +119,26 @@ public class NaivePolicy implements IPolicyV2 {
         int storageEngineNum = storageEngineList.size();
 
         String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
-        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
+        int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient();
+        int instancesIndexStart = ConfigDescriptor.getInstance().getConfig().getInstancesIndexStart();
+        int instancesIndexStep = ConfigDescriptor.getInstance().getConfig().getInstancesIndexStep();
+        boolean isClientBindEngine = ConfigDescriptor.getInstance().getConfig().isClientBindEngine();
         int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
-        String[] prefixes = new String[clients.length * instancesNumPerClient];
+        int fragmentNum = instancesNumPerClient * clients.length;
+        String[] prefixes = new String[fragmentNum];
+
         for (int i = 0; i < clients.length; i++) {
             for (int j = 0; j < instancesNumPerClient; j++) {
-                prefixes[i * instancesNumPerClient + j] = clients[i] + (j + 2);
+                prefixes[i * instancesNumPerClient + j] = String.format(clients[i], instancesIndexStart + instancesIndexStep * (i * instancesNumPerClient + j));
             }
         }
+
         Arrays.sort(prefixes);
 
         List<FragmentMeta> fragmentMetaList;
         String masterId;
         StorageUnitMeta storageUnit;
-        for (int i = 0; i < clients.length * instancesNumPerClient - 1; i++) {
-            fragmentMetaList = new ArrayList<>();
-            masterId = RandomStringUtils.randomAlphanumeric(16);
-            storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
-//            storageUnit = new StorageUnitMeta(masterId, getStorageEngineList().get(i * 2 % getStorageEngineList().size()).getId(), masterId, true);
-            for (int j = i + 1; j < i + replicaNum; j++) {
-                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(j % storageEngineNum).getId(), masterId, false));
-//                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), getStorageEngineList().get((i * 2 + 1) % getStorageEngineList().size()).getId(), masterId, false));
-            }
-            storageUnitList.add(storageUnit);
-            fragmentMetaList.add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, masterId));
-            fragmentMap.put(new TimeSeriesInterval(prefixes[i], prefixes[i + 1]), fragmentMetaList);
-        }
+
 
         fragmentMetaList = new ArrayList<>();
         masterId = RandomStringUtils.randomAlphanumeric(16);
@@ -155,16 +150,25 @@ public class NaivePolicy implements IPolicyV2 {
         fragmentMetaList.add(new FragmentMeta(null, prefixes[0], 0, Long.MAX_VALUE, masterId));
         fragmentMap.put(new TimeSeriesInterval(null, prefixes[0]), fragmentMetaList);
 
-        fragmentMetaList = new ArrayList<>();
-        masterId = RandomStringUtils.randomAlphanumeric(16);
-        storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(storageEngineNum - 1).getId(), masterId, true);
-        for (int i = 1; i < replicaNum; i++) {
-            storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(storageEngineNum - 1 - i).getId(), masterId, false));
+        for (int i = 0; i < clients.length; i++) {
+            for (int j = 0; j < instancesNumPerClient; j++) {
+                fragmentMetaList = new ArrayList<>();
+                masterId = RandomStringUtils.randomAlphanumeric(16);
+                storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
+                int index = i * instancesNumPerClient + j;
+                for (int k = 1; k < replicaNum; k++) {
+                    storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get((k + (isClientBindEngine ? i : index)) % storageEngineNum).getId(), masterId, false));
+                }
+                storageUnitList.add(storageUnit);
+                if (index == fragmentNum - 1) {
+                    fragmentMetaList.add(new FragmentMeta(prefixes[index], null, 0, Long.MAX_VALUE, masterId));
+                    fragmentMap.put(new TimeSeriesInterval(prefixes[index], null), fragmentMetaList);
+                } else {
+                    fragmentMetaList.add(new FragmentMeta(prefixes[index], prefixes[index + 1], 0, Long.MAX_VALUE, masterId));
+                    fragmentMap.put(new TimeSeriesInterval(prefixes[index], prefixes[index + 1]), fragmentMetaList);
+                }
+            }
         }
-        storageUnitList.add(storageUnit);
-        fragmentMetaList.add(new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, masterId));
-        fragmentMap.put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null), fragmentMetaList);
-
         return new Pair<>(fragmentMap, storageUnitList);
     }
 

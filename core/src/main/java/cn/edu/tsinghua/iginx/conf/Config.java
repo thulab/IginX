@@ -48,6 +48,12 @@ public class Config {
 
     private int storageUnitNum = 30;
 
+    private int instancesIndexStart = 1;
+
+    private int instancesIndexStep = 1;
+
+    private boolean isClientBindEngine = false;
+
     private String statisticsCollectorClassName = "";
 
     private int statisticsLogInterval = 1000;
@@ -202,6 +208,30 @@ public class Config {
 
     public void setStorageUnitNum(int storageUnitNum) {
         this.storageUnitNum = storageUnitNum;
+    }
+
+    public int getInstancesIndexStart() {
+        return instancesIndexStart;
+    }
+
+    public void setInstancesIndexStart(int instancesIndexStart) {
+        this.instancesIndexStart = instancesIndexStart;
+    }
+
+    public int getInstancesIndexStep() {
+        return instancesIndexStep;
+    }
+
+    public void setInstancesIndexStep(int instancesIndexStep) {
+        this.instancesIndexStep = instancesIndexStep;
+    }
+
+    public boolean isClientBindEngine() {
+        return isClientBindEngine;
+    }
+
+    public void setClientBindEngine(boolean clientBindEngine) {
+        isClientBindEngine = clientBindEngine;
     }
 
     public String getStatisticsCollectorClassName() {

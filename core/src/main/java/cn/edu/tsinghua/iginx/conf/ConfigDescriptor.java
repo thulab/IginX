@@ -99,6 +99,10 @@ public class ConfigDescriptor {
             config.setPhysicalOptimizer(properties.getProperty("physicalOptimizer", "naive"));
             config.setMemoryTaskThreadPoolSize(Integer.parseInt(properties.getProperty("memoryTaskThreadPoolSize", "100")));
             config.setPhysicalTaskThreadPoolSizePerStorage(Integer.parseInt(properties.getProperty("physicalTaskThreadPoolSizePerStorage", "20")));
+
+            config.setClientBindEngine(Boolean.parseBoolean(properties.getProperty("clientBindEngine", "false")));
+            config.setInstancesIndexStart(Integer.parseInt(properties.getProperty("instancesIndexStart", "1")));
+            config.setInstancesIndexStep(Integer.parseInt(properties.getProperty("instancesIndexStep", "1")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -138,6 +142,9 @@ public class ConfigDescriptor {
         config.setPhysicalOptimizer(EnvUtils.loadEnv("physicalOptimizer", config.getPhysicalOptimizer()));
         config.setMemoryTaskThreadPoolSize(EnvUtils.loadEnv("memoryTaskThreadPoolSize", config.getMemoryTaskThreadPoolSize()));
         config.setPhysicalTaskThreadPoolSizePerStorage(EnvUtils.loadEnv("physicalTaskThreadPoolSizePerStorage", config.getPhysicalTaskThreadPoolSizePerStorage()));
+        config.setClientBindEngine(EnvUtils.loadEnv("clientBindEngine", config.isClientBindEngine()));
+        config.setInstancesIndexStart(EnvUtils.loadEnv("instancesIndexStart", config.getInstancesIndexStart()));
+        config.setInstancesIndexStep(EnvUtils.loadEnv("instancesIndexStep", config.getInstancesIndexStep()));
     }
 
 
