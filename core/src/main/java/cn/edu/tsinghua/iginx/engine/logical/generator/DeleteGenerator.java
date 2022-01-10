@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -46,8 +45,6 @@ public class DeleteGenerator implements LogicalGenerator {
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
-    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
-
     private DeleteGenerator() {
     }
 
@@ -80,8 +77,6 @@ public class DeleteGenerator implements LogicalGenerator {
 
     private Operator generateRoot(DeleteStatement statement) {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
-
-        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 

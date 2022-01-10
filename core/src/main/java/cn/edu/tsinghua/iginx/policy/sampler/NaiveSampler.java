@@ -1,10 +1,10 @@
-package cn.edu.tsinghua.iginx.engine.logical.sampler;
+package cn.edu.tsinghua.iginx.policy.sampler;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class NaiveSampler {
+public class NaiveSampler implements Sampler {
 
     private final static NaiveSampler instance = new NaiveSampler();
 

@@ -1,7 +1,9 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
+import cn.edu.tsinghua.iginx.policy.IPolicyV2;
+import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
+import cn.edu.tsinghua.iginx.policy.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
@@ -18,8 +20,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.policy.IPolicy;
-import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
@@ -44,7 +44,7 @@ public class InsertGenerator implements LogicalGenerator {
 
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
 
-    private final IPolicy policy = PolicyManager.getInstance()
+    private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
@@ -82,8 +82,6 @@ public class InsertGenerator implements LogicalGenerator {
     private Operator generateRoot(InsertStatement statement) {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
-        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
-
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
@@ -99,7 +97,6 @@ public class InsertGenerator implements LogicalGenerator {
             logger.debug("Trig ReAllocate!");
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator()
                     .generateFragmentsAndStorageUnits(
-                            naiveSampler.samplePrefix(metaManager.getStorageEngineList().size() - 1),
                             statement.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1
                     );
             metaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);

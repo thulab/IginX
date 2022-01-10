@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
@@ -48,8 +47,6 @@ public class QueryGenerator implements LogicalGenerator {
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
-    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
-
     private QueryGenerator() {
     }
 
@@ -82,8 +79,6 @@ public class QueryGenerator implements LogicalGenerator {
 
     private Operator generateRoot(SelectStatement statement) {
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPathSet()));
-
-        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
