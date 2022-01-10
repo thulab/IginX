@@ -37,6 +37,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.ShowSubPathsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -167,6 +168,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_LAST, this::executeDownsampleLastQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.VALUE_FILTER_QUERY, this::executeValueFilterQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.SHOW_COLUMNS, this::executeShowColumnsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.SHOW_SUB_PATHS, this::executeShowSubPathsPlan);
     }
 
 
@@ -334,6 +336,13 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
     protected Future<? extends PlanExecuteResult> executeShowColumnsPlan(IginxPlan plan) {
         if (plan.isSync()) {
             return syncExecuteThreadPool.submit(() -> syncExecuteShowColumnsPlan((ShowColumnsPlan) plan));
+        }
+        return null;
+    }
+
+    protected Future<? extends PlanExecuteResult> executeShowSubPathsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteShowSubPathsPlan((ShowSubPathsPlan) plan));
         }
         return null;
     }

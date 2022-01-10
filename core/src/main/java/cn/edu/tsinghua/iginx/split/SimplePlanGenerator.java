@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
 import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.ShowSubPathsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -51,6 +52,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.ShowSubPathsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -73,6 +75,7 @@ import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -428,6 +431,9 @@ public class SimplePlanGenerator implements IPlanGenerator {
                 return splitLastQueryPlan(lastQueryPlan, splitInfoList);
             case ShowColumns:
                 return planSplitter.getSplitShowColumnsPlanResult().stream().map(ShowColumnsPlan::new).collect(Collectors.toList());
+            case ShowSubPaths:
+                ShowSubPathsReq showSubPathsReq = ((ShowSubPathsContext) requestContext).getReq();
+                return planSplitter.getSplitShowSubPathsPathResult().stream().map(e -> new ShowSubPathsPlan(e, showSubPathsReq.getPath())).collect(Collectors.toList());
             default:
                 throw new UnsupportedOperationException(requestContext.getType().toString());
         }

@@ -475,6 +475,11 @@ class SimplePlanSplitter implements IPlanSplitter {
     }
 
     @Override
+    public List<Long> getSplitShowSubPathsPathResult() {
+        return iMetaManager.getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+    }
+
+    @Override
     public List<StorageUnitMeta> selectStorageUnitList(FragmentMeta fragment, boolean isQuery) {
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
         // TODO 暂时设置为只查主

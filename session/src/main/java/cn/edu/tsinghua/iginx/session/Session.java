@@ -52,6 +52,8 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
@@ -304,6 +306,28 @@ public class Session {
             columns.add(new Column(resp.paths.get(i), resp.dataTypeList.get(i)));
         }
         return columns;
+    }
+
+    public List<String> showChildPaths(String path) throws SessionException {
+        ShowSubPathsReq req = new ShowSubPathsReq(sessionId);
+        if (path != null) {
+            req.setPath(path);
+        }
+
+        ShowSubPathsResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.showSubPaths(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+        return resp.paths;
     }
 
     public void deleteColumn(String path) throws SessionException,

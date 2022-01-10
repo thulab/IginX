@@ -252,6 +252,16 @@ struct ShowColumnsResp {
     3: optional list<DataType> dataTypeList
 }
 
+struct ShowSubPathsReq {
+    1: required i64 sessionId
+    2: optional string path
+}
+
+struct ShowSubPathsResp {
+    1: required Status status
+    2: optional list<string> paths
+}
+
 struct GetReplicaNumReq {
     1: required i64 sessionId
 }
@@ -389,6 +399,8 @@ service IService {
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 
     ShowColumnsResp showColumns(ShowColumnsReq req);
+
+    ShowSubPathsResp showSubPaths(ShowSubPathsReq req);
 
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 

@@ -36,6 +36,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.ShowSubPathsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -53,6 +54,7 @@ import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ShowSubPathsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
@@ -144,6 +146,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
     private static final String SUM_DOWNSAMPLE = "SELECT SUM(%s) FROM " + PREFIX + "%s " + GROUP_BY_CLAUSE;
 
     private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
+
+    private static final String SHOW_SUB_PATHS = "SHOW CHILD PATHS " + PREFIX + "*";
 
     private static final String SHOW_STORAGE_GROUP = "SHOW STORAGE GROUP";
 
@@ -1121,6 +1125,35 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             return new ShowColumnsPlanExecuteResult(FAILURE, plan);
         }
         return new ShowColumnsPlanExecuteResult(SUCCESS, plan, paths, dataTypes);
+    }
+
+    @Override
+    public ShowSubPathsPlanExecuteResult syncExecuteShowSubPathsPlan(ShowSubPathsPlan plan) {
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
+        List<String> paths = new ArrayList<>();
+        try {
+            String statements = SHOW_SUB_PATHS;
+            if (plan.getPath() != null) {
+                statements += "." + plan.getPath();
+            }
+            logger.info("execute sql: " + statements);
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(statements);
+            while(dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                if (record == null || record.getFields().size() < 1) {
+                    continue;
+                }
+                String path = record.getFields().get(0).getStringValue();
+                path = path.substring(5);
+                path = path.substring(path.indexOf('.') + 1);
+                paths.add(path);
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+            return new ShowSubPathsPlanExecuteResult(FAILURE, plan);
+        }
+        return new ShowSubPathsPlanExecuteResult(SUCCESS, plan, paths);
     }
 
     private Pair<String, String> generateDeviceAndMeasurement(String path, String storageUnitId) {

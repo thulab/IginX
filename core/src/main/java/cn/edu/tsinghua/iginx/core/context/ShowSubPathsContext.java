@@ -18,21 +18,19 @@
  */
 package cn.edu.tsinghua.iginx.core.context;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-    InsertRowRecords,
-    InsertNonAlignedRowRecords,
-    InsertColumnRecords,
-    InsertNonAlignedColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    LastQuery,
-    ShowColumns,
-    ShowSubPaths,
-    Unknown;
+@EqualsAndHashCode(callSuper = true)
+@Data
+public class ShowSubPathsContext extends RequestContext {
+
+    private final ShowSubPathsReq req;
+
+    public ShowSubPathsContext(ShowSubPathsReq req) {
+        super(req.sessionId, ContextType.ShowSubPaths);
+        this.req = req;
+    }
 
 }

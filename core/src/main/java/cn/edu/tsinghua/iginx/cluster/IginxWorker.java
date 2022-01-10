@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
+import cn.edu.tsinghua.iginx.combine.ShowSubPathsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.Config;
@@ -40,6 +41,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
+import cn.edu.tsinghua.iginx.core.context.ShowSubPathsContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -90,6 +92,8 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
@@ -314,6 +318,16 @@ public class IginxWorker implements IService.Iface {
         ShowColumnsContext context = new ShowColumnsContext(req);
         core.processRequest(context);
         return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
+    }
+
+    @Override
+    public ShowSubPathsResp showSubPaths(ShowSubPathsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new ShowSubPathsResp(RpcUtils.ACCESS_DENY);
+        }
+        ShowSubPathsContext context = new ShowSubPathsContext(req);
+        core.processRequest(context);
+        return ((ShowSubPathsCombineResult) context.getCombineResult()).getResp();
     }
 
     @Override
