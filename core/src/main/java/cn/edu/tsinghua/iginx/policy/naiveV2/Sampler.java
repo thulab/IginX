@@ -1,12 +1,12 @@
-package cn.edu.tsinghua.iginx.policy.sampler;
+package cn.edu.tsinghua.iginx.policy.naiveV2;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class NaiveSampler implements Sampler {
+public class Sampler {
 
-    private final static NaiveSampler instance = new NaiveSampler();
+    private final static Sampler instance = new Sampler();
 
     private final Set<String> prefixSet = new HashSet<>();
 
@@ -18,10 +18,10 @@ public class NaiveSampler implements Sampler {
 
     private final Random random = new Random();
 
-    private NaiveSampler() {
+    private Sampler() {
     }
 
-    public static NaiveSampler getInstance() {
+    public static Sampler getInstance() {
         return instance;
     }
 

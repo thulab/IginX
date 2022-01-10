@@ -5,8 +5,6 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.policy.IPolicyV2;
-import cn.edu.tsinghua.iginx.policy.sampler.NaiveSampler;
-import cn.edu.tsinghua.iginx.policy.sampler.Sampler;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -33,7 +31,7 @@ public class NaivePolicy implements IPolicyV2 {
     @Override
     public void init(IMetaManager iMetaManager) {
         this.iMetaManager = iMetaManager;
-        this.sampler = NaiveSampler.getInstance();
+        this.sampler = Sampler.getInstance();
         StorageEngineChangeHook hook = getStorageEngineChangeHook();
         if (hook != null) {
             iMetaManager.registerStorageEngineChangeHook(hook);

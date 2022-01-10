@@ -3,7 +3,6 @@ package cn.edu.tsinghua.iginx.engine.logical.generator;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.policy.IPolicyV2;
 import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
-import cn.edu.tsinghua.iginx.policy.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class InsertGenerator implements LogicalGenerator {
 
@@ -46,8 +44,6 @@ public class InsertGenerator implements LogicalGenerator {
 
     private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
-
-    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
 
     private InsertGenerator() {
     }
