@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -15,9 +14,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.policy.IPolicy;
-import cn.edu.tsinghua.iginx.policy.PolicyManager;
+import cn.edu.tsinghua.iginx.policy.IPolicyV2;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
+import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
@@ -27,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -43,10 +41,8 @@ public class DeleteGenerator implements LogicalGenerator {
 
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
 
-    private final IPolicy policy = PolicyManager.getInstance()
+    private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
-
-    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
 
     private DeleteGenerator() {
     }
@@ -79,16 +75,16 @@ public class DeleteGenerator implements LogicalGenerator {
     }
 
     private Operator generateRoot(DeleteStatement statement) {
-        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
+        policy.notify(statement);
 
-        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
+        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         if (fragments.isEmpty()) {
             //on startup
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator().generateInitialFragmentsAndStorageUnits(pathList, new TimeInterval(0, Long.MAX_VALUE));
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(statement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         }

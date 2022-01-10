@@ -1,7 +1,8 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.sampler.NaiveSampler;
+import cn.edu.tsinghua.iginx.policy.IPolicyV2;
+import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
@@ -18,8 +19,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.policy.IPolicy;
-import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
@@ -30,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 public class InsertGenerator implements LogicalGenerator {
 
@@ -44,10 +42,8 @@ public class InsertGenerator implements LogicalGenerator {
 
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
 
-    private final IPolicy policy = PolicyManager.getInstance()
+    private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
-
-    private final NaiveSampler naiveSampler = NaiveSampler.getInstance();
 
     private InsertGenerator() {
     }
@@ -80,9 +76,9 @@ public class InsertGenerator implements LogicalGenerator {
     }
 
     private Operator generateRoot(InsertStatement statement) {
-        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
+        policy.notify(statement);
 
-        naiveSampler.updatePrefix(new ArrayList<>(Arrays.asList(pathList.get(0), pathList.get(pathList.size()-1))));
+        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
@@ -90,18 +86,13 @@ public class InsertGenerator implements LogicalGenerator {
         if (fragments.isEmpty()) {
             //on startup
             policy.setNeedReAllocate(false);
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator()
-                    .generateInitialFragmentsAndStorageUnits(pathList, new TimeInterval(0, Long.MAX_VALUE));
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(statement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         } else if (policy.isNeedReAllocate()) {
             //on scale-out or any events requiring reallocation
             logger.debug("Trig ReAllocate!");
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.getIFragmentGenerator()
-                    .generateFragmentsAndStorageUnits(
-                            naiveSampler.samplePrefix(metaManager.getStorageEngineList().size() - 1),
-                            statement.getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1
-                    );
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateFragmentsAndStorageUnits(statement);
             metaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
         }
 
