@@ -14,9 +14,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.policy.IPolicy;
-import cn.edu.tsinghua.iginx.policy.PolicyManager;
+import cn.edu.tsinghua.iginx.policy.IPolicyV2;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
+import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
@@ -44,7 +44,7 @@ public class QueryGenerator implements LogicalGenerator {
 
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
 
-    private final IPolicy policy = PolicyManager.getInstance()
+    private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private QueryGenerator() {
