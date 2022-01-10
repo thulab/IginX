@@ -80,6 +80,8 @@ public class InsertGenerator implements LogicalGenerator {
     }
 
     private Operator generateRoot(InsertStatement statement) {
+        policy.notify(statement);
+
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));

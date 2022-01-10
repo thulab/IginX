@@ -78,6 +78,8 @@ public class QueryGenerator implements LogicalGenerator {
     }
 
     private Operator generateRoot(SelectStatement statement) {
+        policy.notify(statement);
+
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPathSet()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
