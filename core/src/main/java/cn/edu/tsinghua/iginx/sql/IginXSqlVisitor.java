@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.sql;
 
+import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -59,6 +60,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.whereClause() != null) {
             Filter filter = parseOrExpression(ctx.whereClause().orExpression(), deleteStatement);
             deleteStatement.setTimeRangesByFilter(filter);
+        } else {
+            List<TimeRange> timeRanges = new ArrayList<>(Collections.singletonList(new TimeRange(0, Long.MAX_VALUE)));
+            deleteStatement.setTimeRanges(timeRanges);
         }
         return deleteStatement;
     }
