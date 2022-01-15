@@ -16,23 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.query.result;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.plan.IginxPlan;
 
-    InsertRowRecords,
-    InsertNonAlignedRowRecords,
-    InsertColumnRecords,
-    InsertNonAlignedColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    LastQuery,
-    ShowColumns,
-    ShowSubPaths,
-    Unknown;
+import java.util.List;
 
+public class ShowSubPathsPlanExecuteResult extends SyncPlanExecuteResult {
+
+    private final List<String> paths;
+
+    public ShowSubPathsPlanExecuteResult(int statusCode, IginxPlan plan) {
+        this(statusCode, plan, null);
+    }
+
+    public ShowSubPathsPlanExecuteResult(int statusCode, IginxPlan plan, List<String> paths) {
+        super(statusCode, plan);
+        this.paths = paths;
+    }
+
+    public List<String> getPaths() {
+        return paths;
+    }
 }

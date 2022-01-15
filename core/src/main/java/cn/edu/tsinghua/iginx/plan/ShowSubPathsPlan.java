@@ -16,23 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.plan;
 
-public enum ContextType {
+public class ShowSubPathsPlan extends IginxPlan {
 
-    InsertRowRecords,
-    InsertNonAlignedRowRecords,
-    InsertColumnRecords,
-    InsertNonAlignedColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    LastQuery,
-    ShowColumns,
-    ShowSubPaths,
-    Unknown;
+    private final long storageEngineId;
 
+    private final String path;
+
+    public ShowSubPathsPlan(long storageEngineId) {
+        this(storageEngineId, null);
+    }
+
+    public ShowSubPathsPlan(long storageEngineId, String path) {
+        super(true);
+        this.setIginxPlanType(IginxPlanType.SHOW_SUB_PATHS);
+        this.setSync(true);
+        this.path = path;
+        this.storageEngineId = storageEngineId;
+    }
+
+    @Override
+    public long getStorageEngineId() {
+        return storageEngineId;
+    }
+
+    public String getPath() {
+        return path;
+    }
 }

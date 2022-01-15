@@ -236,5 +236,7 @@ public interface IPlanSplitter {
 
     List<Long> getSplitShowColumnsPlanResult();
 
+    List<Long> getSplitShowSubPathsPathResult();
+
     List<SplitInfo> getLastQueryPlanResults(LastQueryPlan plan);
 }

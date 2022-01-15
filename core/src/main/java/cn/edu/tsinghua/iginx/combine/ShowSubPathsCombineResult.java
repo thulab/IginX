@@ -16,23 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.core.context;
+package cn.edu.tsinghua.iginx.combine;
 
-public enum ContextType {
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
 
-    InsertRowRecords,
-    InsertNonAlignedRowRecords,
-    InsertColumnRecords,
-    InsertNonAlignedColumnRecords,
-    QueryData,
-    DeleteColumns,
-    DeleteDataInColumns,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    LastQuery,
-    ShowColumns,
-    ShowSubPaths,
-    Unknown;
+public class ShowSubPathsCombineResult extends DataCombineResult {
 
+    private final ShowSubPathsResp resp;
+
+    public ShowSubPathsCombineResult(Status status, ShowSubPathsResp resp) {
+        super(status);
+        this.resp = resp;
+    }
+
+    public ShowSubPathsResp getResp() {
+        return resp;
+    }
 }

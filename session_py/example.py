@@ -83,5 +83,8 @@ if __name__ == '__main__':
     dataset = session.execute_sql("select * from a.d where time in [5, 10) order by b desc offset 4 limit 2").get_query_data_set()
     print(dataset)
 
+    paths = session.list_sub_time_series("a.d")
+    print(paths)
+
     session.close()
     print("关闭 session 成功")
