@@ -131,16 +131,16 @@ public class SQLSessionIT {
 
     @Test
     public void testShowTimeSeries() {
-        String statement = "SHOW TIME SERIES;";
-        String excepted = "Time series:\n" +
-                "+--------+--------+\n" +
-                "|    Path|DataType|\n" +
-                "+--------+--------+\n" +
-                "|us.d1.s1|    LONG|\n" +
-                "|us.d1.s3|  BINARY|\n" +
-                "|us.d1.s2|    LONG|\n" +
-                "|us.d1.s4|  DOUBLE|\n" +
-                "+--------+--------+\n" +
+        String statement = "SHOW TIMESERIES;";
+        String excepted = "TimeSeries:\n" +
+                "+----------+--------+\n" +
+                "|TimeSeries|DataType|\n" +
+                "+----------+--------+\n" +
+                "|  us.d1.s1|    LONG|\n" +
+                "|  us.d1.s3|  BINARY|\n" +
+                "|  us.d1.s2|    LONG|\n" +
+                "|  us.d1.s4|  DOUBLE|\n" +
+                "+----------+--------+\n" +
                 "Total line number = 4\n";
         executeAndCompare(statement, excepted);
     }
@@ -520,15 +520,15 @@ public class SQLSessionIT {
 
     @Test
     public void testDeleteTimeSeries() {
-        String deleteTimeSeries = "DELETE TIME SERIES us.*";
+        String deleteTimeSeries = "DELETE TIMESERIES us.*";
         execute(deleteTimeSeries);
 
-        String showTimeSeries = "SHOW TIME SERIES;";
-        String excepted = "Time series:\n" +
-                "+----+--------+\n" +
-                "|Path|DataType|\n" +
-                "+----+--------+\n" +
-                "+----+--------+\n" +
+        String showTimeSeries = "SHOW TIMESERIES;";
+        String excepted = "TimeSeries:\n" +
+                "+----------+--------+\n" +
+                "|TimeSeries|DataType|\n" +
+                "+----------+--------+\n" +
+                "+----------+--------+\n" +
                 "Empty set.\n";
         executeAndCompare(showTimeSeries, excepted);
 
@@ -546,12 +546,12 @@ public class SQLSessionIT {
         String excepted = "Points num: 0\n";
         executeAndCompare(countPoints, excepted);
 
-        String showTimeSeries = "SHOW TIME SERIES;";
-        excepted = "Time series:\n" +
-                "+----+--------+\n" +
-                "|Path|DataType|\n" +
-                "+----+--------+\n" +
-                "+----+--------+\n" +
+        String showTimeSeries = "SHOW TIMESERIES;";
+        excepted = "TimeSeries:\n" +
+                "+----------+--------+\n" +
+                "|TimeSeries|DataType|\n" +
+                "+----------+--------+\n" +
+                "+----------+--------+\n" +
                 "Empty set.\n";
         executeAndCompare(showTimeSeries, excepted);
     }

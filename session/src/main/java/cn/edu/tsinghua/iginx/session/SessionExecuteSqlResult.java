@@ -83,6 +83,9 @@ public class SessionExecuteSqlResult {
                 this.paths = resp.getPaths();
                 this.dataTypeList = resp.getDataTypeList();
                 break;
+            case ShowSubTimeSeries:
+                this.paths = resp.getPaths();
+                break;
             case ShowClusterInfo:
                 this.iginxInfos = resp.getIginxInfos();
                 this.storageEngineInfos = resp.getStorageEngineInfos();
@@ -186,10 +189,17 @@ public class SessionExecuteSqlResult {
             List<Integer> maxSizeList = new ArrayList<>();
             result = cacheResult(needFormatTime, timePrecision, maxSizeList);
         } else if (sqlType == SqlType.ShowTimeSeries) {
-            result.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
+            result.add(new ArrayList<>(Arrays.asList("TimeSeries", "DataType")));
             if (paths != null) {
                 for (int i = 0; i < paths.size(); i++) {
                     result.add(Arrays.asList(paths.get(i) + "", dataTypeList.get(i) + ""));
+                }
+            }
+        } else if (sqlType == SqlType.ShowSubTimeSeries) {
+            result.add(new ArrayList<>(Collections.singletonList("SubTimeSeries")));
+            if (paths != null) {
+                for (String path : paths) {
+                    result.add(Collections.singletonList(path + ""));
                 }
             }
         } else if (sqlType == SqlType.GetReplicaNum) {
@@ -216,6 +226,8 @@ public class SessionExecuteSqlResult {
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             return buildShowTimeSeriesResult();
+        } else if (sqlType == SqlType.ShowSubTimeSeries) {
+            return buildShowSubTimeSeriesResult();
         } else if (sqlType == SqlType.ShowClusterInfo) {
             return buildShowClusterInfoResult();
         } else if (sqlType == SqlType.ShowUser) {
@@ -388,13 +400,30 @@ public class SessionExecuteSqlResult {
 
     private String buildShowTimeSeriesResult() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Time series:").append("\n");
+        builder.append("TimeSeries:").append("\n");
         int num = paths == null ? 0 : paths.size();
         if (paths != null) {
             List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
+            cache.add(new ArrayList<>(Arrays.asList("TimeSeries", "DataType")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
+            }
+
+            buildFromStringList(builder, cache);
+        }
+        builder.append(buildCount(num));
+        return builder.toString();
+    }
+
+    private String buildShowSubTimeSeriesResult() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("SubTimeSeries:").append("\n");
+        int num = paths == null ? 0 : paths.size();
+        if (paths != null) {
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Collections.singletonList("SubTimeSeries")));
+            for (String path : paths) {
+                cache.add(new ArrayList<>(Collections.singletonList(path)));
             }
 
             buildFromStringList(builder, cache);

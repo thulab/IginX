@@ -7,13 +7,14 @@ sqlStatement
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
-    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
+    | DELETE TIMESERIES path (COMMA path)* #deleteTimeSeriesStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | COUNT POINTS #countPointsStatement
     | CLEAR DATA #clearDataStatement
-    | SHOW TIME SERIES #showTimeSeriesStatement
+    | SHOW TIMESERIES #showTimeSeriesStatement
+    | SHOW SUB TIMESERIES path? #showSubTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
     | CREATE USER username=nodeName IDENTIFIED BY password=nodeName #createUserStatement
     | GRANT permissionSpec TO USER username=nodeName #grantUserStatement
@@ -183,7 +184,7 @@ nodeName
     | LIMIT
     | OFFSET
     | TIME
-    | SERIES
+    | TIMESERIES
     | TIMESTAMP
     | GROUP
     | ORDER
@@ -477,8 +478,12 @@ CLEAR
     : C L E A R
     ;
 
-SERIES
-    : S E R I E S
+SUB
+    : S U B
+    ;
+
+TIMESERIES
+    : T I M E S E R I E S
     ;
 
 DESC

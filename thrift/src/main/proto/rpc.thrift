@@ -55,6 +55,7 @@ enum SqlType {
     ClearData,
     DeleteTimeSeries,
     ShowTimeSeries,
+    ShowSubTimeSeries,
     ShowClusterInfo,
     CreateUser,
     GrantUser,

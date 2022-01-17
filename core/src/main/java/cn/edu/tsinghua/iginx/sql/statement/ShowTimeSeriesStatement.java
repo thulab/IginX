@@ -9,7 +9,7 @@ import cn.edu.tsinghua.iginx.thrift.SqlType;
 public class ShowTimeSeriesStatement extends Statement {
 
     public ShowTimeSeriesStatement() {
-        this.statementType = StatementType.SHOW_TIME_SERIES;
+        this.statementType = StatementType.SHOW_TIMESERIES;
     }
 
     @Override
