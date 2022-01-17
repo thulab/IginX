@@ -86,6 +86,8 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
+    private String queryOptimizer = "";
+
     private String physicalOptimizer = "naive";
 
     private int memoryTaskThreadPoolSize = 100;
@@ -354,6 +356,14 @@ public class Config {
 
     public void setInstancesNumPerClient(int instancesNumPerClient) {
         this.instancesNumPerClient = instancesNumPerClient;
+    }
+
+    public String getQueryOptimizer() {
+        return queryOptimizer;
+    }
+
+    public void setQueryOptimizer(String queryOptimizer) {
+        this.queryOptimizer = queryOptimizer;
     }
 
     public String getPhysicalOptimizer() {

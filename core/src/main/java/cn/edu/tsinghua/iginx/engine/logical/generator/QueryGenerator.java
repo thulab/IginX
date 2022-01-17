@@ -1,6 +1,8 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
@@ -36,6 +38,8 @@ public class QueryGenerator implements LogicalGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryGenerator.class);
 
+    private final static Config config = ConfigDescriptor.getInstance().getConfig();
+
     private final static QueryGenerator instance = new QueryGenerator();
 
     private final static FunctionManager functionManager = FunctionManager.getInstance();
@@ -48,6 +52,11 @@ public class QueryGenerator implements LogicalGenerator {
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private QueryGenerator() {
+        LogicalOptimizerManager optimizerManager = LogicalOptimizerManager.getInstance();
+        String[] optimizers = config.getQueryOptimizer().split(",");
+        for (String optimizer : optimizers) {
+            registerOptimizer(optimizerManager.getOptimizer(optimizer));
+        }
     }
 
     public static QueryGenerator getInstance() {
@@ -176,7 +185,7 @@ public class QueryGenerator implements LogicalGenerator {
             );
         }
 
-        if (statement.getLimit() != Long.MAX_VALUE || statement.getOffset() != 0) {
+        if (statement.getLimit() != Integer.MAX_VALUE || statement.getOffset() != 0) {
             root = new Limit(
                     new OperatorSource(root),
                     (int) statement.getLimit(),
