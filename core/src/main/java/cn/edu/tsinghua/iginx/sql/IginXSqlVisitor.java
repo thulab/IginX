@@ -143,6 +143,15 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
+    public Statement visitShowSubTimeSeriesStatement(SqlParser.ShowSubTimeSeriesStatementContext ctx) {
+        if (ctx.path() != null) {
+            return new ShowSubTimeSeriesStatement(ctx.path().getText());
+        } else {
+            return new ShowSubTimeSeriesStatement("");
+        }
+    }
+
+    @Override
     public Statement visitShowClusterInfoStatement(SqlParser.ShowClusterInfoStatementContext ctx) {
         return new ShowClusterInfoStatement();
     }

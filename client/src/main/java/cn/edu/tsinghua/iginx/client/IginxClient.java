@@ -282,11 +282,10 @@ public class IginxClient {
 
             if (res.isQuery()) {
                 res.print(true, timestampPrecision);
-            } else if (res.getSqlType() == SqlType.ShowTimeSeries) {
-                res.print(false, "");
-            } else if (res.getSqlType() == SqlType.ShowClusterInfo) {
-                res.print(false, "");
-            } else if (res.getSqlType() == SqlType.ShowUser) {
+            } else if (res.getSqlType() == SqlType.ShowTimeSeries ||
+                    res.getSqlType() == SqlType.ShowSubTimeSeries ||
+                    res.getSqlType() == SqlType.ShowClusterInfo ||
+                    res.getSqlType() == SqlType.ShowUser) {
                 res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
@@ -345,7 +344,8 @@ public class IginxClient {
                 Arrays.asList("show", "replica", "number"),
                 Arrays.asList("count", "points"),
                 Arrays.asList("clear", "data"),
-                Arrays.asList("show", "time", "series"),
+                Arrays.asList("show", "timeseries"),
+                Arrays.asList("show", "sub", "timeseries"),
                 Arrays.asList("show", "cluster", "info")
         );
         addArgumentCompleters(iginxCompleters, withoutNullCompleters, false);
