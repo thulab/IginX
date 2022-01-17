@@ -146,7 +146,7 @@ public class ParseTest {
 
     @Test
     public void testParseDeleteTimeSeries() {
-        String deleteTimeSeriesStr = "DELETE TIME SERIES a.b.c, a.b.d;";
+        String deleteTimeSeriesStr = "DELETE TIMESERIES a.b.c, a.b.d;";
         DeleteTimeSeriesStatement statement = (DeleteTimeSeriesStatement) buildStatement(deleteTimeSeriesStr);
         List<String> paths = Arrays.asList("a.b.c", "a.b.d");
         assertEquals(paths, statement.getPaths());
