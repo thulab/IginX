@@ -46,7 +46,7 @@ public class ConstraintManagerImpl implements ConstraintManager {
         if (OperatorType.isMultipleOperator(operator.getType())) {
             return checkMultipleOperator((MultipleOperator) operator);
         }
-        return false; // 未能识别的操作符
+        return OperatorType.isGlobalOperator(operator.getType()); // 未能识别的操作符
     }
 
     @Override

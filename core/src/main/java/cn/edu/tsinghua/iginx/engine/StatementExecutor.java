@@ -282,8 +282,8 @@ public class StatementExecutor {
             Object[] rowValues = row.getValues();
 
             if (rowValues.length == 2) {
-                paths.add((String) rowValues[0]);
-                DataType type = DataTypeUtils.strToDataType((String) rowValues[1]);
+                paths.add(new String((byte[]) rowValues[0]));
+                DataType type = DataTypeUtils.strToDataType(new String((byte[]) rowValues[1]));
                 if (type == null) {
                     logger.warn("unknown data type [{}]", rowValues[1]);
                 }

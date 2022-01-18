@@ -18,18 +18,18 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.task;
 
-public enum TaskType {
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-    Storage,
-    Global,
-    Memory,
+import java.util.Collections;
 
-    MultipleMemory,
-    BinaryMemory,
-    UnaryMemory;
+public class GlobalPhysicalTask extends AbstractPhysicalTask{
 
-    public static boolean isMemoryTask(TaskType type) {
-        return type == MultipleMemory || type == BinaryMemory || type == UnaryMemory;
+    public GlobalPhysicalTask(Operator operator) {
+        super(TaskType.Global, Collections.singletonList(operator));
+    }
+
+    public Operator getOperator() {
+        return getOperators().get(0);
     }
 
 }
