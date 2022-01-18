@@ -21,7 +21,10 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
+
+import java.util.List;
 
 public interface OperatorMemoryExecutor {
 
@@ -29,5 +32,7 @@ public interface OperatorMemoryExecutor {
     RowStream executeUnaryOperator(UnaryOperator operator, RowStream stream) throws PhysicalException;
 
     RowStream executeBinaryOperator(BinaryOperator operator, RowStream streamA, RowStream streamB) throws PhysicalException;
+
+    RowStream executeMultiOperator(MultipleOperator operator, List<RowStream> streams) throws PhysicalException;
 
 }

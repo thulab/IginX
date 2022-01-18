@@ -39,9 +39,11 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
 import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.operator.RowTransform;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.SetCombine;
 import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
 import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
@@ -58,6 +60,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+
+import static cn.edu.tsinghua.iginx.utils.CheckedFunction.wrap;
 
 public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
@@ -99,6 +104,20 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
     }
 
+    @Override
+    public RowStream executeMultiOperator(MultipleOperator operator, List<RowStream> streams) throws PhysicalException {
+        switch (operator.getType()) {
+            case SetCombine:
+                try {
+                    return executeSetCombine((SetCombine) operator, streams.stream().map(wrap(this::transformToTable)).collect(Collectors.toList()));
+                } catch (Exception e) {
+                    throw new PhysicalException(e);
+                }
+            default:
+                throw new UnexpectedOperatorException("unknown multi operator: " + operator.getType());
+        }
+    }
+
     public static NaiveOperatorMemoryExecutor getInstance() {
         return NaiveOperatorMemoryExecutorHolder.INSTANCE;
     }
@@ -122,6 +141,10 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         stream.close();
         return new Table(header, rows);
+    }
+
+    private RowStream executeSetCombine(SetCombine combine, List<Table> tables) throws PhysicalException {
+        return null;
     }
 
     private RowStream executeProject(Project project, Table table) throws PhysicalException {

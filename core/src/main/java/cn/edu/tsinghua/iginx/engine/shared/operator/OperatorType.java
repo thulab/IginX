@@ -41,6 +41,7 @@ public enum OperatorType {
     Delete,
     Insert,
     CombineNonQuery,
+    SetCombine,
 
     ShowTimeSeries;
 
@@ -53,7 +54,11 @@ public enum OperatorType {
     }
 
     public static boolean isMultipleOperator(OperatorType op) {
-        return op == CombineNonQuery;
+        return op == CombineNonQuery || op == SetCombine;
+    }
+
+    public static boolean isGlobalOperator(OperatorType op) {
+        return op == ShowTimeSeries;
     }
 
     public static boolean isNeedBroadcasting(OperatorType op) {

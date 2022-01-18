@@ -2,6 +2,9 @@ package cn.edu.tsinghua.iginx.engine.physical.task;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.NaiveOperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import org.slf4j.Logger;
@@ -9,9 +12,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * 目前专门用于 CombineNonQuery 操作符
+ * 目前专门用于 CombineNonQuery 和 SetCombine 操作符
  */
 public class MultipleMemoryPhysicalTask extends MemoryPhysicalTask {
 
@@ -35,7 +39,7 @@ public class MultipleMemoryPhysicalTask extends MemoryPhysicalTask {
             return new TaskExecuteResult(new PhysicalException("unexpected multiple memory physical task"));
         }
         Operator operator = operators.get(0);
-        if (operator.getType() != OperatorType.CombineNonQuery) {
+        if (OperatorType.isMultipleOperator(operator.getType())) {
             return new TaskExecuteResult(new PhysicalException("unexpected multiple memory physical task"));
         }
         if (getFollowerTask() != null) {
@@ -54,6 +58,15 @@ public class MultipleMemoryPhysicalTask extends MemoryPhysicalTask {
                 message.append(exception.getMessage());
             }
             return new TaskExecuteResult(new PhysicalTaskExecuteFailureException(message.toString()));
+        }
+        if (operator.getType() == OperatorType.SetCombine) {
+            try {
+                RowStream stream = NaiveOperatorMemoryExecutor.getInstance().executeMultiOperator((MultipleOperator) operator, parentTasks.stream().map(PhysicalTask::getResult).map(TaskExecuteResult::getRowStream).collect(Collectors.toList()));
+                return new TaskExecuteResult(stream);
+            } catch (PhysicalException e) {
+                logger.error("execute set combine error: ", e);
+                return new TaskExecuteResult(e);
+            }
         }
         return new TaskExecuteResult();
     }

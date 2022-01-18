@@ -47,6 +47,9 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
         if (root == null) {
             return null;
         }
+        if (OperatorType.isGlobalOperator(root.getType())) {
+            return constructGlobalTask(root);
+        }
         return constructTask(root);
     }
 
@@ -92,6 +95,10 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
             }
             return task;
         }
+    }
+
+    private PhysicalTask constructGlobalTask(Operator operator) {
+        return null;
     }
 
     public static NaivePhysicalOptimizer getInstance() {

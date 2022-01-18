@@ -130,6 +130,7 @@ public class StoragePhysicalTaskExecutor {
         for (StoragePhysicalTask task : tasks) {
             storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task); // 异步写备，查询只查主
         }
+        storageManager.getStorageMap()
     }
 
     public void init(MemoryPhysicalTaskDispatcher memoryTaskExecutor) {

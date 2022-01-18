@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
 import java.util.List;
-import java.util.concurrent.Future;
 
 public class StoragePhysicalTask extends AbstractPhysicalTask {
 
