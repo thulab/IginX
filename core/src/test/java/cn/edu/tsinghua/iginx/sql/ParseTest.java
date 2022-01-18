@@ -51,7 +51,7 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f), MIN(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 1000ms;";
+        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f), MIN(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 10ms, LEVEL = 2, 3;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
         assertTrue(statement.hasFunc());
@@ -75,7 +75,23 @@ public class ParseTest {
 
         assertEquals(10, statement.getStartTime());
         assertEquals(100, statement.getEndTime());
-        assertEquals(1000L, statement.getPrecision());
+        assertEquals(10L, statement.getPrecision());
+
+        assertEquals(Arrays.asList(2, 3), statement.getLayers());
+    }
+
+    @Test
+    public void testParseGroupBy() {
+        String selectStr = "SELECT MAX(c) FROM a.b GROUP [100, 1000) BY 10ms;";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(100, statement.getStartTime());
+        assertEquals(1000, statement.getEndTime());
+        assertEquals(10L, statement.getPrecision());
+
+        selectStr = "SELECT MAX(c) FROM a.b GROUP BY LEVEL = 1, 2;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("max").get(0));
+        assertEquals(Arrays.asList(1, 2), statement.getLayers());
     }
 
     @Test

@@ -31,6 +31,8 @@ public class SelectStatement extends DataStatement {
     private int limit;
     private int offset;
 
+    private List<Integer> layers;
+
     public SelectStatement() {
         this.statementType = StatementType.SELECT;
         this.queryType = QueryType.Unknown;
@@ -42,6 +44,7 @@ public class SelectStatement extends DataStatement {
         this.orderByPath = "";
         this.limit = Integer.MAX_VALUE;
         this.offset = 0;
+        this.layers = new ArrayList<>();
     }
 
     // simple query
@@ -111,6 +114,7 @@ public class SelectStatement extends DataStatement {
                 new TimeFilter(Op.L, endTime)
         )));
         this.hasValueFilter = true;
+        this.layers = new ArrayList<>();
     }
 
     public static FuncType str2FuncType(String str) {
@@ -317,6 +321,14 @@ public class SelectStatement extends DataStatement {
 
     public void setOffset(int offset) {
         this.offset = offset;
+    }
+
+    public List<Integer> getLayers() {
+        return layers;
+    }
+
+    public void setLayer(Integer layer) {
+        this.layers.add(layer);
     }
 
     public void setQueryType() {

@@ -4,37 +4,24 @@ import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.SqlParser.AndExpressionContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.ConstantContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.DateExpressionContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.ExpressionContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.InsertMultiValueContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.InsertValuesSpecContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.MeasurementNameContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.OrExpressionContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.PredicateContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.SelectClauseContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.ShowTimeSeriesStatementContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.SpecialClauseContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
-import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
+import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.*;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
-    public Statement visitSqlStatement(SqlParser.SqlStatementContext ctx) {
+    public Statement visitSqlStatement(SqlStatementContext ctx) {
         return visit(ctx.statement());
     }
 
     @Override
-    public Statement visitInsertStatement(SqlParser.InsertStatementContext ctx) {
+    public Statement visitInsertStatement(InsertStatementContext ctx) {
         InsertStatement insertStatement = new InsertStatement();
         insertStatement.setPrefixPath(ctx.path().getText());
         // parse paths
@@ -52,7 +39,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
-    public Statement visitDeleteStatement(SqlParser.DeleteStatementContext ctx) {
+    public Statement visitDeleteStatement(DeleteStatementContext ctx) {
         DeleteStatement deleteStatement = new DeleteStatement();
         // parse delete paths
         ctx.path().forEach(e -> deleteStatement.addPath(e.getText()));
@@ -68,7 +55,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
-    public Statement visitSelectStatement(SqlParser.SelectStatementContext ctx) {
+    public Statement visitSelectStatement(SelectStatementContext ctx) {
         SelectStatement selectStatement = new SelectStatement();
         // Step 1. parse as much information as possible.
         // parse from paths
@@ -97,29 +84,29 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
-    public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
+    public Statement visitDeleteTimeSeriesStatement(DeleteTimeSeriesStatementContext ctx) {
         DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
         ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
         return deleteTimeSeriesStatement;
     }
 
     @Override
-    public Statement visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
+    public Statement visitCountPointsStatement(CountPointsStatementContext ctx) {
         return new CountPointsStatement();
     }
 
     @Override
-    public Statement visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
+    public Statement visitClearDataStatement(ClearDataStatementContext ctx) {
         return new ClearDataStatement();
     }
 
     @Override
-    public Statement visitShowReplicationStatement(SqlParser.ShowReplicationStatementContext ctx) {
+    public Statement visitShowReplicationStatement(ShowReplicationStatementContext ctx) {
         return new ShowReplicationStatement();
     }
 
     @Override
-    public Statement visitAddStorageEngineStatement(SqlParser.AddStorageEngineStatementContext ctx) {
+    public Statement visitAddStorageEngineStatement(AddStorageEngineStatementContext ctx) {
         AddStorageEngineStatement addStorageEngineStatement = new AddStorageEngineStatement();
         // parse engines
         List<StorageEngineContext> engines = ctx.storageEngineSpec().storageEngine();
@@ -140,7 +127,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
-    public Statement visitShowClusterInfoStatement(SqlParser.ShowClusterInfoStatementContext ctx) {
+    public Statement visitShowClusterInfoStatement(ShowClusterInfoStatementContext ctx) {
         return new ShowClusterInfoStatement();
     }
 
@@ -165,24 +152,29 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
 
     private void parseSpecialClause(SpecialClauseContext ctx, SelectStatement selectStatement) {
-        // parse group by precision
-        if (ctx.groupByTimeClause() != null) {
-            parseGroupByTimeClause(ctx.groupByTimeClause(), selectStatement);
+        if (ctx.groupByClause() != null) {
+            // groupByClause = groupByTimeClause + groupByLevelClause
+            parseGroupByTimeClause(ctx.groupByClause().timeInterval(), ctx.groupByClause().DURATION(), selectStatement);
+            parseGroupByLevelClause(ctx.groupByClause().INT(), selectStatement);
         }
-        // parse limit & offset
+        if (ctx.groupByTimeClause() != null) {
+            parseGroupByTimeClause(ctx.groupByTimeClause().timeInterval(), ctx.groupByTimeClause().DURATION(), selectStatement);
+        }
+        if (ctx.groupByLevelClause() != null) {
+            parseGroupByLevelClause(ctx.groupByLevelClause().INT(), selectStatement);
+        }
         if (ctx.limitClause() != null) {
             parseLimitClause(ctx.limitClause(), selectStatement);
         }
-        // parse order by
         if (ctx.orderByClause() != null) {
             parseOrderByClause(ctx.orderByClause(), selectStatement);
         }
     }
 
-    private void parseGroupByTimeClause(SqlParser.GroupByTimeClauseContext ctx, SelectStatement selectStatement) {
-        String duration = ctx.DURATION().getText();
-        long precision = TimeUtils.convertDurationStrToLong(0, duration);
-        Pair<Long, Long> timeInterval = parseTimeInterval(ctx.timeInterval());
+    private void parseGroupByTimeClause(TimeIntervalContext timeIntervalContext, TerminalNode duration, SelectStatement selectStatement) {
+        String durationStr = duration.getText();
+        long precision = TimeUtils.convertDurationStrToLong(0, durationStr);
+        Pair<Long, Long> timeInterval = parseTimeInterval(timeIntervalContext);
         selectStatement.setStartTime(timeInterval.k);
         selectStatement.setEndTime(timeInterval.v);
         selectStatement.setPrecision(precision);
@@ -201,8 +193,12 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         selectStatement.setFilter(mergedFilter);
     }
 
+    private void parseGroupByLevelClause(List<TerminalNode> layers, SelectStatement selectStatement) {
+        layers.forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
+    }
+
     // like standard SQL, limit N, M means limit M offset N
-    private void parseLimitClause(SqlParser.LimitClauseContext ctx, SelectStatement selectStatement) {
+    private void parseLimitClause(LimitClauseContext ctx, SelectStatement selectStatement) {
         if (ctx.INT().size() == 1) {
             int limit = Integer.parseInt(ctx.INT(0).getText());
             selectStatement.setLimit(limit);
@@ -220,7 +216,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
     }
 
-    private void parseOrderByClause(SqlParser.OrderByClauseContext ctx, SelectStatement selectStatement) {
+    private void parseOrderByClause(OrderByClauseContext ctx, SelectStatement selectStatement) {
         if (selectStatement.hasFunc()) {
             throw new SQLParserException("Not support ORDER BY clause in aggregate query.");
         }
@@ -240,7 +236,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
     }
 
-    private Pair<Long, Long> parseTimeInterval(SqlParser.TimeIntervalContext interval) {
+    private Pair<Long, Long> parseTimeInterval(TimeIntervalContext interval) {
         long startTime, endTime;
 
         if (interval == null) {
