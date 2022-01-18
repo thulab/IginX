@@ -5,7 +5,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Select extends AbstractUnaryOperator {
 
-    private final Filter filter;
+    private Filter filter;
 
     public Select(Source source, Filter filter) {
         super(OperatorType.Select, source);
@@ -17,6 +17,10 @@ public class Select extends AbstractUnaryOperator {
 
     public Filter getFilter() {
         return filter;
+    }
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
     }
 
     @Override
