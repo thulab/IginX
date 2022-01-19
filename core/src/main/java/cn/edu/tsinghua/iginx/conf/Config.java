@@ -88,6 +88,8 @@ public class Config {
 
     private String queryOptimizer = "";
 
+    private String constraintChecker = "naive";
+
     private String physicalOptimizer = "naive";
 
     private int memoryTaskThreadPoolSize = 100;
@@ -364,6 +366,14 @@ public class Config {
 
     public void setQueryOptimizer(String queryOptimizer) {
         this.queryOptimizer = queryOptimizer;
+    }
+
+    public String getConstraintChecker() {
+        return constraintChecker;
+    }
+
+    public void setConstraintChecker(String constraintChecker) {
+        this.constraintChecker = constraintChecker;
     }
 
     public String getPhysicalOptimizer() {

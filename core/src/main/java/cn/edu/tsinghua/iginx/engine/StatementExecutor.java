@@ -2,6 +2,8 @@ package cn.edu.tsinghua.iginx.engine;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.constraint.ConstraintChecker;
+import cn.edu.tsinghua.iginx.engine.logical.constraint.ConstraintCheckerManager;
 import cn.edu.tsinghua.iginx.engine.logical.generator.DeleteGenerator;
 import cn.edu.tsinghua.iginx.engine.logical.generator.InsertGenerator;
 import cn.edu.tsinghua.iginx.engine.logical.generator.LogicalGenerator;
@@ -45,7 +47,9 @@ import java.util.List;
 
 public class StatementExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(StatementExecutor.class);
+    private final static Logger logger = LoggerFactory.getLogger(StatementExecutor.class);
+
+    private final static Config config = ConfigDescriptor.getInstance().getConfig();
 
     private final static StatementExecutor instance = new StatementExecutor();
 
@@ -53,8 +57,9 @@ public class StatementExecutor {
 
     private final static PhysicalEngine engine = PhysicalEngineImpl.getInstance();
 
+    private final static ConstraintChecker checker = ConstraintCheckerManager.getInstance().getChecker(config.getConstraintChecker());
     private final static ConstraintManager constraintManager = engine.getConstraintManager();
-    private final static Config config = ConfigDescriptor.getInstance().getConfig();
+
     private final List<LogicalGenerator> queryGeneratorList = new ArrayList<>();
     private final List<LogicalGenerator> deleteGeneratorList = new ArrayList<>();
     private final List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
@@ -138,7 +143,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processQuery(SelectStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : queryGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 RowStream stream = engine.execute(root);
                 return buildQueryRowStreamResp(stream, statement);
             }
@@ -149,7 +154,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processDelete(DeleteStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : deleteGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 engine.execute(root);
                 return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Delete);
             }
@@ -160,7 +165,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processInsert(InsertStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : insertGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 engine.execute(root);
                 return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Insert);
             }
@@ -171,7 +176,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processShowTimeSeries(ShowTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : showTSGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 RowStream stream = engine.execute(root);
                 return buildShowTSRowStreamResp(stream);
             }
@@ -234,7 +239,7 @@ public class StatementExecutor {
         List<ByteBuffer> bitmapList = new ArrayList<>();
 
         boolean hasTimestamp = stream.getHeader().hasTimestamp();
-        while(stream.hasNext()) {
+        while (stream.hasNext()) {
             Row row = stream.next();
 
             Object[] rowValues = row.getValues();
@@ -288,7 +293,7 @@ public class StatementExecutor {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
 
-        while(stream.hasNext()) {
+        while (stream.hasNext()) {
             Row row = stream.next();
             Object[] rowValues = row.getValues();
 
