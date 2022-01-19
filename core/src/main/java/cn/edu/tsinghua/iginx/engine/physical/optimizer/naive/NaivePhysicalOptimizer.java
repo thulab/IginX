@@ -25,22 +25,23 @@ import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.UnaryMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class NaivePhysicalOptimizer implements PhysicalOptimizer {
+
+    public static NaivePhysicalOptimizer getInstance() {
+        return NaivePhysicalOptimizerHolder.INSTANCE;
+    }
 
     @Override
     public PhysicalTask optimize(Operator root) {
@@ -81,28 +82,25 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
             MultipleOperator multipleOperator = (MultipleOperator) operator;
             List<Source> sources = multipleOperator.getSources();
             List<PhysicalTask> parentTasks = new ArrayList<>();
-            for (Source source: sources) {
+            for (Source source : sources) {
                 OperatorSource operatorSource = (OperatorSource) source;
                 PhysicalTask parentTask = constructTask(operatorSource.getOperator());
                 parentTasks.add(parentTask);
             }
             PhysicalTask task = new MultipleMemoryPhysicalTask(Collections.singletonList(operator), parentTasks);
-            for (PhysicalTask parentTask: parentTasks) {
+            for (PhysicalTask parentTask : parentTasks) {
                 parentTask.setFollowerTask(task);
             }
             return task;
         }
     }
 
-    public static NaivePhysicalOptimizer getInstance() {
-        return NaivePhysicalOptimizerHolder.INSTANCE;
-    }
-
     private static class NaivePhysicalOptimizerHolder {
 
         private static final NaivePhysicalOptimizer INSTANCE = new NaivePhysicalOptimizer();
 
-        private NaivePhysicalOptimizerHolder() {}
+        private NaivePhysicalOptimizerHolder() {
+        }
 
     }
 

@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -41,6 +40,12 @@ public final class Timeseries {
     public Timeseries(String path, DataType dataType) {
         this.path = path;
         this.dataType = dataType;
+    }
+
+    public static RowStream toRowStream(Collection<Timeseries> timeseries) {
+        Header header = new Header(Arrays.asList(new Field("path", DataType.BINARY), new Field("type", DataType.BINARY)));
+        List<Row> rows = timeseries.stream().map(e -> new Row(header, new Object[]{e.path.getBytes(), e.dataType.toString().getBytes()})).collect(Collectors.toList());
+        return new Table(header, rows);
     }
 
     public String getPath() {
@@ -62,12 +67,6 @@ public final class Timeseries {
     @Override
     public int hashCode() {
         return Objects.hash(path, dataType);
-    }
-
-    public static RowStream toRowStream(Collection<Timeseries> timeseries) {
-        Header header = new Header(Arrays.asList(new Field("path", DataType.BINARY), new Field("type", DataType.BINARY)));
-        List<Row> rows = timeseries.stream().map(e -> new Row(header, new Object[] { e.path.getBytes(), e.dataType.toString().getBytes() })).collect(Collectors.toList());
-        return new Table(header, rows);
     }
 
 }

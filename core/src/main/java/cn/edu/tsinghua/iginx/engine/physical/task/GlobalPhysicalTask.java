@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
 import java.util.Collections;
 
-public class GlobalPhysicalTask extends AbstractPhysicalTask{
+public class GlobalPhysicalTask extends AbstractPhysicalTask {
 
     public GlobalPhysicalTask(Operator operator) {
         super(TaskType.Global, Collections.singletonList(operator));

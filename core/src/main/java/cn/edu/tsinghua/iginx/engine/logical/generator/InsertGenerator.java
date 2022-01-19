@@ -1,8 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.policy.IPolicyV2;
-import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
+import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
@@ -19,7 +18,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
+import cn.edu.tsinghua.iginx.policy.IPolicyV2;
+import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
@@ -28,20 +28,17 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class InsertGenerator implements LogicalGenerator {
 
-    private final GeneratorType type = GeneratorType.Insert;
-
     private static final Logger logger = LoggerFactory.getLogger(InsertGenerator.class);
-
     private final static InsertGenerator instance = new InsertGenerator();
-
-    private final List<Optimizer> optimizerList = new ArrayList<>();
-
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
-
+    private final GeneratorType type = GeneratorType.Insert;
+    private final List<Optimizer> optimizerList = new ArrayList<>();
     private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
@@ -132,21 +129,21 @@ public class InsertGenerator implements LogicalGenerator {
         }
 
         int startTimeIndex = 0;
-        while (timeInterval.getStartTime() > insertTimes.get(startTimeIndex))
+        while(timeInterval.getStartTime() > insertTimes.get(startTimeIndex))
             startTimeIndex++;
         int endTimeIndex = startTimeIndex;
-        while (endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
+        while(endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
             endTimeIndex++;
 
 
         int startPathIndex = 0;
         if (tsInterval.getStartTimeSeries() != null) {
-            while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
+            while(tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
                 startPathIndex++;
         }
         int endPathIndex = startPathIndex;
         if (tsInterval.getEndTimeSeries() != null) {
-            while (endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)
+            while(endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)
                 endPathIndex++;
         } else {
             endPathIndex = paths.size();

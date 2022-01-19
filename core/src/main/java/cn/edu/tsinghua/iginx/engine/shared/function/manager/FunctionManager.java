@@ -42,6 +42,10 @@ public class FunctionManager {
         this.initSystemFunctions();
     }
 
+    public static FunctionManager getInstance() {
+        return FunctionManagerHolder.INSTANCE;
+    }
+
     private void initSystemFunctions() {
         registerFunction(Avg.getInstance());
         registerFunction(Count.getInstance());
@@ -61,10 +65,6 @@ public class FunctionManager {
         functions.put(function.getIdentifier(), function);
     }
 
-    public static FunctionManager getInstance() {
-        return FunctionManagerHolder.INSTANCE;
-    }
-
     public Collection<Function> getFunctions() {
         return functions.values();
     }
@@ -81,7 +81,8 @@ public class FunctionManager {
 
         private static final FunctionManager INSTANCE = new FunctionManager();
 
-        private FunctionManagerHolder() {}
+        private FunctionManagerHolder() {
+        }
 
     }
 

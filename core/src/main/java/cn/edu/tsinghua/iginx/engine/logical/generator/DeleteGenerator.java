@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -15,7 +16,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IPolicyV2;
-import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
@@ -31,16 +31,11 @@ import java.util.Map;
 
 public class DeleteGenerator implements LogicalGenerator {
 
-    private final GeneratorType type = GeneratorType.Delete;
-
     private static final Logger logger = LoggerFactory.getLogger(InsertGenerator.class);
-
     private final static DeleteGenerator instance = new DeleteGenerator();
-
-    private final List<Optimizer> optimizerList = new ArrayList<>();
-
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
-
+    private final GeneratorType type = GeneratorType.Delete;
+    private final List<Optimizer> optimizerList = new ArrayList<>();
     private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 

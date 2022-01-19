@@ -40,7 +40,12 @@ public class Min implements SetMappingFunction {
 
     private static final Min INSTANCE = new Min();
 
-    private Min() {}
+    private Min() {
+    }
+
+    public static Min getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -69,11 +74,11 @@ public class Min implements SetMappingFunction {
         String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: rows.getHeader().getFields()) {
+            for (Field field : rows.getHeader().getFields()) {
                 targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
             }
             Object[] targetValues = new Object[targetFields.size()];
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
                 for (int i = 0; i < targetFields.size(); i++) {
@@ -94,7 +99,7 @@ public class Min implements SetMappingFunction {
             }
             Field targetField = new Field(getIdentifier() + "(" + target + ")", rows.getHeader().getField(index).getType());
             Object targetValue = null;
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value != null) {
@@ -105,10 +110,6 @@ public class Min implements SetMappingFunction {
             }
             return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
-    }
-
-    public static Min getInstance() {
-        return INSTANCE;
     }
 
 }

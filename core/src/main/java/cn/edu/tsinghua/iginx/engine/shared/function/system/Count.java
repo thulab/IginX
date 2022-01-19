@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,13 +37,16 @@ import java.util.List;
 
 public class Count implements SetMappingFunction {
 
-    private static final Logger logger = LoggerFactory.getLogger(Count.class);
-
     public static final String COUNT = "count";
-
+    private static final Logger logger = LoggerFactory.getLogger(Count.class);
     private static final Count INSTANCE = new Count();
 
-    private Count() {}
+    private Count() {
+    }
+
+    public static Count getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -73,11 +75,11 @@ public class Count implements SetMappingFunction {
         String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: rows.getHeader().getFields()) {
+            for (Field field : rows.getHeader().getFields()) {
                 targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
             }
             long[] counts = new long[targetFields.size()];
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
                 for (int i = 0; i < targetFields.size(); i++) {
@@ -96,7 +98,7 @@ public class Count implements SetMappingFunction {
             long count = 0L;
             int index = rows.getHeader().indexOf(target);
             if (index != -1) {
-                while (rows.hasNext()) {
+                while(rows.hasNext()) {
                     Row row = rows.next();
                     Object value = row.getValue(index);
                     if (value != null) {
@@ -106,10 +108,6 @@ public class Count implements SetMappingFunction {
             }
             return new Row(header, new Object[]{count});
         }
-    }
-
-    public static Count getInstance() {
-        return INSTANCE;
     }
 
 }

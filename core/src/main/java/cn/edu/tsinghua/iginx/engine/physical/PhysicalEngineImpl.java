@@ -64,6 +64,10 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         memoryTaskExecutor.startDispatcher();
     }
 
+    public static PhysicalEngineImpl getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public RowStream execute(Operator root) throws PhysicalException {
         if (OperatorType.isGlobalOperator(root.getType())) { // 全局任务临时兼容逻辑
@@ -100,7 +104,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
             getStorageTasks(tasks, task.getParentTask());
         } else if (root.getType() == TaskType.MultipleMemory) {
             MultipleMemoryPhysicalTask task = (MultipleMemoryPhysicalTask) root;
-            for (PhysicalTask parentTask: task.getParentTasks()) {
+            for (PhysicalTask parentTask : task.getParentTasks()) {
                 getStorageTasks(tasks, parentTask);
             }
         }
@@ -114,9 +118,5 @@ public class PhysicalEngineImpl implements PhysicalEngine {
     @Override
     public StorageManager getStorageManager() {
         return storageTaskExecutor.getStorageManager();
-    }
-
-    public static PhysicalEngineImpl getInstance() {
-        return INSTANCE;
     }
 }

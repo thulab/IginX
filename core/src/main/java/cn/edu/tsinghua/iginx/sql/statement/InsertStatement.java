@@ -6,7 +6,11 @@ import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class InsertStatement extends DataStatement {
 
@@ -91,7 +95,7 @@ public class InsertStatement extends DataStatement {
     }
 
     public long getEndTime() {
-        return times.get(times.size()-1);
+        return times.get(times.size() - 1);
     }
 
     public void sortData() {

@@ -34,7 +34,12 @@ public class ConstraintManagerImpl implements ConstraintManager {
 
     private static final ConstraintManagerImpl INSTANCE = new ConstraintManagerImpl();
 
-    private ConstraintManagerImpl() {}
+    private ConstraintManagerImpl() {
+    }
+
+    public static ConstraintManagerImpl getInstance() {
+        return INSTANCE;
+    }
 
     private boolean checkOperator(Operator operator) {
         if (OperatorType.isBinaryOperator(operator.getType())) {
@@ -87,7 +92,7 @@ public class ConstraintManagerImpl implements ConstraintManager {
 
     public boolean checkMultipleOperator(MultipleOperator multipleOperator) {
         List<Source> sources = multipleOperator.getSources();
-        for (Source source: sources) {
+        for (Source source : sources) {
             if (source.getType() == SourceType.Fragment) {
                 return false;
             }
@@ -97,9 +102,5 @@ public class ConstraintManagerImpl implements ConstraintManager {
             }
         }
         return true;
-    }
-
-    public static ConstraintManagerImpl getInstance() {
-        return INSTANCE;
     }
 }

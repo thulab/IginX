@@ -2,18 +2,34 @@ package cn.edu.tsinghua.iginx.engine;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.generator.DeleteGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.InsertGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.LogicalGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.QueryGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.ShowTimeSeriesGenerator;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.*;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.engine.logical.generator.*;
-import cn.edu.tsinghua.iginx.sql.statement.*;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
+import cn.edu.tsinghua.iginx.sql.statement.DeleteTimeSeriesStatement;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
+import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
+import cn.edu.tsinghua.iginx.sql.statement.ShowTimeSeriesStatement;
+import cn.edu.tsinghua.iginx.sql.statement.Statement;
+import cn.edu.tsinghua.iginx.sql.statement.StatementType;
+import cn.edu.tsinghua.iginx.sql.statement.SystemStatement;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
@@ -38,16 +54,11 @@ public class StatementExecutor {
     private final static PhysicalEngine engine = PhysicalEngineImpl.getInstance();
 
     private final static ConstraintManager constraintManager = engine.getConstraintManager();
-
-    private final List<LogicalGenerator> queryGeneratorList = new ArrayList<>();
-
-    private final List<LogicalGenerator> deleteGeneratorList = new ArrayList<>();
-
-    private final List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
-
-    private final List<LogicalGenerator> showTSGeneratorList = new ArrayList<>();
-
     private final static Config config = ConfigDescriptor.getInstance().getConfig();
+    private final List<LogicalGenerator> queryGeneratorList = new ArrayList<>();
+    private final List<LogicalGenerator> deleteGeneratorList = new ArrayList<>();
+    private final List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
+    private final List<LogicalGenerator> showTSGeneratorList = new ArrayList<>();
 
     private StatementExecutor() {
         registerGenerator(QueryGenerator.getInstance());
@@ -223,7 +234,7 @@ public class StatementExecutor {
         List<ByteBuffer> bitmapList = new ArrayList<>();
 
         boolean hasTimestamp = stream.getHeader().hasTimestamp();
-        while (stream.hasNext()) {
+        while(stream.hasNext()) {
             Row row = stream.next();
 
             Object[] rowValues = row.getValues();
@@ -277,7 +288,7 @@ public class StatementExecutor {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
 
-        while (stream.hasNext()) {
+        while(stream.hasNext()) {
             Row row = stream.next();
             Object[] rowValues = row.getValues();
 

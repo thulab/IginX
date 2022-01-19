@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.influxdb;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
-import cn.edu.tsinghua.iginx.engine.physical.exception.NotSupportedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
@@ -69,7 +68,7 @@ import static com.influxdb.client.domain.WritePrecision.MS;
 
 public class InfluxDBStorage implements IStorage {
 
-    private static final Logger logger = LoggerFactory.getLogger(InfluxDBPlanExecutor.class);
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDBStorage.class);
 
     private static final String STORAGE_ENGINE = "influxdb";
 

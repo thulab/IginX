@@ -10,11 +10,9 @@ import org.slf4j.LoggerFactory;
 
 public class ShowTimeSeriesGenerator implements LogicalGenerator {
 
-    private final GeneratorType type = GeneratorType.ShowTimeSeries;
-
     private static final Logger logger = LoggerFactory.getLogger(ShowTimeSeriesGenerator.class);
-
     private final static ShowTimeSeriesGenerator instance = new ShowTimeSeriesGenerator();
+    private final GeneratorType type = GeneratorType.ShowTimeSeries;
 
     private ShowTimeSeriesGenerator() {
     }

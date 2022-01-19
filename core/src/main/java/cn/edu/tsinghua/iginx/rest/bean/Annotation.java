@@ -72,7 +72,7 @@ public class Annotation {
             return false;
         }
         for (String tag : tags) {
-            if (Pattern.matches(annotationLimit.getTag(), tag))  {
+            if (Pattern.matches(annotationLimit.getTag(), tag)) {
                 return true;
             }
         }

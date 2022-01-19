@@ -22,7 +22,23 @@ import cn.edu.tsinghua.iginx.rest.bean.AnnotationLimit;
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.Filter;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorAvg;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorCount;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorDev;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorDiff;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorDiv;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorFilter;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorFirst;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorLast;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorMax;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorMin;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorPercentile;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorRate;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSampler;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSaveAs;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorSum;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -158,8 +174,7 @@ public class QueryParser {
         long now = System.currentTimeMillis();
         if (start_absolute == null && end_absolute == null) {
             return null;
-        }
-        else if (start_absolute != null && end_absolute != null) {
+        } else if (start_absolute != null && end_absolute != null) {
             ret.setStartAbsolute(start_absolute.asLong());
             ret.setEndAbsolute(end_absolute.asLong());
         } else if (start_absolute != null) {
@@ -171,8 +186,7 @@ public class QueryParser {
             JsonNode start_relative = node.get("start_relative");
             if (start_relative == null) {
                 ret.setStartAbsolute(now);
-            }
-            else {
+            } else {
                 JsonNode value = start_relative.get("value");
                 if (value == null) {
                     return null;
@@ -216,7 +230,7 @@ public class QueryParser {
         if (tags != null) {
             Iterator<String> fieldNames = tags.fieldNames();
             Iterator<JsonNode> elements = tags.elements();
-            while (elements.hasNext() && fieldNames.hasNext()) {
+            while(elements.hasNext() && fieldNames.hasNext()) {
                 String key = fieldNames.next();
                 for (JsonNode valuenode : elements.next()) {
                     ret.addTag(key, valuenode.asText());
@@ -231,8 +245,7 @@ public class QueryParser {
         JsonNode end_relative = node.get("end_relative");
         if (end_relative == null) {
             ret.setEndAbsolute(now);
-        }
-        else {
+        } else {
             JsonNode value = end_relative.get("value");
             if (value == null) {
                 return true;
@@ -284,7 +297,7 @@ public class QueryParser {
                 tags = tags.get("tags");
                 if (tags != null) {
                     Iterator<String> fieldNames = tags.fieldNames();
-                    while (fieldNames.hasNext()) {
+                    while(fieldNames.hasNext()) {
                         String key = fieldNames.next();
                         JsonNode valuenode = tags.get(key);
                         ins.addTag(key, valuenode.asText());
@@ -311,8 +324,7 @@ public class QueryParser {
                 JsonNode start_relative = node.get("start_relative");
                 if (start_relative == null) {
                     ret.setStartAbsolute(0L);
-                }
-                else {
+                } else {
                     JsonNode value = start_relative.get("value");
                     if (value == null) {
                         return null;

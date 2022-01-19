@@ -32,12 +32,9 @@ public abstract class AbstractPhysicalTask implements PhysicalTask {
     private final TaskType type;
 
     private final List<Operator> operators;
-
-    private PhysicalTask followerTask;
-
-    private TaskExecuteResult result;
-
     private final CountDownLatch resultLatch = new CountDownLatch(1);
+    private PhysicalTask followerTask;
+    private TaskExecuteResult result;
 
     public AbstractPhysicalTask(TaskType type, List<Operator> operators) {
         this.type = type;

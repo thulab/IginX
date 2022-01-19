@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.Table;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
@@ -28,13 +27,10 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 
-import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -44,7 +40,12 @@ public class Avg implements SetMappingFunction {
 
     private static final Avg INSTANCE = new Avg();
 
-    private Avg() {}
+    private Avg() {
+    }
+
+    public static Avg getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -73,7 +74,7 @@ public class Avg implements SetMappingFunction {
         String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> fields = rows.getHeader().getFields();
-            for (Field field: fields) {
+            for (Field field : fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
                     throw new IllegalArgumentException("only number can calculate average");
                 }
@@ -81,7 +82,7 @@ public class Avg implements SetMappingFunction {
             double[] targetSums = new double[fields.size()];
             long[] counts = new long[fields.size()];
 
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 for (int i = 0; i < fields.size(); i++) {
                     Object value = row.getValue(i);
@@ -106,7 +107,7 @@ public class Avg implements SetMappingFunction {
                 }
             }
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: fields) {
+            for (Field field : fields) {
                 targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
             }
             Object[] targetValues = new Object[targetFields.size()];
@@ -125,7 +126,7 @@ public class Avg implements SetMappingFunction {
             }
             double targetSum = 0.0D;
             long count = 0;
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value == null) {
@@ -151,11 +152,6 @@ public class Avg implements SetMappingFunction {
             double targetValue = targetSum / count;
             return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
-    }
-
-
-    public static Avg getInstance() {
-        return INSTANCE;
     }
 
 }

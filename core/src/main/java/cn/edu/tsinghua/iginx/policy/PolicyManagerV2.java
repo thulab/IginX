@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class PolicyManagerV2 {
 
-    private static final Logger logger = LoggerFactory.getLogger(PolicyManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(PolicyManagerV2.class);
 
     private static final PolicyManagerV2 instance = new PolicyManagerV2();
 

@@ -1,6 +1,13 @@
 package cn.edu.tsinghua.iginx.integration;
 
-import cn.edu.tsinghua.iginx.session_v2.*;
+import cn.edu.tsinghua.iginx.session_v2.AsyncWriteClient;
+import cn.edu.tsinghua.iginx.session_v2.ClusterClient;
+import cn.edu.tsinghua.iginx.session_v2.DeleteClient;
+import cn.edu.tsinghua.iginx.session_v2.IginXClient;
+import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
+import cn.edu.tsinghua.iginx.session_v2.QueryClient;
+import cn.edu.tsinghua.iginx.session_v2.UsersClient;
+import cn.edu.tsinghua.iginx.session_v2.WriteClient;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
@@ -26,7 +33,13 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -37,59 +50,16 @@ import static org.junit.Assert.fail;
 
 public class SessionV2IT {
 
+    private final static long startTimestamp = 0L;
+    private final static long endTimestamp = 10000L;
+    private static final long SLEEP_TIME = 1000L;
     private static IginXClient iginXClient;
-
     private static WriteClient writeClient;
     private static AsyncWriteClient asyncWriteClient;
     private static DeleteClient deleteClient;
     private static QueryClient queryClient;
     private static UsersClient usersClient;
     private static ClusterClient clusterClient;
-
-    private final static long startTimestamp = 0L;
-    private final static long endTimestamp = 10000L;
-
-    private static final long SLEEP_TIME = 1000L;
-
-    @Measurement(name = "test.session.v2")
-    public static class POJO {
-
-        @Field(timestamp = true)
-        long timestamp;
-
-        @Field(name = "bool")
-        boolean boolValue;
-
-        @Field(name = "int")
-        int intValue;
-
-        @Field(name = "long")
-        long longValue;
-
-        @Field(name = "float")
-        float floatValue;
-
-        @Field(name = "double")
-        double doubleValue;
-
-        @Field(name = "string")
-        byte[] binaryValue;
-
-        public POJO() {
-
-        }
-
-        public POJO(long timestamp, boolean boolValue, int intValue, long longValue, float floatValue, double doubleValue, byte[] binaryValue) {
-            this.timestamp = timestamp;
-            this.boolValue = boolValue;
-            this.intValue = intValue;
-            this.longValue = longValue;
-            this.floatValue = floatValue;
-            this.doubleValue = doubleValue;
-            this.binaryValue = binaryValue;
-        }
-
-    }
 
     @BeforeClass
     public static void setUp() {
@@ -183,7 +153,7 @@ public class SessionV2IT {
                     .timestamp(i)
                     .addBooleanField("bool", i % 2 == 0)
                     .addLongField("long", i)
-                    .addFloatField("float", (float)(i + 0.1))
+                    .addFloatField("float", (float) (i + 0.1))
                     .addDoubleField("double", i + 0.2)
                     .addIntField("int", (int) i);
             if (i % 2 == 0) {
@@ -302,7 +272,7 @@ public class SessionV2IT {
         assertTrue(header.hasTimestamp());
         List<IginXColumn> columns = header.getColumns();
         assertEquals(6, columns.size());
-        for (IginXColumn column: columns) {
+        for (IginXColumn column : columns) {
             switch (column.getName()) {
                 case "test.session.v2.bool":
                     assertEquals(DataType.BOOLEAN, column.getDataType());
@@ -344,7 +314,7 @@ public class SessionV2IT {
             assertEquals(timestamp, longValue);
             // 核验 float 值
             float floatValue = (float) record.getValue("test.session.v2.float");
-            assertEquals((float)(timestamp + 0.1), floatValue, 0.05);
+            assertEquals((float) (timestamp + 0.1), floatValue, 0.05);
             // 核验 double 值
             double doubleValue = (double) record.getValue("test.session.v2.double");
             assertEquals(timestamp + 0.2, doubleValue, 0.05);
@@ -373,7 +343,7 @@ public class SessionV2IT {
         assertFalse(header.hasTimestamp());
         List<IginXColumn> columns = header.getColumns();
         assertEquals(6, columns.size());
-        for (IginXColumn column: columns) {
+        for (IginXColumn column : columns) {
             switch (column.getName()) {
                 case "count(test.session.v2.bool)":
                 case "count(test.session.v2.int)":
@@ -391,7 +361,7 @@ public class SessionV2IT {
         assertEquals(1, records.size());
 
         IginXRecord record = records.get(0);
-        for (Map.Entry<String, Object> entry: record.getValues().entrySet()) {
+        for (Map.Entry<String, Object> entry : record.getValues().entrySet()) {
             long value = (long) entry.getValue();
             if (entry.getKey().equals("count(test.session.v2.string)")) {
                 assertEquals((endTimestamp - startTimestamp) / 2, value);
@@ -417,12 +387,12 @@ public class SessionV2IT {
         List<IginXRecord> records = table.getRecords();
         assertEquals(2, records.size());
 
-        for (IginXRecord record: records) {
+        for (IginXRecord record : records) {
             String value = new String((byte[]) record.getValue("value"));
-            if ((new String((byte[])record.getValue("path"))).equals("test.session.v2.string")) {
+            if ((new String((byte[]) record.getValue("path"))).equals("test.session.v2.string")) {
                 assertEquals(endTimestamp - 2, record.getTimestamp());
                 assertEquals(String.valueOf(endTimestamp - 2), value);
-            } else if ((new String((byte[])record.getValue("path"))).equals("test.session.v2.int")) {
+            } else if ((new String((byte[]) record.getValue("path"))).equals("test.session.v2.int")) {
                 assertEquals(endTimestamp - 1, record.getTimestamp());
                 assertEquals(String.valueOf(endTimestamp - 1), value);
             } else {
@@ -447,7 +417,7 @@ public class SessionV2IT {
         assertTrue(header.hasTimestamp());
         List<IginXColumn> columns = header.getColumns();
         assertEquals(2, columns.size());
-        for (IginXColumn column: columns) {
+        for (IginXColumn column : columns) {
             switch (column.getName()) {
                 case "sum(test.session.v2.long)":
                     assertEquals(DataType.LONG, column.getDataType());
@@ -461,7 +431,7 @@ public class SessionV2IT {
         }
         List<IginXRecord> records = table.getRecords();
         assertEquals(10, records.size());
-        for (IginXRecord record: records) {
+        for (IginXRecord record : records) {
             long timestamp = record.getTimestamp();
             if (timestamp >= endTimestamp) {
                 fail();
@@ -606,5 +576,45 @@ public class SessionV2IT {
 
         return user1.getAuths().containsAll(user2.getAuths()) &&
                 user2.getAuths().containsAll(user1.getAuths());
+    }
+
+    @Measurement(name = "test.session.v2")
+    public static class POJO {
+
+        @Field(timestamp = true)
+        long timestamp;
+
+        @Field(name = "bool")
+        boolean boolValue;
+
+        @Field(name = "int")
+        int intValue;
+
+        @Field(name = "long")
+        long longValue;
+
+        @Field(name = "float")
+        float floatValue;
+
+        @Field(name = "double")
+        double doubleValue;
+
+        @Field(name = "string")
+        byte[] binaryValue;
+
+        public POJO() {
+
+        }
+
+        public POJO(long timestamp, boolean boolValue, int intValue, long longValue, float floatValue, double doubleValue, byte[] binaryValue) {
+            this.timestamp = timestamp;
+            this.boolValue = boolValue;
+            this.intValue = intValue;
+            this.longValue = longValue;
+            this.floatValue = floatValue;
+            this.doubleValue = doubleValue;
+            this.binaryValue = binaryValue;
+        }
+
     }
 }

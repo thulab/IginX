@@ -13,7 +13,7 @@ public class ExecuteDetail {
     }
 
     public boolean isFullSuccess() {
-        for (Boolean success: resultList) {
+        for (Boolean success : resultList) {
             if (!success)
                 return false;
         }
@@ -21,7 +21,7 @@ public class ExecuteDetail {
     }
 
     public boolean isFullFailure() {
-        for (Boolean success: resultList) {
+        for (Boolean success : resultList) {
             if (success)
                 return false;
         }

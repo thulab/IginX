@@ -39,7 +39,12 @@ public class LastValue implements SetMappingFunction {
 
     private static final LastValue INSTANCE = new LastValue();
 
-    private LastValue() {}
+    private LastValue() {
+    }
+
+    public static LastValue getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -69,11 +74,11 @@ public class LastValue implements SetMappingFunction {
         if (target.endsWith(Constants.ALL_PATH)) {
             List<Field> fields = rows.getHeader().getFields();
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: fields) {
+            for (Field field : fields) {
                 targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
             }
             Object[] targetValues = new Object[targetFields.size()];
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 for (int i = 0; i < fields.size(); i++) {
                     Object value = row.getValue(i);
@@ -92,7 +97,7 @@ public class LastValue implements SetMappingFunction {
             Field field = rows.getHeader().getField(index);
             Field targetField = new Field(getIdentifier() + "(" + field.getName() + ")", field.getType());
             Object targetValue = null;
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value != null) {
@@ -101,10 +106,6 @@ public class LastValue implements SetMappingFunction {
             }
             return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
-    }
-
-    public static LastValue getInstance() {
-        return INSTANCE;
     }
 
 }

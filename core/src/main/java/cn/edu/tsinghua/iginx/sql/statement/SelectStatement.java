@@ -8,7 +8,13 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SelectStatement extends DataStatement {
 
@@ -95,24 +101,6 @@ public class SelectStatement extends DataStatement {
         this.setFromSession(paths, startTime, endTime);
     }
 
-    private void setFromSession(List<String> paths, long startTime, long endTime) {
-        this.statementType = StatementType.SELECT;
-
-        this.ascending = true;
-        this.limit = Integer.MAX_VALUE;
-        this.offset = 0;
-        this.orderByPath = "";
-
-        this.pathSet = new HashSet<>();
-        this.pathSet.addAll(paths);
-
-        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
-                new TimeFilter(Op.GE, startTime),
-                new TimeFilter(Op.L, endTime)
-        )));
-        this.hasValueFilter = true;
-    }
-
     public static FuncType str2FuncType(String str) {
         switch (str.toLowerCase()) {
             case "first_value":
@@ -163,6 +151,24 @@ public class SelectStatement extends DataStatement {
             default:
                 return null;
         }
+    }
+
+    private void setFromSession(List<String> paths, long startTime, long endTime) {
+        this.statementType = StatementType.SELECT;
+
+        this.ascending = true;
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
+        this.orderByPath = "";
+
+        this.pathSet = new HashSet<>();
+        this.pathSet.addAll(paths);
+
+        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
+                new TimeFilter(Op.GE, startTime),
+                new TimeFilter(Op.L, endTime)
+        )));
+        this.hasValueFilter = true;
     }
 
     public boolean hasFunc() {

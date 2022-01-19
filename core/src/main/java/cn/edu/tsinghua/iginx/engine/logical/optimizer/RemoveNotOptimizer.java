@@ -1,7 +1,12 @@
 package cn.edu.tsinghua.iginx.engine.logical.optimizer;
 
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
-import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
@@ -48,7 +53,7 @@ public class RemoveNotOptimizer implements Optimizer {
         } else {
             MultipleOperator multipleOperator = (MultipleOperator) operator;
             List<Source> sources = multipleOperator.getSources();
-            for (Source source: sources) {
+            for (Source source : sources) {
                 removeNot(((OperatorSource) source).getOperator());
             }
         }

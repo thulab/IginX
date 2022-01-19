@@ -86,25 +86,6 @@ public class Value {
         }
     }
 
-    public Object getValue() {
-        switch (dataType){
-            case BINARY:
-                return binaryV;
-            case BOOLEAN:
-                return boolV;
-            case INTEGER:
-                return intV;
-            case LONG:
-                return longV;
-            case DOUBLE:
-                return doubleV;
-            case FLOAT:
-                return floatV;
-            default:
-                return null;
-        }
-    }
-
     public Value(boolean boolV) {
         this.dataType = DataType.BOOLEAN;
         this.boolV = boolV;
@@ -138,6 +119,25 @@ public class Value {
     public Value(byte[] binaryV) {
         this.dataType = DataType.BINARY;
         this.binaryV = binaryV;
+    }
+
+    public Object getValue() {
+        switch (dataType) {
+            case BINARY:
+                return binaryV;
+            case BOOLEAN:
+                return boolV;
+            case INTEGER:
+                return intV;
+            case LONG:
+                return longV;
+            case DOUBLE:
+                return doubleV;
+            case FLOAT:
+                return floatV;
+            default:
+                return null;
+        }
     }
 
     public DataType getDataType() {

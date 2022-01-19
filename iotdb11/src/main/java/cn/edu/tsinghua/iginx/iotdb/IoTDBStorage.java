@@ -42,7 +42,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
@@ -65,11 +64,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
-import static cn.edu.tsinghua.iginx.query.result.PlanExecuteResult.FAILURE;
 import static cn.edu.tsinghua.iginx.thrift.DataType.BINARY;
-import static cn.edu.tsinghua.iginx.thrift.DataType.DOUBLE;
-import static cn.edu.tsinghua.iginx.thrift.DataType.INTEGER;
-import static cn.edu.tsinghua.iginx.thrift.DataType.LONG;
 
 public class IoTDBStorage implements IStorage {
 

@@ -34,6 +34,7 @@ public abstract class AbstractBinaryOperator extends AbstractOperator implements
         this.sourceA = sourceA;
         this.sourceB = sourceB;
     }
+
     public AbstractBinaryOperator(Source sourceA, Source sourceB) {
         this(OperatorType.Binary, sourceA, sourceB);
     }
