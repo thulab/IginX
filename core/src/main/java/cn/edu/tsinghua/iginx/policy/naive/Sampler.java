@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.policy.naiveV2;
+package cn.edu.tsinghua.iginx.policy.naive;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;

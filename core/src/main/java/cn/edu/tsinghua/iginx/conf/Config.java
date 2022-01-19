@@ -36,10 +36,6 @@ public class Config {
 
     private int maxAsyncRetryTimes = 2;
 
-    private int syncExecuteThreadPool = 60;
-
-    private int asyncExecuteThreadPool = 20;
-
     private int replicaNum = 1;
 
     private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
@@ -156,22 +152,6 @@ public class Config {
 
     public void setMaxAsyncRetryTimes(int maxAsyncRetryTimes) {
         this.maxAsyncRetryTimes = maxAsyncRetryTimes;
-    }
-
-    public int getSyncExecuteThreadPool() {
-        return syncExecuteThreadPool;
-    }
-
-    public void setSyncExecuteThreadPool(int syncExecuteThreadPool) {
-        this.syncExecuteThreadPool = syncExecuteThreadPool;
-    }
-
-    public int getAsyncExecuteThreadPool() {
-        return asyncExecuteThreadPool;
-    }
-
-    public void setAsyncExecuteThreadPool(int asyncExecuteThreadPool) {
-        this.asyncExecuteThreadPool = asyncExecuteThreadPool;
     }
 
     public int getReplicaNum() {

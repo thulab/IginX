@@ -1,10 +1,10 @@
-package cn.edu.tsinghua.iginx.policy.naiveV2;
+package cn.edu.tsinghua.iginx.policy.naive;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.policy.IPolicyV2;
+import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-public class NaivePolicy implements IPolicyV2 {
+public class NaivePolicy implements IPolicy {
 
     protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IMetaManager iMetaManager;

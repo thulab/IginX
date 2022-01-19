@@ -46,12 +46,6 @@ public class SessionQueryDataSet {
         parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
     }
 
-    public SessionQueryDataSet(ValueFilterQueryResp resp) {
-        this.paths = resp.getPaths();
-        this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
-        parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
-    }
-
     public SessionQueryDataSet(DownsampleQueryResp resp) {
         this.paths = resp.getPaths();
         if (resp.queryDataSet != null) {
