@@ -19,15 +19,20 @@
 package cn.edu.tsinghua.iginx.engine.physical.storage.execute;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
+import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
 import cn.edu.tsinghua.iginx.engine.physical.storage.queue.StoragePhysicalTaskQueue;
+import cn.edu.tsinghua.iginx.engine.physical.task.GlobalPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
@@ -35,9 +40,12 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.Time;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -124,6 +132,30 @@ public class StoragePhysicalTaskExecutor {
 
     public void commit(StoragePhysicalTask task) {
         commit(Collections.singletonList(task));
+    }
+
+    public TaskExecuteResult executeGlobalTask(GlobalPhysicalTask task) {
+        List<StorageEngineMeta> storageList = metaManager.getStorageEngineList();
+        switch (task.getOperator().getType()) {
+            case ShowTimeSeries:
+                Set<Timeseries> timeseries = new HashSet<>();
+                for  (StorageEngineMeta storage: storageList) {
+                    long id = storage.getId();
+                    Pair<IStorage, ExecutorService> pair = storageManager.getStorage(id);
+                    if (pair == null) {
+                        continue;
+                    }
+                    try {
+                        List<Timeseries> timeseriesList = pair.k.getTimeSeries();
+                        timeseries.addAll(timeseriesList);
+                    } catch (PhysicalException e) {
+                        return new TaskExecuteResult(e);
+                    }
+                }
+                return new TaskExecuteResult(Timeseries.toRowStream(timeseries));
+            default:
+                return new TaskExecuteResult(new UnexpectedOperatorException("unknown op: " + task.getOperator().getType()));
+        }
     }
 
     public void commit(List<StoragePhysicalTask> tasks) {

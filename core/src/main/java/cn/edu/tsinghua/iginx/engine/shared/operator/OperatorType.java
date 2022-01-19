@@ -56,6 +56,10 @@ public enum OperatorType {
         return op == CombineNonQuery;
     }
 
+    public static boolean isGlobalOperator(OperatorType op) {
+        return op == ShowTimeSeries;
+    }
+
     public static boolean isNeedBroadcasting(OperatorType op) {
         return op == Delete || op == Insert;
     }
