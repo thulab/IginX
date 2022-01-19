@@ -31,7 +31,6 @@ import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
@@ -40,7 +39,6 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Time;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -104,7 +102,7 @@ public class StoragePhysicalTaskExecutor {
                             if (task.isNeedBroadcasting()) { // 需要传播
                                 List<String> replicaIds = task.getTargetFragment().getMasterStorageUnit().getReplicas()
                                         .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
-                                for (String replicaId: replicaIds) {
+                                for (String replicaId : replicaIds) {
                                     StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
                                     storageTaskQueues.get(replicaId).addTask(replicaTask);
                                     logger.info("broadcasting task " + task + " to " + replicaId);
@@ -139,7 +137,7 @@ public class StoragePhysicalTaskExecutor {
         switch (task.getOperator().getType()) {
             case ShowTimeSeries:
                 Set<Timeseries> timeseries = new HashSet<>();
-                for  (StorageEngineMeta storage: storageList) {
+                for (StorageEngineMeta storage : storageList) {
                     long id = storage.getId();
                     Pair<IStorage, ExecutorService> pair = storageManager.getStorage(id);
                     if (pair == null) {

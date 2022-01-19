@@ -1,8 +1,8 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
+import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 
 import java.util.ArrayList;

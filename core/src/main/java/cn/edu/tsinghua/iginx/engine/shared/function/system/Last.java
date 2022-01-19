@@ -51,7 +51,12 @@ public class Last implements MappingFunction {
 
     private static final String VALUE = "value";
 
-    private Last() {}
+    private Last() {
+    }
+
+    public static Last getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -82,7 +87,7 @@ public class Last implements MappingFunction {
         List<Row> resultRows = new ArrayList<>();
         if (target.endsWith(Constants.ALL_PATH)) {
             Map<Integer, Pair<Long, Object>> valueMap = new HashMap<>();
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
 
@@ -99,9 +104,9 @@ public class Last implements MappingFunction {
                     }
                 }
             }
-            for (Map.Entry<Integer, Pair<Long, Object>> entry: valueMap.entrySet()) {
-                resultRows.add(new Row(header, entry.getValue().k, new Object[] {rows.getHeader().getField(entry.getKey()).getName().getBytes(StandardCharsets.UTF_8),
-                    ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
+            for (Map.Entry<Integer, Pair<Long, Object>> entry : valueMap.entrySet()) {
+                resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getName().getBytes(StandardCharsets.UTF_8),
+                        ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
             }
             resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
         } else {
@@ -110,7 +115,7 @@ public class Last implements MappingFunction {
                 // 处理某一列的最后一个值
                 long timestamp = 0L;
                 String value = null;
-                while (rows.hasNext()) {
+                while(rows.hasNext()) {
                     Row row = rows.next();
                     if (row.getValue(index) != null) {
                         timestamp = row.getTimestamp();
@@ -118,15 +123,11 @@ public class Last implements MappingFunction {
                     }
                 }
                 if (value != null) {
-                    resultRows.add(new Row(header, timestamp, new Object[] {rows.getHeader().getField(index).getName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
+                    resultRows.add(new Row(header, timestamp, new Object[]{rows.getHeader().getField(index).getName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
                 }
             }
         }
         return new Table(header, resultRows);
-    }
-
-    public static Last getInstance() {
-        return INSTANCE;
     }
 
 }

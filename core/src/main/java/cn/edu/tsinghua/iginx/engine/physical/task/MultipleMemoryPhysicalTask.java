@@ -42,7 +42,7 @@ public class MultipleMemoryPhysicalTask extends MemoryPhysicalTask {
             return new TaskExecuteResult(new PhysicalException("multiple memory physical task shouldn't have follower task"));
         }
         List<PhysicalException> exceptions = new ArrayList<>();
-        for (PhysicalTask parentTask: parentTasks) {
+        for (PhysicalTask parentTask : parentTasks) {
             PhysicalException exception = parentTask.getResult().getException();
             if (exception != null) {
                 exceptions.add(exception);
@@ -50,7 +50,7 @@ public class MultipleMemoryPhysicalTask extends MemoryPhysicalTask {
         }
         if (exceptions.size() != 0) {
             StringBuilder message = new StringBuilder("some sub-task execute failure, details: ");
-            for (PhysicalException exception: exceptions) {
+            for (PhysicalException exception : exceptions) {
                 message.append(exception.getMessage());
             }
             return new TaskExecuteResult(new PhysicalTaskExecuteFailureException(message.toString()));

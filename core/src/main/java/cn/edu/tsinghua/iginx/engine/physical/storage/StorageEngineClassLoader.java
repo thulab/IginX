@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.engine.physical.storage;
 
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.utils.EnvUtils;
@@ -44,7 +44,7 @@ public class StorageEngineClassLoader extends ClassLoader {
 
     public StorageEngineClassLoader(String path) throws IOException {
         String tPath = EnvUtils.loadEnv(Constants.DRIVER, Constants.DRIVER_DIR);
-        this.path = tPath.endsWith(File.separator)?tPath+path:tPath+File.separator + path;
+        this.path = tPath.endsWith(File.separator) ? tPath + path : tPath + File.separator + path;
         this.nameToJar = new HashMap<>();
         preloadClassNames();
     }

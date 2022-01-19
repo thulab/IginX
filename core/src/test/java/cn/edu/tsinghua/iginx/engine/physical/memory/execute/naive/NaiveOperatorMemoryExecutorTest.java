@@ -21,7 +21,6 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
-import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
 import java.util.Arrays;
 

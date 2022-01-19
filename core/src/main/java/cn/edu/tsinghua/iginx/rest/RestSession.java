@@ -26,7 +26,24 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
+import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
+import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
+import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.Status;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -35,7 +52,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -45,12 +67,12 @@ public class RestSession {
     private static final Logger logger = LoggerFactory.getLogger(RestSession.class);
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private final ReadWriteLock lock;
+    private final String username;
+    private final String password;
     private IginxWorker client;
     private long sessionId;
     private boolean isClosed;
     private int redirectTimes;
-    private final String username;
-    private final String password;
 
     public RestSession() {
         this.isClosed = true;
@@ -95,7 +117,7 @@ public class RestSession {
             logger.info("当前请求将被重定向到：" + resp.status.getMessage());
             redirectTimes += 1;
 
-        } while (redirectTimes <= Constants.MAX_REDIRECT_TIME);
+        } while(redirectTimes <= Constants.MAX_REDIRECT_TIME);
 
         if (redirectTimes > Constants.MAX_REDIRECT_TIME) {
             throw new SessionException("重定向次数过多！");
@@ -132,7 +154,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -153,7 +175,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -221,7 +243,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -314,7 +336,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
         RpcUtils.verifySuccess(status);
     }
 
@@ -335,7 +357,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(status));
+        } while(checkRedirect(status));
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime) {
@@ -354,33 +376,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
-
-        return new SessionQueryDataSet(resp);
-    }
-
-    public SessionQueryDataSet valueFilterQuery(List<String> paths, long startTime, long endTime, String booleanExpression)
-            throws SessionException {
-        if (paths.isEmpty() || startTime > endTime) {
-            logger.error("Invalid query request!");
-            return null;
-        }
-        ValueFilterQueryReq req = new ValueFilterQueryReq(sessionId, paths, startTime, endTime, booleanExpression);
-
-        ValueFilterQueryResp resp;
-
-        try {
-            do {
-                lock.readLock().lock();
-                try {
-                    resp = client.valueFilterQuery(req);
-                } finally {
-                    lock.readLock().unlock();
-                }
-            } while (checkRedirect(resp.status));
-        } catch (Exception e) {
-            throw new SessionException(e);
-        }
+        } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
     }
@@ -396,7 +392,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
@@ -414,7 +410,7 @@ public class RestSession {
             } finally {
                 lock.readLock().unlock();
             }
-        } while (checkRedirect(resp.status));
+        } while(checkRedirect(resp.status));
 
         return new SessionQueryDataSet(resp);
     }

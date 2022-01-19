@@ -21,16 +21,10 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
 import cn.edu.tsinghua.iginx.session_v2.QueryClient;
-import cn.edu.tsinghua.iginx.session_v2.WriteClient;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
-import cn.edu.tsinghua.iginx.session_v2.query.Query;
 import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
-import cn.edu.tsinghua.iginx.session_v2.write.Point;
-import cn.edu.tsinghua.iginx.session_v2.write.Record;
-import cn.edu.tsinghua.iginx.session_v2.write.Table;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.List;
 

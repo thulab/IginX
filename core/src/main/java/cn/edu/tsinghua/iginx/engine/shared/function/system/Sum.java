@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 
@@ -41,7 +40,12 @@ public class Sum implements SetMappingFunction {
 
     private static final Sum INSTANCE = new Sum();
 
-    private Sum() {}
+    private Sum() {
+    }
+
+    public static Sum getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -70,13 +74,13 @@ public class Sum implements SetMappingFunction {
         String target = param.getBinaryVAsString();
         if (target.endsWith(Constants.ALL_PATH)) { // 对于任意序列均统计
             List<Field> fields = rows.getHeader().getFields();
-            for (Field field: fields) {
+            for (Field field : fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
                     throw new IllegalArgumentException("only number can calculate sum");
                 }
             }
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: fields) {
+            for (Field field : fields) {
                 targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
             }
             Object[] targetValues = new Object[targetFields.size()];
@@ -90,7 +94,7 @@ public class Sum implements SetMappingFunction {
                     targetValues[i] = 0.0D;
                 }
             }
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 for (int i = 0; i < fields.size(); i++) {
                     Object value = row.getValue(i);
@@ -132,7 +136,7 @@ public class Sum implements SetMappingFunction {
                 targetField = new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE);
                 targetValue = 0.0D;
             }
-            while (rows.hasNext()) {
+            while(rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value == null) {
@@ -155,9 +159,5 @@ public class Sum implements SetMappingFunction {
             }
             return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
-    }
-
-    public static Sum getInstance() {
-        return INSTANCE;
     }
 }

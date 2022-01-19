@@ -31,7 +31,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
@@ -68,6 +72,30 @@ public class MetricsResource {
 
     @Inject
     public MetricsResource() {
+    }
+
+    static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
+        responseBuilder.header("Access-Control-Allow-Origin", "*");
+        responseBuilder.header("Access-Control-Allow-Methods", "POST");
+        responseBuilder.header("Access-Control-Allow-Headers", "accept, content-type");
+        responseBuilder.header("Pragma", "no-cache");
+        responseBuilder.header("Cache-Control", "no-cache");
+        responseBuilder.header("Expires", 0);
+        return (responseBuilder);
+    }
+
+    private static String inputStreamToString(InputStream inputStream) throws Exception {
+        StringBuilder buffer = new StringBuilder();
+        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
+        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+        String str;
+        while((str = bufferedReader.readLine()) != null) {
+            buffer.append(str);
+        }
+        bufferedReader.close();
+        inputStreamReader.close();
+        inputStream.close();
+        return buffer.toString();
     }
 
     @GET
@@ -125,7 +153,6 @@ public class MetricsResource {
         }
     }
 
-
     @POST
     @Path(ERROR_PATH)
     public Response postErrorPath(@PathParam("string") String str) {
@@ -156,7 +183,6 @@ public class MetricsResource {
         }
     }
 
-
     @POST
     @Path(DELETE_URL)
     public Response postDelete(final InputStream stream) {
@@ -179,30 +205,6 @@ public class MetricsResource {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
-    }
-
-    static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
-        responseBuilder.header("Access-Control-Allow-Origin", "*");
-        responseBuilder.header("Access-Control-Allow-Methods", "POST");
-        responseBuilder.header("Access-Control-Allow-Headers", "accept, content-type");
-        responseBuilder.header("Pragma", "no-cache");
-        responseBuilder.header("Cache-Control", "no-cache");
-        responseBuilder.header("Expires", 0);
-        return (responseBuilder);
-    }
-
-    private static String inputStreamToString(InputStream inputStream) throws Exception {
-        StringBuilder buffer = new StringBuilder();
-        InputStreamReader inputStreamReader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-        BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
-        String str;
-        while ((str = bufferedReader.readLine()) != null) {
-            buffer.append(str);
-        }
-        bufferedReader.close();
-        inputStreamReader.close();
-        inputStream.close();
-        return buffer.toString();
     }
 
     public Response postQuery(String jsonStr, boolean isAnnotation, boolean isGrafana) {

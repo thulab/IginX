@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.engine.physical.storage;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.query.StorageEngineClassLoader;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,11 +45,23 @@ public class StorageManager {
 
     public StorageManager(List<StorageEngineMeta> metaList) {
         initClassLoaderAndDrivers();
-        for (StorageEngineMeta meta: metaList) {
+        for (StorageEngineMeta meta : metaList) {
             if (!initStorage(meta)) {
                 System.exit(-1);
             }
         }
+    }
+
+    private static String getDriverClassName(String storageEngine) {
+        String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
+        for (String part : parts) {
+            String[] kAndV = part.split("=");
+            if (!kAndV[0].equals(storageEngine)) {
+                continue;
+            }
+            return kAndV[1];
+        }
+        throw new RuntimeException("cannot find driver for " + storageEngine + ", please check config.properties ");
     }
 
     private boolean initStorage(StorageEngineMeta meta) {
@@ -77,7 +88,7 @@ public class StorageManager {
 
     private void initClassLoaderAndDrivers() {
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String part: parts) {
+        for (String part : parts) {
             String[] kAndV = part.split("=");
             if (kAndV.length != 2) {
                 logger.error("unexpected database class names: {}", part);
@@ -94,18 +105,6 @@ public class StorageManager {
                 System.exit(-1);
             }
         }
-    }
-
-    private static String getDriverClassName(String storageEngine) {
-        String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
-        for (String part : parts) {
-            String[] kAndV = part.split("=");
-            if (!kAndV[0].equals(storageEngine)) {
-                continue;
-            }
-            return kAndV[1];
-        }
-        throw new RuntimeException("cannot find driver for " + storageEngine + ", please check config.properties ");
     }
 
     public Map<Long, Pair<IStorage, ExecutorService>> getStorageMap() {

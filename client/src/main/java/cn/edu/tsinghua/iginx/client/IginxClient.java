@@ -178,7 +178,7 @@ public class IginxClient {
                 displayLogo("0.4.0-SNAPSHOT");
 
                 String command;
-                while (true) {
+                while(true) {
                     command = reader.readLine(IGINX_CLI_PREFIX);
                     boolean continues = processCommand(command);
                     if (!continues) {

@@ -20,8 +20,6 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
-import java.io.Serializable;
-
 public class Union extends AbstractBinaryOperator {
 
     public Union(Source sourceA, Source sourceB) {

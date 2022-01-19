@@ -20,13 +20,11 @@ package cn.edu.tsinghua.iginx.iotdb.query.entity;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.RowFetchException;
-import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer;
-import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;

@@ -15,10 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from .thrift.rpc.ttypes import SqlType, AggregateType, ExecuteSqlResp
 from .utils.bitmap import Bitmap
 from .utils.byte_utils import get_long_array, get_values_by_data_type, BytesParser
-
-from .thrift.rpc.ttypes import DataType, SqlType, AggregateType, ExecuteSqlResp
 
 
 class Point(object):

@@ -26,7 +26,6 @@ import cn.edu.tsinghua.iginx.session_v2.DeleteClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientOptions;
 import cn.edu.tsinghua.iginx.session_v2.QueryClient;
-import cn.edu.tsinghua.iginx.session_v2.SQLClient;
 import cn.edu.tsinghua.iginx.session_v2.UsersClient;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;

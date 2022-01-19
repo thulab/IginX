@@ -22,12 +22,9 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 
 public class ValueFilter implements Filter {
 
-    private Op op;
-
     private final String path;
-
     private final Value value;
-
+    private Op op;
     private FilterType type = FilterType.Value;
 
     public ValueFilter(String path, Op op, Value value) {

@@ -31,9 +31,9 @@ import java.util.zip.GZIPInputStream;
 public class InsertWorker extends Thread {
     private static final String NO_CACHE = "no-cache";
     private final HttpHeaders httpheaders;
-    private InputStream stream;
     private final AsyncResponse asyncResponse;
     private final boolean isAnnotation;
+    private InputStream stream;
 
     public InsertWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
                         InputStream stream, boolean isAnnotation) {
