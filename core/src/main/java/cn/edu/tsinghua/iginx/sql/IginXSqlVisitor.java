@@ -15,6 +15,15 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import java.util.*;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
+
+    private final static Set<SelectStatement.FuncType> supportedGroupByLevelFuncSet = new HashSet<>(
+            Arrays.asList(
+                    SelectStatement.FuncType.Sum,
+                    SelectStatement.FuncType.Count,
+                    SelectStatement.FuncType.Avg
+            )
+    );
+
     @Override
     public Statement visitSqlStatement(SqlStatementContext ctx) {
         return visit(ctx.statement());
@@ -194,7 +203,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private void parseGroupByLevelClause(List<TerminalNode> layers, SelectStatement selectStatement) {
+        if (!isSupportGroupByLevel(selectStatement)) {
+            throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+        }
         layers.forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
+    }
+
+    private boolean isSupportGroupByLevel(SelectStatement selectStatement) {
+        return supportedGroupByLevelFuncSet.containsAll(selectStatement.getFuncTypeSet());
     }
 
     // like standard SQL, limit N, M means limit M offset N
