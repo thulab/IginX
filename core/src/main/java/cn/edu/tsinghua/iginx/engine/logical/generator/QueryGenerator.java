@@ -146,7 +146,11 @@ public class QueryGenerator implements LogicalGenerator {
             // Aggregate Query
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> params = new ArrayList<>(Collections.singletonList(new Value(str)));
+                List<Value> params = new ArrayList<>();
+                params.add(new Value(str));
+                if (!statement.getLayers().isEmpty()) {
+                    params.add(new Value(statement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                }
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(

@@ -36,5 +36,9 @@ public class Constants {
 
     public static final String ETCD_META = "etcd";
 
+    public static final String LEVEL_SEPARATOR = ".";
+
+    public static final String LEVEL_PLACEHOLDER = "*";
+
 }
 

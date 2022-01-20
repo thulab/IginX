@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.Table;
-import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
@@ -54,7 +53,12 @@ public class First implements MappingFunction {
 
     private static final String VALUE = "value";
 
-    private First() {}
+    private First() {
+    }
+
+    public static First getInstance() {
+        return INSTANCE;
+    }
 
     @Override
     public FunctionType getFunctionType() {
@@ -93,7 +97,7 @@ public class First implements MappingFunction {
                     indices.add(i);
                 }
             }
-            while (rows.hasNext() && valueMap.size() < indices.size()) {
+            while(rows.hasNext() && valueMap.size() < indices.size()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
 
@@ -106,8 +110,8 @@ public class First implements MappingFunction {
                     }
                 }
             }
-            for (Map.Entry<Integer, Pair<Long, Object>> entry: valueMap.entrySet()) {
-                resultRows.add(new Row(header, entry.getValue().k, new Object[] {rows.getHeader().getField(entry.getKey()).getName().getBytes(StandardCharsets.UTF_8),
+            for (Map.Entry<Integer, Pair<Long, Object>> entry : valueMap.entrySet()) {
+                resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getName().getBytes(StandardCharsets.UTF_8),
                         ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
             }
             resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
@@ -117,7 +121,7 @@ public class First implements MappingFunction {
                 // 处理某一列的第一个值
                 long timestamp = 0L;
                 String value = null;
-                while (rows.hasNext()) {
+                while(rows.hasNext()) {
                     Row row = rows.next();
                     if (row.getValue(index) != null) {
                         timestamp = row.getTimestamp();
@@ -126,15 +130,11 @@ public class First implements MappingFunction {
                     }
                 }
                 if (value != null) {
-                    resultRows.add(new Row(header, timestamp, new Object[] {rows.getHeader().getField(index).getName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
+                    resultRows.add(new Row(header, timestamp, new Object[]{rows.getHeader().getField(index).getName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
                 }
             }
         }
         return new Table(header, resultRows);
-    }
-
-    public static First getInstance() {
-        return INSTANCE;
     }
 
 }
