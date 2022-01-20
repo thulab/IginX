@@ -31,12 +31,14 @@ import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Avg implements SetMappingFunction {
 
@@ -71,24 +73,34 @@ public class Avg implements SetMappingFunction {
             throw new IllegalArgumentException("unexpected param type for avg.");
         }
         String target = param.getBinaryVAsString();
-        if (target.endsWith(Constants.ALL_PATH)) {
+        if (StringUtils.isPattern(target)) {
             List<Field> fields = rows.getHeader().getFields();
             for (Field field: fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
                     throw new IllegalArgumentException("only number can calculate average");
                 }
             }
-            double[] targetSums = new double[fields.size()];
-            long[] counts = new long[fields.size()];
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
+            List<Field> targetFields = new ArrayList<>();
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < fields.size(); i++) {
+                Field field = fields.get(i);
+                if (pattern.matcher(field.getName()).matches()) {
+                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
+                    indices.add(i);
+                }
+            }
 
+            double[] targetSums = new double[targetFields.size()];
+            long[] counts = new long[targetFields.size()];
             while (rows.hasNext()) {
                 Row row = rows.next();
-                for (int i = 0; i < fields.size(); i++) {
-                    Object value = row.getValue(i);
+                for (int i = 0; i < indices.size(); i++) {
+                    Object value = row.getValue(indices.get(i));
                     if (value == null) {
                         continue;
                     }
-                    switch (fields.get(i).getType()) {
+                    switch (fields.get(indices.get(i)).getType()) {
                         case INTEGER:
                             targetSums[i] += (int) value;
                             break;
@@ -105,10 +117,7 @@ public class Avg implements SetMappingFunction {
                     counts[i]++;
                 }
             }
-            List<Field> targetFields = new ArrayList<>();
-            for (Field field: fields) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
-            }
+
             Object[] targetValues = new Object[targetFields.size()];
             for (int i = 0; i < targetValues.length; i++) {
                 targetValues[i] = targetSums[i] / counts[i];
