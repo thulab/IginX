@@ -14,7 +14,6 @@ import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IPolicyV2;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
@@ -232,9 +231,5 @@ public class QueryGenerator implements LogicalGenerator {
             join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)), joinBy);
         }
         return join;
-    }
-
-    private boolean needJoinByTime(SelectStatement statement) {
-        return statement.hasGroupBy() || statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery;
     }
 }

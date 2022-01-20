@@ -56,7 +56,7 @@ public class ParseTest {
 
         assertTrue(statement.hasFunc());
         assertTrue(statement.hasValueFilter());
-        assertTrue(statement.hasGroupBy());
+        assertTrue(statement.hasGroupByTime());
         assertEquals(SelectStatement.QueryType.DownSampleQuery, statement.getQueryType());
 
         assertEquals(2, statement.getSelectedFuncsAndPaths().size());
