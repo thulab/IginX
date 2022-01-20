@@ -93,7 +93,7 @@ public class QueryGeneratorStub implements LogicalGenerator {
         }
 
         List<Operator> queryList = new ArrayList<>();
-        if (statement.hasGroupBy()) {
+        if (statement.hasGroupByTime()) {
             // DownSample Query
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {

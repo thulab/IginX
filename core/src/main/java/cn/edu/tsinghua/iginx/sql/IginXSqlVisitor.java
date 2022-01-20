@@ -187,7 +187,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         selectStatement.setStartTime(timeInterval.k);
         selectStatement.setEndTime(timeInterval.v);
         selectStatement.setPrecision(precision);
-        selectStatement.setHasGroupBy(true);
+        selectStatement.setHasGroupByTime(true);
 
         // merge value filter and group time range filter
         TimeFilter startTime = new TimeFilter(Op.GE, timeInterval.k);

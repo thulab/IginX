@@ -16,7 +16,7 @@ public class SelectStatement extends DataStatement {
 
     private boolean hasFunc;
     private boolean hasValueFilter;
-    private boolean hasGroupBy;
+    private boolean hasGroupByTime;
     private boolean ascending;
 
     private Map<String, List<String>> selectedFuncsAndPaths;
@@ -93,7 +93,7 @@ public class SelectStatement extends DataStatement {
         this.precision = precision;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.hasGroupBy = true;
+        this.hasGroupByTime = true;
 
         this.setFromSession(paths, startTime, endTime);
     }
@@ -185,12 +185,12 @@ public class SelectStatement extends DataStatement {
         this.hasValueFilter = hasValueFilter;
     }
 
-    public boolean hasGroupBy() {
-        return hasGroupBy;
+    public boolean hasGroupByTime() {
+        return hasGroupByTime;
     }
 
-    public void setHasGroupBy(boolean hasGroupBy) {
-        this.hasGroupBy = hasGroupBy;
+    public void setHasGroupByTime(boolean hasGroupByTime) {
+        this.hasGroupByTime = hasGroupByTime;
     }
 
     public boolean isAscending() {
@@ -333,13 +333,13 @@ public class SelectStatement extends DataStatement {
 
     public void setQueryType() {
         if (hasFunc) {
-            if (hasGroupBy) {
+            if (hasGroupByTime) {
                 this.queryType = QueryType.DownSampleQuery;
             } else {
                 this.queryType = QueryType.AggregateQuery;
             }
         } else {
-            if (hasGroupBy) {
+            if (hasGroupByTime) {
                 throw new SQLParserException("Group by clause cannot be used without aggregate function.");
             } else {
                 this.queryType = QueryType.SimpleQuery;
