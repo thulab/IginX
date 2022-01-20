@@ -62,14 +62,26 @@ fromClause
 
 specialClause
     : limitClause
+    | groupByLevelClause
+    | groupByClause limitClause?
     | groupByTimeClause limitClause?
     | orderByClause limitClause?
     ;
 
-orderByClause : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?;
+orderByClause
+    : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?
+    ;
+
+groupByClause
+    : GROUP timeInterval BY DURATION COMMA LEVEL OPERATOR_EQ INT (COMMA INT)*
+    ;
 
 groupByTimeClause
     : GROUP timeInterval BY DURATION
+    ;
+
+groupByLevelClause
+    : GROUP BY LEVEL OPERATOR_EQ INT (COMMA INT)*
     ;
 
 timeInterval
@@ -158,6 +170,7 @@ nodeName
     | TIMESTAMP
     | GROUP
     | ORDER
+    | LEVEL
     | ADD
     | VALUE
     | VALUES
@@ -279,6 +292,10 @@ GROUP
 
 ORDER
     : O R D E R
+    ;
+
+LEVEL
+    : L E V E L
     ;
 
 BY

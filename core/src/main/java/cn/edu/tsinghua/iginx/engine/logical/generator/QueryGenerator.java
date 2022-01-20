@@ -35,10 +35,8 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
@@ -129,13 +127,18 @@ public class QueryGenerator implements LogicalGenerator {
             // DownSample Query
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
+                List<Value> params = new ArrayList<>();
+                params.add(new Value(str));
+                if (!statement.getLayers().isEmpty()) {
+                    params.add(new Value(statement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                }
                 Operator copySelect = finalRoot.copy();
+
                 queryList.add(
                         new Downsample(
                                 new OperatorSource(copySelect),
                                 statement.getPrecision(),
-                                new FunctionCall(functionManager.getFunction(k), wrappedPath),
+                                new FunctionCall(functionManager.getFunction(k), params),
                                 new TimeRange(statement.getStartTime(), statement.getEndTime())
                         )
                 );
@@ -144,26 +147,30 @@ public class QueryGenerator implements LogicalGenerator {
             // Aggregate Query
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
+                List<Value> params = new ArrayList<>();
+                params.add(new Value(str));
+                if (!statement.getLayers().isEmpty()) {
+                    params.add(new Value(statement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                }
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
                         new SetTransform(
                                 new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), wrappedPath)
+                                new FunctionCall(functionManager.getFunction(k), params)
                         )
                 );
             }));
         } else if (statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
             Operator finalRoot = root;
             statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> wrappedPath = new ArrayList<>(Collections.singletonList(new Value(str)));
+                List<Value> params = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
                         new MappingTransform(
                                 new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), wrappedPath)
+                                new FunctionCall(functionManager.getFunction(k), params)
                         )
                 );
             }));
@@ -226,9 +233,5 @@ public class QueryGenerator implements LogicalGenerator {
             join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)), joinBy);
         }
         return join;
-    }
-
-    private boolean needJoinByTime(SelectStatement statement) {
-        return statement.hasGroupBy() || statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery;
     }
 }

@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
-import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
@@ -27,12 +26,17 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.GroupByUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class Sum implements SetMappingFunction {
 
@@ -64,55 +68,90 @@ public class Sum implements SetMappingFunction {
 
     @Override
     public Row transform(RowStream rows, List<Value> params) throws Exception {
-        if (params.size() != 1) {
+        if (params.size() == 0 || params.size() > 2) {
             throw new IllegalArgumentException("unexpected params for sum.");
         }
         Value param = params.get(0);
         if (param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for sum.");
         }
+        List<Integer> groupByLevels = null;
+        if (params.size() == 2) {
+            groupByLevels = GroupByUtils.parseLevelsFromValue(params.get(1));
+        }
         String target = param.getBinaryVAsString();
-        if (target.endsWith(Constants.ALL_PATH)) { // 对于任意序列均统计
+        if (StringUtils.isPattern(target)) {
             List<Field> fields = rows.getHeader().getFields();
             for (Field field : fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
                     throw new IllegalArgumentException("only number can calculate sum");
                 }
             }
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
             List<Field> targetFields = new ArrayList<>();
-            for (Field field : fields) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
-            }
-            Object[] targetValues = new Object[targetFields.size()];
+            List<Integer> indices = new ArrayList<>();
+            Map<String, Integer> groupNameIndexMap = new HashMap<>(); // 只有在存在 group by 的时候才奏效
+            Map<Integer, Integer> groupOrderIndexMap = new HashMap<>();
             for (int i = 0; i < fields.size(); i++) {
                 Field field = fields.get(i);
-                if (DataTypeUtils.isWholeNumber(field.getType())) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                if (pattern.matcher(field.getName()).matches()) {
+                    if (groupByLevels == null) {
+                        if (DataTypeUtils.isWholeNumber(field.getType())) {
+                            targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                        } else {
+                            targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
+                        }
+                    } else {
+                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                        int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
+                        if (index != -1) {
+                            groupOrderIndexMap.put(i, index);
+                        } else {
+                            groupNameIndexMap.put(targetFieldName, targetFields.size());
+                            groupOrderIndexMap.put(i, targetFields.size());
+                            if (DataTypeUtils.isWholeNumber(field.getType())) {
+                                targetFields.add(new Field(targetFieldName, DataType.LONG));
+                            } else {
+                                targetFields.add(new Field(targetFieldName, DataType.DOUBLE));
+                            }
+                        }
+                    }
+                    indices.add(i);
+                }
+            }
+            Object[] targetValues = new Object[targetFields.size()];
+            for (int i = 0; i < targetFields.size(); i++) {
+                Field targetField = targetFields.get(i);
+                if (targetField.getType() == DataType.LONG) {
                     targetValues[i] = 0L;
                 } else {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
                     targetValues[i] = 0.0D;
                 }
             }
             while(rows.hasNext()) {
                 Row row = rows.next();
-                for (int i = 0; i < fields.size(); i++) {
-                    Object value = row.getValue(i);
+                for (int i = 0; i < indices.size(); i++) {
+                    int index = indices.get(i);
+                    Object value = row.getValue(index);
                     if (value == null) {
                         continue;
                     }
-                    switch (fields.get(i).getType()) {
+                    int targetIndex = i;
+                    if (groupByLevels != null) {
+                        targetIndex = groupOrderIndexMap.get(index);
+                    }
+                    switch (fields.get(index).getType()) {
                         case INTEGER:
-                            targetValues[i] = ((long) targetValues[i]) + (int) value;
+                            targetValues[targetIndex] = ((long) targetValues[targetIndex]) + (int) value;
                             break;
                         case LONG:
-                            targetValues[i] = ((long) targetValues[i]) + (long) value;
+                            targetValues[targetIndex] = ((long) targetValues[targetIndex]) + (long) value;
                             break;
                         case FLOAT:
-                            targetValues[i] = ((double) targetValues[i]) + (float) value;
+                            targetValues[targetIndex] = ((double) targetValues[targetIndex]) + (float) value;
                             break;
                         case DOUBLE:
-                            targetValues[i] = ((double) targetValues[i]) + (double) value;
+                            targetValues[targetIndex] = ((double) targetValues[targetIndex]) + (double) value;
                             break;
                     }
                 }
@@ -129,11 +168,17 @@ public class Sum implements SetMappingFunction {
             }
             Field targetField;
             Object targetValue;
+            String targetFieldName;
+            if (groupByLevels == null) {
+                targetFieldName = getIdentifier() + "(" + field.getName() + ")";
+            } else {
+                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+            }
             if (DataTypeUtils.isWholeNumber(field.getType())) {
-                targetField = new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG);
+                targetField = new Field(targetFieldName, DataType.LONG);
                 targetValue = 0L;
             } else {
-                targetField = new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE);
+                targetField = new Field(targetFieldName, DataType.DOUBLE);
                 targetValue = 0.0D;
             }
             while(rows.hasNext()) {

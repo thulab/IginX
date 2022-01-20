@@ -22,7 +22,7 @@ public class SelectStatement extends DataStatement {
 
     private boolean hasFunc;
     private boolean hasValueFilter;
-    private boolean hasGroupBy;
+    private boolean hasGroupByTime;
     private boolean ascending;
 
     private Map<String, List<String>> selectedFuncsAndPaths;
@@ -37,6 +37,8 @@ public class SelectStatement extends DataStatement {
     private int limit;
     private int offset;
 
+    private List<Integer> layers;
+
     public SelectStatement() {
         this.statementType = StatementType.SELECT;
         this.queryType = QueryType.Unknown;
@@ -48,6 +50,7 @@ public class SelectStatement extends DataStatement {
         this.orderByPath = "";
         this.limit = Integer.MAX_VALUE;
         this.offset = 0;
+        this.layers = new ArrayList<>();
     }
 
     // simple query
@@ -96,10 +99,30 @@ public class SelectStatement extends DataStatement {
         this.precision = precision;
         this.startTime = startTime;
         this.endTime = endTime;
-        this.hasGroupBy = true;
+        this.hasGroupByTime = true;
 
         this.setFromSession(paths, startTime, endTime);
     }
+
+    private void setFromSession(List<String> paths, long startTime, long endTime) {
+        this.statementType = StatementType.SELECT;
+
+        this.ascending = true;
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
+        this.orderByPath = "";
+
+        this.pathSet = new HashSet<>();
+        this.pathSet.addAll(paths);
+
+        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
+                new TimeFilter(Op.GE, startTime),
+                new TimeFilter(Op.L, endTime)
+        )));
+        this.hasValueFilter = true;
+        this.layers = new ArrayList<>();
+    }
+
 
     public static FuncType str2FuncType(String str) {
         switch (str.toLowerCase()) {
@@ -153,24 +176,6 @@ public class SelectStatement extends DataStatement {
         }
     }
 
-    private void setFromSession(List<String> paths, long startTime, long endTime) {
-        this.statementType = StatementType.SELECT;
-
-        this.ascending = true;
-        this.limit = Integer.MAX_VALUE;
-        this.offset = 0;
-        this.orderByPath = "";
-
-        this.pathSet = new HashSet<>();
-        this.pathSet.addAll(paths);
-
-        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
-                new TimeFilter(Op.GE, startTime),
-                new TimeFilter(Op.L, endTime)
-        )));
-        this.hasValueFilter = true;
-    }
-
     public boolean hasFunc() {
         return hasFunc;
     }
@@ -187,12 +192,12 @@ public class SelectStatement extends DataStatement {
         this.hasValueFilter = hasValueFilter;
     }
 
-    public boolean hasGroupBy() {
-        return hasGroupBy;
+    public boolean hasGroupByTime() {
+        return hasGroupByTime;
     }
 
-    public void setHasGroupBy(boolean hasGroupBy) {
-        this.hasGroupBy = hasGroupBy;
+    public void setHasGroupByTime(boolean hasGroupByTime) {
+        this.hasGroupByTime = hasGroupByTime;
     }
 
     public boolean isAscending() {
@@ -325,15 +330,23 @@ public class SelectStatement extends DataStatement {
         this.offset = offset;
     }
 
+    public List<Integer> getLayers() {
+        return layers;
+    }
+
+    public void setLayer(Integer layer) {
+        this.layers.add(layer);
+    }
+
     public void setQueryType() {
         if (hasFunc) {
-            if (hasGroupBy) {
+            if (hasGroupByTime) {
                 this.queryType = QueryType.DownSampleQuery;
             } else {
                 this.queryType = QueryType.AggregateQuery;
             }
         } else {
-            if (hasGroupBy) {
+            if (hasGroupByTime) {
                 throw new SQLParserException("Group by clause cannot be used without aggregate function.");
             } else {
                 this.queryType = QueryType.SimpleQuery;

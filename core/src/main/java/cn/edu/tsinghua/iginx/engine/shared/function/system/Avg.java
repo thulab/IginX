@@ -27,12 +27,17 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.GroupByUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Pattern;
 
 public class Avg implements SetMappingFunction {
 
@@ -64,51 +69,80 @@ public class Avg implements SetMappingFunction {
 
     @Override
     public Row transform(RowStream rows, List<Value> params) throws Exception {
-        if (params.size() != 1) {
+        if (params.size() == 0 || params.size() > 2) {
             throw new IllegalArgumentException("unexpected params for avg.");
         }
         Value param = params.get(0);
         if (param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for avg.");
         }
+        List<Integer> groupByLevels = null;
+        if (params.size() == 2) {
+            groupByLevels = GroupByUtils.parseLevelsFromValue(params.get(1));
+        }
         String target = param.getBinaryVAsString();
-        if (target.endsWith(Constants.ALL_PATH)) {
+        if (StringUtils.isPattern(target)) {
             List<Field> fields = rows.getHeader().getFields();
             for (Field field : fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
                     throw new IllegalArgumentException("only number can calculate average");
                 }
             }
-            double[] targetSums = new double[fields.size()];
-            long[] counts = new long[fields.size()];
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
+            List<Field> targetFields = new ArrayList<>();
+            List<Integer> indices = new ArrayList<>();
+            Map<String, Integer> groupNameIndexMap = new HashMap<>(); // 只有在存在 group by 的时候才奏效
+            Map<Integer, Integer> groupOrderIndexMap = new HashMap<>();
+            for (int i = 0; i < fields.size(); i++) {
+                Field field = fields.get(i);
+                if (pattern.matcher(field.getName()).matches()) {
+                    if (groupByLevels == null) {
+                        targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
+                    } else {
+                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                        int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
+                        if (index != -1) {
+                            groupOrderIndexMap.put(i, index);
+                        } else {
+                            groupNameIndexMap.put(targetFieldName, targetFields.size());
+                            groupOrderIndexMap.put(i, targetFields.size());
+                            targetFields.add(new Field(targetFieldName, DataType.DOUBLE));
+                        }
+                    }
+                    indices.add(i);
+                }
+            }
 
+            double[] targetSums = new double[targetFields.size()];
+            long[] counts = new long[targetFields.size()];
             while(rows.hasNext()) {
                 Row row = rows.next();
-                for (int i = 0; i < fields.size(); i++) {
-                    Object value = row.getValue(i);
+                for (int i = 0; i < indices.size(); i++) {
+                    int index = indices.get(i);
+                    Object value = row.getValue(index);
                     if (value == null) {
                         continue;
                     }
-                    switch (fields.get(i).getType()) {
+                    int targetIndex = i;
+                    if (groupByLevels != null) {
+                        targetIndex = groupOrderIndexMap.get(index);
+                    }
+                    switch (fields.get(index).getType()) {
                         case INTEGER:
-                            targetSums[i] += (int) value;
+                            targetSums[targetIndex] += (int) value;
                             break;
                         case LONG:
-                            targetSums[i] += (long) value;
+                            targetSums[targetIndex] += (long) value;
                             break;
                         case FLOAT:
-                            targetSums[i] += (float) value;
+                            targetSums[targetIndex] += (float) value;
                             break;
                         case DOUBLE:
-                            targetSums[i] += (double) value;
+                            targetSums[targetIndex] += (double) value;
                             break;
                     }
-                    counts[i]++;
+                    counts[targetIndex]++;
                 }
-            }
-            List<Field> targetFields = new ArrayList<>();
-            for (Field field : fields) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
             }
             Object[] targetValues = new Object[targetFields.size()];
             for (int i = 0; i < targetValues.length; i++) {
@@ -124,6 +158,14 @@ public class Avg implements SetMappingFunction {
             if (!DataTypeUtils.isNumber(field.getType())) {
                 throw new IllegalArgumentException("only number can calculate average");
             }
+            Field targetField;
+            String targetFieldName;
+            if (groupByLevels == null) {
+                targetFieldName = getIdentifier() + "(" + field.getName() + ")";
+            } else {
+                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+            }
+            targetField = new Field(targetFieldName, DataType.DOUBLE);
             double targetSum = 0.0D;
             long count = 0;
             while(rows.hasNext()) {
@@ -148,7 +190,6 @@ public class Avg implements SetMappingFunction {
                 }
                 count++;
             }
-            Field targetField = new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE);
             double targetValue = targetSum / count;
             return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }

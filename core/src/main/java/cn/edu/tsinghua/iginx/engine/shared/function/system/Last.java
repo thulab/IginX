@@ -20,7 +20,6 @@ package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
 
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.Table;
-import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
@@ -32,14 +31,18 @@ import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class Last implements MappingFunction {
 
@@ -85,14 +88,22 @@ public class Last implements MappingFunction {
         String target = param.getBinaryVAsString();
         Header header = new Header(Field.TIME, Arrays.asList(new Field(PATH, DataType.BINARY), new Field(VALUE, DataType.BINARY)));
         List<Row> resultRows = new ArrayList<>();
-        if (target.endsWith(Constants.ALL_PATH)) {
+        if (StringUtils.isPattern(target)) {
             Map<Integer, Pair<Long, Object>> valueMap = new HashMap<>();
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
+            Set<Integer> indices = new HashSet<>();
+            for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
+                Field field = rows.getHeader().getField(i);
+                if (pattern.matcher(field.getName()).matches()) {
+                    indices.add(i);
+                }
+            }
             while(rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
 
                 for (int i = 0; i < values.length; i++) {
-                    if (values[i] == null) {
+                    if (values[i] == null || !indices.contains(i)) {
                         continue;
                     }
                     if (!valueMap.containsKey(i)) {
