@@ -176,24 +176,6 @@ public class SelectStatement extends DataStatement {
         }
     }
 
-    private void setFromSession(List<String> paths, long startTime, long endTime) {
-        this.statementType = StatementType.SELECT;
-
-        this.ascending = true;
-        this.limit = Integer.MAX_VALUE;
-        this.offset = 0;
-        this.orderByPath = "";
-
-        this.pathSet = new HashSet<>();
-        this.pathSet.addAll(paths);
-
-        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
-                new TimeFilter(Op.GE, startTime),
-                new TimeFilter(Op.L, endTime)
-        )));
-        this.hasValueFilter = true;
-    }
-
     public boolean hasFunc() {
         return hasFunc;
     }
