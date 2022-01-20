@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +43,7 @@ public class StorageManager {
 
     private final Map<String, String> drivers = new ConcurrentHashMap<>();
 
-    private final Map<Long, Pair<IStorage, ExecutorService>> storageMap = new ConcurrentHashMap<>();
+    private final Map<Long, Pair<IStorage, ThreadPoolExecutor>> storageMap = new ConcurrentHashMap<>();
 
     public StorageManager(List<StorageEngineMeta> metaList) {
         initClassLoaderAndDrivers();
@@ -72,9 +74,9 @@ public class StorageManager {
             IStorage storage = (IStorage) loader.loadClass(driver)
                     .getConstructor(StorageEngineMeta.class).newInstance(meta);
             // 启动一个派发线程池
-            ExecutorService dispatcher = new ThreadPoolExecutor(0,
+            ThreadPoolExecutor dispatcher = new ThreadPoolExecutor(0,
                     ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
-                    60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+                    60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
             storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
         } catch (ClassNotFoundException e) {
             logger.error("load class {} for engine {} failure: {}", driver, engine, e);
@@ -107,11 +109,11 @@ public class StorageManager {
         }
     }
 
-    public Map<Long, Pair<IStorage, ExecutorService>> getStorageMap() {
+    public Map<Long, Pair<IStorage, ThreadPoolExecutor>> getStorageMap() {
         return storageMap;
     }
 
-    public Pair<IStorage, ExecutorService> getStorage(long id) {
+    public Pair<IStorage, ThreadPoolExecutor> getStorage(long id) {
         return storageMap.get(id);
     }
 
