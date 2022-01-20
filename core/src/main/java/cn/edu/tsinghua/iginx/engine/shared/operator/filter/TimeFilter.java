@@ -20,11 +20,9 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class TimeFilter implements Filter {
 
-    private Op op;
-
     private final long value;
-
     private final FilterType type = FilterType.Time;
+    private Op op;
 
     public TimeFilter(Op op, long value) {
         this.op = op;

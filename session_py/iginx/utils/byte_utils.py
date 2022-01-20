@@ -20,6 +20,7 @@ import struct
 
 from ..thrift.rpc.ttypes import DataType
 
+
 def get_long_array(bytes):
     array = []
     parser = BytesParser(bytes)

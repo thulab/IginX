@@ -34,7 +34,7 @@ public class FilterUtils {
         switch (filter.getType()) {
             case Or:
                 OrFilter orFilter = (OrFilter) filter;
-                for (Filter childFilter: orFilter.getChildren()) {
+                for (Filter childFilter : orFilter.getChildren()) {
                     if (validate(childFilter, row)) { // 任何一个子条件满足，都直接返回
                         return true;
                     }
@@ -42,7 +42,7 @@ public class FilterUtils {
                 return false;
             case And:
                 AndFilter andFilter = (AndFilter) filter;
-                for (Filter childFilter: andFilter.getChildren()) {
+                for (Filter childFilter : andFilter.getChildren()) {
                     if (!validate(childFilter, row)) { // 任何一个子条件不满足，都直接返回
                         return false;
                     }

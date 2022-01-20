@@ -195,7 +195,7 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.addStorageUnit(storageUnit);
             }
             cache.getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
-            for (StorageUnitHook storageUnitHook: storageUnitHooks) {
+            for (StorageUnitHook storageUnitHook : storageUnitHooks) {
                 storageUnitHook.onChange(originStorageUnitMeta, storageUnit);
             }
         });
@@ -354,7 +354,7 @@ public class DefaultMetaManager implements IMetaManager {
                 String actualName = storage.addStorageUnit();
                 StorageUnitMeta actualMasterStorageUnit = masterStorageUnit.renameStorageUnitMeta(actualName, actualName);
                 cache.updateStorageUnit(actualMasterStorageUnit);
-                for (StorageUnitHook hook: storageUnitHooks) {
+                for (StorageUnitHook hook : storageUnitHooks) {
                     hook.onChange(null, actualMasterStorageUnit);
                 }
                 storage.updateStorageUnit(actualMasterStorageUnit);
@@ -365,7 +365,7 @@ public class DefaultMetaManager implements IMetaManager {
                     String slaveActualName = storage.addStorageUnit();
                     StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit.renameStorageUnitMeta(slaveActualName, actualName);
                     actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
-                    for (StorageUnitHook hook: storageUnitHooks) {
+                    for (StorageUnitHook hook : storageUnitHooks) {
                         hook.onChange(null, actualSlaveStorageUnit);
                     }
                     cache.updateStorageUnit(actualSlaveStorageUnit);
@@ -436,8 +436,8 @@ public class DefaultMetaManager implements IMetaManager {
                 cache.initStorageUnit(globalStorageUnits);
                 cache.initFragment(globalFragmentMap);
                 newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
-                for (StorageUnitHook hook: storageUnitHooks) {
-                    for (StorageUnitMeta meta: newStorageUnits) {
+                for (StorageUnitHook hook : storageUnitHooks) {
+                    for (StorageUnitMeta meta : newStorageUnits) {
                         hook.onChange(null, meta);
                     }
                 }
@@ -479,8 +479,8 @@ public class DefaultMetaManager implements IMetaManager {
             cache.initStorageUnit(loadedStorageUnits);
             cache.initFragment(storage.loadFragment());
             newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
-            for (StorageUnitHook hook: storageUnitHooks) {
-                for (StorageUnitMeta meta: newStorageUnits) {
+            for (StorageUnitHook hook : storageUnitHooks) {
+                for (StorageUnitMeta meta : newStorageUnits) {
                     hook.onChange(null, meta);
                 }
             }

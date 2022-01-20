@@ -2,14 +2,26 @@ package cn.edu.tsinghua.iginx.policy.naiveV2;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.*;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.policy.IPolicyV2;
-import cn.edu.tsinghua.iginx.sql.statement.*;
+import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
+import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
+import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
+import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -60,6 +72,7 @@ public class NaivePolicy implements IPolicyV2 {
         } else
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
     }
+
     /**
      * This storage unit initialization method is used when no information about workloads is provided
      */

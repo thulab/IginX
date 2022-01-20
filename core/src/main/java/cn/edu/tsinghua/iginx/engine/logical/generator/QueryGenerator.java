@@ -3,11 +3,21 @@ package cn.edu.tsinghua.iginx.engine.logical.generator;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
+import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -16,7 +26,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IPolicyV2;
-import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.policy.PolicyManagerV2;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
@@ -34,20 +43,13 @@ import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
 
 public class QueryGenerator implements LogicalGenerator {
 
-    private final GeneratorType type = GeneratorType.Query;
-
     private static final Logger logger = LoggerFactory.getLogger(QueryGenerator.class);
-
     private final static Config config = ConfigDescriptor.getInstance().getConfig();
-
     private final static QueryGenerator instance = new QueryGenerator();
-
     private final static FunctionManager functionManager = FunctionManager.getInstance();
-
-    private final List<Optimizer> optimizerList = new ArrayList<>();
-
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
-
+    private final GeneratorType type = GeneratorType.Query;
+    private final List<Optimizer> optimizerList = new ArrayList<>();
     private final IPolicyV2 policy = PolicyManagerV2.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 

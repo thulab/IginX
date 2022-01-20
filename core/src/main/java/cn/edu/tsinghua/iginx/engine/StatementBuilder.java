@@ -13,7 +13,8 @@ public class StatementBuilder {
 
     private static final StatementBuilder instance = new StatementBuilder();
 
-    private StatementBuilder() {}
+    private StatementBuilder() {
+    }
 
     public static StatementBuilder getInstance() {
         return instance;

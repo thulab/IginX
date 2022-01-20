@@ -2,7 +2,6 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 

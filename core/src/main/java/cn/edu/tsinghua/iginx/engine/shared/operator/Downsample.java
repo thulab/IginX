@@ -20,11 +20,8 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
-import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
-
-import java.io.Serializable;
+import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Downsample extends AbstractUnaryOperator {
 

@@ -1,17 +1,26 @@
 package cn.edu.tsinghua.iginx.sql.stub;
 
+import cn.edu.tsinghua.iginx.engine.logical.generator.GeneratorType;
+import cn.edu.tsinghua.iginx.engine.logical.generator.LogicalGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
+import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.engine.logical.generator.GeneratorType;
-import cn.edu.tsinghua.iginx.engine.logical.generator.LogicalGenerator;
-import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
@@ -19,21 +28,22 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
 
 public class QueryGeneratorStub implements LogicalGenerator {
 
-    private final GeneratorType type = GeneratorType.Query;
-
     private static final Logger logger = LoggerFactory.getLogger(QueryGeneratorStub.class);
-
     private final static QueryGeneratorStub instance = new QueryGeneratorStub();
-
     private final static FunctionManager functionManager = FunctionManager.getInstance();
-
+    private final GeneratorType type = GeneratorType.Query;
     private final List<Optimizer> optimizerList = new ArrayList<>();
 
     private QueryGeneratorStub() {

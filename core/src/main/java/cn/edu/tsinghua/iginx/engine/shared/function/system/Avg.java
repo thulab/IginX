@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
+import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
@@ -143,7 +144,6 @@ public class Avg implements SetMappingFunction {
                     counts[targetIndex]++;
                 }
             }
-
             Object[] targetValues = new Object[targetFields.size()];
             for (int i = 0; i < targetValues.length; i++) {
                 targetValues[i] = targetSums[i] / counts[i];

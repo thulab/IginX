@@ -30,7 +30,12 @@ public class PhysicalOptimizerManager {
 
     private static final PhysicalOptimizerManager INSTANCE = new PhysicalOptimizerManager();
 
-    private PhysicalOptimizerManager() {}
+    private PhysicalOptimizerManager() {
+    }
+
+    public static PhysicalOptimizerManager getInstance() {
+        return INSTANCE;
+    }
 
     public PhysicalOptimizer getOptimizer(String name) {
         if (name == null) {
@@ -44,9 +49,5 @@ public class PhysicalOptimizerManager {
                 logger.error("unknown physical optimizer {}, use {} as default.", name, NAIVE);
                 return NaivePhysicalOptimizer.getInstance();
         }
-    }
-
-    public static PhysicalOptimizerManager getInstance() {
-        return INSTANCE;
     }
 }

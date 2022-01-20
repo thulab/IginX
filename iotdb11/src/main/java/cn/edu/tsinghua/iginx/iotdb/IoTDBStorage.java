@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
+import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
@@ -41,10 +42,13 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
+import org.apache.iotdb.session.pool.SessionDataSetWrapper;
 import org.apache.iotdb.session.pool.SessionPool;
+import org.apache.iotdb.tsfile.read.common.RowRecord;
 import org.apache.iotdb.tsfile.utils.Binary;
 import org.apache.iotdb.tsfile.write.record.Tablet;
 import org.apache.iotdb.tsfile.write.schema.MeasurementSchema;
@@ -87,6 +91,8 @@ public class IoTDBStorage implements IStorage {
     private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
     private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
+
+    private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
 
     private static final String DOES_NOT_EXISTED = "does not exist";
 
@@ -153,6 +159,48 @@ public class IoTDBStorage implements IStorage {
             return executeDeleteTask(storageUnit, delete);
         }
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+    }
+
+    @Override
+    public List<Timeseries> getTimeSeries() throws PhysicalException {
+        List<Timeseries> timeseries = new ArrayList<>();
+        try {
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
+            while(dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                if (record == null || record.getFields().size() < 4) {
+                    continue;
+                }
+                String path = record.getFields().get(0).getStringValue();
+                path = path.substring(5);
+                path = path.substring(path.indexOf('.') + 1);
+                String dataTypeName = record.getFields().get(3).getStringValue();
+                switch (dataTypeName) {
+                    case "BOOLEAN":
+                        timeseries.add(new Timeseries(path, DataType.BOOLEAN));
+                        break;
+                    case "FLOAT":
+                        timeseries.add(new Timeseries(path, DataType.FLOAT));
+                        break;
+                    case "TEXT":
+                        timeseries.add(new Timeseries(path, DataType.BINARY));
+                        break;
+                    case "DOUBLE":
+                        timeseries.add(new Timeseries(path, DataType.DOUBLE));
+                        break;
+                    case "INT32":
+                        timeseries.add(new Timeseries(path, DataType.INTEGER));
+                        break;
+                    case "INT64":
+                        timeseries.add(new Timeseries(path, DataType.LONG));
+                        break;
+                }
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        return timeseries;
     }
 
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤

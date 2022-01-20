@@ -24,19 +24,14 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
 import java.util.List;
-import java.util.concurrent.Future;
 
 public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     private final FragmentMeta targetFragment;
-
-    private String storageUnit;
-
-    private long storage;
-
     private final boolean sync;
-
     private final boolean needBroadcasting;
+    private String storageUnit;
+    private long storage;
 
     public StoragePhysicalTask(List<Operator> operators) {
         this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment(), true, false);

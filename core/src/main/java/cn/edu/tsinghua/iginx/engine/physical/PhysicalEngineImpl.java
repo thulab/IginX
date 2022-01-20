@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizerManager;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.task.BinaryMemoryPhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.GlobalPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.MultipleMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
@@ -36,6 +37,7 @@ import cn.edu.tsinghua.iginx.engine.physical.task.UnaryMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,8 +64,20 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         memoryTaskExecutor.startDispatcher();
     }
 
+    public static PhysicalEngineImpl getInstance() {
+        return INSTANCE;
+    }
+
     @Override
     public RowStream execute(Operator root) throws PhysicalException {
+        if (OperatorType.isGlobalOperator(root.getType())) { // 全局任务临时兼容逻辑
+            GlobalPhysicalTask task = new GlobalPhysicalTask(root);
+            TaskExecuteResult result = storageTaskExecutor.executeGlobalTask(task);
+            if (result.getException() != null) {
+                throw result.getException();
+            }
+            return result.getRowStream();
+        }
         PhysicalTask task = optimizer.optimize(root);
         List<StoragePhysicalTask> storageTasks = new ArrayList<>();
         getStorageTasks(storageTasks, task);
@@ -90,7 +104,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
             getStorageTasks(tasks, task.getParentTask());
         } else if (root.getType() == TaskType.MultipleMemory) {
             MultipleMemoryPhysicalTask task = (MultipleMemoryPhysicalTask) root;
-            for (PhysicalTask parentTask: task.getParentTasks()) {
+            for (PhysicalTask parentTask : task.getParentTasks()) {
                 getStorageTasks(tasks, parentTask);
             }
         }
@@ -104,9 +118,5 @@ public class PhysicalEngineImpl implements PhysicalEngine {
     @Override
     public StorageManager getStorageManager() {
         return storageTaskExecutor.getStorageManager();
-    }
-
-    public static PhysicalEngineImpl getInstance() {
-        return INSTANCE;
     }
 }

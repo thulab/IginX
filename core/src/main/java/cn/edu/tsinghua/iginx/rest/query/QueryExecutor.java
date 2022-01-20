@@ -30,7 +30,11 @@ import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class QueryExecutor {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryExecutor.class);
@@ -95,7 +99,7 @@ public class QueryExecutor {
             StringBuilder path = new StringBuilder();
             Iterator iter = pos2path.entrySet().iterator();
             int now = 0;
-            while (iter.hasNext()) {
+            while(iter.hasNext()) {
                 String ins = null;
                 Map.Entry entry = (Map.Entry) iter.next();
                 List<String> tmp = queryMetric.getTags().get(entry.getValue());
@@ -104,16 +108,14 @@ public class QueryExecutor {
                 }
                 if (ins != null) {
                     path.append(ins).append(".");
-                }
-                else {
+                } else {
                     path.append("*.");
                 }
                 now++;
             }
             if (queryMetric.getAnnotation()) {
                 path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
-            }
-            else {
+            } else {
                 path.append(queryMetric.getName());
             }
             paths.add(path.toString());

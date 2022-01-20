@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.engine.physical.task;
 public enum TaskType {
 
     Storage,
+    Global,
     Memory,
 
     MultipleMemory,

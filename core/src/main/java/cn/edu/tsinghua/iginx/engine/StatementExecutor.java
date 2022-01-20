@@ -2,18 +2,36 @@ package cn.edu.tsinghua.iginx.engine;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.logical.constraint.ConstraintChecker;
+import cn.edu.tsinghua.iginx.engine.logical.constraint.ConstraintCheckerManager;
+import cn.edu.tsinghua.iginx.engine.logical.generator.DeleteGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.InsertGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.LogicalGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.QueryGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.ShowTimeSeriesGenerator;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.*;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.engine.logical.generator.*;
-import cn.edu.tsinghua.iginx.sql.statement.*;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
+import cn.edu.tsinghua.iginx.sql.statement.DeleteTimeSeriesStatement;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
+import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
+import cn.edu.tsinghua.iginx.sql.statement.ShowTimeSeriesStatement;
+import cn.edu.tsinghua.iginx.sql.statement.Statement;
+import cn.edu.tsinghua.iginx.sql.statement.StatementType;
+import cn.edu.tsinghua.iginx.sql.statement.SystemStatement;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
@@ -29,7 +47,9 @@ import java.util.List;
 
 public class StatementExecutor {
 
-    private static final Logger logger = LoggerFactory.getLogger(StatementExecutor.class);
+    private final static Logger logger = LoggerFactory.getLogger(StatementExecutor.class);
+
+    private final static Config config = ConfigDescriptor.getInstance().getConfig();
 
     private final static StatementExecutor instance = new StatementExecutor();
 
@@ -37,17 +57,13 @@ public class StatementExecutor {
 
     private final static PhysicalEngine engine = PhysicalEngineImpl.getInstance();
 
+    private final static ConstraintChecker checker = ConstraintCheckerManager.getInstance().getChecker(config.getConstraintChecker());
     private final static ConstraintManager constraintManager = engine.getConstraintManager();
 
     private final List<LogicalGenerator> queryGeneratorList = new ArrayList<>();
-
     private final List<LogicalGenerator> deleteGeneratorList = new ArrayList<>();
-
     private final List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
-
     private final List<LogicalGenerator> showTSGeneratorList = new ArrayList<>();
-
-    private final static Config config = ConfigDescriptor.getInstance().getConfig();
 
     private StatementExecutor() {
         registerGenerator(QueryGenerator.getInstance());
@@ -127,7 +143,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processQuery(SelectStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : queryGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 RowStream stream = engine.execute(root);
                 return buildQueryRowStreamResp(stream, statement);
             }
@@ -138,7 +154,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processDelete(DeleteStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : deleteGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 engine.execute(root);
                 return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Delete);
             }
@@ -149,7 +165,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processInsert(InsertStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : insertGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 engine.execute(root);
                 return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Insert);
             }
@@ -160,7 +176,7 @@ public class StatementExecutor {
     private ExecuteSqlResp processShowTimeSeries(ShowTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
         for (LogicalGenerator generator : showTSGeneratorList) {
             Operator root = generator.generate(statement);
-            if (constraintManager.check(root)) {
+            if (constraintManager.check(root) && checker.check(root)) {
                 RowStream stream = engine.execute(root);
                 return buildShowTSRowStreamResp(stream);
             }
@@ -282,8 +298,8 @@ public class StatementExecutor {
             Object[] rowValues = row.getValues();
 
             if (rowValues.length == 2) {
-                paths.add((String) rowValues[0]);
-                DataType type = DataTypeUtils.strToDataType((String) rowValues[1]);
+                paths.add(new String((byte[]) rowValues[0]));
+                DataType type = DataTypeUtils.strToDataType(new String((byte[]) rowValues[1]));
                 if (type == null) {
                     logger.warn("unknown data type [{}]", rowValues[1]);
                 }

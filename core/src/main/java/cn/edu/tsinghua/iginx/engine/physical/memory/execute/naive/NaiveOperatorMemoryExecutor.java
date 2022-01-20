@@ -23,8 +23,8 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.FilterUtils;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils.RowUtils;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
@@ -61,7 +61,12 @@ import java.util.regex.Pattern;
 
 public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
-    private NaiveOperatorMemoryExecutor() {}
+    private NaiveOperatorMemoryExecutor() {
+    }
+
+    public static NaiveOperatorMemoryExecutor getInstance() {
+        return NaiveOperatorMemoryExecutorHolder.INSTANCE;
+    }
 
     @Override
     public RowStream executeUnaryOperator(UnaryOperator operator, RowStream stream) throws PhysicalException {
@@ -99,18 +104,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
     }
 
-    public static NaiveOperatorMemoryExecutor getInstance() {
-        return NaiveOperatorMemoryExecutorHolder.INSTANCE;
-    }
-
-    private static class NaiveOperatorMemoryExecutorHolder {
-
-        private static final NaiveOperatorMemoryExecutor INSTANCE = new NaiveOperatorMemoryExecutor();
-
-        private NaiveOperatorMemoryExecutorHolder() {}
-
-    }
-
     private Table transformToTable(RowStream stream) throws PhysicalException {
         if (stream instanceof Table) {
             return (Table) stream;
@@ -129,8 +122,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         Header header = table.getHeader();
         List<Field> targetFields = new ArrayList<>();
 
-        for (Field field: header.getFields()) {
-            for (String pattern: patterns) {
+        for (Field field : header.getFields()) {
+            for (String pattern : patterns) {
                 if (!StringUtils.isPattern(pattern)) {
                     if (pattern.equals(field.getName())) {
                         targetFields.add(field);
@@ -144,7 +137,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header targetHeader = new Header(header.getTime(), targetFields);
         List<Row> targetRows = new ArrayList<>();
-        while (table.hasNext()) {
+        while(table.hasNext()) {
             Row row = table.next();
             Object[] objects = new Object[targetFields.size()];
             for (int i = 0; i < targetFields.size(); i++) {
@@ -162,7 +155,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeSelect(Select select, Table table) throws PhysicalException {
         Filter filter = select.getFilter();
         List<Row> targetRows = new ArrayList<>();
-        while (table.hasNext()) {
+        while(table.hasNext()) {
             Row row = table.next();
             if (FilterUtils.validate(filter, row)) {
                 targetRows.add(row);
@@ -211,13 +204,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         TreeMap<Long, List<Row>> groups = new TreeMap<>();
         SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
         List<Value> params = downsample.getFunctionCall().getParams();
-        for (Row row: rows) {
+        for (Row row : rows) {
             long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
-            groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>(): v).add(row);
+            groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
         }
         List<Pair<Long, Row>> transformedRawRows = new ArrayList<>();
         try {
-            for (Map.Entry<Long, List<Row>> entry: groups.entrySet()) {
+            for (Map.Entry<Long, List<Row>> entry : groups.entrySet()) {
                 long time = entry.getKey();
                 List<Row> group = entry.getValue();
                 Row row = function.transform(new Table(header, group), params);
@@ -233,7 +226,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header newHeader = new Header(Field.TIME, transformedRawRows.get(0).v.getHeader().getFields());
         List<Row> transformedRows = new ArrayList<>();
-        for (Pair<Long, Row> pair: transformedRawRows) {
+        for (Pair<Long, Row> pair : transformedRawRows) {
             transformedRows.add(new Row(newHeader, pair.k, pair.v.getValues()));
         }
         return new Table(newHeader, transformedRows);
@@ -244,7 +237,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Value> params = rowTransform.getFunctionCall().getParams();
         List<Row> rows = new ArrayList<>();
         try {
-            while (table.hasNext()) {
+            while(table.hasNext()) {
                 Row row = function.transform(table.next(), params);
                 if (row != null) {
                     rows.add(row);
@@ -276,7 +269,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     }
 
-
     private RowStream executeMappingTransform(MappingTransform mappingTransform, Table table) throws PhysicalException {
         MappingFunction function = (MappingFunction) mappingTransform.getFunctionCall().getFunction();
         List<Value> params = mappingTransform.getFunctionCall().getParams();
@@ -297,7 +289,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
             // 检查 field
-            for (Field field: headerA.getFields()) {
+            for (Field field : headerA.getFields()) {
                 if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
                     throw new PhysicalTaskExecuteFailureException("two source has shared field");
                 }
@@ -309,7 +301,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             List<Row> newRows = new ArrayList<>();
 
             int index1 = 0, index2 = 0;
-            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            while(index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 long timestamp;
@@ -351,7 +343,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
             }
-            for (Field field: headerA.getFields()) {
+            for (Field field : headerA.getFields()) {
                 if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
                     throw new PhysicalTaskExecuteFailureException("two source has shared field");
                 }
@@ -363,7 +355,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             List<Row> newRows = new ArrayList<>();
 
             int index1 = 0, index2 = 0;
-            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            while(index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
@@ -407,16 +399,16 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Row> rows = new ArrayList<>();
         if (!hasTimestamp) {
             targetHeader = new Header(targetFields);
-            for (Row row: tableA.getRows()) {
+            for (Row row : tableA.getRows()) {
                 rows.add(RowUtils.transform(row, targetHeader));
             }
-            for (Row row: tableB.getRows()) {
+            for (Row row : tableB.getRows()) {
                 rows.add(RowUtils.transform(row, targetHeader));
             }
         } else {
             targetHeader = new Header(Field.TIME, targetFields);
             int index1 = 0, index2 = 0;
-            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            while(index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row row1 = tableA.getRow(index1);
                 Row row2 = tableB.getRow(index2);
                 if (row1.getTimestamp() <= row2.getTimestamp()) {
@@ -435,6 +427,15 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
         }
         return new Table(targetHeader, rows);
+    }
+
+    private static class NaiveOperatorMemoryExecutorHolder {
+
+        private static final NaiveOperatorMemoryExecutor INSTANCE = new NaiveOperatorMemoryExecutor();
+
+        private NaiveOperatorMemoryExecutorHolder() {
+        }
+
     }
 
 }

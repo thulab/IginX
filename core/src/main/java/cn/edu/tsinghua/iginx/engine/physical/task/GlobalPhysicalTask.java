@@ -16,18 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.operator;
+package cn.edu.tsinghua.iginx.engine.physical.task;
 
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
-public class Union extends AbstractBinaryOperator {
+import java.util.Collections;
 
-    public Union(Source sourceA, Source sourceB) {
-        super(OperatorType.Union, sourceA, sourceB);
+public class GlobalPhysicalTask extends AbstractPhysicalTask {
+
+    public GlobalPhysicalTask(Operator operator) {
+        super(TaskType.Global, Collections.singletonList(operator));
     }
 
-    @Override
-    public Operator copy() {
-        return new Union(getSourceA().copy(), getSourceB().copy());
+    public Operator getOperator() {
+        return getOperators().get(0);
     }
+
 }

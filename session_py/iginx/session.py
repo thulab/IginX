@@ -16,10 +16,11 @@
 # under the License.
 #
 import logging
-
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
+from .cluster_info import ClusterInfo
+from .dataset import LastQueryDataSet, QueryDataSet, AggregateQueryDataSet
 from .thrift.rpc.IService import Client
 from .thrift.rpc.ttypes import (
     OpenSessionReq,
@@ -44,19 +45,11 @@ from .thrift.rpc.ttypes import (
     InsertNonAlignedColumnRecordsReq,
     ExecuteSqlReq,
 
-    AuthType,
-    SqlType,
-    DataType,
-    AggregateType,
-
     StorageEngine,
 )
-
-from .cluster_info import ClusterInfo
 from .time_series import TimeSeries
-from .dataset import LastQueryDataSet, QueryDataSet, AggregateQueryDataSet, SqlExecuteResult
-from .utils.byte_utils import timestamps_to_bytes, row_values_to_bytes, column_values_to_bytes, bitmap_to_bytes
 from .utils.bitmap import Bitmap
+from .utils.byte_utils import timestamps_to_bytes, row_values_to_bytes, column_values_to_bytes, bitmap_to_bytes
 
 logger = logging.getLogger("IginX")
 

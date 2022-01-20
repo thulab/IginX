@@ -19,11 +19,11 @@
 package cn.edu.tsinghua.iginx.influxdb;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
-import cn.edu.tsinghua.iginx.engine.physical.exception.NotSupportedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
+import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
@@ -68,7 +68,7 @@ import static com.influxdb.client.domain.WritePrecision.MS;
 
 public class InfluxDBStorage implements IStorage {
 
-    private static final Logger logger = LoggerFactory.getLogger(InfluxDBPlanExecutor.class);
+    private static final Logger logger = LoggerFactory.getLogger(InfluxDBStorage.class);
 
     private static final String STORAGE_ENGINE = "influxdb";
 
@@ -136,6 +136,11 @@ public class InfluxDBStorage implements IStorage {
             return executeDeleteTask(storageUnit, delete);
         }
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+    }
+
+    @Override
+    public List<Timeseries> getTimeSeries() {
+        return null;
     }
 
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) {
