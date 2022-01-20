@@ -29,10 +29,12 @@ import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Min implements SetMappingFunction {
 
@@ -67,21 +69,28 @@ public class Min implements SetMappingFunction {
             throw new IllegalArgumentException("unexpected param type for max.");
         }
         String target = param.getBinaryVAsString();
-        if (target.endsWith(Constants.ALL_PATH)) {
+        if (StringUtils.isPattern(target)) {
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: rows.getHeader().getFields()) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
+                Field field = rows.getHeader().getField(i);
+                if (pattern.matcher(field.getName()).matches()) {
+                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
+                    indices.add(i);
+                }
             }
             Object[] targetValues = new Object[targetFields.size()];
             while (rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
-                for (int i = 0; i < targetFields.size(); i++) {
+                for (int i = 0; i < indices.size(); i++) {
+                    Object value = values[indices.get(i)];
                     if (targetValues[i] == null) {
-                        targetValues[i] = values[i];
+                        targetValues[i] = value;
                     } else {
-                        if (values[i] != null && ValueUtils.compare(targetValues[i], values[i], targetFields.get(i).getType()) > 0) {
-                            targetValues[i] = values[i];
+                        if (value != null && ValueUtils.compare(targetValues[i], value, targetFields.get(i).getType()) > 0) {
+                            targetValues[i] = value;
                         }
                     }
                 }

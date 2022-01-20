@@ -29,12 +29,14 @@ import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Count implements SetMappingFunction {
 
@@ -64,24 +66,30 @@ public class Count implements SetMappingFunction {
     @Override
     public Row transform(RowStream rows, List<Value> params) throws Exception {
         if (params.size() != 1) {
-            throw new IllegalArgumentException("unexpected params for avg.");
+            throw new IllegalArgumentException("unexpected params for count.");
         }
         Value param = params.get(0);
         if (param.getDataType() != DataType.BINARY) {
-            throw new IllegalArgumentException("unexpected param type for avg.");
+            throw new IllegalArgumentException("unexpected param type for count.");
         }
         String target = param.getBinaryVAsString();
-        if (target.endsWith(Constants.ALL_PATH)) {
+        if (StringUtils.isPattern(target)) {
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: rows.getHeader().getFields()) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+            List<Integer> indices = new ArrayList<>();
+            for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
+                Field field = rows.getHeader().getField(i);
+                if (pattern.matcher(field.getName()).matches()) {
+                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                    indices.add(i);
+                }
             }
             long[] counts = new long[targetFields.size()];
             while (rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
-                for (int i = 0; i < targetFields.size(); i++) {
-                    if (values[i] != null) {
+                for (int i = 0; i < indices.size(); i++) {
+                    if (values[indices.get(i)] != null) {
                         counts[i]++;
                     }
                 }

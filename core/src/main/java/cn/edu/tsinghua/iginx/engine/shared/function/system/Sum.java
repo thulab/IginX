@@ -30,10 +30,12 @@ import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class Sum implements SetMappingFunction {
 
@@ -68,36 +70,44 @@ public class Sum implements SetMappingFunction {
             throw new IllegalArgumentException("unexpected param type for sum.");
         }
         String target = param.getBinaryVAsString();
-        if (target.endsWith(Constants.ALL_PATH)) { // 对于任意序列均统计
+        if (StringUtils.isPattern(target)) { // 对于任意序列均统计
             List<Field> fields = rows.getHeader().getFields();
             for (Field field: fields) {
                 if (!DataTypeUtils.isNumber(field.getType())) {
                     throw new IllegalArgumentException("only number can calculate sum");
                 }
             }
+            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
             List<Field> targetFields = new ArrayList<>();
-            for (Field field: fields) {
-                targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
-            }
-            Object[] targetValues = new Object[targetFields.size()];
+            List<Integer> indices = new ArrayList<>();
             for (int i = 0; i < fields.size(); i++) {
                 Field field = fields.get(i);
-                if (DataTypeUtils.isWholeNumber(field.getType())) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                if (pattern.matcher(field.getName()).matches()) {
+                    if (DataTypeUtils.isWholeNumber(field.getType())) {
+                        targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                    } else {
+                        targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
+                    }
+                    indices.add(i);
+                }
+            }
+            Object[] targetValues = new Object[targetFields.size()];
+            for (int i = 0; i < targetFields.size(); i++) {
+                Field targetField = targetFields.get(i);
+                if (targetField.getType() == DataType.LONG) {
                     targetValues[i] = 0L;
                 } else {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
                     targetValues[i] = 0.0D;
                 }
             }
             while (rows.hasNext()) {
                 Row row = rows.next();
-                for (int i = 0; i < fields.size(); i++) {
-                    Object value = row.getValue(i);
+                for (int i = 0; i < indices.size(); i++) {
+                    Object value = row.getValue(indices.get(i));
                     if (value == null) {
                         continue;
                     }
-                    switch (fields.get(i).getType()) {
+                    switch (fields.get(indices.get(i)).getType()) {
                         case INTEGER:
                             targetValues[i] = ((long) targetValues[i]) + (int) value;
                             break;
