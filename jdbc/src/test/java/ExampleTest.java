@@ -77,7 +77,7 @@ public class ExampleTest {
         statement.executeUpdate(sql);
 
         // Full query use executeQuery
-        String fullQueryClause = "SELECT %s, %s, %s, %s FROM %s WHERE TIME IN (%s, %s);";
+        String fullQueryClause = "SELECT %s, %s, %s, %s FROM %s WHERE TIME > %s AND TIME < %s;";
         sql = String.format(fullQueryClause,
                 S1, S2, S3, S4, // select
                 prefix, // from
@@ -88,7 +88,7 @@ public class ExampleTest {
         outputResult(resultSet);
 
         // Time range query use execute
-        String timeRangeClause = "SELECT %s FROM %s WHERE time in (50, 100);";
+        String timeRangeClause = "SELECT %s FROM %s WHERE time > 50 AND TIME < 100;";
         sql = String.format(timeRangeClause, S1, prefix);
         if (statement.execute(sql)) {
             resultSet = statement.getResultSet();
@@ -97,7 +97,7 @@ public class ExampleTest {
         outputResult(resultSet);
 
         // DownSample query use executeQuery
-        String downSampleClause = "SELECT %s(%s) FROM %s WHERE time in (%s, %s) GROUP BY %s;";
+        String downSampleClause = "SELECT %s(%s) FROM %s GROUP (%s, %s) BY %s;";
         sql = String.format(downSampleClause, "MAX", S2, prefix, "0", "200", "10ms");
         resultSet = statement.executeQuery(sql);
         System.out.println("sql: " + sql);
@@ -116,7 +116,7 @@ public class ExampleTest {
         statement.close();
 
         // Create prepareStatement
-        String preparedClause = "SELECT %s FROM %s WHERE time in (?, ?) and %s < ?;";
+        String preparedClause = "SELECT %s FROM %s WHERE TIME > ? AND TIME < ? AND %s < ?;";
         preparedStatement = connection.prepareStatement(String.format(preparedClause, S1, prefix, S1));
         if (statement == null) {
             System.out.println("create statement fail.");
