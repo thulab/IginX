@@ -45,31 +45,6 @@ class Point(object):
         return self.__value
 
 
-class LastQueryDataSet(object):
-
-    def __init__(self, resp):
-        self.__points = []
-
-        paths = resp.paths
-        data_types = resp.dataTypeList
-        timestamps = get_long_array(resp.timestamps)
-        values = get_values_by_data_type(resp.valuesList, data_types)
-
-        for i in range(len(paths)):
-            self.__points.append(Point(paths[i], data_types[i], timestamps[i], values[i]))
-
-
-    def get_points(self):
-        return self.__points
-
-
-    def __str__(self):
-        value = "Time\tSeries\tValue\n"
-        for point in self.__points:
-            value += str(point.get_timestamp()) + "\t" + str(point.get_path()) + "\t" + str(point.get_value()) + "\n"
-        return value
-
-
 class QueryDataSet(object):
 
     def __init__(self, paths, types, timestamps, values_list, bitmap_list):
