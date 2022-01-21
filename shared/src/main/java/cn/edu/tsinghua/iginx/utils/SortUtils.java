@@ -139,7 +139,7 @@ public class SortUtils {
                 mergedPaths.add(path);
             }
         }
-        mergedPaths.sort(Comparator.comparing(o -> o.substring(0, o.indexOf("*"))));
+        mergedPaths.sort(Comparator.comparing(o -> o.contains("*") ? o.substring(0, o.indexOf("*")) : o));
         return mergedPaths;
     }
 }
