@@ -15,7 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 #
-from iginx.session import Session, DataType, AggregateType
+from iginx.session import Session
+from iginx.thrift.rpc.ttypes import DataType, AggregateType
 
 
 if __name__ == '__main__':
