@@ -92,9 +92,11 @@ public class Config {
 
     private String physicalOptimizer = "naive";
 
-    private int memoryTaskThreadPoolSize = 100;
+    private int memoryTaskThreadPoolSize = 200;
 
-    private int physicalTaskThreadPoolSizePerStorage = 20;
+    private int physicalTaskThreadPoolSizePerStorage = 100;
+
+    private int maxCachedPhysicalTaskPerStorage = 500;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -398,5 +400,13 @@ public class Config {
 
     public void setPhysicalTaskThreadPoolSizePerStorage(int physicalTaskThreadPoolSizePerStorage) {
         this.physicalTaskThreadPoolSizePerStorage = physicalTaskThreadPoolSizePerStorage;
+    }
+
+    public int getMaxCachedPhysicalTaskPerStorage() {
+        return maxCachedPhysicalTaskPerStorage;
+    }
+
+    public void setMaxCachedPhysicalTaskPerStorage(int maxCachedPhysicalTaskPerStorage) {
+        this.maxCachedPhysicalTaskPerStorage = maxCachedPhysicalTaskPerStorage;
     }
 }

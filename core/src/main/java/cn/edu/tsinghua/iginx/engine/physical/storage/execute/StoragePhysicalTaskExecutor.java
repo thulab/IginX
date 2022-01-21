@@ -18,7 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.storage.execute;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.TooManyPhysicalTasksException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
@@ -47,6 +49,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.stream.Collectors;
 
 public class StoragePhysicalTaskExecutor {
@@ -65,6 +68,8 @@ public class StoragePhysicalTaskExecutor {
 
     private MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
+    private final int maxCachedPhysicalTaskPerStorage = ConfigDescriptor.getInstance().getConfig().getMaxCachedPhysicalTaskPerStorage();
+
     private StoragePhysicalTaskExecutor() {
         StorageUnitHook storageUnitHook = (before, after) -> {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
@@ -77,11 +82,15 @@ public class StoragePhysicalTaskExecutor {
                 dispatchers.put(id, dispatcher);
                 dispatcher.submit(() -> {
                     StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(id);
-                    Pair<IStorage, ExecutorService> pair = storageManager.getStorage(storageId);
+                    Pair<IStorage, ThreadPoolExecutor> pair = storageManager.getStorage(storageId);
                     while(true) {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
                         logger.info("take out new task: " + task);
+                        if (pair.v.getQueue().size() > maxCachedPhysicalTaskPerStorage) {
+                            task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
+                            continue;
+                        }
                         pair.v.submit(() -> {
                             TaskExecuteResult result = null;
                             try {
@@ -100,12 +109,17 @@ public class StoragePhysicalTaskExecutor {
                                 }
                             }
                             if (task.isNeedBroadcasting()) { // 需要传播
-                                List<String> replicaIds = task.getTargetFragment().getMasterStorageUnit().getReplicas()
-                                        .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
-                                for (String replicaId : replicaIds) {
-                                    StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
-                                    storageTaskQueues.get(replicaId).addTask(replicaTask);
-                                    logger.info("broadcasting task " + task + " to " + replicaId);
+                                if (result.getException() != null) {
+                                    logger.error("task " + task + " will not broadcasting to replicas for the sake of exception: " + result.getException());
+                                    task.setResult(new TaskExecuteResult(result.getException()));
+                                } else {
+                                    List<String> replicaIds = task.getTargetFragment().getMasterStorageUnit().getReplicas()
+                                            .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
+                                    for (String replicaId : replicaIds) {
+                                        StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
+                                        storageTaskQueues.get(replicaId).addTask(replicaTask);
+                                        logger.info("broadcasting task " + task + " to " + replicaId);
+                                    }
                                 }
                             }
                         });
@@ -139,7 +153,7 @@ public class StoragePhysicalTaskExecutor {
                 Set<Timeseries> timeseries = new HashSet<>();
                 for (StorageEngineMeta storage : storageList) {
                     long id = storage.getId();
-                    Pair<IStorage, ExecutorService> pair = storageManager.getStorage(id);
+                    Pair<IStorage, ThreadPoolExecutor> pair = storageManager.getStorage(id);
                     if (pair == null) {
                         continue;
                     }

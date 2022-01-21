@@ -100,8 +100,10 @@ public class ConfigDescriptor {
             config.setConstraintChecker(properties.getProperty("constraintChecker", "naive"));
 
             config.setPhysicalOptimizer(properties.getProperty("physicalOptimizer", "naive"));
-            config.setMemoryTaskThreadPoolSize(Integer.parseInt(properties.getProperty("memoryTaskThreadPoolSize", "100")));
-            config.setPhysicalTaskThreadPoolSizePerStorage(Integer.parseInt(properties.getProperty("physicalTaskThreadPoolSizePerStorage", "20")));
+            config.setMemoryTaskThreadPoolSize(Integer.parseInt(properties.getProperty("memoryTaskThreadPoolSize", "200")));
+            config.setPhysicalTaskThreadPoolSizePerStorage(Integer.parseInt(properties.getProperty("physicalTaskThreadPoolSizePerStorage", "100")));
+
+            config.setMaxCachedPhysicalTaskPerStorage(Integer.parseInt(properties.getProperty("maxCachedPhysicalTaskPerStorage", "500")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -143,6 +145,7 @@ public class ConfigDescriptor {
         config.setPhysicalOptimizer(EnvUtils.loadEnv("physicalOptimizer", config.getPhysicalOptimizer()));
         config.setMemoryTaskThreadPoolSize(EnvUtils.loadEnv("memoryTaskThreadPoolSize", config.getMemoryTaskThreadPoolSize()));
         config.setPhysicalTaskThreadPoolSizePerStorage(EnvUtils.loadEnv("physicalTaskThreadPoolSizePerStorage", config.getPhysicalTaskThreadPoolSizePerStorage()));
+        config.setMaxCachedPhysicalTaskPerStorage(EnvUtils.loadEnv("maxCachedPhysicalTaskPerStorage", config.getMaxCachedPhysicalTaskPerStorage()));
     }
 
 
