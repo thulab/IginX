@@ -19,8 +19,12 @@
 package cn.edu.tsinghua.iginx.engine.physical.optimizer;
 
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.naive.NaivePhysicalOptimizer;
+import cn.edu.tsinghua.iginx.engine.physical.optimizer.rule.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Collection;
+import java.util.Collections;
 
 public class PhysicalOptimizerManager {
 
@@ -41,13 +45,22 @@ public class PhysicalOptimizerManager {
         if (name == null) {
             return null;
         }
+        PhysicalOptimizer optimizer = null;
         switch (name) {
             case NAIVE:
                 logger.info("use {} as physical optimizer.", name);
-                return NaivePhysicalOptimizer.getInstance();
+                optimizer = NaivePhysicalOptimizer.getInstance();
+                break;
             default:
                 logger.error("unknown physical optimizer {}, use {} as default.", name, NAIVE);
-                return NaivePhysicalOptimizer.getInstance();
+                optimizer = NaivePhysicalOptimizer.getInstance();
         }
+        optimizer.setRules(getRules());
+        return optimizer;
+    }
+
+    private Collection<Rule> getRules() {
+        // TODO: get rule from conf
+        return Collections.emptyList();
     }
 }

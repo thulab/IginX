@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.constraint;
+package cn.edu.tsinghua.iginx.engine.physical.optimizer.naive;
 
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
@@ -30,14 +30,14 @@ import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
 import java.util.List;
 
-public class ConstraintManagerImpl implements ConstraintManager {
+class NaiveConstraintManager implements ConstraintManager {
 
-    private static final ConstraintManagerImpl INSTANCE = new ConstraintManagerImpl();
+    private static final NaiveConstraintManager INSTANCE = new NaiveConstraintManager();
 
-    private ConstraintManagerImpl() {
+    private NaiveConstraintManager() {
     }
 
-    public static ConstraintManagerImpl getInstance() {
+    public static NaiveConstraintManager getInstance() {
         return INSTANCE;
     }
 
