@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.TooManyPhysicalTasksException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.MemoryPhysicalTaskDispatcher;
+import cn.edu.tsinghua.iginx.engine.physical.optimizer.ReplicaDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
 import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
@@ -65,6 +66,8 @@ public class StoragePhysicalTaskExecutor {
     private final Map<String, StoragePhysicalTaskQueue> storageTaskQueues = new ConcurrentHashMap<>();
 
     private final Map<String, ExecutorService> dispatchers = new ConcurrentHashMap<>();
+
+    private ReplicaDispatcher replicaDispatcher;
 
     private MemoryPhysicalTaskDispatcher memoryTaskExecutor;
 
@@ -113,9 +116,14 @@ public class StoragePhysicalTaskExecutor {
                                     logger.error("task " + task + " will not broadcasting to replicas for the sake of exception: " + result.getException());
                                     task.setResult(new TaskExecuteResult(result.getException()));
                                 } else {
-                                    List<String> replicaIds = task.getTargetFragment().getMasterStorageUnit().getReplicas()
+                                    StorageUnitMeta masterStorageUnit = task.getTargetFragment().getMasterStorageUnit();
+                                    List<String> replicaIds = masterStorageUnit.getReplicas()
                                             .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
+                                    replicaIds.add(masterStorageUnit.getId());
                                     for (String replicaId : replicaIds) {
+                                        if (replicaId.equals(task.getStorageUnit())) {
+                                            continue;
+                                        }
                                         StoragePhysicalTask replicaTask = new StoragePhysicalTask(task.getOperators(), false, false);
                                         storageTaskQueues.get(replicaId).addTask(replicaTask);
                                         logger.info("broadcasting task " + task + " to " + replicaId);
@@ -172,15 +180,21 @@ public class StoragePhysicalTaskExecutor {
 
     public void commit(List<StoragePhysicalTask> tasks) {
         for (StoragePhysicalTask task : tasks) {
-            storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task); // 异步写备，查询只查主
+            if (replicaDispatcher == null) {
+                storageTaskQueues.get(task.getTargetFragment().getMasterStorageUnitId()).addTask(task); // 默认情况下，异步写备，查询只查主
+            } else {
+                storageTaskQueues.get(replicaDispatcher.chooseReplica(task)).addTask(task); // 在优化策略提供了选择器的情况下，利用选择器提供的结果
+            }
         }
     }
 
-    public void init(MemoryPhysicalTaskDispatcher memoryTaskExecutor) {
+    public void init(MemoryPhysicalTaskDispatcher memoryTaskExecutor, ReplicaDispatcher replicaDispatcher) {
         this.memoryTaskExecutor = memoryTaskExecutor;
+        this.replicaDispatcher = replicaDispatcher;
     }
 
     public StorageManager getStorageManager() {
         return storageManager;
     }
+
 }

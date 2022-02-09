@@ -16,24 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.optimizer;
+package cn.edu.tsinghua.iginx.engine.physical.optimizer.rule;
 
-import cn.edu.tsinghua.iginx.engine.physical.optimizer.rule.Rule;
-import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
-import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+public interface Rule {
 
-import java.util.Collection;
-
-public interface PhysicalOptimizer {
-
-    PhysicalTask optimize(Operator root);
-
-    ConstraintManager getConstraintManager();
-
-    ReplicaDispatcher getReplicaDispatcher();
-
-    void setRules(Collection<Rule> rules);
-
+    // TODO: how to define rule
 
 }

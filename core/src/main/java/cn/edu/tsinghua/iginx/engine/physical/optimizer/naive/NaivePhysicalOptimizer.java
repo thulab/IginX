@@ -19,11 +19,14 @@
 package cn.edu.tsinghua.iginx.engine.physical.optimizer.naive;
 
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
+import cn.edu.tsinghua.iginx.engine.physical.optimizer.ReplicaDispatcher;
+import cn.edu.tsinghua.iginx.engine.physical.optimizer.rule.Rule;
 import cn.edu.tsinghua.iginx.engine.physical.task.BinaryMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.MultipleMemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.UnaryMemoryPhysicalTask;
+import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
@@ -34,6 +37,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,6 +53,21 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
             return null;
         }
         return constructTask(root);
+    }
+
+    @Override
+    public ConstraintManager getConstraintManager() {
+        return NaiveConstraintManager.getInstance();
+    }
+
+    @Override
+    public ReplicaDispatcher getReplicaDispatcher() {
+        return NaiveReplicaDispatcher.getInstance();
+    }
+
+    @Override
+    public void setRules(Collection<Rule> rules) {
+
     }
 
     private PhysicalTask constructTask(Operator operator) {

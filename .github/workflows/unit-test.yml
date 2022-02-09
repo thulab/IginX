@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - dev_0.4.0
+      - 0.5.0
   pull_request:
     branches:
       - main
-      - dev_0.4.0
+      - 0.5.0
 
 jobs:
   ZK-Test:
