@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
@@ -179,5 +181,17 @@ public interface IMetaManager {
     List<UserMeta> getUsers(List<String> username);
 
     void registerStorageUnitHook(StorageUnitHook hook);
+
+    boolean election();
+
+    void saveTimeSeriesData(InsertStatement statement);
+
+    List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
+
+    Map<String, Double> getTimeseriesData();
+
+    int updateVersion();
+
+    Map<Integer, Integer> getTimeseriesVersionMap();
 
 }

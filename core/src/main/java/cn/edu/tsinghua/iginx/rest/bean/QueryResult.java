@@ -26,11 +26,7 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @Data
 public class QueryResult {
@@ -199,7 +195,8 @@ public class QueryResult {
             ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[]) {
                 ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
-            } else {
+            }
+            else {
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             }
             ret.append("],");

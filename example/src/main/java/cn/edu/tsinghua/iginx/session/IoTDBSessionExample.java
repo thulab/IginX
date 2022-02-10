@@ -110,6 +110,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
+        System.out.println("insertColumnRecords...");
         session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
@@ -151,6 +152,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
+        System.out.println("insertNonAlignedColumnRecords...");
         session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
@@ -185,6 +187,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
+        System.out.println("insertRowRecords...");
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
@@ -223,6 +226,7 @@ public class IoTDBSessionExample {
             dataTypeList.add(DataType.BINARY);
         }
 
+        System.out.println("insertNonAlignedRowRecords...");
         session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 

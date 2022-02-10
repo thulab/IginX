@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.policy.naiveV2;
+package cn.edu.tsinghua.iginx.policy.naive;
 
 import java.util.ArrayList;
 import java.util.HashSet;

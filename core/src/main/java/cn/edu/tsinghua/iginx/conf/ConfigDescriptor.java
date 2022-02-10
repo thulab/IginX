@@ -104,6 +104,14 @@ public class ConfigDescriptor {
             config.setPhysicalTaskThreadPoolSizePerStorage(Integer.parseInt(properties.getProperty("physicalTaskThreadPoolSizePerStorage", "100")));
 
             config.setMaxCachedPhysicalTaskPerStorage(Integer.parseInt(properties.getProperty("maxCachedPhysicalTaskPerStorage", "500")));
+
+            config.setCachedTimeseriesProb(Double.parseDouble(properties.getProperty("cachedTimeseriesProb", "0.01")));
+            config.setRetryCount(Integer.parseInt(properties.getProperty("retryCount", "10")));
+            config.setRetryWait(Integer.parseInt(properties.getProperty("retryWait", "5000")));
+            config.setFragmentPerEngine(Integer.parseInt(properties.getProperty("fragmentPerEngine", "10")));
+            config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
+            config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
+            config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -146,6 +154,13 @@ public class ConfigDescriptor {
         config.setMemoryTaskThreadPoolSize(EnvUtils.loadEnv("memoryTaskThreadPoolSize", config.getMemoryTaskThreadPoolSize()));
         config.setPhysicalTaskThreadPoolSizePerStorage(EnvUtils.loadEnv("physicalTaskThreadPoolSizePerStorage", config.getPhysicalTaskThreadPoolSizePerStorage()));
         config.setMaxCachedPhysicalTaskPerStorage(EnvUtils.loadEnv("maxCachedPhysicalTaskPerStorage", config.getMaxCachedPhysicalTaskPerStorage()));
+        config.setCachedTimeseriesProb(EnvUtils.loadEnv("cachedTimeseriesProb", config.getCachedTimeseriesProb()));
+        config.setRetryCount(EnvUtils.loadEnv("retryCount", config.getRetryCount()));
+        config.setRetryWait(EnvUtils.loadEnv("retryWait", config.getRetryWait()));
+        config.setFragmentPerEngine(EnvUtils.loadEnv("fragmentPerEngine", config.getFragmentPerEngine()));
+        config.setReAllocatePeriod(EnvUtils.loadEnv("reAllocatePeriod", config.getReAllocatePeriod()));
+        config.setEnableStorageGroupValueLimit(EnvUtils.loadEnv("enableStorageGroupValueLimit", config.isEnableStorageGroupValueLimit()));
+        config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
     }
 
 

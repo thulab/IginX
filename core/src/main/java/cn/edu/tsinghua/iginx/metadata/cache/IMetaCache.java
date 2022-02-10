@@ -25,6 +25,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 
 import java.util.List;
 import java.util.Map;
@@ -105,4 +107,13 @@ public interface IMetaCache {
 
     List<UserMeta> getUser(List<String> usernames);
 
+    void timeSeriesIsUpdated(int node, int version);
+
+    void saveTimeSeriesData(InsertStatement statement);
+
+    List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
+
+    double getSumFromTimeSeries();
+
+    Map<Integer, Integer> getTimeseriesVersionMap();
 }

@@ -18,6 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.*;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -25,14 +28,13 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -66,6 +68,17 @@ public class DefaultMetaCache implements IMetaCache {
     // user 的缓存
     private final Map<String, UserMeta> userMetaMap;
 
+    // 时序列信息版本号的缓存
+    private final Map<Integer, Integer> timeSeriesVersionMap;
+
+    private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
+
+    private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
+
+    private Random random = new Random();
+
+    private Config config = ConfigDescriptor.getInstance().getConfig();
+
     private DefaultMetaCache() {
         // 分片相关
         sortedFragmentMetaLists = new ArrayList<>();
@@ -82,6 +95,8 @@ public class DefaultMetaCache implements IMetaCache {
         schemaMappings = new ConcurrentHashMap<>();
         // user 相关
         userMetaMap = new ConcurrentHashMap<>();
+        // 时序列信息版本号相关
+        timeSeriesVersionMap = new ConcurrentHashMap<>();
     }
 
     public static DefaultMetaCache getInstance() {
@@ -101,7 +116,7 @@ public class DefaultMetaCache implements IMetaCache {
             return resultList;
         }
         int index = 0;
-        while(index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
+        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
             if (fragmentSeriesList.get(index).k.isIntersect(tsInterval)) {
                 resultList.add(fragmentSeriesList.get(index));
             }
@@ -116,7 +131,7 @@ public class DefaultMetaCache implements IMetaCache {
             return resultList;
         }
         int index = 0;
-        while(index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
+        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
             if (fragmentSeriesList.get(index).k.isContain(tsName)) {
                 resultList.add(fragmentSeriesList.get(index));
             }
@@ -131,7 +146,7 @@ public class DefaultMetaCache implements IMetaCache {
             return resultList;
         }
         int index = 0;
-        while(index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
+        while (index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
             if (fragmentMetaList.get(index).getTimeInterval().isIntersect(timeInterval)) {
                 resultList.add(fragmentMetaList.get(index));
             }
@@ -172,7 +187,7 @@ public class DefaultMetaCache implements IMetaCache {
             return;
         }
         int left = 0, right = sortedFragmentMetaLists.size() - 1;
-        while(left <= right) {
+        while (left <= right) {
             int mid = (left + right) / 2;
             TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
             if (tsInterval.compareTo(midTsInterval) < 0) {
@@ -445,4 +460,121 @@ public class DefaultMetaCache implements IMetaCache {
         return users;
     }
 
+    @Override
+    public void timeSeriesIsUpdated(int node, int version) {
+        timeSeriesVersionMap.put(node, version);
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertStatement statement) {
+        insertRecordLock.writeLock().lock();
+        long now = System.currentTimeMillis();
+
+        RawData data = statement.getRawData();
+        List<String> paths = data.getPaths();
+        if (data.isColumnData()) {
+            DataView view = new ColumnDataView(data, 0, data.getPaths().size(), 0, data.getTimestamps().size());
+            for (int i = 0; i < view.getPathNum(); i++) {
+                long minn = Long.MAX_VALUE;
+                long maxx = Long.MIN_VALUE;
+                long totalByte = 0L;
+                int count = 0;
+                BitmapView bitmapView = view.getBitmapView(i);
+                for (int j = 0; j < view.getTimeSize(); j++) {
+                    if (bitmapView.get(j)) {
+                        minn = Math.min(minn, view.getTimestamp(j));
+                        maxx = Math.max(maxx, view.getTimestamp(j));
+                        if (view.getDataType(i) == DataType.BINARY) {
+                            totalByte += ((byte[]) view.getValue(i, j)).length;
+                        } else {
+                            totalByte += transDatatypeToByte(view.getDataType(i));
+                        }
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    updateTimeSeriesCalDOConcurrentHashMap(paths.get(i), now, minn, maxx, totalByte, count);
+                }
+            }
+        } else {
+            DataView view = new RowDataView(data, 0, data.getPaths().size(), 0, data.getTimestamps().size());
+            long[] totalByte = new long[view.getPathNum()];
+            int[] count = new int[view.getPathNum()];
+            long[] minn = new long[view.getPathNum()];
+            long[] maxx = new long[view.getPathNum()];
+            Arrays.fill(minn, Long.MAX_VALUE);
+            Arrays.fill(maxx, Long.MIN_VALUE);
+
+            for (int i = 0; i < view.getTimeSize(); i++) {
+                BitmapView bitmapView = view.getBitmapView(i);
+                int index = 0;
+                for (int j = 0; j < view.getPathNum(); j++) {
+                    if (bitmapView.get(j)) {
+                        minn[j] = Math.min(minn[j], view.getTimestamp(i));
+                        maxx[j] = Math.max(maxx[j], view.getTimestamp(i));
+                        if (view.getDataType(j) == DataType.BINARY) {
+                            totalByte[j] += ((byte[]) view.getValue(i, index)).length;
+                        } else {
+                            totalByte[j] += transDatatypeToByte(view.getDataType(j));
+                        }
+                        count[j]++;
+                        index++;
+                    }
+                }
+            }
+            for (int i = 0; i < count.length; i++) {
+                if (count[i] > 0) {
+                    updateTimeSeriesCalDOConcurrentHashMap(paths.get(i), now, minn[i], maxx[i], totalByte[i], count[i]);
+                }
+            }
+        }
+        insertRecordLock.writeLock().unlock();
+    }
+
+    private void updateTimeSeriesCalDOConcurrentHashMap(String path, long now, long minn, long maxx, long totalByte, int count) {
+        TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
+        timeSeriesCalDO.setTimeSeries(path);
+        if (timeSeriesCalDOConcurrentHashMap.containsKey(path)) {
+            timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(path);
+        }
+        timeSeriesCalDO.merge(now, minn, maxx, count, totalByte);
+        timeSeriesCalDOConcurrentHashMap.put(path, timeSeriesCalDO);
+    }
+
+    private long transDatatypeToByte(DataType dataType) {
+        switch (dataType) {
+            case BOOLEAN:
+                return 1;
+            case INTEGER:
+            case FLOAT:
+                return 4;
+            case LONG:
+            case DOUBLE:
+                return 8;
+            default:
+                return 0;
+        }
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
+        insertRecordLock.readLock().lock();
+        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
+                .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
+        insertRecordLock.readLock().unlock();
+        return ret;
+    }
+
+    @Override
+    public double getSumFromTimeSeries() {
+        insertRecordLock.readLock().lock();
+        double ret = timeSeriesCalDOConcurrentHashMap.values().stream().mapToDouble(TimeSeriesCalDO::getValue).sum();
+        insertRecordLock.readLock().unlock();
+        return ret;
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap() {
+        return timeSeriesVersionMap;
+    }
 }

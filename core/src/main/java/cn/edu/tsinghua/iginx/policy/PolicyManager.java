@@ -8,29 +8,29 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PolicyManagerV2 {
+public class PolicyManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(PolicyManagerV2.class);
+    private static final Logger logger = LoggerFactory.getLogger(PolicyManager.class);
 
-    private static final PolicyManagerV2 instance = new PolicyManagerV2();
+    private static final PolicyManager instance = new PolicyManager();
 
-    private final Map<String, IPolicyV2> policies;
+    private final Map<String, IPolicy> policies;
 
-    private PolicyManagerV2() {
+    private PolicyManager() {
         this.policies = new HashMap<>();
     }
 
-    public static PolicyManagerV2 getInstance() {
+    public static PolicyManager getInstance() {
         return instance;
     }
 
-    public IPolicyV2 getPolicy(String policyClassName) {
-        IPolicyV2 policy;
+    public IPolicy getPolicy(String policyClassName) {
+        IPolicy policy;
         synchronized (policies) {
             policy = policies.get(policyClassName);
             if (policy == null) {
                 try {
-                    Class<? extends IPolicyV2> clazz = (Class<? extends IPolicyV2>) this.getClass().getClassLoader().loadClass(policyClassName);
+                    Class<? extends IPolicy> clazz = (Class<? extends IPolicy>) this.getClass().getClassLoader().loadClass(policyClassName);
                     policy = clazz.getConstructor().newInstance();
                     policy.init(DefaultMetaManager.getInstance());
                     policies.put(policyClassName, policy);

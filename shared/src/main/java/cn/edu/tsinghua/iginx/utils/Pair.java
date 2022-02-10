@@ -29,6 +29,14 @@ public class Pair<K, V> {
         this.v = v;
     }
 
+    public K getK() {
+        return k;
+    }
+
+    public V getV() {
+        return v;
+    }
+
     @Override
     public String toString() {
         return "Pair{" +

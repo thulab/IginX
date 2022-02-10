@@ -36,6 +36,8 @@ import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
@@ -101,6 +103,7 @@ public class DefaultMetaManager implements IMetaManager {
             initStorageUnit();
             initFragment();
             initSchemaMapping();
+            initPolicy();
             initUser();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
@@ -236,6 +239,30 @@ public class DefaultMetaManager implements IMetaManager {
         });
         for (Map.Entry<String, Map<String, Integer>> schemaEntry : storage.loadSchemaMapping().entrySet()) {
             cache.addOrUpdateSchemaMapping(schemaEntry.getKey(), schemaEntry.getValue());
+        }
+    }
+
+    private void initPolicy(){
+        storage.registerTimeseriesChangeHook(cache::timeSeriesIsUpdated);
+        storage.registerVersionChangeHook((version, num) -> {
+            double sum = cache.getSumFromTimeSeries();
+            Map<String, Double> timeseriesData = cache.getMaxValueFromTimeSeries().stream().
+                    collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
+            double countSum = timeseriesData.values().stream().mapToDouble(Double::doubleValue).sum();
+            if (countSum > 1e-9) {
+                timeseriesData.forEach((k, v) -> timeseriesData.put(k, v / countSum * sum));
+            }
+            try {
+                storage.updateTimeseriesData(timeseriesData, getIginxId(), version);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        int num = 0;
+        try {
+            storage.registerPolicy(getIginxId(), num);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -680,5 +707,35 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public void registerStorageUnitHook(StorageUnitHook hook) {
         this.storageUnitHooks.add(hook);
+    }
+
+    @Override
+    public boolean election() {
+        return storage.election();
+    }
+
+    @Override
+    public void saveTimeSeriesData(InsertStatement statement) {
+        cache.saveTimeSeriesData(statement);
+    }
+
+    @Override
+    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
+        return cache.getMaxValueFromTimeSeries();
+    }
+
+    @Override
+    public Map<String, Double> getTimeseriesData() {
+        return storage.getTimeseriesData();
+    }
+
+    @Override
+    public int updateVersion() {
+        return storage.updateVersion();
+    }
+
+    @Override
+    public Map<Integer, Integer> getTimeseriesVersionMap() {
+        return cache.getTimeseriesVersionMap();
     }
 }

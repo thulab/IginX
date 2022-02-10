@@ -9,7 +9,7 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
 
-public interface IPolicyV2 {
+public interface IPolicy {
 
     void notify(DataStatement statement);
 

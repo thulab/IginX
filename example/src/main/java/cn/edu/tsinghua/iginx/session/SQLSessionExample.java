@@ -21,29 +21,29 @@ public class SQLSessionExample {
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 15000L;
 
-    private static List<String> funcTypeList = Arrays.asList("MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT");
+    private static final List<String> funcTypeList = Arrays.asList("MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT");
 
-    private static String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
+    private static final String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
 
-    private static String delete = "DELETE FROM us.d1.s1 WHERE time in (105, 115);";
+    private static final String delete = "DELETE FROM us.d1.s1 WHERE time > 105 and time < 115;";
 
-    private static String simpleQuery = "SELECT s1 FROM us.d1 WHERE time in (100, 120);";
-    private static String valueFilterQuery = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) and s1 > 200 and s1 < 210;";
-    private static String limitQuery = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10;";
-    private static String limitOffsetQuery = "SELECT s1 FROM us.d1 WHERE time in (0, 10000) limit 10 offset 5;";
-    private static String aggregateQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, %s);";
-    private static String downSample = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, %s) GROUP BY %s;";
-    private static String lastQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time in (%s, INF);";
-    private static String countAll = "SELECT COUNT(*) FROM us.d1;";
+    private static final String simpleQuery = "SELECT s1 FROM us.d1 WHERE time > 100 and time < 120;";
+    private static final String valueFilterQuery = "SELECT s1 FROM us.d1 WHERE time > 0 and time < 10000 and s1 > 200 and s1 < 210;";
+    private static final String limitQuery = "SELECT s1 FROM us.d1 WHERE time > 0 and time < 10000 limit 10;";
+    private static final String limitOffsetQuery = "SELECT s1 FROM us.d1 WHERE time > 0 and time < 10000 limit 10 offset 5;";
+    private static final String aggregateQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time > %s and time < %s;";
+    private static final String downSample = "SELECT %s(%s), %s(%s) FROM us.d1 GROUP (%s, %s) BY %s;";
+    private static final String lastQuery = "SELECT %s(%s), %s(%s) FROM us.d1 WHERE time > %s;";
+    private static final String countAll = "SELECT COUNT(*) FROM us.d1;";
 
-    private static String deleteTimeSeries = "DELETE TIME SERIES us.d1.s2, us.d1.s4;";
-    private static String addStorageEngines = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb11\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key: val\");";
+    private static final String deleteTimeSeries = "DELETE TIME SERIES us.d1.s2, us.d1.s4;";
+    private static final String addStorageEngines = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb11\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key: val\");";
 
-    private static String countPoints = "COUNT POINTS;";
-    private static String showReplication = "SHOW REPLICA NUMBER;";
-    private static String showTimeSeries = "SHOW TIME SERIES;";
-    private static String showClusterInfo = "SHOW CLUSTER INFO;";
-    private static String clearData = "CLEAR DATA;";
+    private static final String countPoints = "COUNT POINTS;";
+    private static final String showReplication = "SHOW REPLICA NUMBER;";
+    private static final String showTimeSeries = "SHOW TIME SERIES;";
+    private static final String showClusterInfo = "SHOW CLUSTER INFO;";
+    private static final String clearData = "CLEAR DATA;";
 
     public static void main(String[] args) throws SessionException, ExecutionException {
         session = new Session("127.0.0.1", 6888, "root", "root");
