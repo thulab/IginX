@@ -31,21 +31,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DataPointsParser {
     public static final String ANNOTATION_SPLIT_STRING = "@@annotation";
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
-    private final ObjectMapper mapper = new ObjectMapper();
-    private final RestSession session = new RestSession();
     private Reader inputStream = null;
+    private final ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
+    private final RestSession session = new RestSession();
 
     public DataPointsParser() {
 
@@ -95,7 +91,7 @@ public class DataPointsParser {
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
-        while(elements.hasNext() && fieldNames.hasNext()) {
+        while (elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
         JsonNode tim = node.get("timestamp"), val = node.get("value");
@@ -213,7 +209,7 @@ public class DataPointsParser {
                 metricschema = new ConcurrentHashMap<>();
             }
             Iterator iter = metric.getTags().entrySet().iterator();
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
@@ -230,12 +226,13 @@ public class DataPointsParser {
             }
             StringBuilder path = new StringBuilder();
             iter = pos2path.entrySet().iterator();
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 Map.Entry entry = (Map.Entry) iter.next();
                 String ins = metric.getTags().get(entry.getValue());
                 if (ins != null) {
                     path.append(ins).append(".");
-                } else {
+                }
+                else {
                     path.append("null.");
                 }
             }

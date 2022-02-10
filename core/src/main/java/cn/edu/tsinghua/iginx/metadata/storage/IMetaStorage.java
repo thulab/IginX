@@ -25,12 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.*;
 
 import java.util.List;
 import java.util.Map;
@@ -89,4 +84,17 @@ public interface IMetaStorage {
 
     void removeUser(String username) throws MetaStorageException;
 
+    void registerTimeseriesChangeHook(TimeSeriesChangeHook hook);
+
+    void registerVersionChangeHook(VersionChangeHook hook);
+
+    boolean election();
+
+    void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception;
+
+    Map<String, Double> getTimeseriesData();
+
+    void registerPolicy(long iginxId, int num) throws Exception;
+
+    int updateVersion();
 }

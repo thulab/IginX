@@ -8,12 +8,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
@@ -470,5 +465,40 @@ public class FileMetaStorage implements IMetaStorage {
         if (userChangeHook != null) {
             userChangeHook.onChange(username, null);
         }
+    }
+
+    @Override
+    public void registerTimeseriesChangeHook(TimeSeriesChangeHook hook) {
+
+    }
+
+    @Override
+    public void registerVersionChangeHook(VersionChangeHook hook) {
+
+    }
+
+    @Override
+    public boolean election() {
+        return false;
+    }
+
+    @Override
+    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception {
+
+    }
+
+    @Override
+    public Map<String, Double> getTimeseriesData() {
+        return null;
+    }
+
+    @Override
+    public void registerPolicy(long iginxId, int num) throws Exception {
+
+    }
+
+    @Override
+    public int updateVersion() {
+        return 0;
     }
 }

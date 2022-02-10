@@ -98,6 +98,20 @@ public class Config {
 
     private int maxCachedPhysicalTaskPerStorage = 500;
 
+    private double cachedTimeseriesProb = 0.01;
+
+    private int retryCount = 10;
+
+    private int retryWait = 5000;
+
+    private int reAllocatePeriod = 30000;
+
+    private int fragmentPerEngine = 10;
+
+    private boolean enableStorageGroupValueLimit = true;
+
+    private double storageGroupValueLimit = 200.0;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -408,5 +422,61 @@ public class Config {
 
     public void setMaxCachedPhysicalTaskPerStorage(int maxCachedPhysicalTaskPerStorage) {
         this.maxCachedPhysicalTaskPerStorage = maxCachedPhysicalTaskPerStorage;
+    }
+
+    public double getCachedTimeseriesProb() {
+        return cachedTimeseriesProb;
+    }
+
+    public void setCachedTimeseriesProb(double cachedTimeseriesProb) {
+        this.cachedTimeseriesProb = cachedTimeseriesProb;
+    }
+
+    public int getRetryCount() {
+        return retryCount;
+    }
+
+    public void setRetryCount(int retryCount) {
+        this.retryCount = retryCount;
+    }
+
+    public int getRetryWait() {
+        return retryWait;
+    }
+
+    public void setRetryWait(int retryWait) {
+        this.retryWait = retryWait;
+    }
+
+    public int getReAllocatePeriod() {
+        return reAllocatePeriod;
+    }
+
+    public void setReAllocatePeriod(int reAllocatePeriod) {
+        this.reAllocatePeriod = reAllocatePeriod;
+    }
+
+    public int getFragmentPerEngine() {
+        return fragmentPerEngine;
+    }
+
+    public void setFragmentPerEngine(int fragmentPerEngine) {
+        this.fragmentPerEngine = fragmentPerEngine;
+    }
+
+    public boolean isEnableStorageGroupValueLimit() {
+        return enableStorageGroupValueLimit;
+    }
+
+    public void setEnableStorageGroupValueLimit(boolean enableStorageGroupValueLimit) {
+        this.enableStorageGroupValueLimit = enableStorageGroupValueLimit;
+    }
+
+    public double getStorageGroupValueLimit() {
+        return storageGroupValueLimit;
+    }
+
+    public void setStorageGroupValueLimit(double storageGroupValueLimit) {
+        this.storageGroupValueLimit = storageGroupValueLimit;
     }
 }
