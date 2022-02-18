@@ -65,12 +65,13 @@ public class ContextBuilder {
         List<Long> times = new ArrayList<>();
         Arrays.stream(timeArray).forEach(times::add);
 
-        List<Bitmap> bitmaps = bitmapList.stream().map(x -> new Bitmap(paths.size(), x.array())).collect(Collectors.toList());
-
+        List<Bitmap> bitmaps;
         Object[] values;
         if (rawDataType == RawDataType.Row || rawDataType == RawDataType.NonAlignedRow) {
+            bitmaps = bitmapList.stream().map(x -> new Bitmap(paths.size(), x.array())).collect(Collectors.toList());
             values = ByteUtils.getRowValuesByDataType(valueList, types, bitmapList);
         } else {
+            bitmaps = bitmapList.stream().map(x -> new Bitmap(times.size(), x.array())).collect(Collectors.toList());
             values = ByteUtils.getColumnValuesByDataType(valueList, types, bitmapList, times.size());
         }
 
