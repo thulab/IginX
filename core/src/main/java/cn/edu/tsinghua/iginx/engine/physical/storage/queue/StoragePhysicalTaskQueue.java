@@ -22,10 +22,15 @@ import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Random;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class StoragePhysicalTaskQueue {
+
+    private static final Random random = new Random();
+
+    private final long id = random.nextLong();
 
     private static final Logger logger = LoggerFactory.getLogger(StoragePhysicalTaskQueue.class);
 
@@ -38,6 +43,7 @@ public class StoragePhysicalTaskQueue {
     public void addTask(StoragePhysicalTask task) {
         try {
             tasks.put(task);
+            logger.info("[add to queue] current task [id = " + id + "] queue size: " + tasks.size());
         } catch (InterruptedException e) {
             logger.error("add task to physical task queue error: ", e);
         }
@@ -45,6 +51,7 @@ public class StoragePhysicalTaskQueue {
 
     public StoragePhysicalTask getTask() {
         try {
+            logger.info("[get from queue] current task [id = " + id + "] queue size: " + tasks.size());
             return tasks.take();
         } catch (Exception e) {
             logger.error("encounter error when get memory task: ", e);
@@ -52,4 +59,7 @@ public class StoragePhysicalTaskQueue {
         return null;
     }
 
+    public long getId() {
+        return id;
+    }
 }

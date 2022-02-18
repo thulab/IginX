@@ -433,14 +433,19 @@ public class DefaultMetaManager implements IMetaManager {
             if (globalStorageUnits != null && !globalStorageUnits.isEmpty()) { // 服务器上已经有人创建过了，本地只需要加载
                 Map<TimeSeriesInterval, List<FragmentMeta>> globalFragmentMap = storage.loadFragment();
                 newStorageUnits.addAll(globalStorageUnits.values());
-                cache.initStorageUnit(globalStorageUnits);
-                cache.initFragment(globalFragmentMap);
-                newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
+                // 先通知
+                logger.warn("server has created storage unit, just need to load.");
+                logger.warn("notify storage unit listeners.");
                 for (StorageUnitHook hook: storageUnitHooks) {
                     for (StorageUnitMeta meta: newStorageUnits) {
                         hook.onChange(null, meta);
                     }
                 }
+                logger.warn("notify storage unit listeners finished.");
+                // 再初始化缓存
+                cache.initStorageUnit(globalStorageUnits);
+                cache.initFragment(globalFragmentMap);
+                newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
                 return false;
             }
 
@@ -476,14 +481,19 @@ public class DefaultMetaManager implements IMetaManager {
             }
             Map<String, StorageUnitMeta> loadedStorageUnits = storage.loadStorageUnit();
             newStorageUnits.addAll(loadedStorageUnits.values());
-            cache.initStorageUnit(loadedStorageUnits);
-            cache.initFragment(storage.loadFragment());
             newStorageUnits.sort(Comparator.comparing(StorageUnitMeta::getId));
+            // 先通知
+            logger.warn("i have created storage unit.");
+            logger.warn("notify storage unit listeners.");
             for (StorageUnitHook hook: storageUnitHooks) {
                 for (StorageUnitMeta meta: newStorageUnits) {
                     hook.onChange(null, meta);
                 }
             }
+            logger.warn("notify storage unit listeners finished.");
+            // 再初始化缓存
+            cache.initStorageUnit(loadedStorageUnits);
+            cache.initFragment(storage.loadFragment());
             return true;
         } catch (MetaStorageException e) {
             logger.error("encounter error when init fragment: ", e);

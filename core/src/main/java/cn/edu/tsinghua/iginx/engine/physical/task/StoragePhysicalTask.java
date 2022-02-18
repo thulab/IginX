@@ -24,9 +24,13 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 
 import java.util.List;
-import java.util.concurrent.Future;
+import java.util.Random;
 
 public class StoragePhysicalTask extends AbstractPhysicalTask {
+
+    private static final Random random = new Random(0);
+
+    private final long id;
 
     private final FragmentMeta targetFragment;
 
@@ -48,6 +52,7 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     public StoragePhysicalTask(List<Operator> operators, FragmentMeta targetFragment, boolean sync, boolean needBroadcasting) {
         super(TaskType.Storage, operators);
+        this.id = random.nextLong();
         this.targetFragment = targetFragment;
         this.sync = sync;
         this.needBroadcasting = needBroadcasting;
@@ -81,10 +86,15 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
         return needBroadcasting;
     }
 
+    public long getId() {
+        return id;
+    }
+
     @Override
     public String toString() {
         return "StoragePhysicalTask{" +
-                "targetFragment=" + targetFragment +
+                "taskId=" + id +
+                ", targetFragment=" + targetFragment +
                 ", storageUnit='" + storageUnit + '\'' +
                 ", storage=" + storage +
                 '}';

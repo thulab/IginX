@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -61,8 +63,8 @@ public class StorageManager {
             IStorage storage = (IStorage) loader.loadClass(driver)
                     .getConstructor(StorageEngineMeta.class).newInstance(meta);
             // 启动一个派发线程池
-            ExecutorService dispatcher = new ThreadPoolExecutor(0,
-                    ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
+            ExecutorService dispatcher = new ThreadPoolExecutor(ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
+                    Integer.MAX_VALUE,
                     60L, TimeUnit.SECONDS, new SynchronousQueue<>());
             storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
         } catch (ClassNotFoundException e) {
