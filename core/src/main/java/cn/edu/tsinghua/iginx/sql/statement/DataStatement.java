@@ -1,4 +1,4 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-public class DataStatement extends Statement {
+public abstract class DataStatement extends Statement {
 }

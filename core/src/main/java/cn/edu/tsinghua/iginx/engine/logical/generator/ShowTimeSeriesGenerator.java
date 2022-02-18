@@ -8,13 +8,13 @@ import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ShowTimeSeriesGenerator implements LogicalGenerator {
+public class ShowTimeSeriesGenerator extends AbstractGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(ShowTimeSeriesGenerator.class);
     private final static ShowTimeSeriesGenerator instance = new ShowTimeSeriesGenerator();
-    private final GeneratorType type = GeneratorType.ShowTimeSeries;
 
     private ShowTimeSeriesGenerator() {
+        this.type = GeneratorType.ShowTimeSeries;
     }
 
     public static ShowTimeSeriesGenerator getInstance() {
@@ -22,16 +22,7 @@ public class ShowTimeSeriesGenerator implements LogicalGenerator {
     }
 
     @Override
-    public GeneratorType getType() {
-        return type;
-    }
-
-    @Override
-    public Operator generate(Statement statement) {
-        if (statement == null)
-            return null;
-        if (statement.getType() != StatementType.SHOW_TIME_SERIES)
-            return null;
+    protected Operator generateRoot(Statement statement) {
         return new ShowTimeSeries(new GlobalSource());
     }
 }

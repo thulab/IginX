@@ -4,34 +4,23 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.constraint.ConstraintChecker;
 import cn.edu.tsinghua.iginx.engine.logical.constraint.ConstraintCheckerManager;
-import cn.edu.tsinghua.iginx.engine.logical.generator.DeleteGenerator;
-import cn.edu.tsinghua.iginx.engine.logical.generator.InsertGenerator;
-import cn.edu.tsinghua.iginx.engine.logical.generator.LogicalGenerator;
-import cn.edu.tsinghua.iginx.engine.logical.generator.QueryGenerator;
-import cn.edu.tsinghua.iginx.engine.logical.generator.ShowTimeSeriesGenerator;
+import cn.edu.tsinghua.iginx.engine.logical.generator.*;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
+import cn.edu.tsinghua.iginx.engine.shared.Result;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.processor.*;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteTimeSeriesStatement;
-import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
-import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
-import cn.edu.tsinghua.iginx.sql.statement.ShowTimeSeriesStatement;
-import cn.edu.tsinghua.iginx.sql.statement.Statement;
-import cn.edu.tsinghua.iginx.sql.statement.StatementType;
-import cn.edu.tsinghua.iginx.sql.statement.SystemStatement;
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSet;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.sql.statement.*;
+import cn.edu.tsinghua.iginx.statistics.IStatisticsCollector;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
@@ -40,18 +29,15 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class StatementExecutor {
 
     private final static Logger logger = LoggerFactory.getLogger(StatementExecutor.class);
 
     private final static Config config = ConfigDescriptor.getInstance().getConfig();
-
-    private final static StatementExecutor instance = new StatementExecutor();
 
     private final static StatementBuilder builder = StatementBuilder.getInstance();
 
@@ -60,20 +46,63 @@ public class StatementExecutor {
     private final static ConstraintChecker checker = ConstraintCheckerManager.getInstance().getChecker(config.getConstraintChecker());
     private final static ConstraintManager constraintManager = engine.getConstraintManager();
 
-    private final List<LogicalGenerator> queryGeneratorList = new ArrayList<>();
-    private final List<LogicalGenerator> deleteGeneratorList = new ArrayList<>();
-    private final List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
-    private final List<LogicalGenerator> showTSGeneratorList = new ArrayList<>();
+    private final static Map<StatementType, List<LogicalGenerator>> generatorMap = new HashMap<>();
+
+    private final static List<LogicalGenerator> queryGeneratorList = new ArrayList<>();
+    private final static List<LogicalGenerator> deleteGeneratorList = new ArrayList<>();
+    private final static List<LogicalGenerator> insertGeneratorList = new ArrayList<>();
+    private final static List<LogicalGenerator> showTSGeneratorList = new ArrayList<>();
+
+    private final List<PreParseProcessor> preParseProcessors = new ArrayList<>();
+    private final List<PostParseProcessor> postParseProcessors = new ArrayList<>();
+    private final List<PreLogicalProcessor> preLogicalProcessors = new ArrayList<>();
+    private final List<PostLogicalProcessor> postLogicalProcessors = new ArrayList<>();
+    private final List<PrePhysicalProcessor> prePhysicalProcessors = new ArrayList<>();
+    private final List<PostPhysicalProcessor> postPhysicalProcessors = new ArrayList<>();
+    private final List<PreExecuteProcessor> preExecuteProcessors = new ArrayList<>();
+    private final List<PostExecuteProcessor> postExecuteProcessors = new ArrayList<>();
+
+    private static class StatementExecutorHolder {
+        private final static StatementExecutor instance = new StatementExecutor();
+    }
+
+    static {
+        generatorMap.put(StatementType.SELECT, queryGeneratorList);
+        generatorMap.put(StatementType.DELETE, deleteGeneratorList);
+        generatorMap.put(StatementType.INSERT, insertGeneratorList);
+        generatorMap.put(StatementType.SHOW_TIME_SERIES, showTSGeneratorList);
+    }
 
     private StatementExecutor() {
         registerGenerator(QueryGenerator.getInstance());
         registerGenerator(DeleteGenerator.getInstance());
         registerGenerator(InsertGenerator.getInstance());
         registerGenerator(ShowTimeSeriesGenerator.getInstance());
+
+        try {
+            String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
+            if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
+                Class<?> statisticsCollectorClass = StatementExecutor.class.getClassLoader().
+                        loadClass(statisticsCollectorClassName);
+                IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
+                        .getConstructor().newInstance();
+                registerPreParseProcessor(statisticsCollector.getPreParseProcessor());
+                registerPostParseProcessor(statisticsCollector.getPostParseProcessor());
+                registerPreLogicalProcessor(statisticsCollector.getPreLogicalProcessor());
+                registerPostLogicalProcessor(statisticsCollector.getPostLogicalProcessor());
+                registerPrePhysicalProcessor(statisticsCollector.getPrePhysicalProcessor());
+                registerPostPhysicalProcessor(statisticsCollector.getPostPhysicalProcessor());
+                registerPreExecuteProcessor(statisticsCollector.getPreExecuteProcessor());
+                registerPostExecuteProcessor(statisticsCollector.getPostExecuteProcessor());
+                statisticsCollector.startBroadcasting();
+            }
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+            logger.error("initial statistics collector error: ", e);
+        }
     }
 
     public static StatementExecutor getInstance() {
-        return instance;
+        return StatementExecutorHolder.instance;
     }
 
     public void registerGenerator(LogicalGenerator generator) {
@@ -97,136 +126,177 @@ public class StatementExecutor {
         }
     }
 
-    public ExecuteSqlResp execute(String sql, long sessionId) {
+    public void registerPreParseProcessor(PreParseProcessor processor) {
+        if (processor != null) preParseProcessors.add(processor);
+    }
+
+    public void registerPostParseProcessor(PostParseProcessor processor) {
+        if (processor != null) postParseProcessors.add(processor);
+    }
+
+    public void registerPreLogicalProcessor(PreLogicalProcessor processor) {
+        if (processor != null) preLogicalProcessors.add(processor);
+    }
+
+    public void registerPostLogicalProcessor(PostLogicalProcessor processor) {
+        if (processor != null) postLogicalProcessors.add(processor);
+    }
+
+    public void registerPrePhysicalProcessor(PrePhysicalProcessor processor) {
+        if (processor != null) prePhysicalProcessors.add(processor);
+    }
+
+    public void registerPostPhysicalProcessor(PostPhysicalProcessor processor) {
+        if (processor != null) postPhysicalProcessors.add(processor);
+    }
+
+    public void registerPreExecuteProcessor(PreExecuteProcessor processor) {
+        if (processor != null) preExecuteProcessors.add(processor);
+    }
+
+    public void registerPostExecuteProcessor(PostExecuteProcessor processor) {
+        if (processor != null) postExecuteProcessors.add(processor);
+    }
+
+    public void execute(RequestContext ctx) {
+        before(ctx, preExecuteProcessors);
+        if (ctx.isFromSQL()) {
+            executeSQL(ctx);
+        } else {
+            executeStatement(ctx);
+        }
+        after(ctx, postExecuteProcessors);
+    }
+
+    public void executeSQL(RequestContext ctx) {
         try {
-            Statement statement = builder.build(sql);
-            return executeStatement(statement, sessionId);
+            before(ctx, preParseProcessors);
+            builder.buildFromSQL(ctx);
+            after(ctx, postParseProcessors);
+            executeStatement(ctx);
         } catch (SQLParserException | ParseCancellationException e) {
             StatusCode statusCode = StatusCode.STATEMENT_PARSE_ERROR;
-            return buildErrResp(statusCode, e.getMessage());
+            ctx.setResult(new Result(RpcUtils.status(statusCode, e.getMessage())));
         } catch (Exception e) {
             e.printStackTrace();
             StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
             String errMsg = "Execute Error: encounter error(s) when executing sql statement, " +
                     "see server log for more details.";
-            return buildErrResp(statusCode, errMsg);
+            ctx.setResult(new Result(RpcUtils.status(statusCode, errMsg)));
+        } finally {
+            ctx.getResult().setSqlType(ctx.getSqlType());
         }
     }
 
-    public ExecuteSqlResp executeStatement(Statement statement, long sessionId) {
+    public void executeStatement(RequestContext ctx) {
         try {
-            StatementType type = statement.getType();
-            switch (type) {
-                case SELECT:
-                    return processQuery((SelectStatement) statement);
-                case DELETE:
-                    return processDelete((DeleteStatement) statement);
-                case INSERT:
-                    return processInsert((InsertStatement) statement);
-                case SHOW_TIME_SERIES:
-                    return processShowTimeSeries((ShowTimeSeriesStatement) statement);
-                case COUNT_POINTS:
-                    return processCountPoints();
-                case DELETE_TIME_SERIES:
-                    return processDeleteTimeSeries((DeleteTimeSeriesStatement) statement);
-                case CLEAR_DATA:
-                    return processClearData();
-                default:
-                    return ((SystemStatement) statement).execute(sessionId);
+            Statement statement = ctx.getStatement();
+            if (statement instanceof DataStatement) {
+                StatementType type = statement.getType();
+                switch (type) {
+                    case SELECT:
+                    case DELETE:
+                    case INSERT:
+                    case SHOW_TIME_SERIES:
+                        process(ctx);
+                        return;
+                    case COUNT_POINTS:
+                        processCountPoints(ctx);
+                        return;
+                    case DELETE_TIME_SERIES:
+                        processDeleteTimeSeries(ctx);
+                        return;
+                    case CLEAR_DATA:
+                        processClearData(ctx);
+                        return;
+                    default:
+                        throw new ExecutionException(String.format("Execute Error: unknown statement type [%s].", type));
+                }
+            } else {
+                ((SystemStatement) statement).execute(ctx);
             }
         } catch (ExecutionException | PhysicalException e) {
             StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
-            return buildErrResp(statusCode, e.getMessage());
+            ctx.setResult(new Result(RpcUtils.status(statusCode, e.getMessage())));
         }
     }
 
-    private ExecuteSqlResp processQuery(SelectStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator : queryGeneratorList) {
-            Operator root = generator.generate(statement);
+    private void process(RequestContext ctx) throws ExecutionException, PhysicalException {
+        List<LogicalGenerator> generatorList = generatorMap.get(ctx.getStatement().getType());
+        for (LogicalGenerator generator : generatorList) {
+            before(ctx, preLogicalProcessors);
+            Operator root = generator.generate(ctx);
+            after(ctx, postLogicalProcessors);
             if (constraintManager.check(root) && checker.check(root)) {
+                before(ctx, prePhysicalProcessors);
                 RowStream stream = engine.execute(root);
-                return buildQueryRowStreamResp(stream, statement);
+                after(ctx, postPhysicalProcessors);
+                setResult(ctx, stream);
+                return;
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
     }
 
-    private ExecuteSqlResp processDelete(DeleteStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator : deleteGeneratorList) {
-            Operator root = generator.generate(statement);
-            if (constraintManager.check(root) && checker.check(root)) {
-                engine.execute(root);
-                return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Delete);
-            }
-        }
-        throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
-    }
-
-    private ExecuteSqlResp processInsert(InsertStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator : insertGeneratorList) {
-            Operator root = generator.generate(statement);
-            if (constraintManager.check(root) && checker.check(root)) {
-                engine.execute(root);
-                return new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.Insert);
-            }
-        }
-        throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
-    }
-
-    private ExecuteSqlResp processShowTimeSeries(ShowTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
-        for (LogicalGenerator generator : showTSGeneratorList) {
-            Operator root = generator.generate(statement);
-            if (constraintManager.check(root) && checker.check(root)) {
-                RowStream stream = engine.execute(root);
-                return buildShowTSRowStreamResp(stream);
-            }
-        }
-        throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
-    }
-
-    private ExecuteSqlResp processCountPoints() throws ExecutionException, PhysicalException {
+    private void processCountPoints(RequestContext ctx) throws ExecutionException, PhysicalException {
         SelectStatement statement = new SelectStatement(
                 Collections.singletonList("*"),
                 0,
                 Long.MAX_VALUE,
                 AggregateType.COUNT);
-        ExecuteSqlResp countResp = processQuery(statement);
+        ctx.setStatement(statement);
+        process(ctx);
+
+        Result result = ctx.getResult();
         long pointsNum = 0;
-        if (countResp.getValuesList() != null) {
-            Object[] row = ByteUtils.getValuesByDataType(countResp.valuesList, countResp.dataTypeList);
-            for (Object count : row) {
-                pointsNum += (Long) count;
-            }
+        if (ctx.getResult().getValuesList() != null) {
+            Object[] row = ByteUtils.getValuesByDataType(result.getValuesList().get(0), result.getDataTypes());
+            pointsNum = Arrays.stream(row).mapToLong(e -> (Long) e).sum();
         }
-        ExecuteSqlResp resp = new ExecuteSqlResp(countResp.getStatus(), SqlType.CountPoints);
-        resp.setPointsNum(pointsNum);
-        return resp;
+
+        ctx.getResult().setPointsNum(pointsNum);
     }
 
-    private ExecuteSqlResp processDeleteTimeSeries(DeleteTimeSeriesStatement statement) throws ExecutionException, PhysicalException {
-        DeleteStatement deleteStatement = new DeleteStatement(statement.getPaths());
-        return processDelete(deleteStatement);
+    private void processDeleteTimeSeries(RequestContext ctx) throws ExecutionException, PhysicalException {
+        DeleteStatement deleteStatement = new DeleteStatement(((DeleteTimeSeriesStatement) ctx.getStatement()).getPaths());
+        ctx.setStatement(deleteStatement);
+        process(ctx);
     }
 
-    private ExecuteSqlResp processClearData() throws ExecutionException, PhysicalException {
+    private void processClearData(RequestContext ctx) throws ExecutionException, PhysicalException {
         DeleteStatement deleteStatement = new DeleteStatement(Collections.singletonList("*"));
-        return processDelete(deleteStatement);
+        ctx.setStatement(deleteStatement);
+        process(ctx);
     }
 
-    private ExecuteSqlResp buildErrResp(StatusCode statusCode, String errMsg) {
-        ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.status(statusCode, errMsg), SqlType.Unknown);
-        resp.setParseErrorMsg(errMsg);
-        return resp;
+    private void setEmptyQueryResp(RequestContext ctx) {
+        Result result = new Result(RpcUtils.SUCCESS);
+        result.setTimestamps(new Long[0]);
+        result.setValuesList(new ArrayList<>());
+        result.setBitmapList(new ArrayList<>());
+        result.setPaths(new ArrayList<>());
+        ctx.setResult(result);
     }
 
-    private ExecuteSqlResp buildEmptyQueryResp() {
-        ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
-        resp.setValuesList(new byte[]{});
-        resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
-        return resp;
+    private void setResult(RequestContext ctx, RowStream stream) throws PhysicalException, ExecutionException {
+        Statement statement = ctx.getStatement();
+        switch (statement.getType()) {
+            case INSERT:
+            case DELETE:
+                ctx.setResult(new Result(RpcUtils.SUCCESS));
+                break;
+            case SELECT:
+                setResultFromRowStream(ctx, stream);
+                break;
+            case SHOW_TIME_SERIES:
+                setShowTSRowStreamResult(ctx, stream);
+                break;
+            default:
+                throw new ExecutionException(String.format("Execute Error: unknown statement type [%s].", statement.getType()));
+        }
     }
 
-    private ExecuteSqlResp buildQueryRowStreamResp(RowStream stream, SelectStatement statement) throws PhysicalException {
+    private void setResultFromRowStream(RequestContext ctx, RowStream stream) throws PhysicalException {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         stream.getHeader().getFields().forEach(field -> {
@@ -263,33 +333,24 @@ public class StatementExecutor {
         logger.debug("time stamp num: {}", timestampList.size());
         logger.debug("value row num: {}", valuesList.size());
 
-        ExecuteSqlResp resp;
-        if (!valuesList.isEmpty()) {
-            if (!timestampList.isEmpty()) {
-                resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.SimpleQuery);
-
-                Long[] timestamps = timestampList.toArray(new Long[timestampList.size()]);
-                ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
-                resp.setTimestamps(timeBuffer);
-
-                QueryDataSet set = new QueryDataSet(timeBuffer, valuesList, bitmapList);
-                resp.setQueryDataSet(set);
-            } else {
-                resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.AggregateQuery);
-                resp.setValuesList(valuesList.get(0));
-            }
-        } else {  // empty result
-            resp = buildEmptyQueryResp();
+        if (valuesList.isEmpty()) { // empty result
+            setEmptyQueryResp(ctx);
+            return;
         }
 
-        resp.setPaths(paths);
-        resp.setDataTypeList(types);
-        resp.setOffset(0);
-        resp.setLimit(Integer.MAX_VALUE);
-        return resp;
+        Result result = new Result(RpcUtils.SUCCESS);
+        if (timestampList.size() != 0) {
+            Long[] timestamps = timestampList.toArray(new Long[timestampList.size()]);
+            result.setTimestamps(timestamps);
+        }
+        result.setValuesList(valuesList);
+        result.setBitmapList(bitmapList);
+        result.setPaths(paths);
+        result.setDataTypes(types);
+        ctx.setResult(result);
     }
 
-    private ExecuteSqlResp buildShowTSRowStreamResp(RowStream stream) throws PhysicalException {
+    private void setShowTSRowStreamResult(RequestContext ctx, RowStream stream) throws PhysicalException {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
 
@@ -309,9 +370,27 @@ public class StatementExecutor {
             }
         }
 
-        ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.SUCCESS, SqlType.ShowTimeSeries);
-        resp.setPaths(paths);
-        resp.setDataTypeList(types);
-        return resp;
+        Result result = new Result(RpcUtils.SUCCESS);
+        result.setPaths(paths);
+        result.setDataTypes(types);
+        ctx.setResult(result);
+    }
+
+    private void before(RequestContext ctx, List<? extends Processor> list) {
+        record(ctx, list);
+    }
+
+    private void after(RequestContext ctx, List<? extends Processor> list) {
+        record(ctx, list);
+    }
+
+    private void record(RequestContext ctx, List<? extends Processor> list) {
+        for (Processor processor : list) {
+            Status status = processor.process(ctx);
+            if (status != null) {
+                ctx.setStatus(status);
+                return;
+            }
+        }
     }
 }

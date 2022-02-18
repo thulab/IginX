@@ -44,19 +44,14 @@ enum SqlType {
     Unknown,
     Insert,
     Delete,
-    SimpleQuery,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    NotSupportQuery,
+    Query,
     GetReplicaNum,
     AddStorageEngines,
     CountPoints,
     ClearData,
     DeleteTimeSeries,
     ShowTimeSeries,
-    ShowClusterInfo,
-    NewQuery,
+    ShowClusterInfo
 }
 
 enum AuthType {

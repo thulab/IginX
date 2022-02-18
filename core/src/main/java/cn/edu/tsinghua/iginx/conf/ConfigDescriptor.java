@@ -71,7 +71,7 @@ public class ConfigDescriptor {
             config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
 
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
-            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
+            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "5000")));
 
             config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
             config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));

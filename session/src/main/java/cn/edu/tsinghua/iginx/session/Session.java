@@ -839,6 +839,7 @@ public class Session {
             } while (checkRedirect(resp.status));
             RpcUtils.verifySuccess(resp.status);
         } catch (TException e) {
+            e.printStackTrace();
             throw new SessionException(e);
         }
 
