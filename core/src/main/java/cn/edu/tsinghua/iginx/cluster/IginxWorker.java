@@ -23,8 +23,10 @@ import cn.edu.tsinghua.iginx.auth.UserManager;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
+import cn.edu.tsinghua.iginx.engine.ContextBuilder;
 import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
@@ -35,7 +37,6 @@ import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteTimeSeriesStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
-import cn.edu.tsinghua.iginx.sql.statement.ShowTimeSeriesStatement;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -104,6 +105,8 @@ public class IginxWorker implements IService.Iface {
 
     private final SessionManager sessionManager = SessionManager.getInstance();
 
+    private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
+
     private final StatementExecutor executor = StatementExecutor.getInstance();
 
     public static IginxWorker getInstance() {
@@ -136,8 +139,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        DeleteTimeSeriesStatement statement = new DeleteTimeSeriesStatement(req.getPaths());
-        return executor.executeStatement(statement, req.getSessionId()).getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -145,23 +149,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        List<String> paths = req.getPaths();
-        List<DataType> types = req.getDataTypeList();
-        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
-        List<Long> times = new ArrayList<>();
-        Arrays.stream(timeArray).forEach(times::add);
-        Object[] values = ByteUtils.getColumnValuesByDataType(req.getValuesList(), types, req.getBitmapList(), times.size());
-        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(timeArray.length, x.array())).collect(Collectors.toList());
-
-        InsertStatement statement = new InsertStatement(
-                RawDataType.Column,
-                paths,
-                times,
-                values,
-                types,
-                bitmaps
-        );
-        return executor.executeStatement(statement, req.getSessionId()).getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -169,23 +159,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        List<String> paths = req.getPaths();
-        List<DataType> types = req.getDataTypeList();
-        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
-        List<Long> times = new ArrayList<>();
-        Arrays.stream(timeArray).forEach(times::add);
-        Object[] values = ByteUtils.getColumnValuesByDataType(req.getValuesList(), types, req.getBitmapList(), times.size());
-        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(timeArray.length, x.array())).collect(Collectors.toList());
-
-        InsertStatement statement = new InsertStatement(
-                RawDataType.NonAlignedColumn,
-                paths,
-                times,
-                values,
-                types,
-                bitmaps
-        );
-        return executor.executeStatement(statement, req.getSessionId()).getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -193,23 +169,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        List<String> paths = req.getPaths();
-        List<DataType> types = req.getDataTypeList();
-        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
-        List<Long> times = new ArrayList<>();
-        Arrays.stream(timeArray).forEach(times::add);
-        Object[] values = ByteUtils.getRowValuesByDataType(req.getValuesList(), types, req.getBitmapList());
-        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
-
-        InsertStatement statement = new InsertStatement(
-                RawDataType.Row,
-                paths,
-                times,
-                values,
-                types,
-                bitmaps
-        );
-        return executor.executeStatement(statement, req.getSessionId()).getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -217,23 +179,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        List<String> paths = req.getPaths();
-        List<DataType> types = req.getDataTypeList();
-        long[] timeArray = ByteUtils.getLongArrayFromByteArray(req.getTimestamps());
-        List<Long> times = new ArrayList<>();
-        Arrays.stream(timeArray).forEach(times::add);
-        Object[] values = ByteUtils.getRowValuesByDataType(req.getValuesList(), types, req.getBitmapList());
-        List<Bitmap> bitmaps = req.getBitmapList().stream().map(x -> new Bitmap(req.getPathsSize(), x.array())).collect(Collectors.toList());
-
-        InsertStatement statement = new InsertStatement(
-                RawDataType.NonAlignedRow,
-                paths,
-                times,
-                values,
-                types,
-                bitmaps
-        );
-        return executor.executeStatement(statement, req.getSessionId()).getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -241,8 +189,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        DeleteStatement statement = new DeleteStatement(req.getPaths(), req.getStartTime(), req.getEndTime());
-        return executor.executeStatement(statement, req.getSessionId()).getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -250,17 +199,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
-        SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                req.getEndTime());
-        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
-
-        QueryDataResp resp = new QueryDataResp(sqlResp.getStatus());
-        resp.setPaths(sqlResp.getPaths());
-        resp.setDataTypeList(sqlResp.getDataTypeList());
-        resp.setQueryDataSet(sqlResp.getQueryDataSet());
-        return resp;
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getQueryDataResp();
     }
 
     @Override
@@ -316,18 +257,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new AggregateQueryResp(RpcUtils.ACCESS_DENY);
         }
-        SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                req.getEndTime(),
-                req.getAggregateType());
-        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
-
-        AggregateQueryResp resp = new AggregateQueryResp(sqlResp.getStatus());
-        resp.setPaths(sqlResp.getPaths());
-        resp.setDataTypeList(sqlResp.getDataTypeList());
-        resp.setValuesList(sqlResp.getValuesList());
-        return resp;
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getAggregateQueryResp();
     }
 
     @Override
@@ -335,19 +267,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new DownsampleQueryResp(RpcUtils.ACCESS_DENY);
         }
-        SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                req.getEndTime(),
-                req.getAggregateType(),
-                req.getPrecision());
-        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
-
-        DownsampleQueryResp resp = new DownsampleQueryResp(sqlResp.getStatus());
-        resp.setPaths(sqlResp.getPaths());
-        resp.setDataTypeList(sqlResp.getDataTypeList());
-        resp.setQueryDataSet(sqlResp.getQueryDataSet());
-        return resp;
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getDownsampleQueryResp();
     }
 
     @Override
@@ -355,13 +277,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new ShowColumnsResp(RpcUtils.ACCESS_DENY);
         }
-        ShowTimeSeriesStatement statement = new ShowTimeSeriesStatement();
-        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
-
-        ShowColumnsResp resp = new ShowColumnsResp(sqlResp.getStatus());
-        resp.setPaths(sqlResp.getPaths());
-        resp.setDataTypeList(sqlResp.getDataTypeList());
-        return resp;
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getShowColumnsResp();
     }
 
     @Override
@@ -377,7 +295,9 @@ public class IginxWorker implements IService.Iface {
     @Override
     public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
         StatementExecutor executor = StatementExecutor.getInstance();
-        return executor.execute(req.getStatement(), req.getSessionId());
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getExecuteSqlResp();
     }
 
     @Override
@@ -385,18 +305,10 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new LastQueryResp(RpcUtils.ACCESS_DENY);
         }
-        SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                Long.MAX_VALUE,
-                AggregateType.LAST);
-        ExecuteSqlResp sqlResp = executor.executeStatement(statement, req.getSessionId());
 
-        LastQueryResp resp = new LastQueryResp(sqlResp.getStatus());
-        resp.setPaths(sqlResp.getPaths());
-        resp.setDataTypeList(sqlResp.getDataTypeList());
-        resp.setQueryDataSet(sqlResp.getQueryDataSet());
-        return resp;
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getLastQueryResp();
     }
 
     @Override

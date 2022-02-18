@@ -3,7 +3,6 @@ package cn.edu.tsinghua.iginx.engine.logical.generator;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
-import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
@@ -29,7 +28,6 @@ import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
-import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
@@ -41,19 +39,18 @@ import java.util.stream.Collectors;
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
 
-public class QueryGenerator implements LogicalGenerator {
+public class QueryGenerator extends AbstractGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(QueryGenerator.class);
     private final static Config config = ConfigDescriptor.getInstance().getConfig();
     private final static QueryGenerator instance = new QueryGenerator();
     private final static FunctionManager functionManager = FunctionManager.getInstance();
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
-    private final GeneratorType type = GeneratorType.Query;
-    private final List<Optimizer> optimizerList = new ArrayList<>();
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private QueryGenerator() {
+        this.type = GeneratorType.Query;
         LogicalOptimizerManager optimizerManager = LogicalOptimizerManager.getInstance();
         String[] optimizers = config.getQueryOptimizer().split(",");
         for (String optimizer : optimizers) {
@@ -65,33 +62,12 @@ public class QueryGenerator implements LogicalGenerator {
         return instance;
     }
 
-    public void registerOptimizer(Optimizer optimizer) {
-        if (optimizer != null)
-            optimizerList.add(optimizer);
-    }
+    protected Operator generateRoot(Statement statement) {
+        SelectStatement selectStatement = (SelectStatement) statement;
 
-    @Override
-    public GeneratorType getType() {
-        return type;
-    }
+        policy.notify(selectStatement);
 
-    @Override
-    public Operator generate(Statement statement) {
-        if (statement == null)
-            return null;
-        if (statement.getType() != StatementType.SELECT)
-            return null;
-        Operator root = generateRoot((SelectStatement) statement);
-        for (Optimizer optimizer : optimizerList) {
-            root = optimizer.optimize(root);
-        }
-        return root;
-    }
-
-    private Operator generateRoot(SelectStatement statement) {
-        policy.notify(statement);
-
-        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPathSet()));
+        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(selectStatement.getPathSet()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
@@ -100,7 +76,7 @@ public class QueryGenerator implements LogicalGenerator {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         if (fragments.isEmpty()) {
             //on startup
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(statement);
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         }
@@ -118,39 +94,39 @@ public class QueryGenerator implements LogicalGenerator {
 
         Operator root = joinOperatorsByTime(joinList);
 
-        if (statement.hasValueFilter()) {
-            root = new Select(new OperatorSource(root), statement.getFilter());
+        if (selectStatement.hasValueFilter()) {
+            root = new Select(new OperatorSource(root), selectStatement.getFilter());
         }
 
         List<Operator> queryList = new ArrayList<>();
-        if (statement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
+        if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
             // DownSample Query
             Operator finalRoot = root;
-            statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
+            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
                 List<Value> params = new ArrayList<>();
                 params.add(new Value(str));
-                if (!statement.getLayers().isEmpty()) {
-                    params.add(new Value(statement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                if (!selectStatement.getLayers().isEmpty()) {
+                    params.add(new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
                 }
                 Operator copySelect = finalRoot.copy();
 
                 queryList.add(
                         new Downsample(
                                 new OperatorSource(copySelect),
-                                statement.getPrecision(),
+                                selectStatement.getPrecision(),
                                 new FunctionCall(functionManager.getFunction(k), params),
-                                new TimeRange(statement.getStartTime(), statement.getEndTime())
+                                new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
                         )
                 );
             }));
-        } else if (statement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
+        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
             // Aggregate Query
             Operator finalRoot = root;
-            statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
+            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
                 List<Value> params = new ArrayList<>();
                 params.add(new Value(str));
-                if (!statement.getLayers().isEmpty()) {
-                    params.add(new Value(statement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                if (!selectStatement.getLayers().isEmpty()) {
+                    params.add(new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
                 }
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
@@ -161,9 +137,9 @@ public class QueryGenerator implements LogicalGenerator {
                         )
                 );
             }));
-        } else if (statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
+        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
             Operator finalRoot = root;
-            statement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
+            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
                 List<Value> params = new ArrayList<>(Collections.singletonList(new Value(str)));
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
@@ -176,31 +152,31 @@ public class QueryGenerator implements LogicalGenerator {
             }));
         } else {
             List<String> selectedPath = new ArrayList<>();
-            statement.getSelectedFuncsAndPaths().forEach((k, v) -> selectedPath.addAll(v));
+            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> selectedPath.addAll(v));
             queryList.add(new Project(new OperatorSource(root), selectedPath));
         }
 
-        if (statement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
+        if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
             root = unionOperators(queryList);
-        } else if (statement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
+        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
             root = joinOperatorsByTime(queryList);
         } else {
             root = joinOperators(queryList, ORDINAL);
         }
 
-        if (!statement.getOrderByPath().equals("")) {
+        if (!selectStatement.getOrderByPath().equals("")) {
             root = new Sort(
                     new OperatorSource(root),
-                    statement.getOrderByPath(),
-                    statement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
+                    selectStatement.getOrderByPath(),
+                    selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
             );
         }
 
-        if (statement.getLimit() != Integer.MAX_VALUE || statement.getOffset() != 0) {
+        if (selectStatement.getLimit() != Integer.MAX_VALUE || selectStatement.getOffset() != 0) {
             root = new Limit(
                     new OperatorSource(root),
-                    (int) statement.getLimit(),
-                    (int) statement.getOffset()
+                    (int) selectStatement.getLimit(),
+                    (int) selectStatement.getOffset()
             );
         }
 

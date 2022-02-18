@@ -13,7 +13,7 @@ public class TestUtils {
     public static ResultSet buildMockResultSet() {
         SessionExecuteSqlResult result = new SessionExecuteSqlResult();
 
-        result.setSqlType(SqlType.SimpleQuery);
+        result.setSqlType(SqlType.Query);
 
         long[] timestamps = new long[]{1L, 2L, 3L, 4L, 5L, 6L, 7L};
         result.setTimestamps(timestamps);
