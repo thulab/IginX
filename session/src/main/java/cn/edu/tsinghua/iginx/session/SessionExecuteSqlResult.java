@@ -49,15 +49,11 @@ public class SessionExecuteSqlResult {
     private AggregateType aggregateType;
     private long[] timestamps;
     private List<String> paths;
-    private String orderByPath;
     private List<List<Object>> values;
     private List<DataType> dataTypeList;
     private int replicaNum;
     private long pointsNum;
     private String parseErrorMsg;
-    private int limit;
-    private int offset;
-    private boolean ascending;
     private List<IginxInfo> iginxInfos;
     private List<StorageEngineInfo> storageEngineInfos;
     private List<MetaStorageInfo> metaStorageInfos;
@@ -77,10 +73,7 @@ public class SessionExecuteSqlResult {
             case CountPoints:
                 this.pointsNum = resp.getPointsNum();
                 break;
-            case AggregateQuery:
-            case SimpleQuery:
-            case DownsampleQuery:
-            case ValueFilterQuery:
+            case Query:
                 constructQueryResult(resp);
                 break;
             case ShowTimeSeries:
@@ -101,33 +94,14 @@ public class SessionExecuteSqlResult {
     private void constructQueryResult(ExecuteSqlResp resp) {
         this.paths = resp.getPaths();
         this.dataTypeList = resp.getDataTypeList();
-        this.limit = resp.getLimit();
-        this.offset = resp.getOffset();
-        this.orderByPath = resp.getOrderByPath();
-        this.ascending = resp.isAscending();
 
         if (resp.timestamps != null) {
             this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
         }
-        if (resp.queryDataSet != null && resp.queryDataSet.timestamps != null) {
-            this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
-        }
-
-        if (resp.getType() == SqlType.AggregateQuery ||
-                resp.getType() == SqlType.DownsampleQuery) {
-            this.aggregateType = resp.aggregateType;
-        }
 
         // parse values
-        if (resp.getQueryDataSet() != null || resp.getValuesList() != null) {
-            if (resp.getType() == SqlType.AggregateQuery) {
-                Object[] aggregateValues = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
-                List<Object> aggregateValueList = new ArrayList<>(Arrays.asList(aggregateValues));
-                this.values = new ArrayList<>();
-                this.values.add(aggregateValueList);
-            } else {
-                this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
-            }
+        if (resp.getQueryDataSet() != null) {
+            this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         } else {
             this.values = new ArrayList<>();
         }
@@ -259,18 +233,11 @@ public class SessionExecuteSqlResult {
             maxSizeList.add(4);
         }
         for (String path : paths) {
-            if (aggregateType == null) {
-                label.add(path);
-                maxSizeList.add(path.length());
-            } else {
-                String newLabel = aggregateType.toString() + "(" + path + ")";
-                label.add(newLabel);
-                maxSizeList.add(newLabel.length());
-            }
+            label.add(path);
+            maxSizeList.add(path.length());
         }
 
-        int maxOutputLen = Math.min(offset + limit, values.size());
-        for (int i = offset; i < maxOutputLen; i++) {
+        for (int i = 0; i < values.size(); i++) {
             List<String> rowCache = new ArrayList<>();
             if (timestamps != null) {
                 String timeValue;
@@ -298,41 +265,9 @@ public class SessionExecuteSqlResult {
             cache.add(rowCache);
         }
 
-        int index = paths.indexOf(orderByPath);
-        if (orderByPath != null && !orderByPath.equals("") && index >= 0) {
-            DataType type = dataTypeList.get(index);
-            int finalIndex = timestamps == null ? index : ++index;
-            cache = cache.stream()
-                    .sorted((o1, o2) -> {
-                        if (ascending) {
-                            return compare(o1.get(finalIndex), o2.get(finalIndex), type);
-                        } else {
-                            return compare(o2.get(finalIndex), o1.get(finalIndex), type);
-                        }
-                    })
-                    .collect(Collectors.toList());
-        }
-
         cache.add(0, label);
 
         return cache;
-    }
-
-    private int compare(String s1, String s2, DataType type) {
-        switch (type) {
-            case LONG:
-                return Long.compare(Long.parseLong(s1), Long.parseLong(s2));
-            case FLOAT:
-                return Float.compare(Float.parseFloat(s1), Float.parseFloat(s2));
-            case DOUBLE:
-                return Double.compare(Double.parseDouble(s1), Double.parseDouble(s2));
-            case INTEGER:
-                return Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2));
-            case BOOLEAN:
-                return Boolean.compare(Boolean.parseBoolean(s1), Boolean.parseBoolean(s2));
-            default:
-                return s1.compareTo(s2);
-        }
     }
 
     private String buildBlockLine(List<Integer> maxSizeList) {
@@ -515,10 +450,7 @@ public class SessionExecuteSqlResult {
     }
 
     public boolean isQuery() {
-        return sqlType == SqlType.SimpleQuery ||
-                sqlType == SqlType.AggregateQuery ||
-                sqlType == SqlType.DownsampleQuery ||
-                sqlType == SqlType.ValueFilterQuery;
+        return sqlType == SqlType.Query;
     }
 
     public SqlType getSqlType() {

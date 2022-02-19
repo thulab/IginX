@@ -50,7 +50,7 @@ public class Config {
 
     private String statisticsCollectorClassName = "";
 
-    private int statisticsLogInterval = 1000;
+    private int statisticsLogInterval = 5000;
 
     private boolean enableEnvParameter = false;
 

@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.logical.generator;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.engine.logical.optimizer.Optimizer;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
@@ -22,7 +21,6 @@ import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
-import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
@@ -32,50 +30,28 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class InsertGenerator implements LogicalGenerator {
+public class InsertGenerator extends AbstractGenerator {
 
     private static final Logger logger = LoggerFactory.getLogger(InsertGenerator.class);
     private final static InsertGenerator instance = new InsertGenerator();
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
-    private final GeneratorType type = GeneratorType.Insert;
-    private final List<Optimizer> optimizerList = new ArrayList<>();
     private final IPolicy policy = PolicyManager.getInstance()
             .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private InsertGenerator() {
+        this.type = GeneratorType.Insert;
     }
 
     public static InsertGenerator getInstance() {
         return instance;
     }
 
-    public void registerOptimizer(Optimizer optimizer) {
-        if (optimizer != null)
-            optimizerList.add(optimizer);
-    }
+    protected Operator generateRoot(Statement statement) {
+        InsertStatement insertStatement = (InsertStatement) statement;
 
-    @Override
-    public GeneratorType getType() {
-        return type;
-    }
+        policy.notify(insertStatement);
 
-    @Override
-    public Operator generate(Statement statement) {
-        if (statement == null)
-            return null;
-        if (statement.getType() != StatementType.INSERT)
-            return null;
-        Operator root = generateRoot((InsertStatement) statement);
-        for (Optimizer optimizer : optimizerList) {
-            root = optimizer.optimize(root);
-        }
-        return root;
-    }
-
-    private Operator generateRoot(InsertStatement statement) {
-        policy.notify(statement);
-
-        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(statement.getPaths()));
+        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(insertStatement.getPaths()));
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
@@ -83,17 +59,17 @@ public class InsertGenerator implements LogicalGenerator {
         if (fragments.isEmpty()) {
             //on startup
             policy.setNeedReAllocate(false);
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(statement);
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(insertStatement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         } else if (policy.isNeedReAllocate()) {
             //on scale-out or any events requiring reallocation
             logger.debug("Trig ReAllocate!");
-            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateFragmentsAndStorageUnits(statement);
+            Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateFragmentsAndStorageUnits(insertStatement);
             metaManager.createFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
         }
 
-        RawData rawData = statement.getRawData();
+        RawData rawData = insertStatement.getRawData();
         List<Insert> insertList = new ArrayList<>();
         fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
             DataView section = getDataSection(fragmentMeta, rawData);

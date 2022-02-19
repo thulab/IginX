@@ -60,10 +60,7 @@ public class IginXResultSet implements ResultSet {
             case GetReplicaNum:
                 constructReplicaNumResult(result);
                 break;
-            case AggregateQuery:
-            case SimpleQuery:
-            case DownsampleQuery:
-            case ValueFilterQuery:
+            case Query:
                 constructQueryResult(result);
         }
 

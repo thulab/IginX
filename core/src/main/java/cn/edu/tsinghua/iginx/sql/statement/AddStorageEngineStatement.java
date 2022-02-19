@@ -1,9 +1,9 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
+import cn.edu.tsinghua.iginx.engine.shared.Result;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.List;
 
 public class AddStorageEngineStatement extends SystemStatement {
 
-    private List<StorageEngine> engines;
+    private final List<StorageEngine> engines;
 
     public AddStorageEngineStatement() {
         engines = new ArrayList<>();
@@ -27,9 +27,9 @@ public class AddStorageEngineStatement extends SystemStatement {
     }
 
     @Override
-    public ExecuteSqlResp execute(long sessionId) {
+    public void execute(RequestContext ctx) {
         IginxWorker worker = IginxWorker.getInstance();
-        AddStorageEnginesReq req = new AddStorageEnginesReq(sessionId, engines);
-        return new ExecuteSqlResp(worker.addStorageEngines(req), SqlType.AddStorageEngines);
+        AddStorageEnginesReq req = new AddStorageEnginesReq(ctx.getSessionId(), engines);
+        ctx.setResult(new Result(worker.addStorageEngines(req)));
     }
 }
