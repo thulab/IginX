@@ -57,7 +57,7 @@ Quick starts in Chinese ([A complete version](./docs/quickStarts/IginXManual.md)
 - [Deploy an IginX Cluster](./docs/quickStarts/IginXCluster.md)：IginX集群版部署
 
 Or, please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is
-still being written.
+still being written, but you might contact [Yuqing Zhu](zhuyuqing@tsinghua.edu.cn) for IginX in case of any question or problem.
 
 ### To understand technological designs in IginX
 
