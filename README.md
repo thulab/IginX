@@ -4,10 +4,9 @@
 
 ## What is IginX?
 
-[IginX](https://github.com/thulab/IginX) (Intelligent/IoTDB Engine X) is an open-source clustering
+[IginX](https://github.com/thulab/IginX) (Intelligent/IoT Engine X) is an open-source clustering
 system for multi-dimensional scaling of standalone time series databases through generalized
-sharding. It is emerged and evolved from the middleware
-system [IKR](https://github.com/thulab/iotdb-kairosdb), already deployed in real applications.
+sharding. It is already deployed in real applications such as train monitoring and intelligent factories.
 
 IginX features in the following aspects:
 
