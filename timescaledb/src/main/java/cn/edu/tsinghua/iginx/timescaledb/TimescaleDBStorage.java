@@ -29,6 +29,8 @@ import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.BitmapView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -218,9 +220,11 @@ public class TimescaleDBStorage implements IStorage {
     switch (dataView.getRawDataType()) {
       case Row:
       case NonAlignedRow:
+        e = insertRowRecords((RowDataView) dataView, storageUnit);
+        break;
       case Column:
       case NonAlignedColumn:
-        e = insertRowRecords((RowDataView) dataView, storageUnit);
+        e = insertColumnRecords((ColumnDataView) dataView, storageUnit);
         break;
     }
     if (e != null) {
@@ -254,7 +258,45 @@ public class TimescaleDBStorage implements IStorage {
   }
 
   private Exception insertRowRecords(RowDataView data, String storageUnit) {
-    // TODO 按timestamp进行行排序再插入
+    int batchSize = Math.min(data.getTimeSize(), BATCH_SIZE);
+    try {
+      Statement stmt = connection.createStatement();
+      for (int i = 0; i < data.getTimeSize(); i++) {
+        BitmapView bitmapView = data.getBitmapView(i);
+        int index = 0;
+        for (int j = 0; j < data.getPathNum(); j++) {
+          if (bitmapView.get(j)) {
+            String path = data.getPath(j);
+            DataType dataType = data.getDataType(j);
+            String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
+            table = table.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+            String sensor = path.substring(path.lastIndexOf('.') + 1);
+            sensor = sensor.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+            createTimeSeriesIfNotExists(table, sensor, dataType);
+
+            long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            String value = data.getValue(i, index).toString();
+            stmt.addBatch(String
+                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
+                    time,
+                    value));
+            if (index > 0 && (index + 1) % batchSize == 0) {
+              stmt.executeBatch();
+            }
+
+            index++;
+          }
+        }
+      }
+      stmt.executeBatch();
+    } catch (SQLException e) {
+      return e;
+    }
+
+    return null;
+  }
+
+  private Exception insertColumnRecords(ColumnDataView data, String storageUnit) {
     int batchSize = Math.min(data.getTimeSize(), BATCH_SIZE);
     try {
       Statement stmt = connection.createStatement();
@@ -266,15 +308,20 @@ public class TimescaleDBStorage implements IStorage {
         String sensor = path.substring(path.lastIndexOf('.') + 1);
         sensor = sensor.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
         createTimeSeriesIfNotExists(table, sensor, dataType);
+        BitmapView bitmapView = data.getBitmapView(i);
+        int index = 0;
         for (int j = 0; j < data.getTimeSize(); j++) {
-          long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
-          String value = data.getValue(j, i).toString();
-          stmt.addBatch(String
-              .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
-                  time,
-                  value));
-          if (j > 0 && (j + 1) % batchSize == 0) {
-            stmt.executeBatch();
+          if (bitmapView.get(j)) {
+            long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            String value = data.getValue(i, index).toString();
+            stmt.addBatch(String
+                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
+                    time,
+                    value));
+            if (index > 0 && (index + 1) % batchSize == 0) {
+              stmt.executeBatch();
+            }
+            index++;
           }
         }
       }
