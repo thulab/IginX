@@ -328,7 +328,52 @@ struct GetClusterInfoResp {
     5: optional LocalMetaStorageInfo localMetaStorageInfo
 }
 
+struct ExecuteStatementReq {
+    1: required i64 sessionId
+    2: required string statement
+    3: optional i32 fetchSize
+    4: optional i64 timeout
+}
+
+struct ExecuteStatementResp {
+    1: required Status status
+    2: required SqlType type
+    3: optional i64 queryId
+    4: optional list<string> columns
+    5: optional list<DataType> dataTypeList
+    6: optional QueryDataSetV2 queryDataSet
+}
+
+struct QueryDataSetV2 {
+    1: required list<binary> valuesList
+    2: optional list<binary> bitmapList
+}
+
+struct CloseStatementReq {
+    1: required i64 sessionId
+    2: required i64 queryId
+}
+
+struct FetchResultsReq {
+    1: required i64 sessionId
+    2: required i64 queryId
+    3: optional i32 fetchSize
+    4: optional i64 timeout
+}
+
+struct FetchResultsResp {
+    1: required Status status
+    2: required bool hasMoreResults
+    3: optional QueryDataSetV2 queryDataSet
+}
+
 service IService {
+
+    ExecuteStatementResp executeStatement(1:ExecuteStatementReq req);
+
+    FetchResultsResp fetchResults(1:FetchResultsReq req);
+
+    Status closeStatement(1:CloseStatementReq req);
 
     OpenSessionResp openSession(1:OpenSessionReq req);
 

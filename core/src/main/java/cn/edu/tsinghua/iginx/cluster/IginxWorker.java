@@ -44,6 +44,7 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.CloseStatementReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
@@ -52,6 +53,10 @@ import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
+import cn.edu.tsinghua.iginx.thrift.ExecuteStatementResp;
+import cn.edu.tsinghua.iginx.thrift.FetchResultsReq;
+import cn.edu.tsinghua.iginx.thrift.FetchResultsResp;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
@@ -82,6 +87,7 @@ import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -437,4 +443,20 @@ public class IginxWorker implements IService.Iface {
         resp.setStatus(RpcUtils.SUCCESS);
         return resp;
     }
+
+    @Override
+    public ExecuteStatementResp executeStatement(ExecuteStatementReq req) {
+        return null;
+    }
+
+    @Override
+    public FetchResultsResp fetchResults(FetchResultsReq req) {
+        return null;
+    }
+
+    @Override
+    public Status closeStatement(CloseStatementReq req) {
+        return null;
+    }
+
 }
