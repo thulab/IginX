@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public abstract class AbstractUnaryOperator extends AbstractOperator implements UnaryOperator {
 
-    private final Source source;
+    private Source source;
 
     public AbstractUnaryOperator(OperatorType type, Source source) {
         super(type);
@@ -39,5 +39,10 @@ public abstract class AbstractUnaryOperator extends AbstractOperator implements 
     @Override
     public Source getSource() {
         return source;
+    }
+
+    @Override
+    public void setSource(Source source) {
+        this.source = source;
     }
 }

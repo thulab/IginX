@@ -22,9 +22,9 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public abstract class AbstractBinaryOperator extends AbstractOperator implements BinaryOperator {
 
-    private final Source sourceA;
+    private Source sourceA;
 
-    private final Source sourceB;
+    private Source sourceB;
 
     public AbstractBinaryOperator(OperatorType type, Source sourceA, Source sourceB) {
         super(type);
@@ -47,5 +47,15 @@ public abstract class AbstractBinaryOperator extends AbstractOperator implements
     @Override
     public Source getSourceB() {
         return sourceB;
+    }
+
+    @Override
+    public void setSourceA(Source source) {
+        this.sourceA = source;
+    }
+
+    @Override
+    public void setSourceB(Source source) {
+        this.sourceB = source;
     }
 }

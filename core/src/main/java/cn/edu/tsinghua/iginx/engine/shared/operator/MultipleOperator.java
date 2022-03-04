@@ -8,4 +8,6 @@ public interface MultipleOperator extends Operator {
 
     List<Source> getSources();
 
+    void setSources(List<Source> sources);
+
 }

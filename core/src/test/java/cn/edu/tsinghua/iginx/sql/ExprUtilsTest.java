@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.sql;
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import org.junit.Test;
@@ -129,6 +130,61 @@ public class ExprUtilsTest {
         assertEquals(
                 new ArrayList<>(),
                 statement.getTimeRanges()
+        );
+    }
+
+    @Test
+    public void testGetSubFilterFromFragment() {
+        // sub1
+        String select = "SELECT a FROM root WHERE (a > 5 OR d < 15) AND !(e < 27) AND (c < 10 OR b > 2) AND time > 10 AND time <= 100;";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(select);
+        Filter filter = statement.getFilter();
+        assertEquals(
+                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2)) && time > 10 && time <= 100))",
+                filter.toString()
+        );
+        assertEquals(
+                "((time > 10 && time <= 100))",
+                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.c")).toString()
+        );
+
+        // sub2
+        select = "SELECT a FROM root WHERE (a > 5 OR d < 15) AND !(e < 27) AND (c < 10 OR b > 2) AND time > 10 AND time <= 100;";
+        statement = (SelectStatement) TestUtils.buildStatement(select);
+        filter = statement.getFilter();
+        assertEquals(
+                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2)) && time > 10 && time <= 100))",
+                filter.toString()
+        );
+        assertEquals(
+                "(((root.e >= 27) && time > 10 && time <= 100))",
+                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.c", "root.z")).toString()
+        );
+
+        // whole
+        select = "SELECT a FROM root WHERE (a > 5 OR d < 15) AND !(e < 27) AND (c < 10 OR b > 2);";
+        statement = (SelectStatement) TestUtils.buildStatement(select);
+        filter = statement.getFilter();
+        assertEquals(
+                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2))))",
+                filter.toString()
+        );
+        assertEquals(
+                "(((root.a > 5 || root.d < 15) && (root.e >= 27) && (root.c < 10 || root.b > 2)))",
+                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.z")).toString()
+        );
+
+        // empty
+        select = "SELECT a FROM root WHERE (a > 5 OR d < 15) AND !(e < 27) AND (c < 10 OR b > 2);";
+        statement = (SelectStatement) TestUtils.buildStatement(select);
+        filter = statement.getFilter();
+        assertEquals(
+                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2))))",
+                filter.toString()
+        );
+        assertEquals(
+                "True",
+                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.h", "root.z")).toString()
         );
     }
 }

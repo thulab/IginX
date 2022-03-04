@@ -25,4 +25,6 @@ public interface UnaryOperator extends Operator {
 
     Source getSource();
 
+    void setSource(Source source);
+
 }
