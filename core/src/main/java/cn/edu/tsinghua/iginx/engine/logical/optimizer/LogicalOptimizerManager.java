@@ -11,6 +11,8 @@ public class LogicalOptimizerManager {
 
     private final static String REMOVE_NOT = "remove_not";
 
+    private final static String FILTER_PUSH_DOWN = "filter_push_down";
+
     private LogicalOptimizerManager() {
     }
 
@@ -27,6 +29,8 @@ public class LogicalOptimizerManager {
         switch (name) {
             case REMOVE_NOT:
                 return RemoveNotOptimizer.getInstance();
+            case FILTER_PUSH_DOWN:
+                return FilterPushDownOptimizer.getInstance();
             default:
                 throw new IllegalArgumentException(String.format("unknown logical optimizer: %s", name));
         }

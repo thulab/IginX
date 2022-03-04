@@ -26,4 +26,8 @@ public interface BinaryOperator extends Operator {
 
     Source getSourceB();
 
+    void setSourceA(Source source);
+
+    void setSourceB(Source source);
+
 }
