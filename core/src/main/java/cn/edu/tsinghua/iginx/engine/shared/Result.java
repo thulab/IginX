@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import lombok.Data;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -37,6 +38,10 @@ public class Result {
         QueryDataResp resp = new QueryDataResp(status);
         resp.setPaths(paths);
         resp.setDataTypeList(dataTypes);
+        if (timestamps == null || timestamps.length == 0) {
+            resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
+            return resp;
+        }
         ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
         resp.setQueryDataSet(new QueryDataSet(timeBuffer, valuesList, bitmapList));
         return resp;
@@ -46,23 +51,35 @@ public class Result {
         AggregateQueryResp resp = new AggregateQueryResp(status);
         resp.setPaths(paths);
         resp.setDataTypeList(dataTypes);
+        if (valuesList == null || valuesList.size() == 0) {
+            resp.setValuesList(ByteBuffer.allocate(0));
+            return resp;
+        }
         resp.setValuesList(valuesList.get(0));
         return resp;
     }
 
-    public DownsampleQueryResp getDownsampleQueryResp() {
+    public DownsampleQueryResp getDownSampleQueryResp() {
         DownsampleQueryResp resp = new DownsampleQueryResp(status);
         resp.setPaths(paths);
         resp.setDataTypeList(dataTypes);
+        if (timestamps == null || timestamps.length == 0) {
+            resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
+            return resp;
+        }
         ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
         resp.setQueryDataSet(new QueryDataSet(timeBuffer, valuesList, bitmapList));
         return resp;
     }
 
-    public LastQueryResp getLastQueryResp () {
+    public LastQueryResp getLastQueryResp() {
         LastQueryResp resp = new LastQueryResp(status);
         resp.setPaths(paths);
         resp.setDataTypeList(dataTypes);
+        if (timestamps == null || timestamps.length == 0) {
+            resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
+            return resp;
+        }
         ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
         resp.setQueryDataSet(new QueryDataSet(timeBuffer, valuesList, bitmapList));
         return resp;
