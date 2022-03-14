@@ -199,6 +199,7 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
+        logger.info("[TPCx-IoT] receive query: " + req.paths.get(0) +  " at [" + req.startTime + " - " + req.endTime + "].");
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getQueryDataResp();

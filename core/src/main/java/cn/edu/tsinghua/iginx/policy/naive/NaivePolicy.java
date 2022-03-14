@@ -17,6 +17,8 @@ import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class NaivePolicy implements IPolicy {
+
+    private static final Logger logger = LoggerFactory.getLogger(NaivePolicy.class);
 
     protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IMetaManager iMetaManager;
@@ -125,6 +129,7 @@ public class NaivePolicy implements IPolicy {
      * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
      */
     public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+        logger.info("generate initial fragment from clients: " + ConfigDescriptor.getInstance().getConfig().getClients());
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 

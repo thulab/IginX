@@ -37,6 +37,10 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -140,24 +144,51 @@ public class IoTDBStorage implements IStorage {
     @Override
     public TaskExecuteResult execute(StoragePhysicalTask task) {
         List<Operator> operators = task.getOperators();
-        if (operators.size() != 1) {
-            return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
-        }
         FragmentMeta fragment = task.getTargetFragment();
         Operator op = operators.get(0);
         String storageUnit = task.getStorageUnit();
 
+        long startTime = System.currentTimeMillis();
+        TaskExecuteResult result;
         if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
             Project project = (Project) op;
-            return executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
+            if (operators.size() == 2) {
+                Select select = (Select) operators.get(1);
+                List<TimeFilter> timeFilters = ((AndFilter) select.getFilter()).getChildren().stream().map(e -> (TimeFilter) e).collect(Collectors.toList());
+                long start = fragment.getTimeInterval().getStartTime(), end = fragment.getTimeInterval().getEndTime();
+                for (TimeFilter timeFilter: timeFilters) {
+                    switch (timeFilter.getOp()) {
+                        case G:
+                            start = timeFilter.getValue() + 1;
+                            break;
+                        case GE:
+                            start = timeFilter.getValue();
+                            break;
+                        case LE:
+                            end = timeFilter.getValue() + 1;
+                            break;
+                        case L:
+                            end = timeFilter.getValue();
+                            break;
+                    }
+                }
+                result = executeProjectTask(new TimeInterval(start, end), fragment.getTsInterval(), storageUnit, project);
+            } else {
+                result = executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
+            }
+
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
-            return executeInsertTask(storageUnit, insert);
+            result = executeInsertTask(storageUnit, insert);
         } else if (op.getType() == OperatorType.Delete) {
             Delete delete = (Delete) op;
-            return executeDeleteTask(storageUnit, delete);
+            result = executeDeleteTask(storageUnit, delete);
+        } else {
+            result = new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
         }
-        return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+        long span = System.currentTimeMillis() - startTime;
+        logger.info("[Time consumed] " + span + " ms is used to execute " + op.getType() + "task in storage " + meta.getIp() + ".");
+        return result;
     }
 
     @Override
@@ -210,11 +241,11 @@ public class IoTDBStorage implements IStorage {
                 builder.append(',');
             }
             String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), storageUnit, timeInterval.getStartTime(), timeInterval.getEndTime());
-            System.out.println(statement);
+            logger.info("[TPCx-IoT] execute sql: " + statement);
             RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
-            logger.error(e.getMessage());
+            logger.error("[TPCx-IoT] execute sql failure: " + e.getMessage());
             return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in iotdb12 failure", e));
         }
     }
