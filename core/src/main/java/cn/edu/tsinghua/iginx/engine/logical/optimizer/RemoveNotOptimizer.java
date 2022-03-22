@@ -27,6 +27,11 @@ public class RemoveNotOptimizer implements Optimizer {
 
     @Override
     public Operator optimize(Operator root) {
+        // only optimize query
+        if (root.getType() == OperatorType.CombineNonQuery || root.getType() == OperatorType.ShowTimeSeries) {
+            return root;
+        }
+
         removeNot(root);
         return root;
     }

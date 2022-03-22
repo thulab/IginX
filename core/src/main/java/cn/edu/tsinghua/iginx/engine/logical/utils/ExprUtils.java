@@ -1,14 +1,10 @@
 package cn.edu.tsinghua.iginx.engine.logical.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -315,5 +311,84 @@ public class ExprUtils {
         long begin = Math.max(first.getBeginTime(), second.getBeginTime());
         long end = Math.min(first.getEndTime(), second.getEndTime());
         return new TimeRange(begin, end);
+    }
+
+    public static Filter getSubFilterFromFragment(Filter filter, TimeSeriesInterval interval) {
+        Filter filterWithoutNot = removeNot(filter);
+        Filter filterWithTrue = setTrue(filterWithoutNot, interval);
+        return mergeTrue(filterWithTrue);
+    }
+
+    private static Filter setTrue(Filter filter, TimeSeriesInterval interval) {
+        switch (filter.getType()) {
+            case Or:
+                List<Filter> orChildren = ((OrFilter) filter).getChildren();
+                for (int i = 0; i < orChildren.size(); i++) {
+                    Filter childFilter = setTrue(orChildren.get(i), interval);
+                    orChildren.set(i, childFilter);
+                }
+                return new OrFilter(orChildren);
+            case And:
+                List<Filter> andChildren = ((AndFilter) filter).getChildren();
+                for (int i = 0; i < andChildren.size(); i++) {
+                    Filter childFilter = setTrue(andChildren.get(i), interval);
+                    andChildren.set(i, childFilter);
+                }
+                return new AndFilter(andChildren);
+            case Time:
+                return filter;
+            case Value:
+                String path = ((ValueFilter) filter).getPath();
+                if (interval.getStartTimeSeries() != null && interval.getStartTimeSeries().compareTo(path) > 0) {
+                    return new BoolFilter(true);
+                }
+                if (interval.getEndTimeSeries() != null && interval.getEndTimeSeries().compareTo(path) <= 0) {
+                    return new BoolFilter(true);
+                }
+                return filter;
+            default:
+                return filter;
+        }
+    }
+
+    private static Filter mergeTrue(Filter filter) {
+        switch (filter.getType()) {
+            case Or:
+                List<Filter> orChildren = ((OrFilter) filter).getChildren();
+                for (int i = 0; i < orChildren.size(); i++) {
+                    Filter childFilter = mergeTrue(orChildren.get(i));
+                    orChildren.set(i, childFilter);
+                }
+                for (Filter childFilter : orChildren) {
+                    if (childFilter.getType() == FilterType.Bool && ((BoolFilter) childFilter).isTrue()) {
+                        return new BoolFilter(true);
+                    }
+                }
+                return new OrFilter(orChildren);
+            case And:
+                List<Filter> andChildren = ((AndFilter) filter).getChildren();
+                for (int i = 0; i < andChildren.size(); i++) {
+                    Filter childFilter = mergeTrue(andChildren.get(i));
+                    andChildren.set(i, childFilter);
+                }
+                List<Filter> removedList = new ArrayList<>();
+                for (Filter childFilter : andChildren) {
+                    if (childFilter.getType() == FilterType.Bool && ((BoolFilter) childFilter).isTrue()) {
+                        removedList.add(childFilter);
+                    }
+                }
+                for (Filter removed : removedList) {
+                    andChildren.remove(removed);
+                }
+                if (andChildren.size() == 0) {
+                    return new BoolFilter(true);
+                } else if (andChildren.size() == 1) {
+                    return andChildren.get(0);
+                } else {
+                    return new AndFilter(andChildren);
+                }
+            default:
+                return filter;
+        }
     }
 }

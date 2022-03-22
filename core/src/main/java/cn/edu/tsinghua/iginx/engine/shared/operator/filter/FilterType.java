@@ -22,6 +22,7 @@ public enum FilterType {
 
     Time,
     Value,
+    Bool,
 
     And,
     Or,
