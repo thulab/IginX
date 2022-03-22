@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
 import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
 import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
+import cn.edu.tsinghua.iginx.combine.ShowSubPathsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
 import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.Config;
@@ -40,7 +41,7 @@ import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
 import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
 import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.RequestContext;
+import cn.edu.tsinghua.iginx.core.context.ShowSubPathsContext;
 import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
 import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -55,7 +56,7 @@ import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
 import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
-import cn.edu.tsinghua.iginx.sql.operator.Operator;
+import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -91,6 +92,8 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
@@ -111,14 +114,14 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
 public class IginxWorker implements IService.Iface {
 
     private static final Logger logger = LoggerFactory.getLogger(IginxWorker.class);
+
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
     private static final IginxWorker instance = new IginxWorker();
 
@@ -318,6 +321,16 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
+    public ShowSubPathsResp showSubPaths(ShowSubPathsReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new ShowSubPathsResp(RpcUtils.ACCESS_DENY);
+        }
+        ShowSubPathsContext context = new ShowSubPathsContext(req);
+        core.processRequest(context);
+        return ((ShowSubPathsCombineResult) context.getCombineResult()).getResp();
+    }
+
+    @Override
     public GetReplicaNumResp getReplicaNum(GetReplicaNumReq req) {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new GetReplicaNumResp(RpcUtils.ACCESS_DENY);
@@ -342,8 +355,8 @@ public class IginxWorker implements IService.Iface {
 
         try {
             ParseTree tree = parser.sqlStatement();
-            Operator operator = visitor.visit(tree);
-            return operator.doOperation(req.getSessionId());
+            Statement statement = visitor.visit(tree);
+            return statement.execute(req.getSessionId());
         } catch (SQLParserException | ParseCancellationException e) {
             StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
             String errMsg = e.getMessage();
@@ -392,6 +405,9 @@ public class IginxWorker implements IService.Iface {
     public Status deleteUser(DeleteUserReq req) {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Admin)) {
             return RpcUtils.ACCESS_DENY;
+        }
+        if (config.getUsername().equals(req.getUsername())) {
+            return RpcUtils.DELETE_ROOT_USER;
         }
         if (userManager.deleteUser(req.username)) {
             return RpcUtils.SUCCESS;

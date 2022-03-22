@@ -37,6 +37,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.ShowSubPathsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -50,17 +51,20 @@ import cn.edu.tsinghua.iginx.query.async.queue.AsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.async.queue.MemoryAsyncTaskQueue;
 import cn.edu.tsinghua.iginx.query.async.task.AsyncTask;
 import cn.edu.tsinghua.iginx.query.result.AsyncPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.NonExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SyncPlanExecuteResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -74,18 +78,21 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
 
     private final ExecutorService asyncTaskDispatcher;
 
-    private final ExecutorService asyncTaskExecuteThreadPool;
+    private final ThreadPoolExecutor asyncTaskExecuteThreadPool;
 
     private final ExecutorService syncExecuteThreadPool;
 
     private final Map<IginxPlan.IginxPlanType, Function<IginxPlan, Future<? extends PlanExecuteResult>>> functionMap = new HashMap<>();
 
+    private final int maxAsyncTasks = ConfigDescriptor.getInstance().getConfig().getMaxAsyncTasks();
+
     protected AbstractPlanExecutor() {
         asyncTaskQueue = new MemoryAsyncTaskQueue();
-        asyncTaskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPool());
+        asyncTaskExecuteThreadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getAsyncExecuteThreadPool());
         asyncTaskDispatcher = Executors.newSingleThreadExecutor();
         asyncTaskDispatcher.submit(() -> {
             while(true) {
+                logger.info("async Thread Pool: {}", asyncTaskExecuteThreadPool.getActiveCount());
                 AsyncTask asyncTask = asyncTaskQueue.getAsyncTask();
                 asyncTaskExecuteThreadPool.submit(() -> {
                     IginxPlan plan = asyncTask.getIginxPlan();
@@ -94,24 +101,30 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
                         case INSERT_COLUMN_RECORDS:
                             logger.info("execute async insert column records task");
                             planExecuteResult = syncExecuteInsertColumnRecordsPlan((InsertColumnRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case INSERT_NON_ALIGNED_COLUMN_RECORDS:
                             logger.info("execute async insert non-aligned column records task");
                             planExecuteResult = syncExecuteInsertNonAlignedColumnRecordsPlan((InsertNonAlignedColumnRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case INSERT_ROW_RECORDS:
                             logger.info("execute async insert row records task");
                             planExecuteResult = syncExecuteInsertRowRecordsPlan((InsertRowRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case INSERT_NON_ALIGNED_ROW_RECORDS:
                             logger.info("execute async insert non-aligned row records task");
                             planExecuteResult = syncExecuteInsertNonAlignedRowRecordsPlan((InsertNonAlignedRowRecordsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case DELETE_COLUMNS:
                             planExecuteResult = syncExecuteDeleteColumnsPlan((DeleteColumnsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         case DELETE_DATA_IN_COLUMNS:
                             planExecuteResult = syncExecuteDeleteDataInColumnsPlan((DeleteDataInColumnsPlan) plan);
+                            plan.setPlanExecuteResult(planExecuteResult);
                             break;
                         default:
                             logger.info("unimplemented method: " + plan.getIginxPlanType());
@@ -155,6 +168,7 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         functionMap.put(IginxPlan.IginxPlanType.DOWNSAMPLE_LAST, this::executeDownsampleLastQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.VALUE_FILTER_QUERY, this::executeValueFilterQueryPlan);
         functionMap.put(IginxPlan.IginxPlanType.SHOW_COLUMNS, this::executeShowColumnsPlan);
+        functionMap.put(IginxPlan.IginxPlanType.SHOW_SUB_PATHS, this::executeShowSubPathsPlan);
     }
 
 
@@ -326,15 +340,31 @@ public abstract class AbstractPlanExecutor implements IPlanExecutor, IService, I
         return null;
     }
 
+    protected Future<? extends PlanExecuteResult> executeShowSubPathsPlan(IginxPlan plan) {
+        if (plan.isSync()) {
+            return syncExecuteThreadPool.submit(() -> syncExecuteShowSubPathsPlan((ShowSubPathsPlan) plan));
+        }
+        return null;
+    }
+
     protected AsyncPlanExecuteResult executeAsyncTask(IginxPlan iginxPlan) {
+        PlanExecuteResult correspondingSyncPlanExecuteResult = iginxPlan.getCorrespondingSyncPlan().getPlanExecuteResult();
+        if (correspondingSyncPlanExecuteResult == null || correspondingSyncPlanExecuteResult.getStatusCode() != PlanExecuteResult.SUCCESS) {
+            logger.warn("async task doesn't execute for the sake of the failure of corresponding sync task");
+            return AsyncPlanExecuteResult.getInstance(false);
+        }
         return AsyncPlanExecuteResult.getInstance(asyncTaskQueue.addAsyncTask(new AsyncTask(iginxPlan, 0)));
     }
 
     @Override
     public List<PlanExecuteResult> executeIginxPlans(RequestContext requestContext) {
-        List<PlanExecuteResult> planExecuteResults = requestContext.getIginxPlans().stream().filter(e -> !e.isSync()).map(this::executeAsyncTask).collect(Collectors.toList());
+        if (asyncTaskExecuteThreadPool.getQueue().size() >= maxAsyncTasks) { // 异步任务发生大规模堆积
+            logger.warn("too many async task, reject to execute current request.");
+            return requestContext.getIginxPlans().stream().map(NonExecuteResult::new).collect(Collectors.toList());
+        }
+        List<PlanExecuteResult> planExecuteResults = requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(e -> functionMap.get(e.getIginxPlanType()).apply(e)).map(wrap(Future::get)).collect(Collectors.toList());
         logger.info(requestContext.getType() + " has " + requestContext.getIginxPlans().size() + " sub plans, there are " + requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).count() + " sync sub plans");
-        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(IginxPlan::isSync).map(e -> functionMap.get(e.getIginxPlanType()).apply(e)).map(wrap(Future::get)).collect(Collectors.toList()));
+        planExecuteResults.addAll(requestContext.getIginxPlans().stream().filter(e -> !e.isSync()).map(this::executeAsyncTask).collect(Collectors.toList()));
         return planExecuteResults;
     }
 

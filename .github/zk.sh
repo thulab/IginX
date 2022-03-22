@@ -2,7 +2,7 @@
 
 set -e
 
-sh -c "wget -nv https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz"
+sh -c "wget -nv https://mirror.softaculous.com/apache/zookeeper/zookeeper-3.6.3/apache-zookeeper-3.6.3-bin.tar.gz --no-check-certificate"
 
 sh -c "tar -xzf apache-zookeeper-3.6.3-bin.tar.gz"
 

@@ -55,7 +55,13 @@ enum SqlType {
     ClearData,
     DeleteTimeSeries,
     ShowTimeSeries,
+    ShowSubTimeSeries,
     ShowClusterInfo,
+    CreateUser,
+    GrantUser,
+    ChangeUserPassword,
+    DropUser,
+    ShowUser
 }
 
 enum AuthType {
@@ -180,6 +186,7 @@ struct AggregateQueryReq {
     3: required i64 startTime
     4: required i64 endTime
     5: required AggregateType aggregateType
+    6: optional list<i32> groupByLevels
 }
 
 struct AggregateQueryResp {
@@ -226,6 +233,7 @@ struct DownsampleQueryReq {
     4: required i64 endTime
     5: required AggregateType aggregateType
     6: required i64 precision
+    7: optional list<i32> groupByLevels
 }
 
 struct DownsampleQueryResp {
@@ -243,6 +251,16 @@ struct ShowColumnsResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
+}
+
+struct ShowSubPathsReq {
+    1: required i64 sessionId
+    2: optional string path
+}
+
+struct ShowSubPathsResp {
+    1: required Status status
+    2: optional list<string> paths
 }
 
 struct GetReplicaNumReq {
@@ -280,6 +298,9 @@ struct ExecuteSqlResp {
     17: optional list<StorageEngineInfo> storageEngineInfos
     18: optional list<MetaStorageInfo>  metaStorageInfos
     19: optional LocalMetaStorageInfo localMetaStorageInfo
+    20: optional list<string> usernames
+    21: optional list<UserType> userTypes
+    22: optional list<set<AuthType>> auths
 }
 
 struct UpdateUserReq {
@@ -379,6 +400,8 @@ service IService {
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 
     ShowColumnsResp showColumns(ShowColumnsReq req);
+
+    ShowSubPathsResp showSubPaths(ShowSubPathsReq req);
 
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 

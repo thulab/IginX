@@ -59,8 +59,9 @@ public class ConfigDescriptor {
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
                     "127.0.0.1:2181"));
             config.setStorageEngineList(properties.getProperty("storageEngineList",
-                    "127.0.0.1:6667:iotdb:username=root:password=root:sessionPoolSize=100"));
+                    "127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100"));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
+            config.setMaxAsyncTasks(Integer.parseInt(properties.getProperty("maxAsyncTasks", "1000")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
@@ -78,6 +79,7 @@ public class ConfigDescriptor {
 
             config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
             config.setAsyncRestThreadPool(Integer.parseInt(properties.getProperty("asyncRestThreadPool", "100")));
+            config.setRestReqSplitNum(Integer.parseInt(properties.getProperty("restReqSplitNum", "10")));
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
@@ -100,6 +102,23 @@ public class ConfigDescriptor {
 
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
+
+            config.setLogRestInsertPossibility(Double.parseDouble(properties.getProperty("logRestInsertPossibility", "1.0")));
+            config.setLogRestQueryPossibility(Double.parseDouble(properties.getProperty("logRestQueryPossibility", "1.0")));
+
+            config.setCachedTimeseriesProb(Double.parseDouble(properties.getProperty("cachedTimeseriesProb", "0.01")));
+            config.setRetryCount(Integer.parseInt(properties.getProperty("retryCount", "10")));
+            config.setRetryWait(Integer.parseInt(properties.getProperty("retryWait", "5000")));
+            config.setFragmentPerEngine(Integer.parseInt(properties.getProperty("fragmentPerEngine", "10")));
+            config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
+            config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
+            config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
+            config.setCheckFragmentInterval(Long.parseLong(properties.getProperty("checkFragmentInterval", "1000")));
+
+            config.setClientBindEngine(Boolean.parseBoolean(properties.getProperty("clientBindEngine", "false")));
+            config.setInstancesIndexStart(Integer.parseInt(properties.getProperty("instancesIndexStart", "1")));
+            config.setInstancesIndexStep(Integer.parseInt(properties.getProperty("instancesIndexStep", "1")));
+
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -113,6 +132,7 @@ public class ConfigDescriptor {
         config.setZookeeperConnectionString(EnvUtils.loadEnv("zookeeperConnectionString", config.getZookeeperConnectionString()));
         config.setStorageEngineList(EnvUtils.loadEnv("storageEngineList", config.getStorageEngineList()));
         config.setMaxAsyncRetryTimes(EnvUtils.loadEnv("maxAsyncRetryTimes", config.getMaxAsyncRetryTimes()));
+        config.setMaxAsyncTasks(EnvUtils.loadEnv("maxAsyncTasks", config.getMaxAsyncTasks()));
         config.setSyncExecuteThreadPool(EnvUtils.loadEnv("syncExecuteThreadPool", config.getSyncExecuteThreadPool()));
         config.setAsyncExecuteThreadPool(EnvUtils.loadEnv("asyncExecuteThreadPool", config.getAsyncExecuteThreadPool()));
         config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));
@@ -126,6 +146,7 @@ public class ConfigDescriptor {
         config.setDisorderMargin(EnvUtils.loadEnv("disorderMargin", config.getDisorderMargin()));
         config.setMaxTimeseriesLength(EnvUtils.loadEnv("maxtimeserieslength", config.getMaxTimeseriesLength()));
         config.setAsyncRestThreadPool(EnvUtils.loadEnv("asyncRestThreadPool", config.getAsyncRestThreadPool()));
+        config.setRestReqSplitNum(EnvUtils.loadEnv("restReqSplitNum", config.getRestReqSplitNum()));
         config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
         config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
         config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));
@@ -136,6 +157,7 @@ public class ConfigDescriptor {
         config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
         config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
         config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
+        config.setCheckFragmentInterval(EnvUtils.loadEnv("checkFragmentInterval", config.getCheckFragmentInterval()));
     }
 
 

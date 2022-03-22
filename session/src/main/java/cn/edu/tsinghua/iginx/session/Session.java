@@ -52,6 +52,8 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
@@ -304,6 +306,28 @@ public class Session {
             columns.add(new Column(resp.paths.get(i), resp.dataTypeList.get(i)));
         }
         return columns;
+    }
+
+    public List<String> showChildPaths(String path) throws SessionException {
+        ShowSubPathsReq req = new ShowSubPathsReq(sessionId);
+        if (path != null) {
+            req.setPath(path);
+        }
+
+        ShowSubPathsResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.showSubPaths(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+        return resp.paths;
     }
 
     public void deleteColumn(String path) throws SessionException,
@@ -789,7 +813,18 @@ public class Session {
 
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
             throws SessionException, ExecutionException {
+        return aggregateQuery(paths, startTime, endTime, aggregateType, null);
+    }
+
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, Set<Integer> groupByLevels)
+            throws SessionException, ExecutionException {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, aggregateType);
+        if (groupByLevels != null && !groupByLevels.isEmpty()) {
+            if (aggregateType != AggregateType.AVG && aggregateType != AggregateType.COUNT && aggregateType != AggregateType.SUM) {
+                throw new IllegalArgumentException(aggregateType + " is not support of group by level.");
+            }
+            req.setGroupByLevels(new ArrayList<>(groupByLevels));
+        }
 
         AggregateQueryResp resp;
         try {
@@ -810,8 +845,18 @@ public class Session {
     }
 
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
+        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, null);
+    }
+
+    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, Set<Integer> groupByLevels) throws SessionException, ExecutionException {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime,
                 aggregateType, precision);
+        if (groupByLevels != null && !groupByLevels.isEmpty()) {
+            if (aggregateType != AggregateType.AVG && aggregateType != AggregateType.COUNT && aggregateType != AggregateType.SUM) {
+                throw new IllegalArgumentException(aggregateType + " is not support of group by level.");
+            }
+            req.setGroupByLevels(new ArrayList<>(groupByLevels));
+        }
 
         DownsampleQueryResp resp;
 
@@ -831,6 +876,7 @@ public class Session {
 
         return new SessionQueryDataSet(resp);
     }
+
 
     public int getReplicaNum() throws SessionException, ExecutionException {
         GetReplicaNumReq req = new GetReplicaNumReq(sessionId);

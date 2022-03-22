@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.combine.aggregate;
 
+import cn.edu.tsinghua.iginx.combine.utils.GroupByUtils;
 import cn.edu.tsinghua.iginx.query.result.AggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.AvgAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
@@ -86,9 +87,43 @@ public class AggregateCombiner {
         resp.dataTypeList = dataTypeList;
     }
 
+    private Map<String, String> groupPathByLevels(AggregateQueryResp resp, List<Integer> groupByLevels) {
+        List<String> paths = resp.paths;
+        List<DataType> dataTypeList = resp.dataTypeList;
+        Map<String, DataType> dataTypeMap = new HashMap<>();
+        Map<String, String> transformMap = new HashMap<>();
+        for (int i = 0; i < paths.size(); i++) {
+            String path = paths.get(i);
+            DataType dataType = dataTypeList.get(i);
+            String transformedPath = GroupByUtils.transformPath(path, groupByLevels);
+            if (dataTypeMap.getOrDefault(transformedPath, dataType) != dataType) {
+                throw new IllegalStateException("unexpected data type for " + path +  " in group by level.");
+            }
+            dataTypeMap.put(transformedPath, dataType);
+            transformMap.put(path, transformedPath);
+        }
+        List<String> transformedPaths = new ArrayList<>();
+        List<DataType> transformedTypes = new ArrayList<>();
+        for (Map.Entry<String, DataType> entry: dataTypeMap.entrySet()) {
+            transformedPaths.add(entry.getKey());
+            transformedTypes.add(entry.getValue());
+        }
+        resp.paths = transformedPaths;
+        resp.dataTypeList = transformedTypes;
+        return transformMap;
+    }
+
     public void combineSumOrCountResult(AggregateQueryResp resp, List<StatisticsAggregateQueryPlanExecuteResult> planExecuteResults) {
-        logger.debug("combine sum/count result, there are " + planExecuteResults.size() + " sub results.");
+        combineSumOrCountResult(resp, planExecuteResults, new ArrayList<>());
+    }
+
+    public void combineSumOrCountResult(AggregateQueryResp resp, List<StatisticsAggregateQueryPlanExecuteResult> planExecuteResults, List<Integer> groupByLevels) {
         constructPathAndTypeList(resp, planExecuteResults);
+        boolean needGroup = groupByLevels != null && groupByLevels.size() != 0;
+        Map<String, String> transformMap = new HashMap<>();
+        if (needGroup) {
+            transformMap = groupPathByLevels(resp, groupByLevels);
+        }
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
         Map<String, List<Object>> pathsRawData = new HashMap<>();
@@ -96,7 +131,11 @@ public class AggregateCombiner {
             List<String> subPaths = planExecuteResult.getPaths();
             List<Object> subPathsRawData = planExecuteResult.getValues();
             for (int i = 0; i < subPaths.size(); i++) {
-                pathsRawData.computeIfAbsent(subPaths.get(i), e -> new ArrayList<>())
+                String path = subPaths.get(i);
+                if (needGroup) {
+                    path = transformMap.get(path);
+                }
+                pathsRawData.computeIfAbsent(path, e -> new ArrayList<>())
                         .add(subPathsRawData.get(i));
             }
         }
@@ -188,11 +227,24 @@ public class AggregateCombiner {
     }
 
     public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults) {
-        combineAvgResult(resp, planExecuteResults, true);
+        combineAvgResult(resp, planExecuteResults, true, new ArrayList<>());
+    }
+
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, List<Integer> groupByLevels) {
+        combineAvgResult(resp, planExecuteResults, true, groupByLevels);
     }
 
     public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, boolean processNull) {
+        combineAvgResult(resp, planExecuteResults, processNull, new ArrayList<>());
+    }
+
+    public void combineAvgResult(AggregateQueryResp resp, List<AvgAggregateQueryPlanExecuteResult> planExecuteResults, boolean processNull, List<Integer> groupByLevels) {
         constructPathAndTypeList(resp, planExecuteResults);
+        boolean needGroup = groupByLevels != null && groupByLevels.size() != 0;
+        Map<String, String> transformMap = new HashMap<>();
+        if (needGroup) {
+            transformMap = groupPathByLevels(resp, groupByLevels);
+        }
         List<String> paths = resp.paths;
         List<DataType> dataTypes = resp.dataTypeList;
         Map<String, Pair<DataType, List<Pair<Long, Object>>>> pathsRawData = new HashMap<>();
@@ -205,7 +257,11 @@ public class AggregateCombiner {
                 DataType dataType = subDataTypes.get(i);
                 Long subCount = subCounts.get(i);
                 Object subSum = subSums.get(i);
-                pathsRawData.computeIfAbsent(subPaths.get(i), e -> new Pair<>(dataType, new ArrayList<>()))
+                String path = subPaths.get(i);
+                if (needGroup) {
+                    path = transformMap.get(path);
+                }
+                pathsRawData.computeIfAbsent(path, e -> new Pair<>(dataType, new ArrayList<>()))
                         .v.add(new Pair<>(subCount, subSum));
             }
         }

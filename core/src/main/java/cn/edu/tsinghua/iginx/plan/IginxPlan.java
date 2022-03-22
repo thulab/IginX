@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.plan;
 
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 
 import static cn.edu.tsinghua.iginx.plan.IginxPlan.IginxPlanType.IGINX;
 
@@ -37,6 +38,10 @@ public abstract class IginxPlan {
     private StorageUnitMeta storageUnit;
 
     private int combineGroup;
+
+    private IginxPlan correspondingSyncPlan;
+
+    private PlanExecuteResult planExecuteResult;
 
     protected IginxPlan(boolean isQuery) {
         this.iginxPlanType = IGINX;
@@ -103,9 +108,25 @@ public abstract class IginxPlan {
         this.combineGroup = combineGroup;
     }
 
+    public IginxPlan getCorrespondingSyncPlan() {
+        return correspondingSyncPlan;
+    }
+
+    public void setCorrespondingSyncPlan(IginxPlan correspondingSyncPlan) {
+        this.correspondingSyncPlan = correspondingSyncPlan;
+    }
+
+    public PlanExecuteResult getPlanExecuteResult() {
+        return planExecuteResult;
+    }
+
+    public void setPlanExecuteResult(PlanExecuteResult planExecuteResult) {
+        this.planExecuteResult = planExecuteResult;
+    }
+
     public enum IginxPlanType {
         UNKNOWN,
-        IGINX, NON_DATABASE, COLUMN, SHOW_COLUMNS, DELETE_COLUMNS, DATA, INSERT_RECORDS,
+        IGINX, NON_DATABASE, COLUMN, SHOW_COLUMNS, DELETE_COLUMNS, DATA, INSERT_RECORDS, SHOW_SUB_PATHS,
         INSERT_COLUMN_RECORDS, INSERT_NON_ALIGNED_COLUMN_RECORDS, INSERT_ROW_RECORDS,
         INSERT_NON_ALIGNED_ROW_RECORDS, DELETE_DATA_IN_COLUMNS, QUERY_DATA, AGGREGATE_QUERY, MAX, MIN,
         SUM, COUNT, AVG, FIRST_VALUE, LAST_VALUE, DOWNSAMPLE_QUERY, DOWNSAMPLE_MAX, DOWNSAMPLE_MIN,

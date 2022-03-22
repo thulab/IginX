@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.combine;
 import cn.edu.tsinghua.iginx.combine.aggregate.AggregateCombiner;
 import cn.edu.tsinghua.iginx.combine.downsample.DownsampleCombiner;
 import cn.edu.tsinghua.iginx.combine.meta.ShowColumnsCombiner;
+import cn.edu.tsinghua.iginx.combine.meta.ShowSubPathsCombiner;
 import cn.edu.tsinghua.iginx.combine.querydata.QueryDataSetCombiner;
 import cn.edu.tsinghua.iginx.combine.valuefilter.ValueFilterCombiner;
 import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
@@ -34,16 +35,19 @@ import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.PlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ShowSubPathsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
+import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
 import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.slf4j.Logger;
@@ -68,6 +72,12 @@ public class CombineExecutor implements ICombineExecutor {
         List<PlanExecuteResult> planExecuteResults = requestContext.getPlanExecuteResults();
         StatusCode statusCode = StatusCode.SUCCESS_STATUS;
         String statusMessage = null;
+
+        boolean notExecute = (int) planExecuteResults.stream().filter(e -> e.getStatusCode() == PlanExecuteResult.NON_EXECUTED).count() > 0;
+        if (notExecute) {
+            statusCode = StatusCode.OVERLOAD;
+            statusMessage = RpcUtils.OVERLOAD.message;
+        }
 
         int failureCount = (int) planExecuteResults.stream().filter(e -> e.getStatusCode() == PlanExecuteResult.FAILURE).count();
         if (failureCount > 0) {
@@ -98,12 +108,19 @@ public class CombineExecutor implements ICombineExecutor {
             case AggregateQuery:
                 AggregateQueryResp aggregateQueryResp = new AggregateQueryResp();
                 aggregateQueryResp.setStatus(RpcUtils.SUCCESS);
-                AggregateQueryReq req = ((AggregateQueryContext) requestContext).getReq();
-                switch (req.aggregateType) {
+                AggregateQueryReq aggregateQueryReq = ((AggregateQueryContext) requestContext).getReq();
+                List<Integer> aggregateGroupByLevels = aggregateQueryReq.getGroupByLevels();
+                boolean needGroup = aggregateGroupByLevels != null && aggregateGroupByLevels.size() != 0;
+                switch (aggregateQueryReq.aggregateType) {
                     case COUNT:
                     case SUM:
-                        aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
-                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        if (needGroup) {
+                            aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
+                                    .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()), aggregateGroupByLevels);
+                        } else {
+                            aggregateCombiner.combineSumOrCountResult(aggregateQueryResp, planExecuteResults.stream()
+                                    .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(StatisticsAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        }
                         break;
                     case MAX:
                         aggregateCombiner.combineMaxResult(aggregateQueryResp, planExecuteResults.stream()
@@ -122,8 +139,14 @@ public class CombineExecutor implements ICombineExecutor {
                                 .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(SingleValueAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
                         break;
                     case AVG:
-                        aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
-                                .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        if (needGroup) {
+                            aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
+                                    .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()), aggregateGroupByLevels);
+                        } else {
+                            aggregateCombiner.combineAvgResult(aggregateQueryResp, planExecuteResults.stream()
+                                    .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).map(AvgAggregateQueryPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                        }
+
                 }
                 combineResult = new AggregateCombineResult(RpcUtils.status(statusCode, statusMessage), aggregateQueryResp);
                 break;
@@ -131,9 +154,18 @@ public class CombineExecutor implements ICombineExecutor {
                 DownsampleQueryResp downsampleQueryResp = new DownsampleQueryResp();
                 downsampleQueryResp.setStatus(RpcUtils.SUCCESS);
                 DownsampleQueryReq downsampleQueryReq = ((DownsampleQueryContext) requestContext).getReq();
+                List<Integer> downsampleGroupByLevels = downsampleQueryReq.getGroupByLevels();
+                if (downsampleGroupByLevels != null) {
+                    downsampleGroupByLevels.sort(Integer::compareTo);
+                }
                 try {
-                    DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
-                            downsampleQueryReq.aggregateType);
+                    if (downsampleQueryReq.aggregateType == AggregateType.AVG) {
+                        DownsampleCombiner.combineDownsampleAvgQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
+                                downsampleGroupByLevels);
+                    } else {
+                        DownsampleCombiner.combineDownsampleQueryResult(downsampleQueryResp, planExecuteResults.stream().filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode()).collect(Collectors.toList()),
+                                downsampleQueryReq.aggregateType, downsampleGroupByLevels);
+                    }
                 } catch (Exception e) {
                     logger.error("encounter error when combine downsample data results: ", e);
                     statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
@@ -169,6 +201,14 @@ public class CombineExecutor implements ICombineExecutor {
                         .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
                         .map(ShowColumnsPlanExecuteResult.class::cast).collect(Collectors.toList()));
                 combineResult = new ShowColumnsCombineResult(RpcUtils.status(statusCode, statusMessage), showColumnsResp);
+                break;
+            case ShowSubPaths:
+                ShowSubPathsResp showSubPathsResp = new ShowSubPathsResp();
+                showSubPathsResp.setStatus(RpcUtils.SUCCESS);
+                ShowSubPathsCombiner.getInstance().combineResult(showSubPathsResp, planExecuteResults.stream()
+                        .filter(e -> e.getStatusCode() == StatusCode.SUCCESS_STATUS.getStatusCode())
+                        .map(ShowSubPathsPlanExecuteResult.class::cast).collect(Collectors.toList()));
+                combineResult = new ShowSubPathsCombineResult(RpcUtils.status(statusCode, statusMessage), showSubPathsResp);
                 break;
             default:
                 combineResult = new NonDataCombineResult(RpcUtils.status(statusCode, statusMessage));

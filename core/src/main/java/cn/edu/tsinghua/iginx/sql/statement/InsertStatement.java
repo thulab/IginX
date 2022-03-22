@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
@@ -11,7 +11,7 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InsertOperator extends Operator {
+public class InsertStatement extends Statement {
 
     private String prefixPath;
     private List<String> paths;
@@ -19,8 +19,8 @@ public class InsertOperator extends Operator {
     private Object[] values;
     private List<DataType> types;
 
-    public InsertOperator() {
-        this.operatorType = OperatorType.INSERT;
+    public InsertStatement() {
+        this.statementType = StatementType.INSERT;
         paths = new ArrayList<>();
         types = new ArrayList<>();
     }
@@ -66,7 +66,7 @@ public class InsertOperator extends Operator {
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         IginxWorker worker = IginxWorker.getInstance();
         InsertNonAlignedColumnRecordsReq req = SortUtils.sortAndBuildInsertReq(
                 sessionId,

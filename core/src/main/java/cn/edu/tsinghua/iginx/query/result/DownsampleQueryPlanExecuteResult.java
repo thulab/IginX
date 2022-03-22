@@ -25,7 +25,7 @@ import java.util.List;
 
 public class DownsampleQueryPlanExecuteResult extends SyncPlanExecuteResult {
 
-    private final List<QueryExecuteDataSet> queryExecuteDataSets;
+    private final List<QueryExecuteDataSet> queryExecuteDataSets; // 每个序列一个元素
 
     public DownsampleQueryPlanExecuteResult(int statusCode, IginxPlan plan, List<QueryExecuteDataSet> queryExecuteDataSets) {
         super(statusCode, plan);

@@ -140,6 +140,7 @@ public abstract class BaseSessionIT {
             logger.error("Error occurs in dataType Test");
             fail();
         }
+        session.insertColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
         logger.info("DataType test finished!");
     }
 

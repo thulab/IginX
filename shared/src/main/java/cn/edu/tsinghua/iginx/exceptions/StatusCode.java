@@ -29,9 +29,12 @@ public enum StatusCode {
 
     SESSION_ERROR(400),
     STATEMENT_EXECUTION_ERROR(401),
-    STATEMENT_PARSE_ERROR(402);
+    STATEMENT_PARSE_ERROR(402),
+    DELETE_ROOT_USER(403),
 
-    private int statusCode;
+    OVERLOAD(503);
+
+    private final int statusCode;
 
     StatusCode(int statusCode) {
         this.statusCode = statusCode;

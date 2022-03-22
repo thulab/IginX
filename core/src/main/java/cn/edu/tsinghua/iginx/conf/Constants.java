@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.conf;
 
+import java.io.File;
+
 public class Constants {
 
     public static final int MAX_REDIRECT_TIME = 5;
@@ -35,6 +37,10 @@ public class Constants {
     public static final String ZOOKEEPER_META = "zookeeper";
 
     public static final String ETCD_META = "etcd";
+
+    public static final String LEVEL_SEPARATOR = ".";
+
+    public static final String LEVEL_PLACEHOLDER = "*";
 
 }
 

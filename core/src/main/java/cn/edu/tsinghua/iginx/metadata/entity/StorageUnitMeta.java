@@ -47,7 +47,16 @@ public final class StorageUnitMeta {
         this.isMaster = isMaster;
     }
 
-    public synchronized void addReplica(StorageUnitMeta storageUnit) {
+
+    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, boolean initialStorageUnit) {
+        this.id = id;
+        this.storageEngineId = storageEngineId;
+        this.masterId = masterId;
+        this.isMaster = isMaster;
+        this.initialStorageUnit = initialStorageUnit;
+    }
+
+    public void addReplica(StorageUnitMeta storageUnit) {
         if (replicas == null)
             replicas = new ArrayList<>();
         replicas.add(storageUnit);

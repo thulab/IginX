@@ -17,99 +17,96 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.StorageEngineContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.StringLiteralContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeRangeContext;
 import cn.edu.tsinghua.iginx.sql.SqlParser.TimeValueContext;
-import cn.edu.tsinghua.iginx.sql.operator.*;
+import cn.edu.tsinghua.iginx.sql.statement.*;
+import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
+public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
-    public Operator visitSqlStatement(SqlParser.SqlStatementContext ctx) {
+    public Statement visitSqlStatement(SqlParser.SqlStatementContext ctx) {
         return visit(ctx.statement());
     }
 
     @Override
-    public Operator visitInsertStatement(SqlParser.InsertStatementContext ctx) {
-        InsertOperator insertOp = new InsertOperator();
-        insertOp.setPrefixPath(ctx.path().getText());
+    public Statement visitInsertStatement(SqlParser.InsertStatementContext ctx) {
+        InsertStatement insertStatement = new InsertStatement();
+        insertStatement.setPrefixPath(ctx.path().getText());
         // parse paths
         List<MeasurementNameContext> measurementNames = ctx.insertColumnsSpec().measurementName();
-        measurementNames.stream().forEach(e -> insertOp.setPath(e.getText()));
+        measurementNames.stream().forEach(e -> insertStatement.setPath(e.getText()));
         // parse times, values and types
-        parseInsertValuesSpec(ctx.insertValuesSpec(), insertOp);
+        parseInsertValuesSpec(ctx.insertValuesSpec(), insertStatement);
 
-        if (insertOp.getPaths().size() != insertOp.getValues().length) {
+        if (insertStatement.getPaths().size() != insertStatement.getValues().length) {
             throw new SQLParserException("Insert path size and value size must be equal.");
         }
-        return insertOp;
+        return insertStatement;
     }
 
     @Override
-    public Operator visitDeleteStatement(SqlParser.DeleteStatementContext ctx) {
-        DeleteOperator deleteOp = new DeleteOperator();
+    public Statement visitDeleteStatement(SqlParser.DeleteStatementContext ctx) {
+        DeleteStatement deleteStatement = new DeleteStatement();
         // parse delete paths
-        ctx.path().stream().forEach(e -> deleteOp.addPath(e.getText()));
+        ctx.path().stream().forEach(e -> deleteStatement.addPath(e.getText()));
         // parse time range
         Pair<Long, Long> range = parseTimeRange(ctx.timeRange());
-        deleteOp.setStartTime(range.k);
-        deleteOp.setEndTime(range.v);
-        return deleteOp;
+        deleteStatement.setStartTime(range.k);
+        deleteStatement.setEndTime(range.v);
+        return deleteStatement;
     }
 
     @Override
-    public Operator visitSelectStatement(SqlParser.SelectStatementContext ctx) {
-        SelectOperator selectOp = new SelectOperator();
+    public Statement visitSelectStatement(SqlParser.SelectStatementContext ctx) {
+        SelectStatement selectStatement = new SelectStatement();
         // Step 1. parse as much information as possible.
         // parse from paths
         if (ctx.fromClause() != null) {
-            selectOp.setFromPath(ctx.fromClause().path().getText());
+            selectStatement.setFromPath(ctx.fromClause().path().getText());
         }
         // parse select paths
         if (ctx.selectClause() != null) {
-            parseSelectPaths(ctx.selectClause(), selectOp);
+            parseSelectPaths(ctx.selectClause(), selectStatement);
         }
         // parse where clause
         if (ctx.whereClause() != null) {
             // parse time range
             Pair<Long, Long> range = parseTimeRange(ctx.whereClause().timeRange());
-            selectOp.setStartTime(range.k);
-            selectOp.setEndTime(range.v);
+            selectStatement.setStartTime(range.k);
+            selectStatement.setEndTime(range.v);
 
             // parse booleanExpression
             if (ctx.whereClause().orExpression() != null) {
                 // can not simply use orExpression().getText()
                 // you may get "a>1andb<2orc>3", and value filter may goes wrong.
-                String ret = parseOrExpression(ctx.whereClause().orExpression(), selectOp);
-                selectOp.setBooleanExpression(ret);
-                selectOp.setHasValueFilter(true);
+                String ret = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
+                selectStatement.setBooleanExpression(ret);
+                selectStatement.setHasValueFilter(true);
             }
         }
         // parse special clause
         if (ctx.specialClause() != null) {
-            parseSpecialClause(ctx.specialClause(), selectOp);
+            parseSpecialClause(ctx.specialClause(), selectStatement);
         }
 
         // Step 2. decide the query type according to the information.
-        selectOp.setQueryType();
+        selectStatement.setQueryType();
 
-        return selectOp;
+        return selectStatement;
     }
 
     @Override
-    public Operator visitShowReplicationStatement(SqlParser.ShowReplicationStatementContext ctx) {
-        return new ShowReplicationOperator();
+    public Statement visitShowReplicationStatement(SqlParser.ShowReplicationStatementContext ctx) {
+        return new ShowReplicationStatement();
     }
 
     @Override
-    public Operator visitAddStorageEngineStatement(SqlParser.AddStorageEngineStatementContext ctx) {
-        AddStorageEngineOperator addStorageEngineOp = new AddStorageEngineOperator();
+    public Statement visitAddStorageEngineStatement(SqlParser.AddStorageEngineStatementContext ctx) {
+        AddStorageEngineStatement addStorageEngineStatement = new AddStorageEngineStatement();
         // parse engines
         List<StorageEngineContext> engines = ctx.storageEngineSpec().storageEngine();
         for (StorageEngineContext engine : engines) {
@@ -118,49 +115,97 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             String typeStr = engine.engineType.getText().trim();
             String type = typeStr.substring(typeStr.indexOf(SQLConstant.QUOTE) + 1, typeStr.lastIndexOf(SQLConstant.QUOTE));
             Map<String, String> extra = parseExtra(engine.extra);
-            addStorageEngineOp.setEngines(new StorageEngine(ip, port, type, extra));
+            addStorageEngineStatement.setEngines(new StorageEngine(ip, port, type, extra));
         }
-        return addStorageEngineOp;
+        return addStorageEngineStatement;
     }
 
     @Override
-    public Operator visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
-        return new CountPointsOperator();
+    public Statement visitCountPointsStatement(SqlParser.CountPointsStatementContext ctx) {
+        return new CountPointsStatement();
     }
 
     @Override
-    public Operator visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
-        return new ClearDataOperator();
+    public Statement visitClearDataStatement(SqlParser.ClearDataStatementContext ctx) {
+        return new ClearDataStatement();
     }
 
     @Override
-    public Operator visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
-        DeleteTimeSeriesOperator deleteTimeSeriesOp = new DeleteTimeSeriesOperator();
-        ctx.path().stream().forEach(e -> deleteTimeSeriesOp.addPath(e.getText()));
-        return deleteTimeSeriesOp;
+    public Statement visitDeleteTimeSeriesStatement(SqlParser.DeleteTimeSeriesStatementContext ctx) {
+        DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
+        ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
+        return deleteTimeSeriesStatement;
     }
 
     @Override
-    public Operator visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
-        return new ShowTimeSeriesOperator();
+    public Statement visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
+        return new ShowTimeSeriesStatement();
     }
 
     @Override
-    public Operator visitShowClusterInfoStatement(SqlParser.ShowClusterInfoStatementContext ctx) {
-        return new ShowClusterInfoOperator();
+    public Statement visitShowSubTimeSeriesStatement(SqlParser.ShowSubTimeSeriesStatementContext ctx) {
+        if (ctx.path() != null) {
+            return new ShowSubTimeSeriesStatement(ctx.path().getText());
+        } else {
+            return new ShowSubTimeSeriesStatement("");
+        }
     }
 
-    private void parseSelectPaths(SelectClauseContext ctx, SelectOperator selectOp) {
+    @Override
+    public Statement visitShowClusterInfoStatement(SqlParser.ShowClusterInfoStatementContext ctx) {
+        return new ShowClusterInfoStatement();
+    }
+
+    @Override
+    public Statement visitCreateUserStatement(SqlParser.CreateUserStatementContext ctx) {
+        String username = ctx.username.getChild(0).toString();
+        String password = ctx.password.getChild(0).toString();
+        return new CreateUserStatement(username, password);
+    }
+
+    @Override
+    public Statement visitGrantUserStatement(SqlParser.GrantUserStatementContext ctx) {
+        String username = ctx.username.getChild(0).toString();
+        Set<AuthType> authTypes = new HashSet<>();
+        if (ctx.permissionSpec() != null) {
+            ctx.permissionSpec().permission().forEach(e -> authTypes.add(parseAuthType(e.getText())));
+        }
+        return new GrantUserStatement(username, authTypes);
+    }
+
+    @Override
+    public Statement visitChangePasswordStatement(SqlParser.ChangePasswordStatementContext ctx) {
+        String username = ctx.username.getChild(0).toString();
+        String password = ctx.password.getChild(0).toString();
+        return new ChangePasswordStatement(username, password);
+    }
+
+    @Override
+    public Statement visitDropUserStatement(SqlParser.DropUserStatementContext ctx) {
+        String username = ctx.username.getChild(0).toString();
+        return new DropUserStatement(username);
+    }
+
+    @Override
+    public Statement visitShowUserStatement(SqlParser.ShowUserStatementContext ctx) {
+        List<String> users = new ArrayList<>();
+        if (ctx.userSpec() != null) {
+            ctx.userSpec().nodeName().forEach(e -> users.add(e.getText()));
+        }
+        return new ShowUserStatement(users);
+    }
+
+    private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {
         List<ExpressionContext> expressions = ctx.expression();
 
         boolean hasFunc = expressions.get(0).functionName() != null;
-        selectOp.setHasFunc(hasFunc);
+        selectStatement.setHasFunc(hasFunc);
 
         for (ExpressionContext expr : expressions) {
             if (expr.functionName() != null && hasFunc) {
-                selectOp.setSelectedFuncsAndPaths(expr.functionName().getText(), expr.path().getText());
+                selectStatement.setSelectedFuncsAndPaths(expr.functionName().getText(), expr.path().getText());
             } else if (expr.functionName() == null && !hasFunc) {
-                selectOp.setSelectedFuncsAndPaths("", expr.path().getText());
+                selectStatement.setSelectedFuncsAndPaths("", expr.path().getText());
             } else {
                 throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
             }
@@ -168,87 +213,103 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
     }
 
 
-    private void parseSpecialClause(SpecialClauseContext ctx, SelectOperator selectOp) {
+    private void parseSpecialClause(SpecialClauseContext ctx, SelectStatement selectStatement) {
         // parse group by precision
         if (ctx.groupByTimeClause() != null) {
             String duration = ctx.groupByTimeClause().DURATION().getText();
             long precision = TimeUtils.convertDurationStrToLong(0, duration);
-            selectOp.setPrecision(precision);
-            selectOp.setHasGroupBy(true);
+            selectStatement.setPrecision(precision);
+            selectStatement.setHasGroupBy(true);
+            if (!ctx.groupByTimeClause().INT().isEmpty()) {
+                if (!selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Count) &&
+                        !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Avg) &&
+                        !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Sum)) {
+                    throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+                }
+                ctx.groupByTimeClause().INT().forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
+            }
         }
         // parse limit & offset
         // like standard SQL, limit N, M means limit M offset N
         if (ctx.limitClause() != null) {
             if (ctx.limitClause().INT().size() == 1) {
                 int limit = Integer.parseInt(ctx.limitClause().INT(0).getText());
-                selectOp.setLimit(limit);
+                selectStatement.setLimit(limit);
                 if (ctx.limitClause().offsetClause() != null) {
                     int offset = Integer.parseInt(ctx.limitClause().offsetClause().INT().getText());
-                    selectOp.setOffset(offset);
+                    selectStatement.setOffset(offset);
                 }
             } else if (ctx.limitClause().INT().size() == 2) {
                 int offset = Integer.parseInt(ctx.limitClause().INT(0).getText());
                 int limit = Integer.parseInt(ctx.limitClause().INT(1).getText());
-                selectOp.setOffset(offset);
-                selectOp.setLimit(limit);
+                selectStatement.setOffset(offset);
+                selectStatement.setLimit(limit);
             } else {
                 throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
             }
         }
         // parse order by
         if (ctx.orderByClause() != null) {
-            if (selectOp.isHasFunc()) {
+            if (selectStatement.isHasFunc()) {
                 throw new SQLParserException("Not support ORDER BY clause in aggregate query for now.");
             }
             if (ctx.orderByClause().path() != null) {
                 String suffixPath = ctx.orderByClause().path().getText();
-                String prefixPath = selectOp.getFromPath();
+                String prefixPath = selectStatement.getFromPath();
                 String orderByPath = prefixPath + SQLConstant.DOT + suffixPath;
                 if (orderByPath.contains("*")) {
                     throw new SQLParserException(String.format("ORDER BY path '%s' has '*', which is not supported.", orderByPath));
                 }
-                selectOp.setOrderByPath(orderByPath);
+                selectStatement.setOrderByPath(orderByPath);
             } else {
-                selectOp.setOrderByPath(SQLConstant.TIME);
+                selectStatement.setOrderByPath(SQLConstant.TIME);
             }
             if (ctx.orderByClause().DESC() != null) {
-                selectOp.setAscending(false);
+                selectStatement.setAscending(false);
             }
+        }
+        if (ctx.groupByLevelClause() != null) {
+            if (!selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Count) &&
+                    !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Avg) &&
+                    !selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Sum)) {
+                throw new SQLParserException("Group by level only support aggregate query count, sum, avg for now.");
+            }
+            ctx.groupByLevelClause().INT().forEach(terminalNode -> selectStatement.setLayer(Integer.parseInt(terminalNode.getText())));
         }
     }
 
-    private String parseOrExpression(OrExpressionContext ctx, SelectOperator selectOp) {
+    private String parseOrExpression(OrExpressionContext ctx, SelectStatement selectStatement) {
         List<AndExpressionContext> list = ctx.andExpression();
         if (list.size() > 1) {
-            String ret = parseAndExpression(list.get(0), selectOp);
+            String ret = parseAndExpression(list.get(0), selectStatement);
             for (int i = 1; i < list.size(); i++) {
-                ret += " || " + parseAndExpression(list.get(i), selectOp);
+                ret += " || " + parseAndExpression(list.get(i), selectStatement);
             }
             return ret;
         } else {
-            return parseAndExpression(list.get(0), selectOp);
+            return parseAndExpression(list.get(0), selectStatement);
         }
     }
 
-    private String parseAndExpression(AndExpressionContext ctx, SelectOperator selectOp) {
+    private String parseAndExpression(AndExpressionContext ctx, SelectStatement selectStatement) {
         List<PredicateContext> list = ctx.predicate();
         if (list.size() > 1) {
-            String ret = parsePredicate(list.get(0), selectOp);
+            String ret = parsePredicate(list.get(0), selectStatement);
             for (int i = 1; i < list.size(); i++) {
-                ret += " && " + parsePredicate(list.get(i), selectOp);
+                ret += " && " + parsePredicate(list.get(i), selectStatement);
             }
             return ret;
         } else {
-            return parsePredicate(list.get(0), selectOp);
+            return parsePredicate(list.get(0), selectStatement);
         }
     }
 
-    private String parsePredicate(PredicateContext ctx, SelectOperator selectOp) {
+    private String parsePredicate(PredicateContext ctx, SelectStatement selectStatement) {
         if (ctx.orExpression() != null) {
-            return "!(" + parseOrExpression(ctx.orExpression(), selectOp) + ")";
+            return "!(" + parseOrExpression(ctx.orExpression(), selectStatement) + ")";
         } else {
             StringBuilder builder = new StringBuilder();
-            String prefixPath = selectOp.getFromPath();
+            String prefixPath = selectStatement.getFromPath();
             builder.append(prefixPath).append(SQLConstant.DOT).append(ctx.path().getText()).append(" ");
             builder.append(ctx.comparisonOperator().getText()).append(" ");
             builder.append(ctx.constant().getText());
@@ -274,7 +335,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
         return map;
     }
 
-    private void parseInsertValuesSpec(InsertValuesSpecContext ctx, InsertOperator insertOp) {
+    private void parseInsertValuesSpec(InsertValuesSpecContext ctx, InsertStatement insertStatement) {
         List<InsertMultiValueContext> insertMultiValues = ctx.insertMultiValue();
 
         int size = insertMultiValues.size();
@@ -309,9 +370,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
             }
         }
 
-        insertOp.setTimes(times);
-        insertOp.setValues(values);
-        insertOp.setTypes(new ArrayList<>(Arrays.asList(types)));
+        insertStatement.setTimes(times);
+        insertStatement.setValues(values);
+        insertStatement.setTypes(new ArrayList<>(Arrays.asList(types)));
     }
 
     private Object parseValue(ConstantContext ctx) {
@@ -436,6 +497,21 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Operator> {
                                     "Input should like yyyy-MM-dd HH:mm:ss." +
                                     "or yyyy/MM/dd HH:mm:ss.",
                             timestampStr));
+        }
+    }
+
+    private AuthType parseAuthType(String authType) {
+        switch (authType.trim().toLowerCase()) {
+            case "read":
+                return AuthType.Read;
+            case "write":
+                return AuthType.Write;
+            case "admin":
+                return AuthType.Admin;
+            case "cluster":
+                return AuthType.Cluster;
+            default:
+                throw new SQLParserException(String.format("Unknown auth type [%s].", authType));
         }
     }
 }

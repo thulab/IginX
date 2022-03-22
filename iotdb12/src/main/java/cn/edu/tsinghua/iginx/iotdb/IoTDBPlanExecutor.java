@@ -36,6 +36,7 @@ import cn.edu.tsinghua.iginx.plan.MaxQueryPlan;
 import cn.edu.tsinghua.iginx.plan.MinQueryPlan;
 import cn.edu.tsinghua.iginx.plan.QueryDataPlan;
 import cn.edu.tsinghua.iginx.plan.ShowColumnsPlan;
+import cn.edu.tsinghua.iginx.plan.ShowSubPathsPlan;
 import cn.edu.tsinghua.iginx.plan.SumQueryPlan;
 import cn.edu.tsinghua.iginx.plan.ValueFilterQueryPlan;
 import cn.edu.tsinghua.iginx.plan.downsample.DownsampleAvgQueryPlan;
@@ -53,11 +54,13 @@ import cn.edu.tsinghua.iginx.query.result.LastQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.NonDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.QueryDataPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ShowColumnsPlanExecuteResult;
+import cn.edu.tsinghua.iginx.query.result.ShowSubPathsPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.SingleValueAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.StatisticsAggregateQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.query.result.ValueFilterQueryPlanExecuteResult;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
@@ -144,6 +147,8 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
 
+    private static final String SHOW_SUB_PATHS = "SHOW CHILD PATHS " + PREFIX + "*";
+
     private static final String SHOW_STORAGE_GROUP = "SHOW STORAGE GROUP";
 
     private final Map<Long, SessionPool> sessionPools;
@@ -194,6 +199,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertColumnRecordsPlan(InsertColumnRecordsPlan plan) {
+        boolean isMaster = false;
+        if (plan.isSync()) {
+            isMaster = true;
+        }
         // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
@@ -224,6 +233,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         for (Map.Entry<String, List<MeasurementSchema>> entry : schemasMap.entrySet()) {
             tablets.put(entry.getKey(), new Tablet(entry.getKey(), entry.getValue(), batchSize));
         }
+        String sign = RandomStringUtils.randomAlphanumeric(3);
+        long start = System.currentTimeMillis();
+        logger.info("Start Iotdb Insert, sign : {}, timestamp : {}", sign, start);
 
         int cnt = 0;
         int[] indexes = new int[plan.getPathsNum()];
@@ -253,7 +265,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
 
             try {
+                logger.info("Before insertTablets, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
                 sessionPool.insertTablets(tablets);
+                logger.info("After insertTablets, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
                 return new NonDataPlanExecuteResult(FAILURE, plan);
@@ -264,6 +278,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
             cnt += size;
         } while(cnt < plan.getTimestamps().length);
+        logger.info("End Iotdb Insert, sign : {}, cos : {}, isMaster: {}, size: {}, engine: {}", sign, System.currentTimeMillis() - start, isMaster, plan.getPaths().size(), plan.getStorageEngineId());
 
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
@@ -340,6 +355,10 @@ public class IoTDBPlanExecutor implements IStorageEngine {
 
     @Override
     public NonDataPlanExecuteResult syncExecuteInsertRowRecordsPlan(InsertRowRecordsPlan plan) {
+        boolean isMaster = false;
+        if (plan.isSync()) {
+            isMaster = true;
+        }
         // TODO 每个 tablet 内部都是对齐的，不同 tablet 之间可以不对齐
         SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
         Map<String, Tablet> tablets = new HashMap<>();
@@ -361,6 +380,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                 schemaList = new ArrayList<>();
                 pathIndexes = new ArrayList<>();
             }
+
             schemaList.add(new MeasurementSchema(measurement, toIoTDB(plan.getDataType(i))));
             schemasMap.put(deviceId, schemaList);
             pathIndexes.add(i);
@@ -370,7 +390,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
         for (Map.Entry<String, List<MeasurementSchema>> entry : schemasMap.entrySet()) {
             tablets.put(entry.getKey(), new Tablet(entry.getKey(), entry.getValue(), batchSize));
         }
-
+        String sign = RandomStringUtils.randomAlphanumeric(3);
+        long start = System.currentTimeMillis();
+        logger.info("Start Iotdb Insert, sign : {}, timestamp : {}", sign, start);
         int cnt = 0;
         do {
             int size = Math.min(plan.getTimestamps().length - cnt, batchSize);
@@ -403,7 +425,9 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             }
 
             try {
+                logger.info("Before insertTablets, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
                 sessionPool.insertTablets(tablets);
+                logger.info("After insertTablets, sign : {}, cost : {}", sign, System.currentTimeMillis() - start);
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.error(e.getMessage());
                 return new NonDataPlanExecuteResult(FAILURE, plan);
@@ -415,6 +439,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             cnt += size;
         } while(cnt < plan.getTimestamps().length);
 
+        logger.info("End Iotdb Insert, sign : {}, cos : {}, isMaster: {}, size: {}, engine: {}", sign, System.currentTimeMillis() - start, isMaster, plan.getPaths().size(), plan.getStorageEngineId());
         return new NonDataPlanExecuteResult(SUCCESS, plan);
     }
 
@@ -578,7 +603,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
+                    sessionPool.executeQueryStatement(String.format(LAST, pair.v, pair.k, plan.getStartTime()));
                 while(true) {
                     RowRecord rowRecord = dataSet.next();
                     if (rowRecord == null || rowRecord.getFields().isEmpty()) {
@@ -667,7 +692,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     logger.error("Unsupported data type in aggregation SUM : TEXT");
                 }
                 logger.error(e.getMessage());
-                return new AvgAggregateQueryPlanExecuteResult(FAILURE, null);
+                return new AvgAggregateQueryPlanExecuteResult(FAILURE, plan);
             }
         }
         AvgAggregateQueryPlanExecuteResult result = new AvgAggregateQueryPlanExecuteResult(SUCCESS, plan);
@@ -688,7 +713,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(COUNT, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(COUNT, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -743,7 +768,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
                     logger.error("Unsupported data type in aggregation SUM : TEXT");
                 }
                 logger.error(e.getMessage());
-                return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, null);
+                return new StatisticsAggregateQueryPlanExecuteResult(FAILURE, plan);
             }
             if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                 for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -780,7 +805,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(FIRST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(FIRST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -823,7 +848,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(LAST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(LAST_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -866,7 +891,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(MAX_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(MAX_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -909,7 +934,7 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             for (String path : plan.getPaths()) {
                 Pair<String, String> pair = generateDeviceAndMeasurement(path, plan.getStorageUnit().getId());
                 SessionDataSetWrapper dataSet =
-                        sessionPool.executeQueryStatement(String.format(MIN_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
+                    sessionPool.executeQueryStatement(String.format(MIN_VALUE, pair.v, pair.k, plan.getStartTime(), plan.getEndTime()));
                 RowRecord rowRecord = dataSet.next();
                 if (rowRecord != null && !rowRecord.getFields().isEmpty()) {
                     for (int i = 0; i < rowRecord.getFields().size(); i++) {
@@ -1127,6 +1152,34 @@ public class IoTDBPlanExecutor implements IStorageEngine {
             return new ShowColumnsPlanExecuteResult(FAILURE, plan);
         }
         return new ShowColumnsPlanExecuteResult(SUCCESS, plan, paths, dataTypes);
+    }
+
+    @Override
+    public ShowSubPathsPlanExecuteResult syncExecuteShowSubPathsPlan(ShowSubPathsPlan plan) {
+        SessionPool sessionPool = sessionPools.get(plan.getStorageEngineId());
+        List<String> paths = new ArrayList<>();
+        try {
+            String statements = SHOW_SUB_PATHS;
+            if (plan.getPath() != null) {
+                statements += "." + plan.getPath();
+            }
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(statements);
+            while(dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                if (record == null || record.getFields().size() < 1) {
+                    continue;
+                }
+                String path = record.getFields().get(0).getStringValue();
+                path = path.substring(5);
+                path = path.substring(path.indexOf('.') + 1);
+                paths.add(path);
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+            return new ShowSubPathsPlanExecuteResult(FAILURE, plan);
+        }
+        return new ShowSubPathsPlanExecuteResult(SUCCESS, plan, paths);
     }
 
     private Pair<String, String> generateDeviceAndMeasurement(String path, String storageUnitId) {

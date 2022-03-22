@@ -34,22 +34,30 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByData
 public class SessionExecuteSqlResult {
 
     private SqlType sqlType;
-    private AggregateType aggregateType;
+    private String parseErrorMsg;
+
     private long[] timestamps;
     private List<String> paths;
-    private String orderByPath;
     private List<List<Object>> values;
     private List<DataType> dataTypeList;
-    private int replicaNum;
-    private long pointsNum;
-    private String parseErrorMsg;
+    private AggregateType aggregateType;
+
     private int limit;
     private int offset;
     private boolean ascending;
+    private String orderByPath;
+
+    private int replicaNum;
+    private long pointsNum;
+
     private List<IginxInfo> iginxInfos;
     private List<StorageEngineInfo> storageEngineInfos;
     private List<MetaStorageInfo> metaStorageInfos;
     private LocalMetaStorageInfo localMetaStorageInfo;
+
+    private List<String> usernames;
+    private List<UserType> userTypes;
+    private List<Set<AuthType>> authTypes;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -75,11 +83,19 @@ public class SessionExecuteSqlResult {
                 this.paths = resp.getPaths();
                 this.dataTypeList = resp.getDataTypeList();
                 break;
+            case ShowSubTimeSeries:
+                this.paths = resp.getPaths();
+                break;
             case ShowClusterInfo:
                 this.iginxInfos = resp.getIginxInfos();
                 this.storageEngineInfos = resp.getStorageEngineInfos();
                 this.metaStorageInfos = resp.getMetaStorageInfos();
                 this.localMetaStorageInfo = resp.getLocalMetaStorageInfo();
+                break;
+            case ShowUser:
+                this.usernames = resp.getUsernames();
+                this.userTypes = resp.getUserTypes();
+                this.authTypes = resp.getAuths();
                 break;
             default:
                 break;
@@ -173,10 +189,17 @@ public class SessionExecuteSqlResult {
             List<Integer> maxSizeList = new ArrayList<>();
             result = cacheResult(needFormatTime, timePrecision, maxSizeList);
         } else if (sqlType == SqlType.ShowTimeSeries) {
-            result.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
+            result.add(new ArrayList<>(Arrays.asList("TimeSeries", "DataType")));
             if (paths != null) {
                 for (int i = 0; i < paths.size(); i++) {
                     result.add(Arrays.asList(paths.get(i) + "", dataTypeList.get(i) + ""));
+                }
+            }
+        } else if (sqlType == SqlType.ShowSubTimeSeries) {
+            result.add(new ArrayList<>(Collections.singletonList("SubTimeSeries")));
+            if (paths != null) {
+                for (String path : paths) {
+                    result.add(Collections.singletonList(path + ""));
                 }
             }
         } else if (sqlType == SqlType.GetReplicaNum) {
@@ -203,8 +226,12 @@ public class SessionExecuteSqlResult {
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             return buildShowTimeSeriesResult();
+        } else if (sqlType == SqlType.ShowSubTimeSeries) {
+            return buildShowSubTimeSeriesResult();
         } else if (sqlType == SqlType.ShowClusterInfo) {
             return buildShowClusterInfoResult();
+        } else if (sqlType == SqlType.ShowUser) {
+            return buildShowUserResult();
         } else if (sqlType == SqlType.GetReplicaNum) {
             return "Replica num: " + replicaNum + "\n";
         } else if (sqlType == SqlType.CountPoints) {
@@ -373,13 +400,30 @@ public class SessionExecuteSqlResult {
 
     private String buildShowTimeSeriesResult() {
         StringBuilder builder = new StringBuilder();
-        builder.append("Time series:").append("\n");
+        builder.append("TimeSeries:").append("\n");
         int num = paths == null ? 0 : paths.size();
         if (paths != null) {
             List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
+            cache.add(new ArrayList<>(Arrays.asList("TimeSeries", "DataType")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
+            }
+
+            buildFromStringList(builder, cache);
+        }
+        builder.append(buildCount(num));
+        return builder.toString();
+    }
+
+    private String buildShowSubTimeSeriesResult() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("SubTimeSeries:").append("\n");
+        int num = paths == null ? 0 : paths.size();
+        if (paths != null) {
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Collections.singletonList("SubTimeSeries")));
+            for (String path : paths) {
+                cache.add(new ArrayList<>(Collections.singletonList(path)));
             }
 
             buildFromStringList(builder, cache);
@@ -445,6 +489,34 @@ public class SessionExecuteSqlResult {
             buildFromStringList(builder, cache);
         }
 
+        return builder.toString();
+    }
+
+    private String buildShowUserResult() {
+        StringBuilder builder = new StringBuilder();
+        if (usernames != null && !usernames.isEmpty()) {
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("Username", "UserType", "Auth")));
+            for (int i = 0; i < usernames.size(); i++) {
+                cache.add(new ArrayList<>(
+                        Arrays.asList(
+                                usernames.get(i),
+                                userTypes.get(i).toString(),
+                                authTypesToString(authTypes.get(i))
+                        )
+                ));
+            }
+            buildFromStringList(builder, cache);
+        }
+        return builder.toString();
+    }
+
+    private String authTypesToString(Set<AuthType> types) {
+        if (types == null || types.isEmpty())
+            return "Null";
+        StringBuilder builder = new StringBuilder();
+        types.forEach(type -> builder.append(type.toString() + ", "));
+        builder.delete(builder.length() - 2, builder.length());
         return builder.toString();
     }
 

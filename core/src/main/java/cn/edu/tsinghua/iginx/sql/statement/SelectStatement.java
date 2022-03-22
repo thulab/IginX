@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.sql.operator;
+package cn.edu.tsinghua.iginx.sql.statement;
 
 import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
@@ -24,7 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class SelectOperator extends Operator {
+public class SelectStatement extends Statement {
 
     private QueryType queryType;
 
@@ -44,8 +44,10 @@ public class SelectOperator extends Operator {
     private int limit;
     private int offset;
 
-    public SelectOperator() {
-        operatorType = OperatorType.SELECT;
+    private List<Integer> layers;
+
+    public SelectStatement() {
+        statementType = StatementType.SELECT;
         queryType = QueryType.Unknown;
         ascending = true;
         selectedFuncsAndPaths = new ArrayList<>();
@@ -56,6 +58,7 @@ public class SelectOperator extends Operator {
         endTime = Long.MAX_VALUE;
         limit = Integer.MAX_VALUE;
         offset = 0;
+        layers = new ArrayList<>();
     }
 
     public static FuncType str2FuncType(String str) {
@@ -241,6 +244,18 @@ public class SelectOperator extends Operator {
         this.offset = offset;
     }
 
+    public void setSelectedFuncsAndPaths(List<Pair<String, String>> selectedFuncsAndPaths) {
+        this.selectedFuncsAndPaths = selectedFuncsAndPaths;
+    }
+
+    public List<Integer> getLayers() {
+        return layers;
+    }
+
+    public void setLayer(int layer) {
+        this.layers.add(layer);
+    }
+
     public void setQueryType() {
         if (hasFunc) {
             if (hasGroupBy && hasValueFilter) {
@@ -274,7 +289,7 @@ public class SelectOperator extends Operator {
     }
 
     @Override
-    public ExecuteSqlResp doOperation(long sessionId) {
+    public ExecuteSqlResp execute(long sessionId) {
         switch (queryType) {
             case SimpleQuery:
                 return simpleQuery(sessionId);
@@ -334,6 +349,9 @@ public class SelectOperator extends Operator {
                 endTime,
                 aggregateType
         );
+        if (!layers.isEmpty()) {
+            req.setGroupByLevels(layers);
+        }
         AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
 
         ExecuteSqlResp resp = new ExecuteSqlResp(aggregateQueryResp.getStatus(), SqlType.AggregateQuery);
@@ -384,6 +402,9 @@ public class SelectOperator extends Operator {
                 aggregateType,
                 precision
         );
+        if (!layers.isEmpty()) {
+            req.setGroupByLevels(layers);
+        }
         DownsampleQueryResp downsampleQueryResp = worker.downsampleQuery(req);
 
         ExecuteSqlResp resp = new ExecuteSqlResp(downsampleQueryResp.getStatus(), SqlType.DownsampleQuery);

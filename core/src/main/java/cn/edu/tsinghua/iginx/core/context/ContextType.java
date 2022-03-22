@@ -32,6 +32,7 @@ public enum ContextType {
     ValueFilterQuery,
     LastQuery,
     ShowColumns,
+    ShowSubPaths,
     Unknown;
 
 }

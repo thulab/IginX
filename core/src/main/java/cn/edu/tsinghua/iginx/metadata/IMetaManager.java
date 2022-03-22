@@ -27,6 +27,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
@@ -99,7 +101,6 @@ public interface IMetaManager {
      * 获取某个时间序列的最新分片
      */
     FragmentMeta getLatestFragmentByTimeSeriesName(String tsName);
-
 
     /**
      * 获取某个时间序列在某个时间区间的所有分片（按照分片时间戳排序）
@@ -184,5 +185,17 @@ public interface IMetaManager {
     List<UserMeta> getUsers();
 
     List<UserMeta> getUsers(List<String> username);
+
+    boolean election();
+
+    void saveTimeSeriesData(InsertRecordsPlan plan);
+
+    List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
+
+    Map<String, Double> getTimeseriesData();
+
+    int updateVersion();
+
+    Map<Integer, Integer> getTimeseriesVersionMap();
 
 }

@@ -31,6 +31,7 @@ from .thrift.rpc.ttypes import (
     GetReplicaNumReq,
     LastQueryReq,
     ShowColumnsReq,
+    ShowSubPathsReq,
     AddStorageEnginesReq,
     DeleteColumnsReq,
     QueryDataReq,
@@ -132,6 +133,14 @@ class Session(object):
             time_series_list.append(TimeSeries(resp.paths[i], resp.dataTypeList[i]))
 
         return time_series_list
+
+
+    def list_sub_time_series(self, prefix=None):
+        req = ShowSubPathsReq(sessionId=self.__session_id, path=prefix)
+        resp = self.__client.showSubPaths(req)
+        Session.verify_status(resp.status)
+
+        return resp.paths
 
 
     def add_storage_engine(self, ip, port, type, extra_params=None):
