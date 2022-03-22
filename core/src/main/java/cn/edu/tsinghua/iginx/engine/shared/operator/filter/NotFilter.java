@@ -20,7 +20,7 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class NotFilter implements Filter {
 
-    private final Filter child;
+    private Filter child;
 
     private final FilterType type = FilterType.Not;
 
@@ -30,6 +30,16 @@ public class NotFilter implements Filter {
 
     public Filter getChild() {
         return child;
+    }
+
+    public void setChild(Filter child) {
+        this.child = child;
+    }
+
+    @Override
+    public void accept(FilterVisitor visitor) {
+        visitor.visit(this);
+        this.child.accept(visitor);
     }
 
     @Override

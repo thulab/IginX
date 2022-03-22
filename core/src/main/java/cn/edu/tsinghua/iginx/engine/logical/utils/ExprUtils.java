@@ -61,6 +61,20 @@ public class ExprUtils {
         }
     }
 
+    private static Filter toDNF(OrFilter orFilter) {
+        List<Filter> children = orFilter.getChildren();
+        List<Filter> newChildren = new ArrayList<>();
+        children.forEach(child -> {
+            Filter newChild = toDNF(child);
+            if (FilterType.isLeafFilter(newChild.getType()) || newChild.getType().equals(FilterType.And)) {
+                newChildren.add(newChild);
+            } else {
+                newChildren.addAll(((OrFilter) newChild).getChildren());
+            }
+        });
+        return new OrFilter(newChildren);
+    }
+
     private static List<Filter> getConjunctions(List<Filter> filters) {
         List<Filter> cur = getAndChild(filters.get(0));
         for (int i = 1; i < filters.size(); i++) {
@@ -99,30 +113,125 @@ public class ExprUtils {
         }
     }
 
-    private static Filter toDNF(OrFilter orFilter) {
-        List<Filter> children = orFilter.getChildren();
+    public static Filter toCNF(Filter filter) {
+        filter = removeNot(filter);
+        filter = removeSingleFilter(filter);
+        FilterType type = filter.getType();
+        switch (type) {
+            case Time:
+            case Value:
+                return filter;
+            case Not:
+                throw new SQLParserException("Get CNF failed, filter has not-subFilter.");
+            case And:
+                return toCNF((AndFilter) filter);
+            case Or:
+                return toCNF((OrFilter) filter);
+            default:
+                throw new SQLParserException("Get CNF failed, token type is: " + filter.getType());
+        }
+    }
+
+    private static Filter toCNF(AndFilter andFilter) {
+        List<Filter> children = andFilter.getChildren();
         List<Filter> newChildren = new ArrayList<>();
         children.forEach(child -> {
             Filter newChild = toDNF(child);
-            if (FilterType.isLeafFilter(newChild.getType()) || newChild.getType().equals(FilterType.And)) {
+            if (FilterType.isLeafFilter(newChild.getType()) || newChild.getType().equals(FilterType.Or)) {
                 newChildren.add(newChild);
             } else {
-                newChildren.addAll(((OrFilter) newChild).getChildren());
+                newChildren.addAll(((AndFilter) newChild).getChildren());
             }
         });
-        return new OrFilter(newChildren);
+        return new AndFilter(newChildren);
     }
 
-    private static Filter removeSingleFilter(Filter filter) {
+    private static Filter toCNF(OrFilter orFilter) {
+        List<Filter> children = orFilter.getChildren();
+        List<Filter> cnfChildren = new ArrayList<>();
+        children.forEach(child -> cnfChildren.add(toCNF(child)));
+
+        boolean childrenWithoutAnd = true;
+        for (Filter child : cnfChildren) {
+            if (child.getType().equals(FilterType.And)) {
+                childrenWithoutAnd = false;
+                break;
+            }
+        }
+
+        List<Filter> newChildren = new ArrayList<>();
+        if (childrenWithoutAnd) {
+            cnfChildren.forEach(child -> {
+                if (FilterType.isLeafFilter(child.getType())) {
+                    newChildren.add(child);
+                } else {
+                    newChildren.addAll(((AndFilter) child).getChildren());
+                }
+            });
+            return new OrFilter(newChildren);
+        } else {
+            newChildren.addAll(getDisjunctions(cnfChildren));
+            return new AndFilter(newChildren);
+        }
+    }
+
+    private static List<Filter> getDisjunctions(List<Filter> filters) {
+        List<Filter> cur = getOrChild(filters.get(0));
+        for (int i = 1; i < filters.size(); i++) {
+            cur = getDisjunctions(cur, getOrChild(filters.get(i)));
+        }
+        return cur;
+    }
+
+    private static List<Filter> getDisjunctions(List<Filter> first, List<Filter> second) {
+        List<Filter> ret = new ArrayList<>();
+        for (Filter firstFilter : first) {
+            for (Filter secondFilter : second) {
+                ret.add(mergeToDisjunction(new ArrayList<>(Arrays.asList(firstFilter.copy(), secondFilter.copy()))));
+            }
+        }
+        return ret;
+    }
+
+    private static Filter mergeToDisjunction(List<Filter> filters) {
+        List<Filter> children = new ArrayList<>();
+        filters.forEach(child -> {
+            if (FilterType.isLeafFilter(child.getType())) {
+                children.add(child);
+            } else {
+                children.addAll(((OrFilter) child).getChildren());
+            }
+        });
+        return new OrFilter(children);
+    }
+
+    private static List<Filter> getOrChild(Filter filter) {
+        if (filter.getType().equals(FilterType.And)) {
+            return ((AndFilter) filter).getChildren();
+        } else {
+            return Collections.singletonList(filter);
+        }
+    }
+
+    public static Filter removeSingleFilter(Filter filter) {
         if (filter.getType().equals(FilterType.Or)) {
             List<Filter> children = ((OrFilter) filter).getChildren();
-            children.forEach(child -> child = removeSingleFilter(child));
+            for (int i = 0; i < children.size(); i++) {
+                Filter childWithoutSingle = removeSingleFilter(children.get(i));
+                children.set(i, childWithoutSingle);
+            }
             return children.size() == 1 ? children.get(0) : filter;
-        }
-        if (filter.getType().equals(FilterType.And)) {
+        } else if (filter.getType().equals(FilterType.And)) {
             List<Filter> children = ((AndFilter) filter).getChildren();
-            children.forEach(child -> child = removeSingleFilter(child));
+            for (int i = 0; i < children.size(); i++) {
+                Filter childWithoutSingle = removeSingleFilter(children.get(i));
+                children.set(i, childWithoutSingle);
+            }
             return children.size() == 1 ? children.get(0) : filter;
+        } else if (filter.getType().equals(FilterType.Not)) {
+            NotFilter notFilter = (NotFilter) filter;
+            notFilter.setChild(removeSingleFilter(notFilter.getChild()));
+            return filter;
         }
         return filter;
     }
