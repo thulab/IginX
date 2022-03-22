@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.sql;
 
+import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
@@ -91,6 +92,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         // parse where clause
         if (ctx.whereClause() != null) {
             Filter filter = parseOrExpression(ctx.whereClause().orExpression(), selectStatement);
+            filter = ExprUtils.removeSingleFilter(filter);
             selectStatement.setFilter(filter);
             selectStatement.setHasValueFilter(true);
         }

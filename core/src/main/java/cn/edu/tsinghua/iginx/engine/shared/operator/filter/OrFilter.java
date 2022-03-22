@@ -37,6 +37,12 @@ public class OrFilter implements Filter {
     }
 
     @Override
+    public void accept(FilterVisitor visitor) {
+        visitor.visit(this);
+        this.children.forEach(child -> child.accept(visitor));
+    }
+
+    @Override
     public FilterType getType() {
         return type;
     }

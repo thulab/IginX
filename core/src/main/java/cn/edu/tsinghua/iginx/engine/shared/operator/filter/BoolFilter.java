@@ -16,6 +16,11 @@ public class BoolFilter implements Filter {
     }
 
     @Override
+    public void accept(FilterVisitor visitor) {
+        visitor.visit(this);
+    }
+
+    @Override
     public FilterType getType() {
         return type;
     }
