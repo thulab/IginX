@@ -71,8 +71,6 @@ public class QueryGenerator extends AbstractGenerator {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        logger.debug("start path={}, end path={}", pathList.get(0), pathList.get(pathList.size() - 1));
-
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         if (fragments.isEmpty()) {
             //on startup
@@ -81,16 +79,12 @@ public class QueryGenerator extends AbstractGenerator {
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         }
 
-        logger.debug("fragment size={}", fragments.size());
-
         List<Operator> joinList = new ArrayList<>();
         fragments.forEach((k, v) -> {
             List<Operator> unionList = new ArrayList<>();
             v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList)));
             joinList.add(unionOperators(unionList));
         });
-
-        logger.debug("joinList size={}", joinList.size());
 
         Operator root = joinOperatorsByTime(joinList);
 

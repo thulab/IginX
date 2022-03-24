@@ -37,6 +37,7 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -75,15 +76,25 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
             UnaryOperator unaryOperator = (UnaryOperator) operator;
             Source source = unaryOperator.getSource();
             if (source.getType() == SourceType.Fragment) { // 构建物理计划
+                List<Operator> operators = new ArrayList<>();
+                operators.add(operator);
                 if (OperatorType.isNeedBroadcasting(operator.getType())) {
-                    return new StoragePhysicalTask(Collections.singletonList(operator), true, true);
+                    return new StoragePhysicalTask(operators, true, true);
                 } else {
-                    return new StoragePhysicalTask(Collections.singletonList(operator));
+                    return new StoragePhysicalTask(operators);
                 }
             } else { // 构建内存中的计划
                 OperatorSource operatorSource = (OperatorSource) source;
+                Operator sourceOperator = operatorSource.getOperator();
                 PhysicalTask sourceTask = constructTask(operatorSource.getOperator());
-                PhysicalTask task = new UnaryMemoryPhysicalTask(Collections.singletonList(operator), sourceTask);
+                if (sourceTask instanceof StoragePhysicalTask && sourceOperator.getType() == OperatorType.Project && ((UnaryOperator) sourceOperator).getSource().getType() == SourceType.Fragment
+                        && operator.getType() == OperatorType.Select) {
+                     sourceTask.getOperators().add(operator);
+                     return sourceTask;
+                }
+                List<Operator> operators = new ArrayList<>();
+                operators.add(operator);
+                PhysicalTask task = new UnaryMemoryPhysicalTask(operators, sourceTask);
                 sourceTask.setFollowerTask(task);
                 return task;
             }
@@ -93,7 +104,9 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
             OperatorSource sourceB = (OperatorSource) binaryOperator.getSourceB();
             PhysicalTask sourceTaskA = constructTask(sourceA.getOperator());
             PhysicalTask sourceTaskB = constructTask(sourceB.getOperator());
-            PhysicalTask task = new BinaryMemoryPhysicalTask(Collections.singletonList(operator), sourceTaskA, sourceTaskB);
+            List<Operator> operators = new ArrayList<>();
+            operators.add(operator);
+            PhysicalTask task = new BinaryMemoryPhysicalTask(operators, sourceTaskA, sourceTaskB);
             sourceTaskA.setFollowerTask(task);
             sourceTaskB.setFollowerTask(task);
             return task;
@@ -106,7 +119,9 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
                 PhysicalTask parentTask = constructTask(operatorSource.getOperator());
                 parentTasks.add(parentTask);
             }
-            PhysicalTask task = new MultipleMemoryPhysicalTask(Collections.singletonList(operator), parentTasks);
+            List<Operator> operators = new ArrayList<>();
+            operators.add(operator);
+            PhysicalTask task = new MultipleMemoryPhysicalTask(operators, parentTasks);
             for (PhysicalTask parentTask : parentTasks) {
                 parentTask.setFollowerTask(task);
             }

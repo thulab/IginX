@@ -2,7 +2,13 @@ package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
@@ -11,8 +17,52 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
+
+class FilterTransformer {
+
+    public static String toString(Filter filter) {
+        switch (filter.getType()) {
+            case And:
+                return toString((AndFilter) filter);
+            case Or:
+                return toString((OrFilter) filter);
+            case Not:
+                return toString((NotFilter) filter);
+            case Value:
+                return toString((ValueFilter) filter);
+            case Time:
+                return toString((TimeFilter) filter);
+            default:
+                return "";
+        }
+    }
+
+    private static String toString(AndFilter filter) {
+        return filter.getChildren().stream().map(FilterTransformer::toString).collect(Collectors.joining(" and ", "(", ")"));
+    }
+
+    private static String toString(NotFilter filter) {
+        return "not " + filter.toString();
+    }
+
+    private static String toString(TimeFilter filter) {
+        return "time " + Op.op2Str(filter.getOp()) + " " + filter.getValue();
+    }
+
+    private static String toString(ValueFilter filter) {
+        return filter.getPath() + " " + Op.op2Str(filter.getOp()) + " " + filter.getValue().getValue();
+    }
+
+    private static String toString(OrFilter filter) {
+        return filter.getChildren().stream().map(FilterTransformer::toString).collect(Collectors.joining(" or ", "(", ")"));
+    }
+
+
+
+}
 
 public class ExprUtilsTest {
     @Test
@@ -75,25 +125,33 @@ public class ExprUtilsTest {
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(select);
         Filter filter = statement.getFilter();
         System.out.println(filter.toString());
+        System.out.println(FilterTransformer.toString(filter));
         System.out.println(ExprUtils.toCNF(filter).toString());
+        System.out.println(FilterTransformer.toString(ExprUtils.toCNF(filter)));
 
         select = "SELECT a FROM root WHERE (a > 5 AND b <= 10) OR (c > 7 AND d == 8);";
         statement = (SelectStatement) TestUtils.buildStatement(select);
         filter = statement.getFilter();
         System.out.println(filter.toString());
+        System.out.println(FilterTransformer.toString(filter));
         System.out.println(ExprUtils.toCNF(filter).toString());
+        System.out.println(FilterTransformer.toString(ExprUtils.toCNF(filter)));
 
         select = "SELECT a FROM root WHERE (a > 5 AND b <= 10) OR (c > 7 OR d == 8) OR (e < 3 AND f != 2);";
         statement = (SelectStatement) TestUtils.buildStatement(select);
         filter = statement.getFilter();
         System.out.println(filter.toString());
+        System.out.println(FilterTransformer.toString(filter));
         System.out.println(ExprUtils.toCNF(filter).toString());
+        System.out.println(FilterTransformer.toString(ExprUtils.toCNF(filter)));
 
         select = "SELECT a FROM root WHERE (a > 5 OR b <= 10) OR (c > 7 AND d == 8);";
         statement = (SelectStatement) TestUtils.buildStatement(select);
         filter = statement.getFilter();
         System.out.println(filter.toString());
+        System.out.println(FilterTransformer.toString(filter));
         System.out.println(ExprUtils.toCNF(filter).toString());
+        System.out.println(FilterTransformer.toString(ExprUtils.toCNF(filter)));
     }
 
     @Test

@@ -328,11 +328,6 @@ public class StatementExecutor {
             }
         }
 
-        logger.debug("selected paths num: {}", paths.size());
-        logger.debug("selected types num: {}", types.size());
-        logger.debug("time stamp num: {}", timestampList.size());
-        logger.debug("value row num: {}", valuesList.size());
-
         if (valuesList.isEmpty()) { // empty result
             setEmptyQueryResp(ctx);
             return;
