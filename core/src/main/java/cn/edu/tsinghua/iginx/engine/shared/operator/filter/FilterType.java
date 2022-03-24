@@ -52,6 +52,7 @@ public enum FilterType {
                         return false;
                     }
                 }
+                break;
             case Or:
                 OrFilter orFilter = (OrFilter) filter;
                 for (Filter f : orFilter.getChildren()) {
@@ -59,6 +60,36 @@ public enum FilterType {
                         return false;
                     }
                 }
+                break;
+        }
+        return true;
+    }
+
+    public static boolean isValueFilter(Filter filter) {
+        switch (filter.getType()) {
+            case Value:
+                return true;
+            case Time:
+                return false;
+            case Not:
+                NotFilter notFilter = (NotFilter) filter;
+                return isValueFilter(notFilter.getChild());
+            case And:
+                AndFilter andFilter = (AndFilter) filter;
+                for (Filter f : andFilter.getChildren()) {
+                    if (!isValueFilter(f)) {
+                        return false;
+                    }
+                }
+                break;
+            case Or:
+                OrFilter orFilter = (OrFilter) filter;
+                for (Filter f : orFilter.getChildren()) {
+                    if (!isValueFilter(f)) {
+                        return false;
+                    }
+                }
+                break;
         }
         return true;
     }

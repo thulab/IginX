@@ -20,6 +20,8 @@
     <module>iotdb11</module>
     <module>iotdb12</module>
     <module>influxdb</module>
+    <!--module>opentsdb</module-->
+    <!--module>timescaledb</module-->
     <module>shared</module>
     <module>client</module>
     <module>antlr</module>

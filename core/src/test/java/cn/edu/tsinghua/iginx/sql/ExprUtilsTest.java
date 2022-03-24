@@ -70,6 +70,33 @@ public class ExprUtilsTest {
     }
 
     @Test
+    public void testToCNF() {
+        String select = "SELECT a FROM root WHERE a > 5 OR b <= 10 AND c > 7 OR d == 8;";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(select);
+        Filter filter = statement.getFilter();
+        System.out.println(filter.toString());
+        System.out.println(ExprUtils.toCNF(filter).toString());
+
+        select = "SELECT a FROM root WHERE (a > 5 AND b <= 10) OR (c > 7 AND d == 8);";
+        statement = (SelectStatement) TestUtils.buildStatement(select);
+        filter = statement.getFilter();
+        System.out.println(filter.toString());
+        System.out.println(ExprUtils.toCNF(filter).toString());
+
+        select = "SELECT a FROM root WHERE (a > 5 AND b <= 10) OR (c > 7 OR d == 8) OR (e < 3 AND f != 2);";
+        statement = (SelectStatement) TestUtils.buildStatement(select);
+        filter = statement.getFilter();
+        System.out.println(filter.toString());
+        System.out.println(ExprUtils.toCNF(filter).toString());
+
+        select = "SELECT a FROM root WHERE (a > 5 OR b <= 10) OR (c > 7 AND d == 8);";
+        statement = (SelectStatement) TestUtils.buildStatement(select);
+        filter = statement.getFilter();
+        System.out.println(filter.toString());
+        System.out.println(ExprUtils.toCNF(filter).toString());
+    }
+
+    @Test
     public void testTimeRange() {
         String delete = "DELETE FROM root.a WHERE (time > 5 AND time <= 10) OR (time > 12 AND time < 15);";
         DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(delete);
