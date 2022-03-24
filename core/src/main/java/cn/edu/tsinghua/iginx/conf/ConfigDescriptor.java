@@ -108,6 +108,7 @@ public class ConfigDescriptor {
             config.setMqttMaxMessageSize(Integer.parseInt(properties.getProperty("mqtt_max_message_size", "1048576")));
 
             config.setClients(properties.getProperty("clients", ""));
+            config.setFragments(properties.getProperty("fragments", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
 
             config.setQueryOptimizer(properties.getProperty("queryOptimizer", ""));

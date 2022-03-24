@@ -56,6 +56,10 @@ public final class TimeInterval {
         return "" + startTime;
     }
 
+    public String toTimeString() {
+        return startTime + "-" + endTime;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

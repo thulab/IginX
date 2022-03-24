@@ -138,7 +138,7 @@ public final class FragmentMeta {
   @Override
   public String toString() {
     return "FragmentMeta{" +
-        "timeInterval=" + timeInterval +
+        "timeInterval=" + timeInterval.toTimeString() +
         ", tsInterval=" + tsInterval +
         ", masterStorageUnitId=" + masterStorageUnitId +
         '}';

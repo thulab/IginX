@@ -55,7 +55,7 @@ public class Config {
 
     private double unbalanceFinalStatusThreshold = 0.5;
 
-    private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * loadBalanceCheckInterval * 1000 * 0.8;
+    private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * loadBalanceCheckInterval * 10000 * 0.8;
 
     private long migrationBatchSize = 100;
 
@@ -106,6 +106,8 @@ public class Config {
     private int mqttMaxMessageSize = 1048576;
 
     private String clients = "";
+
+    private String fragments = "";
 
     private int instancesNumPerClient = 0;
 
@@ -477,6 +479,14 @@ public class Config {
 
     public void setClients(String clients) {
         this.clients = clients;
+    }
+
+    public String getFragments() {
+        return fragments;
+    }
+
+    public void setFragments(String fragments) {
+        this.fragments = fragments;
     }
 
     public int getInstancesNumPerClient() {

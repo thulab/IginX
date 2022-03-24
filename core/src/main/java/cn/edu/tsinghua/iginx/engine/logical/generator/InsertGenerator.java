@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
+import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,11 +83,15 @@ public class InsertGenerator extends AbstractGenerator {
         insertList.forEach(operator -> sources.add(new OperatorSource(operator)));
 
         if(sources.isEmpty()){
-            System.out.println("123");
-            List<FragmentMeta> fragmentMetas = metaManager.getAllFragments();
-            for(FragmentMeta fragmentMeta: fragmentMetas){
-                logger.info(fragmentMeta.toString());
+            logger.error("sources empty!!! insertStatement = {}", insertStatement);
+            logger.error("sources empty!!! start fragments");
+            for (Entry<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListEntry : fragments.entrySet()) {
+                logger.error("TimeSeriesInterval: {}", timeSeriesIntervalListEntry.getKey().toString());
+                for (FragmentMeta fragmentMeta : timeSeriesIntervalListEntry.getValue()) {
+                    logger.error("fragment: {}", fragmentMeta.toString());
+                }
             }
+            logger.error("sources empty!!! end fragments");
         }
         return new CombineNonQuery(sources);
     }
@@ -94,7 +99,7 @@ public class InsertGenerator extends AbstractGenerator {
     private DataView getDataSection(FragmentMeta meta, RawData rawData) {
         TimeInterval timeInterval = meta.getTimeInterval();
         TimeSeriesInterval tsInterval = meta.getTsInterval();
-        List<Long> insertTimes = rawData.getTimestamps();
+        List<Long> insertTimes =  rawData.getTimestamps();
         List<String> paths = rawData.getPaths();
 
         // time overlap doesn't exist.

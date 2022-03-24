@@ -47,6 +47,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
 import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.policy.dynamic.DynamicPolicy;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
@@ -58,8 +59,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
+
+    private static final Logger logger = LoggerFactory.getLogger(NaiveOperatorMemoryExecutor.class);
 
     private NaiveOperatorMemoryExecutor() {
     }
@@ -289,11 +294,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
             // 检查 field
-            for (Field field : headerA.getFields()) {
-                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
-                }
-            }
+//            for (Field field : headerA.getFields()) {
+//                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+//                    logger.error("headerA = {}", headerA.getFields());
+//                    logger.error("headerB = {}", headerB.getFields());
+//                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
+//                }
+//            }
             List<Field> newFields = new ArrayList<>();
             newFields.addAll(headerA.getFields());
             newFields.addAll(headerB.getFields());
@@ -343,11 +350,13 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
             }
-            for (Field field : headerA.getFields()) {
-                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
-                }
-            }
+//            for (Field field : headerA.getFields()) {
+//                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+//                    logger.error("headerA = {}", headerA.getFields());
+//                    logger.error("headerB = {}", headerB.getFields());
+//                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
+//                }
+//            }
             List<Field> newFields = new ArrayList<>();
             newFields.addAll(headerA.getFields());
             newFields.addAll(headerB.getFields());

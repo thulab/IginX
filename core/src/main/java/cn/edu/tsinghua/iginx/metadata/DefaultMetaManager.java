@@ -549,19 +549,14 @@ public class DefaultMetaManager implements IMetaManager {
         storage.updateStorageUnit(actualSlaveStorageUnit);
       }
 
-      logger.info("end old fragment");
       // 结束旧分片
+      cache.deleteFragmentByTsInterval(fragment.getTsInterval(), fragment);
       fragment = fragment
           .endFragmentMeta(toAddFragment.getTimeInterval().getStartTime());
-      logger.info("end old fragment:endFragmentMeta");
+      cache.addFragment(fragment);
       fragment.setUpdatedBy(id);
-      logger.info("end old fragment:setUpdatedBy");
-      cache.updateFragment(fragment);
-      logger.info("end old fragment:cache.updateFragment");
       storage.updateFragment(fragment);
-      logger.info("end old fragment:storage.updateFragment");
 
-      logger.info("update new fragment");
       // 更新新分片
       toAddFragment.setCreatedBy(id);
       toAddFragment.setInitialFragment(false);
@@ -607,10 +602,13 @@ public class DefaultMetaManager implements IMetaManager {
   public void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries) {
     try {
       storage.lockFragment();
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+          fragmentMeta.getTsInterval().getStartTimeSeries(),
+          fragmentMeta.getTsInterval().getEndTimeSeries());
       cache.deleteFragmentByTsInterval(fragmentMeta.getTsInterval(), fragmentMeta);
       fragmentMeta.getTsInterval().setEndTimeSeries(endTimeSeries);
       cache.addFragment(fragmentMeta);
-      storage.addFragment(fragmentMeta);
+      storage.updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
     } catch (MetaStorageException e) {
       logger.error("end fragment by time series interval error: ", e);
     } finally {
@@ -1010,8 +1008,8 @@ public class DefaultMetaManager implements IMetaManager {
   public void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
       Map<FragmentMeta, Long> readRequestsMap) {
     try {
-      storage.updateFragmentRequests(writeRequestsMap, readRequestsMap);
       storage.lockFragmentRequestsCounter();
+      storage.updateFragmentRequests(writeRequestsMap, readRequestsMap);
       storage.incrementFragmentRequestsCounter();
       storage.releaseFragmentRequestsCounter();
     } catch (Exception e) {
@@ -1023,8 +1021,8 @@ public class DefaultMetaManager implements IMetaManager {
   public void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
       Map<FragmentMeta, Long> readHotspotMap) {
     try {
-      storage.updateFragmentHeat(writeHotspotMap, readHotspotMap);
       storage.lockFragmentHeatCounter();
+      storage.updateFragmentHeat(writeHotspotMap, readHotspotMap);
       storage.incrementFragmentHeatCounter();
       storage.releaseFragmentHeatCounter();
     } catch (Exception e) {
@@ -1035,8 +1033,8 @@ public class DefaultMetaManager implements IMetaManager {
   @Override
   public void updateTimeseriesHeat(Map<String, Long> timeseriesHeatMap) throws Exception {
     try {
-      storage.updateTimeseriesLoad(timeseriesHeatMap);
       storage.lockTimeseriesHeatCounter();
+      storage.updateTimeseriesLoad(timeseriesHeatMap);
       storage.incrementTimeseriesHeatCounter();
       storage.releaseTimeseriesHeatCounter();
     } catch (Exception e) {
@@ -1048,8 +1046,11 @@ public class DefaultMetaManager implements IMetaManager {
   public boolean isAllMonitorsCompleteCollection() {
     try {
       int fragmentRequestsCount = storage.getFragmentRequestsCounter();
+      logger.error("fragmentRequestsCount = {}", fragmentRequestsCount);
       int fragmentHeatCount = storage.getFragmentHeatCounter();
+      logger.error("fragmentHeatCount = {}", fragmentHeatCount);
       int count = getIginxList().size();
+      logger.error("getIginxList().size() = {}", count);
       return fragmentRequestsCount >= count && fragmentHeatCount >= count;
     } catch (MetaStorageException e) {
       logger.error("encounter error when get monitor counter: ", e);
@@ -1071,16 +1072,58 @@ public class DefaultMetaManager implements IMetaManager {
   @Override
   public void clearMonitors() {
     try {
-      storage.resetFragmentRequestsCounter();
-      storage.resetFragmentHeatCounter();
-      storage.resetTimeseriesHeatCounter();
-      storage.removeFragmentRequests();
-      storage.removeFragmentHeat();
-      storage.removeTimeseriesHeat();
+//      incMonitors();
+      int time = 0;
+//      while (!isAllMonitorsClearing()) {
+//        Thread.sleep(100);
+//        time++;
+//        if (time > 20) {
+//          logger.error("wait time more than {} ms", time * 20);
+//          return;
+//        }
+//      }
+      Thread.sleep(1000);
+      if (getIginxList().get(0).getId() == getIginxId()) {
+        storage.lockFragmentRequestsCounter();
+        storage.lockFragmentHeatCounter();
+        storage.lockTimeseriesHeatCounter();
+
+        storage.resetFragmentRequestsCounter();
+        storage.resetFragmentHeatCounter();
+        storage.resetTimeseriesHeatCounter();
+        storage.removeFragmentRequests();
+        storage.removeFragmentHeat();
+        storage.removeTimeseriesHeat();
+
+        storage.releaseFragmentRequestsCounter();
+        storage.releaseFragmentHeatCounter();
+        storage.releaseTimeseriesHeatCounter();
+      }
       HotSpotMonitor.getInstance().clear();
       RequestsMonitor.getInstance().clear();
+//      storage.resetMonitorClearCounter();
     } catch (Exception e) {
       logger.error("encounter error when clear monitors: ", e);
+    }
+  }
+
+  private void incMonitors() {
+    try {
+      storage.incrementMonitorClearCounter();
+    } catch (Exception e) {
+      logger.error("encounter error when increment monitor clear counter: ", e);
+    }
+  }
+
+  private boolean isAllMonitorsClearing() {
+    try {
+      int monitorClearCount = storage.getMonitorClearCounter();
+      logger.error("monitorClearCount = {}", monitorClearCount);
+      int count = getIginxList().size();
+      return monitorClearCount >= count;
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when get monitor counter: ", e);
+      return false;
     }
   }
 
@@ -1120,15 +1163,9 @@ public class DefaultMetaManager implements IMetaManager {
         return;
       }
       storage.lockReshardStatus();
-      // 提议进入重分片判断流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
-      if (storage.proposeToReshard()) {
-        reshardStatus = JUDGING;
-        isProposer = true;
-        // 生成最终节点状态和整体迁移计划
-        // 根据整体迁移计划进行迁移
-        logger.info("iginx node {} propose to judge reshard", id);
-        // 在重分片判断阶段，proposer 节点不需要推送本地的存储后端统计信息
-      }
+      reshardStatus = JUDGING;
+      isProposer = true;
+      logger.info("iginx node {} propose to judge reshard", id);
       storage.releaseReshardStatus();
     } catch (MetaStorageException e) {
       logger.error("encounter error when proposing to reshard: ", e);
@@ -1136,25 +1173,33 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void executeReshard() {
+  public boolean executeReshard() {
     try {
+      logger.error("reshardStatus = {}", reshardStatus);
       if (!reshardStatus.equals(JUDGING)) {
-        return;
+        return false;
       }
       storage.lockReshardStatus();
-      // 提议进入重分片流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
-      if (storage.proposeToReshard()) {
-        reshardStatus = EXECUTING;
-        isProposer = true;
-        // 生成最终节点状态和整体迁移计划
-        // 根据整体迁移计划进行迁移
-        logger.info("iginx node {} propose to reshard", id);
-        // 在重分片判断阶段，proposer 节点不需要推送本地的存储后端统计信息
+      try {
+        // 提议进入重分片流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
+        if (storage.proposeToReshard()) {
+          reshardStatus = EXECUTING;
+          isProposer = true;
+          // 生成最终节点状态和整体迁移计划
+          // 根据整体迁移计划进行迁移
+          logger.info("iginx node {} propose to reshard", id);
+          // 在重分片判断阶段，proposer 节点不需要推送本地的存储后端统计信息
+          return true;
+        } else {
+          return false;
+        }
+      } finally {
+        storage.releaseReshardStatus();
       }
-      storage.releaseReshardStatus();
     } catch (MetaStorageException e) {
       logger.error("encounter error when proposing to reshard: ", e);
     }
+    return false;
   }
 
   @Override
@@ -1162,6 +1207,7 @@ public class DefaultMetaManager implements IMetaManager {
     try {
       storage.lockReshardStatus();
       reshardStatus = NON_RESHARDING;
+      storage.updateReshardStatus(NON_RESHARDING);
       storage.releaseReshardStatus();
     } catch (MetaStorageException e) {
       logger.error("encounter error when proposing to reshard: ", e);

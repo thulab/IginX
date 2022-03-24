@@ -76,6 +76,7 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import java.util.concurrent.atomic.AtomicLong;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,6 +103,10 @@ public class IginxWorker implements IService.Iface {
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 
     private final StatementExecutor executor = StatementExecutor.getInstance();
+
+    public final AtomicLong insertCount = new AtomicLong(0);
+
+    public final AtomicLong insertCompleteCount = new AtomicLong(0);
 
     public static IginxWorker getInstance() {
         return instance;
@@ -140,12 +145,15 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status insertColumnRecords(InsertColumnRecordsReq req) {
+        insertCount.incrementAndGet();
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
-        return ctx.getResult().getStatus();
+        Status status = ctx.getResult().getStatus();
+        insertCompleteCount.incrementAndGet();
+        return status;
     }
 
     @Override
@@ -206,11 +214,17 @@ public class IginxWorker implements IService.Iface {
         List<StorageEngine> storageEngines = req.getStorageEngines();
         List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
 
+        List<StorageEngineMeta> allStorageEngineMetas = metaManager.getStorageEngineList();
         for (StorageEngine storageEngine : storageEngines) {
-            String type = storageEngine.getType();
-            StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
-                storageEngine.getExtraParams(), type, metaManager.getIginxId());
-            storageEngineMetas.add(meta);
+          for(StorageEngineMeta existedStorageEngineMeta: allStorageEngineMetas){
+            if(existedStorageEngineMeta.getIp().equals(storageEngine.getIp()) && existedStorageEngineMeta.getPort() == storageEngine.getPort()){
+              String type = storageEngine.getType();
+              StorageEngineMeta meta = new StorageEngineMeta(existedStorageEngineMeta.getId(), storageEngine.getIp(), storageEngine.getPort(),
+                  storageEngine.getExtraParams(), type, metaManager.getIginxId());
+              storageEngineMetas.add(meta);
+              break;
+            }
+          }
         }
         Status status = RpcUtils.SUCCESS;
 

@@ -31,9 +31,9 @@ public class SimplePolicy implements IPolicy {
 
     @Override
     public void notify(DataStatement statement) {
-        if (statement.getType() == StatementType.INSERT) {
-            iMetaManager.saveTimeSeriesData((InsertStatement) statement);
-        }
+//        if (statement.getType() == StatementType.INSERT) {
+//            iMetaManager.saveTimeSeriesData((InsertStatement) statement);
+//        }
     }
 
     @Override
@@ -62,12 +62,57 @@ public class SimplePolicy implements IPolicy {
         List<String> paths = Utils.getPathListFromStatement(statement);
         TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
-        if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
+        if (ConfigDescriptor.getInstance().getConfig().getFragments().length()>0){
+            Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByFragments(paths, timeInterval);
+            return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
+        } else if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
             Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
             return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
         } else {
             return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
         }
+    }
+
+    /**
+     * This storage unit initialization method is used when fragments are provided, such as in tsbs tests
+     */
+    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByFragments(List<String> paths, TimeInterval timeInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+        List<StorageUnitMeta> storageUnitList = new ArrayList<>();
+
+        List<StorageEngineMeta> storageEngineList = iMetaManager.getStorageEngineList();
+        int storageEngineNum = storageEngineList.size();
+        int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+
+        String[] fragments = ConfigDescriptor.getInstance().getConfig().getFragments().split(",");
+
+        List<FragmentMeta> fragmentMetaList;
+        String masterId;
+        StorageUnitMeta storageUnit;
+        for (int i = 0; i <= fragments.length; i++) {
+            fragmentMetaList = new ArrayList<>();
+            masterId = RandomStringUtils.randomAlphanumeric(16);
+            storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
+            for (int j = i + 1; j < i + replicaNum; j++) {
+                storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(j % storageEngineNum).getId(), masterId, false));
+            }
+            storageUnitList.add(storageUnit);
+            String startTimeseries;
+            String endTimeseries;
+            if (i == 0){
+                startTimeseries = null;
+                endTimeseries = fragments[i];
+            } else if (i == fragments.length){
+                startTimeseries = fragments[i - 1];
+                endTimeseries = null;
+            } else {
+                startTimeseries = fragments[i - 1];
+                endTimeseries = fragments[i];
+            }
+            fragmentMetaList.add(new FragmentMeta(startTimeseries, endTimeseries, 0, Long.MAX_VALUE, masterId));
+            fragmentMap.put(new TimeSeriesInterval(startTimeseries, endTimeseries), fragmentMetaList);
+        }
+        return new Pair<>(fragmentMap, storageUnitList);
     }
 
     /**

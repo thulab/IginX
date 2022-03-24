@@ -1,11 +1,14 @@
 package cn.edu.tsinghua.iginx.monitor;
 
+import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.physical.storage.execute.StoragePhysicalTaskExecutor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.mqtt.MQTTService;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
@@ -82,15 +85,17 @@ public class MonitorManager implements Runnable {
       for (StorageEngineMeta storageEngineMeta : storageEngineMetas) {
         toScaleInNodes.add(storageEngineMeta.getId());
       }
-      DefaultMetaManager.getInstance().executeReshard();
-      //发起负载均衡
-      policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
-          fragmentHeatWriteMap, fragmentHeatReadMap, toScaleInNodes);
-      metaManager.scaleInStorageEngines(storageEngineMetas);
-      for (StorageEngineMeta meta : storageEngineMetas) {
-        PhysicalEngineImpl.getInstance().getStorageManager().removeStorage(meta);
+      if (DefaultMetaManager.getInstance().executeReshard()) {
+        //发起负载均衡
+        policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
+            fragmentHeatWriteMap, fragmentHeatReadMap, toScaleInNodes);
+        metaManager.scaleInStorageEngines(storageEngineMetas);
+        for (StorageEngineMeta meta : storageEngineMetas) {
+          PhysicalEngineImpl.getInstance().getStorageManager().removeStorage(meta);
+        }
+        return true;
       }
-      return true;
+      return false;
     } catch (Exception e) {
       logger.error("execute scale-in reshard failed :", e);
       return false;
@@ -105,27 +110,71 @@ public class MonitorManager implements Runnable {
     while (true) {
       try {
         //清空节点信息
+        logger.error("start to clear monitors");
         metaManager.clearMonitors();
+        logger.error("end clear monitors");
+        Thread.sleep(interval * 1000L);
+        logger.error("allRequests = {}", StoragePhysicalTaskExecutor.getInstance().allRequests);
+        logger.error("submittedRequests = {}", StoragePhysicalTaskExecutor.getInstance().submittedRequests);
+        logger.error("completedRequests = {}", StoragePhysicalTaskExecutor.getInstance().completedRequests);
+        logger.error("insertCount = {}", IginxWorker.getInstance().insertCount);
+        logger.error("insertCompleteCount = {}", IginxWorker.getInstance().insertCompleteCount);
         logger.error("start to print all fragments in the system");
         List<FragmentMeta> fragmentMeta1s = DefaultMetaManager.getInstance().getAllFragments();
         for (FragmentMeta fragmentMeta : fragmentMeta1s) {
-          logger.error(fragmentMeta.toString());
+          logger.error("fragment: {}", fragmentMeta.toString());
         }
         logger.error("end print all fragments in the system");
-        Thread.sleep(interval * 1000L);
+        logger.error("start to print query fragments in the system");
+        Map<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListMap = DefaultMetaManager
+            .getInstance().getFragmentMapByTimeSeriesInterval(
+                new TimeSeriesInterval("readings.truck_7.East.H_2.v2.0.longitude",
+                    "readings.truck_7.East.H_2.v2.0.longitude"));
+        for (Entry<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListEntry : timeSeriesIntervalListMap
+            .entrySet()) {
+          logger.error("TimeSeriesInterval: {}", timeSeriesIntervalListEntry.getKey().toString());
+          for (FragmentMeta fragmentMeta : timeSeriesIntervalListEntry.getValue()) {
+            logger.error("fragment: {}", fragmentMeta.toString());
+          }
+        }
+        logger.error("end print query fragments in the system");
+
         //发起负载均衡判断
         DefaultMetaManager.getInstance().executeReshardJudging();
         metaManager.updateFragmentRequests(RequestsMonitor.getInstance().getWriteRequestsMap(),
             RequestsMonitor.getInstance()
                 .getReadRequestsMap());
+
+        long totalWriteRequests = 0;
+        logger.error("start to print all requests of each fragments");
+        Map<FragmentMeta, Long> writeRequestsMap = RequestsMonitor.getInstance()
+            .getWriteRequestsMap();
+        for (Entry<FragmentMeta, Long> requestsOfEachFragment : writeRequestsMap
+            .entrySet()) {
+          totalWriteRequests += requestsOfEachFragment.getValue();
+          logger.error("fragment requests: {} = {}", requestsOfEachFragment.getKey().toString(),
+              requestsOfEachFragment.getValue());
+        }
+        logger.error("end print all requests of each fragments");
+        logger.error("total write requests: {}", totalWriteRequests);
+
         metaManager.submitMaxActiveEndTime();
         Map<FragmentMeta, Long> writeHotspotMap = HotSpotMonitor.getInstance().getWriteHotspotMap();
         Map<FragmentMeta, Long> readHotspotMap = HotSpotMonitor.getInstance().getReadHotspotMap();
         metaManager.updateFragmentHeat(writeHotspotMap, readHotspotMap);
         //等待收集完成
-        while (!metaManager.isAllMonitorsCompleteCollection()) {
-          Thread.sleep(1000);
-        }
+//        int waitTime = 0;
+//        while (!metaManager.isAllMonitorsCompleteCollection()) {
+//          Thread.sleep(100);
+//          logger.error("waiting for complete");
+//          waitTime++;
+//          if (waitTime > 10) {
+//            logger.error("monitor collection wait time more than {} ms", waitTime * 100);
+//            break;
+//          }
+//        }
+        Thread.sleep(1000);
+        logger.error("start to load fragments heat");
         //集中信息（初版主要是统计分区热度）
         Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> fragmentHeatPair = metaManager
             .loadFragmentHeat();
@@ -137,7 +186,9 @@ public class MonitorManager implements Runnable {
         if (fragmentHeatReadMap == null) {
           fragmentHeatReadMap = new HashMap<>();
         }
+        logger.error("start to load fragments points");
         Map<FragmentMeta, Long> fragmentMetaPointsMap = metaManager.loadFragmentPoints();
+        logger.error("start to load fragment of each node");
         Map<Long, List<FragmentMeta>> fragmentOfEachNode = loadFragmentOfEachNode(
             fragmentHeatWriteMap, fragmentHeatReadMap);
 
@@ -148,6 +199,7 @@ public class MonitorManager implements Runnable {
         for (Entry<Long, List<FragmentMeta>> fragmentOfEachNodeEntry : fragmentOfEachNode
             .entrySet()) {
           long heat = 0;
+          long requests = 0;
           List<FragmentMeta> fragmentMetas = fragmentOfEachNodeEntry.getValue();
           for (FragmentMeta fragmentMeta : fragmentMetas) {
             logger.error("fragment: {}", fragmentMeta.toString());
@@ -157,8 +209,10 @@ public class MonitorManager implements Runnable {
             logger.error("fragment heat read: {} = {}", fragmentMeta,
                 fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L));
             heat += fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L);
+            requests += writeRequestsMap.getOrDefault(fragmentMeta, 0L);
           }
           logger.error("heat of node {} : {}", fragmentOfEachNodeEntry.getKey(), heat);
+          logger.error("requests of node {} : {}", fragmentOfEachNodeEntry.getKey(), requests);
 
           totalHeats += heat;
           maxHeat = Math.max(maxHeat, heat);
@@ -169,10 +223,14 @@ public class MonitorManager implements Runnable {
 
         if (((1 - unbalanceThreshold) * averageHeats >= minHeat
             || (1 + unbalanceThreshold) * averageHeats <= maxHeat)) {
-          DefaultMetaManager.getInstance().executeReshard();
-          //发起负载均衡
-          policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
-              fragmentHeatWriteMap, fragmentHeatReadMap, new ArrayList<>());
+          logger.error("start to execute reshard");
+          if (DefaultMetaManager.getInstance().executeReshard()) {
+            //发起负载均衡
+            policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
+                fragmentHeatWriteMap, fragmentHeatReadMap, new ArrayList<>());
+          } else {
+            logger.error("execute reshard failed");
+          }
         }
       } catch (Exception e) {
         logger.error("monitor manager error ", e);

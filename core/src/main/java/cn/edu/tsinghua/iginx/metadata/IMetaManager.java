@@ -254,7 +254,7 @@ public interface IMetaManager {
 
     void executeReshardJudging();
 
-    void executeReshard();
+    boolean executeReshard();
 
     void doneReshard();
 
@@ -265,6 +265,10 @@ public interface IMetaManager {
     void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 
     void updateFragmentPoints(FragmentMeta fragmentMeta, long points);
+
+    void updateMaxActiveEndTime(long endTime);
+
+    long getMaxActiveEndTime();
 
     void submitMaxActiveEndTime();
 }

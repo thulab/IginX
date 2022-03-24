@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.Result;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
+import cn.edu.tsinghua.iginx.thrift.ScaleInStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +29,7 @@ public class ScaleInStorageEngineStatement extends SystemStatement {
     @Override
     public void execute(RequestContext ctx) {
         IginxWorker worker = IginxWorker.getInstance();
-        AddStorageEnginesReq req = new AddStorageEnginesReq(ctx.getSessionId(), engines);
-        ctx.setResult(new Result(worker.addStorageEngines(req)));
+        ScaleInStorageEnginesReq req = new ScaleInStorageEnginesReq(ctx.getSessionId(), engines);
+        ctx.setResult(new Result(worker.scaleInStorageEngines(req)));
     }
 }

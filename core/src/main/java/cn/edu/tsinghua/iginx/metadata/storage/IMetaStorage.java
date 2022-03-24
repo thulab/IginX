@@ -132,6 +132,12 @@ public interface IMetaStorage {
 
   void lockFragmentRequestsCounter() throws MetaStorageException;
 
+  void incrementMonitorClearCounter() throws MetaStorageException;
+
+  int getMonitorClearCounter() throws MetaStorageException;
+
+  void resetMonitorClearCounter() throws MetaStorageException;
+
   void incrementFragmentRequestsCounter() throws MetaStorageException;
 
   void resetFragmentRequestsCounter() throws MetaStorageException;

@@ -410,6 +410,10 @@ DESC
 ASC
     : A S C
     ;
+
+SCALE
+    : S C A L E
+    ;
 //============================
 // End of the keywords list
 //============================

@@ -342,23 +342,26 @@ public class DynamicPolicy implements IPolicy {
         maxReadLoad = load;
       }
     }
-    if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
-      logger.info("start to ececute timeseries reshard");
-      if (maxWriteLoad >= maxReadLoad) {
-        executeTimeseriesReshard(maxWriteLoadFragment,
-            fragmentMetaPointsMap.get(maxWriteLoadFragment), nodeLoadMap, true);
-      } else {
-        executeTimeseriesReshard(maxReadLoadFragment,
-            fragmentMetaPointsMap.get(maxReadLoadFragment), nodeLoadMap, false);
+    if (maxWriteLoadFragment != null || maxReadLoadFragment != null) {
+      if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
+        logger.info("start to execute timeseries reshard");
+        if (maxWriteLoad >= maxReadLoad) {
+          executeTimeseriesReshard(maxWriteLoadFragment,
+              fragmentMetaPointsMap.get(maxWriteLoadFragment), nodeLoadMap, true);
+        } else {
+//          executeTimeseriesReshard(maxReadLoadFragment,
+//              fragmentMetaPointsMap.get(maxReadLoadFragment), nodeLoadMap, false);
+        }
+        logger.info("end execute timeseries reshard");
+        return;
       }
-      logger.info("end execute timeseries reshard");
-      return;
     }
 
+    logger.error("start to calculate migration final status");
     int[][][] migrationResults = calculateMigrationFinalStatus(totalHeat / nodeFragmentMap.size(),
         fragmentMetaPointsMap, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap,
         totalFragmentNum, m, toScaleInNodes);
-    logger.info("end calculate migration final status");
+    logger.error("end calculate migration final status");
 
     // 所有的分区
     FragmentMeta[] allFragmentMetas = new FragmentMeta[totalFragmentNum];
@@ -462,10 +465,10 @@ public class DynamicPolicy implements IPolicy {
         }
 
         if (overLoadTimeseriesMap.size() > 0
-            && fragmentMeta.getTimeInterval().getEndTime() != Long.MAX_VALUE) {
-          MigrationManager.getInstance().getMigration()
-              .reshardByCustomizableReplica(fragmentMeta, timeseriesHeat,
-                  overLoadTimeseriesMap.keySet(), totalHeat, points, storageHeat);
+            && fragmentMeta.getTimeInterval().getEndTime() != Long.MAX_VALUE && !isWrite) {
+//          MigrationManager.getInstance().getMigration()
+//              .reshardByCustomizableReplica(fragmentMeta, timeseriesHeat,
+//                  overLoadTimeseriesMap.keySet(), totalHeat, points, storageHeat);
         } else {
           MigrationManager.getInstance().getMigration()
               .reshardQueryByTimeseries(fragmentMeta, timeseriesHeat);
@@ -616,7 +619,7 @@ public class DynamicPolicy implements IPolicy {
       // 退出优化模型
       problem.deleteLp();
     } catch (LpSolveException e) {
-      System.err.println("Concert exception caught: " + e);
+      logger.error("Concert exception caught: " + e);
     }
 
     return result;

@@ -983,6 +983,21 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void incrementMonitorClearCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getMonitorClearCounter() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public void resetMonitorClearCounter() throws MetaStorageException {
+
+    }
+
+    @Override
     public void incrementFragmentRequestsCounter() throws MetaStorageException {
 
     }

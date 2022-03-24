@@ -43,6 +43,7 @@ import cn.edu.tsinghua.iginx.monitor.HotSpotMonitor;
 import cn.edu.tsinghua.iginx.monitor.RequestsMonitor;
 import cn.edu.tsinghua.iginx.monitor.TimeseriesMonitor;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +78,12 @@ public class StoragePhysicalTaskExecutor {
 
     private final int maxCachedPhysicalTaskPerStorage = ConfigDescriptor.getInstance().getConfig().getMaxCachedPhysicalTaskPerStorage();
 
+    public final AtomicLong allRequests = new AtomicLong(0);
+
+    public final AtomicLong submittedRequests = new AtomicLong(0);
+
+    public final AtomicLong completedRequests = new AtomicLong(0);
+
     private StoragePhysicalTaskExecutor() {
         StorageUnitHook storageUnitHook = (before, after) -> {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
@@ -98,11 +105,13 @@ public class StoragePhysicalTaskExecutor {
                             task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
                             continue;
                         }
+                        allRequests.incrementAndGet();
                         pair.v.submit(() -> {
                             TaskExecuteResult result = null;
                             long taskId = System.nanoTime();
                             HotSpotMonitor.getInstance().recordBefore(taskId);
                             TimeseriesMonitor.getInstance().recordBefore(taskId);
+                            submittedRequests.incrementAndGet();
                             try {
                                 result = pair.k.execute(task);
                                 logger.info("task " + task + " execute finished");
@@ -110,9 +119,10 @@ public class StoragePhysicalTaskExecutor {
                                 logger.error("execute task error: " + e);
                                 result = new TaskExecuteResult(new PhysicalException(e));
                             }
+                            completedRequests.incrementAndGet();
                             HotSpotMonitor.getInstance().recordAfter(taskId, task.getTargetFragment(), task.getOperators().get(0).getType());
                             TimeseriesMonitor.getInstance().recordAfter(taskId, result, task.getOperators().get(0).getType());
-                            RequestsMonitor.getInstance().record(task.getTargetFragment(), task.getOperators().get(0).getType());
+                            RequestsMonitor.getInstance().record(task.getTargetFragment(), task.getOperators().get(0));
                             task.setResult(result);
                             if (task.getFollowerTask() != null && task.isSync()) { // 只有同步任务才会影响后续任务的执行
                                 MemoryPhysicalTask followerTask = (MemoryPhysicalTask) task.getFollowerTask();

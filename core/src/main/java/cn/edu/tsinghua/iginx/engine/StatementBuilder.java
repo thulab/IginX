@@ -24,6 +24,7 @@ public class StatementBuilder {
         typeMap.put(StatementType.DELETE, SqlType.Delete);
         typeMap.put(StatementType.SELECT, SqlType.Query);
         typeMap.put(StatementType.ADD_STORAGE_ENGINE, SqlType.AddStorageEngines);
+        typeMap.put(StatementType.SCALE_IN_STORAGE_ENGINE, SqlType.ScaleInStorageEngines);
         typeMap.put(StatementType.SHOW_REPLICATION, SqlType.GetReplicaNum);
         typeMap.put(StatementType.COUNT_POINTS, SqlType.CountPoints);
         typeMap.put(StatementType.CLEAR_DATA, SqlType.ClearData);
