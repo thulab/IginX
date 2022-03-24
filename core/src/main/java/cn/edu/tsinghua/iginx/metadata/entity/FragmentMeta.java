@@ -56,6 +56,8 @@ public final class FragmentMeta {
 
     private boolean initialFragment = true;
 
+    private long numOfPoints = 0L;
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
@@ -160,5 +162,13 @@ public final class FragmentMeta {
 
     public void setInitialFragment(boolean initialFragment) {
         this.initialFragment = initialFragment;
+    }
+
+  public synchronized void incrementPoint(){
+        numOfPoints++;
+    }
+
+    public long getNumOfPoints() {
+        return numOfPoints;
     }
 }

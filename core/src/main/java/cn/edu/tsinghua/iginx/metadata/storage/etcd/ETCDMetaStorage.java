@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
+
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -29,6 +31,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import com.google.gson.reflect.TypeToken;
 import io.etcd.jetcd.ByteSequence;
 import io.etcd.jetcd.Client;
@@ -74,6 +78,10 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK = "/lock/user/";
 
+    private static final String RESHARD_NOTIFICATION_LOCK = "/lock/reshard_notification/";
+
+    private static final String RESHARD_COUNTER_LOCK = "/lock/reshard_counter/";
+
     private static final String SCHEMA_MAPPING_PREFIX = "/schema/";
 
     private static final String IGINX_PREFIX = "/iginx/";
@@ -86,6 +94,10 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String USER_PREFIX = "/user/";
 
+    private static final String RESHARD_NOTIFICATION_PREFIX = "/reshard_notification/";
+
+    private static final String RESHARD_COUNTER_PREFIX = "/reshard_counter/";
+
     private static final long MAX_LOCK_TIME = 30; // 最长锁住 30 秒
 
     private static final long HEART_BEAT_INTERVAL = 5; // 和 etcd 之间的心跳包的时间间隔
@@ -95,6 +107,8 @@ public class ETCDMetaStorage implements IMetaStorage {
     private final Lock storageUnitLeaseLock = new ReentrantLock();
     private final Lock fragmentLeaseLock = new ReentrantLock();
     private final Lock userLeaseLock = new ReentrantLock();
+    private final Lock reshardNotificationLeaseLock = new ReentrantLock();
+    private final Lock reshardCounterLeaseLock = new ReentrantLock();
     private Client client;
     private Watch.Watcher schemaMappingWatcher;
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
@@ -112,6 +126,12 @@ public class ETCDMetaStorage implements IMetaStorage {
     private Watch.Watcher userWatcher;
     private UserChangeHook userChangeHook = null;
     private long userLease = -1L;
+    private Watch.Watcher reshardNotificationWatcher;
+    private ReshardStatusChangeHook reshardStatusChangeHook = null;
+    private long reshardNotificationLease = -1L;
+    private Watch.Watcher reshardCounterWatcher;
+    private ReshardCounterChangeHook reshardCounterChangeHook = null;
+    private long reshardCounterLease = -1L;
 
     public ETCDMetaStorage() {
         client = Client.builder()
@@ -344,6 +364,73 @@ public class ETCDMetaStorage implements IMetaStorage {
 
                     }
                 });
+        // 注册 reshard status 的监听
+        this.reshardNotificationWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
+            @Override
+            public void onNext(WatchResponse watchResponse) {
+                if (reshardStatusChangeHook == null) {
+                    return;
+                }
+                for (WatchEvent event : watchResponse.getEvents()) {
+                    ReshardStatus status;
+                    switch (event.getEventType()) {
+                        case PUT:
+                            status = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), ReshardStatus.class);
+                            reshardStatusChangeHook.onChange(status);
+                            break;
+                        case DELETE:
+                            break;
+                        default:
+                            logger.error("unexpected watchEvent: " + event.getEventType());
+                            break;
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
+
+        // 注册 reshard counter 的监听
+        this.reshardCounterWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
+            @Override
+            public void onNext(WatchResponse watchResponse) {
+                if (reshardCounterChangeHook == null) {
+                    return;
+                }
+                for (WatchEvent event : watchResponse.getEvents()) {
+                    int counter;
+                    switch (event.getEventType()) {
+                        case PUT:
+                            counter = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), Integer.class);
+                            reshardCounterChangeHook.onChange(counter);
+                            break;
+                        case DELETE:
+                            break;
+                        default:
+                            logger.error("unexpected watchEvent: " + event.getEventType());
+                            break;
+                    }
+                }
+            }
+
+            @Override
+            public void onError(Throwable throwable) {
+
+            }
+
+            @Override
+            public void onCompleted() {
+
+            }
+        });
     }
 
     public static ETCDMetaStorage getInstance() {
@@ -828,6 +915,184 @@ public class ETCDMetaStorage implements IMetaStorage {
         return 0;
     }
 
+    @Override
+    public void updateNodeLoadScore(double score) throws Exception {
+
+    }
+
+    @Override
+    public Map<Long, Double> loadNodeLoadScores() {
+        return null;
+    }
+
+    @Override
+    public void updateNodePerformance(double writeLatency, double readLatency) throws Exception {
+
+    }
+
+    @Override
+    public Map<Long, Pair<Double, Double>> loadNodePerformance() {
+        return null;
+    }
+
+    @Override
+    public void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
+        Map<FragmentMeta, Long> readHotspotMap) throws Exception {
+
+    }
+
+    @Override
+    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() {
+        return null;
+    }
+
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        try {
+            GetResponse response = this.client.getKVClient().
+                get(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).get();
+            if (response.getKvs().isEmpty() ||
+                Boolean.FALSE.equals(JsonUtils.fromJson(response.getKvs().get(0).getValue().getBytes(), Boolean.class))) {
+                this.client.getKVClient().put(
+                    ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()),
+                    ByteSequence.from(JsonUtils.toJson(true))
+                ).get();
+                return true;
+            }
+            return false;
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("encounter error when proposing to reshard: ", e);
+            throw new MetaStorageException(e);
+        }
+    }
+
+    @Override
+    public void lockReshardStatus() throws MetaStorageException {
+        try {
+            reshardNotificationLeaseLock.lock();
+            reshardNotificationLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
+            client.getLockClient().lock(ByteSequence.from(RESHARD_NOTIFICATION_LOCK.getBytes()), reshardNotificationLease);
+        } catch (Exception e) {
+            reshardNotificationLeaseLock.unlock();
+            throw new MetaStorageException("encounter error when acquiring reshard notification mutex: ", e);
+        }
+    }
+
+    @Override
+    public void updateReshardStatus(ReshardStatus status) throws MetaStorageException {
+        try {
+            this.client.getKVClient().put(
+                ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()),
+                ByteSequence.from(JsonUtils.toJson(status))
+            ).get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("encounter error when updating reshard notification: ", e);
+            throw new MetaStorageException(e);
+        }
+    }
+
+    @Override
+    public void releaseReshardStatus() throws MetaStorageException {
+        try {
+            client.getLockClient().unlock(ByteSequence.from(RESHARD_NOTIFICATION_LOCK.getBytes())).get();
+            client.getLeaseClient().revoke(reshardNotificationLease).get();
+            reshardNotificationLease = -1L;
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when releasing reshard notification: ", e);
+        } finally {
+            reshardNotificationLeaseLock.unlock();
+        }
+    }
+
+    @Override
+    public void removeReshardStatus() throws MetaStorageException {
+        try {
+            this.client.getKVClient().delete(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("encounter error when removing reshard notification: ", e);
+            throw new MetaStorageException(e);
+        }
+    }
+
+    @Override
+    public void registerReshardStatusHook(ReshardStatusChangeHook hook) {
+        reshardStatusChangeHook = hook;
+    }
+
+    @Override
+    public void lockReshardCounter() throws MetaStorageException {
+        try {
+            reshardCounterLeaseLock.lock();
+            reshardCounterLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
+            client.getLockClient().lock(ByteSequence.from(RESHARD_COUNTER_LOCK.getBytes()), reshardCounterLease);
+        } catch (Exception e) {
+            reshardCounterLeaseLock.unlock();
+            throw new MetaStorageException("encounter error when acquiring reshard counter mutex: ", e);
+        }
+    }
+
+    @Override
+    public void incrementReshardCounter() throws MetaStorageException {
+        try {
+            GetResponse response = this.client.getKVClient().
+                get(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes())).get();
+            int counter;
+            if (response.getKvs().isEmpty()) {
+                counter = 0;
+            } else {
+                counter = JsonUtils.fromJson(response.getKvs().get(0).getValue().getBytes(), Integer.class);
+            }
+            this.client.getKVClient().put(
+                ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes()),
+                ByteSequence.from(JsonUtils.toJson(counter + 1))
+            ).get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("encounter error when incrementing reshard counter: ", e);
+            throw new MetaStorageException(e);
+        }
+    }
+
+    @Override
+    public void resetReshardCounter() throws MetaStorageException {
+        try {
+            this.client.getKVClient().put(
+                ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes()),
+                ByteSequence.from(JsonUtils.toJson(0))
+            ).get();
+        } catch (InterruptedException | ExecutionException e) {
+            logger.error("encounter error when resetting reshard counter: ", e);
+            throw new MetaStorageException(e);
+        }
+    }
+
+    @Override
+    public void releaseReshardCounter() throws MetaStorageException {
+        try {
+            client.getLockClient().unlock(ByteSequence.from(RESHARD_COUNTER_LOCK.getBytes())).get();
+            client.getLeaseClient().revoke(reshardCounterLease).get();
+            reshardCounterLease = -1L;
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when releasing reshard counter: ", e);
+        } finally {
+            reshardCounterLeaseLock.unlock();
+        }
+    }
+
+    @Override
+    public void removeReshardCounter() throws MetaStorageException {
+        try {
+            this.client.getKVClient().delete(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes())).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("encounter error when removing reshard counter: ", e);
+            throw new MetaStorageException(e);
+        }
+    }
+
+    @Override
+    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
+        reshardCounterChangeHook = hook;
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;
@@ -847,8 +1112,13 @@ public class ETCDMetaStorage implements IMetaStorage {
         this.userWatcher.close();
         this.userWatcher = null;
 
+        this.reshardNotificationWatcher.close();
+        this.reshardNotificationWatcher = null;
+
+        this.reshardCounterWatcher.close();
+        this.reshardCounterWatcher = null;
+
         this.client.close();
         this.client = null;
     }
-
 }

@@ -16,23 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.storage;
+package cn.edu.tsinghua.iginx.metadata.utils;
 
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
-import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
-import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
-
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import java.util.List;
-
-public interface IStorage {
-
-    TaskExecuteResult execute(StoragePhysicalTask task);
-
-    List<Timeseries> getTimeSeries() throws PhysicalException;
-
-    String exportData(FragmentMeta fragmentMeta);
-
-    void importData(String filePath);
+public enum ReshardStatus {
+    NON_RESHARDING, // 非重分片阶段
+    JUDGING, // 重分片判断阶段
+    EXECUTING; // 重分片执行阶段
 }

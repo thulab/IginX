@@ -31,6 +31,7 @@ import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 
+import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -194,4 +195,18 @@ public interface IMetaManager {
 
     Map<Integer, Integer> getTimeseriesVersionMap();
 
+    void updateNodeLoadScore(double score) throws Exception;
+
+    Map<Long, Double> loadNodeLoadScores();
+
+    void updateNodePerformance(double writeLatency, double readLatency) throws Exception;
+
+    Map<Long, Pair<Double, Double>> loadNodePerformance();
+
+    void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
+        Map<FragmentMeta, Long> readHotspotMap) throws Exception;
+
+    Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat();
+
+    void executeReshard();
 }

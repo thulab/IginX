@@ -8,8 +8,10 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
+import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
@@ -257,6 +259,13 @@ public class NaivePolicy implements IPolicy {
         storageUnitList.add(pair.v);
 
         return new Pair<>(fragmentList, storageUnitList);
+    }
+
+    public List<MigrationTask> generateReshardFinalStatus(
+        Map<Long, NodeResource> nodeRestResourcesMap, Map<Long, NodeResource> nodeUsedResourcesMap,
+        Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+        Map<FragmentMeta, Long> fragmentReadLoadMap) {
+        return new ArrayList<>();
     }
 
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {

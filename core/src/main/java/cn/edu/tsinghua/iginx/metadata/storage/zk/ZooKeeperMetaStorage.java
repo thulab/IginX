@@ -18,6 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.metadata.storage.zk;
 
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
+
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -29,6 +32,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
+import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import com.google.gson.reflect.TypeToken;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -82,6 +87,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK_NODE = "/lock/user";
 
+    private static final String RESHARD_STATUS_LOCK_NODE = "/lock/status/reshard";
+
+    private static final String RESHARD_COUNTER_LOCK_NODE = "/lock/counter/reshard";
+
     private static final String POLICY_NODE_PREFIX = "/policy";
 
     private static final String POLICY_LEADER = "/policy/leader";
@@ -92,6 +101,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String TIMESERIES_NODE_PREFIX = "/timeseries";
 
+    private static final String RESHARD_STATUS_NODE_PREFIX = "/status/reshard";
+
+    private static final String RESHARD_COUNTER_NODE_PREFIX = "/counter/reshard";
+
     private boolean isMaster = false;
 
     private static ZooKeeperMetaStorage INSTANCE = null;
@@ -101,17 +114,27 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private final InterProcessMutex storageUnitMutex;
     private final Lock fragmentMutexLock = new ReentrantLock();
     private final InterProcessMutex fragmentMutex;
+    private final Lock reshardStatusMutexLock = new ReentrantLock();
+    private final InterProcessMutex reshardStatusMutex;
+    private final Lock reshardCounterMutexLock = new ReentrantLock();
+    private final InterProcessMutex reshardCounterMutex;
+
     protected TreeCache schemaMappingsCache;
     protected TreeCache iginxCache;
     protected TreeCache storageEngineCache;
     protected TreeCache storageUnitCache;
     protected TreeCache fragmentCache;
+    protected TreeCache reshardStatusCache;
+    protected TreeCache reshardCounterCache;
+
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
     private IginxChangeHook iginxChangeHook = null;
     private StorageChangeHook storageChangeHook = null;
     private StorageUnitChangeHook storageUnitChangeHook = null;
     private FragmentChangeHook fragmentChangeHook = null;
     private UserChangeHook userChangeHook = null;
+    private ReshardStatusChangeHook reshardStatusChangeHook = null;
+    private ReshardCounterChangeHook reshardCounterChangeHook = null;
     private TimeSeriesChangeHook timeSeriesChangeHook = null;
     private VersionChangeHook versionChangeHook = null;
 
@@ -133,6 +156,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
         storageUnitMutex = new InterProcessMutex(client, STORAGE_UNIT_LOCK_NODE);
+        reshardStatusMutex = new InterProcessMutex(client, RESHARD_STATUS_LOCK_NODE);
+        reshardCounterMutex = new InterProcessMutex(client, RESHARD_COUNTER_LOCK_NODE);
     }
 
     public static ZooKeeperMetaStorage getInstance() {
@@ -391,6 +416,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 }
                 storageEngineMetaMap.putIfAbsent(storageEngineMeta.getId(), storageEngineMeta);
             }
+
+            registerReshardStatusListener();
+            registerReshardCounterListener();
             return storageEngineMetaMap;
         } catch (Exception e) {
             throw new MetaStorageException("get error when load schema mapping", e);
@@ -1069,6 +1097,223 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             e.printStackTrace();
         }
         return version + 1;
+    }
+
+    @Override
+    public void updateNodeLoadScore(double score) throws Exception {
+
+    }
+
+    @Override
+    public Map<Long, Double> loadNodeLoadScores() {
+        return null;
+    }
+
+    @Override
+    public void updateNodePerformance(double writeLatency, double readLatency) throws Exception {
+
+    }
+
+    @Override
+    public Map<Long, Pair<Double, Double>> loadNodePerformance() {
+        return null;
+    }
+
+    @Override
+    public void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
+        Map<FragmentMeta, Long> readHotspotMap) throws Exception {
+
+    }
+
+    @Override
+    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() {
+        return null;
+    }
+
+    @Override
+    public boolean proposeToReshard() throws MetaStorageException {
+        try {
+            ReshardStatus status;
+            if (this.client.checkExists().forPath(RESHARD_STATUS_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(JUDGING));
+                return true;
+            } else {
+                status = JsonUtils.fromJson(
+                    this.client.getData().forPath(RESHARD_STATUS_NODE_PREFIX), ReshardStatus.class);
+                if (status.equals(NON_RESHARDING)) {
+                    this.client.setData()
+                        .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(JUDGING));
+                    return true;
+                }
+                return false;
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when proposing to reshard: ", e);
+        }
+    }
+
+    @Override
+    public void lockReshardStatus() throws MetaStorageException {
+        try {
+            reshardStatusMutexLock.lock();
+            reshardStatusMutex.acquire();
+        } catch (Exception e) {
+            reshardStatusMutexLock.unlock();
+            throw new MetaStorageException("encounter error when acquiring reshard status mutex: ", e);
+        }
+    }
+
+    @Override
+    public void updateReshardStatus(ReshardStatus status) throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_STATUS_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(status));
+            } else {
+                this.client.setData()
+                    .forPath(RESHARD_STATUS_NODE_PREFIX, JsonUtils.toJson(status));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when updating reshard status: ", e);
+        }
+    }
+
+    @Override
+    public void releaseReshardStatus() throws MetaStorageException {
+        try {
+            reshardStatusMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when releasing reshard status mutex: ", e);
+        } finally {
+            reshardStatusMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void removeReshardStatus() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_STATUS_NODE_PREFIX) != null) {
+                this.client.delete().forPath(RESHARD_STATUS_NODE_PREFIX);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when removing reshard status: ", e);
+        }
+    }
+
+    @Override
+    public void registerReshardStatusHook(ReshardStatusChangeHook hook) {
+        this.reshardStatusChangeHook = hook;
+    }
+
+    private void registerReshardStatusListener() throws Exception {
+        this.reshardStatusCache = new TreeCache(this.client, RESHARD_STATUS_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            byte[] data;
+            ReshardStatus status;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    status = JsonUtils.fromJson(data, ReshardStatus.class);
+                    reshardStatusChangeHook.onChange(status);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.reshardStatusCache.getListenable().addListener(listener);
+        this.reshardStatusCache.start();
+    }
+
+    @Override
+    public void lockReshardCounter() throws MetaStorageException {
+        try {
+            reshardCounterMutexLock.lock();
+            reshardCounterMutex.acquire();
+        } catch (Exception e) {
+            reshardCounterMutexLock.unlock();
+            throw new MetaStorageException("encounter error when acquiring reshard counter mutex: ", e);
+        }
+    }
+
+    @Override
+    public void incrementReshardCounter() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_COUNTER_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(1));
+            } else {
+                int counter = JsonUtils.fromJson(
+                    this.client.getData().forPath(RESHARD_COUNTER_NODE_PREFIX), Integer.class);
+                this.client.setData()
+                    .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(counter + 1));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when updating reshard counter: ", e);
+        }
+    }
+
+    @Override
+    public void resetReshardCounter() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_COUNTER_NODE_PREFIX) == null) {
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                    .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(0));
+            } else {
+                this.client.setData()
+                    .forPath(RESHARD_COUNTER_NODE_PREFIX, JsonUtils.toJson(0));
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when resetting reshard counter: ", e);
+        }
+    }
+
+    @Override
+    public void releaseReshardCounter() throws MetaStorageException {
+        try {
+            reshardCounterMutex.release();
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when releasing reshard counter mutex: ", e);
+        } finally {
+            reshardCounterMutexLock.unlock();
+        }
+    }
+
+    @Override
+    public void removeReshardCounter() throws MetaStorageException {
+        try {
+            if (this.client.checkExists().forPath(RESHARD_COUNTER_NODE_PREFIX) != null) {
+                this.client.delete().forPath(RESHARD_COUNTER_NODE_PREFIX);
+            }
+        } catch (Exception e) {
+            throw new MetaStorageException("encounter error when removing reshard counter: ", e);
+        }
+    }
+
+    @Override
+    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
+        this.reshardCounterChangeHook = hook;
+    }
+
+    private void registerReshardCounterListener() throws Exception {
+        this.reshardCounterCache = new TreeCache(this.client, RESHARD_COUNTER_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            byte[] data;
+            int counter;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    data = event.getData().getData();
+                    counter = JsonUtils.fromJson(data, Integer.class);
+                    reshardCounterChangeHook.onChange(counter);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.reshardCounterCache.getListenable().addListener(listener);
+        this.reshardCounterCache.start();
     }
 
     public static boolean isNumeric(String str) {

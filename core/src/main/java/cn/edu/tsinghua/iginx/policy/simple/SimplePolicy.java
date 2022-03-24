@@ -5,8 +5,10 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
+import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
@@ -325,5 +327,13 @@ public class SimplePolicy implements IPolicy {
         } else {
             return true;
         }
+    }
+
+    @Override
+    public List<MigrationTask> generateReshardFinalStatus(
+        Map<Long, NodeResource> nodeRestResourcesMap, Map<Long, NodeResource> nodeUsedResourcesMap,
+        Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+        Map<FragmentMeta, Long> fragmentReadLoadMap) {
+        return new ArrayList<>();
     }
 }

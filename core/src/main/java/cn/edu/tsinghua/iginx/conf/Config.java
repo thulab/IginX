@@ -46,6 +46,12 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 
+    private boolean enableMonitor = true;
+
+    private int loadBalanceCheckInterval = 30;
+
+    private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy";
+
     private int storageUnitNum = 30;
 
     private String statisticsCollectorClassName = "";
@@ -222,6 +228,30 @@ public class Config {
 
     public void setStorageUnitNum(int storageUnitNum) {
         this.storageUnitNum = storageUnitNum;
+    }
+
+    public boolean isEnableMonitor() {
+        return enableMonitor;
+    }
+
+    public void setEnableMonitor(boolean enableMonitor) {
+        this.enableMonitor = enableMonitor;
+    }
+
+    public int getLoadBalanceCheckInterval() {
+        return loadBalanceCheckInterval;
+    }
+
+    public void setLoadBalanceCheckInterval(int loadBalanceCheckInterval) {
+        this.loadBalanceCheckInterval = loadBalanceCheckInterval;
+    }
+
+    public String getMigrationPolicyClassName() {
+        return migrationPolicyClassName;
+    }
+
+    public void setMigrationPolicyClassName(String migrationPolicyClassName) {
+        this.migrationPolicyClassName = migrationPolicyClassName;
     }
 
     public String getStatisticsCollectorClassName() {

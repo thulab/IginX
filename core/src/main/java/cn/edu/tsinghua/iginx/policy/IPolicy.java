@@ -4,24 +4,34 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
+import cn.edu.tsinghua.iginx.monitor.NodeResource;
+import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.List;
+import java.util.Map;
 
 public interface IPolicy {
 
-    void notify(DataStatement statement);
+  void notify(DataStatement statement);
 
-    void init(IMetaManager iMetaManager);
+  void init(IMetaManager iMetaManager);
 
-    StorageEngineChangeHook getStorageEngineChangeHook();
+  StorageEngineChangeHook getStorageEngineChangeHook();
 
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(DataStatement statement);
+  Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(
+      DataStatement statement);
 
-    Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(DataStatement statement);
+  Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(
+      DataStatement statement);
 
-    boolean isNeedReAllocate();
+  List<MigrationTask> generateReshardFinalStatus(Map<Long, NodeResource> nodeRestResourcesMap,
+      Map<Long, NodeResource> nodeUsedResourcesMap,
+      Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+      Map<FragmentMeta, Long> fragmentReadLoadMap);
 
-    void setNeedReAllocate(boolean needReAllocate);
+  boolean isNeedReAllocate();
+
+  void setNeedReAllocate(boolean needReAllocate);
 }

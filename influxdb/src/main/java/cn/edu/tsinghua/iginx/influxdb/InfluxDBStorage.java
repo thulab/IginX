@@ -143,6 +143,16 @@ public class InfluxDBStorage implements IStorage {
         return null;
     }
 
+    @Override
+    public String exportData(FragmentMeta fragmentMeta) {
+        return null;
+    }
+
+    @Override
+    public void importData(String filePath) {
+
+    }
+
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) {
         Organization organization = client.getOrganizationsApi()
                 .findOrganizations().stream()
