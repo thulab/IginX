@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.optimizer.naive;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.ReplicaDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.rule.Rule;
@@ -87,7 +89,7 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
                 OperatorSource operatorSource = (OperatorSource) source;
                 Operator sourceOperator = operatorSource.getOperator();
                 PhysicalTask sourceTask = constructTask(operatorSource.getOperator());
-                if (sourceTask instanceof StoragePhysicalTask && sourceOperator.getType() == OperatorType.Project && ((UnaryOperator) sourceOperator).getSource().getType() == SourceType.Fragment
+                if (ConfigDescriptor.getInstance().getConfig().isEnablePushDown() && sourceTask instanceof StoragePhysicalTask && sourceOperator.getType() == OperatorType.Project && ((UnaryOperator) sourceOperator).getSource().getType() == SourceType.Fragment
                         && operator.getType() == OperatorType.Select) {
                      sourceTask.getOperators().add(operator);
                      return sourceTask;

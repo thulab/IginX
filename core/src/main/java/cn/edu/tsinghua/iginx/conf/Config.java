@@ -113,6 +113,8 @@ public class Config {
 
     private double storageGroupValueLimit = 200.0;
 
+    private boolean enablePushDown=true;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -479,5 +481,13 @@ public class Config {
 
     public void setStorageGroupValueLimit(double storageGroupValueLimit) {
         this.storageGroupValueLimit = storageGroupValueLimit;
+    }
+
+    public boolean isEnablePushDown() {
+        return enablePushDown;
+    }
+
+    public void setEnablePushDown(boolean enablePushDown) {
+        this.enablePushDown = enablePushDown;
     }
 }
