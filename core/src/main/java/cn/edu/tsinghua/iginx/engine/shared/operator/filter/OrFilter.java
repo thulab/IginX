@@ -24,38 +24,38 @@ import java.util.stream.Collectors;
 
 public class OrFilter implements Filter {
 
-    private final List<Filter> children;
+  private final List<Filter> children;
 
-    private FilterType type = FilterType.Or;
+  private FilterType type = FilterType.Or;
 
-    public OrFilter(List<Filter> children) {
-        this.children = children;
-    }
+  public OrFilter(List<Filter> children) {
+    this.children = children;
+  }
 
-    public List<Filter> getChildren() {
-        return children;
-    }
+  public List<Filter> getChildren() {
+    return children;
+  }
 
-    @Override
-    public void accept(FilterVisitor visitor) {
-        visitor.visit(this);
-        this.children.forEach(child -> child.accept(visitor));
-    }
+  @Override
+  public void accept(FilterVisitor visitor) {
+    visitor.visit(this);
+    this.children.forEach(child -> child.accept(visitor));
+  }
 
-    @Override
-    public FilterType getType() {
-        return type;
-    }
+  @Override
+  public FilterType getType() {
+    return type;
+  }
 
-    @Override
-    public Filter copy() {
-        List<Filter> newChildren = new ArrayList<>();
-        children.forEach(e -> newChildren.add(e.copy()));
-        return new OrFilter(newChildren);
-    }
+  @Override
+  public Filter copy() {
+    List<Filter> newChildren = new ArrayList<>();
+    children.forEach(e -> newChildren.add(e.copy()));
+    return new OrFilter(newChildren);
+  }
 
-    @Override
-    public String toString() {
-        return children.stream().map(Object::toString).collect(Collectors.joining(" || ", "(", ")"));
-    }
+  @Override
+  public String toString() {
+    return children.stream().map(Object::toString).collect(Collectors.joining(" || ", "(", ")"));
+  }
 }

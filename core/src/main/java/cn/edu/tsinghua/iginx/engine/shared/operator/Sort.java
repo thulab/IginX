@@ -23,42 +23,42 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Sort extends AbstractUnaryOperator {
 
-    private final String sortBy;
+  private final String sortBy;
 
-    private final SortType sortType;
+  private final SortType sortType;
 
-    public Sort(Source source) {
-        this(source, Constants.TIMESTAMP, SortType.ASC);
+  public Sort(Source source) {
+    this(source, Constants.TIMESTAMP, SortType.ASC);
+  }
+
+  public Sort(Source source, String sortBy, SortType sortType) {
+    super(OperatorType.Sort, source);
+    if (sortBy == null) {
+      throw new IllegalArgumentException("sortBy shouldn't be null");
     }
-
-    public Sort(Source source, String sortBy, SortType sortType) {
-        super(OperatorType.Sort, source);
-        if (sortBy == null) {
-            throw new IllegalArgumentException("sortBy shouldn't be null");
-        }
-        if (sortType == null) {
-            throw new IllegalArgumentException("sortType shouldn't be null");
-        }
-        this.sortBy = sortBy;
-        this.sortType = sortType;
+    if (sortType == null) {
+      throw new IllegalArgumentException("sortType shouldn't be null");
     }
+    this.sortBy = sortBy;
+    this.sortType = sortType;
+  }
 
-    public String getSortBy() {
-        return sortBy;
-    }
+  public String getSortBy() {
+    return sortBy;
+  }
 
-    public SortType getSortType() {
-        return sortType;
-    }
+  public SortType getSortType() {
+    return sortType;
+  }
 
-    @Override
-    public Operator copy() {
-        return new Sort(getSource().copy(), sortBy, sortType);
-    }
+  @Override
+  public Operator copy() {
+    return new Sort(getSource().copy(), sortBy, sortType);
+  }
 
-    public enum SortType {
-        ASC,
-        DESC
-    }
+  public enum SortType {
+    ASC,
+    DESC
+  }
 
 }

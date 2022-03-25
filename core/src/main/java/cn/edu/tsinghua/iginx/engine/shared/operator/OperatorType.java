@@ -20,46 +20,48 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 public enum OperatorType {
 
-    Unknown,
-    Binary,
-    Unary,
-    Multiple,
+  Unknown,
+  Binary,
+  Unary,
+  Multiple,
 
-    Project,
-    Select,
-    Join,
-    Union,
-    Sort,
-    Limit,
-    Downsample,
-    RowTransform,
-    SetTransform,
-    MappingTransform,
+  Project,
+  Select,
+  Join,
+  Union,
+  Sort,
+  Limit,
+  Downsample,
+  RowTransform,
+  SetTransform,
+  MappingTransform,
 
-    Delete,
-    Insert,
-    CombineNonQuery,
+  Delete,
+  Insert,
+  CombineNonQuery,
 
-    ShowTimeSeries;
+  ShowTimeSeries;
 
-    public static boolean isBinaryOperator(OperatorType op) {
-        return op == Join || op == Union;
-    }
+  public static boolean isBinaryOperator(OperatorType op) {
+    return op == Join || op == Union;
+  }
 
-    public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete || op == Insert;
-    }
+  public static boolean isUnaryOperator(OperatorType op) {
+    return op == Project || op == Select || op == Sort || op == Limit || op == Downsample
+        || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete
+        || op == Insert;
+  }
 
-    public static boolean isMultipleOperator(OperatorType op) {
-        return op == CombineNonQuery;
-    }
+  public static boolean isMultipleOperator(OperatorType op) {
+    return op == CombineNonQuery;
+  }
 
-    public static boolean isGlobalOperator(OperatorType op) {
-        return op == ShowTimeSeries;
-    }
+  public static boolean isGlobalOperator(OperatorType op) {
+    return op == ShowTimeSeries;
+  }
 
-    public static boolean isNeedBroadcasting(OperatorType op) {
-        return op == Delete || op == Insert;
-    }
+  public static boolean isNeedBroadcasting(OperatorType op) {
+    return op == Delete || op == Insert;
+  }
 
 }

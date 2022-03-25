@@ -19,21 +19,23 @@
 package cn.edu.tsinghua.iginx.session_v2;
 
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
-
 import java.util.Collection;
 
 public interface DeleteClient {
 
-    void deleteMeasurement(final String measurement) throws IginXException;
+  void deleteMeasurement(final String measurement) throws IginXException;
 
-    void deleteMeasurements(final Collection<String> measurements) throws IginXException;
+  void deleteMeasurements(final Collection<String> measurements) throws IginXException;
 
-    void deleteMeasurement(final Class<?> measurementType) throws IginXException;
+  void deleteMeasurement(final Class<?> measurementType) throws IginXException;
 
-    void deleteMeasurementData(final String measurement, long startTime, long endTime) throws IginXException;
+  void deleteMeasurementData(final String measurement, long startTime, long endTime)
+      throws IginXException;
 
-    void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime) throws IginXException;
+  void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime)
+      throws IginXException;
 
-    void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime) throws IginXException;
+  void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime)
+      throws IginXException;
 
 }

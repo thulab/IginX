@@ -22,48 +22,48 @@ import java.util.Map;
 
 public class IginXRecord {
 
-    private final long timestamp;
+  private final long timestamp;
 
-    private final IginXHeader header;
+  private final IginXHeader header;
 
-    private final Map<String, Object> values;
+  private final Map<String, Object> values;
 
-    public IginXRecord(IginXHeader header, Map<String, Object> values) {
-        this.timestamp = 0L;
-        this.header = header;
-        this.values = values;
-    }
+  public IginXRecord(IginXHeader header, Map<String, Object> values) {
+    this.timestamp = 0L;
+    this.header = header;
+    this.values = values;
+  }
 
-    public IginXRecord(long timestamp, IginXHeader header, Map<String, Object> values) {
-        this.timestamp = timestamp;
-        this.header = header;
-        this.values = values;
-    }
+  public IginXRecord(long timestamp, IginXHeader header, Map<String, Object> values) {
+    this.timestamp = timestamp;
+    this.header = header;
+    this.values = values;
+  }
 
-    public IginXHeader getHeader() {
-        return header;
-    }
+  public IginXHeader getHeader() {
+    return header;
+  }
 
-    public Map<String, Object> getValues() {
-        return values;
-    }
+  public Map<String, Object> getValues() {
+    return values;
+  }
 
-    public Object getValue(String measurement) {
-        return values.get(measurement);
-    }
+  public Object getValue(String measurement) {
+    return values.get(measurement);
+  }
 
-    public boolean hasTimestamp() {
-        return header.hasTimestamp();
-    }
+  public boolean hasTimestamp() {
+    return header.hasTimestamp();
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    @Override
-    public String toString() {
-        return "IginXRecord{" +
-                "values=" + values +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "IginXRecord{" +
+        "values=" + values +
+        '}';
+  }
 }

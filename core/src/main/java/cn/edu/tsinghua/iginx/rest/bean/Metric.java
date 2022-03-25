@@ -18,30 +18,30 @@
  */
 package cn.edu.tsinghua.iginx.rest.bean;
 
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import lombok.Data;
 
 @Data
 public class Metric {
-    private String name;
-    private Map<String, String> tags = new TreeMap<>();
-    private List<Long> timestamps = new ArrayList<>();
-    private List<String> values = new ArrayList<>();
-    private String annotation = null;
 
-    public void addTag(String key, String value) {
-        tags.put(key, value);
-    }
+  private String name;
+  private Map<String, String> tags = new TreeMap<>();
+  private List<Long> timestamps = new ArrayList<>();
+  private List<String> values = new ArrayList<>();
+  private String annotation = null;
 
-    public void addTimestamp(Long timestamp) {
-        timestamps.add(timestamp);
-    }
+  public void addTag(String key, String value) {
+    tags.put(key, value);
+  }
 
-    public void addValue(String value) {
-        values.add(value);
-    }
+  public void addTimestamp(Long timestamp) {
+    timestamps.add(timestamp);
+  }
+
+  public void addValue(String value) {
+    values.add(value);
+  }
 }

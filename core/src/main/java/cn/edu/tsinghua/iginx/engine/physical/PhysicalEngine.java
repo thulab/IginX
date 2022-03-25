@@ -26,10 +26,10 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 
 public interface PhysicalEngine {
 
-    RowStream execute(Operator root) throws PhysicalException;
+  RowStream execute(Operator root) throws PhysicalException;
 
-    ConstraintManager getConstraintManager();
+  ConstraintManager getConstraintManager();
 
-    StorageManager getStorageManager();
+  StorageManager getStorageManager();
 
 }

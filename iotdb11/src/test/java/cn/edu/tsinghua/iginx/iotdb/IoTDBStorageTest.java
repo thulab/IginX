@@ -30,37 +30,39 @@ import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import org.junit.Test;
 
 public class IoTDBStorageTest {
 
-    private IStorage storage;
+  private IStorage storage;
 
-    @Test
-    public void testInitialization() throws StorageInitializationException {
-        StorageEngineMeta meta = new StorageEngineMeta(1L, "127.0.0.1", 6667, new HashMap<>(), "iotdb11", 1L);
-        this.storage = new IoTDBStorage(meta);
-    }
+  @Test
+  public void testInitialization() throws StorageInitializationException {
+    StorageEngineMeta meta = new StorageEngineMeta(1L, "127.0.0.1", 6667, new HashMap<>(),
+        "iotdb11", 1L);
+    this.storage = new IoTDBStorage(meta);
+  }
 
-    @Test
-    public void testProject() throws PhysicalException {
-        FragmentMeta fragment = new FragmentMeta(null, null, 0, 1000);
-        Source source = new FragmentSource(fragment);
-        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Project(source, Arrays.asList("wf01.wt01.status", "wf01.wt02.*"))));
-        task.setStorageUnit("unit001");
-        RowStream rowStream = this.storage.execute(task).getRowStream();
-        Header header = rowStream.getHeader();;
-        Row row;
-        while (rowStream.hasNext()) {
-            row = rowStream.next();
-            System.out.println(row);
-        }
-        System.out.println(header);
-        rowStream.close();
+  @Test
+  public void testProject() throws PhysicalException {
+    FragmentMeta fragment = new FragmentMeta(null, null, 0, 1000);
+    Source source = new FragmentSource(fragment);
+    StoragePhysicalTask task = new StoragePhysicalTask(Collections
+        .singletonList(new Project(source, Arrays.asList("wf01.wt01.status", "wf01.wt02.*"))));
+    task.setStorageUnit("unit001");
+    RowStream rowStream = this.storage.execute(task).getRowStream();
+    Header header = rowStream.getHeader();
+    ;
+    Row row;
+    while (rowStream.hasNext()) {
+      row = rowStream.next();
+      System.out.println(row);
     }
+    System.out.println(header);
+    rowStream.close();
+  }
 
 }

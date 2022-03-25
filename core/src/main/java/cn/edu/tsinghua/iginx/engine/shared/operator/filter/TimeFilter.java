@@ -20,44 +20,44 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class TimeFilter implements Filter {
 
-    private final long value;
-    private final FilterType type = FilterType.Time;
-    private Op op;
+  private final long value;
+  private final FilterType type = FilterType.Time;
+  private Op op;
 
-    public TimeFilter(Op op, long value) {
-        this.op = op;
-        this.value = value;
-    }
+  public TimeFilter(Op op, long value) {
+    this.op = op;
+    this.value = value;
+  }
 
-    public void reverseFunc() {
-        this.op = Op.getOpposite(op);
-    }
+  public void reverseFunc() {
+    this.op = Op.getOpposite(op);
+  }
 
-    public Op getOp() {
-        return op;
-    }
+  public Op getOp() {
+    return op;
+  }
 
-    public long getValue() {
-        return value;
-    }
+  public long getValue() {
+    return value;
+  }
 
-    @Override
-    public void accept(FilterVisitor visitor) {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(FilterVisitor visitor) {
+    visitor.visit(this);
+  }
 
-    @Override
-    public FilterType getType() {
-        return type;
-    }
+  @Override
+  public FilterType getType() {
+    return type;
+  }
 
-    @Override
-    public Filter copy() {
-        return new TimeFilter(op, value);
-    }
+  @Override
+  public Filter copy() {
+    return new TimeFilter(op, value);
+  }
 
-    @Override
-    public String toString() {
-        return "time " + Op.op2Str(op) + " " + value;
-    }
+  @Override
+  public String toString() {
+    return "time " + Op.op2Str(op) + " " + value;
+  }
 }

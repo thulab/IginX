@@ -24,19 +24,19 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 
 public class RowUtils {
 
-    public static Row transform(Row row, Header targetHeader) {
-        Object[] values = new Object[targetHeader.getFieldSize()];
-        for (int i = 0; i < targetHeader.getFieldSize(); i++) {
-            Field field = targetHeader.getField(i);
-            values[i] = row.getValue(field);
-        }
-        Row targetRow;
-        if (targetHeader.hasTimestamp()) {
-            targetRow = new Row(targetHeader, row.getTimestamp(), values);
-        } else {
-            targetRow = new Row(targetHeader, values);
-        }
-        return targetRow;
+  public static Row transform(Row row, Header targetHeader) {
+    Object[] values = new Object[targetHeader.getFieldSize()];
+    for (int i = 0; i < targetHeader.getFieldSize(); i++) {
+      Field field = targetHeader.getField(i);
+      values[i] = row.getValue(field);
     }
+    Row targetRow;
+    if (targetHeader.hasTimestamp()) {
+      targetRow = new Row(targetHeader, row.getTimestamp(), values);
+    } else {
+      targetRow = new Row(targetHeader, values);
+    }
+    return targetRow;
+  }
 
 }

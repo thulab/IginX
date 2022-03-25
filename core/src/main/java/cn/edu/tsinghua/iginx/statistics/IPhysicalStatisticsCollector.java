@@ -5,8 +5,8 @@ import cn.edu.tsinghua.iginx.engine.shared.processor.PrePhysicalProcessor;
 
 public interface IPhysicalStatisticsCollector {
 
-    PrePhysicalProcessor getPrePhysicalProcessor();
+  PrePhysicalProcessor getPrePhysicalProcessor();
 
-    PostPhysicalProcessor getPostPhysicalProcessor();
+  PostPhysicalProcessor getPostPhysicalProcessor();
 
 }

@@ -22,21 +22,21 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 
 public class ExecutionException extends IginxException {
 
-    private static final long serialVersionUID = -7769482614133326007L;
+  private static final long serialVersionUID = -7769482614133326007L;
 
-    public ExecutionException(Status status) {
-        super(status.message, status.code);
-    }
+  public ExecutionException(Status status) {
+    super(status.message, status.code);
+  }
 
-    public ExecutionException(String message) {
-        super(message, StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
-    }
+  public ExecutionException(String message) {
+    super(message, StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+  }
 
-    public ExecutionException(Throwable cause) {
-        super(cause, StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
-    }
+  public ExecutionException(Throwable cause) {
+    super(cause, StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+  }
 
-    public ExecutionException(String message, Throwable cause) {
-        super(message, cause, StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
-    }
+  public ExecutionException(String message, Throwable cause) {
+    super(message, cause, StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
+  }
 }

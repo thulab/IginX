@@ -20,21 +20,21 @@ package cn.edu.tsinghua.iginx.engine.shared.operator;
 
 public abstract class AbstractOperator implements Operator {
 
-    private final OperatorType type;
+  private final OperatorType type;
 
-    public AbstractOperator() {
-        this.type = OperatorType.Unknown;
-    }
+  public AbstractOperator() {
+    this.type = OperatorType.Unknown;
+  }
 
-    public AbstractOperator(OperatorType type) {
-        if (type == null) {
-            throw new IllegalArgumentException("operator type shouldn't be null");
-        }
-        this.type = type;
+  public AbstractOperator(OperatorType type) {
+    if (type == null) {
+      throw new IllegalArgumentException("operator type shouldn't be null");
     }
+    this.type = type;
+  }
 
-    @Override
-    public OperatorType getType() {
-        return type;
-    }
+  @Override
+  public OperatorType getType() {
+    return type;
+  }
 }

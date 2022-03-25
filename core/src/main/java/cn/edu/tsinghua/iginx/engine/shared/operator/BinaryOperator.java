@@ -22,12 +22,12 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public interface BinaryOperator extends Operator {
 
-    Source getSourceA();
+  Source getSourceA();
 
-    Source getSourceB();
+  Source getSourceB();
 
-    void setSourceA(Source source);
+  void setSourceA(Source source);
 
-    void setSourceB(Source source);
+  void setSourceB(Source source);
 
 }

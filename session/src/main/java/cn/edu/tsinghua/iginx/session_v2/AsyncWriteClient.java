@@ -21,25 +21,24 @@ package cn.edu.tsinghua.iginx.session_v2;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
 import cn.edu.tsinghua.iginx.session_v2.write.Record;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
-
 import java.util.List;
 
 public interface AsyncWriteClient extends AutoCloseable {
 
-    void writePoint(final Point point);
+  void writePoint(final Point point);
 
-    void writePoints(final List<Point> points);
+  void writePoints(final List<Point> points);
 
-    void writeRecord(final Record record);
+  void writeRecord(final Record record);
 
-    void writeRecords(final List<Record> records);
+  void writeRecords(final List<Record> records);
 
-    <M> void writeMeasurement(final M measurement);
+  <M> void writeMeasurement(final M measurement);
 
-    <M> void writeMeasurements(final List<M> measurements);
+  <M> void writeMeasurements(final List<M> measurements);
 
-    void writeTable(final Table table);
+  void writeTable(final Table table);
 
-    @Override
-    void close() throws Exception;
+  @Override
+  void close() throws Exception;
 }

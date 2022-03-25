@@ -20,25 +20,25 @@ package cn.edu.tsinghua.iginx.conf;
 
 public class Constants {
 
-    public static final int MAX_REDIRECT_TIME = 5;
+  public static final int MAX_REDIRECT_TIME = 5;
 
-    public static final String CONF = "IGINX_CONF";
+  public static final String CONF = "IGINX_CONF";
 
-    public static final String DRIVER = "IGINX_DRIVER";
+  public static final String DRIVER = "IGINX_DRIVER";
 
-    public static final String CONFIG_FILE = "conf/config.properties";
+  public static final String CONFIG_FILE = "conf/config.properties";
 
-    public static final String DRIVER_DIR = "driver/";
+  public static final String DRIVER_DIR = "driver/";
 
-    public static final String FILE_META = "file";
+  public static final String FILE_META = "file";
 
-    public static final String ZOOKEEPER_META = "zookeeper";
+  public static final String ZOOKEEPER_META = "zookeeper";
 
-    public static final String ETCD_META = "etcd";
+  public static final String ETCD_META = "etcd";
 
-    public static final String LEVEL_SEPARATOR = ".";
+  public static final String LEVEL_SEPARATOR = ".";
 
-    public static final String LEVEL_PLACEHOLDER = "*";
+  public static final String LEVEL_PLACEHOLDER = "*";
 
 }
 

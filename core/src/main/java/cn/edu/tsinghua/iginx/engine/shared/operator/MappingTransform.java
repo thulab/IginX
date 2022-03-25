@@ -24,25 +24,25 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class MappingTransform extends AbstractUnaryOperator {
 
-    private final FunctionCall functionCall;
+  private final FunctionCall functionCall;
 
-    public MappingTransform(Source source, FunctionCall functionCall) {
-        super(OperatorType.MappingTransform, source);
-        if (functionCall == null || functionCall.getFunction() == null) {
-            throw new IllegalArgumentException("function shouldn't be null");
-        }
-        if (functionCall.getFunction().getMappingType() != MappingType.Mapping) {
-            throw new IllegalArgumentException("function should be mapping function");
-        }
-        this.functionCall = functionCall;
+  public MappingTransform(Source source, FunctionCall functionCall) {
+    super(OperatorType.MappingTransform, source);
+    if (functionCall == null || functionCall.getFunction() == null) {
+      throw new IllegalArgumentException("function shouldn't be null");
     }
+    if (functionCall.getFunction().getMappingType() != MappingType.Mapping) {
+      throw new IllegalArgumentException("function should be mapping function");
+    }
+    this.functionCall = functionCall;
+  }
 
-    public FunctionCall getFunctionCall() {
-        return functionCall;
-    }
+  public FunctionCall getFunctionCall() {
+    return functionCall;
+  }
 
-    @Override
-    public Operator copy() {
-        return null;
-    }
+  @Override
+  public Operator copy() {
+    return null;
+  }
 }

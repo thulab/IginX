@@ -22,43 +22,43 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 public class Message {
 
-    private String path;
+  private String path;
 
-    private long timestamp;
+  private long timestamp;
 
-    private DataType dataType;
+  private DataType dataType;
 
-    private Object value;
+  private Object value;
 
-    public String getPath() {
-        return path;
-    }
+  public String getPath() {
+    return path;
+  }
 
-    public void setPath(String path) {
-        this.path = path;
-    }
+  public void setPath(String path) {
+    this.path = path;
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    public void setTimestamp(long timestamp) {
-        this.timestamp = timestamp;
-    }
+  public void setTimestamp(long timestamp) {
+    this.timestamp = timestamp;
+  }
 
-    public DataType getDataType() {
-        return dataType;
-    }
+  public DataType getDataType() {
+    return dataType;
+  }
 
-    public void setDataType(DataType dataType) {
-        this.dataType = dataType;
-    }
+  public void setDataType(DataType dataType) {
+    this.dataType = dataType;
+  }
 
-    public Object getValue() {
-        return value;
-    }
+  public Object getValue() {
+    return value;
+  }
 
-    public void setValue(Object value) {
-        this.value = value;
-    }
+  public void setValue(Object value) {
+    this.value = value;
+  }
 }

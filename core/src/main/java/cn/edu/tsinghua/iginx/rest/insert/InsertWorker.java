@@ -19,54 +19,58 @@
 package cn.edu.tsinghua.iginx.rest.insert;
 
 
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
 
 public class InsertWorker extends Thread {
-    private static final String NO_CACHE = "no-cache";
-    private final HttpHeaders httpheaders;
-    private InputStream stream;
-    private final AsyncResponse asyncResponse;
-    private final boolean isAnnotation;
 
-    public InsertWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
-                        InputStream stream, boolean isAnnotation) {
-        this.asyncResponse = asyncResponse;
-        this.httpheaders = httpheaders;
-        this.stream = stream;
-        this.isAnnotation = isAnnotation;
-    }
+  private static final String NO_CACHE = "no-cache";
+  private final HttpHeaders httpheaders;
+  private InputStream stream;
+  private final AsyncResponse asyncResponse;
+  private final boolean isAnnotation;
 
-    static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
-        responseBuilder.header("Access-Control-Allow-Origin", "*");
-        responseBuilder.header("Pragma", NO_CACHE);
-        responseBuilder.header("Cache-Control", NO_CACHE);
-        responseBuilder.header("Expires", 0);
-        return responseBuilder;
-    }
+  public InsertWorker(final AsyncResponse asyncResponse, HttpHeaders httpheaders,
+      InputStream stream, boolean isAnnotation) {
+    this.asyncResponse = asyncResponse;
+    this.httpheaders = httpheaders;
+    this.stream = stream;
+    this.isAnnotation = isAnnotation;
+  }
 
-    @Override
-    public void run() {
-        Response response;
-        try {
-            if (httpheaders != null) {
-                List<String> requestHeader = httpheaders.getRequestHeader("Content-Encoding");
-                if (requestHeader != null && requestHeader.contains("gzip")) {
-                    stream = new GZIPInputStream(stream);
-                }
-            }
-            DataPointsParser parser = new DataPointsParser(new InputStreamReader(stream, StandardCharsets.UTF_8));
-            parser.parse(isAnnotation);
-            response = Response.status(Response.Status.OK).build();
-        } catch (Exception e) {
-            response = setHeaders(Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
+  static Response.ResponseBuilder setHeaders(Response.ResponseBuilder responseBuilder) {
+    responseBuilder.header("Access-Control-Allow-Origin", "*");
+    responseBuilder.header("Pragma", NO_CACHE);
+    responseBuilder.header("Cache-Control", NO_CACHE);
+    responseBuilder.header("Expires", 0);
+    return responseBuilder;
+  }
+
+  @Override
+  public void run() {
+    Response response;
+    try {
+      if (httpheaders != null) {
+        List<String> requestHeader = httpheaders.getRequestHeader("Content-Encoding");
+        if (requestHeader != null && requestHeader.contains("gzip")) {
+          stream = new GZIPInputStream(stream);
         }
-        asyncResponse.resume(response);
+      }
+      DataPointsParser parser = new DataPointsParser(
+          new InputStreamReader(stream, StandardCharsets.UTF_8));
+      parser.parse(isAnnotation);
+      response = Response.status(Response.Status.OK).build();
+    } catch (Exception e) {
+      response = setHeaders(
+          Response.status(Response.Status.BAD_REQUEST).entity("Error occurred during execution\n"))
+          .build();
     }
+    asyncResponse.resume(response);
+  }
 }

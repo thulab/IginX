@@ -28,62 +28,61 @@ import cn.edu.tsinghua.iginx.engine.shared.function.system.LastValue;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Max;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Min;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.Sum;
-
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class FunctionManager {
 
-    private final Map<String, Function> functions;
+  private final Map<String, Function> functions;
 
-    private FunctionManager() {
-        this.functions = new HashMap<>();
-        this.initSystemFunctions();
+  private FunctionManager() {
+    this.functions = new HashMap<>();
+    this.initSystemFunctions();
+  }
+
+  public static FunctionManager getInstance() {
+    return FunctionManagerHolder.INSTANCE;
+  }
+
+  private void initSystemFunctions() {
+    registerFunction(Avg.getInstance());
+    registerFunction(Count.getInstance());
+    registerFunction(FirstValue.getInstance());
+    registerFunction(LastValue.getInstance());
+    registerFunction(First.getInstance());
+    registerFunction(Last.getInstance());
+    registerFunction(Max.getInstance());
+    registerFunction(Min.getInstance());
+    registerFunction(Sum.getInstance());
+  }
+
+  public void registerFunction(Function function) {
+    if (functions.containsKey(function.getIdentifier())) {
+      return;
+    }
+    functions.put(function.getIdentifier(), function);
+  }
+
+  public Collection<Function> getFunctions() {
+    return functions.values();
+  }
+
+  public Function getFunction(String identifier) {
+    return functions.get(identifier);
+  }
+
+  public boolean hasFunction(String identifier) {
+    return functions.containsKey(identifier);
+  }
+
+  private static class FunctionManagerHolder {
+
+    private static final FunctionManager INSTANCE = new FunctionManager();
+
+    private FunctionManagerHolder() {
     }
 
-    public static FunctionManager getInstance() {
-        return FunctionManagerHolder.INSTANCE;
-    }
-
-    private void initSystemFunctions() {
-        registerFunction(Avg.getInstance());
-        registerFunction(Count.getInstance());
-        registerFunction(FirstValue.getInstance());
-        registerFunction(LastValue.getInstance());
-        registerFunction(First.getInstance());
-        registerFunction(Last.getInstance());
-        registerFunction(Max.getInstance());
-        registerFunction(Min.getInstance());
-        registerFunction(Sum.getInstance());
-    }
-
-    public void registerFunction(Function function) {
-        if (functions.containsKey(function.getIdentifier())) {
-            return;
-        }
-        functions.put(function.getIdentifier(), function);
-    }
-
-    public Collection<Function> getFunctions() {
-        return functions.values();
-    }
-
-    public Function getFunction(String identifier) {
-        return functions.get(identifier);
-    }
-
-    public boolean hasFunction(String identifier) {
-        return functions.containsKey(identifier);
-    }
-
-    private static class FunctionManagerHolder {
-
-        private static final FunctionManager INSTANCE = new FunctionManager();
-
-        private FunctionManagerHolder() {
-        }
-
-    }
+  }
 
 }

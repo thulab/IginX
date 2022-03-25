@@ -7,14 +7,14 @@ import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
 public class ShowReplicationStatement extends SystemStatement {
 
-    public ShowReplicationStatement() {
-        this.statementType = StatementType.SHOW_REPLICATION;
-    }
+  public ShowReplicationStatement() {
+    this.statementType = StatementType.SHOW_REPLICATION;
+  }
 
-    @Override
-    public void execute(RequestContext ctx) {
-        Result result = new Result(RpcUtils.SUCCESS);
-        result.setReplicaNum(ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
-        ctx.setResult(result);
-    }
+  @Override
+  public void execute(RequestContext ctx) {
+    Result result = new Result(RpcUtils.SUCCESS);
+    result.setReplicaNum(ConfigDescriptor.getInstance().getConfig().getReplicaNum() + 1);
+    ctx.setResult(result);
+  }
 }

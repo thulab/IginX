@@ -25,76 +25,85 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.*;
-
+import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.TimeSeriesChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
+import cn.edu.tsinghua.iginx.metadata.hook.VersionChangeHook;
 import java.util.List;
 import java.util.Map;
 
 public interface IMetaStorage {
 
-    Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException;
+  Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException;
 
-    void registerSchemaMappingChangeHook(SchemaMappingChangeHook hook);
+  void registerSchemaMappingChangeHook(SchemaMappingChangeHook hook);
 
-    void updateSchemaMapping(String schema, Map<String, Integer> schemaMapping) throws MetaStorageException;
+  void updateSchemaMapping(String schema, Map<String, Integer> schemaMapping)
+      throws MetaStorageException;
 
-    Map<Long, IginxMeta> loadIginx() throws MetaStorageException;
+  Map<Long, IginxMeta> loadIginx() throws MetaStorageException;
 
-    long registerIginx(IginxMeta iginx) throws MetaStorageException;
+  long registerIginx(IginxMeta iginx) throws MetaStorageException;
 
-    void registerIginxChangeHook(IginxChangeHook hook);
+  void registerIginxChangeHook(IginxChangeHook hook);
 
-    Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines) throws MetaStorageException;
+  Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines)
+      throws MetaStorageException;
 
-    long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException;
+  long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException;
 
-    void registerStorageChangeHook(StorageChangeHook hook);
+  void registerStorageChangeHook(StorageChangeHook hook);
 
-    Map<String, StorageUnitMeta> loadStorageUnit() throws MetaStorageException;
+  Map<String, StorageUnitMeta> loadStorageUnit() throws MetaStorageException;
 
-    void lockStorageUnit() throws MetaStorageException;
+  void lockStorageUnit() throws MetaStorageException;
 
-    String addStorageUnit() throws MetaStorageException;
+  String addStorageUnit() throws MetaStorageException;
 
-    void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException;
+  void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException;
 
-    void releaseStorageUnit() throws MetaStorageException;
+  void releaseStorageUnit() throws MetaStorageException;
 
-    void registerStorageUnitChangeHook(StorageUnitChangeHook hook);
+  void registerStorageUnitChangeHook(StorageUnitChangeHook hook);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException;
+  Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException;
 
-    void lockFragment() throws MetaStorageException;
+  void lockFragment() throws MetaStorageException;
 
-    void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
+  void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
-    void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
+  void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
-    void releaseFragment() throws MetaStorageException;
+  void releaseFragment() throws MetaStorageException;
 
-    void registerFragmentChangeHook(FragmentChangeHook hook);
+  void registerFragmentChangeHook(FragmentChangeHook hook);
 
-    List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException;
+  List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException;
 
-    void registerUserChangeHook(UserChangeHook hook);
+  void registerUserChangeHook(UserChangeHook hook);
 
-    void addUser(UserMeta userMeta) throws MetaStorageException;
+  void addUser(UserMeta userMeta) throws MetaStorageException;
 
-    void updateUser(UserMeta userMeta) throws MetaStorageException;
+  void updateUser(UserMeta userMeta) throws MetaStorageException;
 
-    void removeUser(String username) throws MetaStorageException;
+  void removeUser(String username) throws MetaStorageException;
 
-    void registerTimeseriesChangeHook(TimeSeriesChangeHook hook);
+  void registerTimeseriesChangeHook(TimeSeriesChangeHook hook);
 
-    void registerVersionChangeHook(VersionChangeHook hook);
+  void registerVersionChangeHook(VersionChangeHook hook);
 
-    boolean election();
+  boolean election();
 
-    void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception;
+  void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version)
+      throws Exception;
 
-    Map<String, Double> getTimeseriesData();
+  Map<String, Double> getTimeseriesData();
 
-    void registerPolicy(long iginxId, int num) throws Exception;
+  void registerPolicy(long iginxId, int num) throws Exception;
 
-    int updateVersion();
+  int updateVersion();
 }

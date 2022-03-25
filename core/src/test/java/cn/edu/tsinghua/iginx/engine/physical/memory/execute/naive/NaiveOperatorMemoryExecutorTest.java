@@ -21,22 +21,21 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
-
 import java.util.Arrays;
 
 public class NaiveOperatorMemoryExecutorTest {
 
-    private final NaiveOperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
+  private final NaiveOperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
 
-    private final Source source = new AbstractSource() {
-        @Override
-        public Source copy() {
-            return null;
-        }
-    };
-
-    public void testProject() {
-        Project project = new Project(source, Arrays.asList("a", "b"));
+  private final Source source = new AbstractSource() {
+    @Override
+    public Source copy() {
+      return null;
     }
+  };
+
+  public void testProject() {
+    Project project = new Project(source, Arrays.asList("a", "b"));
+  }
 
 }

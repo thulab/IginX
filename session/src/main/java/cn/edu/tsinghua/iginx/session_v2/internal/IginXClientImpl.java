@@ -32,6 +32,11 @@ import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
+import java.util.Collection;
+import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -40,143 +45,137 @@ import org.apache.thrift.transport.TTransportException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-
 public class IginXClientImpl implements IginXClient {
 
-    private static final Logger logger = LoggerFactory.getLogger(IginXClientImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger(IginXClientImpl.class);
 
-    private final IService.Iface client;
+  private final IService.Iface client;
 
-    private final TTransport transport;
+  private final TTransport transport;
 
-    private final Lock lock; // IService.Iface 的 lock，保证多个线程在使用 client 时候不会互相影响
+  private final Lock lock; // IService.Iface 的 lock，保证多个线程在使用 client 时候不会互相影响
 
-    private final long sessionId;
+  private final long sessionId;
 
-    private boolean isClosed;
+  private boolean isClosed;
 
-    private final MeasurementMapper measurementMapper;
+  private final MeasurementMapper measurementMapper;
 
-    private final ResultMapper resultMapper;
+  private final ResultMapper resultMapper;
 
-    private final Collection<AutoCloseable> autoCloseables = new CopyOnWriteArrayList<>();
+  private final Collection<AutoCloseable> autoCloseables = new CopyOnWriteArrayList<>();
 
-    public IginXClientImpl(IginXClientOptions options) {
-        Arguments.checkNotNull(options, "IginXClientOptions");
+  public IginXClientImpl(IginXClientOptions options) {
+    Arguments.checkNotNull(options, "IginXClientOptions");
 
-        lock = new ReentrantLock();
-        transport = new TSocket(options.getHost(), options.getPort());
-        measurementMapper = new MeasurementMapper();
-        resultMapper = new ResultMapper();
+    lock = new ReentrantLock();
+    transport = new TSocket(options.getHost(), options.getPort());
+    measurementMapper = new MeasurementMapper();
+    resultMapper = new ResultMapper();
 
-        try {
-            transport.open();
-            client = new IService.Client(new TBinaryProtocol(transport));
-        } catch (TTransportException e) {
-            throw new IginXException("Open socket error: ", e);
-        }
-
-        try {
-            OpenSessionReq req = new OpenSessionReq();
-            req.setUsername(options.getUsername());
-            req.setPassword(options.getPassword());
-            sessionId = client.openSession(req).getSessionId();
-
-        } catch (TException e) {
-            throw new IginXException("Open session error: ", e);
-        }
-
+    try {
+      transport.open();
+      client = new IService.Client(new TBinaryProtocol(transport));
+    } catch (TTransportException e) {
+      throw new IginXException("Open socket error: ", e);
     }
 
-    @Override
-    public synchronized WriteClient getWriteClient() {
-        checkIsClosed();
-        return new WriteClientImpl(this, measurementMapper);
+    try {
+      OpenSessionReq req = new OpenSessionReq();
+      req.setUsername(options.getUsername());
+      req.setPassword(options.getPassword());
+      sessionId = client.openSession(req).getSessionId();
+
+    } catch (TException e) {
+      throw new IginXException("Open session error: ", e);
     }
 
-    @Override
-    public synchronized AsyncWriteClient getAsyncWriteClient() {
-        checkIsClosed();
-        return new AsyncWriteClientImpl(this, measurementMapper, autoCloseables);
+  }
+
+  @Override
+  public synchronized WriteClient getWriteClient() {
+    checkIsClosed();
+    return new WriteClientImpl(this, measurementMapper);
+  }
+
+  @Override
+  public synchronized AsyncWriteClient getAsyncWriteClient() {
+    checkIsClosed();
+    return new AsyncWriteClientImpl(this, measurementMapper, autoCloseables);
+  }
+
+  @Override
+  public synchronized QueryClient getQueryClient() {
+    checkIsClosed();
+    return new QueryClientImpl(this, resultMapper);
+  }
+
+  @Override
+  public synchronized DeleteClient getDeleteClient() {
+    checkIsClosed();
+    return new DeleteClientImpl(this, measurementMapper);
+  }
+
+  @Override
+  public synchronized UsersClient getUserClient() {
+    checkIsClosed();
+    return new UsersClientImpl(this);
+  }
+
+  @Override
+  public synchronized ClusterClient getClusterClient() {
+    checkIsClosed();
+    return new ClusterClientImpl(this);
+  }
+
+  void checkIsClosed() {
+    if (isClosed) {
+      throw new IginXException("Session has been closed.");
+    }
+  }
+
+  public synchronized boolean isClosed() {
+    return isClosed;
+  }
+
+  IService.Iface getClient() {
+    return client;
+  }
+
+  Lock getLock() {
+    return lock;
+  }
+
+  long getSessionId() {
+    return sessionId;
+  }
+
+  @Override
+  public synchronized void close() {
+    if (isClosed) {
+      logger.warn("Client has been closed.");
+      return;
     }
 
-    @Override
-    public synchronized QueryClient getQueryClient() {
-        checkIsClosed();
-        return new QueryClientImpl(this, resultMapper);
+    autoCloseables.stream().filter(Objects::nonNull).forEach(resource -> {
+      try {
+        resource.close();
+      } catch (Exception e) {
+        logger.warn(String.format("Exception was thrown while closing: %s", resource), e);
+      }
+    });
+
+    CloseSessionReq req = new CloseSessionReq(sessionId);
+    try {
+      client.closeSession(req);
+    } catch (TException e) {
+      throw new IginXException("Close session error: ", e);
+    } finally {
+      if (transport != null) {
+        transport.close();
+      }
+      isClosed = true;
     }
-
-    @Override
-    public synchronized DeleteClient getDeleteClient() {
-        checkIsClosed();
-        return new DeleteClientImpl(this, measurementMapper);
-    }
-
-    @Override
-    public synchronized UsersClient getUserClient() {
-        checkIsClosed();
-        return new UsersClientImpl(this);
-    }
-
-    @Override
-    public synchronized ClusterClient getClusterClient() {
-        checkIsClosed();
-        return new ClusterClientImpl(this);
-    }
-
-    void checkIsClosed() {
-        if (isClosed) {
-            throw new IginXException("Session has been closed.");
-        }
-    }
-
-    public synchronized boolean isClosed() {
-        return isClosed;
-    }
-
-    IService.Iface getClient() {
-        return client;
-    }
-
-    Lock getLock() {
-        return lock;
-    }
-
-    long getSessionId() {
-        return sessionId;
-    }
-
-    @Override
-    public synchronized void close() {
-        if (isClosed) {
-            logger.warn("Client has been closed.");
-            return;
-        }
-
-        autoCloseables.stream().filter(Objects::nonNull).forEach(resource -> {
-            try {
-                resource.close();
-            } catch (Exception e) {
-                logger.warn(String.format("Exception was thrown while closing: %s", resource), e);
-            }
-        });
-
-        CloseSessionReq req = new CloseSessionReq(sessionId);
-        try {
-            client.closeSession(req);
-        } catch (TException e) {
-            throw new IginXException("Close session error: ", e);
-        } finally {
-            if (transport != null) {
-                transport.close();
-            }
-            isClosed = true;
-        }
-    }
+  }
 
 }

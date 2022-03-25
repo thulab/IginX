@@ -22,30 +22,30 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 public class IginXColumn {
 
-    public static final IginXColumn TIME = new IginXColumn("timestamp", DataType.LONG);
+  public static final IginXColumn TIME = new IginXColumn("timestamp", DataType.LONG);
 
-    private final String name;
+  private final String name;
 
-    private final DataType dataType;
+  private final DataType dataType;
 
-    public IginXColumn(String name, DataType dataType) {
-        this.name = name;
-        this.dataType = dataType;
-    }
+  public IginXColumn(String name, DataType dataType) {
+    this.name = name;
+    this.dataType = dataType;
+  }
 
-    public String getName() {
-        return name;
-    }
+  public String getName() {
+    return name;
+  }
 
-    public DataType getDataType() {
-        return dataType;
-    }
+  public DataType getDataType() {
+    return dataType;
+  }
 
-    @Override
-    public String toString() {
-        return "IginXColumn{" +
-                "name='" + name + '\'' +
-                ", dataType=" + dataType +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "IginXColumn{" +
+        "name='" + name + '\'' +
+        ", dataType=" + dataType +
+        '}';
+  }
 }

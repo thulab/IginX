@@ -22,12 +22,12 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Union extends AbstractBinaryOperator {
 
-    public Union(Source sourceA, Source sourceB) {
-        super(OperatorType.Union, sourceA, sourceB);
-    }
+  public Union(Source sourceA, Source sourceB) {
+    super(OperatorType.Union, sourceA, sourceB);
+  }
 
-    @Override
-    public Operator copy() {
-        return new Union(getSourceA().copy(), getSourceB().copy());
-    }
+  @Override
+  public Operator copy() {
+    return new Union(getSourceA().copy(), getSourceB().copy());
+  }
 }

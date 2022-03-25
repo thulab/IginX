@@ -20,11 +20,10 @@ package cn.edu.tsinghua.iginx.engine.shared.function;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-
 import java.util.List;
 
 public interface MappingFunction extends Function {
 
-    RowStream transform(RowStream rows, List<Value> params) throws Exception;
+  RowStream transform(RowStream rows, List<Value> params) throws Exception;
 
 }

@@ -22,50 +22,50 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 
 public class ValueFilter implements Filter {
 
-    private final String path;
-    private final Value value;
-    private Op op;
-    private FilterType type = FilterType.Value;
+  private final String path;
+  private final Value value;
+  private Op op;
+  private FilterType type = FilterType.Value;
 
-    public ValueFilter(String path, Op op, Value value) {
-        this.path = path;
-        this.op = op;
-        this.value = value;
-    }
+  public ValueFilter(String path, Op op, Value value) {
+    this.path = path;
+    this.op = op;
+    this.value = value;
+  }
 
-    public void reverseFunc() {
-        this.op = Op.getOpposite(op);
-    }
+  public void reverseFunc() {
+    this.op = Op.getOpposite(op);
+  }
 
-    public String getPath() {
-        return path;
-    }
+  public String getPath() {
+    return path;
+  }
 
-    public Op getOp() {
-        return op;
-    }
+  public Op getOp() {
+    return op;
+  }
 
-    public Value getValue() {
-        return value;
-    }
+  public Value getValue() {
+    return value;
+  }
 
-    @Override
-    public void accept(FilterVisitor visitor) {
-        visitor.visit(this);
-    }
+  @Override
+  public void accept(FilterVisitor visitor) {
+    visitor.visit(this);
+  }
 
-    @Override
-    public FilterType getType() {
-        return type;
-    }
+  @Override
+  public FilterType getType() {
+    return type;
+  }
 
-    @Override
-    public Filter copy() {
-        return new ValueFilter(path, op, value.copy());
-    }
+  @Override
+  public Filter copy() {
+    return new ValueFilter(path, op, value.copy());
+  }
 
-    @Override
-    public String toString() {
-        return path + " " + Op.op2Str(op) + " " + value.getValue();
-    }
+  @Override
+  public String toString() {
+    return path + " " + Op.op2Str(op) + " " + value.getValue();
+  }
 }

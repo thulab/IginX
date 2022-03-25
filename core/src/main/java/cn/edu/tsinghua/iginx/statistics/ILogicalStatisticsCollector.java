@@ -5,8 +5,8 @@ import cn.edu.tsinghua.iginx.engine.shared.processor.PreLogicalProcessor;
 
 public interface ILogicalStatisticsCollector {
 
-    PreLogicalProcessor getPreLogicalProcessor();
+  PreLogicalProcessor getPreLogicalProcessor();
 
-    PostLogicalProcessor getPostLogicalProcessor();
+  PostLogicalProcessor getPostLogicalProcessor();
 
 }

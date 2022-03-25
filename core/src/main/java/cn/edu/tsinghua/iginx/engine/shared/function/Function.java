@@ -20,10 +20,10 @@ package cn.edu.tsinghua.iginx.engine.shared.function;
 
 public interface Function {
 
-    FunctionType getFunctionType();
+  FunctionType getFunctionType();
 
-    MappingType getMappingType();
+  MappingType getMappingType();
 
-    String getIdentifier();
+  String getIdentifier();
 
 }

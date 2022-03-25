@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class AnnotationLimit {
-    private String tag = ".*";
-    private String text = ".*";
-    private String title = ".*";
+
+  private String tag = ".*";
+  private String text = ".*";
+  private String title = ".*";
 }

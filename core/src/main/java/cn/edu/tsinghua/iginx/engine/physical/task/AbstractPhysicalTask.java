@@ -19,61 +19,60 @@
 package cn.edu.tsinghua.iginx.engine.physical.task;
 
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
 public abstract class AbstractPhysicalTask implements PhysicalTask {
 
-    private static final Logger logger = LoggerFactory.getLogger(AbstractPhysicalTask.class);
+  private static final Logger logger = LoggerFactory.getLogger(AbstractPhysicalTask.class);
 
-    private final TaskType type;
+  private final TaskType type;
 
-    private final List<Operator> operators;
-    private final CountDownLatch resultLatch = new CountDownLatch(1);
-    private PhysicalTask followerTask;
-    private TaskExecuteResult result;
+  private final List<Operator> operators;
+  private final CountDownLatch resultLatch = new CountDownLatch(1);
+  private PhysicalTask followerTask;
+  private TaskExecuteResult result;
 
-    public AbstractPhysicalTask(TaskType type, List<Operator> operators) {
-        this.type = type;
-        this.operators = operators;
+  public AbstractPhysicalTask(TaskType type, List<Operator> operators) {
+    this.type = type;
+    this.operators = operators;
+  }
+
+  @Override
+  public TaskType getType() {
+    return type;
+  }
+
+  @Override
+  public List<Operator> getOperators() {
+    return operators;
+  }
+
+  @Override
+  public PhysicalTask getFollowerTask() {
+    return followerTask;
+  }
+
+  @Override
+  public void setFollowerTask(PhysicalTask task) {
+    this.followerTask = task;
+  }
+
+  @Override
+  public TaskExecuteResult getResult() {
+    try {
+      this.resultLatch.await();
+    } catch (InterruptedException e) {
+      logger.error("unexpected interrupted when get result: ", e);
     }
+    return result;
+  }
 
-    @Override
-    public TaskType getType() {
-        return type;
-    }
-
-    @Override
-    public List<Operator> getOperators() {
-        return operators;
-    }
-
-    @Override
-    public PhysicalTask getFollowerTask() {
-        return followerTask;
-    }
-
-    @Override
-    public void setFollowerTask(PhysicalTask task) {
-        this.followerTask = task;
-    }
-
-    @Override
-    public TaskExecuteResult getResult() {
-        try {
-            this.resultLatch.await();
-        } catch (InterruptedException e) {
-            logger.error("unexpected interrupted when get result: ", e);
-        }
-        return result;
-    }
-
-    @Override
-    public void setResult(TaskExecuteResult result) {
-        this.result = result;
-        this.resultLatch.countDown();
-    }
+  @Override
+  public void setResult(TaskExecuteResult result) {
+    this.result = result;
+    this.resultLatch.countDown();
+  }
 }

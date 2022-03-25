@@ -25,45 +25,45 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Downsample extends AbstractUnaryOperator {
 
-    private final long precision;
+  private final long precision;
 
-    private final FunctionCall functionCall;
+  private final FunctionCall functionCall;
 
-    private final TimeRange timeRange;
+  private final TimeRange timeRange;
 
-    public Downsample(Source source, long precision, FunctionCall functionCall, TimeRange timeRange) {
-        super(OperatorType.Downsample, source);
-        if (precision <= 0) {
-            throw new IllegalArgumentException("precision should be greater than zero");
-        }
-        if (functionCall == null || functionCall.getFunction() == null) {
-            throw new IllegalArgumentException("function shouldn't be null");
-        }
-        if (functionCall.getFunction().getMappingType() != MappingType.SetMapping) {
-            throw new IllegalArgumentException("function should be set mapping function");
-        }
-        if (timeRange == null) {
-            throw new IllegalArgumentException("timeRange shouldn't be null");
-        }
-        this.precision = precision;
-        this.functionCall = functionCall;
-        this.timeRange = timeRange;
+  public Downsample(Source source, long precision, FunctionCall functionCall, TimeRange timeRange) {
+    super(OperatorType.Downsample, source);
+    if (precision <= 0) {
+      throw new IllegalArgumentException("precision should be greater than zero");
     }
-
-    public long getPrecision() {
-        return precision;
+    if (functionCall == null || functionCall.getFunction() == null) {
+      throw new IllegalArgumentException("function shouldn't be null");
     }
-
-    public FunctionCall getFunctionCall() {
-        return functionCall;
+    if (functionCall.getFunction().getMappingType() != MappingType.SetMapping) {
+      throw new IllegalArgumentException("function should be set mapping function");
     }
-
-    public TimeRange getTimeRange() {
-        return timeRange;
+    if (timeRange == null) {
+      throw new IllegalArgumentException("timeRange shouldn't be null");
     }
+    this.precision = precision;
+    this.functionCall = functionCall;
+    this.timeRange = timeRange;
+  }
 
-    @Override
-    public Operator copy() {
-        return new Downsample(getSource().copy(), precision, functionCall.copy(), timeRange.copy());
-    }
+  public long getPrecision() {
+    return precision;
+  }
+
+  public FunctionCall getFunctionCall() {
+    return functionCall;
+  }
+
+  public TimeRange getTimeRange() {
+    return timeRange;
+  }
+
+  @Override
+  public Operator copy() {
+    return new Downsample(getSource().copy(), precision, functionCall.copy(), timeRange.copy());
+  }
 }

@@ -19,28 +19,28 @@
 package cn.edu.tsinghua.iginx.rest.bean;
 
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import lombok.Data;
 
 @Data
 public class QueryMetric {
-    private String name;
-    private Long limit;
-    private Map<String, List<String>> tags = new TreeMap<>();
-    private List<QueryAggregator> aggregators = new ArrayList<>();
-    private Boolean annotation = false;
-    private AnnotationLimit annotationLimit;
 
-    public void addTag(String key, String value) {
-        tags.computeIfAbsent(key, k -> new ArrayList<>());
-        tags.get(key).add(value);
-    }
+  private String name;
+  private Long limit;
+  private Map<String, List<String>> tags = new TreeMap<>();
+  private List<QueryAggregator> aggregators = new ArrayList<>();
+  private Boolean annotation = false;
+  private AnnotationLimit annotationLimit;
 
-    public void addAggregator(QueryAggregator qa) {
-        aggregators.add(qa);
-    }
+  public void addTag(String key, String value) {
+    tags.computeIfAbsent(key, k -> new ArrayList<>());
+    tags.get(key).add(value);
+  }
+
+  public void addAggregator(QueryAggregator qa) {
+    aggregators.add(qa);
+  }
 }

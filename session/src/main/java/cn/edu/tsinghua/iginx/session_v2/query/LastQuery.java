@@ -19,65 +19,64 @@
 package cn.edu.tsinghua.iginx.session_v2.query;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
-
 import java.util.HashSet;
 import java.util.Set;
 
 public class LastQuery extends Query {
 
-    private final long startTime;
+  private final long startTime;
 
-    public LastQuery(Set<String> measurements, long startTime) {
-        super(measurements);
-        this.startTime = startTime;
+  public LastQuery(Set<String> measurements, long startTime) {
+    super(measurements);
+    this.startTime = startTime;
+  }
+
+  public long getStartTime() {
+    return startTime;
+  }
+
+  public static LastQuery.Builder builder() {
+    return new LastQuery.Builder();
+  }
+
+  public static class Builder {
+
+    private final Set<String> measurements;
+
+    private long startTime;
+
+    private Builder() {
+      this.measurements = new HashSet<>();
+      this.startTime = 0L;
     }
 
-    public long getStartTime() {
-        return startTime;
+    public LastQuery.Builder addMeasurement(String measurement) {
+      Arguments.checkNonEmpty(measurement, "measurement");
+      this.measurements.add(measurement);
+      return this;
     }
 
-    public static LastQuery.Builder builder() {
-        return new LastQuery.Builder();
+    public LastQuery.Builder addMeasurements(Set<String> measurements) {
+      measurements.forEach(measurement -> Arguments.checkNonEmpty(measurement, "measurement"));
+      this.measurements.addAll(measurements);
+      return this;
     }
 
-    public static class Builder {
-
-        private final Set<String> measurements;
-
-        private long startTime;
-
-        private Builder() {
-            this.measurements = new HashSet<>();
-            this.startTime = 0L;
-        }
-
-        public LastQuery.Builder addMeasurement(String measurement) {
-            Arguments.checkNonEmpty(measurement, "measurement");
-            this.measurements.add(measurement);
-            return this;
-        }
-
-        public LastQuery.Builder addMeasurements(Set<String> measurements) {
-            measurements.forEach(measurement -> Arguments.checkNonEmpty(measurement, "measurement"));
-            this.measurements.addAll(measurements);
-            return this;
-        }
-
-        public LastQuery.Builder startTime(long startTime) {
-            if (startTime < 0) {
-                throw new IllegalArgumentException("startTime must greater than zero.");
-            }
-            this.startTime = startTime;
-            return this;
-        }
-
-        public LastQuery build() {
-            if (this.measurements.isEmpty()) {
-                throw new IllegalStateException("last query at least has one measurement.");
-            }
-            return new LastQuery(measurements, startTime);
-        }
-
+    public LastQuery.Builder startTime(long startTime) {
+      if (startTime < 0) {
+        throw new IllegalArgumentException("startTime must greater than zero.");
+      }
+      this.startTime = startTime;
+      return this;
     }
+
+    public LastQuery build() {
+      if (this.measurements.isEmpty()) {
+        throw new IllegalStateException("last query at least has one measurement.");
+      }
+      return new LastQuery(measurements, startTime);
+    }
+
+  }
 
 }

@@ -23,26 +23,26 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class Join extends AbstractBinaryOperator {
 
-    private final String joinBy;
+  private final String joinBy;
 
-    public Join(Source sourceA, Source sourceB) {
-        this(sourceA, sourceB, Constants.TIMESTAMP);
-    }
+  public Join(Source sourceA, Source sourceB) {
+    this(sourceA, sourceB, Constants.TIMESTAMP);
+  }
 
-    public Join(Source sourceA, Source sourceB, String joinBy) {
-        super(OperatorType.Join, sourceA, sourceB);
-        if (joinBy == null) {
-            throw new IllegalArgumentException("joinBy shouldn't be null");
-        }
-        this.joinBy = joinBy;
+  public Join(Source sourceA, Source sourceB, String joinBy) {
+    super(OperatorType.Join, sourceA, sourceB);
+    if (joinBy == null) {
+      throw new IllegalArgumentException("joinBy shouldn't be null");
     }
+    this.joinBy = joinBy;
+  }
 
-    public String getJoinBy() {
-        return joinBy;
-    }
+  public String getJoinBy() {
+    return joinBy;
+  }
 
-    @Override
-    public Operator copy() {
-        return new Join(getSourceA().copy(), getSourceB().copy(), joinBy);
-    }
+  @Override
+  public Operator copy() {
+    return new Join(getSourceA().copy(), getSourceB().copy(), joinBy);
+  }
 }

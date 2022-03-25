@@ -24,128 +24,136 @@ import java.util.Objects;
 
 public final class StorageUnitMeta {
 
-    private final String id;
+  private final String id;
 
-    private final long storageEngineId;
+  private final long storageEngineId;
 
-    private final String masterId;
+  private final String masterId;
 
-    private final boolean isMaster;
+  private final boolean isMaster;
 
-    private long createdBy;
+  private long createdBy;
 
-    private boolean initialStorageUnit = true;
+  private boolean initialStorageUnit = true;
 
-    private transient List<StorageUnitMeta> replicas = new ArrayList<>();
+  private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
-    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
-        this.id = id;
-        this.storageEngineId = storageEngineId;
-        this.masterId = masterId;
-        this.isMaster = isMaster;
+  public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
+    this.id = id;
+    this.storageEngineId = storageEngineId;
+    this.masterId = masterId;
+    this.isMaster = isMaster;
+  }
+
+  public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster,
+      boolean initialStorageUnit) {
+    this.id = id;
+    this.storageEngineId = storageEngineId;
+    this.masterId = masterId;
+    this.isMaster = isMaster;
+    this.initialStorageUnit = initialStorageUnit;
+  }
+
+  public void addReplica(StorageUnitMeta storageUnit) {
+    if (replicas == null) {
+      replicas = new ArrayList<>();
     }
+    replicas.add(storageUnit);
+  }
 
-    public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, boolean initialStorageUnit) {
-        this.id = id;
-        this.storageEngineId = storageEngineId;
-        this.masterId = masterId;
-        this.isMaster = isMaster;
-        this.initialStorageUnit = initialStorageUnit;
+  public void removeReplica(StorageUnitMeta storageUnit) {
+    if (replicas == null) {
+      replicas = new ArrayList<>();
     }
+    replicas.remove(storageUnit);
+  }
 
-    public void addReplica(StorageUnitMeta storageUnit) {
-        if (replicas == null)
-            replicas = new ArrayList<>();
-        replicas.add(storageUnit);
-    }
+  public String getId() {
+    return id;
+  }
 
-    public void removeReplica(StorageUnitMeta storageUnit) {
-        if (replicas == null)
-            replicas = new ArrayList<>();
-        replicas.remove(storageUnit);
-    }
+  public long getStorageEngineId() {
+    return storageEngineId;
+  }
 
-    public String getId() {
-        return id;
-    }
+  public String getMasterId() {
+    return masterId;
+  }
 
-    public long getStorageEngineId() {
-        return storageEngineId;
-    }
+  public boolean isMaster() {
+    return isMaster;
+  }
 
-    public String getMasterId() {
-        return masterId;
+  public List<StorageUnitMeta> getReplicas() {
+    if (replicas == null) {
+      replicas = new ArrayList<>();
     }
+    return replicas;
+  }
 
-    public boolean isMaster() {
-        return isMaster;
-    }
+  public void setReplicas(List<StorageUnitMeta> replicas) {
+    this.replicas = replicas;
+  }
 
-    public List<StorageUnitMeta> getReplicas() {
-        if (replicas == null)
-            replicas = new ArrayList<>();
-        return replicas;
-    }
+  public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
+    StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
+    storageUnitMeta.setCreatedBy(createdBy);
+    storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
+    return storageUnitMeta;
+  }
 
-    public void setReplicas(List<StorageUnitMeta> replicas) {
-        this.replicas = replicas;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    StorageUnitMeta that = (StorageUnitMeta) o;
+    return Objects.equals(id, that.id);
+  }
 
-    public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
-        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
-        storageUnitMeta.setCreatedBy(createdBy);
-        storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
-        return storageUnitMeta;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        StorageUnitMeta that = (StorageUnitMeta) o;
-        return Objects.equals(id, that.id);
+  @Override
+  public String toString() {
+    StringBuilder builder = new StringBuilder();
+    builder.append("StorageUnitMeta: { id = ");
+    builder.append(id);
+    builder.append(", storageEngineId = ");
+    builder.append(storageEngineId);
+    builder.append(", masterId = ");
+    builder.append(masterId);
+    builder.append(", isMaster = ");
+    builder.append(isMaster);
+    builder.append(", createdBy = ");
+    builder.append(createdBy);
+    builder.append(", replica id list = ");
+    for (StorageUnitMeta storageUnit : replicas) {
+      builder.append(" ");
+      builder.append(storageUnit.getId());
     }
+    builder.append("}");
+    return builder.toString();
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
+  public long getCreatedBy() {
+    return createdBy;
+  }
 
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("StorageUnitMeta: { id = ");
-        builder.append(id);
-        builder.append(", storageEngineId = ");
-        builder.append(storageEngineId);
-        builder.append(", masterId = ");
-        builder.append(masterId);
-        builder.append(", isMaster = ");
-        builder.append(isMaster);
-        builder.append(", createdBy = ");
-        builder.append(createdBy);
-        builder.append(", replica id list = ");
-        for (StorageUnitMeta storageUnit : replicas) {
-            builder.append(" ");
-            builder.append(storageUnit.getId());
-        }
-        builder.append("}");
-        return builder.toString();
-    }
+  public void setCreatedBy(long createdBy) {
+    this.createdBy = createdBy;
+  }
 
-    public long getCreatedBy() {
-        return createdBy;
-    }
+  public boolean isInitialStorageUnit() {
+    return initialStorageUnit;
+  }
 
-    public void setCreatedBy(long createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public boolean isInitialStorageUnit() {
-        return initialStorageUnit;
-    }
-
-    public void setInitialStorageUnit(boolean initialStorageUnit) {
-        this.initialStorageUnit = initialStorageUnit;
-    }
+  public void setInitialStorageUnit(boolean initialStorageUnit) {
+    this.initialStorageUnit = initialStorageUnit;
+  }
 }

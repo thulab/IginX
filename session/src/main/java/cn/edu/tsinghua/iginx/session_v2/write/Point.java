@@ -23,134 +23,134 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 
 public class Point {
 
-    private final long timestamp;
+  private final long timestamp;
 
-    private final Object value;
+  private final Object value;
 
-    private final DataType dataType;
+  private final DataType dataType;
 
-    private final String measurement;
+  private final String measurement;
 
-    public Point(long timestamp, Object value, DataType dataType, String measurement) {
-        this.timestamp = timestamp;
-        this.value = value;
-        this.dataType = dataType;
-        this.measurement = measurement;
-    }
+  public Point(long timestamp, Object value, DataType dataType, String measurement) {
+    this.timestamp = timestamp;
+    this.value = value;
+    this.dataType = dataType;
+    this.measurement = measurement;
+  }
 
-    private Point(Point.Builder builder) {
-        this(builder.timestamp, builder.value, builder.dataType, builder.measurement);
-    }
+  private Point(Point.Builder builder) {
+    this(builder.timestamp, builder.value, builder.dataType, builder.measurement);
+  }
 
-    public static Point.Builder builder() {
-        return new Point.Builder();
-    }
+  public static Point.Builder builder() {
+    return new Point.Builder();
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
+  public long getTimestamp() {
+    return timestamp;
+  }
 
-    public Object getValue() {
-        return value;
-    }
+  public Object getValue() {
+    return value;
+  }
 
-    public DataType getDataType() {
-        return dataType;
-    }
+  public DataType getDataType() {
+    return dataType;
+  }
 
-    public String getMeasurement() {
-        return measurement;
-    }
+  public String getMeasurement() {
+    return measurement;
+  }
 
-    public static class Builder {
+  public static class Builder {
 
-        private long timestamp = -1;
+    private long timestamp = -1;
 
-        private Object value;
+    private Object value;
 
-        private DataType dataType;
+    private DataType dataType;
 
-        private String measurement;
+    private String measurement;
 
-        private Builder() {
-
-        }
-
-        public Point.Builder timestamp(long timestamp) {
-            this.timestamp = timestamp;
-            return this;
-        }
-
-        public Point.Builder now() {
-            this.timestamp = System.currentTimeMillis();
-            return this;
-        }
-
-        public Point.Builder dataType(DataType dataType) {
-            Arguments.checkNotNull(dataType, "dataType");
-            this.dataType = dataType;
-            return this;
-        }
-
-        public Point.Builder value(Object value) {
-            Arguments.checkNotNull(value, "value");
-            this.value = value;
-            return this;
-        }
-
-        public Point.Builder measurement(String measurement) {
-            Arguments.checkNonEmpty(measurement, "measurement");
-            this.measurement = measurement;
-            return this;
-        }
-
-        public Point.Builder booleanValue(boolean value) {
-            this.value = value;
-            this.dataType = DataType.BOOLEAN;
-            return this;
-        }
-
-        public Point.Builder intValue(int value) {
-            this.value = value;
-            this.dataType = DataType.INTEGER;
-            return this;
-        }
-
-        public Point.Builder longValue(long value) {
-            this.value = value;
-            this.dataType = DataType.LONG;
-            return this;
-        }
-
-        public Point.Builder floatValue(float value) {
-            this.value = value;
-            this.dataType = DataType.FLOAT;
-            return this;
-        }
-
-        public Point.Builder doubleValue(double value) {
-            this.value = value;
-            this.dataType = DataType.DOUBLE;
-            return this;
-        }
-
-        public Point.Builder binaryValue(byte[] value) {
-            this.value = value;
-            this.dataType = DataType.BINARY;
-            return this;
-        }
-
-        public Point build() {
-            Arguments.checkNonEmpty(measurement, "measurement");
-            Arguments.checkNotNull(value, "value");
-            Arguments.checkNotNull(dataType, "dataType");
-            Arguments.checkDataType(value, dataType, "value");
-            if (timestamp < 0) {
-                timestamp = System.currentTimeMillis();
-            }
-            return new Point(this);
-        }
+    private Builder() {
 
     }
+
+    public Point.Builder timestamp(long timestamp) {
+      this.timestamp = timestamp;
+      return this;
+    }
+
+    public Point.Builder now() {
+      this.timestamp = System.currentTimeMillis();
+      return this;
+    }
+
+    public Point.Builder dataType(DataType dataType) {
+      Arguments.checkNotNull(dataType, "dataType");
+      this.dataType = dataType;
+      return this;
+    }
+
+    public Point.Builder value(Object value) {
+      Arguments.checkNotNull(value, "value");
+      this.value = value;
+      return this;
+    }
+
+    public Point.Builder measurement(String measurement) {
+      Arguments.checkNonEmpty(measurement, "measurement");
+      this.measurement = measurement;
+      return this;
+    }
+
+    public Point.Builder booleanValue(boolean value) {
+      this.value = value;
+      this.dataType = DataType.BOOLEAN;
+      return this;
+    }
+
+    public Point.Builder intValue(int value) {
+      this.value = value;
+      this.dataType = DataType.INTEGER;
+      return this;
+    }
+
+    public Point.Builder longValue(long value) {
+      this.value = value;
+      this.dataType = DataType.LONG;
+      return this;
+    }
+
+    public Point.Builder floatValue(float value) {
+      this.value = value;
+      this.dataType = DataType.FLOAT;
+      return this;
+    }
+
+    public Point.Builder doubleValue(double value) {
+      this.value = value;
+      this.dataType = DataType.DOUBLE;
+      return this;
+    }
+
+    public Point.Builder binaryValue(byte[] value) {
+      this.value = value;
+      this.dataType = DataType.BINARY;
+      return this;
+    }
+
+    public Point build() {
+      Arguments.checkNonEmpty(measurement, "measurement");
+      Arguments.checkNotNull(value, "value");
+      Arguments.checkNotNull(dataType, "dataType");
+      Arguments.checkDataType(value, dataType, "value");
+      if (timestamp < 0) {
+        timestamp = System.currentTimeMillis();
+      }
+      return new Point(this);
+    }
+
+  }
 
 }

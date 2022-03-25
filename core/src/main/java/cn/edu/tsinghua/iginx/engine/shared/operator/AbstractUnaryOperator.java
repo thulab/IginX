@@ -22,27 +22,27 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public abstract class AbstractUnaryOperator extends AbstractOperator implements UnaryOperator {
 
-    private Source source;
+  private Source source;
 
-    public AbstractUnaryOperator(OperatorType type, Source source) {
-        super(type);
-        if (source == null) {
-            throw new IllegalArgumentException("source shouldn't be null");
-        }
-        this.source = source;
+  public AbstractUnaryOperator(OperatorType type, Source source) {
+    super(type);
+    if (source == null) {
+      throw new IllegalArgumentException("source shouldn't be null");
     }
+    this.source = source;
+  }
 
-    public AbstractUnaryOperator(Source source) {
-        this(OperatorType.Unary, source);
-    }
+  public AbstractUnaryOperator(Source source) {
+    this(OperatorType.Unary, source);
+  }
 
-    @Override
-    public Source getSource() {
-        return source;
-    }
+  @Override
+  public Source getSource() {
+    return source;
+  }
 
-    @Override
-    public void setSource(Source source) {
-        this.source = source;
-    }
+  @Override
+  public void setSource(Source source) {
+    this.source = source;
+  }
 }

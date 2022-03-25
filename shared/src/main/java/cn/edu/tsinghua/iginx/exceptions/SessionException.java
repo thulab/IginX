@@ -20,17 +20,17 @@ package cn.edu.tsinghua.iginx.exceptions;
 
 public class SessionException extends IginxException {
 
-    private static final long serialVersionUID = -2811585771984779297L;
+  private static final long serialVersionUID = -2811585771984779297L;
 
-    public SessionException(String message) {
-        super(message, StatusCode.SESSION_ERROR.getStatusCode());
-    }
+  public SessionException(String message) {
+    super(message, StatusCode.SESSION_ERROR.getStatusCode());
+  }
 
-    public SessionException(Throwable cause) {
-        super(cause, StatusCode.SESSION_ERROR.getStatusCode());
-    }
+  public SessionException(Throwable cause) {
+    super(cause, StatusCode.SESSION_ERROR.getStatusCode());
+  }
 
-    public SessionException(String message, Throwable cause) {
-        super(message, cause, StatusCode.SESSION_ERROR.getStatusCode());
-    }
+  public SessionException(String message, Throwable cause) {
+    super(message, cause, StatusCode.SESSION_ERROR.getStatusCode());
+  }
 }

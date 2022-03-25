@@ -22,52 +22,53 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import io.netty.util.internal.ConcurrentSet;
-
 import java.util.Set;
 
 public class SessionManager {
 
-    private static SessionManager instance;
-    private final UserManager userManager;
-    private final Set<Long> sessionIds = new ConcurrentSet<>();
+  private static SessionManager instance;
+  private final UserManager userManager;
+  private final Set<Long> sessionIds = new ConcurrentSet<>();
 
-    private SessionManager(UserManager userManager) {
-        this.userManager = userManager;
-    }
+  private SessionManager(UserManager userManager) {
+    this.userManager = userManager;
+  }
 
-    public static SessionManager getInstance() {
+  public static SessionManager getInstance() {
+    if (instance == null) {
+      synchronized (UserManager.class) {
         if (instance == null) {
-            synchronized (UserManager.class) {
-                if (instance == null) {
-                    instance = new SessionManager(UserManager.getInstance());
-                }
-            }
+          instance = new SessionManager(UserManager.getInstance());
         }
-        return instance;
+      }
     }
+    return instance;
+  }
 
-    public boolean checkSession(long sessionId, AuthType auth) {
-        if (!sessionIds.contains(sessionId)) {
-            return false;
-        }
-        return ((1L << auth.getValue()) & sessionId) != 0;
+  public boolean checkSession(long sessionId, AuthType auth) {
+    if (!sessionIds.contains(sessionId)) {
+      return false;
     }
+    return ((1L << auth.getValue()) & sessionId) != 0;
+  }
 
-    public long openSession(String username) {
-        UserMeta userMeta = userManager.getUser(username);
-        if (userMeta == null) {
-            throw new IllegalArgumentException("non-existed user: " + username);
-        }
-        long sessionId = (username.hashCode() + System.currentTimeMillis() + SnowFlakeUtils.getInstance().nextId()) << 4;
-        for (AuthType auth : userMeta.getAuths()) {
-            sessionId += (1L << auth.getValue());
-        }
-        sessionIds.add(sessionId);
-        return sessionId;
+  public long openSession(String username) {
+    UserMeta userMeta = userManager.getUser(username);
+    if (userMeta == null) {
+      throw new IllegalArgumentException("non-existed user: " + username);
     }
+    long sessionId =
+        (username.hashCode() + System.currentTimeMillis() + SnowFlakeUtils.getInstance().nextId())
+            << 4;
+    for (AuthType auth : userMeta.getAuths()) {
+      sessionId += (1L << auth.getValue());
+    }
+    sessionIds.add(sessionId);
+    return sessionId;
+  }
 
-    public void closeSession(long sessionId) {
-        sessionIds.remove(sessionId);
-    }
+  public void closeSession(long sessionId) {
+    sessionIds.remove(sessionId);
+  }
 
 }

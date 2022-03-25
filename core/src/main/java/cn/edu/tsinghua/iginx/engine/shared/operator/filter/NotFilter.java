@@ -20,40 +20,40 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class NotFilter implements Filter {
 
-    private Filter child;
+  private Filter child;
 
-    private final FilterType type = FilterType.Not;
+  private final FilterType type = FilterType.Not;
 
-    public NotFilter(Filter child) {
-        this.child = child;
-    }
+  public NotFilter(Filter child) {
+    this.child = child;
+  }
 
-    public Filter getChild() {
-        return child;
-    }
+  public Filter getChild() {
+    return child;
+  }
 
-    public void setChild(Filter child) {
-        this.child = child;
-    }
+  public void setChild(Filter child) {
+    this.child = child;
+  }
 
-    @Override
-    public void accept(FilterVisitor visitor) {
-        visitor.visit(this);
-        this.child.accept(visitor);
-    }
+  @Override
+  public void accept(FilterVisitor visitor) {
+    visitor.visit(this);
+    this.child.accept(visitor);
+  }
 
-    @Override
-    public FilterType getType() {
-        return type;
-    }
+  @Override
+  public FilterType getType() {
+    return type;
+  }
 
-    @Override
-    public Filter copy() {
-        return new NotFilter(child.copy());
-    }
+  @Override
+  public Filter copy() {
+    return new NotFilter(child.copy());
+  }
 
-    @Override
-    public String toString() {
-        return "!" + child.toString();
-    }
+  @Override
+  public String toString() {
+    return "!" + child.toString();
+  }
 }

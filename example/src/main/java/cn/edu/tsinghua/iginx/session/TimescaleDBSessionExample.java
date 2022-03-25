@@ -26,89 +26,89 @@ import java.util.List;
 
 public class TimescaleDBSessionExample {
 
-    private static final String S1 = "sg.d1.s1";
-    private static final String S2 = "sg.d1.s2";
-    private static final String S3 = "sg.d2.s3";
-    private static final String S4 = "sg.d3.s4";
-    private static final long COLUMN_START_TIMESTAMP = 1L;
-    private static final long COLUMN_END_TIMESTAMP = 10000L;
-    private static final long NON_ALIGNED_COLUMN_START_TIMESTAMP = 10001L;
-    private static final long NON_ALIGNED_COLUMN_END_TIMESTAMP = 20000L;
-    private static final long ROW_START_TIMESTAMP = 20001L;
-    private static final long ROW_END_TIMESTAMP = 30000L;
-    private static final long NON_ALIGNED_ROW_START_TIMESTAMP = 30001L;
-    private static final long NON_ALIGNED_ROW_END_TIMESTAMP = 40000L;
-    private static final int INTERVAL = 10;
-    private static Session session;
+  private static final String S1 = "sg.d1.s1";
+  private static final String S2 = "sg.d1.s2";
+  private static final String S3 = "sg.d2.s3";
+  private static final String S4 = "sg.d3.s4";
+  private static final long COLUMN_START_TIMESTAMP = 1L;
+  private static final long COLUMN_END_TIMESTAMP = 10000L;
+  private static final long NON_ALIGNED_COLUMN_START_TIMESTAMP = 10001L;
+  private static final long NON_ALIGNED_COLUMN_END_TIMESTAMP = 20000L;
+  private static final long ROW_START_TIMESTAMP = 20001L;
+  private static final long ROW_END_TIMESTAMP = 30000L;
+  private static final long NON_ALIGNED_ROW_START_TIMESTAMP = 30001L;
+  private static final long NON_ALIGNED_ROW_END_TIMESTAMP = 40000L;
+  private static final int INTERVAL = 10;
+  private static Session session;
 
-    public static void main(String[] args) throws SessionException, ExecutionException {
-        session = new Session("127.0.0.1", 6888, "root", "root");
-        // 打开 Session
-        session.openSession();
-        // 行式插入对齐数据
+  public static void main(String[] args) throws SessionException, ExecutionException {
+    session = new Session("127.0.0.1", 6888, "root", "root");
+    // 打开 Session
+    session.openSession();
+    // 行式插入对齐数据
 //        insertRowRecords();
 //        queryData();
-        deleteDataInColumns();
-        // 关闭 Session
-        session.closeSession();
-    }
+    deleteDataInColumns();
+    // 关闭 Session
+    session.closeSession();
+  }
 
-    private static void insertRowRecords() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
+  private static void insertRowRecords() throws SessionException, ExecutionException {
+    List<String> paths = new ArrayList<>();
+    paths.add(S1);
+    paths.add(S2);
 //        paths.add(S3);
 //        paths.add(S4);
 
-        int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP + 1);
-        long[] timestamps = new long[size];
-        Object[] valuesList = new Object[size];
-        for (long i = 0; i < size; i++) {
-            timestamps[(int) i] = ROW_START_TIMESTAMP + i;
-            Object[] values = new Object[2];
-            for (long j = 0; j < 4; j++) {
-                if (j < 2) {
-                    values[(int) j] = i + j;
-                } else {
+    int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP + 1);
+    long[] timestamps = new long[size];
+    Object[] valuesList = new Object[size];
+    for (long i = 0; i < size; i++) {
+      timestamps[(int) i] = ROW_START_TIMESTAMP + i;
+      Object[] values = new Object[2];
+      for (long j = 0; j < 4; j++) {
+        if (j < 2) {
+          values[(int) j] = i + j;
+        } else {
 //                    values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
-                }
-            }
-            valuesList[(int) i] = values;
         }
+      }
+      valuesList[(int) i] = values;
+    }
 
-        List<DataType> dataTypeList = new ArrayList<>();
-        for (int i = 0; i < 2; i++) {
-            dataTypeList.add(DataType.LONG);
-        }
+    List<DataType> dataTypeList = new ArrayList<>();
+    for (int i = 0; i < 2; i++) {
+      dataTypeList.add(DataType.LONG);
+    }
 //        for (int i = 0; i < 2; i++) {
 //            dataTypeList.add(DataType.BINARY);
 //        }
 
-        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
-    }
+    session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+  }
 
-    private static void queryData() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
+  private static void queryData() throws SessionException, ExecutionException {
+    List<String> paths = new ArrayList<>();
+    paths.add(S1);
+    paths.add(S2);
 //        paths.add(S3);
 //        paths.add(S4);
 
-        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
-        long endTime = ROW_START_TIMESTAMP + 100L;
+    long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
+    long endTime = ROW_START_TIMESTAMP + 100L;
 
-        SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
-        dataSet.print();
-    }
+    SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
+    dataSet.print();
+  }
 
-    private static void deleteDataInColumns() throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
+  private static void deleteDataInColumns() throws SessionException, ExecutionException {
+    List<String> paths = new ArrayList<>();
+    paths.add(S1);
+    paths.add(S2);
 
-        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 50L;
-        long endTime = ROW_START_TIMESTAMP + 50L;
+    long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 50L;
+    long endTime = ROW_START_TIMESTAMP + 50L;
 
-        session.deleteDataInColumns(paths, startTime, endTime);
-    }
+    session.deleteDataInColumns(paths, startTime, endTime);
+  }
 }

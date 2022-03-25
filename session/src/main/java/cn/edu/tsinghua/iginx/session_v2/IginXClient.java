@@ -20,17 +20,17 @@ package cn.edu.tsinghua.iginx.session_v2;
 
 public interface IginXClient extends AutoCloseable {
 
-    WriteClient getWriteClient();
+  WriteClient getWriteClient();
 
-    AsyncWriteClient getAsyncWriteClient();
+  AsyncWriteClient getAsyncWriteClient();
 
-    QueryClient getQueryClient();
+  QueryClient getQueryClient();
 
-    DeleteClient getDeleteClient();
+  DeleteClient getDeleteClient();
 
-    UsersClient getUserClient();
+  UsersClient getUserClient();
 
-    ClusterClient getClusterClient();
+  ClusterClient getClusterClient();
 
-    void close();
+  void close();
 }

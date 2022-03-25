@@ -27,8 +27,8 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD})
 public @interface Field {
 
-    String name() default "";
+  String name() default "";
 
-    boolean timestamp() default false;
+  boolean timestamp() default false;
 
 }

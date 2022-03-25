@@ -27,93 +27,96 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public interface IMetaCache {
 
-    // 分片相关的缓存读写接口
-    void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap);
+  // 分片相关的缓存读写接口
+  void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap);
 
-    void addFragment(FragmentMeta fragmentMeta);
+  void addFragment(FragmentMeta fragmentMeta);
 
-    void updateFragment(FragmentMeta fragmentMeta);
+  void updateFragment(FragmentMeta fragmentMeta);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+  Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(
+      TimeSeriesInterval tsInterval);
 
-    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
+  Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
 
-    Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
+  Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(
+      TimeSeriesInterval tsInterval);
 
-    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+  Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+      TimeSeriesInterval tsInterval, TimeInterval timeInterval);
 
-    List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
+  List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
 
-    FragmentMeta getLatestFragmentByTimeSeriesName(String tsName);
+  FragmentMeta getLatestFragmentByTimeSeriesName(String tsName);
 
-    List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
+  List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName,
+      TimeInterval timeInterval);
 
-    boolean hasFragment();
+  boolean hasFragment();
 
-    // 数据单元相关的缓存读写接口
-    boolean hasStorageUnit();
+  // 数据单元相关的缓存读写接口
+  boolean hasStorageUnit();
 
-    void initStorageUnit(Map<String, StorageUnitMeta> storageUnits);
+  void initStorageUnit(Map<String, StorageUnitMeta> storageUnits);
 
-    StorageUnitMeta getStorageUnit(String id);
+  StorageUnitMeta getStorageUnit(String id);
 
-    Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
+  Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
 
-    List<StorageUnitMeta> getStorageUnits();
+  List<StorageUnitMeta> getStorageUnits();
 
-    void addStorageUnit(StorageUnitMeta storageUnitMeta);
+  void addStorageUnit(StorageUnitMeta storageUnitMeta);
 
-    void updateStorageUnit(StorageUnitMeta storageUnitMeta);
+  void updateStorageUnit(StorageUnitMeta storageUnitMeta);
 
-    // iginx 相关的缓存读写接口
-    List<IginxMeta> getIginxList();
+  // iginx 相关的缓存读写接口
+  List<IginxMeta> getIginxList();
 
-    void addIginx(IginxMeta iginxMeta);
+  void addIginx(IginxMeta iginxMeta);
 
-    void removeIginx(long id);
+  void removeIginx(long id);
 
-    // 数据后端相关的缓存读写接口
-    void addStorageEngine(StorageEngineMeta storageEngineMeta);
+  // 数据后端相关的缓存读写接口
+  void addStorageEngine(StorageEngineMeta storageEngineMeta);
 
-    List<StorageEngineMeta> getStorageEngineList();
+  List<StorageEngineMeta> getStorageEngineList();
 
-    StorageEngineMeta getStorageEngine(long id);
+  StorageEngineMeta getStorageEngine(long id);
 
-    // schemaMapping 相关的缓存读写接口
-    Map<String, Integer> getSchemaMapping(String schema);
+  // schemaMapping 相关的缓存读写接口
+  Map<String, Integer> getSchemaMapping(String schema);
 
-    int getSchemaMappingItem(String schema, String key);
+  int getSchemaMappingItem(String schema, String key);
 
-    void removeSchemaMapping(String schema);
+  void removeSchemaMapping(String schema);
 
-    void removeSchemaMappingItem(String schema, String key);
+  void removeSchemaMappingItem(String schema, String key);
 
-    void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping);
+  void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping);
 
-    void addOrUpdateSchemaMappingItem(String schema, String key, int value);
+  void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
-    void addOrUpdateUser(UserMeta userMeta);
+  void addOrUpdateUser(UserMeta userMeta);
 
-    void removeUser(String username);
+  void removeUser(String username);
 
-    List<UserMeta> getUser();
+  List<UserMeta> getUser();
 
-    List<UserMeta> getUser(List<String> usernames);
+  List<UserMeta> getUser(List<String> usernames);
 
-    void timeSeriesIsUpdated(int node, int version);
+  void timeSeriesIsUpdated(int node, int version);
 
-    void saveTimeSeriesData(InsertStatement statement);
+  void saveTimeSeriesData(InsertStatement statement);
 
-    List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
+  List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
 
-    double getSumFromTimeSeries();
+  double getSumFromTimeSeries();
 
-    Map<Integer, Integer> getTimeseriesVersionMap();
+  Map<Integer, Integer> getTimeseriesVersionMap();
 }

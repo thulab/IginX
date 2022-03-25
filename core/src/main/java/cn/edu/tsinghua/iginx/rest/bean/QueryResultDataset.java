@@ -18,35 +18,35 @@
  */
 package cn.edu.tsinghua.iginx.rest.bean;
 
-import lombok.Data;
-
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class QueryResultDataset {
-    private int size = 0;
-    private int sampleSize = 0;
-    private List<Long> timestamps = new ArrayList<>();
-    private List<Object> values = new ArrayList<>();
-    private List<String> paths = new ArrayList<>();
 
-    private void addSize() {
-        this.size++;
-    }
+  private int size = 0;
+  private int sampleSize = 0;
+  private List<Long> timestamps = new ArrayList<>();
+  private List<Object> values = new ArrayList<>();
+  private List<String> paths = new ArrayList<>();
 
-    private void addTimestamp(long timestamp) {
-        this.timestamps.add(timestamp);
-    }
+  private void addSize() {
+    this.size++;
+  }
 
-    private void addValue(Object value) {
-        this.values.add(value);
-    }
+  private void addTimestamp(long timestamp) {
+    this.timestamps.add(timestamp);
+  }
 
-    public void add(long timestamp, Object value) {
-        addTimestamp(timestamp);
-        addValue(value);
-        addSize();
-    }
+  private void addValue(Object value) {
+    this.values.add(value);
+  }
+
+  public void add(long timestamp, Object value) {
+    addTimestamp(timestamp);
+    addValue(value);
+    addSize();
+  }
 
 }

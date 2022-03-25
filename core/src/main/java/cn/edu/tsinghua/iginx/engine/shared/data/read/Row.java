@@ -20,88 +20,87 @@ package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-
 import java.util.Arrays;
 
 public class Row {
 
-    public static final long NON_EXISTED_TIMESTAMP = -1L;
+  public static final long NON_EXISTED_TIMESTAMP = -1L;
 
-    public static final Row EMPTY_ROW = new Row(Header.EMPTY_HEADER, new Object[0]);
+  public static final Row EMPTY_ROW = new Row(Header.EMPTY_HEADER, new Object[0]);
 
-    private final Header header;
+  private final Header header;
 
-    private final long timestamp;
+  private final long timestamp;
 
-    private final Object[] values;
+  private final Object[] values;
 
-    public Row(Header header, Object[] values) {
-        this(header, NON_EXISTED_TIMESTAMP, values);
+  public Row(Header header, Object[] values) {
+    this(header, NON_EXISTED_TIMESTAMP, values);
+  }
+
+  public Row(Header header, long timestamp, Object[] values) {
+    this.header = header;
+    this.timestamp = timestamp;
+    this.values = values;
+  }
+
+  public Header getHeader() {
+    return header;
+  }
+
+  public long getTimestamp() {
+    return timestamp;
+  }
+
+  public Object[] getValues() {
+    return values;
+  }
+
+  public Object getValue(int i) {
+    return values[i];
+  }
+
+  public Field getField(int i) {
+    return header.getField(i);
+  }
+
+  public String getName(int i) {
+    return header.getField(i).getName();
+  }
+
+  public DataType getType(int i) {
+    return header.getField(i).getType();
+  }
+
+  public Object getValue(Field field) {
+    int index = header.indexOf(field);
+    if (index == -1) {
+      return null;
     }
+    return values[index];
+  }
 
-    public Row(Header header, long timestamp, Object[] values) {
-        this.header = header;
-        this.timestamp = timestamp;
-        this.values = values;
+  public Object getValue(String name) {
+    int index = header.indexOf(name);
+    if (index == -1) {
+      return null;
     }
+    return values[index];
+  }
 
-    public Header getHeader() {
-        return header;
+  public Value getAsValue(String name) {
+    int index = header.indexOf(name);
+    if (index == -1) {
+      return null;
     }
+    return new Value(header.getField(index).getType(), values[index]);
+  }
 
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public Object[] getValues() {
-        return values;
-    }
-
-    public Object getValue(int i) {
-        return values[i];
-    }
-
-    public Field getField(int i) {
-        return header.getField(i);
-    }
-
-    public String getName(int i) {
-        return header.getField(i).getName();
-    }
-
-    public DataType getType(int i) {
-        return header.getField(i).getType();
-    }
-
-    public Object getValue(Field field) {
-        int index = header.indexOf(field);
-        if (index == -1) {
-            return null;
-        }
-        return values[index];
-    }
-
-    public Object getValue(String name) {
-        int index = header.indexOf(name);
-        if (index == -1) {
-            return null;
-        }
-        return values[index];
-    }
-
-    public Value getAsValue(String name) {
-        int index = header.indexOf(name);
-        if (index == -1) {
-            return null;
-        }
-        return new Value(header.getField(index).getType(), values[index]);
-    }
-
-    @Override
-    public String toString() {
-        return "Row{" +
-                "timestamp=" + timestamp +
-                ", values=" + Arrays.toString(values) +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "Row{" +
+        "timestamp=" + timestamp +
+        ", values=" + Arrays.toString(values) +
+        '}';
+  }
 }

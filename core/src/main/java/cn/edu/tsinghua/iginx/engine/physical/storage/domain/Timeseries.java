@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -33,40 +32,47 @@ import java.util.stream.Collectors;
 
 public final class Timeseries {
 
-    private final String path;
+  private final String path;
 
-    private final DataType dataType;
+  private final DataType dataType;
 
-    public Timeseries(String path, DataType dataType) {
-        this.path = path;
-        this.dataType = dataType;
+  public Timeseries(String path, DataType dataType) {
+    this.path = path;
+    this.dataType = dataType;
+  }
+
+  public static RowStream toRowStream(Collection<Timeseries> timeseries) {
+    Header header = new Header(
+        Arrays.asList(new Field("path", DataType.BINARY), new Field("type", DataType.BINARY)));
+    List<Row> rows = timeseries.stream().map(
+        e -> new Row(header, new Object[]{e.path.getBytes(), e.dataType.toString().getBytes()}))
+        .collect(Collectors.toList());
+    return new Table(header, rows);
+  }
+
+  public String getPath() {
+    return path;
+  }
+
+  public DataType getDataType() {
+    return dataType;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    public static RowStream toRowStream(Collection<Timeseries> timeseries) {
-        Header header = new Header(Arrays.asList(new Field("path", DataType.BINARY), new Field("type", DataType.BINARY)));
-        List<Row> rows = timeseries.stream().map(e -> new Row(header, new Object[]{e.path.getBytes(), e.dataType.toString().getBytes()})).collect(Collectors.toList());
-        return new Table(header, rows);
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
+    Timeseries that = (Timeseries) o;
+    return Objects.equals(path, that.path) && dataType == that.dataType;
+  }
 
-    public String getPath() {
-        return path;
-    }
-
-    public DataType getDataType() {
-        return dataType;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Timeseries that = (Timeseries) o;
-        return Objects.equals(path, that.path) && dataType == that.dataType;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(path, dataType);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(path, dataType);
+  }
 
 }

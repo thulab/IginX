@@ -20,6 +20,6 @@ package cn.edu.tsinghua.iginx.engine.physical.optimizer.rule;
 
 public interface Rule {
 
-    // TODO: how to define rule
+  // TODO: how to define rule
 
 }

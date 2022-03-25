@@ -24,72 +24,72 @@ import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueu
 import cn.edu.tsinghua.iginx.engine.physical.memory.queue.MemoryPhysicalTaskQueueImpl;
 import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class MemoryPhysicalTaskDispatcher {
 
-    private static final Logger logger = LoggerFactory.getLogger(MemoryPhysicalTaskDispatcher.class);
+  private static final Logger logger = LoggerFactory.getLogger(MemoryPhysicalTaskDispatcher.class);
 
-    private static final MemoryPhysicalTaskDispatcher INSTANCE = new MemoryPhysicalTaskDispatcher();
+  private static final MemoryPhysicalTaskDispatcher INSTANCE = new MemoryPhysicalTaskDispatcher();
 
-    private final MemoryPhysicalTaskQueue taskQueue;
+  private final MemoryPhysicalTaskQueue taskQueue;
 
-    private final ExecutorService taskDispatcher;
+  private final ExecutorService taskDispatcher;
 
-    private final ExecutorService taskExecuteThreadPool;
+  private final ExecutorService taskExecuteThreadPool;
 
-    private MemoryPhysicalTaskDispatcher() {
-        taskQueue = new MemoryPhysicalTaskQueueImpl();
-        taskExecuteThreadPool = Executors.newFixedThreadPool(ConfigDescriptor.getInstance().getConfig().getMemoryTaskThreadPoolSize());
-        taskDispatcher = Executors.newSingleThreadExecutor();
-    }
+  private MemoryPhysicalTaskDispatcher() {
+    taskQueue = new MemoryPhysicalTaskQueueImpl();
+    taskExecuteThreadPool = Executors.newFixedThreadPool(
+        ConfigDescriptor.getInstance().getConfig().getMemoryTaskThreadPoolSize());
+    taskDispatcher = Executors.newSingleThreadExecutor();
+  }
 
-    public static MemoryPhysicalTaskDispatcher getInstance() {
-        return INSTANCE;
-    }
+  public static MemoryPhysicalTaskDispatcher getInstance() {
+    return INSTANCE;
+  }
 
-    public boolean addMemoryTask(MemoryPhysicalTask task) {
-        return taskQueue.addTask(task);
-    }
+  public boolean addMemoryTask(MemoryPhysicalTask task) {
+    return taskQueue.addTask(task);
+  }
 
-    public void startDispatcher() {
-        taskDispatcher.submit(() -> {
-            while(true) {
-                final MemoryPhysicalTask task = taskQueue.getTask();
-                taskExecuteThreadPool.submit(() -> {
+  public void startDispatcher() {
+    taskDispatcher.submit(() -> {
+      while (true) {
+        final MemoryPhysicalTask task = taskQueue.getTask();
+        taskExecuteThreadPool.submit(() -> {
 
-                    MemoryPhysicalTask currentTask = task;
-                    while(currentTask != null) {
-                        TaskExecuteResult result;
-                        try {
-                            result = currentTask.execute();
-                        } catch (Exception e) {
-                            logger.error("execute memory task failure: ", e);
-                            result = new TaskExecuteResult(new PhysicalException(e));
-                        }
-                        currentTask.setResult(result);
-                        if (currentTask.getFollowerTask() != null) { // 链式执行可以被执行的任务
-                            MemoryPhysicalTask followerTask = (MemoryPhysicalTask) currentTask.getFollowerTask();
-                            if (followerTask.notifyParentReady()) {
-                                currentTask = followerTask;
-                            } else {
-                                currentTask = null;
-                            }
-                        } else {
-                            currentTask = null;
-                        }
-                    }
-                });
+          MemoryPhysicalTask currentTask = task;
+          while (currentTask != null) {
+            TaskExecuteResult result;
+            try {
+              result = currentTask.execute();
+            } catch (Exception e) {
+              logger.error("execute memory task failure: ", e);
+              result = new TaskExecuteResult(new PhysicalException(e));
             }
+            currentTask.setResult(result);
+            if (currentTask.getFollowerTask() != null) { // 链式执行可以被执行的任务
+              MemoryPhysicalTask followerTask = (MemoryPhysicalTask) currentTask.getFollowerTask();
+              if (followerTask.notifyParentReady()) {
+                currentTask = followerTask;
+              } else {
+                currentTask = null;
+              }
+            } else {
+              currentTask = null;
+            }
+          }
         });
-    }
+      }
+    });
+  }
 
-    public void stopDispatcher() {
-        taskDispatcher.shutdown();
-    }
+  public void stopDispatcher() {
+    taskDispatcher.shutdown();
+  }
 
 }

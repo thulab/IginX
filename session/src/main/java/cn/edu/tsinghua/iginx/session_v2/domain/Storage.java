@@ -22,34 +22,34 @@ import java.util.Map;
 
 public final class Storage {
 
-    private final String ip;
+  private final String ip;
 
-    private final int port;
+  private final int port;
 
-    private final String type;
+  private final String type;
 
-    private final Map<String, String> extraParams;
+  private final Map<String, String> extraParams;
 
-    public Storage(String ip, int port, String type, Map<String, String> extraParams) {
-        this.ip = ip;
-        this.port = port;
-        this.type = type;
-        this.extraParams = extraParams;
-    }
+  public Storage(String ip, int port, String type, Map<String, String> extraParams) {
+    this.ip = ip;
+    this.port = port;
+    this.type = type;
+    this.extraParams = extraParams;
+  }
 
-    public String getIp() {
-        return ip;
-    }
+  public String getIp() {
+    return ip;
+  }
 
-    public int getPort() {
-        return port;
-    }
+  public int getPort() {
+    return port;
+  }
 
-    public String getType() {
-        return type;
-    }
+  public String getType() {
+    return type;
+  }
 
-    public Map<String, String> getExtraParams() {
-        return extraParams;
-    }
+  public Map<String, String> getExtraParams() {
+    return extraParams;
+  }
 }

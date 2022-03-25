@@ -20,4 +20,5 @@ package cn.edu.tsinghua.iginx.session_v2;
 
 
 public interface SQLClient {
+
 }

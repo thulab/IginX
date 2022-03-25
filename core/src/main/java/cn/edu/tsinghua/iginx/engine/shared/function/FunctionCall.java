@@ -19,30 +19,29 @@
 package cn.edu.tsinghua.iginx.engine.shared.function;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionCall {
 
-    private final Function function;
+  private final Function function;
 
-    private final List<Value> params;
+  private final List<Value> params;
 
-    public FunctionCall(Function function, List<Value> params) {
-        this.function = function;
-        this.params = params;
-    }
+  public FunctionCall(Function function, List<Value> params) {
+    this.function = function;
+    this.params = params;
+  }
 
-    public Function getFunction() {
-        return function;
-    }
+  public Function getFunction() {
+    return function;
+  }
 
-    public List<Value> getParams() {
-        return params;
-    }
+  public List<Value> getParams() {
+    return params;
+  }
 
-    public FunctionCall copy() {
-        return new FunctionCall(function, new ArrayList<>(params));
-    }
+  public FunctionCall copy() {
+    return new FunctionCall(function, new ArrayList<>(params));
+  }
 }

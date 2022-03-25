@@ -20,24 +20,24 @@
 
 -->
 <assembly>
-    <id>server</id>
-    <formats>
-        <format>dir</format>
-    </formats>
-    <includeBaseDirectory>false</includeBaseDirectory>
-    <dependencySets>
-        <dependencySet>
-            <outputDirectory>lib</outputDirectory>
-        </dependencySet>
-    </dependencySets>
-    <fileSets>
-        <fileSet>
-            <directory>src/assembly/resources</directory>
-            <outputDirectory>${file.separator}</outputDirectory>
-        </fileSet>
-        <fileSet>
-            <directory>../conf/</directory>
-            <outputDirectory>conf</outputDirectory>
-        </fileSet>
-    </fileSets>
+  <id>server</id>
+  <formats>
+    <format>dir</format>
+  </formats>
+  <includeBaseDirectory>false</includeBaseDirectory>
+  <dependencySets>
+    <dependencySet>
+      <outputDirectory>lib</outputDirectory>
+    </dependencySet>
+  </dependencySets>
+  <fileSets>
+    <fileSet>
+      <directory>src/assembly/resources</directory>
+      <outputDirectory>${file.separator}</outputDirectory>
+    </fileSet>
+    <fileSet>
+      <directory>../conf/</directory>
+      <outputDirectory>conf</outputDirectory>
+    </fileSet>
+  </fileSets>
 </assembly>

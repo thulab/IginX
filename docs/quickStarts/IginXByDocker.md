@@ -8,7 +8,11 @@ IginX 是清华大学大数据系统软件国家工程实验室，为满足工�
 
 由于 ZooKeeper、IginX 以及 IoTDB 都是使用 Java 开发的，因此首先需要安装 Java。如果本地已经安装了 JDK>=1.8 的运行环境，**直接跳过此步骤**。
 
-1. 首先访问 [Java官方网站](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)下载适用于当前系统的 JDK 包。
+1.
+
+首先访问 [Java官方网站](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)下载适用于当前系统的
+JDK 包。
+
 2. 安装
 
 ```shell
@@ -242,7 +246,8 @@ $ docker run -e "metaStorage=file" -e "storageEngineList=iotdb#6667#iotdb#sessio
 
 该命令会将本地的 6888 接口暴露出来，作为与 IginX 集群的通讯接口。
 
-在系统启动完毕后，可以运行 IginX 源码 example 目录下的 cn.edu.tsinghua.iginx.session.IoTDBSessionExample 类，往其中尝试插入/读取数据。
+在系统启动完毕后，可以运行 IginX 源码 example 目录下的 cn.edu.tsinghua.iginx.session.IoTDBSessionExample
+类，往其中尝试插入/读取数据。
 
 > 关于 IginX docker 版本的参数设置：
 >

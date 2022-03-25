@@ -22,6 +22,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 
 public interface IginxChangeHook {
 
-    void onChange(long id, IginxMeta iginx);
+  void onChange(long id, IginxMeta iginx);
 
 }

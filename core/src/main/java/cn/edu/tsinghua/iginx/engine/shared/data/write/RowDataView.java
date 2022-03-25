@@ -22,31 +22,33 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 
 public class RowDataView extends DataView {
 
-    private final int[] biases;
+  private final int[] biases;
 
-    public RowDataView(RawData data, int startPathIndex, int endPathIndex, int startTimeIndex, int endTimeIndex) {
-        super(data, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);
-        this.biases = new int[this.endTimeIndex - this.startTimeIndex];
-        for (int i = this.startTimeIndex; i < this.endTimeIndex; i++) {
-            Bitmap bitmap = data.getBitmaps().get(i);
-            for (int j = 0; j < this.startPathIndex; j++) {
-                if (bitmap.get(j)) {
-                    biases[i - this.startTimeIndex]++;
-                }
-            }
+  public RowDataView(RawData data, int startPathIndex, int endPathIndex, int startTimeIndex,
+      int endTimeIndex) {
+    super(data, startPathIndex, endPathIndex, startTimeIndex, endTimeIndex);
+    this.biases = new int[this.endTimeIndex - this.startTimeIndex];
+    for (int i = this.startTimeIndex; i < this.endTimeIndex; i++) {
+      Bitmap bitmap = data.getBitmaps().get(i);
+      for (int j = 0; j < this.startPathIndex; j++) {
+        if (bitmap.get(j)) {
+          biases[i - this.startTimeIndex]++;
         }
+      }
     }
+  }
 
-    @Override
-    public Object getValue(int index1, int index2) {
-        checkTimeIndexRange(index1);
-        Object[] tmp = (Object[]) data.getValuesList()[index1 + startTimeIndex];
-        return tmp[biases[index1] + index2];
-    }
+  @Override
+  public Object getValue(int index1, int index2) {
+    checkTimeIndexRange(index1);
+    Object[] tmp = (Object[]) data.getValuesList()[index1 + startTimeIndex];
+    return tmp[biases[index1] + index2];
+  }
 
-    @Override
-    public BitmapView getBitmapView(int index) {
-        checkTimeIndexRange(index);
-        return new BitmapView(data.getBitmaps().get(startTimeIndex + index), startPathIndex, endPathIndex);
-    }
+  @Override
+  public BitmapView getBitmapView(int index) {
+    checkTimeIndexRange(index);
+    return new BitmapView(data.getBitmaps().get(startTimeIndex + index), startPathIndex,
+        endPathIndex);
+  }
 }

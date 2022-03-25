@@ -22,6 +22,6 @@ import java.util.Map;
 
 public interface SchemaMappingChangeHook {
 
-    void onChange(String schema, Map<String, Integer> schemaMapping);
+  void onChange(String schema, Map<String, Integer> schemaMapping);
 
 }

@@ -20,53 +20,56 @@ package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-
 import java.util.Objects;
 
 public final class Field {
 
-    public static final Field TIME = new Field();
+  public static final Field TIME = new Field();
 
-    private final String name;
+  private final String name;
 
-    private final DataType type;
+  private final DataType type;
 
-    public Field() {
-        this(Constants.TIMESTAMP, DataType.LONG);
+  public Field() {
+    this(Constants.TIMESTAMP, DataType.LONG);
+  }
+
+  public Field(String name, DataType type) {
+    this.name = name;
+    this.type = type;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public DataType getType() {
+    return type;
+  }
+
+  @Override
+  public String toString() {
+    return "Field{" +
+        "name='" + name + '\'' +
+        ", type=" + type +
+        '}';
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    public Field(String name, DataType type) {
-        this.name = name;
-        this.type = type;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
+    Field field = (Field) o;
+    return Objects.equals(name, field.name) && type == field.type;
+  }
 
-    public String getName() {
-        return name;
-    }
-
-    public DataType getType() {
-        return type;
-    }
-
-    @Override
-    public String toString() {
-        return "Field{" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Field field = (Field) o;
-        return Objects.equals(name, field.name) && type == field.type;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(name, type);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(name, type);
+  }
 
 }

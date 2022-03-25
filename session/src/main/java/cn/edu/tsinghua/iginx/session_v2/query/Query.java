@@ -22,13 +22,13 @@ import java.util.Set;
 
 public abstract class Query {
 
-    protected final Set<String> measurements;
+  protected final Set<String> measurements;
 
-    public Query(Set<String> measurements) {
-        this.measurements = measurements;
-    }
+  public Query(Set<String> measurements) {
+    this.measurements = measurements;
+  }
 
-    public Set<String> getMeasurements() {
-        return measurements;
-    }
+  public Set<String> getMeasurements() {
+    return measurements;
+  }
 }

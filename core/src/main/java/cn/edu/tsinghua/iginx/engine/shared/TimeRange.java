@@ -22,70 +22,75 @@ import java.util.Objects;
 
 public final class TimeRange {
 
-    private final long beginTime;
+  private final long beginTime;
 
-    private final boolean includeBeginTime;
+  private final boolean includeBeginTime;
 
-    private final long endTime;
+  private final long endTime;
 
-    private final boolean includeEndTime;
+  private final boolean includeEndTime;
 
-    public TimeRange(long beginTime, long endTime) {
-        this(beginTime, true, endTime, false);
+  public TimeRange(long beginTime, long endTime) {
+    this(beginTime, true, endTime, false);
+  }
+
+  public TimeRange(long beginTime, boolean includeBeginTime, long endTime, boolean includeEndTime) {
+    this.beginTime = beginTime;
+    this.includeBeginTime = includeBeginTime;
+    this.endTime = endTime;
+    this.includeEndTime = includeEndTime;
+  }
+
+  public long getBeginTime() {
+    return beginTime;
+  }
+
+  public boolean isIncludeBeginTime() {
+    return includeBeginTime;
+  }
+
+  public long getEndTime() {
+    return endTime;
+  }
+
+  public boolean isIncludeEndTime() {
+    return includeEndTime;
+  }
+
+  public TimeRange copy() {
+    return new TimeRange(beginTime, includeBeginTime, endTime, includeEndTime);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
     }
-
-    public TimeRange(long beginTime, boolean includeBeginTime, long endTime, boolean includeEndTime) {
-        this.beginTime = beginTime;
-        this.includeBeginTime = includeBeginTime;
-        this.endTime = endTime;
-        this.includeEndTime = includeEndTime;
+    if (o == null || getClass() != o.getClass()) {
+      return false;
     }
+    TimeRange range = (TimeRange) o;
+    return beginTime == range.beginTime && includeBeginTime == range.includeBeginTime
+        && endTime == range.endTime && includeEndTime == range.includeEndTime;
+  }
 
-    public long getBeginTime() {
-        return beginTime;
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(beginTime, includeBeginTime, endTime, includeEndTime);
+  }
 
-    public boolean isIncludeBeginTime() {
-        return includeBeginTime;
+  public long getActualBeginTime() {
+    if (includeBeginTime) {
+      return beginTime;
     }
+    return beginTime + 1;
+  }
 
-    public long getEndTime() {
-        return endTime;
+  public long getActualEndTime() {
+    if (includeEndTime) {
+      return endTime;
     }
-
-    public boolean isIncludeEndTime() {
-        return includeEndTime;
-    }
-
-    public TimeRange copy() {
-        return new TimeRange(beginTime, includeBeginTime, endTime, includeEndTime);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        TimeRange range = (TimeRange) o;
-        return beginTime == range.beginTime && includeBeginTime == range.includeBeginTime && endTime == range.endTime && includeEndTime == range.includeEndTime;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(beginTime, includeBeginTime, endTime, includeEndTime);
-    }
-
-    public long getActualBeginTime() {
-        if (includeBeginTime) {
-            return beginTime;
-        }
-        return beginTime + 1;
-    }
-
-    public long getActualEndTime() {
-        if (includeEndTime) {
-            return endTime;
-        }
-        return endTime - 1;
-    }
+    return endTime - 1;
+  }
 
 }

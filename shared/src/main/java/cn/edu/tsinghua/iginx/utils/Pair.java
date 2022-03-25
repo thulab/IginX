@@ -20,28 +20,28 @@ package cn.edu.tsinghua.iginx.utils;
 
 public class Pair<K, V> {
 
-    public K k;
+  public K k;
 
-    public V v;
+  public V v;
 
-    public Pair(K k, V v) {
-        this.k = k;
-        this.v = v;
-    }
+  public Pair(K k, V v) {
+    this.k = k;
+    this.v = v;
+  }
 
-    public K getK() {
-        return k;
-    }
+  public K getK() {
+    return k;
+  }
 
-    public V getV() {
-        return v;
-    }
+  public V getV() {
+    return v;
+  }
 
-    @Override
-    public String toString() {
-        return "Pair{" +
-                "k=" + k +
-                ", v=" + v +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "Pair{" +
+        "k=" + k +
+        ", v=" + v +
+        '}';
+  }
 }

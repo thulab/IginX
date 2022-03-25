@@ -22,52 +22,54 @@ import cn.edu.tsinghua.iginx.thrift.IginxInfo;
 import cn.edu.tsinghua.iginx.thrift.LocalMetaStorageInfo;
 import cn.edu.tsinghua.iginx.thrift.MetaStorageInfo;
 import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
-
 import java.util.List;
 
 public final class ClusterInfo {
 
-    private final List<IginxInfo> iginxInfos;
+  private final List<IginxInfo> iginxInfos;
 
-    private final List<StorageEngineInfo> storageEngineInfos;
+  private final List<StorageEngineInfo> storageEngineInfos;
 
-    private final LocalMetaStorageInfo localMetaStorageInfo;
+  private final LocalMetaStorageInfo localMetaStorageInfo;
 
-    private final List<MetaStorageInfo> metaStorageInfos;
+  private final List<MetaStorageInfo> metaStorageInfos;
 
-    public ClusterInfo(List<IginxInfo> iginxInfos, List<StorageEngineInfo> storageEngineInfos, LocalMetaStorageInfo localMetaStorageInfo, List<MetaStorageInfo> metaStorageInfos) {
-        this.iginxInfos = iginxInfos;
-        this.storageEngineInfos = storageEngineInfos;
-        this.localMetaStorageInfo = localMetaStorageInfo;
-        this.metaStorageInfos = metaStorageInfos;
-    }
+  public ClusterInfo(List<IginxInfo> iginxInfos, List<StorageEngineInfo> storageEngineInfos,
+      LocalMetaStorageInfo localMetaStorageInfo, List<MetaStorageInfo> metaStorageInfos) {
+    this.iginxInfos = iginxInfos;
+    this.storageEngineInfos = storageEngineInfos;
+    this.localMetaStorageInfo = localMetaStorageInfo;
+    this.metaStorageInfos = metaStorageInfos;
+  }
 
-    public ClusterInfo(List<IginxInfo> iginxInfos, List<StorageEngineInfo> storageEngineInfos, LocalMetaStorageInfo localMetaStorageInfo) {
-        this(iginxInfos, storageEngineInfos, localMetaStorageInfo, null);
-    }
+  public ClusterInfo(List<IginxInfo> iginxInfos, List<StorageEngineInfo> storageEngineInfos,
+      LocalMetaStorageInfo localMetaStorageInfo) {
+    this(iginxInfos, storageEngineInfos, localMetaStorageInfo, null);
+  }
 
-    public ClusterInfo(List<IginxInfo> iginxInfos, List<StorageEngineInfo> storageEngineInfos, List<MetaStorageInfo> metaStorageInfo) {
-        this(iginxInfos, storageEngineInfos, null, metaStorageInfo);
-    }
+  public ClusterInfo(List<IginxInfo> iginxInfos, List<StorageEngineInfo> storageEngineInfos,
+      List<MetaStorageInfo> metaStorageInfo) {
+    this(iginxInfos, storageEngineInfos, null, metaStorageInfo);
+  }
 
-    public List<IginxInfo> getIginxInfos() {
-        return iginxInfos;
-    }
+  public List<IginxInfo> getIginxInfos() {
+    return iginxInfos;
+  }
 
-    public List<StorageEngineInfo> getStorageEngineInfos() {
-        return storageEngineInfos;
-    }
+  public List<StorageEngineInfo> getStorageEngineInfos() {
+    return storageEngineInfos;
+  }
 
-    public LocalMetaStorageInfo getLocalMetaStorageInfo() {
-        return localMetaStorageInfo;
-    }
+  public LocalMetaStorageInfo getLocalMetaStorageInfo() {
+    return localMetaStorageInfo;
+  }
 
-    public List<MetaStorageInfo> getMetaStorageInfos() {
-        return metaStorageInfos;
-    }
+  public List<MetaStorageInfo> getMetaStorageInfos() {
+    return metaStorageInfos;
+  }
 
-    public boolean isUseLocalMetaStorage() {
-        return localMetaStorageInfo != null;
-    }
+  public boolean isUseLocalMetaStorage() {
+    return localMetaStorageInfo != null;
+  }
 
 }

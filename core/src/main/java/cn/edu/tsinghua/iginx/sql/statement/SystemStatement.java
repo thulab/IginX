@@ -5,5 +5,5 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 
 public abstract class SystemStatement extends Statement {
 
-    public abstract void execute(RequestContext ctx) throws ExecutionException;
+  public abstract void execute(RequestContext ctx) throws ExecutionException;
 }

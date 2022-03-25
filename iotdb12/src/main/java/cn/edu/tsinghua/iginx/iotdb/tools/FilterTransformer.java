@@ -25,51 +25,51 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
-
 import java.util.stream.Collectors;
 
 public class FilterTransformer {
 
-    public static String toString(Filter filter) {
-        if (filter == null) {
-            return "";
-        }
-        switch (filter.getType()) {
-            case And:
-                return toString((AndFilter) filter);
-            case Or:
-                return toString((OrFilter) filter);
-            case Not:
-                return toString((NotFilter) filter);
-            case Value:
-                return toString((ValueFilter) filter);
-            case Time:
-                return toString((TimeFilter) filter);
-            default:
-                return "";
-        }
+  public static String toString(Filter filter) {
+    if (filter == null) {
+      return "";
     }
-
-    private static String toString(AndFilter filter) {
-        return filter.getChildren().stream().map(FilterTransformer::toString).collect(Collectors.joining(" and ", "(", ")"));
+    switch (filter.getType()) {
+      case And:
+        return toString((AndFilter) filter);
+      case Or:
+        return toString((OrFilter) filter);
+      case Not:
+        return toString((NotFilter) filter);
+      case Value:
+        return toString((ValueFilter) filter);
+      case Time:
+        return toString((TimeFilter) filter);
+      default:
+        return "";
     }
+  }
 
-    private static String toString(NotFilter filter) {
-        return "not " + filter.toString();
-    }
+  private static String toString(AndFilter filter) {
+    return filter.getChildren().stream().map(FilterTransformer::toString)
+        .collect(Collectors.joining(" and ", "(", ")"));
+  }
 
-    private static String toString(TimeFilter filter) {
-        return "time " + Op.op2Str(filter.getOp()) + " " + filter.getValue();
-    }
+  private static String toString(NotFilter filter) {
+    return "not " + filter.toString();
+  }
 
-    private static String toString(ValueFilter filter) {
-        return filter.getPath() + " " + Op.op2Str(filter.getOp()) + " " + filter.getValue().getValue();
-    }
+  private static String toString(TimeFilter filter) {
+    return "time " + Op.op2Str(filter.getOp()) + " " + filter.getValue();
+  }
 
-    private static String toString(OrFilter filter) {
-        return filter.getChildren().stream().map(FilterTransformer::toString).collect(Collectors.joining(" or ", "(", ")"));
-    }
+  private static String toString(ValueFilter filter) {
+    return filter.getPath() + " " + Op.op2Str(filter.getOp()) + " " + filter.getValue().getValue();
+  }
 
+  private static String toString(OrFilter filter) {
+    return filter.getChildren().stream().map(FilterTransformer::toString)
+        .collect(Collectors.joining(" or ", "(", ")"));
+  }
 
 
 }

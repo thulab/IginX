@@ -23,45 +23,45 @@ import java.util.Map;
 
 public class InfluxDBSchema {
 
-    public static final String TAG = "t";
+  public static final String TAG = "t";
 
-    private final String measurement;
+  private final String measurement;
 
-    private final String field;
+  private final String field;
 
-    private final Map<String, String> tags;
+  private final Map<String, String> tags;
 
-    public InfluxDBSchema(String path) {
-        int firstIndex = path.indexOf(".");
-        this.measurement = path.substring(0, firstIndex);
-        int lastIndex = path.lastIndexOf(".");
-        this.field = path.substring(lastIndex + 1);
+  public InfluxDBSchema(String path) {
+    int firstIndex = path.indexOf(".");
+    this.measurement = path.substring(0, firstIndex);
+    int lastIndex = path.lastIndexOf(".");
+    this.field = path.substring(lastIndex + 1);
 
-        this.tags = new HashMap<>();
+    this.tags = new HashMap<>();
 
-        if (firstIndex != lastIndex) {
-            this.tags.put(TAG, path.substring(firstIndex + 1, lastIndex));
-        }
+    if (firstIndex != lastIndex) {
+      this.tags.put(TAG, path.substring(firstIndex + 1, lastIndex));
     }
+  }
 
-    public String getMeasurement() {
-        return measurement;
-    }
+  public String getMeasurement() {
+    return measurement;
+  }
 
-    public String getField() {
-        return field;
-    }
+  public String getField() {
+    return field;
+  }
 
-    public Map<String, String> getTags() {
-        return tags;
-    }
+  public Map<String, String> getTags() {
+    return tags;
+  }
 
-    @Override
-    public String toString() {
-        return "InfluxDBSchema{" +
-                "measurement='" + measurement + '\'' +
-                ", field='" + field + '\'' +
-                ", tags=" + tags +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "InfluxDBSchema{" +
+        "measurement='" + measurement + '\'' +
+        ", field='" + field + '\'' +
+        ", tags=" + tags +
+        '}';
+  }
 }

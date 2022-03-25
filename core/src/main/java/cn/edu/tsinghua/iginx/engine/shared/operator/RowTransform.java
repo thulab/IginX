@@ -24,25 +24,25 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class RowTransform extends AbstractUnaryOperator {
 
-    private final FunctionCall functionCall;
+  private final FunctionCall functionCall;
 
-    public RowTransform(Source source, FunctionCall functionCall) {
-        super(OperatorType.RowTransform, source);
-        if (functionCall == null || functionCall.getFunction() == null) {
-            throw new IllegalArgumentException("function shouldn't be null");
-        }
-        if (functionCall.getFunction().getMappingType() != MappingType.RowMapping) {
-            throw new IllegalArgumentException("function should be set mapping function");
-        }
-        this.functionCall = functionCall;
+  public RowTransform(Source source, FunctionCall functionCall) {
+    super(OperatorType.RowTransform, source);
+    if (functionCall == null || functionCall.getFunction() == null) {
+      throw new IllegalArgumentException("function shouldn't be null");
     }
+    if (functionCall.getFunction().getMappingType() != MappingType.RowMapping) {
+      throw new IllegalArgumentException("function should be set mapping function");
+    }
+    this.functionCall = functionCall;
+  }
 
-    public FunctionCall getFunctionCall() {
-        return functionCall;
-    }
+  public FunctionCall getFunctionCall() {
+    return functionCall;
+  }
 
-    @Override
-    public Operator copy() {
-        return new RowTransform(getSource().copy(), functionCall.copy());
-    }
+  @Override
+  public Operator copy() {
+    return new RowTransform(getSource().copy(), functionCall.copy());
+  }
 }

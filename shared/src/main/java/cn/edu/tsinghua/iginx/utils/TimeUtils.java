@@ -25,127 +25,127 @@ import java.util.Date;
 
 public class TimeUtils {
 
-    public static final String DEFAULT_TIMESTAMP_PRECISION = "ms";
+  public static final String DEFAULT_TIMESTAMP_PRECISION = "ms";
 
-    public static long getMicrosecond() {
-        long currentTime = System.currentTimeMillis() * 1000;
-        long nanoTime = System.nanoTime();
-        return currentTime + (nanoTime - nanoTime / 1000000 * 1000000) / 1000;
+  public static long getMicrosecond() {
+    long currentTime = System.currentTimeMillis() * 1000;
+    long nanoTime = System.nanoTime();
+    return currentTime + (nanoTime - nanoTime / 1000000 * 1000000) / 1000;
+  }
+
+  public static long convertDatetimeStrToLong(String timestampStr) throws ParseException {
+    SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    Date date;
+    try {
+      date = format.parse(timestampStr);
+    } catch (ParseException e) {
+      format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+      date = format.parse(timestampStr);
     }
+    return date.getTime();
+  }
 
-    public static long convertDatetimeStrToLong(String timestampStr) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date date;
-        try {
-            date = format.parse(timestampStr);
-        } catch (ParseException e) {
-            format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-            date = format.parse(timestampStr);
+  public static long convertDurationStrToLong(long currentTime, String duration) {
+    String timestampPrecision = DEFAULT_TIMESTAMP_PRECISION;
+    long total = 0;
+    long temp = 0;
+    for (int i = 0; i < duration.length(); i++) {
+      char ch = duration.charAt(i);
+      if (Character.isDigit(ch)) {
+        temp *= 10;
+        temp += (ch - '0');
+      } else {
+        String unit = duration.charAt(i) + "";
+        if (i + 1 < duration.length() && !Character.isDigit(duration.charAt(i + 1))) {
+          i++;
+          unit += duration.charAt(i);
         }
-        return date.getTime();
+        total += TimeUtils.convertDurationStrToLong(
+            currentTime == -1 ? -1 : currentTime + total,
+            temp,
+            unit.toLowerCase(),
+            timestampPrecision
+        );
+        temp = 0;
+      }
     }
+    return total;
+  }
 
-    public static long convertDurationStrToLong(long currentTime, String duration) {
-        String timestampPrecision = DEFAULT_TIMESTAMP_PRECISION;
-        long total = 0;
-        long temp = 0;
-        for (int i = 0; i < duration.length(); i++) {
-            char ch = duration.charAt(i);
-            if (Character.isDigit(ch)) {
-                temp *= 10;
-                temp += (ch - '0');
-            } else {
-                String unit = duration.charAt(i) + "";
-                if (i + 1 < duration.length() && !Character.isDigit(duration.charAt(i + 1))) {
-                    i++;
-                    unit += duration.charAt(i);
-                }
-                total += TimeUtils.convertDurationStrToLong(
-                        currentTime == -1 ? -1 : currentTime + total,
-                        temp,
-                        unit.toLowerCase(),
-                        timestampPrecision
-                );
-                temp = 0;
-            }
-        }
-        return total;
-    }
-
-    public static long convertDurationStrToLong(
-            long currentTime, long value, String unit, String timestampPrecision) {
-        DurationUnit durationUnit = DurationUnit.valueOf(unit);
-        long res = value;
-        switch (durationUnit) {
-            case y:
-                res *= 365 * 86_400_000L;
-                break;
-            case mo:
-                if (currentTime == -1) {
-                    res *= 30 * 86_400_000L;
-                } else {
-                    Calendar calendar = Calendar.getInstance();
-                    calendar.setTimeInMillis(currentTime);
-                    calendar.add(Calendar.MONTH, (int) (value));
-                    res = calendar.getTimeInMillis() - currentTime;
-                }
-                break;
-            case w:
-                res *= 7 * 86_400_000L;
-                break;
-            case d:
-                res *= 86_400_000L;
-                break;
-            case h:
-                res *= 3_600_000L;
-                break;
-            case m:
-                res *= 60_000L;
-                break;
-            case s:
-                res *= 1_000L;
-                break;
-            default:
-                break;
-        }
-
-        if (timestampPrecision.equals("us")) {
-            if (unit.equals(DurationUnit.ns.toString())) {
-                return value / 1000;
-            } else if (unit.equals(DurationUnit.us.toString())) {
-                return value;
-            } else {
-                return res * 1000;
-            }
-        } else if (timestampPrecision.equals("ns")) {
-            if (unit.equals(DurationUnit.ns.toString())) {
-                return value;
-            } else if (unit.equals(DurationUnit.us.toString())) {
-                return value * 1000;
-            } else {
-                return res * 1000_000;
-            }
+  public static long convertDurationStrToLong(
+      long currentTime, long value, String unit, String timestampPrecision) {
+    DurationUnit durationUnit = DurationUnit.valueOf(unit);
+    long res = value;
+    switch (durationUnit) {
+      case y:
+        res *= 365 * 86_400_000L;
+        break;
+      case mo:
+        if (currentTime == -1) {
+          res *= 30 * 86_400_000L;
         } else {
-            if (unit.equals(DurationUnit.ns.toString())) {
-                return value / 1000_000;
-            } else if (unit.equals(DurationUnit.us.toString())) {
-                return value / 1000;
-            } else {
-                return res;
-            }
+          Calendar calendar = Calendar.getInstance();
+          calendar.setTimeInMillis(currentTime);
+          calendar.add(Calendar.MONTH, (int) (value));
+          res = calendar.getTimeInMillis() - currentTime;
         }
+        break;
+      case w:
+        res *= 7 * 86_400_000L;
+        break;
+      case d:
+        res *= 86_400_000L;
+        break;
+      case h:
+        res *= 3_600_000L;
+        break;
+      case m:
+        res *= 60_000L;
+        break;
+      case s:
+        res *= 1_000L;
+        break;
+      default:
+        break;
     }
 
-    public enum DurationUnit {
-        y,
-        mo,
-        w,
-        d,
-        h,
-        m,
-        s,
-        ms,
-        us,
-        ns
+    if (timestampPrecision.equals("us")) {
+      if (unit.equals(DurationUnit.ns.toString())) {
+        return value / 1000;
+      } else if (unit.equals(DurationUnit.us.toString())) {
+        return value;
+      } else {
+        return res * 1000;
+      }
+    } else if (timestampPrecision.equals("ns")) {
+      if (unit.equals(DurationUnit.ns.toString())) {
+        return value;
+      } else if (unit.equals(DurationUnit.us.toString())) {
+        return value * 1000;
+      } else {
+        return res * 1000_000;
+      }
+    } else {
+      if (unit.equals(DurationUnit.ns.toString())) {
+        return value / 1000_000;
+      } else if (unit.equals(DurationUnit.us.toString())) {
+        return value / 1000;
+      } else {
+        return res;
+      }
     }
+  }
+
+  public enum DurationUnit {
+    y,
+    mo,
+    w,
+    d,
+    h,
+    m,
+    s,
+    ms,
+    us,
+    ns
+  }
 }

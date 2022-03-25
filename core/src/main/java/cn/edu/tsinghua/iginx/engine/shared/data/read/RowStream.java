@@ -22,11 +22,11 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 
 public interface RowStream {
 
-    Header getHeader();
+  Header getHeader();
 
-    void close() throws PhysicalException;
+  void close() throws PhysicalException;
 
-    boolean hasNext() throws PhysicalException;
+  boolean hasNext() throws PhysicalException;
 
-    Row next() throws PhysicalException;
+  Row next() throws PhysicalException;
 }

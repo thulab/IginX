@@ -25,70 +25,70 @@ import java.util.Map;
 
 public final class Header {
 
-    public static final Header EMPTY_HEADER = new Header(Collections.emptyList());
+  public static final Header EMPTY_HEADER = new Header(Collections.emptyList());
 
-    private final Field time;
+  private final Field time;
 
-    private final List<Field> fields;
+  private final List<Field> fields;
 
-    private final Map<String, Integer> indexMap;
+  private final Map<String, Integer> indexMap;
 
-    public Header(List<Field> fields) {
-        this(null, fields);
+  public Header(List<Field> fields) {
+    this(null, fields);
+  }
+
+  public Header(Field time, List<Field> fields) {
+    this.time = time;
+    this.fields = fields;
+    this.indexMap = new HashMap<>();
+    for (int i = 0; i < fields.size(); i++) {
+      this.indexMap.put(fields.get(i).getName(), i);
     }
+  }
 
-    public Header(Field time, List<Field> fields) {
-        this.time = time;
-        this.fields = fields;
-        this.indexMap = new HashMap<>();
-        for (int i = 0; i < fields.size(); i++) {
-            this.indexMap.put(fields.get(i).getName(), i);
-        }
-    }
+  public Field getTime() {
+    return time;
+  }
 
-    public Field getTime() {
-        return time;
-    }
+  public List<Field> getFields() {
+    return fields;
+  }
 
-    public List<Field> getFields() {
-        return fields;
-    }
+  public Field getField(int index) {
+    return fields.get(index);
+  }
 
-    public Field getField(int index) {
-        return fields.get(index);
-    }
+  public int getFieldSize() {
+    return fields.size();
+  }
 
-    public int getFieldSize() {
-        return fields.size();
-    }
+  public boolean hasTimestamp() {
+    return time != null;
+  }
 
-    public boolean hasTimestamp() {
-        return time != null;
+  public int indexOf(Field field) {
+    String name = field.getName();
+    int index = indexMap.getOrDefault(name, -1);
+    if (index == -1) {
+      return -1;
     }
+    Field targetField = fields.get(index);
+    if (targetField.equals(field)) {
+      return index;
+    } else {
+      return -1;
+    }
+  }
 
-    public int indexOf(Field field) {
-        String name = field.getName();
-        int index = indexMap.getOrDefault(name, -1);
-        if (index == -1) {
-            return -1;
-        }
-        Field targetField = fields.get(index);
-        if (targetField.equals(field)) {
-            return index;
-        } else {
-            return -1;
-        }
-    }
+  public int indexOf(String name) {
+    return indexMap.getOrDefault(name, -1);
+  }
 
-    public int indexOf(String name) {
-        return indexMap.getOrDefault(name, -1);
-    }
-
-    @Override
-    public String toString() {
-        return "Header{" +
-                "time=" + time +
-                ", fields=" + fields +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "Header{" +
+        "time=" + time +
+        ", fields=" + fields +
+        '}';
+  }
 }

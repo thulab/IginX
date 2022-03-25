@@ -22,9 +22,9 @@ import org.junit.Test;
 
 public class MaxTest {
 
-    @Test
-    public void testMaxTransform() {
+  @Test
+  public void testMaxTransform() {
 
-    }
+  }
 
 }

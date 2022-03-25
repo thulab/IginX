@@ -22,6 +22,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 
 public interface UserChangeHook {
 
-    void onChange(String username, UserMeta user);
+  void onChange(String username, UserMeta user);
 
 }

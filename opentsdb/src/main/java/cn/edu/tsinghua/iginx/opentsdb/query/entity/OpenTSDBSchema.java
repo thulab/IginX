@@ -5,30 +5,30 @@ import java.util.Map;
 
 public class OpenTSDBSchema {
 
-    private static final String STORAGE_UNIT = "du";
+  private static final String STORAGE_UNIT = "du";
 
-    private final String metric;
+  private final String metric;
 
-    private final Map<String, String> tags = new HashMap<>();
+  private final Map<String, String> tags = new HashMap<>();
 
-    public OpenTSDBSchema(String path, String storageUnit) {
-        this.metric = storageUnit + "." + path;
-        this.tags.put(STORAGE_UNIT, storageUnit);
-    }
+  public OpenTSDBSchema(String path, String storageUnit) {
+    this.metric = storageUnit + "." + path;
+    this.tags.put(STORAGE_UNIT, storageUnit);
+  }
 
-    public String getMetric() {
-        return metric;
-    }
+  public String getMetric() {
+    return metric;
+  }
 
-    public Map<String, String> getTags() {
-        return tags;
-    }
+  public Map<String, String> getTags() {
+    return tags;
+  }
 
-    @Override
-    public String toString() {
-        return "OpenTSDBSchema{" +
-                "measurement='" + metric + '\'' +
-                ", tags=" + tags +
-                '}';
-    }
+  @Override
+  public String toString() {
+    return "OpenTSDBSchema{" +
+        "measurement='" + metric + '\'' +
+        ", tags=" + tags +
+        '}';
+  }
 }

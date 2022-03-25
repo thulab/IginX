@@ -22,86 +22,86 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 
 public enum Op {
 
-    GE,
-    G,
-    LE,
-    L,
-    E,
-    NE;
+  GE,
+  G,
+  LE,
+  L,
+  E,
+  NE;
 
 
-    public static Op getOpposite(Op op) {
-        switch (op) {
-            case NE:
-                return E;
-            case E:
-                return NE;
-            case GE:
-                return L;
-            case LE:
-                return G;
-            case G:
-                return LE;
-            case L:
-                return GE;
-            default:
-                return op;
-        }
+  public static Op getOpposite(Op op) {
+    switch (op) {
+      case NE:
+        return E;
+      case E:
+        return NE;
+      case GE:
+        return L;
+      case LE:
+        return G;
+      case G:
+        return LE;
+      case L:
+        return GE;
+      default:
+        return op;
     }
+  }
 
-    public static Op getDirectionOpposite(Op op) {
-        switch (op) {
-            case GE:
-                return LE;
-            case LE:
-                return GE;
-            case G:
-                return L;
-            case L:
-                return G;
-            default:
-                return op;
-        }
+  public static Op getDirectionOpposite(Op op) {
+    switch (op) {
+      case GE:
+        return LE;
+      case LE:
+        return GE;
+      case G:
+        return L;
+      case L:
+        return G;
+      default:
+        return op;
     }
+  }
 
-    public static Op str2Op(String op) {
-        switch (op) {
-            case "=":
-            case "==":
-                return E;
-            case "!=":
-            case "<>":
-                return NE;
-            case ">":
-                return G;
-            case ">=":
-                return GE;
-            case "<":
-                return L;
-            case "<=":
-                return LE;
-            default:
-                throw new SQLParserException(String.format("Not support comparison operator %s", op));
-        }
+  public static Op str2Op(String op) {
+    switch (op) {
+      case "=":
+      case "==":
+        return E;
+      case "!=":
+      case "<>":
+        return NE;
+      case ">":
+        return G;
+      case ">=":
+        return GE;
+      case "<":
+        return L;
+      case "<=":
+        return LE;
+      default:
+        throw new SQLParserException(String.format("Not support comparison operator %s", op));
     }
+  }
 
-    public static String op2Str(Op op) {
-        switch (op) {
-            case GE:
-                return ">=";
-            case G:
-                return ">";
-            case LE:
-                return "<=";
-            case L:
-                return "<";
-            case E:
-                return "==";
-            case NE:
-                return "!=";
-            default:
-                return "";
-        }
+  public static String op2Str(Op op) {
+    switch (op) {
+      case GE:
+        return ">=";
+      case G:
+        return ">";
+      case LE:
+        return "<=";
+      case L:
+        return "<";
+      case E:
+        return "==";
+      case NE:
+        return "!=";
+      default:
+        return "";
     }
+  }
 
 }

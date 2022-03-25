@@ -19,90 +19,89 @@
 package cn.edu.tsinghua.iginx.session_v2.query;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
 public class SimpleQuery extends Query {
 
-    private final long startTime;
+  private final long startTime;
 
-    private final long endTime;
+  private final long endTime;
 
-    private SimpleQuery(Set<String> measurements, long startTime, long endTime) {
-        super(Collections.unmodifiableSet(measurements));
-        this.startTime = startTime;
-        this.endTime = endTime;
+  private SimpleQuery(Set<String> measurements, long startTime, long endTime) {
+    super(Collections.unmodifiableSet(measurements));
+    this.startTime = startTime;
+    this.endTime = endTime;
+  }
+
+  public static SimpleQuery.Builder builder() {
+    return new Builder();
+  }
+
+  public long getStartTime() {
+    return startTime;
+  }
+
+  public long getEndTime() {
+    return endTime;
+  }
+
+  public static class Builder {
+
+    private final Set<String> measurements;
+
+    private long startTime;
+
+    private long endTime;
+
+    private Builder() {
+      this.measurements = new HashSet<>();
+      this.startTime = 0L;
+      this.endTime = Long.MAX_VALUE;
     }
 
-    public static SimpleQuery.Builder builder() {
-        return new Builder();
+    public SimpleQuery.Builder addMeasurement(String measurement) {
+      Arguments.checkNonEmpty(measurement, "measurement");
+      this.measurements.add(measurement);
+      return this;
     }
 
-    public long getStartTime() {
-        return startTime;
+    public SimpleQuery.Builder addMeasurements(Set<String> measurements) {
+      measurements.forEach(measurement -> Arguments.checkNonEmpty(measurement, "measurement"));
+      this.measurements.addAll(measurements);
+      return this;
     }
 
-    public long getEndTime() {
-        return endTime;
+    public SimpleQuery.Builder startTime(long startTime) {
+      if (startTime < 0) {
+        throw new IllegalArgumentException("startTime must greater than zero.");
+      }
+      if (startTime >= endTime) {
+        throw new IllegalArgumentException("startTime must less than endTime.");
+      }
+      this.startTime = startTime;
+      return this;
     }
 
-    public static class Builder {
-
-        private final Set<String> measurements;
-
-        private long startTime;
-
-        private long endTime;
-
-        private Builder() {
-            this.measurements = new HashSet<>();
-            this.startTime = 0L;
-            this.endTime = Long.MAX_VALUE;
-        }
-
-        public SimpleQuery.Builder addMeasurement(String measurement) {
-            Arguments.checkNonEmpty(measurement, "measurement");
-            this.measurements.add(measurement);
-            return this;
-        }
-
-        public SimpleQuery.Builder addMeasurements(Set<String> measurements) {
-            measurements.forEach(measurement -> Arguments.checkNonEmpty(measurement, "measurement"));
-            this.measurements.addAll(measurements);
-            return this;
-        }
-
-        public SimpleQuery.Builder startTime(long startTime) {
-            if (startTime < 0) {
-                throw new IllegalArgumentException("startTime must greater than zero.");
-            }
-            if (startTime >= endTime) {
-                throw new IllegalArgumentException("startTime must less than endTime.");
-            }
-            this.startTime = startTime;
-            return this;
-        }
-
-        public SimpleQuery.Builder endTime(long endTime) {
-            if (endTime < 0) {
-                throw new IllegalArgumentException("endTime mush greater than zero.");
-            }
-            if (endTime <= startTime) {
-                throw new IllegalArgumentException("endTime must greater than startTime.");
-            }
-            this.endTime = endTime;
-            return this;
-        }
-
-        public SimpleQuery build() {
-            if (this.measurements.isEmpty()) {
-                throw new IllegalStateException("simple query at least has one measurement.");
-            }
-            return new SimpleQuery(measurements, startTime, endTime);
-        }
-
+    public SimpleQuery.Builder endTime(long endTime) {
+      if (endTime < 0) {
+        throw new IllegalArgumentException("endTime mush greater than zero.");
+      }
+      if (endTime <= startTime) {
+        throw new IllegalArgumentException("endTime must greater than startTime.");
+      }
+      this.endTime = endTime;
+      return this;
     }
+
+    public SimpleQuery build() {
+      if (this.measurements.isEmpty()) {
+        throw new IllegalStateException("simple query at least has one measurement.");
+      }
+      return new SimpleQuery(measurements, startTime, endTime);
+    }
+
+  }
 
 }

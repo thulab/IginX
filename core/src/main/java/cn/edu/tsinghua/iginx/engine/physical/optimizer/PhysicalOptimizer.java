@@ -22,18 +22,17 @@ import cn.edu.tsinghua.iginx.engine.physical.optimizer.rule.Rule;
 import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-
 import java.util.Collection;
 
 public interface PhysicalOptimizer {
 
-    PhysicalTask optimize(Operator root);
+  PhysicalTask optimize(Operator root);
 
-    ConstraintManager getConstraintManager();
+  ConstraintManager getConstraintManager();
 
-    ReplicaDispatcher getReplicaDispatcher();
+  ReplicaDispatcher getReplicaDispatcher();
 
-    void setRules(Collection<Rule> rules);
+  void setRules(Collection<Rule> rules);
 
 
 }

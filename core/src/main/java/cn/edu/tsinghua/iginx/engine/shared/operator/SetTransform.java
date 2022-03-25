@@ -24,25 +24,25 @@ import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 public class SetTransform extends AbstractUnaryOperator {
 
-    private final FunctionCall functionCall;
+  private final FunctionCall functionCall;
 
-    public SetTransform(Source source, FunctionCall functionCall) {
-        super(OperatorType.SetTransform, source);
-        if (functionCall == null || functionCall.getFunction() == null) {
-            throw new IllegalArgumentException("function shouldn't be null");
-        }
-        if (functionCall.getFunction().getMappingType() != MappingType.SetMapping) {
-            throw new IllegalArgumentException("function should be set mapping function");
-        }
-        this.functionCall = functionCall;
+  public SetTransform(Source source, FunctionCall functionCall) {
+    super(OperatorType.SetTransform, source);
+    if (functionCall == null || functionCall.getFunction() == null) {
+      throw new IllegalArgumentException("function shouldn't be null");
     }
+    if (functionCall.getFunction().getMappingType() != MappingType.SetMapping) {
+      throw new IllegalArgumentException("function should be set mapping function");
+    }
+    this.functionCall = functionCall;
+  }
 
-    public FunctionCall getFunctionCall() {
-        return functionCall;
-    }
+  public FunctionCall getFunctionCall() {
+    return functionCall;
+  }
 
-    @Override
-    public Operator copy() {
-        return new SetTransform(getSource().copy(), functionCall.copy());
-    }
+  @Override
+  public Operator copy() {
+    return new SetTransform(getSource().copy(), functionCall.copy());
+  }
 }

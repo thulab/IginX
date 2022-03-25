@@ -17,37 +17,32 @@
 #
 class ClusterInfo(object):
 
-    def __init__(self, resp):
-        self.__iginx_list = resp.iginxInfos
-        self.__storage_engine_list = resp.storageEngineInfos
-        self.__meta_storage_list = resp.metaStorageInfos
-        self.__local_meta_storage = resp.localMetaStorageInfo
+  def __init__(self, resp):
+    self.__iginx_list = resp.iginxInfos
+    self.__storage_engine_list = resp.storageEngineInfos
+    self.__meta_storage_list = resp.metaStorageInfos
+    self.__local_meta_storage = resp.localMetaStorageInfo
 
+  def get_iginx_list(self):
+    return self.__iginx_list
 
-    def get_iginx_list(self):
-        return self.__iginx_list
+  def get_storage_engine_list(self):
+    return self.__storage_engine_list
 
+  def get_local_meta_storage(self):
+    return self.__local_meta_storage
 
-    def get_storage_engine_list(self):
-        return self.__storage_engine_list
+  def get_meta_storage_list(self):
+    return self.__meta_storage_list
 
+  def is_use_local_meta_storage(self):
+    return self.__local_meta_storage is not None
 
-    def get_local_meta_storage(self):
-        return self.__local_meta_storage
-
-
-    def get_meta_storage_list(self):
-        return self.__meta_storage_list
-
-
-    def is_use_local_meta_storage(self):
-        return self.__local_meta_storage is not None
-
-
-    def __str__(self):
-        value = str(self.__iginx_list) + "\n" + str(self.__storage_engine_list) + "\n"
-        if self.__meta_storage_list:
-            value += str(self.__meta_storage_list)
-        else:
-            value += str(self.__local_meta_storage)
-        return value
+  def __str__(self):
+    value = str(self.__iginx_list) + "\n" + str(
+        self.__storage_engine_list) + "\n"
+    if self.__meta_storage_list:
+      value += str(self.__meta_storage_list)
+    else:
+      value += str(self.__local_meta_storage)
+    return value

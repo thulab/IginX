@@ -22,23 +22,22 @@ import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
 import cn.edu.tsinghua.iginx.session_v2.write.Record;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
-
 import java.util.List;
 
 public interface WriteClient {
 
-    void writePoint(final Point point) throws IginXException;
+  void writePoint(final Point point) throws IginXException;
 
-    void writePoints(final List<Point> points) throws IginXException;
+  void writePoints(final List<Point> points) throws IginXException;
 
-    void writeRecord(final Record record) throws IginXException;
+  void writeRecord(final Record record) throws IginXException;
 
-    void writeRecords(final List<Record> records) throws IginXException;
+  void writeRecords(final List<Record> records) throws IginXException;
 
-    <M> void writeMeasurement(final M measurement) throws IginXException;
+  <M> void writeMeasurement(final M measurement) throws IginXException;
 
-    <M> void writeMeasurements(final List<M> measurements) throws IginXException;
+  <M> void writeMeasurements(final List<M> measurements) throws IginXException;
 
-    void writeTable(final Table table) throws IginXException;
+  void writeTable(final Table table) throws IginXException;
 
 }
