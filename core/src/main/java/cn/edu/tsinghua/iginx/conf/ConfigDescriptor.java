@@ -115,6 +115,8 @@ public class ConfigDescriptor {
             config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
             config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
+
+            config.setEnablePushDown(Boolean.parseBoolean(properties.getProperty("enablePushDown", "true")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -164,6 +166,7 @@ public class ConfigDescriptor {
         config.setReAllocatePeriod(EnvUtils.loadEnv("reAllocatePeriod", config.getReAllocatePeriod()));
         config.setEnableStorageGroupValueLimit(EnvUtils.loadEnv("enableStorageGroupValueLimit", config.isEnableStorageGroupValueLimit()));
         config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
+        config.setEnablePushDown(EnvUtils.loadEnv("enablePushDown", config.isEnablePushDown()));
     }
 
 

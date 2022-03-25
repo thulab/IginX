@@ -37,11 +37,15 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
+import cn.edu.tsinghua.iginx.iotdb.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
@@ -86,7 +90,7 @@ public class IoTDBStorage implements IStorage {
 
     private static final String PREFIX = "root.";
 
-    private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s WHERE time >= %d and time < %d";
+    private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s WHERE %s";
 
     private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
@@ -140,16 +144,21 @@ public class IoTDBStorage implements IStorage {
     @Override
     public TaskExecuteResult execute(StoragePhysicalTask task) {
         List<Operator> operators = task.getOperators();
-        if (operators.size() != 1) {
-            return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+        if (operators.size() < 1) {
+            return new TaskExecuteResult(new NonExecutablePhysicalTaskException("storage physical task should have one more operators"));
         }
-        FragmentMeta fragment = task.getTargetFragment();
         Operator op = operators.get(0);
         String storageUnit = task.getStorageUnit();
-
-        if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
+        if (op.getType() == OperatorType.Project) {
             Project project = (Project) op;
-            return executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
+            Filter filter;
+            if (operators.size() == 2) {
+                filter = ((Select) operators.get(1)).getFilter();
+            } else {
+                FragmentMeta fragment = task.getTargetFragment();
+                filter = new AndFilter(Arrays.asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()), new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
+            }
+            return executeQueryTask(storageUnit, project, filter);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -202,15 +211,15 @@ public class IoTDBStorage implements IStorage {
         return timeseries;
     }
 
-    private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+    private TaskExecuteResult executeQueryTask(String storageUnit, Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
         try {
             StringBuilder builder = new StringBuilder();
             for (String path : project.getPatterns()) {
                 builder.append(path);
                 builder.append(',');
             }
-            String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), storageUnit, timeInterval.getStartTime(), timeInterval.getEndTime());
-            System.out.println(statement);
+            String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), storageUnit, FilterTransformer.toString(filter));
+            logger.info("[Query] execute query: " + statement);
             RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {

@@ -11,7 +11,7 @@ public class FilterVisitorTest {
     public void testVisit() {
         FilterVisitor visitor = new NaiveVisitor();
 
-        String select = "SELECT a FROM root WHERE a > 5 AND b <= 10 OR c > 7 AND d == 8;";
+        String select = "SELECT a FROM root.v.c WHERE a > 5 AND b <= 10 OR c > 7 AND d == 8;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(select);
         Filter filter = statement.getFilter();
         filter.accept(visitor);
@@ -24,7 +24,7 @@ public class FilterVisitorTest {
         filter.accept(visitor);
     }
 
-    class NaiveVisitor implements FilterVisitor {
+    static class NaiveVisitor implements FilterVisitor {
 
         @Override
         public void visit(AndFilter filter) {
