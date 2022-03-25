@@ -26,7 +26,7 @@ import java.nio.charset.StandardCharsets;
 public class JsonUtils {
 
     private static final Gson gson = new GsonBuilder()
-            .create();
+        .create();
 
     public static byte[] toJson(Object o) {
         return gson.toJson(o).getBytes(StandardCharsets.UTF_8);

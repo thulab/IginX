@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.ShowTimeSeries;
 import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
-import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

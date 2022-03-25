@@ -97,7 +97,7 @@ public class FilterPushDownOptimizer implements Optimizer {
                 subFilter = ExprUtils.getSubFilterFromFragment(filter, fragmentMeta.getTsInterval());
                 cache.put(fragmentMeta.getMasterStorageUnitId(), subFilter);
             }
-            if (subFilter.getType() == FilterType.Bool && ((BoolFilter)subFilter).isTrue()) {
+            if (subFilter.getType() == FilterType.Bool && ((BoolFilter) subFilter).isTrue()) {
                 // need to scan whole scope.
                 return;
             }
@@ -110,8 +110,8 @@ public class FilterPushDownOptimizer implements Optimizer {
                     unaryOp.setSource(new OperatorSource(subSelect));
                 } else if (OperatorType.isBinaryOperator(fatherOperator.getType())) {
                     BinaryOperator binaryOperator = (BinaryOperator) fatherOperator;
-                    Operator operatorA = ((OperatorSource)binaryOperator.getSourceA()).getOperator();
-                    Operator operatorB = ((OperatorSource)binaryOperator.getSourceB()).getOperator();
+                    Operator operatorA = ((OperatorSource) binaryOperator.getSourceA()).getOperator();
+                    Operator operatorB = ((OperatorSource) binaryOperator.getSourceB()).getOperator();
 
                     if (operatorA.equals(project)) {
                         binaryOperator.setSourceA(new OperatorSource(subSelect));
@@ -124,7 +124,7 @@ public class FilterPushDownOptimizer implements Optimizer {
 
                     int index = -1;
                     for (int i = 0; i < sources.size(); i++) {
-                        Operator curOperator = ((OperatorSource)sources.get(i)).getOperator();
+                        Operator curOperator = ((OperatorSource) sources.get(i)).getOperator();
                         if (curOperator.equals(project)) {
                             index = i;
                         }

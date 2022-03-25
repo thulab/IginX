@@ -33,7 +33,7 @@ public class DeleteGenerator extends AbstractGenerator {
     private final static DeleteGenerator instance = new DeleteGenerator();
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
     private final IPolicy policy = PolicyManager.getInstance()
-            .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+        .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private DeleteGenerator() {
         this.type = GeneratorType.Delete;
@@ -82,7 +82,7 @@ public class DeleteGenerator extends AbstractGenerator {
         List<TimeRange> res = new ArrayList<>();
         for (TimeRange range : timeRanges) {
             if (interval.getStartTime() > range.getEndTime() ||
-                    interval.getEndTime() < range.getBeginTime())
+                interval.getEndTime() < range.getBeginTime())
                 continue;
             res.add(range);
         }

@@ -56,9 +56,9 @@ public class QueryAggregatorDev extends QueryAggregator {
                             }
                         }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
+                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
-                                    sum2 / cnt - Math.pow(sum / cnt, 2));
+                                sum2 / cnt - Math.pow(sum / cnt, 2));
                             sum = 0;
                             sum2 = 0;
                             cnt = 0;

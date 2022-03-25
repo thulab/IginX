@@ -34,29 +34,12 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.RowMappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.function.SetMappingFunction;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
-import cn.edu.tsinghua.iginx.engine.shared.operator.RowTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
-import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
@@ -110,7 +93,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header header = stream.getHeader();
         List<Row> rows = new ArrayList<>();
-        while(stream.hasNext()) {
+        while (stream.hasNext()) {
             rows.add(stream.next());
         }
         stream.close();
@@ -137,7 +120,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         }
         Header targetHeader = new Header(header.getTime(), targetFields);
         List<Row> targetRows = new ArrayList<>();
-        while(table.hasNext()) {
+        while (table.hasNext()) {
             Row row = table.next();
             Object[] objects = new Object[targetFields.size()];
             for (int i = 0; i < targetFields.size(); i++) {
@@ -155,7 +138,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeSelect(Select select, Table table) throws PhysicalException {
         Filter filter = select.getFilter();
         List<Row> targetRows = new ArrayList<>();
-        while(table.hasNext()) {
+        while (table.hasNext()) {
             Row row = table.next();
             if (FilterUtils.validate(filter, row)) {
                 targetRows.add(row);
@@ -237,7 +220,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         List<Value> params = rowTransform.getFunctionCall().getParams();
         List<Row> rows = new ArrayList<>();
         try {
-            while(table.hasNext()) {
+            while (table.hasNext()) {
                 Row row = function.transform(table.next(), params);
                 if (row != null) {
                     rows.add(row);
@@ -301,7 +284,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             List<Row> newRows = new ArrayList<>();
 
             int index1 = 0, index2 = 0;
-            while(index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 long timestamp;
@@ -355,7 +338,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             List<Row> newRows = new ArrayList<>();
 
             int index1 = 0, index2 = 0;
-            while(index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 System.arraycopy(rowA.getValues(), 0, values, 0, headerA.getFieldSize());
@@ -408,7 +391,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         } else {
             targetHeader = new Header(Field.TIME, targetFields);
             int index1 = 0, index2 = 0;
-            while(index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
                 Row row1 = tableA.getRow(index1);
                 Row row2 = tableB.getRow(index2);
                 if (row1.getTimestamp() <= row2.getTimestamp()) {

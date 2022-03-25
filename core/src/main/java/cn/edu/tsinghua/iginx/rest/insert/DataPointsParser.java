@@ -115,7 +115,7 @@ public class DataPointsParser {
         JsonNode anno = node.get("annotation");
         if (anno != null) {
             ret.setAnnotation(anno.toString().replace("\n", "")
-                    .replace("\t", "").replace(" ", ""));
+                .replace("\t", "").replace(" ", ""));
         }
         return ret;
     }
@@ -231,8 +231,7 @@ public class DataPointsParser {
                 String ins = metric.getTags().get(entry.getValue());
                 if (ins != null) {
                     path.append(ins).append(".");
-                }
-                else {
+                } else {
                     path.append("null.");
                 }
             }

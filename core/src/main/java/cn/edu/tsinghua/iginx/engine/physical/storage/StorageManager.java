@@ -69,11 +69,11 @@ public class StorageManager {
         try {
             ClassLoader loader = classLoaders.get(engine);
             IStorage storage = (IStorage) loader.loadClass(driver)
-                    .getConstructor(StorageEngineMeta.class).newInstance(meta);
+                .getConstructor(StorageEngineMeta.class).newInstance(meta);
             // 启动一个派发线程池
             ThreadPoolExecutor dispatcher = new ThreadPoolExecutor(ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
-                    Integer.MAX_VALUE,
-                    60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+                Integer.MAX_VALUE,
+                60L, TimeUnit.SECONDS, new SynchronousQueue<>());
             storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
         } catch (ClassNotFoundException e) {
             logger.error("load class {} for engine {} failure: {}", driver, engine, e);

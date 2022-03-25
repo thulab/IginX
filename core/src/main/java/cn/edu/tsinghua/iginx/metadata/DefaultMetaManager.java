@@ -23,13 +23,7 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
@@ -44,15 +38,7 @@ import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class DefaultMetaManager implements IMetaManager {
@@ -134,7 +120,7 @@ public class DefaultMetaManager implements IMetaManager {
             cache.addIginx(iginx);
         }
         IginxMeta iginx = new IginxMeta(0L, ConfigDescriptor.getInstance().getConfig().getIp(),
-                ConfigDescriptor.getInstance().getConfig().getPort(), null);
+            ConfigDescriptor.getInstance().getConfig().getPort(), null);
         id = storage.registerIginx(iginx);
         SnowFlakeUtils.init(id);
     }
@@ -242,12 +228,12 @@ public class DefaultMetaManager implements IMetaManager {
         }
     }
 
-    private void initPolicy(){
+    private void initPolicy() {
         storage.registerTimeseriesChangeHook(cache::timeSeriesIsUpdated);
         storage.registerVersionChangeHook((version, num) -> {
             double sum = cache.getSumFromTimeSeries();
             Map<String, Double> timeseriesData = cache.getMaxValueFromTimeSeries().stream().
-                    collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
+                collect(Collectors.toMap(TimeSeriesCalDO::getTimeSeries, TimeSeriesCalDO::getValue));
             double countSum = timeseriesData.values().stream().mapToDouble(Double::doubleValue).sum();
             if (countSum > 1e-9) {
                 timeseriesData.forEach((k, v) -> timeseriesData.put(k, v / countSum * sum));

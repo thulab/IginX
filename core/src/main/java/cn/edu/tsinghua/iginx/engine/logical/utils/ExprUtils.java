@@ -3,7 +3,6 @@ package cn.edu.tsinghua.iginx.engine.logical.utils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 
 import java.util.ArrayList;

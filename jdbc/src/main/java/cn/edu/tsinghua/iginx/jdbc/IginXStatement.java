@@ -5,11 +5,7 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,7 +61,7 @@ public class IginXStatement implements Statement {
         checkConnection("execute");
         executeSQL(sql);
         return sql.trim().toLowerCase().startsWith(Constant.SELECT_CLAUSE_PREFIX) ||
-                sql.trim().toLowerCase().startsWith(Constant.SHOW_CLAUSE_PREFIX);
+            sql.trim().toLowerCase().startsWith(Constant.SHOW_CLAUSE_PREFIX);
     }
 
     @Override
@@ -120,7 +116,7 @@ public class IginXStatement implements Statement {
         }
 
         boolean isQuery = sql.trim().toLowerCase().startsWith(Constant.SELECT_CLAUSE_PREFIX) ||
-                sql.trim().toLowerCase().startsWith(Constant.SHOW_CLAUSE_PREFIX);
+            sql.trim().toLowerCase().startsWith(Constant.SHOW_CLAUSE_PREFIX);
         if (isQuery) {
             throw new SQLException("Batch query is not supported.");
         } else {

@@ -31,11 +31,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class Sum implements SetMappingFunction {
@@ -128,7 +124,7 @@ public class Sum implements SetMappingFunction {
                     targetValues[i] = 0.0D;
                 }
             }
-            while(rows.hasNext()) {
+            while (rows.hasNext()) {
                 Row row = rows.next();
                 for (int i = 0; i < indices.size(); i++) {
                     int index = indices.get(i);
@@ -181,7 +177,7 @@ public class Sum implements SetMappingFunction {
                 targetField = new Field(targetFieldName, DataType.DOUBLE);
                 targetValue = 0.0D;
             }
-            while(rows.hasNext()) {
+            while (rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value == null) {

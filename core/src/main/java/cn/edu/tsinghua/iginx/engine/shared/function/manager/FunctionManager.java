@@ -19,15 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.function.manager;
 
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.Avg;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.Count;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.First;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.FirstValue;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.Last;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.LastValue;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.Max;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.Min;
-import cn.edu.tsinghua.iginx.engine.shared.function.system.Sum;
+import cn.edu.tsinghua.iginx.engine.shared.function.system.*;
 
 import java.util.Collection;
 import java.util.HashMap;

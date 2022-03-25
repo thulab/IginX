@@ -100,8 +100,8 @@ public class Row {
     @Override
     public String toString() {
         return "Row{" +
-                "timestamp=" + timestamp +
-                ", values=" + Arrays.toString(values) +
-                '}';
+            "timestamp=" + timestamp +
+            ", values=" + Arrays.toString(values) +
+            '}';
     }
 }

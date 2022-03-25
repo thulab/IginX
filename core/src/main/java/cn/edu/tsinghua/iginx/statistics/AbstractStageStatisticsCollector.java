@@ -34,12 +34,12 @@ public abstract class AbstractStageStatisticsCollector {
 
     public AbstractStageStatisticsCollector() {
         Executors.newSingleThreadExecutor()
-                .submit(() -> {
-                    while(true) {
-                        Statistics statistics = statisticsQueue.take();
-                        processStatistics(statistics);
-                    }
-                });
+            .submit(() -> {
+                while (true) {
+                    Statistics statistics = statisticsQueue.take();
+                    processStatistics(statistics);
+                }
+            });
     }
 
     protected abstract String getStageName();

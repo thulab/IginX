@@ -18,30 +18,19 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.optimizer.naive;
 
-import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.PhysicalOptimizer;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.ReplicaDispatcher;
 import cn.edu.tsinghua.iginx.engine.physical.optimizer.rule.Rule;
-import cn.edu.tsinghua.iginx.engine.physical.task.BinaryMemoryPhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.MultipleMemoryPhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.PhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
-import cn.edu.tsinghua.iginx.engine.physical.task.UnaryMemoryPhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.*;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 public class NaivePhysicalOptimizer implements PhysicalOptimizer {
@@ -90,9 +79,9 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
                 Operator sourceOperator = operatorSource.getOperator();
                 PhysicalTask sourceTask = constructTask(operatorSource.getOperator());
                 if (ConfigDescriptor.getInstance().getConfig().isEnablePushDown() && sourceTask instanceof StoragePhysicalTask && sourceOperator.getType() == OperatorType.Project && ((UnaryOperator) sourceOperator).getSource().getType() == SourceType.Fragment
-                        && operator.getType() == OperatorType.Select) {
-                     sourceTask.getOperators().add(operator);
-                     return sourceTask;
+                    && operator.getType() == OperatorType.Select) {
+                    sourceTask.getOperators().add(operator);
+                    return sourceTask;
                 }
                 List<Operator> operators = new ArrayList<>();
                 operators.add(operator);

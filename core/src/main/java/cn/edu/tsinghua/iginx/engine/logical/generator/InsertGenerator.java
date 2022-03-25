@@ -36,7 +36,7 @@ public class InsertGenerator extends AbstractGenerator {
     private final static InsertGenerator instance = new InsertGenerator();
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
     private final IPolicy policy = PolicyManager.getInstance()
-            .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+        .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private InsertGenerator() {
         this.type = GeneratorType.Insert;
@@ -91,35 +91,35 @@ public class InsertGenerator extends AbstractGenerator {
 
         // time overlap doesn't exist.
         if (timeInterval.getStartTime() > insertTimes.get(insertTimes.size() - 1) ||
-                timeInterval.getEndTime() < insertTimes.get(0)) {
+            timeInterval.getEndTime() < insertTimes.get(0)) {
             return null;
         }
 
         // path overlap doesn't exist.
         if (tsInterval.getStartTimeSeries() != null &&
-                tsInterval.getStartTimeSeries().compareTo(paths.get(paths.size() - 1)) > 0)
+            tsInterval.getStartTimeSeries().compareTo(paths.get(paths.size() - 1)) > 0)
             return null;
         if (tsInterval.getEndTimeSeries() != null &&
-                tsInterval.getEndTimeSeries().compareTo(paths.get(0)) < 0) {
+            tsInterval.getEndTimeSeries().compareTo(paths.get(0)) < 0) {
             return null;
         }
 
         int startTimeIndex = 0;
-        while(timeInterval.getStartTime() > insertTimes.get(startTimeIndex))
+        while (timeInterval.getStartTime() > insertTimes.get(startTimeIndex))
             startTimeIndex++;
         int endTimeIndex = startTimeIndex;
-        while(endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
+        while (endTimeIndex < insertTimes.size() && timeInterval.getEndTime() > insertTimes.get(endTimeIndex))
             endTimeIndex++;
 
 
         int startPathIndex = 0;
         if (tsInterval.getStartTimeSeries() != null) {
-            while(tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
+            while (tsInterval.getStartTimeSeries().compareTo(paths.get(startPathIndex)) > 0)
                 startPathIndex++;
         }
         int endPathIndex = startPathIndex;
         if (tsInterval.getEndTimeSeries() != null) {
-            while(endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)
+            while (endPathIndex < paths.size() && tsInterval.getEndTimeSeries().compareTo(paths.get(endPathIndex)) > 0)
                 endPathIndex++;
         } else {
             endPathIndex = paths.size();

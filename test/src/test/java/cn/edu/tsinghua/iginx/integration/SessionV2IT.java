@@ -1,52 +1,22 @@
 package cn.edu.tsinghua.iginx.integration;
 
-import cn.edu.tsinghua.iginx.session_v2.AsyncWriteClient;
-import cn.edu.tsinghua.iginx.session_v2.ClusterClient;
-import cn.edu.tsinghua.iginx.session_v2.DeleteClient;
-import cn.edu.tsinghua.iginx.session_v2.IginXClient;
-import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
-import cn.edu.tsinghua.iginx.session_v2.QueryClient;
-import cn.edu.tsinghua.iginx.session_v2.UsersClient;
-import cn.edu.tsinghua.iginx.session_v2.WriteClient;
+import cn.edu.tsinghua.iginx.session_v2.*;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Field;
 import cn.edu.tsinghua.iginx.session_v2.annotations.Measurement;
 import cn.edu.tsinghua.iginx.session_v2.domain.ClusterInfo;
 import cn.edu.tsinghua.iginx.session_v2.domain.User;
-import cn.edu.tsinghua.iginx.session_v2.query.AggregateQuery;
-import cn.edu.tsinghua.iginx.session_v2.query.DownsampleQuery;
-import cn.edu.tsinghua.iginx.session_v2.query.IginXColumn;
-import cn.edu.tsinghua.iginx.session_v2.query.IginXHeader;
-import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
-import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
-import cn.edu.tsinghua.iginx.session_v2.query.LastQuery;
-import cn.edu.tsinghua.iginx.session_v2.query.Query;
-import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
+import cn.edu.tsinghua.iginx.session_v2.query.*;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
 import cn.edu.tsinghua.iginx.session_v2.write.Record;
 import cn.edu.tsinghua.iginx.session_v2.write.Table;
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.IginxInfo;
-import cn.edu.tsinghua.iginx.thrift.UserType;
+import cn.edu.tsinghua.iginx.thrift.*;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 public class SessionV2IT {
 
@@ -95,36 +65,36 @@ public class SessionV2IT {
         List<Point> points = new ArrayList<>();
         for (long i = startTimestamp; i < endTimestamp; i++) {
             points.add(Point.builder()
-                    .timestamp(i)
-                    .measurement("test.session.v2.bool")
-                    .booleanValue(i % 2 == 0)
-                    .build());
+                .timestamp(i)
+                .measurement("test.session.v2.bool")
+                .booleanValue(i % 2 == 0)
+                .build());
             points.add(Point.builder()
-                    .timestamp(i)
-                    .measurement("test.session.v2.int")
-                    .intValue((int) i)
-                    .build());
+                .timestamp(i)
+                .measurement("test.session.v2.int")
+                .intValue((int) i)
+                .build());
             points.add(Point.builder()
-                    .timestamp(i)
-                    .measurement("test.session.v2.long")
-                    .longValue(i)
-                    .build());
+                .timestamp(i)
+                .measurement("test.session.v2.long")
+                .longValue(i)
+                .build());
             points.add(Point.builder()
-                    .timestamp(i)
-                    .measurement("test.session.v2.float")
-                    .floatValue((float) (i + 0.1))
-                    .build());
+                .timestamp(i)
+                .measurement("test.session.v2.float")
+                .floatValue((float) (i + 0.1))
+                .build());
             points.add(Point.builder()
-                    .timestamp(i)
-                    .measurement("test.session.v2.double")
-                    .doubleValue(i + 0.2)
-                    .build());
+                .timestamp(i)
+                .measurement("test.session.v2.double")
+                .doubleValue(i + 0.2)
+                .build());
             if (i % 2 == 0) {
                 points.add(Point.builder()
-                        .timestamp(i)
-                        .measurement("test.session.v2.string")
-                        .binaryValue(String.valueOf(i).getBytes())
-                        .build());
+                    .timestamp(i)
+                    .measurement("test.session.v2.string")
+                    .binaryValue(String.valueOf(i).getBytes())
+                    .build());
             }
         }
         return points;
@@ -149,13 +119,13 @@ public class SessionV2IT {
         List<Record> records = new ArrayList<>();
         for (long i = startTimestamp; i < endTimestamp; i++) {
             Record.Builder builder = Record.builder()
-                    .measurement("test.session.v2")
-                    .timestamp(i)
-                    .addBooleanField("bool", i % 2 == 0)
-                    .addLongField("long", i)
-                    .addFloatField("float", (float) (i + 0.1))
-                    .addDoubleField("double", i + 0.2)
-                    .addIntField("int", (int) i);
+                .measurement("test.session.v2")
+                .timestamp(i)
+                .addBooleanField("bool", i % 2 == 0)
+                .addLongField("long", i)
+                .addFloatField("float", (float) (i + 0.1))
+                .addDoubleField("double", i + 0.2)
+                .addIntField("int", (int) i);
             if (i % 2 == 0) {
                 builder.addBinaryField("string", String.valueOf(i).getBytes());
             }
@@ -181,24 +151,24 @@ public class SessionV2IT {
 
     private static Table buildInsertDataTable() {
         Table.Builder builder = Table.builder().measurement("test.session.v2")
-                .addField("bool", DataType.BOOLEAN)
-                .addField("int", DataType.INTEGER)
-                .addField("long", DataType.LONG)
-                .addField("float", DataType.FLOAT)
-                .addField("double", DataType.DOUBLE)
-                .addField("string", DataType.BINARY);
+            .addField("bool", DataType.BOOLEAN)
+            .addField("int", DataType.INTEGER)
+            .addField("long", DataType.LONG)
+            .addField("float", DataType.FLOAT)
+            .addField("double", DataType.DOUBLE)
+            .addField("string", DataType.BINARY);
 
         for (long i = startTimestamp; i < endTimestamp; i++) {
             if (i % 2 == 0) {
                 builder = builder.binaryValue("string", String.valueOf(i).getBytes());
             }
             builder = builder.timestamp(i)
-                    .boolValue("bool", i % 2 == 0)
-                    .intValue("int", (int) i)
-                    .longValue("long", i)
-                    .floatValue("float", (float) (i + 0.1))
-                    .doubleValue("double", i + 0.2)
-                    .next();
+                .boolValue("bool", i % 2 == 0)
+                .intValue("int", (int) i)
+                .longValue("long", i)
+                .floatValue("float", (float) (i + 0.1))
+                .doubleValue("double", i + 0.2)
+                .next();
         }
 
         return builder.build();
@@ -227,7 +197,7 @@ public class SessionV2IT {
                 binaryValue = String.valueOf(i).getBytes();
             }
             measurements.add(
-                    new POJO(i, i % 2 == 0, (int) i, i, (float) (i + 0.1), i + 0.2, binaryValue)
+                new POJO(i, i % 2 == 0, (int) i, i, (float) (i + 0.1), i + 0.2, binaryValue)
             );
         }
         return measurements;
@@ -261,11 +231,11 @@ public class SessionV2IT {
     @Test
     public void testSimpleQuery() {
         IginXTable table = queryClient.query(
-                SimpleQuery.builder()
-                        .addMeasurement("test.session.v2.*")
-                        .startTime(endTimestamp - 1000L)
-                        .endTime(endTimestamp)
-                        .build()
+            SimpleQuery.builder()
+                .addMeasurement("test.session.v2.*")
+                .startTime(endTimestamp - 1000L)
+                .endTime(endTimestamp)
+                .build()
         );
         assertNotNull(table);
         IginXHeader header = table.getHeader();
@@ -332,11 +302,11 @@ public class SessionV2IT {
     @Test
     public void testAggregateQuery() {
         Query query = AggregateQuery.builder()
-                .addMeasurements(new HashSet<>(Collections.singletonList("test.session.v2.*")))
-                .aggregate(AggregateType.COUNT)
-                .startTime(startTimestamp)
-                .endTime(endTimestamp)
-                .build();
+            .addMeasurements(new HashSet<>(Collections.singletonList("test.session.v2.*")))
+            .aggregate(AggregateType.COUNT)
+            .startTime(startTimestamp)
+            .endTime(endTimestamp)
+            .build();
         IginXTable table = queryClient.query(query);
         assertNotNull(table);
         IginXHeader header = table.getHeader();
@@ -375,9 +345,9 @@ public class SessionV2IT {
     @Test
     public void testLastQuery() {
         Query query = LastQuery.builder()
-                .addMeasurements(new HashSet<>(Arrays.asList("test.session.v2.string", "test.session.v2.int")))
-                .startTime(startTimestamp)
-                .build();
+            .addMeasurements(new HashSet<>(Arrays.asList("test.session.v2.string", "test.session.v2.int")))
+            .startTime(startTimestamp)
+            .build();
 
         IginXTable table = queryClient.query(query);
         assertNotNull(table);
@@ -404,13 +374,13 @@ public class SessionV2IT {
     @Test
     public void testDownsampleQuery() {
         Query query = DownsampleQuery.builder()
-                .addMeasurement("test.session.v2.long")
-                .addMeasurement("test.session.v2.double")
-                .aggregate(AggregateType.SUM)
-                .precision((endTimestamp - startTimestamp) / 10)
-                .startTime(startTimestamp)
-                .endTime(endTimestamp + (endTimestamp - startTimestamp))
-                .build();
+            .addMeasurement("test.session.v2.long")
+            .addMeasurement("test.session.v2.double")
+            .aggregate(AggregateType.SUM)
+            .precision((endTimestamp - startTimestamp) / 10)
+            .startTime(startTimestamp)
+            .endTime(endTimestamp + (endTimestamp - startTimestamp))
+            .build();
         IginXTable table = queryClient.query(query);
         assertNotNull(table);
         IginXHeader header = table.getHeader();
@@ -448,12 +418,12 @@ public class SessionV2IT {
     @Test
     public void testMeasurementQuery() {
         List<POJO> pojoList = queryClient.query(
-                SimpleQuery.builder()
-                        .addMeasurement("test.session.v2.*")
-                        .startTime(endTimestamp - 1000L)
-                        .endTime(endTimestamp)
-                        .build(),
-                POJO.class
+            SimpleQuery.builder()
+                .addMeasurement("test.session.v2.*")
+                .startTime(endTimestamp - 1000L)
+                .endTime(endTimestamp)
+                .build(),
+            POJO.class
         );
         assertEquals(1000, pojoList.size());
         for (int i = 0; i < pojoList.size(); i++) {
@@ -492,9 +462,9 @@ public class SessionV2IT {
 
         List<User> actualUsers = usersClient.findUsers();
         List<User> expectedUsers = new ArrayList<>(
-                Collections.singletonList(
-                        new User("root", "root", UserType.Administrator, fullAuth)
-                )
+            Collections.singletonList(
+                new User("root", "root", UserType.Administrator, fullAuth)
+            )
         );
         assertEqualUsers(expectedUsers, actualUsers);
 
@@ -575,7 +545,7 @@ public class SessionV2IT {
             return false;
 
         return user1.getAuths().containsAll(user2.getAuths()) &&
-                user2.getAuths().containsAll(user1.getAuths());
+            user2.getAuths().containsAll(user1.getAuths());
     }
 
     @Measurement(name = "test.session.v2")

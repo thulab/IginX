@@ -32,11 +32,7 @@ import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class Count implements SetMappingFunction {
@@ -107,7 +103,7 @@ public class Count implements SetMappingFunction {
                 }
             }
             long[] counts = new long[targetFields.size()];
-            while(rows.hasNext()) {
+            while (rows.hasNext()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
                 for (int i = 0; i < indices.size(); i++) {
@@ -141,7 +137,7 @@ public class Count implements SetMappingFunction {
             }
             targetField = new Field(targetFieldName, DataType.LONG);
             long count = 0L;
-            while(rows.hasNext()) {
+            while (rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value != null) {

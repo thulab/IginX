@@ -41,22 +41,22 @@ public class ContextBuilder {
 
     public RequestContext build(InsertColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Column, req.getPaths(), req.getDataTypeList(),
-                req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
     }
 
     public RequestContext build(InsertNonAlignedColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedColumn, req.getPaths(), req.getDataTypeList(),
-                req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
     }
 
     public RequestContext build(InsertRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Row, req.getPaths(), req.getDataTypeList(),
-                req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
     }
 
     public RequestContext build(InsertNonAlignedRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedRow, req.getPaths(), req.getDataTypeList(),
-                req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
     }
 
     private RequestContext buildFromInsertReq(long sessionId, RawDataType rawDataType, List<String> paths, List<DataType> types,
@@ -76,12 +76,12 @@ public class ContextBuilder {
         }
 
         InsertStatement statement = new InsertStatement(
-                rawDataType,
-                paths,
-                times,
-                values,
-                types,
-                bitmaps
+            rawDataType,
+            paths,
+            times,
+            values,
+            types,
+            bitmaps
         );
         return new RequestContext(sessionId, statement);
     }
@@ -93,28 +93,28 @@ public class ContextBuilder {
 
     public RequestContext build(QueryDataReq req) {
         SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                req.getEndTime());
+            req.getPaths(),
+            req.getStartTime(),
+            req.getEndTime());
         return new RequestContext(req.getSessionId(), statement);
     }
 
     public RequestContext build(AggregateQueryReq req) {
         SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                req.getEndTime(),
-                req.getAggregateType());
+            req.getPaths(),
+            req.getStartTime(),
+            req.getEndTime(),
+            req.getAggregateType());
         return new RequestContext(req.getSessionId(), statement);
     }
 
     public RequestContext build(DownsampleQueryReq req) {
         SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                req.getEndTime(),
-                req.getAggregateType(),
-                req.getPrecision());
+            req.getPaths(),
+            req.getStartTime(),
+            req.getEndTime(),
+            req.getAggregateType(),
+            req.getPrecision());
         return new RequestContext(req.getSessionId(), statement);
     }
 
@@ -128,10 +128,10 @@ public class ContextBuilder {
 
     public RequestContext build(LastQueryReq req) {
         SelectStatement statement = new SelectStatement(
-                req.getPaths(),
-                req.getStartTime(),
-                Long.MAX_VALUE,
-                AggregateType.LAST);
+            req.getPaths(),
+            req.getStartTime(),
+            Long.MAX_VALUE,
+            AggregateType.LAST);
         return new RequestContext(req.getSessionId(), statement);
     }
 }

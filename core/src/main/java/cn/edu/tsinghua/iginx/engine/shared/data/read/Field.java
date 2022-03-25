@@ -51,9 +51,9 @@ public final class Field {
     @Override
     public String toString() {
         return "Field{" +
-                "name='" + name + '\'' +
-                ", type=" + type +
-                '}';
+            "name='" + name + '\'' +
+            ", type=" + type +
+            '}';
     }
 
     @Override

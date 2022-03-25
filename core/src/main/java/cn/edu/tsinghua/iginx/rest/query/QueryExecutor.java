@@ -104,16 +104,14 @@ public class QueryExecutor {
                 }
                 if (ins != null) {
                     path.append(ins).append(".");
-                }
-                else {
+                } else {
                     path.append("*.");
                 }
                 now++;
             }
             if (queryMetric.getAnnotation()) {
                 path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
-            }
-            else {
+            } else {
                 path.append(queryMetric.getName());
             }
             paths.add(path.toString());

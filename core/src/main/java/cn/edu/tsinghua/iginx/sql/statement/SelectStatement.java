@@ -8,13 +8,7 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class SelectStatement extends DataStatement {
 
@@ -116,8 +110,8 @@ public class SelectStatement extends DataStatement {
         this.pathSet.addAll(paths);
 
         this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
-                new TimeFilter(Op.GE, startTime),
-                new TimeFilter(Op.L, endTime)
+            new TimeFilter(Op.GE, startTime),
+            new TimeFilter(Op.L, endTime)
         )));
         this.hasValueFilter = true;
         this.layers = new ArrayList<>();
@@ -354,7 +348,7 @@ public class SelectStatement extends DataStatement {
         }
 
         if (queryType == QueryType.AggregateQuery
-                && (funcTypeSet.contains(FuncType.First) || funcTypeSet.contains(FuncType.Last))) {
+            && (funcTypeSet.contains(FuncType.First) || funcTypeSet.contains(FuncType.Last))) {
             this.queryType = QueryType.LastFirstQuery;
             if (funcTypeSet.size() > 1) {
                 throw new SQLParserException("First/Last query and other aggregate queries can not be mixed.");

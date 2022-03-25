@@ -65,7 +65,7 @@ public class MQTTService implements Runnable {
         server.startServer(config, handlers, null, authenticator, null);
 
         logger.info("Start MQTT service successfully, listening on ip {} port {}",
-                iginxConfig.getMqttHost(), iginxConfig.getMqttPort());
+            iginxConfig.getMqttHost(), iginxConfig.getMqttPort());
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Stopping IoTDB MQTT service...");

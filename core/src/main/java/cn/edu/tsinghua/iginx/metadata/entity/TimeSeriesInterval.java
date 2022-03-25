@@ -101,7 +101,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     public boolean isContain(String tsName) {
         return (startTimeSeries == null || (tsName != null && StringUtils.compare(tsName, startTimeSeries, true) >= 0))
-                && (endTimeSeries == null || (tsName != null && StringUtils.compare(tsName, endTimeSeries, false) < 0));
+            && (endTimeSeries == null || (tsName != null && StringUtils.compare(tsName, endTimeSeries, false) < 0));
     }
 
     public boolean isCompletelyBefore(String tsName) {
@@ -110,7 +110,7 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
 
     public boolean isIntersect(TimeSeriesInterval tsInterval) {
         return (tsInterval.startTimeSeries == null || endTimeSeries == null || StringUtils.compare(tsInterval.startTimeSeries, endTimeSeries, false) < 0)
-                && (tsInterval.endTimeSeries == null || startTimeSeries == null || StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) >= 0);
+            && (tsInterval.endTimeSeries == null || startTimeSeries == null || StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) >= 0);
     }
 
     public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {

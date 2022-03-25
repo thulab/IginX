@@ -21,17 +21,10 @@ package cn.edu.tsinghua.iginx.metadata.cache;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.*;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.*;
@@ -162,7 +155,7 @@ public class DefaultMetaCache implements IMetaCache {
         storageUnitLock.readLock().unlock();
         fragmentLock.writeLock().lock();
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
+            .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
         fragmentListMap.forEach(fragmentMetaListMap::put);
         fragmentLock.writeLock().unlock();
     }
@@ -229,7 +222,7 @@ public class DefaultMetaCache implements IMetaCache {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
-                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+            .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
         fragmentLock.readLock().unlock();
         return latestFragmentMap;
     }
@@ -239,7 +232,7 @@ public class DefaultMetaCache implements IMetaCache {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
         searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
-                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+            .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
         fragmentLock.readLock().unlock();
         return latestFragmentMap;
     }
@@ -280,7 +273,7 @@ public class DefaultMetaCache implements IMetaCache {
         FragmentMeta result;
         fragmentLock.readLock().lock();
         result = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
-                .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
+            .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
         fragmentLock.readLock().unlock();
         return result;
     }
@@ -290,7 +283,7 @@ public class DefaultMetaCache implements IMetaCache {
         List<FragmentMeta> resultList;
         fragmentLock.readLock().lock();
         List<FragmentMeta> fragmentMetas = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
-                .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
+            .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
         resultList = searchFragmentList(fragmentMetas, timeInterval);
         fragmentLock.readLock().unlock();
         return resultList;
@@ -560,7 +553,7 @@ public class DefaultMetaCache implements IMetaCache {
     public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
         insertRecordLock.readLock().lock();
         List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
-                .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
+            .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
         insertRecordLock.readLock().unlock();
         return ret;
     }

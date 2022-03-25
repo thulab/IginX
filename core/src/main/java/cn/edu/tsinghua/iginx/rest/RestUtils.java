@@ -12,10 +12,10 @@ public class RestUtils {
             for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     if (sessionQueryDataSet.getValues().get(i).get(j) instanceof Integer ||
-                            sessionQueryDataSet.getValues().get(i).get(j) instanceof Long) {
+                        sessionQueryDataSet.getValues().get(i).get(j) instanceof Long) {
                         ret = Math.max(ret, 1);
                     } else if (sessionQueryDataSet.getValues().get(i).get(j) instanceof Float ||
-                            sessionQueryDataSet.getValues().get(i).get(j) instanceof Double) {
+                        sessionQueryDataSet.getValues().get(i).get(j) instanceof Double) {
                         ret = Math.max(ret, 2);
                     } else if (sessionQueryDataSet.getValues().get(i).get(j) instanceof byte[]) {
                         ret = 3;

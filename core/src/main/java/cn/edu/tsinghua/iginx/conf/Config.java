@@ -113,7 +113,7 @@ public class Config {
 
     private double storageGroupValueLimit = 200.0;
 
-    private boolean enablePushDown=true;
+    private boolean enablePushDown = true;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;

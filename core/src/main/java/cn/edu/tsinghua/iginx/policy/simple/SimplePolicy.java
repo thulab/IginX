@@ -255,10 +255,10 @@ public class SimplePolicy implements IPolicy {
         if (config.isEnableStorageGroupValueLimit()) {
             double totalValue = data.values().stream().mapToDouble(Double::doubleValue).sum();
             m = new Double(Math.ceil(totalValue / config.getStorageGroupValueLimit() / iMetaManager.getStorageEngineNum())).
-                    intValue() * iMetaManager.getStorageEngineNum();
+                intValue() * iMetaManager.getStorageEngineNum();
         }
         List<Pair<String, Double>> tmp = data.entrySet().stream().map(entry -> new Pair<>(entry.getKey(), entry.getValue())).
-                sorted(Comparator.comparing(Pair::getK)).collect(Collectors.toList());
+            sorted(Comparator.comparing(Pair::getK)).collect(Collectors.toList());
         List<Double> sum = new ArrayList<>();
         sum.add(0.0);
         for (int i = 0; i < n; i++) {
@@ -287,7 +287,7 @@ public class SimplePolicy implements IPolicy {
         int tmpn = n, tmpm = m;
         while (last[tmpn][tmpm] > 0) {
             tmpn = last[tmpn][tmpm];
-            tmpm --;
+            tmpm--;
             ret.add(tmp.get(tmpn - 1).k);
         }
         Collections.reverse(ret);
@@ -304,8 +304,8 @@ public class SimplePolicy implements IPolicy {
 
     public boolean checkSuccess(Map<String, Double> timeseriesData) {
         Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-        Map<TimeSeriesInterval, Double> fragmentValue =  latestFragments.keySet().stream().collect(
-                Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
+        Map<TimeSeriesInterval, Double> fragmentValue = latestFragments.keySet().stream().collect(
+            Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
         );
         timeseriesData.forEach((key, value) -> {
             for (TimeSeriesInterval timeSeriesInterval : fragmentValue.keySet()) {
@@ -317,8 +317,8 @@ public class SimplePolicy implements IPolicy {
         });
         List<Double> value = fragmentValue.values().stream().sorted().collect(Collectors.toList());
         int num = 0;
-        for (Double v: value) {
-            logger.info("fragment value num : {}, value : {}", num ++, v);
+        for (Double v : value) {
+            logger.info("fragment value num : {}, value : {}", num++, v);
         }
         if (value.size() > 0) {
             return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);

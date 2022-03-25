@@ -6,27 +6,9 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Date;
-import java.sql.NClob;
-import java.sql.ParameterMetaData;
-import java.sql.PreparedStatement;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLType;
-import java.sql.SQLXML;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.sql.*;
+import java.util.*;
 
 public class IginXPreparedStatement extends IginXStatement implements PreparedStatement {
 
@@ -64,7 +46,7 @@ public class IginXPreparedStatement extends IginXStatement implements PreparedSt
     }
 
     private String createCompleteSql(final String sql, Map<Integer, String> parameters)
-            throws SQLException {
+        throws SQLException {
         List<String> parts = splitSqlStatement(sql);
 
         StringBuilder newSql = new StringBuilder(parts.get(0));
@@ -159,7 +141,7 @@ public class IginXPreparedStatement extends IginXStatement implements PreparedSt
                     }
                     d *= 10; // shifts 1 digit to left
                     int count = 1;
-                    while(d - (long) d != 0) { // keeps shifting until there are no more fractions
+                    while (d - (long) d != 0) { // keeps shifting until there are no more fractions
                         d *= 10;
                         count++;
                     }
@@ -252,10 +234,10 @@ public class IginXPreparedStatement extends IginXStatement implements PreparedSt
             setBoolean(parameterIndex, (Boolean) x);
         } else {
             throw new SQLException(
-                    String.format(
-                            "Can''t infer the SQL type to use for an instance of %s. Use setObject() with"
-                                    + " an explicit Types value to specify the type to use.",
-                            x.getClass().getName()));
+                String.format(
+                    "Can''t infer the SQL type to use for an instance of %s. Use setObject() with"
+                        + " an explicit Types value to specify the type to use.",
+                    x.getClass().getName()));
         }
     }
 

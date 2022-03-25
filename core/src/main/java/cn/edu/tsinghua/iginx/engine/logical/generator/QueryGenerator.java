@@ -7,16 +7,7 @@ import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
-import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -33,7 +24,10 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
@@ -47,7 +41,7 @@ public class QueryGenerator extends AbstractGenerator {
     private final static FunctionManager functionManager = FunctionManager.getInstance();
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
     private final IPolicy policy = PolicyManager.getInstance()
-            .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+        .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private QueryGenerator() {
         this.type = GeneratorType.Query;
@@ -105,12 +99,12 @@ public class QueryGenerator extends AbstractGenerator {
                 Operator copySelect = finalRoot.copy();
 
                 queryList.add(
-                        new Downsample(
-                                new OperatorSource(copySelect),
-                                selectStatement.getPrecision(),
-                                new FunctionCall(functionManager.getFunction(k), params),
-                                new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
-                        )
+                    new Downsample(
+                        new OperatorSource(copySelect),
+                        selectStatement.getPrecision(),
+                        new FunctionCall(functionManager.getFunction(k), params),
+                        new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
+                    )
                 );
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
@@ -125,10 +119,10 @@ public class QueryGenerator extends AbstractGenerator {
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
-                        new SetTransform(
-                                new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), params)
-                        )
+                    new SetTransform(
+                        new OperatorSource(copySelect),
+                        new FunctionCall(functionManager.getFunction(k), params)
+                    )
                 );
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
@@ -138,10 +132,10 @@ public class QueryGenerator extends AbstractGenerator {
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
-                        new MappingTransform(
-                                new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), params)
-                        )
+                    new MappingTransform(
+                        new OperatorSource(copySelect),
+                        new FunctionCall(functionManager.getFunction(k), params)
+                    )
                 );
             }));
         } else {
@@ -160,17 +154,17 @@ public class QueryGenerator extends AbstractGenerator {
 
         if (!selectStatement.getOrderByPath().equals("")) {
             root = new Sort(
-                    new OperatorSource(root),
-                    selectStatement.getOrderByPath(),
-                    selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
+                new OperatorSource(root),
+                selectStatement.getOrderByPath(),
+                selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
             );
         }
 
         if (selectStatement.getLimit() != Integer.MAX_VALUE || selectStatement.getOffset() != 0) {
             root = new Limit(
-                    new OperatorSource(root),
-                    (int) selectStatement.getLimit(),
-                    (int) selectStatement.getOffset()
+                new OperatorSource(root),
+                (int) selectStatement.getLimit(),
+                (int) selectStatement.getOffset()
             );
         }
 

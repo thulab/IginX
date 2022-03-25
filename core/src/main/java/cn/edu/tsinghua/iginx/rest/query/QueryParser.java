@@ -517,7 +517,7 @@ public class QueryParser {
 
     public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana) {
         return "[" + result.toAnnotationResultString(isGrafana) +
-                "]";
+            "]";
     }
 
     public String parseResultToGrafanaJson(QueryResult result) {
