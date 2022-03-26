@@ -19,11 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.physical.optimizer.naive;
 
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
@@ -83,8 +79,8 @@ class NaiveConstraintManager implements ConstraintManager {
         }
         if (source.getType() == SourceType.Fragment) {
             return unaryOperator.getType() == OperatorType.Project ||
-                    unaryOperator.getType() == OperatorType.Delete ||
-                    unaryOperator.getType() == OperatorType.Insert;
+                unaryOperator.getType() == OperatorType.Delete ||
+                unaryOperator.getType() == OperatorType.Insert;
         }
         Operator sourceOperator = ((OperatorSource) source).getOperator();
         return checkOperator(sourceOperator);

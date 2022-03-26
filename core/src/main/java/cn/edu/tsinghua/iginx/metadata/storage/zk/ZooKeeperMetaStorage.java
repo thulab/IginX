@@ -20,12 +20,7 @@ package cn.edu.tsinghua.iginx.metadata.storage.zk;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
@@ -125,10 +120,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
-                .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
-                .connectionTimeoutMs(15000)
-                .retryPolicy(new RetryForever(1000))
-                .build();
+            .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
+            .connectionTimeoutMs(15000)
+            .retryPolicy(new RetryForever(1000))
+            .build();
         client.start();
 
         fragmentMutex = new InterProcessMutex(client, FRAGMENT_LOCK_NODE);
@@ -155,14 +150,14 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             if (client.checkExists().forPath(SCHEMA_MAPPING_PREFIX) == null) {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
                 client.create()
-                        .withMode(CreateMode.PERSISTENT)
-                        .forPath(SCHEMA_MAPPING_PREFIX);
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(SCHEMA_MAPPING_PREFIX);
             } else {
                 List<String> schemas = this.client.getChildren()
-                        .forPath(SCHEMA_MAPPING_PREFIX);
+                    .forPath(SCHEMA_MAPPING_PREFIX);
                 for (String schema : schemas) {
                     Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(new String(this.client.getData()
-                            .forPath(SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {
+                        .forPath(SCHEMA_MAPPING_PREFIX + "/" + schema)), new TypeToken<Map<String, Integer>>() {
                     }.getType());
                     schemaMappings.put(schema, schemaMapping);
                 }
@@ -252,14 +247,14 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             if (client.checkExists().forPath(IGINX_NODE_PREFIX) == null) {
                 // 当前还没有数据，创建父节点，然后不需要解析数据
                 client.create()
-                        .withMode(CreateMode.PERSISTENT)
-                        .forPath(IGINX_NODE_PREFIX);
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(IGINX_NODE_PREFIX);
             } else {
                 List<String> children = client.getChildren()
-                        .forPath(IGINX_NODE_PREFIX);
+                    .forPath(IGINX_NODE_PREFIX);
                 for (String childName : children) {
                     byte[] data = client.getData()
-                            .forPath(IGINX_NODE_PREFIX + "/" + childName);
+                        .forPath(IGINX_NODE_PREFIX + "/" + childName);
                     IginxMeta iginxMeta = JsonUtils.fromJson(data, IginxMeta.class);
                     if (iginxMeta == null) {
                         logger.error("resolve data from " + IGINX_NODE_PREFIX + "/" + childName + " error");
@@ -287,14 +282,14 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             String nodeName = this.client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
-                    .forPath(IGINX_NODE, "".getBytes(StandardCharsets.UTF_8));
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
+                .forPath(IGINX_NODE, "".getBytes(StandardCharsets.UTF_8));
             long id = Long.parseLong(nodeName.substring(IGINX_NODE.length()));
             IginxMeta iginxMeta = new IginxMeta(id, iginx.getIp(),
-                    iginx.getPort(), iginx.getExtraParams());
+                iginx.getPort(), iginx.getExtraParams());
             this.client.setData()
-                    .forPath(nodeName, JsonUtils.toJson(iginxMeta));
+                .forPath(nodeName, JsonUtils.toJson(iginxMeta));
             return id;
         } catch (Exception e) {
             throw new MetaStorageException("get error when load iginx", e);
@@ -364,13 +359,13 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             mutex.acquire();
             if (this.client.checkExists().forPath(STORAGE_ENGINE_NODE_PREFIX) == null) { // 节点不存在，说明还没有别的 iginx 节点写入过元信息
                 this.client.create().creatingParentsIfNeeded()
-                        .withMode(CreateMode.PERSISTENT)
-                        .forPath(STORAGE_ENGINE_NODE_PREFIX);
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(STORAGE_ENGINE_NODE_PREFIX);
                 for (StorageEngineMeta storageEngineMeta : storageEngines) {
                     String nodeName = this.client.create()
-                            .creatingParentsIfNeeded()
-                            .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
-                            .forPath(STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
+                        .creatingParentsIfNeeded()
+                        .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                        .forPath(STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
                     long id = Long.parseLong(nodeName.substring(STORAGE_ENGINE_NODE.length()));
                     storageEngineMeta.setId(id);
                     this.client.setData().forPath(nodeName, JsonUtils.toJson(storageEngineMeta));
@@ -383,7 +378,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             List<String> children = this.client.getChildren().forPath(STORAGE_ENGINE_NODE_PREFIX);
             for (String childName : children) {
                 byte[] data = this.client.getData()
-                        .forPath(STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
+                    .forPath(STORAGE_ENGINE_NODE_PREFIX + "/" + childName);
                 StorageEngineMeta storageEngineMeta = JsonUtils.fromJson(data, StorageEngineMeta.class);
                 if (storageEngineMeta == null) {
                     logger.error("resolve data from " + STORAGE_ENGINE_NODE_PREFIX + "/" + childName + " error");
@@ -409,13 +404,13 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             String nodeName = this.client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
-                    .forPath(STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                .forPath(STORAGE_ENGINE_NODE, "".getBytes(StandardCharsets.UTF_8));
             long id = Long.parseLong(nodeName.substring(STORAGE_ENGINE_NODE.length()));
             storageEngine.setId(id);
             this.client.setData()
-                    .forPath(nodeName, JsonUtils.toJson(storageEngine));
+                .forPath(nodeName, JsonUtils.toJson(storageEngine));
             return id;
         } catch (Exception e) {
             throw new MetaStorageException("get error when add storage engine", e);
@@ -497,7 +492,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                 for (String storageUnitId : storageUnitIds) {
                     logger.info("load storage unit: " + storageUnitId);
                     byte[] data = this.client.getData()
-                            .forPath(STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitId);
+                        .forPath(STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitId);
                     StorageUnitMeta storageUnitMeta = JsonUtils.fromJson(data, StorageUnitMeta.class);
                     if (!storageUnitMeta.isMaster()) { // 需要加入到主节点的子节点列表中
                         StorageUnitMeta masterStorageUnitMeta = storageUnitMetaMap.get(storageUnitMeta.getMasterId());
@@ -532,9 +527,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public String addStorageUnit() throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             String nodeName = this.client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
-                    .forPath(STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT_SEQUENTIAL)
+                .forPath(STORAGE_UNIT_NODE, "".getBytes(StandardCharsets.UTF_8));
             return nodeName.substring(STORAGE_UNIT_NODE_PREFIX.length() + 1);
         } catch (Exception e) {
             throw new MetaStorageException("add storage unit error: ", e);
@@ -545,7 +540,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.setData()
-                    .forPath(STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitMeta.getId(), JsonUtils.toJson(storageUnitMeta));
+                .forPath(STORAGE_UNIT_NODE_PREFIX + "/" + storageUnitMeta.getId(), JsonUtils.toJson(storageUnitMeta));
         } catch (Exception e) {
             throw new MetaStorageException("add storage unit error: ", e);
         }
@@ -607,7 +602,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
                     for (String timeIntervalName : timeIntervalNames) {
                         FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
-                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                            .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
                         fragmentMetaList.add(fragmentMeta);
                     }
                     fragmentListMap.put(fragmentTimeSeries, fragmentMetaList);
@@ -673,7 +668,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.setData()
-                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
             throw new MetaStorageException("get error when update fragment", e);
         }
@@ -683,7 +678,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
         try {
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+                .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
         } catch (Exception e) {
             throw new MetaStorageException("get error when add fragment", e);
         }
@@ -746,13 +741,13 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             mutex.acquire();
             if (this.client.checkExists().forPath(USER_NODE_PREFIX) == null) { // 节点不存在，说明系统中第一个用户还没有被创建
                 this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                        .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
+                    .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
             }
             List<UserMeta> users = new ArrayList<>();
             List<String> usernames = this.client.getChildren().forPath(USER_NODE_PREFIX);
             for (String username : usernames) {
                 byte[] data = this.client.getData()
-                        .forPath(USER_NODE_PREFIX + "/" + username);
+                    .forPath(USER_NODE_PREFIX + "/" + username);
                 UserMeta user = JsonUtils.fromJson(data, UserMeta.class);
                 if (user == null) {
                     logger.error("resolve data from " + USER_NODE_PREFIX + "/" + username + " error");
@@ -784,7 +779,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                    .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
+                .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
         } catch (Exception e) {
             throw new MetaStorageException("get error when add user", e);
         } finally {
@@ -802,7 +797,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             this.client.setData()
-                    .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
+                .forPath(USER_NODE_PREFIX + "/" + userMeta.getUsername(), JsonUtils.toJson(userMeta));
         } catch (Exception e) {
             throw new MetaStorageException("get error when update user", e);
         } finally {
@@ -820,7 +815,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             this.client.delete()
-                    .forPath(USER_NODE_PREFIX + "/" + username);
+                .forPath(USER_NODE_PREFIX + "/" + username);
         } catch (Exception e) {
             throw new MetaStorageException("get error when remove user", e);
         } finally {
@@ -849,9 +844,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         }
         try {
             this.client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.EPHEMERAL)
-                    .forPath(POLICY_LEADER);
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.EPHEMERAL)
+                .forPath(POLICY_LEADER);
             logger.info("成功");
             isMaster = true;
         } catch (KeeperException.NodeExistsException e) {
@@ -868,7 +863,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             if (this.client.checkExists().forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid) == null) {
-                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT). forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid, tobytes(timeseriesData));
+                this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid, tobytes(timeseriesData));
             } else {
                 this.client.setData().forPath(TIMESERIES_NODE_PREFIX + "/" + iginxid, tobytes(timeseriesData));
             }
@@ -889,11 +884,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         Map<String, Double> ret = new HashMap<>();
         try {
             Set<Integer> idSet = loadIginx().keySet().stream().
-                    map(Long::intValue).collect(Collectors.toSet());
+                map(Long::intValue).collect(Collectors.toSet());
             List<String> children = client.getChildren().forPath(TIMESERIES_NODE_PREFIX);
-            for (String child: children) {
+            for (String child : children) {
                 byte[] data = this.client.getData()
-                        .forPath(TIMESERIES_NODE_PREFIX + "/" + child);
+                    .forPath(TIMESERIES_NODE_PREFIX + "/" + child);
                 if (!idSet.contains(Integer.parseInt(child))) {
                     continue;
                 }
@@ -918,7 +913,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private byte[] tobytes(Map<String, Double> prefix) {
         StringBuilder ret = new StringBuilder();
-        for (Map.Entry<String, Double> entry: prefix.entrySet()) {
+        for (Map.Entry<String, Double> entry : prefix.entrySet()) {
             ret.append(entry.getKey());
             ret.append("~");
             ret.append(entry.getValue());
@@ -937,15 +932,11 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         Map<String, Double> ret = new HashMap<>();
         String str = new String(prefix);
         String[] tmp = str.split("\\^");
-        for (String entry: Arrays.asList(tmp))
-        {
+        for (String entry : Arrays.asList(tmp)) {
             String[] tmp2 = entry.split("~");
-            try
-            {
+            try {
                 ret.put(tmp2[0], Double.parseDouble(tmp2[1]));
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 logger.error(entry);
             }
         }
@@ -959,37 +950,37 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             mutex.acquire();
             if (client.checkExists().forPath(POLICY_NODE_PREFIX) == null) {
                 this.client.create()
-                        .creatingParentsIfNeeded()
-                        .withMode(CreateMode.PERSISTENT)
-                        .forPath(POLICY_NODE_PREFIX);
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(POLICY_NODE_PREFIX);
             }
 
             if (client.checkExists().forPath(TIMESERIES_NODE_PREFIX) == null) {
                 this.client.create()
-                        .creatingParentsIfNeeded()
-                        .withMode(CreateMode.PERSISTENT)
-                        .forPath(TIMESERIES_NODE_PREFIX);
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(TIMESERIES_NODE_PREFIX);
             }
             if (client.checkExists().forPath(POLICY_VERSION) == null) {
                 this.client.create()
-                        .creatingParentsIfNeeded()
-                        .withMode(CreateMode.PERSISTENT)
-                        .forPath(POLICY_VERSION);
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(POLICY_VERSION);
 
                 this.client.setData().forPath(POLICY_VERSION, ("0" + "\t" + num).getBytes());
             }
 
             this.client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT)
-                    .forPath(POLICY_NODE_PREFIX + "/" + iginxId);
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT)
+                .forPath(POLICY_NODE_PREFIX + "/" + iginxId);
 
             this.client.setData().forPath(POLICY_NODE_PREFIX + "/" + iginxId, "0".getBytes());
 
             this.client.create()
-                    .creatingParentsIfNeeded()
-                    .withMode(CreateMode.PERSISTENT)
-                    .forPath(TIMESERIES_NODE_PREFIX + "/" + iginxId);
+                .creatingParentsIfNeeded()
+                .withMode(CreateMode.PERSISTENT)
+                .forPath(TIMESERIES_NODE_PREFIX + "/" + iginxId);
 
             this.policyCache = new TreeCache(this.client, POLICY_LEADER);
             TreeCacheListener listener = (curatorFramework, event) -> {

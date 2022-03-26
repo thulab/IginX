@@ -85,7 +85,7 @@ public class LastValue implements SetMappingFunction {
                 }
             }
             Object[] targetValues = new Object[targetFields.size()];
-            while(rows.hasNext()) {
+            while (rows.hasNext()) {
                 Row row = rows.next();
                 for (int i = 0; i < indices.size(); i++) {
                     Object value = row.getValue(indices.get(i));
@@ -104,7 +104,7 @@ public class LastValue implements SetMappingFunction {
             Field field = rows.getHeader().getField(index);
             Field targetField = new Field(getIdentifier() + "(" + field.getName() + ")", field.getType());
             Object targetValue = null;
-            while(rows.hasNext()) {
+            while (rows.hasNext()) {
                 Row row = rows.next();
                 Object value = row.getValue(index);
                 if (value != null) {

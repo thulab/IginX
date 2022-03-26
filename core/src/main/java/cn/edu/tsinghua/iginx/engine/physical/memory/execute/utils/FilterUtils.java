@@ -21,12 +21,7 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 
 public class FilterUtils {
 

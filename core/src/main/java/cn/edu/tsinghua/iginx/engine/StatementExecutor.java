@@ -20,7 +20,9 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.statistics.IStatisticsCollector;
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
@@ -83,9 +85,9 @@ public class StatementExecutor {
             String statisticsCollectorClassName = ConfigDescriptor.getInstance().getConfig().getStatisticsCollectorClassName();
             if (statisticsCollectorClassName != null && !statisticsCollectorClassName.equals("")) {
                 Class<?> statisticsCollectorClass = StatementExecutor.class.getClassLoader().
-                        loadClass(statisticsCollectorClassName);
+                    loadClass(statisticsCollectorClassName);
                 IStatisticsCollector statisticsCollector = ((Class<? extends IStatisticsCollector>) statisticsCollectorClass)
-                        .getConstructor().newInstance();
+                    .getConstructor().newInstance();
                 registerPreParseProcessor(statisticsCollector.getPreParseProcessor());
                 registerPostParseProcessor(statisticsCollector.getPostParseProcessor());
                 registerPreLogicalProcessor(statisticsCollector.getPreLogicalProcessor());
@@ -181,7 +183,7 @@ public class StatementExecutor {
             e.printStackTrace();
             StatusCode statusCode = StatusCode.STATEMENT_EXECUTION_ERROR;
             String errMsg = "Execute Error: encounter error(s) when executing sql statement, " +
-                    "see server log for more details.";
+                "see server log for more details.";
             ctx.setResult(new Result(RpcUtils.status(statusCode, errMsg)));
         } finally {
             ctx.getResult().setSqlType(ctx.getSqlType());
@@ -240,10 +242,10 @@ public class StatementExecutor {
 
     private void processCountPoints(RequestContext ctx) throws ExecutionException, PhysicalException {
         SelectStatement statement = new SelectStatement(
-                Collections.singletonList("*"),
-                0,
-                Long.MAX_VALUE,
-                AggregateType.COUNT);
+            Collections.singletonList("*"),
+            0,
+            Long.MAX_VALUE,
+            AggregateType.COUNT);
         ctx.setStatement(statement);
         process(ctx);
 

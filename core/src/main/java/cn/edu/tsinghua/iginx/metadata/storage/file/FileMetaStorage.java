@@ -2,12 +2,7 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
@@ -15,13 +10,7 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -145,7 +134,7 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, SCHEMA_MAPPING_FILE).toFile())))) {
             String line;
             String[] params;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 String schema = params[1];
                 if (params[0].equals(UPDATE)) {
@@ -222,7 +211,7 @@ public class FileMetaStorage implements IMetaStorage {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_META_FILE).toFile())))) {
                 String line;
                 String[] params;
-                while((line = reader.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
                     params = line.split(" ");
                     if (params[0].equals(UPDATE)) {
                         StorageEngineMeta storageEngine = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), StorageEngineMeta.class);
@@ -271,7 +260,7 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_UNIT_META_FILE).toFile())))) {
             String line;
             String[] params;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     StorageUnitMeta storageUnit = JsonUtils.getGson().fromJson(params[1], StorageUnitMeta.class);
@@ -328,7 +317,7 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, FRAGMENT_META_FILE).toFile())))) {
             String line;
             String[] params;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
@@ -401,7 +390,7 @@ public class FileMetaStorage implements IMetaStorage {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, USER_META_FILE).toFile())))) {
                 String line;
                 String[] params;
-                while((line = reader.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
                     params = line.split(" ");
                     if (params[0].equals(UPDATE)) {
                         UserMeta user = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), UserMeta.class);

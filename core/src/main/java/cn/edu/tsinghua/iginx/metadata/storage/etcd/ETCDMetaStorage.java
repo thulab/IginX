@@ -20,21 +20,12 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.KeyValue;
-import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.Watch;
+import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.options.GetOption;
@@ -47,11 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -115,235 +102,235 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     public ETCDMetaStorage() {
         client = Client.builder()
-                .endpoints(ConfigDescriptor.getInstance().getConfig().getEtcdEndpoints()
-                        .split(","))
-                .build();
+            .endpoints(ConfigDescriptor.getInstance().getConfig().getEtcdEndpoints()
+                .split(","))
+            .build();
 
         // 注册 schema mapping 的监听
         this.schemaMappingWatcher = client.getWatchClient().watch(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
-                WatchOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).withPrevKV(true).build(),
-                new Watch.Listener() {
-                    @Override
-                    public void onNext(WatchResponse watchResponse) {
-                        if (ETCDMetaStorage.this.schemaMappingChangeHook == null) {
-                            return;
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.schemaMappingChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        String schema = event.getKeyValue().getKey().toString(StandardCharsets.UTF_8)
+                            .substring(SCHEMA_MAPPING_PREFIX.length());
+                        Map<String, Integer> schemaMapping = null;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                schemaMapping = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<String, Integer>>() {
+                                }.getType());
+                                break;
+                            case DELETE:
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
                         }
-                        for (WatchEvent event : watchResponse.getEvents()) {
-                            String schema = event.getKeyValue().getKey().toString(StandardCharsets.UTF_8)
-                                    .substring(SCHEMA_MAPPING_PREFIX.length());
-                            Map<String, Integer> schemaMapping = null;
-                            switch (event.getEventType()) {
-                                case PUT:
-                                    schemaMapping = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<String, Integer>>() {
-                                    }.getType());
-                                    break;
-                                case DELETE:
-                                    break;
-                                default:
-                                    logger.error("unexpected watchEvent: " + event.getEventType());
-                                    break;
-                            }
-                            ETCDMetaStorage.this.schemaMappingChangeHook.onChange(schema, schemaMapping);
-                        }
+                        ETCDMetaStorage.this.schemaMappingChangeHook.onChange(schema, schemaMapping);
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-                    }
+                }
 
-                    @Override
-                    public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                    }
-                });
+                }
+            });
 
         // 注册 iginx 的监听
         this.iginxWatcher = client.getWatchClient().watch(ByteSequence.from(IGINX_PREFIX.getBytes()),
-                WatchOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).withPrevKV(true).build(),
-                new Watch.Listener() {
-                    @Override
-                    public void onNext(WatchResponse watchResponse) {
-                        if (ETCDMetaStorage.this.iginxChangeHook == null) {
-                            return;
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.iginxChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        IginxMeta iginx;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                iginx = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), IginxMeta.class);
+                                logger.info("new iginx comes to cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
+                                ETCDMetaStorage.this.iginxChangeHook.onChange(iginx.getId(), iginx);
+                                break;
+                            case DELETE:
+                                iginx = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), IginxMeta.class);
+                                logger.info("iginx leave from cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
+                                iginxChangeHook.onChange(iginx.getId(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
                         }
-                        for (WatchEvent event : watchResponse.getEvents()) {
-                            IginxMeta iginx;
-                            switch (event.getEventType()) {
-                                case PUT:
-                                    iginx = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), IginxMeta.class);
-                                    logger.info("new iginx comes to cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
-                                    ETCDMetaStorage.this.iginxChangeHook.onChange(iginx.getId(), iginx);
-                                    break;
-                                case DELETE:
-                                    iginx = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), IginxMeta.class);
-                                    logger.info("iginx leave from cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
-                                    iginxChangeHook.onChange(iginx.getId(), null);
-                                    break;
-                                default:
-                                    logger.error("unexpected watchEvent: " + event.getEventType());
-                                    break;
-                            }
-                        }
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-                    }
+                }
 
-                    @Override
-                    public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                    }
-                });
+                }
+            });
 
         // 注册 storage 的监听
         this.storageWatcher = client.getWatchClient().watch(ByteSequence.from(STORAGE_PREFIX.getBytes()),
-                WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).withPrevKV(true).build(),
-                new Watch.Listener() {
-                    @Override
-                    public void onNext(WatchResponse watchResponse) {
-                        if (ETCDMetaStorage.this.storageWatcher == null) {
-                            return;
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.storageWatcher == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        StorageEngineMeta storageEngine;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                storageEngine = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageEngineMeta.class);
+                                storageChangeHook.onChange(storageEngine.getId(), storageEngine);
+                                break;
+                            case DELETE:
+                                storageEngine = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), StorageEngineMeta.class);
+                                storageChangeHook.onChange(storageEngine.getId(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
                         }
-                        for (WatchEvent event : watchResponse.getEvents()) {
-                            StorageEngineMeta storageEngine;
-                            switch (event.getEventType()) {
-                                case PUT:
-                                    storageEngine = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageEngineMeta.class);
-                                    storageChangeHook.onChange(storageEngine.getId(), storageEngine);
-                                    break;
-                                case DELETE:
-                                    storageEngine = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), StorageEngineMeta.class);
-                                    storageChangeHook.onChange(storageEngine.getId(), null);
-                                    break;
-                                default:
-                                    logger.error("unexpected watchEvent: " + event.getEventType());
-                                    break;
-                            }
-                        }
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-                    }
+                }
 
-                    @Override
-                    public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                    }
-                });
+                }
+            });
 
         // 注册 storage unit 的监听
         this.storageUnitWatcher = client.getWatchClient().watch(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
-                WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).withPrevKV(true).build(),
-                new Watch.Listener() {
-                    @Override
-                    public void onNext(WatchResponse watchResponse) {
-                        if (ETCDMetaStorage.this.storageUnitWatcher == null) {
-                            return;
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.storageUnitWatcher == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        StorageUnitMeta storageUnit;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                storageUnit = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageUnitMeta.class);
+                                storageUnitChangeHook.onChange(storageUnit.getId(), storageUnit);
+                                break;
+                            case DELETE:
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
                         }
-                        for (WatchEvent event : watchResponse.getEvents()) {
-                            StorageUnitMeta storageUnit;
-                            switch (event.getEventType()) {
-                                case PUT:
-                                    storageUnit = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageUnitMeta.class);
-                                    storageUnitChangeHook.onChange(storageUnit.getId(), storageUnit);
-                                    break;
-                                case DELETE:
-                                default:
-                                    logger.error("unexpected watchEvent: " + event.getEventType());
-                                    break;
-                            }
-                        }
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-                    }
+                }
 
-                    @Override
-                    public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                    }
-                });
+                }
+            });
 
         // 注册 fragment 的监听
         this.fragmentWatcher = client.getWatchClient().watch(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
-                WatchOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).withPrevKV(true).build(),
-                new Watch.Listener() {
-                    @Override
-                    public void onNext(WatchResponse watchResponse) {
-                        if (ETCDMetaStorage.this.fragmentChangeHook == null) {
-                            return;
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.fragmentChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        FragmentMeta fragment;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                fragment = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), FragmentMeta.class);
+                                boolean isCreate = event.getPrevKV().getVersion() == 0; // 上一次如果是 0，意味着就是创建
+                                fragmentChangeHook.onChange(isCreate, fragment);
+                                break;
+                            case DELETE:
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
                         }
-                        for (WatchEvent event : watchResponse.getEvents()) {
-                            FragmentMeta fragment;
-                            switch (event.getEventType()) {
-                                case PUT:
-                                    fragment = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), FragmentMeta.class);
-                                    boolean isCreate = event.getPrevKV().getVersion() == 0; // 上一次如果是 0，意味着就是创建
-                                    fragmentChangeHook.onChange(isCreate, fragment);
-                                    break;
-                                case DELETE:
-                                default:
-                                    logger.error("unexpected watchEvent: " + event.getEventType());
-                                    break;
-                            }
-                        }
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-                    }
+                }
 
-                    @Override
-                    public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                    }
-                });
+                }
+            });
 
         // 注册 user 的监听
         this.userWatcher = client.getWatchClient().watch(ByteSequence.from(USER_PREFIX.getBytes()),
-                WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(),
-                new Watch.Listener() {
-                    @Override
-                    public void onNext(WatchResponse watchResponse) {
-                        if (ETCDMetaStorage.this.userChangeHook == null) {
-                            return;
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.userChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        UserMeta userMeta;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
+                                userChangeHook.onChange(userMeta.getUsername(), userMeta);
+                                break;
+                            case DELETE:
+                                userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
+                                userChangeHook.onChange(userMeta.getUsername(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
                         }
-                        for (WatchEvent event : watchResponse.getEvents()) {
-                            UserMeta userMeta;
-                            switch (event.getEventType()) {
-                                case PUT:
-                                    userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
-                                    userChangeHook.onChange(userMeta.getUsername(), userMeta);
-                                    break;
-                                case DELETE:
-                                    userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
-                                    userChangeHook.onChange(userMeta.getUsername(), null);
-                                    break;
-                                default:
-                                    logger.error("unexpected watchEvent: " + event.getEventType());
-                                    break;
-                            }
-                        }
                     }
+                }
 
-                    @Override
-                    public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-                    }
+                }
 
-                    @Override
-                    public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-                    }
-                });
+                }
+            });
     }
 
     public static ETCDMetaStorage getInstance() {
@@ -359,12 +346,12 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private long nextId(String category) throws InterruptedException, ExecutionException {
         return client.getKVClient().put(
-                ByteSequence.from(category.getBytes()),
-                ByteSequence.EMPTY,
-                PutOption.newBuilder().withPrevKV().build())
-                .get()
-                .getPrevKv()
-                .getVersion();
+            ByteSequence.from(category.getBytes()),
+            ByteSequence.EMPTY,
+            PutOption.newBuilder().withPrevKV().build())
+            .get()
+            .getPrevKv()
+            .getVersion();
     }
 
 
@@ -373,9 +360,9 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<String, Map<String, Integer>> schemaMappings = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).build())
+                .get();
             response.getKvs().forEach(e -> {
                 String schema = e.getKey().toString(StandardCharsets.UTF_8).substring(SCHEMA_MAPPING_PREFIX.length());
                 Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(e.getValue().toString(StandardCharsets.UTF_8), new TypeToken<Map<String, Integer>>() {
@@ -413,9 +400,9 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<Long, IginxMeta> iginxMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(IGINX_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(IGINX_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).build())
+                .get();
             response.getKvs().forEach(e -> {
                 String info = new String(e.getValue().getBytes());
                 System.out.println(info);
@@ -453,9 +440,9 @@ public class ETCDMetaStorage implements IMetaStorage {
                 }
             });
             iginx = new IginxMeta(id, iginx.getIp(),
-                    iginx.getPort(), iginx.getExtraParams());
+                iginx.getPort(), iginx.getExtraParams());
             this.client.getKVClient().put(ByteSequence.from((IGINX_PREFIX + String.format("%07d", id)).getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(iginx))).get();
+                ByteSequence.from(JsonUtils.toJson(iginx))).get();
             return id;
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when register iginx meta: ", e);
@@ -497,9 +484,9 @@ public class ETCDMetaStorage implements IMetaStorage {
             lockStorage();
             Map<Long, StorageEngineMeta> storageEngines = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(STORAGE_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(STORAGE_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).build())
+                .get();
             if (response.getCount() != 0L) { // 服务器上已经有了，本地的不作数
                 response.getKvs().forEach(e -> {
                     StorageEngineMeta storageEngine = JsonUtils.fromJson(e.getValue().getBytes(), StorageEngineMeta.class);
@@ -511,8 +498,8 @@ public class ETCDMetaStorage implements IMetaStorage {
                     storageEngine.setId(id);
                     storageEngines.put(storageEngine.getId(), storageEngine);
                     this.client.getKVClient()
-                            .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
-                                    ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
+                        .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
+                            ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
                 }
             }
             return storageEngines;
@@ -533,8 +520,8 @@ public class ETCDMetaStorage implements IMetaStorage {
             long id = nextId(STORAGE_ID);
             storageEngine.setId(id);
             this.client.getKVClient()
-                    .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
-                            ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
+                .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
+                    ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when add storage: ", e);
             throw new MetaStorageException(e);
@@ -556,9 +543,9 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<String, StorageUnitMeta> storageUnitMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).build())
+                .get();
             List<KeyValue> kvs = response.getKvs();
             kvs.sort(Comparator.comparing(e -> e.getKey().toString(StandardCharsets.UTF_8)));
             for (KeyValue kv : kvs) {
@@ -605,7 +592,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException {
         try {
             client.getKVClient().put(ByteSequence.from((STORAGE_UNIT_PREFIX + storageUnitMeta.getId()).getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(storageUnitMeta))).get();
+                ByteSequence.from(JsonUtils.toJson(storageUnitMeta))).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new MetaStorageException("update storage unit error: ", e);
         }
@@ -634,13 +621,13 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
+                .get();
             for (KeyValue kv : response.getKvs()) {
                 FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
                 fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>())
-                        .add(fragment);
+                    .add(fragment);
             }
             return fragmentsMap;
         } catch (ExecutionException | InterruptedException e) {
@@ -665,7 +652,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try {
             client.getKVClient().put(ByteSequence.from((FRAGMENT_PREFIX + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString()).getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(fragmentMeta))).get();
+                ByteSequence.from(JsonUtils.toJson(fragmentMeta))).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new MetaStorageException("update storage unit error: ", e);
         }
@@ -723,8 +710,8 @@ public class ETCDMetaStorage implements IMetaStorage {
             lockUser();
             Map<String, UserMeta> users = new HashMap<>();
             GetResponse response = this.client.getKVClient().get(ByteSequence.from(USER_PREFIX.getBytes()),
-                    GetOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).build())
-                    .get();
+                GetOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).build())
+                .get();
             if (response.getCount() != 0L) { // 服务器上已经有了，本地的不作数
                 response.getKvs().forEach(e -> {
                     UserMeta user = JsonUtils.fromJson(e.getValue().getBytes(), UserMeta.class);
@@ -760,7 +747,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             lockUser();
             this.client.getKVClient()
-                    .put(ByteSequence.from((USER_PREFIX + userMeta.getUsername()).getBytes()), ByteSequence.from(JsonUtils.toJson(userMeta))).get();
+                .put(ByteSequence.from((USER_PREFIX + userMeta.getUsername()).getBytes()), ByteSequence.from(JsonUtils.toJson(userMeta))).get();
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when add/update user: ", e);
             throw new MetaStorageException(e);
@@ -779,7 +766,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             lockUser();
             this.client.getKVClient()
-                    .delete(ByteSequence.from((USER_PREFIX + username).getBytes())).get();
+                .delete(ByteSequence.from((USER_PREFIX + username).getBytes())).get();
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when remove user: ", e);
             throw new MetaStorageException(e);

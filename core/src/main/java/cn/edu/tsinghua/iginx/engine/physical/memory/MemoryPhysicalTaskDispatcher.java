@@ -58,12 +58,12 @@ public class MemoryPhysicalTaskDispatcher {
 
     public void startDispatcher() {
         taskDispatcher.submit(() -> {
-            while(true) {
+            while (true) {
                 final MemoryPhysicalTask task = taskQueue.getTask();
                 taskExecuteThreadPool.submit(() -> {
 
                     MemoryPhysicalTask currentTask = task;
-                    while(currentTask != null) {
+                    while (currentTask != null) {
                         TaskExecuteResult result;
                         try {
                             result = currentTask.execute();

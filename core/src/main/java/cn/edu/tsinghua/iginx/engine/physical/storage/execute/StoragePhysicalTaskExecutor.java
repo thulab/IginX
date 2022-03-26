@@ -42,11 +42,7 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,7 +82,7 @@ public class StoragePhysicalTaskExecutor {
                 dispatcher.submit(() -> {
                     StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(id);
                     Pair<IStorage, ThreadPoolExecutor> pair = storageManager.getStorage(storageId);
-                    while(true) {
+                    while (true) {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
                         logger.info("take out new task: " + task);
@@ -118,7 +114,7 @@ public class StoragePhysicalTaskExecutor {
                                 } else {
                                     StorageUnitMeta masterStorageUnit = task.getTargetFragment().getMasterStorageUnit();
                                     List<String> replicaIds = masterStorageUnit.getReplicas()
-                                            .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
+                                        .stream().map(StorageUnitMeta::getId).collect(Collectors.toList());
                                     replicaIds.add(masterStorageUnit.getId());
                                     for (String replicaId : replicaIds) {
                                         if (replicaId.equals(task.getStorageUnit())) {

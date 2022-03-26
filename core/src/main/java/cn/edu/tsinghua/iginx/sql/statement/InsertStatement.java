@@ -6,11 +6,7 @@ import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class InsertStatement extends DataStatement {
 

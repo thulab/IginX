@@ -1,13 +1,7 @@
 package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.sql.statement.AddStorageEngineStatement;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteTimeSeriesStatement;
-import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
-import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
-import cn.edu.tsinghua.iginx.sql.statement.ShowReplicationStatement;
-import cn.edu.tsinghua.iginx.sql.statement.StatementType;
+import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import org.junit.Test;
@@ -17,9 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class ParseTest {
 

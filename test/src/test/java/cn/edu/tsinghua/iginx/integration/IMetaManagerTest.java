@@ -22,11 +22,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import java.util.Collections;
 import java.util.HashMap;

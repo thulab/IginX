@@ -33,14 +33,7 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class First implements MappingFunction {
@@ -97,7 +90,7 @@ public class First implements MappingFunction {
                     indices.add(i);
                 }
             }
-            while(rows.hasNext() && valueMap.size() < indices.size()) {
+            while (rows.hasNext() && valueMap.size() < indices.size()) {
                 Row row = rows.next();
                 Object[] values = row.getValues();
 
@@ -112,7 +105,7 @@ public class First implements MappingFunction {
             }
             for (Map.Entry<Integer, Pair<Long, Object>> entry : valueMap.entrySet()) {
                 resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getName().getBytes(StandardCharsets.UTF_8),
-                        ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
+                    ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
             }
             resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
         } else {
@@ -121,7 +114,7 @@ public class First implements MappingFunction {
                 // 处理某一列的第一个值
                 long timestamp = 0L;
                 String value = null;
-                while(rows.hasNext()) {
+                while (rows.hasNext()) {
                     Row row = rows.next();
                     if (row.getValue(index) != null) {
                         timestamp = row.getTimestamp();

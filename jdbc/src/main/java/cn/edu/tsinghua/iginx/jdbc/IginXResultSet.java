@@ -11,22 +11,7 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
@@ -247,8 +232,8 @@ public class IginXResultSet implements ResultSet {
 
     private void throwRangeException(String valueAsString, int columnIndex, int jdbcType) throws SQLException {
         throw new SQLException("Numeric value out of range" +
-                "'" + valueAsString + "' in column '" + columnIndex +
-                "' is outside valid range for the jdbcType " + jdbcType);
+            "'" + valueAsString + "' in column '" + columnIndex +
+            "' is outside valid range for the jdbcType " + jdbcType);
     }
 
     @Override

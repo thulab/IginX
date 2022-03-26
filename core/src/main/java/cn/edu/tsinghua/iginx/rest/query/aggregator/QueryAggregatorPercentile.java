@@ -54,10 +54,10 @@ public class QueryAggregatorPercentile extends QueryAggregator {
                             }
                         }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
+                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmp);
                             queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
-                                    tmp.get((int) Math.floor(getPercentile() * (tmp.size() - 1))));
+                                tmp.get((int) Math.floor(getPercentile() * (tmp.size() - 1))));
                             tmp = new ArrayList<>();
                         }
                     }
@@ -72,10 +72,10 @@ public class QueryAggregatorPercentile extends QueryAggregator {
                             }
                         }
                         if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                                RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
+                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
                             Collections.sort(tmpd);
                             queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()),
-                                    tmpd.get((int) Math.floor(getPercentile() * (tmpd.size() - 1))));
+                                tmpd.get((int) Math.floor(getPercentile() * (tmpd.size() - 1))));
                             tmpd = new ArrayList<>();
                         }
                     }

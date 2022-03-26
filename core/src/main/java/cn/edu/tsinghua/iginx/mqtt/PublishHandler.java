@@ -34,11 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -72,7 +68,7 @@ public class PublishHandler extends AbstractInterceptHandler {
         MqttQoS qos = msg.getQos();
 
         logger.debug("Receive publish message. clientId: {}, username: {}, qos = {}, topic: {}, payload: {}",
-                clientId, username, qos, topic, payload);
+            clientId, username, qos, topic, payload);
 
         List<Message> events = payloadFormat.format(payload);
         if (events == null) {
@@ -112,9 +108,9 @@ public class PublishHandler extends AbstractInterceptHandler {
         List<ByteBuffer> bitmapList = new ArrayList<>();
         List<ByteBuffer> valuesList = new ArrayList<>();
         int from = 0, to = 0;
-        while(from < events.size()) {
+        while (from < events.size()) {
             long timestamp = events.get(from).getTimestamp();
-            while(to < events.size() && events.get(to).getTimestamp() == timestamp) {
+            while (to < events.size() && events.get(to).getTimestamp() == timestamp) {
                 to++;
             }
             timestamps.add(timestamp);

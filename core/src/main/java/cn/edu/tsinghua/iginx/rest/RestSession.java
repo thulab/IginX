@@ -377,7 +377,7 @@ public class RestSession {
 
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
-                aggregateType, precision);
+            aggregateType, precision);
 
         DownsampleQueryResp resp;
 

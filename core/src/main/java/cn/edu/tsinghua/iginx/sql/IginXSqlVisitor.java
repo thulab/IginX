@@ -3,13 +3,7 @@ package cn.edu.tsinghua.iginx.sql;
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
@@ -19,23 +13,16 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private final static Set<SelectStatement.FuncType> supportedGroupByLevelFuncSet = new HashSet<>(
-            Arrays.asList(
-                    SelectStatement.FuncType.Sum,
-                    SelectStatement.FuncType.Count,
-                    SelectStatement.FuncType.Avg
-            )
+        Arrays.asList(
+            SelectStatement.FuncType.Sum,
+            SelectStatement.FuncType.Count,
+            SelectStatement.FuncType.Avg
+        )
     );
 
     @Override
@@ -325,7 +312,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                     return parseValueFilter(ctx, (SelectStatement) statement);
                 } else {
                     throw new SQLParserException(
-                            String.format("%s clause can not use value filter.", type.toString().toLowerCase())
+                        String.format("%s clause can not use value filter.", type.toString().toLowerCase())
                     );
                 }
             }
@@ -501,10 +488,10 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             return TimeUtils.convertDatetimeStrToLong(timestampStr);
         } catch (Exception e) {
             throw new SQLParserException(
-                    String.format("Input time format %s error. " +
-                                    "Input should like yyyy-MM-dd HH:mm:ss." +
-                                    "or yyyy/MM/dd HH:mm:ss.",
-                            timestampStr));
+                String.format("Input time format %s error. " +
+                        "Input should like yyyy-MM-dd HH:mm:ss." +
+                        "or yyyy/MM/dd HH:mm:ss.",
+                    timestampStr));
         }
     }
 }

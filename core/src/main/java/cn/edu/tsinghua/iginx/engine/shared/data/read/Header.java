@@ -87,8 +87,8 @@ public final class Header {
     @Override
     public String toString() {
         return "Header{" +
-                "time=" + time +
-                ", fields=" + fields +
-                '}';
+            "time=" + time +
+            ", fields=" + fields +
+            '}';
     }
 }

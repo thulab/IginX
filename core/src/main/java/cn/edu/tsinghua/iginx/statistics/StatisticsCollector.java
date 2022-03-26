@@ -68,7 +68,7 @@ public class StatisticsCollector implements IStatisticsCollector {
         // 启动一个新线程，定期播报统计信息
         broadcastThreadPool.execute(() -> {
             try {
-                while(broadcast.get()) {
+                while (broadcast.get()) {
                     parseStatisticsCollector.broadcastStatistics();
                     logicalStatisticsCollector.broadcastStatistics();
                     physicalStatisticsCollector.broadcastStatistics();

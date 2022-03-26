@@ -18,13 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 

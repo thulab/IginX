@@ -2,13 +2,7 @@ package cn.edu.tsinghua.iginx.sql;
 
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.NotFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.OrFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.filter.ValueFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
@@ -59,7 +53,6 @@ class FilterTransformer {
     private static String toString(OrFilter filter) {
         return filter.getChildren().stream().map(FilterTransformer::toString).collect(Collectors.joining(" or ", "(", ")"));
     }
-
 
 
 }
@@ -159,62 +152,62 @@ public class ExprUtilsTest {
         String delete = "DELETE FROM root.a WHERE (time > 5 AND time <= 10) OR (time > 12 AND time < 15);";
         DeleteStatement statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                Arrays.asList(
-                        new TimeRange(6, 11),
-                        new TimeRange(13, 15)
-                ),
-                statement.getTimeRanges()
+            Arrays.asList(
+                new TimeRange(6, 11),
+                new TimeRange(13, 15)
+            ),
+            statement.getTimeRanges()
         );
 
         delete = "DELETE FROM root.a WHERE (time > 1 AND time <= 8) OR (time >= 5 AND time < 11) OR time >= 66;";
         statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                Arrays.asList(
-                        new TimeRange(2, 11),
-                        new TimeRange(66, Long.MAX_VALUE)
-                ),
-                statement.getTimeRanges()
+            Arrays.asList(
+                new TimeRange(2, 11),
+                new TimeRange(66, Long.MAX_VALUE)
+            ),
+            statement.getTimeRanges()
         );
 
         delete = "DELETE FROM root.a WHERE time >= 16 AND time < 61;";
         statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                Collections.singletonList(
-                        new TimeRange(16, 61)
-                ),
-                statement.getTimeRanges()
+            Collections.singletonList(
+                new TimeRange(16, 61)
+            ),
+            statement.getTimeRanges()
         );
 
         delete = "DELETE FROM root.a WHERE time >= 16;";
         statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                Collections.singletonList(
-                        new TimeRange(16, Long.MAX_VALUE)
-                ),
-                statement.getTimeRanges()
+            Collections.singletonList(
+                new TimeRange(16, Long.MAX_VALUE)
+            ),
+            statement.getTimeRanges()
         );
 
         delete = "DELETE FROM root.a WHERE time < 61;";
         statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                Collections.singletonList(
-                        new TimeRange(0, 61)
-                ),
-                statement.getTimeRanges()
+            Collections.singletonList(
+                new TimeRange(0, 61)
+            ),
+            statement.getTimeRanges()
         );
 
         delete = "DELETE FROM root.a WHERE time < 61 AND time > 616;";
         statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                new ArrayList<>(),
-                statement.getTimeRanges()
+            new ArrayList<>(),
+            statement.getTimeRanges()
         );
 
         delete = "DELETE FROM root.a;";
         statement = (DeleteStatement) TestUtils.buildStatement(delete);
         assertEquals(
-                new ArrayList<>(),
-                statement.getTimeRanges()
+            new ArrayList<>(),
+            statement.getTimeRanges()
         );
     }
 
@@ -225,12 +218,12 @@ public class ExprUtilsTest {
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(select);
         Filter filter = statement.getFilter();
         assertEquals(
-                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2)) && time > 10 && time <= 100))",
-                filter.toString()
+            "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2)) && time > 10 && time <= 100))",
+            filter.toString()
         );
         assertEquals(
-                "((time > 10 && time <= 100))",
-                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.c")).toString()
+            "((time > 10 && time <= 100))",
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.c")).toString()
         );
 
         // sub2
@@ -238,12 +231,12 @@ public class ExprUtilsTest {
         statement = (SelectStatement) TestUtils.buildStatement(select);
         filter = statement.getFilter();
         assertEquals(
-                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2)) && time > 10 && time <= 100))",
-                filter.toString()
+            "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2)) && time > 10 && time <= 100))",
+            filter.toString()
         );
         assertEquals(
-                "(((root.e >= 27) && time > 10 && time <= 100))",
-                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.c", "root.z")).toString()
+            "(((root.e >= 27) && time > 10 && time <= 100))",
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.c", "root.z")).toString()
         );
 
         // whole
@@ -251,12 +244,12 @@ public class ExprUtilsTest {
         statement = (SelectStatement) TestUtils.buildStatement(select);
         filter = statement.getFilter();
         assertEquals(
-                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2))))",
-                filter.toString()
+            "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2))))",
+            filter.toString()
         );
         assertEquals(
-                "(((root.a > 5 || root.d < 15) && (root.e >= 27) && (root.c < 10 || root.b > 2)))",
-                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.z")).toString()
+            "(((root.a > 5 || root.d < 15) && (root.e >= 27) && (root.c < 10 || root.b > 2)))",
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.a", "root.z")).toString()
         );
 
         // empty
@@ -264,12 +257,12 @@ public class ExprUtilsTest {
         statement = (SelectStatement) TestUtils.buildStatement(select);
         filter = statement.getFilter();
         assertEquals(
-                "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2))))",
-                filter.toString()
+            "((((root.a > 5) || (root.d < 15)) && !((root.e < 27)) && ((root.c < 10) || (root.b > 2))))",
+            filter.toString()
         );
         assertEquals(
-                "True",
-                ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.h", "root.z")).toString()
+            "True",
+            ExprUtils.getSubFilterFromFragment(filter, new TimeSeriesInterval("root.h", "root.z")).toString()
         );
     }
 }

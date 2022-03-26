@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.sql;
 
-import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import org.junit.Test;

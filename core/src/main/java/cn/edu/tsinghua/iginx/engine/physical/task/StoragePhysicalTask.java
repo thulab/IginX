@@ -79,9 +79,9 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
     @Override
     public String toString() {
         return "StoragePhysicalTask{" +
-                "targetFragment=" + targetFragment +
-                ", storageUnit='" + storageUnit + '\'' +
-                ", storage=" + storage +
-                '}';
+            "targetFragment=" + targetFragment +
+            ", storageUnit='" + storageUnit + '\'' +
+            ", storage=" + storage +
+            '}';
     }
 }
