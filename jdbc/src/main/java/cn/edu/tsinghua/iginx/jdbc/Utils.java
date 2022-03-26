@@ -40,7 +40,7 @@ public class Utils {
 
         if (!isUrlLegal) {
             throw new IginxUrlException("Error url format, " +
-                    "url should be jdbc:iginx://ip:port/ or jdbc:iginx://ip:port");
+                "url should be jdbc:iginx://ip:port/ or jdbc:iginx://ip:port");
         }
 
         params.setHost(matcher.group(1));

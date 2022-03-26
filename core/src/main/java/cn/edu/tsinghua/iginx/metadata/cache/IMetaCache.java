@@ -18,16 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.metadata.cache;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 
 import java.util.List;
 import java.util.Map;
@@ -67,6 +60,8 @@ public interface IMetaCache {
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
 
+    List<StorageUnitMeta> getStorageUnits();
+
     void addStorageUnit(StorageUnitMeta storageUnitMeta);
 
     void updateStorageUnit(StorageUnitMeta storageUnitMeta);
@@ -98,32 +93,6 @@ public interface IMetaCache {
 
     void addOrUpdateSchemaMappingItem(String schema, String key, int value);
 
-    void initActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    // 更新本地缓存的分片的统计信息
-    void addOrUpdateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    // 获取本地缓存的分片的统计信息
-    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
-
-    // 清空本地缓存的分片的统计信息
-    void clearActiveFragmentStatistics();
-
-    // 更新本地缓存的分片的增量统计信息
-    void addOrUpdateDeltaActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    // 获取本地缓存的分片的增量统计信息
-    Map<FragmentMeta, FragmentStatistics> getDeltaActiveFragmentStatistics();
-
-    // 清空本地缓存的分片的增量统计信息
-    void clearDeltaActiveFragmentStatistics();
-
-    void addReshardFragment(FragmentMeta fragment);
-
-    List<FragmentMeta> getReshardFragmentsByStorageUnitId(String storageUnitId);
-
-    void removeReshardFragmentsByStorageUnitId(String storageUnitId);
-
     void addOrUpdateUser(UserMeta userMeta);
 
     void removeUser(String username);
@@ -132,9 +101,9 @@ public interface IMetaCache {
 
     List<UserMeta> getUser(List<String> usernames);
 
-    void timeseriesIsUpdated(int node, int version);
+    void timeSeriesIsUpdated(int node, int version);
 
-    void saveTimeSeriesData(InsertRecordsPlan plan);
+    void saveTimeSeriesData(InsertStatement statement);
 
     List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
 

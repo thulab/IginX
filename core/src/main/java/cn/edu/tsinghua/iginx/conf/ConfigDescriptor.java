@@ -57,29 +57,30 @@ public class ConfigDescriptor {
             config.setUsername(properties.getProperty("username", "root"));
             config.setPassword(properties.getProperty("password", "root"));
             config.setZookeeperConnectionString(properties.getProperty("zookeeperConnectionString",
-                    "127.0.0.1:2181"));
+                "127.0.0.1:2181"));
             config.setStorageEngineList(properties.getProperty("storageEngineList",
-                    "127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100"));
+                "127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100"));
             config.setMaxAsyncRetryTimes(Integer.parseInt(properties.getProperty("maxAsyncRetryTimes", "3")));
-            config.setMaxAsyncTasks(Integer.parseInt(properties.getProperty("maxAsyncTasks", "1000")));
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
+
             config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
+            //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor
+
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
 
             config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
 
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
-            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "1000")));
+            config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "5000")));
 
             config.setRestIp(properties.getProperty("restIp", "127.0.0.1"));
             config.setRestPort(Integer.parseInt(properties.getProperty("restPort", "6666")));
 
             config.setDisorderMargin(Long.parseLong(properties.getProperty("disorderMargin", "10")));
             config.setAsyncRestThreadPool(Integer.parseInt(properties.getProperty("asyncRestThreadPool", "100")));
-            config.setRestReqSplitNum(Integer.parseInt(properties.getProperty("restReqSplitNum", "10")));
 
             config.setMaxTimeseriesLength(Integer.parseInt(properties.getProperty("maxtimeserieslength", "10")));
             config.setEnableRestService(Boolean.parseBoolean(properties.getProperty("enableRestService", "true")));
@@ -87,11 +88,6 @@ public class ConfigDescriptor {
             config.setMetaStorage(properties.getProperty("metaStorage", "zookeeper"));
             config.setFileDataDir(properties.getProperty("fileDataDir", ""));
             config.setEtcdEndpoints(properties.getProperty("etcdEndpoints", "http://localhost:2379"));
-
-            config.setEnableGlobalStatistics(Boolean.parseBoolean(properties.getProperty("enableGlobalStatistics", "false")));
-            config.setGlobalStatisticsCollectInterval(Long.parseLong(properties.getProperty("globalStatisticsCollectInterval", "60")));
-            config.setInsertThreshold(Long.parseLong(properties.getProperty("insertThreshold", "100000")));
-            config.setReshardFragmentTimeMargin(Long.parseLong(properties.getProperty("reshardFragmentTimeMargin", "60")));
 
             config.setEnableMQTT(Boolean.parseBoolean(properties.getProperty("enable_mqtt", "false")));
             config.setMqttHost(properties.getProperty("mqtt_host", "0.0.0.0"));
@@ -103,8 +99,14 @@ public class ConfigDescriptor {
             config.setClients(properties.getProperty("clients", ""));
             config.setInstancesNumPerClient(Integer.parseInt(properties.getProperty("instancesNumPerClient", "0")));
 
-            config.setLogRestInsertPossibility(Double.parseDouble(properties.getProperty("logRestInsertPossibility", "1.0")));
-            config.setLogRestQueryPossibility(Double.parseDouble(properties.getProperty("logRestQueryPossibility", "1.0")));
+            config.setQueryOptimizer(properties.getProperty("queryOptimizer", ""));
+            config.setConstraintChecker(properties.getProperty("constraintChecker", "naive"));
+
+            config.setPhysicalOptimizer(properties.getProperty("physicalOptimizer", "naive"));
+            config.setMemoryTaskThreadPoolSize(Integer.parseInt(properties.getProperty("memoryTaskThreadPoolSize", "200")));
+            config.setPhysicalTaskThreadPoolSizePerStorage(Integer.parseInt(properties.getProperty("physicalTaskThreadPoolSizePerStorage", "100")));
+
+            config.setMaxCachedPhysicalTaskPerStorage(Integer.parseInt(properties.getProperty("maxCachedPhysicalTaskPerStorage", "500")));
 
             config.setCachedTimeseriesProb(Double.parseDouble(properties.getProperty("cachedTimeseriesProb", "0.01")));
             config.setRetryCount(Integer.parseInt(properties.getProperty("retryCount", "10")));
@@ -113,12 +115,8 @@ public class ConfigDescriptor {
             config.setReAllocatePeriod(Integer.parseInt(properties.getProperty("reAllocatePeriod", "30000")));
             config.setEnableStorageGroupValueLimit(Boolean.parseBoolean(properties.getProperty("enableStorageGroupValueLimit", "true")));
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
-            config.setCheckFragmentInterval(Long.parseLong(properties.getProperty("checkFragmentInterval", "1000")));
 
-            config.setClientBindEngine(Boolean.parseBoolean(properties.getProperty("clientBindEngine", "false")));
-            config.setInstancesIndexStart(Integer.parseInt(properties.getProperty("instancesIndexStart", "1")));
-            config.setInstancesIndexStep(Integer.parseInt(properties.getProperty("instancesIndexStep", "1")));
-
+            config.setEnablePushDown(Boolean.parseBoolean(properties.getProperty("enablePushDown", "true")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -132,7 +130,6 @@ public class ConfigDescriptor {
         config.setZookeeperConnectionString(EnvUtils.loadEnv("zookeeperConnectionString", config.getZookeeperConnectionString()));
         config.setStorageEngineList(EnvUtils.loadEnv("storageEngineList", config.getStorageEngineList()));
         config.setMaxAsyncRetryTimes(EnvUtils.loadEnv("maxAsyncRetryTimes", config.getMaxAsyncRetryTimes()));
-        config.setMaxAsyncTasks(EnvUtils.loadEnv("maxAsyncTasks", config.getMaxAsyncTasks()));
         config.setSyncExecuteThreadPool(EnvUtils.loadEnv("syncExecuteThreadPool", config.getSyncExecuteThreadPool()));
         config.setAsyncExecuteThreadPool(EnvUtils.loadEnv("asyncExecuteThreadPool", config.getAsyncExecuteThreadPool()));
         config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));
@@ -146,7 +143,6 @@ public class ConfigDescriptor {
         config.setDisorderMargin(EnvUtils.loadEnv("disorderMargin", config.getDisorderMargin()));
         config.setMaxTimeseriesLength(EnvUtils.loadEnv("maxtimeserieslength", config.getMaxTimeseriesLength()));
         config.setAsyncRestThreadPool(EnvUtils.loadEnv("asyncRestThreadPool", config.getAsyncRestThreadPool()));
-        config.setRestReqSplitNum(EnvUtils.loadEnv("restReqSplitNum", config.getRestReqSplitNum()));
         config.setEnableRestService(EnvUtils.loadEnv("enableRestService", config.isEnableRestService()));
         config.setMetaStorage(EnvUtils.loadEnv("metaStorage", config.getMetaStorage()));
         config.setFileDataDir(EnvUtils.loadEnv("fileDataDir", config.getFileDataDir()));
@@ -157,7 +153,20 @@ public class ConfigDescriptor {
         config.setMqttHandlerPoolSize(EnvUtils.loadEnv("mqtt_handler_pool_size", config.getMqttHandlerPoolSize()));
         config.setMqttPayloadFormatter(EnvUtils.loadEnv("mqtt_payload_formatter", config.getMqttPayloadFormatter()));
         config.setMqttMaxMessageSize(EnvUtils.loadEnv("mqtt_max_message_size", config.getMqttMaxMessageSize()));
-        config.setCheckFragmentInterval(EnvUtils.loadEnv("checkFragmentInterval", config.getCheckFragmentInterval()));
+        config.setQueryOptimizer(EnvUtils.loadEnv("queryOptimizer", config.getQueryOptimizer()));
+        config.setConstraintChecker(EnvUtils.loadEnv("constraintChecker", config.getConstraintChecker()));
+        config.setPhysicalOptimizer(EnvUtils.loadEnv("physicalOptimizer", config.getPhysicalOptimizer()));
+        config.setMemoryTaskThreadPoolSize(EnvUtils.loadEnv("memoryTaskThreadPoolSize", config.getMemoryTaskThreadPoolSize()));
+        config.setPhysicalTaskThreadPoolSizePerStorage(EnvUtils.loadEnv("physicalTaskThreadPoolSizePerStorage", config.getPhysicalTaskThreadPoolSizePerStorage()));
+        config.setMaxCachedPhysicalTaskPerStorage(EnvUtils.loadEnv("maxCachedPhysicalTaskPerStorage", config.getMaxCachedPhysicalTaskPerStorage()));
+        config.setCachedTimeseriesProb(EnvUtils.loadEnv("cachedTimeseriesProb", config.getCachedTimeseriesProb()));
+        config.setRetryCount(EnvUtils.loadEnv("retryCount", config.getRetryCount()));
+        config.setRetryWait(EnvUtils.loadEnv("retryWait", config.getRetryWait()));
+        config.setFragmentPerEngine(EnvUtils.loadEnv("fragmentPerEngine", config.getFragmentPerEngine()));
+        config.setReAllocatePeriod(EnvUtils.loadEnv("reAllocatePeriod", config.getReAllocatePeriod()));
+        config.setEnableStorageGroupValueLimit(EnvUtils.loadEnv("enableStorageGroupValueLimit", config.isEnableStorageGroupValueLimit()));
+        config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
+        config.setEnablePushDown(EnvUtils.loadEnv("enablePushDown", config.isEnablePushDown()));
     }
 
 
@@ -168,4 +177,5 @@ public class ConfigDescriptor {
     private static class ConfigDescriptorHolder {
         private static final ConfigDescriptor INSTANCE = new ConfigDescriptor();
     }
+
 }

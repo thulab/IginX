@@ -32,23 +32,17 @@ public class RpcUtils {
 
     public static Status ACCESS_DENY = new Status(StatusCode.ACCESS_DENY.getStatusCode());
 
-    public static Status DELETE_ROOT_USER = new Status(StatusCode.DELETE_ROOT_USER.getStatusCode());
-
     public static Status SUCCESS = new Status(StatusCode.SUCCESS_STATUS.getStatusCode());
 
     public static Status PARTIAL_SUCCESS = new Status(StatusCode.PARTIAL_SUCCESS.getStatusCode());
 
     public static Status FAILURE = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
 
-    public static Status OVERLOAD = new Status(StatusCode.OVERLOAD.getStatusCode());
-
     static {
         WRONG_USERNAME_OR_PASSWORD.setMessage("wrong username or password");
         ACCESS_DENY.setMessage("access deny");
-        DELETE_ROOT_USER.setMessage("administrator user can not be deleted");
         PARTIAL_SUCCESS.setMessage("partial success");
         FAILURE.setMessage("unexpected error");
-        OVERLOAD.setMessage("service is overloaded");
     }
 
     public static void verifySuccess(Status status) throws ExecutionException {

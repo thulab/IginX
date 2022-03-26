@@ -58,8 +58,7 @@ public class DataTypeTransformer {
             case BINARY:
                 return TSDataType.TEXT;
             default:
-                break;
+                throw new IllegalArgumentException("unknown data type: " + dataType);
         }
-        return null;
     }
 }

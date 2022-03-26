@@ -24,21 +24,7 @@
             <name>GitHub Release</name>
             <url>file://${project.basedir}/../maven-repo</url>
         </repository>
-        <snapshotRepository>
-            <id>local-snapshot-repo-release</id>
-            <name>GitHub Release</name>
-            <url>file://${project.basedir}/../maven-snapshot-repo</url>
-        </snapshotRepository>
     </distributionManagement>
-
-
-    <repositories>
-        <repository>
-            <id>github-release-repo</id>
-            <name>The Maven Repository on Github</name>
-            <url>https://thulab.github.io/IginX/maven-repo/</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>

@@ -44,24 +44,14 @@ enum SqlType {
     Unknown,
     Insert,
     Delete,
-    SimpleQuery,
-    AggregateQuery,
-    DownsampleQuery,
-    ValueFilterQuery,
-    NotSupportQuery,
+    Query,
     GetReplicaNum,
     AddStorageEngines,
     CountPoints,
     ClearData,
     DeleteTimeSeries,
     ShowTimeSeries,
-    ShowSubTimeSeries,
-    ShowClusterInfo,
-    CreateUser,
-    GrantUser,
-    ChangeUserPassword,
-    DropUser,
-    ShowUser
+    ShowClusterInfo
 }
 
 enum AuthType {
@@ -186,7 +176,6 @@ struct AggregateQueryReq {
     3: required i64 startTime
     4: required i64 endTime
     5: required AggregateType aggregateType
-    6: optional list<i32> groupByLevels
 }
 
 struct AggregateQueryResp {
@@ -195,21 +184,6 @@ struct AggregateQueryResp {
     3: optional list<DataType> dataTypeList
     4: optional binary timestamps
     5: optional binary valuesList
-}
-
-struct ValueFilterQueryReq {
-    1: required i64 sessionId
-    2: required list<string> paths
-    3: required i64 startTime
-    4: required i64 endTime
-    5: required string booleanExpression
-}
-
-struct ValueFilterQueryResp {
-    1: required Status status
-    2: optional list<string> paths
-    3: optional list<DataType> dataTypeList
-    4: optional QueryDataSet queryDataSet
 }
 
 struct LastQueryReq {
@@ -222,8 +196,7 @@ struct LastQueryResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
-    4: optional binary timestamps
-    5: optional binary valuesList
+    4: optional QueryDataSet queryDataSet
 }
 
 struct DownsampleQueryReq {
@@ -233,7 +206,6 @@ struct DownsampleQueryReq {
     4: required i64 endTime
     5: required AggregateType aggregateType
     6: required i64 precision
-    7: optional list<i32> groupByLevels
 }
 
 struct DownsampleQueryResp {
@@ -251,16 +223,6 @@ struct ShowColumnsResp {
     1: required Status status
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
-}
-
-struct ShowSubPathsReq {
-    1: required i64 sessionId
-    2: optional string path
-}
-
-struct ShowSubPathsResp {
-    1: required Status status
-    2: optional list<string> paths
 }
 
 struct GetReplicaNumReq {
@@ -298,9 +260,6 @@ struct ExecuteSqlResp {
     17: optional list<StorageEngineInfo> storageEngineInfos
     18: optional list<MetaStorageInfo>  metaStorageInfos
     19: optional LocalMetaStorageInfo localMetaStorageInfo
-    20: optional list<string> usernames
-    21: optional list<UserType> userTypes
-    22: optional list<set<AuthType>> auths
 }
 
 struct UpdateUserReq {
@@ -393,15 +352,11 @@ service IService {
 
     AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
 
-    ValueFilterQueryResp valueFilterQuery(1:ValueFilterQueryReq req);
-
     LastQueryResp lastQuery(1: LastQueryReq req);
 
     DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
 
     ShowColumnsResp showColumns(ShowColumnsReq req);
-
-    ShowSubPathsResp showSubPaths(ShowSubPathsReq req);
 
     GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
 

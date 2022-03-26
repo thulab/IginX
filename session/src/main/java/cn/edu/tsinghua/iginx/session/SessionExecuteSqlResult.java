@@ -18,14 +18,26 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.IginxInfo;
+import cn.edu.tsinghua.iginx.thrift.LocalMetaStorageInfo;
+import cn.edu.tsinghua.iginx.thrift.MetaStorageInfo;
+import cn.edu.tsinghua.iginx.thrift.SqlType;
+import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -34,30 +46,18 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByData
 public class SessionExecuteSqlResult {
 
     private SqlType sqlType;
-    private String parseErrorMsg;
-
+    private AggregateType aggregateType;
     private long[] timestamps;
     private List<String> paths;
     private List<List<Object>> values;
     private List<DataType> dataTypeList;
-    private AggregateType aggregateType;
-
-    private int limit;
-    private int offset;
-    private boolean ascending;
-    private String orderByPath;
-
     private int replicaNum;
     private long pointsNum;
-
+    private String parseErrorMsg;
     private List<IginxInfo> iginxInfos;
     private List<StorageEngineInfo> storageEngineInfos;
     private List<MetaStorageInfo> metaStorageInfos;
     private LocalMetaStorageInfo localMetaStorageInfo;
-
-    private List<String> usernames;
-    private List<UserType> userTypes;
-    private List<Set<AuthType>> authTypes;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -73,29 +73,18 @@ public class SessionExecuteSqlResult {
             case CountPoints:
                 this.pointsNum = resp.getPointsNum();
                 break;
-            case AggregateQuery:
-            case SimpleQuery:
-            case DownsampleQuery:
-            case ValueFilterQuery:
+            case Query:
                 constructQueryResult(resp);
                 break;
             case ShowTimeSeries:
                 this.paths = resp.getPaths();
                 this.dataTypeList = resp.getDataTypeList();
                 break;
-            case ShowSubTimeSeries:
-                this.paths = resp.getPaths();
-                break;
             case ShowClusterInfo:
                 this.iginxInfos = resp.getIginxInfos();
                 this.storageEngineInfos = resp.getStorageEngineInfos();
                 this.metaStorageInfos = resp.getMetaStorageInfos();
                 this.localMetaStorageInfo = resp.getLocalMetaStorageInfo();
-                break;
-            case ShowUser:
-                this.usernames = resp.getUsernames();
-                this.userTypes = resp.getUserTypes();
-                this.authTypes = resp.getAuths();
                 break;
             default:
                 break;
@@ -105,31 +94,16 @@ public class SessionExecuteSqlResult {
     private void constructQueryResult(ExecuteSqlResp resp) {
         this.paths = resp.getPaths();
         this.dataTypeList = resp.getDataTypeList();
-        this.limit = resp.getLimit();
-        this.offset = resp.getOffset();
-        this.orderByPath = resp.getOrderByPath();
-        this.ascending = resp.isAscending();
 
         if (resp.timestamps != null) {
             this.timestamps = getLongArrayFromByteBuffer(resp.timestamps);
         }
-        if (resp.queryDataSet != null && resp.queryDataSet.timestamps != null) {
-            this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
-        }
-
-        if (resp.getType() == SqlType.AggregateQuery ||
-                resp.getType() == SqlType.DownsampleQuery) {
-            this.aggregateType = resp.aggregateType;
-        }
 
         // parse values
-        if (resp.getType() == SqlType.AggregateQuery) {
-            Object[] aggregateValues = ByteUtils.getValuesByDataType(resp.valuesList, resp.dataTypeList);
-            List<Object> aggregateValueList = new ArrayList<>(Arrays.asList(aggregateValues));
-            this.values = new ArrayList<>();
-            this.values.add(aggregateValueList);
-        } else {
+        if (resp.getQueryDataSet() != null) {
             this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+        } else {
+            this.values = new ArrayList<>();
         }
 
         sortColumns();
@@ -189,17 +163,10 @@ public class SessionExecuteSqlResult {
             List<Integer> maxSizeList = new ArrayList<>();
             result = cacheResult(needFormatTime, timePrecision, maxSizeList);
         } else if (sqlType == SqlType.ShowTimeSeries) {
-            result.add(new ArrayList<>(Arrays.asList("TimeSeries", "DataType")));
+            result.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
             if (paths != null) {
                 for (int i = 0; i < paths.size(); i++) {
                     result.add(Arrays.asList(paths.get(i) + "", dataTypeList.get(i) + ""));
-                }
-            }
-        } else if (sqlType == SqlType.ShowSubTimeSeries) {
-            result.add(new ArrayList<>(Collections.singletonList("SubTimeSeries")));
-            if (paths != null) {
-                for (String path : paths) {
-                    result.add(Collections.singletonList(path + ""));
                 }
             }
         } else if (sqlType == SqlType.GetReplicaNum) {
@@ -226,12 +193,8 @@ public class SessionExecuteSqlResult {
             return buildQueryResult(needFormatTime, timePrecision);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             return buildShowTimeSeriesResult();
-        } else if (sqlType == SqlType.ShowSubTimeSeries) {
-            return buildShowSubTimeSeriesResult();
         } else if (sqlType == SqlType.ShowClusterInfo) {
             return buildShowClusterInfoResult();
-        } else if (sqlType == SqlType.ShowUser) {
-            return buildShowUserResult();
         } else if (sqlType == SqlType.GetReplicaNum) {
             return "Replica num: " + replicaNum + "\n";
         } else if (sqlType == SqlType.CountPoints) {
@@ -243,7 +206,7 @@ public class SessionExecuteSqlResult {
 
     private String buildQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
-        builder.append(String.format("%s ResultSets:", sqlType.toString())).append("\n");
+        builder.append("ResultSets:").append("\n");
 
         List<Integer> maxSizeList = new ArrayList<>();
         List<List<String>> cache = cacheResult(needFormatTime, timePrecision, maxSizeList);
@@ -270,18 +233,11 @@ public class SessionExecuteSqlResult {
             maxSizeList.add(4);
         }
         for (String path : paths) {
-            if (aggregateType == null) {
-                label.add(path);
-                maxSizeList.add(path.length());
-            } else {
-                String newLabel = aggregateType.toString() + "(" + path + ")";
-                label.add(newLabel);
-                maxSizeList.add(newLabel.length());
-            }
+            label.add(path);
+            maxSizeList.add(path.length());
         }
 
-        int maxOutputLen = Math.min(offset + limit, values.size());
-        for (int i = offset; i < maxOutputLen; i++) {
+        for (int i = 0; i < values.size(); i++) {
             List<String> rowCache = new ArrayList<>();
             if (timestamps != null) {
                 String timeValue;
@@ -309,41 +265,9 @@ public class SessionExecuteSqlResult {
             cache.add(rowCache);
         }
 
-        int index = paths.indexOf(orderByPath);
-        if (orderByPath != null && !orderByPath.equals("") && index >= 0) {
-            DataType type = dataTypeList.get(index);
-            int finalIndex = timestamps == null ? index : ++index;
-            cache = cache.stream()
-                    .sorted((o1, o2) -> {
-                        if (ascending) {
-                            return compare(o1.get(finalIndex), o2.get(finalIndex), type);
-                        } else {
-                            return compare(o2.get(finalIndex), o1.get(finalIndex), type);
-                        }
-                    })
-                    .collect(Collectors.toList());
-        }
-
         cache.add(0, label);
 
         return cache;
-    }
-
-    private int compare(String s1, String s2, DataType type) {
-        switch (type) {
-            case LONG:
-                return Long.compare(Long.parseLong(s1), Long.parseLong(s2));
-            case FLOAT:
-                return Float.compare(Float.parseFloat(s1), Float.parseFloat(s2));
-            case DOUBLE:
-                return Double.compare(Double.parseDouble(s1), Double.parseDouble(s2));
-            case INTEGER:
-                return Integer.compare(Integer.parseInt(s1), Integer.parseInt(s2));
-            case BOOLEAN:
-                return Boolean.compare(Boolean.parseBoolean(s1), Boolean.parseBoolean(s2));
-            default:
-                return s1.compareTo(s2);
-        }
     }
 
     private String buildBlockLine(List<Integer> maxSizeList) {
@@ -379,7 +303,7 @@ public class SessionExecuteSqlResult {
 
     private String buildLastQueryResult(boolean needFormatTime, String timePrecision) {
         StringBuilder builder = new StringBuilder();
-        builder.append("LastQuery ResultSets:").append("\n");
+        builder.append("ResultSets:").append("\n");
         int num = paths == null ? 0 : paths.size();
         if (values != null && !values.isEmpty()) {
             List<List<String>> cache = new ArrayList<>();
@@ -400,30 +324,13 @@ public class SessionExecuteSqlResult {
 
     private String buildShowTimeSeriesResult() {
         StringBuilder builder = new StringBuilder();
-        builder.append("TimeSeries:").append("\n");
+        builder.append("Time series:").append("\n");
         int num = paths == null ? 0 : paths.size();
         if (paths != null) {
             List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("TimeSeries", "DataType")));
+            cache.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
-            }
-
-            buildFromStringList(builder, cache);
-        }
-        builder.append(buildCount(num));
-        return builder.toString();
-    }
-
-    private String buildShowSubTimeSeriesResult() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("SubTimeSeries:").append("\n");
-        int num = paths == null ? 0 : paths.size();
-        if (paths != null) {
-            List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Collections.singletonList("SubTimeSeries")));
-            for (String path : paths) {
-                cache.add(new ArrayList<>(Collections.singletonList(path)));
             }
 
             buildFromStringList(builder, cache);
@@ -492,34 +399,6 @@ public class SessionExecuteSqlResult {
         return builder.toString();
     }
 
-    private String buildShowUserResult() {
-        StringBuilder builder = new StringBuilder();
-        if (usernames != null && !usernames.isEmpty()) {
-            List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("Username", "UserType", "Auth")));
-            for (int i = 0; i < usernames.size(); i++) {
-                cache.add(new ArrayList<>(
-                        Arrays.asList(
-                                usernames.get(i),
-                                userTypes.get(i).toString(),
-                                authTypesToString(authTypes.get(i))
-                        )
-                ));
-            }
-            buildFromStringList(builder, cache);
-        }
-        return builder.toString();
-    }
-
-    private String authTypesToString(Set<AuthType> types) {
-        if (types == null || types.isEmpty())
-            return "Null";
-        StringBuilder builder = new StringBuilder();
-        types.forEach(type -> builder.append(type.toString() + ", "));
-        builder.delete(builder.length() - 2, builder.length());
-        return builder.toString();
-    }
-
     private void buildFromStringList(StringBuilder builder, List<List<String>> cache) {
         List<Integer> maxSizeList = new ArrayList<>();
         if (!cache.isEmpty()) {
@@ -571,10 +450,7 @@ public class SessionExecuteSqlResult {
     }
 
     public boolean isQuery() {
-        return sqlType == SqlType.SimpleQuery ||
-                sqlType == SqlType.AggregateQuery ||
-                sqlType == SqlType.DownsampleQuery ||
-                sqlType == SqlType.ValueFilterQuery;
+        return sqlType == SqlType.Query;
     }
 
     public SqlType getSqlType() {

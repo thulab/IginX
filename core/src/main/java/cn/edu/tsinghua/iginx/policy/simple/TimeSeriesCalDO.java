@@ -3,8 +3,8 @@ package cn.edu.tsinghua.iginx.policy.simple;
 import lombok.Data;
 
 @Data
-public class TimeSeriesCalDO implements Comparable<TimeSeriesCalDO>
-{
+public class TimeSeriesCalDO implements Comparable<TimeSeriesCalDO> {
+
     private String timeSeries;
 
     private Long recentTimeStamp = 0L;
@@ -17,22 +17,19 @@ public class TimeSeriesCalDO implements Comparable<TimeSeriesCalDO>
 
     private Long totalByte = 0L;
 
-
     public Double getValue() {
         double ret = 0.0;
         if (count > 1 && lastTimestamp > firstTimestamp) {
-            ret = 1.0 * totalByte / count * (count - 1) / (lastTimestamp  - firstTimestamp);
+            ret = 1.0 * totalByte / count * (count - 1) / (lastTimestamp - firstTimestamp);
         }
         return ret;
     }
 
     @Override
-    public int compareTo(TimeSeriesCalDO timeSeriesCalDO)
-    {
+    public int compareTo(TimeSeriesCalDO timeSeriesCalDO) {
         if (getValue() < timeSeriesCalDO.getValue()) {
             return -1;
-        }
-        else if (getValue() > timeSeriesCalDO.getValue()) {
+        } else if (getValue() > timeSeriesCalDO.getValue()) {
             return 1;
         }
         return 0;

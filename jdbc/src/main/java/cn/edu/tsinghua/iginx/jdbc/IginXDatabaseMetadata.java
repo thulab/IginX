@@ -2,11 +2,7 @@ package cn.edu.tsinghua.iginx.jdbc;
 
 import cn.edu.tsinghua.iginx.session.Session;
 
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.ResultSet;
-import java.sql.RowIdLifetime;
-import java.sql.SQLException;
+import java.sql.*;
 
 public class IginXDatabaseMetadata implements DatabaseMetaData {
 

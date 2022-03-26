@@ -38,15 +38,12 @@ public final class StorageUnitMeta {
 
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
-    private boolean lastOfBatch = false;
-
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
         this.id = id;
         this.storageEngineId = storageEngineId;
         this.masterId = masterId;
         this.isMaster = isMaster;
     }
-
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, boolean initialStorageUnit) {
         this.id = id;
@@ -62,7 +59,7 @@ public final class StorageUnitMeta {
         replicas.add(storageUnit);
     }
 
-    public synchronized void removeReplica(StorageUnitMeta storageUnit) {
+    public void removeReplica(StorageUnitMeta storageUnit) {
         if (replicas == null)
             replicas = new ArrayList<>();
         replicas.remove(storageUnit);
@@ -94,11 +91,10 @@ public final class StorageUnitMeta {
         this.replicas = replicas;
     }
 
-    public StorageUnitMeta renameStorageUnitMeta(String id, String masterId, boolean initialStorageUnit) {
+    public StorageUnitMeta renameStorageUnitMeta(String id, String masterId) {
         StorageUnitMeta storageUnitMeta = new StorageUnitMeta(id, storageEngineId, masterId, isMaster);
         storageUnitMeta.setCreatedBy(createdBy);
         storageUnitMeta.setInitialStorageUnit(initialStorageUnit);
-        storageUnitMeta.setLastOfBatch(lastOfBatch);
         return storageUnitMeta;
     }
 
@@ -128,17 +124,11 @@ public final class StorageUnitMeta {
         builder.append(isMaster);
         builder.append(", createdBy = ");
         builder.append(createdBy);
-        if (replicas != null) {
-            builder.append(", replica id list = ");
-            for (StorageUnitMeta storageUnit : replicas) {
-                builder.append(" ");
-                builder.append(storageUnit.getId());
-            }
+        builder.append(", replica id list = ");
+        for (StorageUnitMeta storageUnit : replicas) {
+            builder.append(" ");
+            builder.append(storageUnit.getId());
         }
-        builder.append(", isInitialStorageUnit = ");
-        builder.append(initialStorageUnit);
-        builder.append(", isLastOfBatch = ");
-        builder.append(lastOfBatch);
         builder.append("}");
         return builder.toString();
     }
@@ -157,13 +147,5 @@ public final class StorageUnitMeta {
 
     public void setInitialStorageUnit(boolean initialStorageUnit) {
         this.initialStorageUnit = initialStorageUnit;
-    }
-
-    public boolean isLastOfBatch() {
-        return lastOfBatch;
-    }
-
-    public void setLastOfBatch(boolean lastOfBatch) {
-        this.lastOfBatch = lastOfBatch;
     }
 }

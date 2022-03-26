@@ -20,40 +20,14 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.IginxChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
-import cn.edu.tsinghua.iginx.metadata.hook.SchemaMappingChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
-import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
-import io.etcd.jetcd.ByteSequence;
-import io.etcd.jetcd.Client;
-import io.etcd.jetcd.KeyValue;
-import io.etcd.jetcd.Lease;
-import io.etcd.jetcd.Watch;
+import io.etcd.jetcd.*;
 import io.etcd.jetcd.kv.GetResponse;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
-import io.etcd.jetcd.options.DeleteOption;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
 import io.etcd.jetcd.options.WatchOption;
@@ -64,11 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -83,8 +53,6 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String STORAGE_UNIT_ID = "/id/storage_unit/";
 
-    private static final String ACTIVE_FRAGMENT_STATISTICS_ID = "/id/active_fragment_statistics/";
-
     private static final String STORAGE_LOCK = "/lock/storage/";
 
     private static final String STORAGE_UNIT_LOCK = "/lock/storage_unit/";
@@ -92,12 +60,6 @@ public class ETCDMetaStorage implements IMetaStorage {
     private static final String FRAGMENT_LOCK = "/lock/fragment/";
 
     private static final String USER_LOCK = "/lock/user/";
-
-    private static final String ACTIVE_FRAGMENT_STATISTICS_LOCK = "/lock/active_fragment_statistics/";
-
-    private static final String RESHARD_NOTIFICATION_LOCK = "/lock/reshard_notification/";
-
-    private static final String RESHARD_COUNTER_LOCK = "/lock/reshard_counter/";
 
     private static final String SCHEMA_MAPPING_PREFIX = "/schema/";
 
@@ -111,14 +73,6 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String USER_PREFIX = "/user/";
 
-    private static final String ACTIVE_FRAGMENT_STATISTICS_PREFIX = "/active_fragment_statistics/";
-
-    private static final String INACTIVE_FRAGMENT_STATISTICS_PREFIX = "/inactive_fragment_statistics/";
-
-    private static final String RESHARD_NOTIFICATION_PREFIX = "/reshard_notification/";
-
-    private static final String RESHARD_COUNTER_PREFIX = "/reshard_counter/";
-
     private static final long MAX_LOCK_TIME = 30; // 最长锁住 30 秒
 
     private static final long HEART_BEAT_INTERVAL = 5; // 和 etcd 之间的心跳包的时间间隔
@@ -128,9 +82,6 @@ public class ETCDMetaStorage implements IMetaStorage {
     private final Lock storageUnitLeaseLock = new ReentrantLock();
     private final Lock fragmentLeaseLock = new ReentrantLock();
     private final Lock userLeaseLock = new ReentrantLock();
-    private final Lock activeFragmentStatisticsLeaseLock = new ReentrantLock();
-    private final Lock reshardNotificationLeaseLock = new ReentrantLock();
-    private final Lock reshardCounterLeaseLock = new ReentrantLock();
     private Client client;
     private Watch.Watcher schemaMappingWatcher;
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
@@ -148,334 +99,238 @@ public class ETCDMetaStorage implements IMetaStorage {
     private Watch.Watcher userWatcher;
     private UserChangeHook userChangeHook = null;
     private long userLease = -1L;
-    private Watch.Watcher activeFragmentStatisticsWatcher;
-    private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
-    private long activeFragmentStatisticsLease = -1L;
-    private Watch.Watcher reshardNotificationWatcher;
-    private ReshardNotificationHook reshardNotificationHook = null;
-    private long reshardNotificationLease = -1L;
-    private Watch.Watcher reshardCounterWatcher;
-    private ReshardCounterChangeHook reshardCounterChangeHook = null;
-    private long reshardCounterLease = -1L;
 
     public ETCDMetaStorage() {
-        client = Client.builder().endpoints(ConfigDescriptor.getInstance().getConfig().getEtcdEndpoints().split(",")).build();
+        client = Client.builder()
+            .endpoints(ConfigDescriptor.getInstance().getConfig().getEtcdEndpoints()
+                .split(","))
+            .build();
 
         // 注册 schema mapping 的监听
-        this.schemaMappingWatcher = client.getWatchClient().watch(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (schemaMappingChangeHook == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    String schema = event.getKeyValue().getKey().toString(StandardCharsets.UTF_8).substring(SCHEMA_MAPPING_PREFIX.length());
-                    Map<String, Integer> schemaMapping = null;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            schemaMapping = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<String, Integer>>() {
-                            }.getType());
-                            break;
-                        case DELETE:
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
+        this.schemaMappingWatcher = client.getWatchClient().watch(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.schemaMappingChangeHook == null) {
+                        return;
                     }
-                    schemaMappingChangeHook.onChange(schema, schemaMapping);
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        String schema = event.getKeyValue().getKey().toString(StandardCharsets.UTF_8)
+                            .substring(SCHEMA_MAPPING_PREFIX.length());
+                        Map<String, Integer> schemaMapping = null;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                schemaMapping = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<String, Integer>>() {
+                                }.getType());
+                                break;
+                            case DELETE:
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
+                        ETCDMetaStorage.this.schemaMappingChangeHook.onChange(schema, schemaMapping);
+                    }
                 }
-            }
 
-            @Override
-            public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-            }
+                }
 
-            @Override
-            public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-            }
-        });
+                }
+            });
 
         // 注册 iginx 的监听
-        this.iginxWatcher = client.getWatchClient().watch(ByteSequence.from(IGINX_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (iginxChangeHook == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    IginxMeta iginx;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            iginx = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), IginxMeta.class);
-                            logger.info("new iginx comes to cluster: id = " + iginx.getId() + " ip = " + iginx.getIp() + " port = " + iginx.getPort());
-                            iginxChangeHook.onChange(iginx.getId(), iginx);
-                            break;
-                        case DELETE:
-                            iginx = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), IginxMeta.class);
-                            logger.info("iginx leave from cluster: id = " + iginx.getId() + " ip = " + iginx.getIp() + " port = " + iginx.getPort());
-                            iginxChangeHook.onChange(iginx.getId(), null);
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
+        this.iginxWatcher = client.getWatchClient().watch(ByteSequence.from(IGINX_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.iginxChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        IginxMeta iginx;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                iginx = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), IginxMeta.class);
+                                logger.info("new iginx comes to cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
+                                ETCDMetaStorage.this.iginxChangeHook.onChange(iginx.getId(), iginx);
+                                break;
+                            case DELETE:
+                                iginx = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), IginxMeta.class);
+                                logger.info("iginx leave from cluster: id = " + iginx.getId() + " ,ip = " + iginx.getIp() + " , port = " + iginx.getPort());
+                                iginxChangeHook.onChange(iginx.getId(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-            }
+                }
 
-            @Override
-            public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-            }
-        });
+                }
+            });
 
         // 注册 storage 的监听
-        this.storageWatcher = client.getWatchClient().watch(ByteSequence.from(STORAGE_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (storageWatcher == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    StorageEngineMeta storageEngine;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            storageEngine = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageEngineMeta.class);
-                            storageChangeHook.onChange(storageEngine.getId(), storageEngine);
-                            break;
-                        case DELETE:
-                            storageEngine = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), StorageEngineMeta.class);
-                            storageChangeHook.onChange(storageEngine.getId(), null);
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
+        this.storageWatcher = client.getWatchClient().watch(ByteSequence.from(STORAGE_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.storageWatcher == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        StorageEngineMeta storageEngine;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                storageEngine = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageEngineMeta.class);
+                                storageChangeHook.onChange(storageEngine.getId(), storageEngine);
+                                break;
+                            case DELETE:
+                                storageEngine = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), StorageEngineMeta.class);
+                                storageChangeHook.onChange(storageEngine.getId(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-            }
+                }
 
-            @Override
-            public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-            }
-        });
+                }
+            });
 
         // 注册 storage unit 的监听
-        this.storageUnitWatcher = client.getWatchClient().watch(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (storageUnitWatcher == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    StorageUnitMeta storageUnit;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            storageUnit = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageUnitMeta.class);
-                            storageUnitChangeHook.onChange(storageUnit.getId(), storageUnit);
-                            break;
-                        case DELETE:
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
+        this.storageUnitWatcher = client.getWatchClient().watch(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.storageUnitWatcher == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        StorageUnitMeta storageUnit;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                storageUnit = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), StorageUnitMeta.class);
+                                storageUnitChangeHook.onChange(storageUnit.getId(), storageUnit);
+                                break;
+                            case DELETE:
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-            }
+                }
 
-            @Override
-            public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-            }
-        });
+                }
+            });
 
         // 注册 fragment 的监听
-        this.fragmentWatcher = client.getWatchClient().watch(ByteSequence.from(FRAGMENT_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (fragmentChangeHook == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    FragmentMeta fragment;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            fragment = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), FragmentMeta.class);
-                            boolean isCreate = event.getPrevKV().getVersion() == 0; // 上一次如果是 0，意味着就是创建
-                            fragmentChangeHook.onChange(isCreate, fragment);
-                            break;
-                        case DELETE:
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
+        this.fragmentWatcher = client.getWatchClient().watch(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.fragmentChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        FragmentMeta fragment;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                fragment = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), FragmentMeta.class);
+                                boolean isCreate = event.getPrevKV().getVersion() == 0; // 上一次如果是 0，意味着就是创建
+                                fragmentChangeHook.onChange(isCreate, fragment);
+                                break;
+                            case DELETE:
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-            }
+                }
 
-            @Override
-            public void onCompleted() {
+                @Override
+                public void onCompleted() {
 
-            }
-        });
+                }
+            });
 
         // 注册 user 的监听
-        this.userWatcher = client.getWatchClient().watch(ByteSequence.from(USER_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (userChangeHook == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    UserMeta userMeta;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
-                            userChangeHook.onChange(userMeta.getUsername(), userMeta);
-                            break;
-                        case DELETE:
-                            userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
-                            userChangeHook.onChange(userMeta.getUsername(), null);
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
+        this.userWatcher = client.getWatchClient().watch(ByteSequence.from(USER_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.userChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        UserMeta userMeta;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                userMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), UserMeta.class);
+                                userChangeHook.onChange(userMeta.getUsername(), userMeta);
+                                break;
+                            case DELETE:
+                                userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
+                                userChangeHook.onChange(userMeta.getUsername(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
                     }
                 }
-            }
 
-            @Override
-            public void onError(Throwable throwable) {
+                @Override
+                public void onError(Throwable throwable) {
 
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        // 注册 active fragment statistics 的监听
-        this.activeFragmentStatisticsWatcher = client.getWatchClient().watch(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (activeFragmentStatisticsChangeHook == null) {
-                    return;
                 }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    Map<FragmentMeta, FragmentStatistics> statisticsMap;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            statisticsMap = JsonUtils.getGson().fromJson(new String(event.getKeyValue().getValue().getBytes()), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {
-                            }.getType());
-                            activeFragmentStatisticsChangeHook.onChange(statisticsMap);
-                            break;
-                        case DELETE:
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
-                    }
+
+                @Override
+                public void onCompleted() {
+
                 }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        // 注册 reshard notification 的监听
-        this.reshardNotificationWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (reshardNotificationHook == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    boolean notification;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            notification = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), Boolean.class);
-                            reshardNotificationHook.onChange(notification);
-                            break;
-                        case DELETE:
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
-                    }
-                }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
-
-        // 注册 reshard counter 的监听
-        this.reshardCounterWatcher = client.getWatchClient().watch(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes()), WatchOption.newBuilder().withPrefix(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes())).withPrevKV(true).build(), new Watch.Listener() {
-            @Override
-            public void onNext(WatchResponse watchResponse) {
-                if (reshardCounterChangeHook == null) {
-                    return;
-                }
-                for (WatchEvent event : watchResponse.getEvents()) {
-                    int counter;
-                    switch (event.getEventType()) {
-                        case PUT:
-                            counter = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), Integer.class);
-                            reshardCounterChangeHook.onChange(counter);
-                            break;
-                        case DELETE:
-                            break;
-                        default:
-                            logger.error("unexpected watchEvent: " + event.getEventType());
-                            break;
-                    }
-                }
-            }
-
-            @Override
-            public void onError(Throwable throwable) {
-
-            }
-
-            @Override
-            public void onCompleted() {
-
-            }
-        });
+            });
     }
 
     public static ETCDMetaStorage getInstance() {
@@ -491,22 +346,23 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private long nextId(String category) throws InterruptedException, ExecutionException {
         return client.getKVClient().put(
-                ByteSequence.from(category.getBytes()),
-                ByteSequence.EMPTY,
-                PutOption.newBuilder().withPrevKV().build())
-                .get()
-                .getPrevKv()
-                .getVersion();
+            ByteSequence.from(category.getBytes()),
+            ByteSequence.EMPTY,
+            PutOption.newBuilder().withPrevKV().build())
+            .get()
+            .getPrevKv()
+            .getVersion();
     }
+
 
     @Override
     public Map<String, Map<String, Integer>> loadSchemaMapping() throws MetaStorageException {
         try {
             Map<String, Map<String, Integer>> schemaMappings = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(SCHEMA_MAPPING_PREFIX.getBytes())).build())
+                .get();
             response.getKvs().forEach(e -> {
                 String schema = e.getKey().toString(StandardCharsets.UTF_8).substring(SCHEMA_MAPPING_PREFIX.length());
                 Map<String, Integer> schemaMapping = JsonUtils.getGson().fromJson(e.getValue().toString(StandardCharsets.UTF_8), new TypeToken<Map<String, Integer>>() {
@@ -515,7 +371,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             });
             return schemaMappings;
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when loading schema mapping: ", e);
+            logger.error("got error when load schema mapping: ", e);
             throw new MetaStorageException(e);
         }
     }
@@ -534,7 +390,7 @@ public class ETCDMetaStorage implements IMetaStorage {
                 this.client.getKVClient().put(ByteSequence.from((SCHEMA_MAPPING_PREFIX + schema).getBytes()), ByteSequence.from(JsonUtils.toJson(schemaMapping))).get();
             }
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when updating schema mapping: ", e);
+            logger.error("got error when update schema mapping: ", e);
             throw new MetaStorageException(e);
         }
     }
@@ -544,9 +400,9 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<Long, IginxMeta> iginxMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(IGINX_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(IGINX_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(IGINX_PREFIX.getBytes())).build())
+                .get();
             response.getKvs().forEach(e -> {
                 String info = new String(e.getValue().getBytes());
                 System.out.println(info);
@@ -555,7 +411,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             });
             return iginxMap;
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when loading schema mapping: ", e);
+            logger.error("got error when load schema mapping: ", e);
             throw new MetaStorageException(e);
         }
     }
@@ -570,12 +426,12 @@ public class ETCDMetaStorage implements IMetaStorage {
             lease.keepAlive(iginxLeaseId, new StreamObserver<LeaseKeepAliveResponse>() {
                 @Override
                 public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
-                    logger.info("send heart beat to etcd successfully");
+                    logger.info("send heart beat to etcd succeed.");
                 }
 
                 @Override
                 public void onError(Throwable throwable) {
-                    logger.error("encounter error when sending heart beat to etcd: ", throwable);
+                    logger.error("got error when send heart beat to etcd: ", throwable);
                 }
 
                 @Override
@@ -584,12 +440,12 @@ public class ETCDMetaStorage implements IMetaStorage {
                 }
             });
             iginx = new IginxMeta(id, iginx.getIp(),
-                    iginx.getPort(), iginx.getExtraParams());
+                iginx.getPort(), iginx.getExtraParams());
             this.client.getKVClient().put(ByteSequence.from((IGINX_PREFIX + String.format("%07d", id)).getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(iginx))).get();
+                ByteSequence.from(JsonUtils.toJson(iginx))).get();
             return id;
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when registering iginx meta: ", e);
+            logger.error("got error when register iginx meta: ", e);
             throw new MetaStorageException(e);
         }
     }
@@ -606,7 +462,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLockClient().lock(ByteSequence.from(STORAGE_LOCK.getBytes()), storageLease);
         } catch (Exception e) {
             storageLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring storage mutex: ", e);
+            throw new MetaStorageException("acquire storage mutex error: ", e);
         }
     }
 
@@ -616,7 +472,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLeaseClient().revoke(storageLease).get();
             storageLease = -1L;
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing storage: ", e);
+            throw new MetaStorageException("release storage error: ", e);
         } finally {
             storageLeaseLock.unlock();
         }
@@ -628,9 +484,9 @@ public class ETCDMetaStorage implements IMetaStorage {
             lockStorage();
             Map<Long, StorageEngineMeta> storageEngines = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(STORAGE_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(STORAGE_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_PREFIX.getBytes())).build())
+                .get();
             if (response.getCount() != 0L) { // 服务器上已经有了，本地的不作数
                 response.getKvs().forEach(e -> {
                     StorageEngineMeta storageEngine = JsonUtils.fromJson(e.getValue().getBytes(), StorageEngineMeta.class);
@@ -642,13 +498,13 @@ public class ETCDMetaStorage implements IMetaStorage {
                     storageEngine.setId(id);
                     storageEngines.put(storageEngine.getId(), storageEngine);
                     this.client.getKVClient()
-                            .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
-                                    ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
+                        .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
+                            ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
                 }
             }
             return storageEngines;
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when loading storage engine: ", e);
+            logger.error("got error when load storage: ", e);
             throw new MetaStorageException(e);
         } finally {
             if (storageLease != -1) {
@@ -664,10 +520,10 @@ public class ETCDMetaStorage implements IMetaStorage {
             long id = nextId(STORAGE_ID);
             storageEngine.setId(id);
             this.client.getKVClient()
-                    .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
-                            ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
+                .put(ByteSequence.from((STORAGE_PREFIX + String.format("%06d", id)).getBytes()),
+                    ByteSequence.from(JsonUtils.toJson(storageEngine))).get();
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when adding storage engine: ", e);
+            logger.error("got error when add storage: ", e);
             throw new MetaStorageException(e);
         } finally {
             if (storageLease != -1) {
@@ -687,9 +543,9 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<String, StorageUnitMeta> storageUnitMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(STORAGE_UNIT_PREFIX.getBytes())).build())
+                .get();
             List<KeyValue> kvs = response.getKvs();
             kvs.sort(Comparator.comparing(e -> e.getKey().toString(StandardCharsets.UTF_8)));
             for (KeyValue kv : kvs) {
@@ -706,7 +562,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             }
             return storageUnitMap;
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when loading storage unit: ", e);
+            logger.error("got error when load storage unit: ", e);
             throw new MetaStorageException(e);
         }
     }
@@ -719,7 +575,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLockClient().lock(ByteSequence.from(STORAGE_UNIT_LOCK.getBytes()), storageUnitLease).get().getKey();
         } catch (Exception e) {
             storageUnitLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring storage unit mutex: ", e);
+            throw new MetaStorageException("acquire storage unit mutex error: ", e);
         }
     }
 
@@ -728,7 +584,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             return String.format("unit%06d", nextId(STORAGE_UNIT_ID));
         } catch (InterruptedException | ExecutionException e) {
-            throw new MetaStorageException("encounter error when adding storage unit: ", e);
+            throw new MetaStorageException("add storage unit error: ", e);
         }
     }
 
@@ -736,9 +592,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException {
         try {
             client.getKVClient().put(ByteSequence.from((STORAGE_UNIT_PREFIX + storageUnitMeta.getId()).getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(storageUnitMeta))).get();
+                ByteSequence.from(JsonUtils.toJson(storageUnitMeta))).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new MetaStorageException("encounter error when updating storage unit: ", e);
+            throw new MetaStorageException("update storage unit error: ", e);
         }
     }
 
@@ -749,7 +605,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLeaseClient().revoke(storageUnitLease).get();
             storageUnitLease = -1L;
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing storage unit mutex: ", e);
+            throw new MetaStorageException("release storage mutex error: ", e);
         } finally {
             storageUnitLeaseLock.unlock();
         }
@@ -765,17 +621,17 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
             GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
-                    .get();
+                .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
+                    GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
+                .get();
             for (KeyValue kv : response.getKvs()) {
                 FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
                 fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>())
-                        .add(fragment);
+                    .add(fragment);
             }
             return fragmentsMap;
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when loading fragment: ", e);
+            logger.error("got error when load fragments: ", e);
             throw new MetaStorageException(e);
         }
     }
@@ -788,7 +644,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLockClient().lock(ByteSequence.from(FRAGMENT_LOCK.getBytes()), fragmentLease);
         } catch (Exception e) {
             fragmentLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring fragment mutex: ", e);
+            throw new MetaStorageException("acquire fragment mutex error: ", e);
         }
     }
 
@@ -796,9 +652,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try {
             client.getKVClient().put(ByteSequence.from((FRAGMENT_PREFIX + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString()).getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(fragmentMeta))).get();
+                ByteSequence.from(JsonUtils.toJson(fragmentMeta))).get();
         } catch (InterruptedException | ExecutionException e) {
-            throw new MetaStorageException("encounter error when updating fragment: ", e);
+            throw new MetaStorageException("update storage unit error: ", e);
         }
     }
 
@@ -814,7 +670,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLeaseClient().revoke(fragmentLease).get();
             fragmentLease = -1L;
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing fragment mutex: ", e);
+            throw new MetaStorageException("release fragment mutex error: ", e);
         } finally {
             fragmentLeaseLock.unlock();
         }
@@ -832,7 +688,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLockClient().lock(ByteSequence.from(USER_LOCK.getBytes()), userLease);
         } catch (Exception e) {
             userLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring user mutex: ", e);
+            throw new MetaStorageException("acquire user mutex error: ", e);
         }
     }
 
@@ -842,7 +698,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             client.getLeaseClient().revoke(userLease).get();
             userLease = -1L;
         } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing user mutex: ", e);
+            throw new MetaStorageException("release user mutex error: ", e);
         } finally {
             userLeaseLock.unlock();
         }
@@ -854,8 +710,8 @@ public class ETCDMetaStorage implements IMetaStorage {
             lockUser();
             Map<String, UserMeta> users = new HashMap<>();
             GetResponse response = this.client.getKVClient().get(ByteSequence.from(USER_PREFIX.getBytes()),
-                    GetOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).build())
-                    .get();
+                GetOption.newBuilder().withPrefix(ByteSequence.from(USER_PREFIX.getBytes())).build())
+                .get();
             if (response.getCount() != 0L) { // 服务器上已经有了，本地的不作数
                 response.getKvs().forEach(e -> {
                     UserMeta user = JsonUtils.fromJson(e.getValue().getBytes(), UserMeta.class);
@@ -867,7 +723,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             }
             return new ArrayList<>(users.values());
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when loading user: ", e);
+            logger.error("got error when load user: ", e);
             throw new MetaStorageException(e);
         } finally {
             if (userLease != -1) {
@@ -891,14 +747,17 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             lockUser();
             this.client.getKVClient()
-                    .put(ByteSequence.from((USER_PREFIX + userMeta.getUsername()).getBytes()), ByteSequence.from(JsonUtils.toJson(userMeta))).get();
+                .put(ByteSequence.from((USER_PREFIX + userMeta.getUsername()).getBytes()), ByteSequence.from(JsonUtils.toJson(userMeta))).get();
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when adding/updating user: ", e);
+            logger.error("got error when add/update user: ", e);
             throw new MetaStorageException(e);
         } finally {
             if (userLease != -1) {
                 releaseUser();
             }
+        }
+        if (userChangeHook != null) {
+            userChangeHook.onChange(userMeta.getUsername(), userMeta);
         }
     }
 
@@ -907,295 +766,52 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             lockUser();
             this.client.getKVClient()
-                    .delete(ByteSequence.from((USER_PREFIX + username).getBytes())).get();
+                .delete(ByteSequence.from((USER_PREFIX + username).getBytes())).get();
         } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when removing user: ", e);
+            logger.error("got error when remove user: ", e);
             throw new MetaStorageException(e);
         } finally {
             if (userLease != -1) {
                 releaseUser();
             }
         }
-    }
-
-    @Override
-    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            Map<FragmentMeta, FragmentStatistics> activeFragmentStatisticsMap = new HashMap<>();
-            GetResponse response = this.client.getKVClient()
-                    .get(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes()),
-                            GetOption.newBuilder().withPrefix(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes())).build())
-                    .get();
-            response.getKvs().forEach(e -> {
-                Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatisticsMap = JsonUtils.getGson().fromJson(e.getValue().toString(StandardCharsets.UTF_8), new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType());
-                deltaActiveFragmentStatisticsMap.forEach((key, value) -> activeFragmentStatisticsMap.computeIfAbsent(key, x -> new FragmentStatistics()).update(value));
-            });
-            return activeFragmentStatisticsMap;
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when loading active fragment statistics: ", e);
-            throw new MetaStorageException(e);
+        if (userChangeHook != null) {
+            userChangeHook.onChange(username, null);
         }
     }
 
     @Override
-    public void lockActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            activeFragmentStatisticsLeaseLock.lock();
-            activeFragmentStatisticsLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
-            client.getLockClient().lock(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_LOCK.getBytes()), activeFragmentStatisticsLease);
-        } catch (Exception e) {
-            activeFragmentStatisticsLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring active fragment statistics mutex: ", e);
-        }
-    }
-
-    @Override
-    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
-        try {
-            long singleId = nextId(ACTIVE_FRAGMENT_STATISTICS_ID + String.format("%06d", id) + "/");
-            this.client.getKVClient().put(
-                    ByteSequence.from((ACTIVE_FRAGMENT_STATISTICS_PREFIX + String.format("%06d", id) + "/" + String.format("%06d", singleId)).getBytes()),
-                    ByteSequence.from(JsonUtils.getGson().toJson(deltaActiveFragmentStatistics, new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType()).getBytes(StandardCharsets.UTF_8))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when adding active fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
-        try {
-            this.client.getKVClient().put(
-                    ByteSequence.from((INACTIVE_FRAGMENT_STATISTICS_PREFIX + endTime).getBytes()),
-                    ByteSequence.from(JsonUtils.getGson().toJson(activeFragmentStatistics, new TypeToken<Map<FragmentMeta, FragmentStatistics>>() {}.getType()).getBytes(StandardCharsets.UTF_8))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when adding inactive fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void releaseActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            client.getLockClient().unlock(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(activeFragmentStatisticsLease).get();
-            activeFragmentStatisticsLease = -1L;
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing active fragment statistics: ", e);
-        } finally {
-            activeFragmentStatisticsLeaseLock.unlock();
-        }
-    }
-
-    @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            this.client.getKVClient().delete(
-                    ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes()),
-                    DeleteOption.newBuilder().withPrefix(ByteSequence.from(ACTIVE_FRAGMENT_STATISTICS_PREFIX.getBytes())).build()
-            ).get();
-        } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when removing active fragment statistics: ", e);
-            throw new MetaStorageException(e);
-        } finally {
-            if (activeFragmentStatisticsLease != -1) {
-                releaseActiveFragmentStatistics();
-            }
-        }
-    }
-
-    @Override
-    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
-        this.activeFragmentStatisticsChangeHook = hook;
-    }
-
-    @Override
-    public boolean proposeToReshard() throws MetaStorageException {
-        try {
-            GetResponse response = this.client.getKVClient().
-                    get(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).get();
-            if (response.getKvs().isEmpty() ||
-                    Boolean.FALSE.equals(JsonUtils.fromJson(response.getKvs().get(0).getValue().getBytes(), Boolean.class))) {
-                this.client.getKVClient().put(
-                        ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()),
-                        ByteSequence.from(JsonUtils.toJson(true))
-                ).get();
-                return true;
-            }
-            return false;
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when proposing to reshard: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void lockReshardNotification() throws MetaStorageException {
-        try {
-            reshardNotificationLeaseLock.lock();
-            reshardNotificationLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
-            client.getLockClient().lock(ByteSequence.from(RESHARD_NOTIFICATION_LOCK.getBytes()), reshardNotificationLease);
-        } catch (Exception e) {
-            reshardNotificationLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring reshard notification mutex: ", e);
-        }
-    }
-
-    @Override
-    public void updateReshardNotification(boolean notification) throws MetaStorageException {
-        try {
-            this.client.getKVClient().put(
-                    ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(notification))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when updating reshard notification: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void releaseReshardNotification() throws MetaStorageException {
-        try {
-            client.getLockClient().unlock(ByteSequence.from(RESHARD_NOTIFICATION_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(reshardNotificationLease).get();
-            reshardNotificationLease = -1L;
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing reshard notification: ", e);
-        } finally {
-            reshardNotificationLeaseLock.unlock();
-        }
-    }
-
-    @Override
-    public void removeReshardNotification() throws MetaStorageException {
-        try {
-            this.client.getKVClient().delete(ByteSequence.from(RESHARD_NOTIFICATION_PREFIX.getBytes())).get();
-        } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when removing reshard notification: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
-        reshardNotificationHook = hook;
-    }
-
-    @Override
-    public void lockReshardCounter() throws MetaStorageException {
-        try {
-            reshardCounterLeaseLock.lock();
-            reshardCounterLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
-            client.getLockClient().lock(ByteSequence.from(RESHARD_COUNTER_LOCK.getBytes()), reshardCounterLease);
-        } catch (Exception e) {
-            reshardCounterLeaseLock.unlock();
-            throw new MetaStorageException("encounter error when acquiring reshard counter mutex: ", e);
-        }
-    }
-
-    @Override
-    public void incrementReshardCounter() throws MetaStorageException {
-        try {
-            GetResponse response = this.client.getKVClient().
-                    get(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes())).get();
-            int counter;
-            if (response.getKvs().isEmpty()) {
-                counter = 0;
-            } else {
-                counter = JsonUtils.fromJson(response.getKvs().get(0).getValue().getBytes(), Integer.class);
-            }
-            this.client.getKVClient().put(
-                    ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(counter + 1))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when incrementing reshard counter: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void resetReshardCounter() throws MetaStorageException {
-        try {
-            this.client.getKVClient().put(
-                    ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes()),
-                    ByteSequence.from(JsonUtils.toJson(0))
-            ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            logger.error("encounter error when resetting reshard counter: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void releaseReshardCounter() throws MetaStorageException {
-        try {
-            client.getLockClient().unlock(ByteSequence.from(RESHARD_COUNTER_LOCK.getBytes())).get();
-            client.getLeaseClient().revoke(reshardCounterLease).get();
-            reshardCounterLease = -1L;
-        } catch (Exception e) {
-            throw new MetaStorageException("encounter error when releasing reshard counter: ", e);
-        } finally {
-            reshardCounterLeaseLock.unlock();
-        }
-    }
-
-    @Override
-    public void removeReshardCounter() throws MetaStorageException {
-        try {
-            this.client.getKVClient().delete(ByteSequence.from(RESHARD_COUNTER_PREFIX.getBytes())).get();
-        } catch (ExecutionException | InterruptedException e) {
-            logger.error("encounter error when removing reshard counter: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
-        reshardCounterChangeHook = hook;
-    }
-
-    public void registerTimeseriesChangeHook(TimeseriesChangeHook hook)
-    {
+    public void registerTimeseriesChangeHook(TimeSeriesChangeHook hook) {
 
     }
 
     @Override
-    public void registerVersionChangeHook(VersionChangeHook hook)
-    {
+    public void registerVersionChangeHook(VersionChangeHook hook) {
 
     }
 
     @Override
-    public boolean election()
-    {
+    public boolean election() {
         return false;
     }
 
     @Override
-    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception
-    {
+    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception {
 
     }
 
     @Override
-    public Map<String, Double> getTimeseriesData()
-    {
+    public Map<String, Double> getTimeseriesData() {
         return null;
     }
 
     @Override
-    public void registerPolicy(long iginxId, int num) throws Exception
-    {
+    public void registerPolicy(long iginxId, int num) throws Exception {
 
     }
 
     @Override
-    public int updateVersion()
-    {
+    public int updateVersion() {
         return 0;
     }
 
@@ -1217,15 +833,6 @@ public class ETCDMetaStorage implements IMetaStorage {
 
         this.userWatcher.close();
         this.userWatcher = null;
-
-        this.activeFragmentStatisticsWatcher.close();
-        this.activeFragmentStatisticsWatcher = null;
-
-        this.reshardNotificationWatcher.close();
-        this.reshardNotificationWatcher = null;
-
-        this.reshardCounterWatcher.close();
-        this.reshardCounterWatcher = null;
 
         this.client.close();
         this.client = null;

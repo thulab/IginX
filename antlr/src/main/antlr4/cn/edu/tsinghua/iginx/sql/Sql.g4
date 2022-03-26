@@ -6,21 +6,15 @@ sqlStatement
 
 statement
     : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
-    | DELETE FROM path (COMMA path)* WHERE? (timeRange)? #deleteStatement
-    | DELETE TIMESERIES path (COMMA path)* #deleteTimeSeriesStatement
+    | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
     | selectClause fromClause whereClause? specialClause? #selectStatement
+    | COUNT POINTS #countPointsStatement
+    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
+    | CLEAR DATA #clearDataStatement
+    | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
-    | COUNT POINTS #countPointsStatement
-    | CLEAR DATA #clearDataStatement
-    | SHOW TIMESERIES #showTimeSeriesStatement
-    | SHOW SUB TIMESERIES path? #showSubTimeSeriesStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
-    | CREATE USER username=nodeName IDENTIFIED BY password=nodeName #createUserStatement
-    | GRANT permissionSpec TO USER username=nodeName #grantUserStatement
-    | SET PASSWORD FOR username=nodeName OPERATOR_EQ PASSWORD LR_BRACKET password=nodeName RR_BRACKET #changePasswordStatement
-    | DROP USER username=nodeName #dropUserStatement
-    | SHOW USER userSpec? #showUserStatement
     ;
 
 selectClause
@@ -44,13 +38,8 @@ functionName
     | SUM
     ;
 
-timeRange
-    : TIME IN timeInterval
-    ;
-
 whereClause
-    : WHERE timeRange (OPERATOR_AND orExpression)?
-    | WHERE orExpression
+    : WHERE orExpression
     ;
 
 orExpression
@@ -62,8 +51,8 @@ andExpression
     ;
 
 predicate
-    : path comparisonOperator constant
-    | constant comparisonOperator path
+    : (TIME | TIMESTAMP | path) comparisonOperator constant
+    | constant comparisonOperator (TIME | TIMESTAMP | path)
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
@@ -74,19 +63,32 @@ fromClause
 specialClause
     : limitClause
     | groupByLevelClause
+    | groupByClause limitClause?
     | groupByTimeClause limitClause?
     | orderByClause limitClause?
     ;
 
-orderByClause : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?;
+orderByClause
+    : ORDER BY (TIME | TIMESTAMP | path) (DESC | ASC)?
+    ;
+
+groupByClause
+    : GROUP timeInterval BY DURATION COMMA LEVEL OPERATOR_EQ INT (COMMA INT)*
+    ;
 
 groupByTimeClause
-    : GROUP BY DURATION
-    | GROUP BY DURATION COMMA LEVEL OPERATOR_EQ INT (COMMA INT)*
+    : GROUP timeInterval BY DURATION
     ;
 
 groupByLevelClause
     : GROUP BY LEVEL OPERATOR_EQ INT (COMMA INT)*
+    ;
+
+timeInterval
+    : LS_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
+    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
+    | LS_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
+    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
     ;
 
 limitClause
@@ -97,18 +99,6 @@ limitClause
 
 offsetClause
     : OFFSET INT
-    ;
-
-permissionSpec
-    : permission (COMMA permission)*
-    ;
-
-userSpec
-    : nodeName (COMMA nodeName)*
-    ;
-
-permission
-    : READ | WRITE | ADMIN | CLUSTER
     ;
 
 comparisonOperator
@@ -145,13 +135,6 @@ storageEngine
     : LR_BRACKET ip COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
     ;
 
-timeInterval
-    : LS_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
-    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RR_BRACKET
-    | LS_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
-    | LR_BRACKET startTime=timeValue COMMA endTime=timeValue RS_BRACKET
-    ;
-
 timeValue
     : dateFormat
     | dateExpression
@@ -177,19 +160,18 @@ nodeName
     | SELECT
     | SHOW
     | INTO
-    | ON
     | WHERE
     | FROM
     | BY
     | LIMIT
     | OFFSET
     | TIME
-    | TIMESERIES
+    | SERIES
     | TIMESTAMP
     | GROUP
     | ORDER
+    | LEVEL
     | ADD
-    | UPDATE
     | VALUE
     | VALUES
     | NOW
@@ -211,12 +193,6 @@ nodeName
     | REPLICA
     | IOTDB
     | INFLUXDB
-    | USER
-    | PASSWORD
-    | CLUSTER
-    | ADMIN
-    | WRITE
-    | READ
     ;
 
 ip
@@ -270,22 +246,6 @@ SELECT
     : S E L E C T
     ;
 
-CREATE
-    : C R E A T E
-    ;
-
-DROP
-    : D R O P
-    ;
-
-GRANT
-    : G R A N T
-    ;
-
-SET
-    : S E T
-    ;
-
 SHOW
     : S H O W
     ;
@@ -302,18 +262,6 @@ CLUSTER
     : C L U S T E R
     ;
 
-ADMIN
-    : A D M I N
-    ;
-
-READ
-    : R E A D
-    ;
-
-WRITE
-    : W R I T E
-    ;
-
 INFO
     : I N F O
     ;
@@ -322,28 +270,12 @@ WHERE
     : W H E R E
     ;
 
-IDENTIFIED
-    : I D E N T I F I E D
-    ;
-
 IN
     : I N
     ;
 
-ON
-    : O N
-    ;
-
-TO
-    : T O
-    ;
-
 INTO
     : I N T O
-    ;
-
-FOR
-    : F O R
     ;
 
 FROM
@@ -354,16 +286,16 @@ TIMESTAMP
     : T I M E S T A M P
     ;
 
-LEVEL
-    : L E V E L
-    ;
-
 GROUP
     : G R O U P
     ;
 
 ORDER
     : O R D E R
+    ;
+
+LEVEL
+    : L E V E L
     ;
 
 BY
@@ -392,14 +324,6 @@ NOW
 
 TIME
     : T I M E
-    ;
-
-USER
-    : U S E R
-    ;
-
-PASSWORD
-    : P A S S W O R D
     ;
 
 TRUE
@@ -462,10 +386,6 @@ ADD
     : A D D
     ;
 
-UPDATE
-    : U P D A T E
-    ;
-
 STORAGEENGINE
     : S T O R A G E E N G I N E
     ;
@@ -478,12 +398,8 @@ CLEAR
     : C L E A R
     ;
 
-SUB
-    : S U B
-    ;
-
-TIMESERIES
-    : T I M E S E R I E S
+SERIES
+    : S E R I E S
     ;
 
 DESC

@@ -20,93 +20,20 @@ package cn.edu.tsinghua.iginx.cluster;
 
 import cn.edu.tsinghua.iginx.auth.SessionManager;
 import cn.edu.tsinghua.iginx.auth.UserManager;
-import cn.edu.tsinghua.iginx.combine.AggregateCombineResult;
-import cn.edu.tsinghua.iginx.combine.DownsampleQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.LastQueryCombineResult;
-import cn.edu.tsinghua.iginx.combine.QueryDataCombineResult;
-import cn.edu.tsinghua.iginx.combine.ShowSubPathsCombineResult;
-import cn.edu.tsinghua.iginx.combine.ShowColumnsCombineResult;
-import cn.edu.tsinghua.iginx.combine.ValueFilterCombineResult;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
-import cn.edu.tsinghua.iginx.core.Core;
-import cn.edu.tsinghua.iginx.core.context.AggregateQueryContext;
-import cn.edu.tsinghua.iginx.core.context.DeleteColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.DeleteDataInColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.DownsampleQueryContext;
-import cn.edu.tsinghua.iginx.core.context.InsertColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedColumnRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertNonAlignedRowRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.InsertRowRecordsContext;
-import cn.edu.tsinghua.iginx.core.context.LastQueryContext;
-import cn.edu.tsinghua.iginx.core.context.QueryDataContext;
-import cn.edu.tsinghua.iginx.core.context.ShowSubPathsContext;
-import cn.edu.tsinghua.iginx.core.context.ShowColumnsContext;
-import cn.edu.tsinghua.iginx.core.context.ValueFilterQueryContext;
-import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
-import cn.edu.tsinghua.iginx.exceptions.StatusCode;
+import cn.edu.tsinghua.iginx.engine.ContextBuilder;
+import cn.edu.tsinghua.iginx.engine.StatementExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.query.MixIStorageEnginePlanExecutor;
-import cn.edu.tsinghua.iginx.sql.IginXSqlVisitor;
-import cn.edu.tsinghua.iginx.sql.SQLParseError;
-import cn.edu.tsinghua.iginx.sql.SqlLexer;
-import cn.edu.tsinghua.iginx.sql.SqlParser;
-import cn.edu.tsinghua.iginx.sql.statement.Statement;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
-import cn.edu.tsinghua.iginx.thrift.AddUserReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
-import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
-import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
-import cn.edu.tsinghua.iginx.thrift.GetUserReq;
-import cn.edu.tsinghua.iginx.thrift.GetUserResp;
-import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.IginxInfo;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
-import cn.edu.tsinghua.iginx.thrift.LocalMetaStorageInfo;
-import cn.edu.tsinghua.iginx.thrift.MetaStorageInfo;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
-import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
-import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
-import cn.edu.tsinghua.iginx.thrift.Status;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
-import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
-import cn.edu.tsinghua.iginx.thrift.UserType;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,17 +48,17 @@ public class IginxWorker implements IService.Iface {
 
     private static final Logger logger = LoggerFactory.getLogger(IginxWorker.class);
 
-    private static final Config config = ConfigDescriptor.getInstance().getConfig();
-
     private static final IginxWorker instance = new IginxWorker();
-
-    private final Core core = Core.getInstance();
 
     private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
     private final UserManager userManager = UserManager.getInstance();
 
     private final SessionManager sessionManager = SessionManager.getInstance();
+
+    private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
+
+    private final StatementExecutor executor = StatementExecutor.getInstance();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -163,9 +90,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        DeleteColumnsContext context = new DeleteColumnsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -173,9 +100,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertColumnRecordsContext context = new InsertColumnRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -183,9 +110,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertNonAlignedColumnRecordsContext context = new InsertNonAlignedColumnRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -193,9 +120,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertRowRecordsContext context = new InsertRowRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -203,9 +130,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        InsertNonAlignedRowRecordsContext context = new InsertNonAlignedRowRecordsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -213,9 +140,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        DeleteDataInColumnsContext context = new DeleteDataInColumnsContext(req);
-        core.processRequest(context);
-        return context.getStatus();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getStatus();
     }
 
     @Override
@@ -223,9 +150,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new QueryDataResp(RpcUtils.ACCESS_DENY);
         }
-        QueryDataContext context = new QueryDataContext(req);
-        core.processRequest(context);
-        return ((QueryDataCombineResult) context.getCombineResult()).getResp();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getQueryDataResp();
     }
 
     @Override
@@ -239,16 +166,9 @@ public class IginxWorker implements IService.Iface {
         for (StorageEngine storageEngine : storageEngines) {
             String type = storageEngine.getType();
             StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
-                    storageEngine.getExtraParams(), type, metaManager.getIginxId());
-            try {
-                if (!MixIStorageEnginePlanExecutor.testConnection(meta)) {
-                    return RpcUtils.FAILURE;
-                }
-            } catch (Exception e) {
-                logger.error("load storage engine error, unable to connection to " + meta.getIp() + ":" + meta.getPort());
-                return RpcUtils.FAILURE;
-            }
+                storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
+
         }
         Status status = RpcUtils.SUCCESS;
         // 检测是否与已有的存储单元冲突
@@ -277,6 +197,9 @@ public class IginxWorker implements IService.Iface {
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;
         }
+        for (StorageEngineMeta meta : storageEngineMetas) {
+            PhysicalEngineImpl.getInstance().getStorageManager().addStorage(meta);
+        }
         return status;
     }
 
@@ -285,19 +208,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new AggregateQueryResp(RpcUtils.ACCESS_DENY);
         }
-        AggregateQueryContext context = new AggregateQueryContext(req);
-        core.processRequest(context);
-        return ((AggregateCombineResult) context.getCombineResult()).getResp();
-    }
-
-    @Override
-    public ValueFilterQueryResp valueFilterQuery(ValueFilterQueryReq req) {
-        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
-            return new ValueFilterQueryResp(RpcUtils.ACCESS_DENY);
-        }
-        ValueFilterQueryContext context = new ValueFilterQueryContext(req);
-        core.processRequest(context);
-        return ((ValueFilterCombineResult) context.getCombineResult()).getResp();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getAggregateQueryResp();
     }
 
     @Override
@@ -305,9 +218,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new DownsampleQueryResp(RpcUtils.ACCESS_DENY);
         }
-        DownsampleQueryContext context = new DownsampleQueryContext(req);
-        core.processRequest(context);
-        return ((DownsampleQueryCombineResult) context.getCombineResult()).getResp();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getDownSampleQueryResp();
     }
 
     @Override
@@ -315,19 +228,9 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
             return new ShowColumnsResp(RpcUtils.ACCESS_DENY);
         }
-        ShowColumnsContext context = new ShowColumnsContext(req);
-        core.processRequest(context);
-        return ((ShowColumnsCombineResult) context.getCombineResult()).getResp();
-    }
-
-    @Override
-    public ShowSubPathsResp showSubPaths(ShowSubPathsReq req) {
-        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
-            return new ShowSubPathsResp(RpcUtils.ACCESS_DENY);
-        }
-        ShowSubPathsContext context = new ShowSubPathsContext(req);
-        core.processRequest(context);
-        return ((ShowSubPathsCombineResult) context.getCombineResult()).getResp();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getShowColumnsResp();
     }
 
     @Override
@@ -342,41 +245,21 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public ExecuteSqlResp executeSql(ExecuteSqlReq req) {
-        SqlLexer lexer = new SqlLexer(CharStreams.fromString(req.getStatement()));
-        lexer.removeErrorListeners();
-        lexer.addErrorListener(SQLParseError.INSTANCE);
-
-        CommonTokenStream tokens = new CommonTokenStream(lexer);
-        SqlParser parser = new SqlParser(tokens);
-        parser.removeErrorListeners();
-        parser.addErrorListener(SQLParseError.INSTANCE);
-
-        IginXSqlVisitor visitor = new IginXSqlVisitor();
-
-        try {
-            ParseTree tree = parser.sqlStatement();
-            Statement statement = visitor.visit(tree);
-            return statement.execute(req.getSessionId());
-        } catch (SQLParserException | ParseCancellationException e) {
-            StatusCode statusCode =  StatusCode.STATEMENT_PARSE_ERROR;
-            String errMsg = e.getMessage();
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.status(statusCode, errMsg), SqlType.Unknown);
-            resp.setParseErrorMsg(e.getMessage());
-            return resp;
-        } catch (Exception e) {
-            e.printStackTrace();
-            ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.Unknown);
-            resp.setParseErrorMsg("Execute Error: encounter error(s) when executing sql statement, " +
-                    "see server log for more details.");
-            return resp;
-        }
+        StatementExecutor executor = StatementExecutor.getInstance();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getExecuteSqlResp();
     }
 
     @Override
     public LastQueryResp lastQuery(LastQueryReq req) {
-        LastQueryContext context = new LastQueryContext(req);
-        core.processRequest(context);
-        return ((LastQueryCombineResult) context.getCombineResult()).getResp();
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Read)) {
+            return new LastQueryResp(RpcUtils.ACCESS_DENY);
+        }
+
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getLastQueryResp();
     }
 
     @Override
@@ -405,9 +288,6 @@ public class IginxWorker implements IService.Iface {
     public Status deleteUser(DeleteUserReq req) {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Admin)) {
             return RpcUtils.ACCESS_DENY;
-        }
-        if (config.getUsername().equals(req.getUsername())) {
-            return RpcUtils.DELETE_ROOT_USER;
         }
         if (userManager.deleteUser(req.username)) {
             return RpcUtils.SUCCESS;
@@ -446,7 +326,7 @@ public class IginxWorker implements IService.Iface {
 
         // IginX 信息
         List<IginxInfo> iginxInfos = new ArrayList<>();
-        for (IginxMeta iginxMeta: metaManager.getIginxList()) {
+        for (IginxMeta iginxMeta : metaManager.getIginxList()) {
             iginxInfos.add(new IginxInfo(iginxMeta.getId(), iginxMeta.getIp(), iginxMeta.getPort()));
         }
         iginxInfos.sort(Comparator.comparingLong(IginxInfo::getId));
@@ -454,9 +334,9 @@ public class IginxWorker implements IService.Iface {
 
         // 数据库信息
         List<StorageEngineInfo> storageEngineInfos = new ArrayList<>();
-        for (StorageEngineMeta storageEngineMeta: metaManager.getStorageEngineList()) {
+        for (StorageEngineMeta storageEngineMeta : metaManager.getStorageEngineList()) {
             storageEngineInfos.add(new StorageEngineInfo(storageEngineMeta.getId(), storageEngineMeta.getIp(),
-                    storageEngineMeta.getPort(), storageEngineMeta.getStorageEngine()));
+                storageEngineMeta.getPort(), storageEngineMeta.getStorageEngine()));
         }
         storageEngineInfos.sort(Comparator.comparingLong(StorageEngineInfo::getId));
         resp.setStorageEngineInfos(storageEngineInfos);
@@ -469,7 +349,7 @@ public class IginxWorker implements IService.Iface {
             case Constants.ETCD_META:
                 metaStorageInfos = new ArrayList<>();
                 String[] endPoints = config.getEtcdEndpoints().split(",");
-                for (String endPoint: endPoints) {
+                for (String endPoint : endPoints) {
                     if (endPoint.startsWith("http://")) {
                         endPoint = endPoint.substring(7);
                     } else if (endPoint.startsWith("https://")) {
@@ -477,17 +357,17 @@ public class IginxWorker implements IService.Iface {
                     }
                     String[] ipAndPort = endPoint.split(":", 2);
                     MetaStorageInfo metaStorageInfo = new MetaStorageInfo(ipAndPort[0], Integer.parseInt(ipAndPort[1]),
-                            Constants.ETCD_META);
+                        Constants.ETCD_META);
                     metaStorageInfos.add(metaStorageInfo);
                 }
                 break;
             case Constants.ZOOKEEPER_META:
                 metaStorageInfos = new ArrayList<>();
                 String[] zookeepers = config.getZookeeperConnectionString().split(",");
-                for (String zookeeper: zookeepers) {
+                for (String zookeeper : zookeepers) {
                     String[] ipAndPort = zookeeper.split(":", 2);
                     MetaStorageInfo metaStorageInfo = new MetaStorageInfo(ipAndPort[0], Integer.parseInt(ipAndPort[1]),
-                            Constants.ZOOKEEPER_META);
+                        Constants.ZOOKEEPER_META);
                     metaStorageInfos.add(metaStorageInfo);
                 }
                 break;
@@ -495,7 +375,7 @@ public class IginxWorker implements IService.Iface {
             case "":
             default:
                 localMetaStorageInfo = new LocalMetaStorageInfo(
-                        Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
+                    Paths.get(config.getFileDataDir()).toAbsolutePath().toString()
                 );
         }
 

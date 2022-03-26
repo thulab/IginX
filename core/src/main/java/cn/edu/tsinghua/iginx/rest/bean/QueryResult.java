@@ -60,16 +60,16 @@ public class QueryResult {
 
     public String toResultString(int num) {
         return "{" + sampleSizeToString(num) +
-                "," +
-                "\"results\": [{ " +
-                nameToString(num) +
-                "," +
-                groupbyToString() +
-                "," +
-                tagsToString(num) +
-                "," +
-                valueToString(num) +
-                "}]}";
+            "," +
+            "\"results\": [{ " +
+            nameToString(num) +
+            "," +
+            groupbyToString() +
+            "," +
+            tagsToString(num) +
+            "," +
+            valueToString(num) +
+            "}]}";
     }
 
 
@@ -168,7 +168,7 @@ public class QueryResult {
         Map<String, List<String>> tags = null;
         try {
             tags = getTagsFromPaths(queryMetrics.get(num).getName(),
-                    queryResultDatasets.get(num).getPaths());
+                queryResultDatasets.get(num).getPaths());
         } catch (Exception e) {
             LOGGER.error("Error occurred during parsing tags ", e);
 
@@ -195,8 +195,7 @@ public class QueryResult {
             ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[]) {
                 ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
-            }
-            else {
+            } else {
                 ret.append(queryResultDatasets.get(num).getValues().get(i).toString());
             }
             ret.append("],");

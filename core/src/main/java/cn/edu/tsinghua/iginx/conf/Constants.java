@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.conf;
 
-import java.io.File;
-
 public class Constants {
 
     public static final int MAX_REDIRECT_TIME = 5;

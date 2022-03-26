@@ -1,9 +1,7 @@
 package cn.edu.tsinghua.iginx.jdbc;
 
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 import com.google.common.primitives.Shorts;
@@ -13,26 +11,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.Clob;
-import java.sql.Date;
-import java.sql.NClob;
-import java.sql.Ref;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.RowId;
-import java.sql.SQLException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.sql.Types;
+import java.sql.*;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
@@ -63,10 +45,7 @@ public class IginXResultSet implements ResultSet {
             case GetReplicaNum:
                 constructReplicaNumResult(result);
                 break;
-            case AggregateQuery:
-            case SimpleQuery:
-            case DownsampleQuery:
-            case ValueFilterQuery:
+            case Query:
                 constructQueryResult(result);
         }
 
@@ -76,40 +55,11 @@ public class IginXResultSet implements ResultSet {
         this.metadata = new IginXResultMetadata(columnNames, columnTypes, hasTime);
     }
 
-    private void constructLastQueryResult(SessionExecuteSqlResult result) {
-        columnNames = Arrays.asList("time", "path", "value");
-        columnTypes = Arrays.asList(DataType.LONG, DataType.BINARY, DataType.BINARY);
-        hasTime = true;
-        List<String> paths = result.getPaths();
-        long[] timestamps = result.getTimestamps();
-        values = new ArrayList<>();
-        for (int i = 0; i < paths.size(); i++) {
-            List<Object> row = new ArrayList<>();
-            row.add(timestamps[i]);
-            row.add(paths.get(i));
-            row.add(result.getValues().get(0).get(i));
-            values.add(row);
-        }
-    }
-
     private void constructQueryResult(SessionExecuteSqlResult result) {
-        if (result.isQuery() && result.getAggregateType() == AggregateType.LAST) {
-            constructLastQueryResult(result);
-            return;
-        }
         columnTypes = result.getDataTypeList();
         values = result.getValues();
 
-        if (result.getSqlType() == SqlType.AggregateQuery ||
-                result.getSqlType() == SqlType.DownsampleQuery) {
-            columnNames = new ArrayList<>();
-            String type = result.getAggregateType().toString();
-            for (String path : result.getPaths()) {
-                columnNames.add(type + "(" + path + ")");
-            }
-        } else {
-            columnNames = result.getPaths();
-        }
+        columnNames = result.getPaths();
 
         long[] timestamps = result.getTimestamps();
         if (timestamps != null) {
@@ -282,8 +232,8 @@ public class IginXResultSet implements ResultSet {
 
     private void throwRangeException(String valueAsString, int columnIndex, int jdbcType) throws SQLException {
         throw new SQLException("Numeric value out of range" +
-                "'" + valueAsString + "' in column '" + columnIndex +
-                "' is outside valid range for the jdbcType " + jdbcType);
+            "'" + valueAsString + "' in column '" + columnIndex +
+            "' is outside valid range for the jdbcType " + jdbcType);
     }
 
     @Override

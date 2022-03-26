@@ -1,13 +1,7 @@
 import cn.edu.tsinghua.iginx.jdbc.IginXPreparedStatement;
 import org.apache.commons.lang3.RandomStringUtils;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 
 public class ExampleTest {
 
@@ -43,11 +37,11 @@ public class ExampleTest {
         String insertClause = "INSERT INTO us.d2 (timestamp, long, double, boolean, string) values (%s, %s, %s, %s, %s);";
         for (int i = 0; i < size; i++) {
             String sql = String.format(insertClause,
-                    START_TIMESTAMP + i, // timestamp
-                    i + 1, // long
-                    i + 0.5, // double
-                    i % 2 == 0, //boolean
-                    "\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"" // string
+                START_TIMESTAMP + i, // timestamp
+                i + 1, // long
+                i + 0.5, // double
+                i % 2 == 0, //boolean
+                "\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"" // string
             );
             statement.addBatch(sql);
         }
@@ -56,39 +50,39 @@ public class ExampleTest {
 
         // Insert use execute
         String sql = String.format(insertClause,
-                100, // timestamp
-                101, // long
-                100.5, // double
-                true, //boolean
-                "\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"" // string
+            100, // timestamp
+            101, // long
+            100.5, // double
+            true, //boolean
+            "\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"" // string
         );
         System.out.println("sql: " + sql);
         statement.execute(sql);
 
         // Insert use executeUpdate
         sql = String.format(insertClause,
-                101, // timestamp
-                102, // long
-                101.5, // double
-                false, //boolean
-                "\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"" // string
+            101, // timestamp
+            102, // long
+            101.5, // double
+            false, //boolean
+            "\"" + new String(RandomStringUtils.randomAlphanumeric(10).getBytes()) + "\"" // string
         );
         System.out.println("sql: " + sql);
         statement.executeUpdate(sql);
 
         // Full query use executeQuery
-        String fullQueryClause = "SELECT %s, %s, %s, %s FROM %s WHERE TIME IN (%s, %s);";
+        String fullQueryClause = "SELECT %s, %s, %s, %s FROM %s WHERE TIME > %s AND TIME < %s;";
         sql = String.format(fullQueryClause,
-                S1, S2, S3, S4, // select
-                prefix, // from
-                0, 200 // time range
+            S1, S2, S3, S4, // select
+            prefix, // from
+            0, 200 // time range
         );
         ResultSet resultSet = statement.executeQuery(sql);
         System.out.println("sql: " + sql);
         outputResult(resultSet);
 
         // Time range query use execute
-        String timeRangeClause = "SELECT %s FROM %s WHERE time in (50, 100);";
+        String timeRangeClause = "SELECT %s FROM %s WHERE time > 50 AND TIME < 100;";
         sql = String.format(timeRangeClause, S1, prefix);
         if (statement.execute(sql)) {
             resultSet = statement.getResultSet();
@@ -97,7 +91,7 @@ public class ExampleTest {
         outputResult(resultSet);
 
         // DownSample query use executeQuery
-        String downSampleClause = "SELECT %s(%s) FROM %s WHERE time in (%s, %s) GROUP BY %s;";
+        String downSampleClause = "SELECT %s(%s) FROM %s GROUP (%s, %s) BY %s;";
         sql = String.format(downSampleClause, "MAX", S2, prefix, "0", "200", "10ms");
         resultSet = statement.executeQuery(sql);
         System.out.println("sql: " + sql);
@@ -116,7 +110,7 @@ public class ExampleTest {
         statement.close();
 
         // Create prepareStatement
-        String preparedClause = "SELECT %s FROM %s WHERE time in (?, ?) and %s < ?;";
+        String preparedClause = "SELECT %s FROM %s WHERE TIME > ? AND TIME < ? AND %s < ?;";
         preparedStatement = connection.prepareStatement(String.format(preparedClause, S1, prefix, S1));
         if (statement == null) {
             System.out.println("create statement fail.");
@@ -179,7 +173,7 @@ public class ExampleTest {
                 System.out.print(metaData.getColumnLabel(i + 1) + " ");
             }
             System.out.println();
-            while(resultSet.next()) {
+            while (resultSet.next()) {
                 for (int i = 1; ; i++) {
                     System.out.print(resultSet.getString(i));
                     if (i < columnCount) {

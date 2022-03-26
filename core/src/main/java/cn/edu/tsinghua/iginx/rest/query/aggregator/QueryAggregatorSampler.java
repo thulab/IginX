@@ -58,7 +58,7 @@ public class QueryAggregatorSampler extends QueryAggregator {
                         }
                         if (i != 0) {
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], nowd * getUnit() /
-                                    (sessionQueryDataSet.getTimestamps()[i] - sessionQueryDataSet.getTimestamps()[i - 1]));
+                                (sessionQueryDataSet.getTimestamps()[i] - sessionQueryDataSet.getTimestamps()[i - 1]));
                         }
                         nowd = null;
                     }

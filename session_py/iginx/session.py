@@ -16,10 +16,11 @@
 # under the License.
 #
 import logging
-
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
+from .cluster_info import ClusterInfo
+from .dataset import QueryDataSet, AggregateQueryDataSet
 from .thrift.rpc.IService import Client
 from .thrift.rpc.ttypes import (
     OpenSessionReq,
@@ -31,11 +32,9 @@ from .thrift.rpc.ttypes import (
     GetReplicaNumReq,
     LastQueryReq,
     ShowColumnsReq,
-    ShowSubPathsReq,
     AddStorageEnginesReq,
     DeleteColumnsReq,
     QueryDataReq,
-    ValueFilterQueryReq,
     DeleteDataInColumnsReq,
     DownsampleQueryReq,
     AggregateQueryReq,
@@ -45,19 +44,11 @@ from .thrift.rpc.ttypes import (
     InsertNonAlignedColumnRecordsReq,
     ExecuteSqlReq,
 
-    AuthType,
-    SqlType,
-    DataType,
-    AggregateType,
-
     StorageEngine,
 )
-
-from .cluster_info import ClusterInfo
 from .time_series import TimeSeries
-from .dataset import LastQueryDataSet, QueryDataSet, AggregateQueryDataSet, SqlExecuteResult
-from .utils.byte_utils import timestamps_to_bytes, row_values_to_bytes, column_values_to_bytes, bitmap_to_bytes
 from .utils.bitmap import Bitmap
+from .utils.byte_utils import timestamps_to_bytes, row_values_to_bytes, column_values_to_bytes, bitmap_to_bytes
 
 logger = logging.getLogger("IginX")
 
@@ -133,14 +124,6 @@ class Session(object):
             time_series_list.append(TimeSeries(resp.paths[i], resp.dataTypeList[i]))
 
         return time_series_list
-
-
-    def list_sub_time_series(self, prefix=None):
-        req = ShowSubPathsReq(sessionId=self.__session_id, path=prefix)
-        resp = self.__client.showSubPaths(req)
-        Session.verify_status(resp.status)
-
-        return resp.paths
 
 
     def add_storage_engine(self, ip, port, type, extra_params=None):
@@ -374,18 +357,6 @@ class Session(object):
         return QueryDataSet(paths, data_types, raw_data_set.timestamps, raw_data_set.valuesList, raw_data_set.bitmapList)
 
 
-    def value_filter_query(self, paths, start_time, end_time, filter_expression):
-        req = ValueFilterQueryReq(sessionId=self.__session_id, paths=Session.merge_and_sort_paths(paths),
-                           startTime=start_time, endTime=end_time, booleanExpression=filter_expression)
-        resp = self.__client.valueFilterQuery(req)
-        Session.verify_status(resp.status)
-        paths = resp.paths
-        data_types = resp.dataTypeList
-        raw_data_set = resp.queryDataSet
-        return QueryDataSet(paths, data_types, raw_data_set.timestamps, raw_data_set.valuesList,
-                                raw_data_set.bitmapList)
-
-
     def last_query(self, paths, start_time=0):
         if len(paths) == 0:
             logger.warning("paths shouldn't be empty")
@@ -393,7 +364,11 @@ class Session(object):
         req = LastQueryReq(sessionId=self.__session_id, paths=Session.merge_and_sort_paths(paths), startTime=start_time)
         resp = self.__client.lastQuery(req)
         Session.verify_status(resp.status)
-        return LastQueryDataSet(resp)
+        paths = resp.paths
+        data_types = resp.dataTypeList
+        raw_data_set = resp.queryDataSet
+        return QueryDataSet(paths, data_types, raw_data_set.timestamps, raw_data_set.valuesList,
+                            raw_data_set.bitmapList)
 
 
     def downsample_query(self, paths, start_time, end_time, type, precision):
@@ -458,7 +433,7 @@ class Session(object):
         req = ExecuteSqlReq(sessionId=self.__session_id, statement=statement)
         resp = self.__client.executeSql(req)
         Session.verify_status(resp.status)
-        return SqlExecuteResult(resp)
+        logger.warning("unsupported function: execute sql")
 
     @staticmethod
     def verify_status(status):

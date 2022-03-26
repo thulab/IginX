@@ -1,65 +1,122 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
-import cn.edu.tsinghua.iginx.utils.Pair;
-import cn.edu.tsinghua.iginx.utils.RpcUtils;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
-public class SelectStatement extends Statement {
+public class SelectStatement extends DataStatement {
 
     private QueryType queryType;
 
     private boolean hasFunc;
     private boolean hasValueFilter;
-    private boolean hasGroupBy;
+    private boolean hasGroupByTime;
     private boolean ascending;
 
-    private List<Pair<String, String>> selectedFuncsAndPaths;
+    private Map<String, List<String>> selectedFuncsAndPaths;
     private Set<FuncType> funcTypeSet;
+    private Set<String> pathSet;
     private String fromPath;
     private String orderByPath;
-    private String booleanExpression;
+    private Filter filter;
+    private long precision;
     private long startTime;
     private long endTime;
-    private long precision;
     private int limit;
     private int offset;
 
     private List<Integer> layers;
 
     public SelectStatement() {
-        statementType = StatementType.SELECT;
-        queryType = QueryType.Unknown;
-        ascending = true;
-        selectedFuncsAndPaths = new ArrayList<>();
-        funcTypeSet = new HashSet<>();
-        fromPath = "";
-        orderByPath = "";
-        startTime = Long.MIN_VALUE;
-        endTime = Long.MAX_VALUE;
-        limit = Integer.MAX_VALUE;
-        offset = 0;
-        layers = new ArrayList<>();
+        this.statementType = StatementType.SELECT;
+        this.queryType = QueryType.Unknown;
+        this.ascending = true;
+        this.selectedFuncsAndPaths = new HashMap<>();
+        this.funcTypeSet = new HashSet<>();
+        this.pathSet = new HashSet<>();
+        this.fromPath = "";
+        this.orderByPath = "";
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
+        this.layers = new ArrayList<>();
     }
+
+    // simple query
+    public SelectStatement(List<String> paths, long startTime, long endTime) {
+        this.queryType = QueryType.SimpleQuery;
+
+        this.selectedFuncsAndPaths = new HashMap<>();
+        this.selectedFuncsAndPaths.put("", paths);
+
+        this.funcTypeSet = new HashSet<>();
+
+        this.setFromSession(paths, startTime, endTime);
+    }
+
+    // aggregate query
+    public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType) {
+        if (aggregateType == AggregateType.LAST || aggregateType == AggregateType.FIRST) {
+            this.queryType = QueryType.LastFirstQuery;
+        } else {
+            this.queryType = QueryType.AggregateQuery;
+        }
+
+        String func = aggregateType.toString().toLowerCase();
+        this.selectedFuncsAndPaths = new HashMap<>();
+        selectedFuncsAndPaths.put(func, paths);
+
+        this.funcTypeSet = new HashSet<>();
+        this.funcTypeSet.add(str2FuncType(func));
+        this.hasFunc = true;
+
+        this.setFromSession(paths, startTime, endTime);
+    }
+
+    // downSample query
+    public SelectStatement(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) {
+        this.queryType = QueryType.DownSampleQuery;
+
+        String func = aggregateType.toString().toLowerCase();
+        this.selectedFuncsAndPaths = new HashMap<>();
+        this.selectedFuncsAndPaths.put(func, paths);
+
+        this.funcTypeSet = new HashSet<>();
+        this.funcTypeSet.add(str2FuncType(func));
+        this.hasFunc = true;
+
+        this.precision = precision;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.hasGroupByTime = true;
+
+        this.setFromSession(paths, startTime, endTime);
+    }
+
+    private void setFromSession(List<String> paths, long startTime, long endTime) {
+        this.statementType = StatementType.SELECT;
+
+        this.ascending = true;
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
+        this.orderByPath = "";
+
+        this.pathSet = new HashSet<>();
+        this.pathSet.addAll(paths);
+
+        this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
+            new TimeFilter(Op.GE, startTime),
+            new TimeFilter(Op.L, endTime)
+        )));
+        this.hasValueFilter = true;
+        this.layers = new ArrayList<>();
+    }
+
 
     public static FuncType str2FuncType(String str) {
         switch (str.toLowerCase()) {
@@ -113,7 +170,7 @@ public class SelectStatement extends Statement {
         }
     }
 
-    public boolean isHasFunc() {
+    public boolean hasFunc() {
         return hasFunc;
     }
 
@@ -121,7 +178,7 @@ public class SelectStatement extends Statement {
         this.hasFunc = hasFunc;
     }
 
-    public boolean isHasValueFilter() {
+    public boolean hasValueFilter() {
         return hasValueFilter;
     }
 
@@ -129,12 +186,12 @@ public class SelectStatement extends Statement {
         this.hasValueFilter = hasValueFilter;
     }
 
-    public boolean isHasGroupBy() {
-        return hasGroupBy;
+    public boolean hasGroupByTime() {
+        return hasGroupByTime;
     }
 
-    public void setHasGroupBy(boolean hasGroupBy) {
-        this.hasGroupBy = hasGroupBy;
+    public void setHasGroupByTime(boolean hasGroupByTime) {
+        this.hasGroupByTime = hasGroupByTime;
     }
 
     public boolean isAscending() {
@@ -147,20 +204,34 @@ public class SelectStatement extends Statement {
 
     public List<String> getSelectedPaths() {
         List<String> paths = new ArrayList<>();
-        for (Pair<String, String> kv : selectedFuncsAndPaths) {
-            paths.add(kv.v);
-        }
+        selectedFuncsAndPaths.forEach((k, v) -> {
+            paths.addAll(v);
+        });
         return paths;
     }
 
-    public List<Pair<String, String>> getSelectedFuncsAndPaths() {
+    public Map<String, List<String>> getSelectedFuncsAndPaths() {
         return selectedFuncsAndPaths;
     }
 
     public void setSelectedFuncsAndPaths(String func, String path) {
+        func = func.toLowerCase();
         String fullPath = fromPath + SQLConstant.DOT + path;
-        this.selectedFuncsAndPaths.add(new Pair<>(func, fullPath));
-        this.funcTypeSet.add(str2FuncType(func));
+        List<String> pathList = this.selectedFuncsAndPaths.get(func);
+        if (pathList == null) {
+            pathList = new ArrayList<>();
+            pathList.add(fullPath);
+            this.selectedFuncsAndPaths.put(func, pathList);
+        } else {
+            pathList.add(fullPath);
+        }
+
+        FuncType type = str2FuncType(func);
+        if (type != null) {
+            this.funcTypeSet.add(type);
+        }
+
+        this.pathSet.add(fullPath);
     }
 
     public Set<FuncType> getFuncTypeSet() {
@@ -169,6 +240,15 @@ public class SelectStatement extends Statement {
 
     public void setFuncTypeSet(Set<FuncType> funcTypeSet) {
         this.funcTypeSet = funcTypeSet;
+    }
+
+    public Set<String> getPathSet() {
+        return pathSet;
+    }
+
+    public void setPathSet(String path) {
+        String fullPath = fromPath + SQLConstant.DOT + path;
+        this.pathSet.add(fullPath);
     }
 
     public String getFromPath() {
@@ -188,12 +268,12 @@ public class SelectStatement extends Statement {
         this.orderByPath = orderByPath;
     }
 
-    public String getBooleanExpression() {
-        return booleanExpression;
+    public Filter getFilter() {
+        return filter;
     }
 
-    public void setBooleanExpression(String booleanExpression) {
-        this.booleanExpression = booleanExpression;
+    public void setFilter(Filter filter) {
+        this.filter = filter;
     }
 
     public long getStartTime() {
@@ -244,206 +324,35 @@ public class SelectStatement extends Statement {
         this.offset = offset;
     }
 
-    public void setSelectedFuncsAndPaths(List<Pair<String, String>> selectedFuncsAndPaths) {
-        this.selectedFuncsAndPaths = selectedFuncsAndPaths;
-    }
-
     public List<Integer> getLayers() {
         return layers;
     }
 
-    public void setLayer(int layer) {
+    public void setLayer(Integer layer) {
         this.layers.add(layer);
     }
 
     public void setQueryType() {
         if (hasFunc) {
-            if (hasGroupBy && hasValueFilter) {
-                this.queryType = QueryType.MixedQuery;
-            } else if (hasGroupBy) {
-                if (funcTypeSet.size() > 1) {
-                    this.queryType = QueryType.MultiDownSampleQuery;
-                } else {
-                    this.queryType = QueryType.DownSampleQuery;
-                }
-            } else if (hasValueFilter) {
-                this.queryType = QueryType.ValueFilterAndAggregateQuery;
+            if (hasGroupByTime) {
+                this.queryType = QueryType.DownSampleQuery;
             } else {
-                if (funcTypeSet.size() > 1) {
-                    this.queryType = QueryType.MultiAggregateQuery;
-                } else {
-                    this.queryType = QueryType.AggregateQuery;
-                }
+                this.queryType = QueryType.AggregateQuery;
             }
         } else {
-            if (hasGroupBy && hasValueFilter) {
-                this.queryType = QueryType.ValueFilterAndDownSampleQuery;
-            } else if (hasGroupBy) {
+            if (hasGroupByTime) {
                 throw new SQLParserException("Group by clause cannot be used without aggregate function.");
-            } else if (hasValueFilter) {
-                this.queryType = QueryType.ValueFilterQuery;
             } else {
                 this.queryType = QueryType.SimpleQuery;
             }
         }
-    }
 
-    @Override
-    public ExecuteSqlResp execute(long sessionId) {
-        switch (queryType) {
-            case SimpleQuery:
-                return simpleQuery(sessionId);
-            case AggregateQuery:
-                return aggregateQuery(sessionId);
-            case DownSampleQuery:
-                return downSampleQuery(sessionId);
-            case ValueFilterQuery:
-                return valueFilterQuery(sessionId);
-            default:
-                ExecuteSqlResp resp = new ExecuteSqlResp(RpcUtils.FAILURE, SqlType.NotSupportQuery);
-                resp.setParseErrorMsg(String.format("Not support %s for now.", queryType.toString()));
-                return resp;
-        }
-    }
-
-    private ExecuteSqlResp simpleQuery(long sessionId) {
-        IginxWorker worker = IginxWorker.getInstance();
-        QueryDataReq req = new QueryDataReq(
-                sessionId,
-                getSelectedPaths(),
-                startTime,
-                endTime
-        );
-        QueryDataResp queryDataResp = worker.queryData(req);
-
-        checkIfHasOrderByPath(queryDataResp.getPaths());
-
-        ExecuteSqlResp resp = new ExecuteSqlResp(queryDataResp.getStatus(), SqlType.SimpleQuery);
-        resp.setPaths(queryDataResp.getPaths());
-        resp.setDataTypeList(queryDataResp.getDataTypeList());
-        resp.setQueryDataSet(queryDataResp.getQueryDataSet());
-        resp.setLimit(limit);
-        resp.setOffset(offset);
-        resp.setOrderByPath(orderByPath);
-        resp.setAscending(ascending);
-        return resp;
-    }
-
-    private ExecuteSqlResp aggregateQuery(long sessionId) {
-        String funcName = selectedFuncsAndPaths.get(0).k;
-        FuncType funcType = str2FuncType(funcName);
-        AggregateType aggregateType = funcType2AggregateType(funcType);
-
-        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST)) {
-            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
-        }
-        if (aggregateType.equals(AggregateType.LAST)) {
-            return lastAggregateQuery(sessionId);
-        }
-
-        IginxWorker worker = IginxWorker.getInstance();
-        AggregateQueryReq req = new AggregateQueryReq(
-                sessionId,
-                getSelectedPaths(),
-                startTime,
-                endTime,
-                aggregateType
-        );
-        if (!layers.isEmpty()) {
-            req.setGroupByLevels(layers);
-        }
-        AggregateQueryResp aggregateQueryResp = worker.aggregateQuery(req);
-
-        ExecuteSqlResp resp = new ExecuteSqlResp(aggregateQueryResp.getStatus(), SqlType.AggregateQuery);
-        resp.setPaths(aggregateQueryResp.getPaths());
-        resp.setDataTypeList(aggregateQueryResp.getDataTypeList());
-        resp.setValuesList(aggregateQueryResp.getValuesList());
-        resp.setAggregateType(aggregateType);
-        resp.setLimit(limit);
-        resp.setOffset(offset);
-        return resp;
-    }
-
-    private ExecuteSqlResp lastAggregateQuery(long sessionId) {
-        if (endTime != Long.MAX_VALUE) {
-            throw new SQLParserException("End time must be set as INF in aggregate query with last function.");
-        }
-
-        IginxWorker worker = IginxWorker.getInstance();
-        LastQueryReq req = new LastQueryReq(sessionId, getSelectedPaths(), startTime);
-        LastQueryResp lastQueryResp = worker.lastQuery(req);
-
-        ExecuteSqlResp resp = new ExecuteSqlResp(lastQueryResp.getStatus(), SqlType.AggregateQuery);
-        resp.setPaths(lastQueryResp.getPaths());
-        resp.setDataTypeList(lastQueryResp.getDataTypeList());
-        resp.setTimestamps(lastQueryResp.getTimestamps());
-        resp.setValuesList(lastQueryResp.getValuesList());
-        resp.setAggregateType(AggregateType.LAST);
-        resp.setLimit(limit);
-        resp.setOffset(offset);
-        return resp;
-    }
-
-    private ExecuteSqlResp downSampleQuery(long sessionId) {
-        String funcName = selectedFuncsAndPaths.get(0).k;
-        FuncType funcType = str2FuncType(funcName);
-        AggregateType aggregateType = funcType2AggregateType(funcType);
-
-        if (aggregateType == null || aggregateType.equals(AggregateType.FIRST) || aggregateType.equals(AggregateType.LAST)) {
-            throw new SQLParserException(String.format("Not support function %s in downSample query for now.", funcName));
-        }
-
-        IginxWorker worker = IginxWorker.getInstance();
-        DownsampleQueryReq req = new DownsampleQueryReq(
-                sessionId,
-                getSelectedPaths(),
-                startTime,
-                endTime,
-                aggregateType,
-                precision
-        );
-        if (!layers.isEmpty()) {
-            req.setGroupByLevels(layers);
-        }
-        DownsampleQueryResp downsampleQueryResp = worker.downsampleQuery(req);
-
-        ExecuteSqlResp resp = new ExecuteSqlResp(downsampleQueryResp.getStatus(), SqlType.DownsampleQuery);
-        resp.setPaths(downsampleQueryResp.getPaths());
-        resp.setDataTypeList(downsampleQueryResp.getDataTypeList());
-        resp.setQueryDataSet(downsampleQueryResp.getQueryDataSet());
-        resp.setAggregateType(aggregateType);
-        resp.setLimit(limit);
-        resp.setOffset(offset);
-        return resp;
-    }
-
-    private ExecuteSqlResp valueFilterQuery(long sessionId) {
-        IginxWorker worker = IginxWorker.getInstance();
-        ValueFilterQueryReq req = new ValueFilterQueryReq(
-                sessionId,
-                getSelectedPaths(),
-                startTime,
-                endTime,
-                booleanExpression
-        );
-        ValueFilterQueryResp valueFilterQueryResp = worker.valueFilterQuery(req);
-
-        checkIfHasOrderByPath(valueFilterQueryResp.getPaths());
-
-        ExecuteSqlResp resp = new ExecuteSqlResp(valueFilterQueryResp.getStatus(), SqlType.ValueFilterQuery);
-        resp.setPaths(valueFilterQueryResp.getPaths());
-        resp.setDataTypeList(valueFilterQueryResp.getDataTypeList());
-        resp.setQueryDataSet(valueFilterQueryResp.getQueryDataSet());
-        resp.setLimit(limit);
-        resp.setOffset(offset);
-        resp.setOrderByPath(orderByPath);
-        resp.setAscending(ascending);
-        return resp;
-    }
-
-    private void checkIfHasOrderByPath(List<String> paths) {
-        if (!orderByPath.equals("") && !paths.contains(orderByPath)) {
-            throw new SQLParserException(String.format("Selected paths did not contain '%s'.", orderByPath));
+        if (queryType == QueryType.AggregateQuery
+            && (funcTypeSet.contains(FuncType.First) || funcTypeSet.contains(FuncType.Last))) {
+            this.queryType = QueryType.LastFirstQuery;
+            if (funcTypeSet.size() > 1) {
+                throw new SQLParserException("First/Last query and other aggregate queries can not be mixed.");
+            }
         }
     }
 
@@ -465,12 +374,7 @@ public class SelectStatement extends Statement {
         Unknown,
         SimpleQuery,
         AggregateQuery,
-        MultiAggregateQuery,
+        LastFirstQuery,
         DownSampleQuery,
-        MultiDownSampleQuery,
-        ValueFilterQuery,
-        ValueFilterAndDownSampleQuery,
-        ValueFilterAndAggregateQuery,
-        MixedQuery,
     }
 }

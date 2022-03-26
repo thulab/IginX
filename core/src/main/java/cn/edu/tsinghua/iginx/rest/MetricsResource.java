@@ -174,7 +174,7 @@ public class MetricsResource {
     public Response metricDelete(@PathParam("metricName") String metricName) {
         try {
             deleteMetric(metricName);
-            return setHeaders(Response.status(Response.Status.OK)).build();
+            return setHeaders(Response.status(Status.OK)).build();
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();

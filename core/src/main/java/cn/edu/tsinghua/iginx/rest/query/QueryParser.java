@@ -158,8 +158,7 @@ public class QueryParser {
         long now = System.currentTimeMillis();
         if (start_absolute == null && end_absolute == null) {
             return null;
-        }
-        else if (start_absolute != null && end_absolute != null) {
+        } else if (start_absolute != null && end_absolute != null) {
             ret.setStartAbsolute(start_absolute.asLong());
             ret.setEndAbsolute(end_absolute.asLong());
         } else if (start_absolute != null) {
@@ -171,8 +170,7 @@ public class QueryParser {
             JsonNode start_relative = node.get("start_relative");
             if (start_relative == null) {
                 ret.setStartAbsolute(now);
-            }
-            else {
+            } else {
                 JsonNode value = start_relative.get("value");
                 if (value == null) {
                     return null;
@@ -231,8 +229,7 @@ public class QueryParser {
         JsonNode end_relative = node.get("end_relative");
         if (end_relative == null) {
             ret.setEndAbsolute(now);
-        }
-        else {
+        } else {
             JsonNode value = end_relative.get("value");
             if (value == null) {
                 return true;
@@ -311,8 +308,7 @@ public class QueryParser {
                 JsonNode start_relative = node.get("start_relative");
                 if (start_relative == null) {
                     ret.setStartAbsolute(0L);
-                }
-                else {
+                } else {
                     JsonNode value = start_relative.get("value");
                     if (value == null) {
                         return null;
@@ -343,11 +339,11 @@ public class QueryParser {
         if (category != null) {
             annotationLimit.setTag(category.asText());
         }
-        JsonNode text = query.get("text");
+        JsonNode text = query.get("description");
         if (text != null) {
             annotationLimit.setText(text.asText());
         }
-        JsonNode description = query.get("description");
+        JsonNode description = query.get("title");
         if (description != null) {
             annotationLimit.setTitle(description.asText());
         }
@@ -521,7 +517,7 @@ public class QueryParser {
 
     public String parseResultToAnnotationJson(QueryResult result, boolean isGrafana) {
         return "[" + result.toAnnotationResultString(isGrafana) +
-                "]";
+            "]";
     }
 
     public String parseResultToGrafanaJson(QueryResult result) {

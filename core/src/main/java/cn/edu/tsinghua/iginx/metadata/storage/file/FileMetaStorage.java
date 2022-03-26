@@ -2,33 +2,15 @@ package cn.edu.tsinghua.iginx.metadata.storage.file;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.hook.ActiveFragmentStatisticsChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.FragmentChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardCounterChangeHook;
-import cn.edu.tsinghua.iginx.metadata.hook.ReshardNotificationHook;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
-import cn.edu.tsinghua.iginx.metadata.hook.UserChangeHook;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -50,24 +32,13 @@ public class FileMetaStorage implements IMetaStorage {
     private static final String STORAGE_UNIT_META_FILE = "storage_unit.log";
     private static final String ID_FILE = "id.log";
     private static final String USER_META_FILE = "user.log";
-    private static final String ACTIVE_FRAGMENT_STATISTICS_META_FILE = "active_fragment_statistics.log";
-    private static final String INACTIVE_FRAGMENT_STATISTICS_META_FILE = "inactive_fragment_statistics.log";
-    private static final String RESHRAD_NOTIFICATION_META_FILE = "reshard_notification.log";
-    private static final String RESHARD_COUNTER_META_FILE = "reshard_counter.log";
     private static final long ID_INTERVAL = 100000;
     private static final String UPDATE = "update";
     private static final String REMOVE = "remove";
     private static FileMetaStorage INSTANCE = null;
-
     private final Lock storageUnitLock = new ReentrantLock();
 
-    private final Lock fragmentLock = new ReentrantLock();
-
-    private final Lock activeFragmentStatisticsLock = new ReentrantLock();
-
-    private final Lock reshardNotificationLock = new ReentrantLock();
-
-    private final Lock reshardCounterLock = new ReentrantLock();
+    private final Lock fragmentUnitLock = new ReentrantLock();
 
     private IginxChangeHook iginxChangeHook = null;
 
@@ -80,12 +51,6 @@ public class FileMetaStorage implements IMetaStorage {
     private FragmentChangeHook fragmentChangeHook = null;
 
     private UserChangeHook userChangeHook = null;
-
-    private ActiveFragmentStatisticsChangeHook activeFragmentStatisticsChangeHook = null;
-
-    private ReshardCounterChangeHook reshardCounterChangeHook = null;
-
-    private ReshardNotificationHook reshardNotificationHook = null;
 
     private AtomicLong idGenerator = null; // 加载完数据之后赋值
 
@@ -111,20 +76,8 @@ public class FileMetaStorage implements IMetaStorage {
             if (Files.notExists(Paths.get(PATH, USER_META_FILE))) {
                 Files.createFile(Paths.get(PATH, USER_META_FILE));
             }
-            if (Files.notExists(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE))) {
-                Files.createFile(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE));
-            }
-            if (Files.notExists(Paths.get(PATH, INACTIVE_FRAGMENT_STATISTICS_META_FILE))) {
-                Files.createFile(Paths.get(PATH, INACTIVE_FRAGMENT_STATISTICS_META_FILE));
-            }
-            if (Files.notExists(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE))) {
-                Files.createFile(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE));
-            }
-            if (Files.notExists(Paths.get(PATH, RESHARD_COUNTER_META_FILE))) {
-                Files.createFile(Paths.get(PATH, RESHARD_COUNTER_META_FILE));
-            }
         } catch (IOException e) {
-            logger.error("encounter error when creating log file: ", e);
+            logger.error("encounter error when create log file: ", e);
             System.exit(10);
         }
         // 加载 id
@@ -132,7 +85,7 @@ public class FileMetaStorage implements IMetaStorage {
             if (Files.notExists(Paths.get(PATH, ID_FILE))) {
                 Files.createFile(Paths.get(PATH, ID_FILE));
                 try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ID_FILE).toFile(), false))) {
-                    writer.write(ID_INTERVAL + "%n");
+                    writer.write(ID_INTERVAL + "\n");
                 }
                 idGenerator = new AtomicLong(0L);
             } else {
@@ -143,11 +96,11 @@ public class FileMetaStorage implements IMetaStorage {
                     idGenerator = new AtomicLong(Long.parseLong(line));
                 }
                 try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ID_FILE).toFile(), false))) {
-                    writer.write(id + "%n");
+                    writer.write(id + "\n");
                 }
             }
         } catch (IOException e) {
-            logger.error("encounter error when processing id file: ", e);
+            logger.error("encounter error when process id file: ", e);
             System.exit(10);
         }
     }
@@ -167,9 +120,9 @@ public class FileMetaStorage implements IMetaStorage {
         long id = idGenerator.incrementAndGet();
         if (id % ID_INTERVAL == 0) {
             try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ID_FILE).toFile(), false))) {
-                writer.write((id + ID_INTERVAL) + "%n");
+                writer.write((id + ID_INTERVAL) + "\n");
             } catch (IOException e) {
-                logger.error("encounter error when rewriting id file: ", e);
+                logger.error("encounter error when rewrite id file: ", e);
             }
         }
         return id;
@@ -195,7 +148,7 @@ public class FileMetaStorage implements IMetaStorage {
                 }
             }
         } catch (IOException e) {
-            logger.error("encounter error when reading schema mapping log file: ", e);
+            logger.error("encounter error when read schema mapping log file: ", e);
             throw new MetaStorageException(e);
         }
         return schemaMappings;
@@ -212,12 +165,12 @@ public class FileMetaStorage implements IMetaStorage {
     public void updateSchemaMapping(String schema, Map<String, Integer> schemaMapping) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, SCHEMA_MAPPING_FILE).toFile(), true))) {
             if (schemaMapping == null || schemaMapping.isEmpty()) {
-                writer.write(String.format("%s %s%n", REMOVE, schema));
+                writer.write(String.format("%s %s\n", REMOVE, schema));
             } else {
-                writer.write(String.format("%s %s %s%n", UPDATE, schema, JsonUtils.getGson().toJson(schemaMapping)));
+                writer.write(String.format("%s %s %s\n", UPDATE, schema, JsonUtils.getGson().toJson(schemaMapping)));
             }
         } catch (IOException e) {
-            logger.error("encounter error when writing schema mapping file error: ", e);
+            logger.error("write schema mapping file error: ", e);
             throw new MetaStorageException(e);
         }
         if (schemaMappingChangeHook != null) {
@@ -258,7 +211,7 @@ public class FileMetaStorage implements IMetaStorage {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_META_FILE).toFile())))) {
                 String line;
                 String[] params;
-                while((line = reader.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
                     params = line.split(" ");
                     if (params[0].equals(UPDATE)) {
                         StorageEngineMeta storageEngine = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), StorageEngineMeta.class);
@@ -268,7 +221,7 @@ public class FileMetaStorage implements IMetaStorage {
                     }
                 }
             } catch (IOException e) {
-                logger.error("encounter error when reading schema mapping log file: ", e);
+                logger.error("encounter error when read schema mapping log file: ", e);
                 throw new MetaStorageException(e);
             }
         }
@@ -282,9 +235,9 @@ public class FileMetaStorage implements IMetaStorage {
         storageEngine.setId(id);
 
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, STORAGE_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", UPDATE, JsonUtils.getGson().toJson(storageEngine)));
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(storageEngine)));
         } catch (IOException e) {
-            logger.error("encounter error when writing storage engine file error: ", e);
+            logger.error("write storage engine file error: ", e);
             throw new MetaStorageException(e);
         }
 
@@ -307,7 +260,7 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, STORAGE_UNIT_META_FILE).toFile())))) {
             String line;
             String[] params;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     StorageUnitMeta storageUnit = JsonUtils.getGson().fromJson(params[1], StorageUnitMeta.class);
@@ -317,7 +270,7 @@ public class FileMetaStorage implements IMetaStorage {
                 }
             }
         } catch (IOException e) {
-            logger.error("encounter error when reading storage unit log file: ", e);
+            logger.error("encounter error when read storage unit log file: ", e);
             throw new MetaStorageException(e);
         }
         return storageUnitMap;
@@ -336,9 +289,9 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public void updateStorageUnit(StorageUnitMeta storageUnitMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, STORAGE_UNIT_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", UPDATE, JsonUtils.getGson().toJson(storageUnitMeta)));
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(storageUnitMeta)));
         } catch (IOException e) {
-            logger.error("encounter error when writing storage unit file error: ", e);
+            logger.error("write storage unit file error: ", e);
             throw new MetaStorageException(e);
         }
         if (storageUnitChangeHook != null) {
@@ -364,7 +317,7 @@ public class FileMetaStorage implements IMetaStorage {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, FRAGMENT_META_FILE).toFile())))) {
             String line;
             String[] params;
-            while((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null) {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
@@ -376,7 +329,7 @@ public class FileMetaStorage implements IMetaStorage {
                 }
             }
         } catch (IOException e) {
-            logger.error("encounter error when reading fragment log file: ", e);
+            logger.error("encounter error when read storage unit log file: ", e);
             throw new MetaStorageException(e);
         }
         return fragmentsMap;
@@ -384,15 +337,15 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void lockFragment() throws MetaStorageException {
-        fragmentLock.lock();
+        fragmentUnitLock.lock();
     }
 
     @Override
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, FRAGMENT_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
         } catch (IOException e) {
-            logger.error("encounter error when writing fragment file error: ", e);
+            logger.error("write fragment file error: ", e);
             throw new MetaStorageException(e);
         }
         if (fragmentChangeHook != null) {
@@ -403,9 +356,9 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, FRAGMENT_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));
         } catch (IOException e) {
-            logger.error("encounter error when writing fragment file error: ", e);
+            logger.error("write fragment file error: ", e);
             throw new MetaStorageException(e);
         }
         if (fragmentChangeHook != null) {
@@ -415,7 +368,7 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void releaseFragment() throws MetaStorageException {
-        fragmentLock.unlock();
+        fragmentUnitLock.unlock();
     }
 
     @Override
@@ -425,6 +378,7 @@ public class FileMetaStorage implements IMetaStorage {
         }
     }
 
+    @Override
     public List<UserMeta> loadUser(UserMeta userMeta) throws MetaStorageException {
         Map<String, UserMeta> users = new HashMap<>();
 
@@ -436,7 +390,7 @@ public class FileMetaStorage implements IMetaStorage {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, USER_META_FILE).toFile())))) {
                 String line;
                 String[] params;
-                while((line = reader.readLine()) != null) {
+                while ((line = reader.readLine()) != null) {
                     params = line.split(" ");
                     if (params[0].equals(UPDATE)) {
                         UserMeta user = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), UserMeta.class);
@@ -449,7 +403,7 @@ public class FileMetaStorage implements IMetaStorage {
                     }
                 }
             } catch (IOException e) {
-                logger.error("encounter error when reading user log file: ", e);
+                logger.error("encounter error when read user log file: ", e);
                 throw new MetaStorageException(e);
             }
         }
@@ -466,9 +420,9 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public void addUser(UserMeta userMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, USER_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", UPDATE, JsonUtils.getGson().toJson(userMeta)));
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(userMeta)));
         } catch (IOException e) {
-            logger.error("encounter error when writing user file error: ", e);
+            logger.error("write user file error: ", e);
             throw new MetaStorageException(e);
         }
         if (userChangeHook != null) {
@@ -479,9 +433,9 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public void updateUser(UserMeta userMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, USER_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", UPDATE, JsonUtils.getGson().toJson(userMeta)));
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(userMeta)));
         } catch (IOException e) {
-            logger.error("encounter error when writing user file error: ", e);
+            logger.error("write user file error: ", e);
             throw new MetaStorageException(e);
         }
         if (userChangeHook != null) {
@@ -492,9 +446,9 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public void removeUser(String username) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, USER_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s%n", REMOVE, username));
+            writer.write(String.format("%s %s\n", REMOVE, username));
         } catch (IOException e) {
-            logger.error("encounter error when writing user file error: ", e);
+            logger.error("write user file error: ", e);
             throw new MetaStorageException(e);
         }
         if (userChangeHook != null) {
@@ -503,233 +457,37 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<FragmentMeta, FragmentStatistics> loadActiveFragmentStatistics() throws MetaStorageException {
-        Map<FragmentMeta, FragmentStatistics> activeFragmentsStatistics = new HashMap<>();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile())))) {
-            String line;
-            String[] params;
-            while ((line = reader.readLine()) != null) {
-                params = line.split(" ");
-                FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
-                if (params[0].equals(UPDATE)) {
-                    FragmentStatistics statistics = JsonUtils.getGson().fromJson(params[2], FragmentStatistics.class);
-                    activeFragmentsStatistics.put(fragment, statistics);
-                } else if (params[0].equals(REMOVE)) {
-                    activeFragmentsStatistics.remove(fragment);
-                } else {
-                    logger.error("unknown log content: " + line);
-                }
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when reading active fragment statistics log file: ", e);
-            throw new MetaStorageException(e);
-        }
-        return activeFragmentsStatistics;
-    }
-
-    @Override
-    public void lockActiveFragmentStatistics() throws MetaStorageException {
-        activeFragmentStatisticsLock.lock();
-    }
-
-    @Override
-    public void addActiveFragmentStatistics(long id, Map<FragmentMeta, FragmentStatistics> deltaActiveFragmentStatistics) throws MetaStorageException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile(), true))) {
-            for (Map.Entry<FragmentMeta, FragmentStatistics> entry : deltaActiveFragmentStatistics.entrySet()) {
-                writer.write(String.format("%s %s %s%n", UPDATE, JsonUtils.getGson().toJson(entry.getKey()), JsonUtils.getGson().toJson(entry.getValue())));
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when writing active fragment statistics file error: ", e);
-            throw new MetaStorageException(e);
-        }
-        if (activeFragmentStatisticsChangeHook != null) {
-            activeFragmentStatisticsChangeHook.onChange(deltaActiveFragmentStatistics);
-        }
-    }
-
-    @Override
-    public void addInactiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> activeFragmentStatistics, long endTime) throws MetaStorageException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, INACTIVE_FRAGMENT_STATISTICS_META_FILE).toFile(), true))) {
-            for (Map.Entry<FragmentMeta, FragmentStatistics> entry : activeFragmentStatistics.entrySet()) {
-                writer.write(String.format("%s %s %s %s%n", UPDATE, endTime, JsonUtils.getGson().toJson(entry.getKey()), JsonUtils.getGson().toJson(entry.getValue())));
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when writing inactive fragment statistics file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void releaseActiveFragmentStatistics() throws MetaStorageException {
-        activeFragmentStatisticsLock.unlock();
-    }
-
-    @Override
-    public void removeActiveFragmentStatistics() throws MetaStorageException {
-        try {
-            Files.deleteIfExists(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE));
-            Files.createFile(Paths.get(PATH, ACTIVE_FRAGMENT_STATISTICS_META_FILE));
-        } catch (IOException e) {
-            logger.error("encounter error when removing active fragment statistics file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void registerActiveFragmentStatisticsChangeHook(ActiveFragmentStatisticsChangeHook hook) {
-        if (hook != null) {
-            activeFragmentStatisticsChangeHook = hook;
-        }
-    }
-
-    @Override
-    public boolean proposeToReshard() throws MetaStorageException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE).toFile())))) {
-            String line = reader.readLine();
-            if (line == null || line.equals("false")) {
-                if (reshardNotificationHook != null) {
-                    reshardNotificationHook.onChange(true);
-                }
-                updateReshardNotification(true);
-                return true;
-            }
-        } catch (IOException e) {
-            logger.error("encounter error when proposing to reshard: ", e);
-            throw new MetaStorageException(e);
-        }
-        return false;
-    }
-
-    public void registerTimeseriesChangeHook(TimeseriesChangeHook hook)
-    {
+    public void registerTimeseriesChangeHook(TimeSeriesChangeHook hook) {
 
     }
 
     @Override
-    public void registerVersionChangeHook(VersionChangeHook hook)
-    {
+    public void registerVersionChangeHook(VersionChangeHook hook) {
 
     }
 
     @Override
-    public boolean election()
-    {
+    public boolean election() {
         return false;
     }
 
     @Override
-    public void lockReshardNotification() throws MetaStorageException {
-        reshardNotificationLock.lock();
-    }
-
-    @Override
-    public void updateReshardNotification(boolean notification) throws MetaStorageException {
-        removeReshardNotification();
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE).toFile(), true))) {
-            writer.write(String.valueOf(notification));
-        } catch (IOException e) {
-            logger.error("encounter error when writing reshard notification log file: ", e);
-            throw new MetaStorageException(e);
-        }
-        if (reshardNotificationHook != null) {
-            reshardNotificationHook.onChange(notification);
-        }
-    }
-
-    @Override
-    public void releaseReshardNotification() throws MetaStorageException {
-        reshardNotificationLock.unlock();
-    }
-
-    @Override
-    public void removeReshardNotification() throws MetaStorageException {
-        try {
-            Files.deleteIfExists(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE));
-            Files.createFile(Paths.get(PATH, RESHRAD_NOTIFICATION_META_FILE));
-        } catch (IOException e) {
-            logger.error("encounter error when removing reshard notification file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void registerReshardNotificationHook(ReshardNotificationHook hook) {
-        if (hook != null) {
-            reshardNotificationHook = hook;
-        }
-    }
-
-    @Override
-    public void lockReshardCounter() throws MetaStorageException {
-        reshardCounterLock.lock();
-    }
-
-    @Override
-    public void incrementReshardCounter() throws MetaStorageException {
-        updateReshardCounter(1);
-        if (reshardCounterChangeHook != null) {
-            reshardCounterChangeHook.onChange(1);
-        }
-    }
-
-    @Override
-    public void resetReshardCounter() throws MetaStorageException {
-        updateReshardCounter(0);
-    }
-
-    private void updateReshardCounter(int counter) throws MetaStorageException {
-        removeReshardNotification();
-        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, RESHARD_COUNTER_META_FILE).toFile(), true))) {
-            writer.write(counter);
-        } catch (IOException e) {
-            logger.error("encounter error when writing reshard counter log file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void releaseReshardCounter() throws MetaStorageException {
-        reshardCounterLock.unlock();
-    }
-
-    @Override
-    public void removeReshardCounter() throws MetaStorageException {
-        try {
-            Files.deleteIfExists(Paths.get(PATH, RESHARD_COUNTER_META_FILE));
-            Files.createFile(Paths.get(PATH, RESHARD_COUNTER_META_FILE));
-        } catch (IOException e) {
-            logger.error("encounter error when removing reshard counter file error: ", e);
-            throw new MetaStorageException(e);
-        }
-    }
-
-    @Override
-    public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
-        if (hook != null) {
-            reshardCounterChangeHook = hook;
-        }
-    }
-
-    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception
-    {
+    public void updateTimeseriesData(Map<String, Double> timeseriesData, long iginxid, long version) throws Exception {
 
     }
 
     @Override
-    public Map<String, Double> getTimeseriesData()
-    {
+    public Map<String, Double> getTimeseriesData() {
         return null;
     }
 
     @Override
-    public void registerPolicy(long iginxId, int num) throws Exception
-    {
+    public void registerPolicy(long iginxId, int num) throws Exception {
 
     }
 
     @Override
-    public int updateVersion()
-    {
+    public int updateVersion() {
         return 0;
     }
 }

@@ -112,21 +112,21 @@ public final class StorageEngineMeta {
         this.storageEngine = storageEngine;
     }
 
-    public synchronized List<StorageUnitMeta> getStorageUnitList() {
+    public List<StorageUnitMeta> getStorageUnitList() {
         if (storageUnitList == null) {
             storageUnitList = new ArrayList<>();
         }
         return storageUnitList;
     }
 
-    public synchronized void removeStorageUnit(String id) {
+    public void removeStorageUnit(String id) {
         if (storageUnitList == null) {
             storageUnitList = new ArrayList<>();
         }
         storageUnitList.removeIf(e -> e.getId().equals(id));
     }
 
-    public synchronized void addStorageUnit(StorageUnitMeta storageUnit) {
+    public void addStorageUnit(StorageUnitMeta storageUnit) {
         if (storageUnitList == null) {
             storageUnitList = new ArrayList<>();
         }
@@ -147,5 +147,14 @@ public final class StorageEngineMeta {
 
     public void setLastOfBatch(boolean lastOfBatch) {
         this.lastOfBatch = lastOfBatch;
+    }
+
+    @Override
+    public String toString() {
+        return "StorageEngineMeta {" +
+            "ip='" + ip + '\'' +
+            ", port=" + port +
+            ", type='" + storageEngine + '\'' +
+            '}';
     }
 }

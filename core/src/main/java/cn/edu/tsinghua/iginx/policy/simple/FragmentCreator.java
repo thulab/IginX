@@ -3,15 +3,18 @@ package cn.edu.tsinghua.iginx.policy.simple;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.*;
+import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.Collectors;
 
-public class FragmentCreator
-{
+public class FragmentCreator {
+
     private static Timer timer = new Timer();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(FragmentCreator.class);
@@ -25,16 +28,14 @@ public class FragmentCreator
         init(config.getReAllocatePeriod());
     }
 
-
-
-    boolean waitforUpdate(int version) {
+    public boolean waitforUpdate(int version) {
         int retry = config.getRetryCount();
         while (retry > 0) {
             Map<Integer, Integer> timeseriesVersionMap = iMetaManager.getTimeseriesVersionMap();
             Set<Integer> idSet = iMetaManager.getIginxList().stream().map(IginxMeta::getId).
-                    map(Long::intValue).collect(Collectors.toSet());
+                map(Long::intValue).collect(Collectors.toSet());
             if (version <= timeseriesVersionMap.entrySet().stream().filter(e -> idSet.contains(e.getKey())).
-                    map(Map.Entry::getValue).min(Integer::compareTo).orElse(Integer.MAX_VALUE)) {
+                map(Map.Entry::getValue).min(Integer::compareTo).orElse(Integer.MAX_VALUE)) {
                 return true;
             }
             LOGGER.info("retry, remain: {}, version:{}, minversion: {}", retry, version, timeseriesVersionMap.values().stream().min(Integer::compareTo).orElse(Integer.MAX_VALUE));
@@ -43,7 +44,7 @@ public class FragmentCreator
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            retry --;
+            retry--;
         }
         return false;
     }

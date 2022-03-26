@@ -58,7 +58,7 @@ public class QueryAggregatorRate extends QueryAggregator {
                         }
                         if (i != 0) {
                             queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], (nowd - lastd) * getUnit() /
-                                    (sessionQueryDataSet.getTimestamps()[i] - sessionQueryDataSet.getTimestamps()[i - 1]));
+                                (sessionQueryDataSet.getTimestamps()[i] - sessionQueryDataSet.getTimestamps()[i - 1]));
                         }
                         lastd = nowd;
                         nowd = null;

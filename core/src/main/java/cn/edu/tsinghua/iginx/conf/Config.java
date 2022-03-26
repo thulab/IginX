@@ -36,8 +36,6 @@ public class Config {
 
     private int maxAsyncRetryTimes = 2;
 
-    private int maxAsyncTasks = 1000;
-
     private int syncExecuteThreadPool = 60;
 
     private int asyncExecuteThreadPool = 20;
@@ -45,6 +43,7 @@ public class Config {
     private int replicaNum = 1;
 
     private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
+    //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 
@@ -52,7 +51,7 @@ public class Config {
 
     private String statisticsCollectorClassName = "";
 
-    private int statisticsLogInterval = 1000;
+    private int statisticsLogInterval = 5000;
 
     private boolean enableEnvParameter = false;
 
@@ -66,21 +65,11 @@ public class Config {
 
     private int asyncRestThreadPool = 100;
 
-    private int restReqSplitNum = 10;
-
     private boolean enableRestService = true;
 
     private String fileDataDir = "";
 
     private String etcdEndpoints = "http://localhost:2379";
-
-    private boolean enableGlobalStatistics = false;
-
-    private long globalStatisticsCollectInterval = 60;
-
-    private long insertThreshold = 100000;
-
-    private long reshardFragmentTimeMargin = 60;
 
     private boolean enableMQTT = false;
 
@@ -98,9 +87,17 @@ public class Config {
 
     private int instancesNumPerClient = 0;
 
-    private double logRestInsertPossibility = 1.0;
+    private String queryOptimizer = "";
 
-    private double logRestQueryPossibility = 1.0;
+    private String constraintChecker = "naive";
+
+    private String physicalOptimizer = "naive";
+
+    private int memoryTaskThreadPoolSize = 200;
+
+    private int physicalTaskThreadPoolSizePerStorage = 100;
+
+    private int maxCachedPhysicalTaskPerStorage = 500;
 
     private double cachedTimeseriesProb = 0.01;
 
@@ -116,13 +113,7 @@ public class Config {
 
     private double storageGroupValueLimit = 200.0;
 
-    private int instancesIndexStart = 1;
-
-    private int instancesIndexStep = 1;
-
-    private boolean isClientBindEngine = false;
-
-    private long checkFragmentInterval = 10000L;
+    private boolean enablePushDown = true;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -186,14 +177,6 @@ public class Config {
 
     public void setMaxAsyncRetryTimes(int maxAsyncRetryTimes) {
         this.maxAsyncRetryTimes = maxAsyncRetryTimes;
-    }
-
-    public int getMaxAsyncTasks() {
-        return maxAsyncTasks;
-    }
-
-    public void setMaxAsyncTasks(int maxAsyncTasks) {
-        this.maxAsyncTasks = maxAsyncTasks;
     }
 
     public int getSyncExecuteThreadPool() {
@@ -292,14 +275,6 @@ public class Config {
         this.asyncRestThreadPool = asyncRestThreadPool;
     }
 
-    public int getRestReqSplitNum() {
-        return restReqSplitNum;
-    }
-
-    public void setRestReqSplitNum(int restReqSplitNum) {
-        this.restReqSplitNum = restReqSplitNum;
-    }
-
     public boolean isEnableRestService() {
         return enableRestService;
     }
@@ -338,38 +313,6 @@ public class Config {
 
     public void setEtcdEndpoints(String etcdEndpoints) {
         this.etcdEndpoints = etcdEndpoints;
-    }
-
-    public boolean isEnableGlobalStatistics() {
-        return enableGlobalStatistics;
-    }
-
-    public void setEnableGlobalStatistics(boolean enableGlobalStatistics) {
-        this.enableGlobalStatistics = enableGlobalStatistics;
-    }
-
-    public long getGlobalStatisticsCollectInterval() {
-        return globalStatisticsCollectInterval;
-    }
-
-    public void setGlobalStatisticsCollectInterval(long globalStatisticsCollectInterval) {
-        this.globalStatisticsCollectInterval = globalStatisticsCollectInterval;
-    }
-
-    public long getInsertThreshold() {
-        return insertThreshold;
-    }
-
-    public void setInsertThreshold(long insertThreshold) {
-        this.insertThreshold = insertThreshold;
-    }
-
-    public long getReshardFragmentTimeMargin() {
-        return reshardFragmentTimeMargin;
-    }
-
-    public void setReshardFragmentTimeMargin(long reshardFragmentTimeMargin) {
-        this.reshardFragmentTimeMargin = reshardFragmentTimeMargin;
     }
 
     public boolean isEnableMQTT() {
@@ -436,20 +379,52 @@ public class Config {
         this.instancesNumPerClient = instancesNumPerClient;
     }
 
-    public double getLogRestInsertPossibility() {
-        return logRestInsertPossibility;
+    public String getQueryOptimizer() {
+        return queryOptimizer;
     }
 
-    public void setLogRestInsertPossibility(double logRestInsertPossibility) {
-        this.logRestInsertPossibility = logRestInsertPossibility;
+    public void setQueryOptimizer(String queryOptimizer) {
+        this.queryOptimizer = queryOptimizer;
     }
 
-    public double getLogRestQueryPossibility() {
-        return logRestQueryPossibility;
+    public String getConstraintChecker() {
+        return constraintChecker;
     }
 
-    public void setLogRestQueryPossibility(double logRestQueryPossibility) {
-        this.logRestQueryPossibility = logRestQueryPossibility;
+    public void setConstraintChecker(String constraintChecker) {
+        this.constraintChecker = constraintChecker;
+    }
+
+    public String getPhysicalOptimizer() {
+        return physicalOptimizer;
+    }
+
+    public void setPhysicalOptimizer(String physicalOptimizer) {
+        this.physicalOptimizer = physicalOptimizer;
+    }
+
+    public int getMemoryTaskThreadPoolSize() {
+        return memoryTaskThreadPoolSize;
+    }
+
+    public void setMemoryTaskThreadPoolSize(int memoryTaskThreadPoolSize) {
+        this.memoryTaskThreadPoolSize = memoryTaskThreadPoolSize;
+    }
+
+    public int getPhysicalTaskThreadPoolSizePerStorage() {
+        return physicalTaskThreadPoolSizePerStorage;
+    }
+
+    public void setPhysicalTaskThreadPoolSizePerStorage(int physicalTaskThreadPoolSizePerStorage) {
+        this.physicalTaskThreadPoolSizePerStorage = physicalTaskThreadPoolSizePerStorage;
+    }
+
+    public int getMaxCachedPhysicalTaskPerStorage() {
+        return maxCachedPhysicalTaskPerStorage;
+    }
+
+    public void setMaxCachedPhysicalTaskPerStorage(int maxCachedPhysicalTaskPerStorage) {
+        this.maxCachedPhysicalTaskPerStorage = maxCachedPhysicalTaskPerStorage;
     }
 
     public double getCachedTimeseriesProb() {
@@ -492,10 +467,6 @@ public class Config {
         this.fragmentPerEngine = fragmentPerEngine;
     }
 
-    public double getStorageGroupValueLimit() {
-        return storageGroupValueLimit;
-    }
-
     public boolean isEnableStorageGroupValueLimit() {
         return enableStorageGroupValueLimit;
     }
@@ -504,39 +475,19 @@ public class Config {
         this.enableStorageGroupValueLimit = enableStorageGroupValueLimit;
     }
 
+    public double getStorageGroupValueLimit() {
+        return storageGroupValueLimit;
+    }
+
     public void setStorageGroupValueLimit(double storageGroupValueLimit) {
         this.storageGroupValueLimit = storageGroupValueLimit;
     }
 
-    public int getInstancesIndexStart() {
-        return instancesIndexStart;
+    public boolean isEnablePushDown() {
+        return enablePushDown;
     }
 
-    public int getInstancesIndexStep() {
-        return instancesIndexStep;
-    }
-
-    public boolean isClientBindEngine() {
-        return isClientBindEngine;
-    }
-
-    public void setClientBindEngine(boolean clientBindEngine) {
-        isClientBindEngine = clientBindEngine;
-    }
-
-    public void setInstancesIndexStart(int instancesIndexStart) {
-        this.instancesIndexStart = instancesIndexStart;
-    }
-
-    public void setInstancesIndexStep(int instancesIndexStep) {
-        this.instancesIndexStep = instancesIndexStep;
-    }
-
-    public long getCheckFragmentInterval() {
-        return checkFragmentInterval;
-    }
-
-    public void setCheckFragmentInterval(long checkFragmentInterval) {
-        this.checkFragmentInterval = checkFragmentInterval;
+    public void setEnablePushDown(boolean enablePushDown) {
+        this.enablePushDown = enablePushDown;
     }
 }

@@ -18,17 +18,11 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentStatistics;
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.plan.InsertRecordsPlan;
+import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
+import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 
 import java.util.List;
@@ -60,6 +54,8 @@ public interface IMetaManager {
     StorageUnitMeta getStorageUnit(String id);
 
     Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids);
+
+    List<StorageUnitMeta> getStorageUnits();
 
     /**
      * 获取所有活跃的 iginx 节点的元信息
@@ -101,6 +97,7 @@ public interface IMetaManager {
      * 获取某个时间序列的最新分片
      */
     FragmentMeta getLatestFragmentByTimeSeriesName(String tsName);
+
 
     /**
      * 获取某个时间序列在某个时间区间的所有分片（按照分片时间戳排序）
@@ -165,15 +162,6 @@ public interface IMetaManager {
      */
     int getSchemaMappingItem(String schema, String key);
 
-    /**
-     * 更新活跃的分片的统计信息
-     *
-     * @param statisticsMap 活跃的分片的关于当前请求的统计信息
-     */
-    void updateActiveFragmentStatistics(Map<FragmentMeta, FragmentStatistics> statisticsMap);
-
-    Map<FragmentMeta, FragmentStatistics> getActiveFragmentStatistics();
-
     boolean addUser(UserMeta user);
 
     boolean updateUser(String username, String password, Set<AuthType> auths);
@@ -186,9 +174,11 @@ public interface IMetaManager {
 
     List<UserMeta> getUsers(List<String> username);
 
+    void registerStorageUnitHook(StorageUnitHook hook);
+
     boolean election();
 
-    void saveTimeSeriesData(InsertRecordsPlan plan);
+    void saveTimeSeriesData(InsertStatement statement);
 
     List<TimeSeriesCalDO> getMaxValueFromTimeSeries();
 

@@ -15,14 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from .thrift.rpc.ttypes import SqlType, AggregateType, ExecuteSqlResp
 from .utils.bitmap import Bitmap
 from .utils.byte_utils import get_long_array, get_values_by_data_type, BytesParser
 
-from .thrift.rpc.ttypes import DataType, SqlType, AggregateType, ExecuteSqlResp
-
-import logging
-
-logger = logging.getLogger("IginX")
 
 class Point(object):
 
@@ -49,38 +45,9 @@ class Point(object):
         return self.__value
 
 
-class LastQueryDataSet(object):
-
-    def __init__(self, resp):
-        self.__points = []
-
-        paths = resp.paths
-        data_types = resp.dataTypeList
-        timestamps = get_long_array(resp.timestamps)
-        values = get_values_by_data_type(resp.valuesList, data_types)
-
-        for i in range(len(paths)):
-            self.__points.append(Point(paths[i], data_types[i], timestamps[i], values[i]))
-
-
-    def get_points(self):
-        return self.__points
-
-
-    def __str__(self):
-        value = "Time\tSeries\tValue\n"
-        for point in self.__points:
-            value += str(point.get_timestamp()) + "\t" + str(point.get_path()) + "\t" + str(point.get_value()) + "\n"
-        return value
-
-
 class QueryDataSet(object):
 
-    NO_OFFSET = 2147483647
-
-    NO_LIMIT = 0
-
-    def __init__(self, paths, types, timestamps, values_list, bitmap_list, offset=NO_OFFSET, limit=NO_LIMIT, order_by='', ascending=True):
+    def __init__(self, paths, types, timestamps, values_list, bitmap_list):
         self.__paths = paths
 
         if timestamps is None:
@@ -100,69 +67,6 @@ class QueryDataSet(object):
                     else:
                         values.append(None)
                 self.__values.append(values)
-
-        if order_by != '':
-            index = -1
-            for i in range(len(self.__paths)):
-                if self.__paths[i] == order_by:
-                    index = i
-                    break
-            if index != -1: # 用于排序的列确实存在
-                # 检查一下是否存在空值，如果存在空值，不排序
-                hasNone = False
-                for values in self.__values:
-                    if values[index] is None:
-                        hasNone = True
-                if hasNone:
-                    logger.warning("path " + order_by + " in order-by clause has none row, so order by is not valid.")
-                else:
-                    related_map = {}
-                    for timestamp, values in zip(self.__timestamps, self.__values):
-                        related_map[timestamp] = values
-                    self.__timestamps = sorted(self.__timestamps, key=lambda x: related_map[x][index], reverse=not ascending)
-                    self.__values = sorted(self.__values, key=lambda x: x[index], reverse=not ascending)
-
-
-        if offset != QueryDataSet.NO_OFFSET and limit != QueryDataSet.NO_LIMIT:
-            if offset >= len(self.__timestamps):
-                self.__timestamps = []
-                self.__values = []
-            else:
-                if offset + limit > len(self.__timestamps):
-                    self.__timestamps = self.__timestamps[offset:]
-                    self.__values = self.__values[offset:]
-                else:
-                    self.__timestamps = self.__timestamps[offset:offset+limit]
-                    self.__values = self.__values[offset:offset+limit]
-
-        # clear null paths
-        null_paths = set()
-        for i in range(len(self.__paths)):
-            all_none = True
-            for j in range(len(self.__timestamps)):
-                if self.__values[j][i] is not None:
-                    all_none = False
-                    break
-            if all_none:
-                null_paths.add(self.__paths[i])
-        if len(null_paths) != 0:
-            new_paths = []
-            new_values = []
-
-            for i in range(len(self.__timestamps)):
-                new_values.append([])
-
-            for i in range(len(self.__paths)):
-                path = self.__paths[i]
-                if path in null_paths:
-                    continue
-                new_paths.append(path)
-                for j in range(len(self.__timestamps)):
-                    new_values[j].append(self.__values[j][i])
-
-            self.__paths = new_paths
-            self.__values = new_values
-
 
 
     def get_paths(self):
@@ -260,20 +164,18 @@ class SqlExecuteResult(object):
             self.__local_meta_storage = resp.localMetaStorageInfo
 
 
-    def _construct_query_result(self, resp):
-        if self.__type == SqlType.SimpleQuery or self.__type == SqlType.ValueFilterQuery:
-            self.__query_data_set = QueryDataSet(resp.paths, resp.dataTypeList, resp.queryDataSet.timestamps,
-                                                 resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList, resp.offset,
-                                                 resp.limit, resp.orderByPath, resp.ascending)
-        elif self.__type == SqlType.DownsampleQuery:
-            self.__query_data_set = QueryDataSet(resp.paths, resp.dataTypeList, resp.queryDataSet.timestamps,
-                                                 resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList, resp.offset, resp.limit)
-        elif self.__type == SqlType.AggregateQuery:
-            if resp.aggregateType == AggregateType.LAST:
-                self.__last_query_data_set = LastQueryDataSet(resp)
-            else:
-                self.__aggregate_query_data_set = AggregateQueryDataSet(resp, resp.aggregateType)
+    def _construct_query_result(self, resp=ExecuteSqlResp()):
+        self.__paths = resp.paths
+        self.__data_type_list = resp.dataTypeList
+        self.__limit = resp.limit
+        self.__offset = resp.offset
+        self.__order_by = resp.orderByPath
+        self.__ascending = resp.ascending
 
+        if resp.timestamps is not None:
+            self.__timestamps = get_long_array(resp.timestamps)
+
+        pass
 
 
     def is_query(self):
@@ -306,15 +208,3 @@ class SqlExecuteResult(object):
 
     def get_local_meta_storage(self):
         return self.__local_meta_storage
-
-
-    def get_last_query_data_set(self):
-        return self.__last_query_data_set
-
-
-    def get_aggregate_query_data_set(self):
-        return self.__aggregate_query_data_set
-
-
-    def get_query_data_set(self):
-        return self.__query_data_set

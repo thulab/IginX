@@ -36,8 +36,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata.entity;
 
-import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
-
 import java.util.Objects;
 
 public final class FragmentMeta {
@@ -50,24 +48,13 @@ public final class FragmentMeta {
 
     private long updatedBy;
 
-    private long createdAt;
-
     private String masterStorageUnitId;
-
-    private FragmentStatistics fragmentStatistics;
 
     private transient StorageUnitMeta masterStorageUnit;
 
     private transient String fakeStorageUnitId;
 
     private boolean initialFragment = true;
-
-    private boolean lastOfBatch = false;
-
-    public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
-        this.timeInterval = timeInterval;
-        this.tsInterval = tsInterval;
-    }
 
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
         this.timeInterval = new TimeInterval(startTime, endTime);
@@ -101,13 +88,6 @@ public final class FragmentMeta {
         fragment.setMasterStorageUnitId(masterStorageUnitId);
         fragment.setCreatedBy(createdBy);
         fragment.setInitialFragment(initialFragment);
-        fragment.setCreatedBy(createdBy);
-        return fragment;
-    }
-
-    public FragmentMeta endFragmentMeta(long endTime, FragmentStatistics statistics) {
-        FragmentMeta fragment = endFragmentMeta(endTime);
-        fragment.setFragmentStatistics(statistics);
         return fragment;
     }
 
@@ -133,6 +113,7 @@ public final class FragmentMeta {
 
     public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
         this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
     public String getFakeStorageUnitId() {
@@ -151,25 +132,13 @@ public final class FragmentMeta {
         this.masterStorageUnitId = masterStorageUnitId;
     }
 
-    public FragmentStatistics getFragmentStatistics() {
-        return fragmentStatistics;
-    }
-
-    public void setFragmentStatistics(FragmentStatistics fragmentStatistics) {
-        this.fragmentStatistics = fragmentStatistics;
-    }
-
-    public long getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(long createdAt) {
-        this.createdAt = createdAt;
-    }
-
     @Override
     public String toString() {
-        return new String(JsonUtils.toJson(this));
+        return "FragmentMeta{" +
+            "timeInterval=" + timeInterval +
+            ", tsInterval=" + tsInterval +
+            ", masterStorageUnitId=" + masterStorageUnitId +
+            '}';
     }
 
     @Override
@@ -191,13 +160,5 @@ public final class FragmentMeta {
 
     public void setInitialFragment(boolean initialFragment) {
         this.initialFragment = initialFragment;
-    }
-
-    public boolean isLastOfBatch() {
-        return lastOfBatch;
-    }
-
-    public void setLastOfBatch(boolean lastOfBatch) {
-        this.lastOfBatch = lastOfBatch;
     }
 }

@@ -41,9 +41,9 @@ import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
 import cn.edu.tsinghua.iginx.thrift.IService;
 import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
+import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
@@ -52,13 +52,9 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
-import cn.edu.tsinghua.iginx.thrift.ShowSubPathsReq;
-import cn.edu.tsinghua.iginx.thrift.ShowSubPathsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryReq;
-import cn.edu.tsinghua.iginx.thrift.ValueFilterQueryResp;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
@@ -306,28 +302,6 @@ public class Session {
             columns.add(new Column(resp.paths.get(i), resp.dataTypeList.get(i)));
         }
         return columns;
-    }
-
-    public List<String> showChildPaths(String path) throws SessionException {
-        ShowSubPathsReq req = new ShowSubPathsReq(sessionId);
-        if (path != null) {
-            req.setPath(path);
-        }
-
-        ShowSubPathsResp resp;
-        try {
-            do {
-                lock.readLock().lock();
-                try {
-                    resp = client.showSubPaths(req);
-                } finally {
-                    lock.readLock().unlock();
-                }
-            } while(checkRedirect(resp.status));
-        } catch (TException e) {
-            throw new SessionException(e);
-        }
-        return resp.paths;
     }
 
     public void deleteColumn(String path) throws SessionException,
@@ -784,47 +758,9 @@ public class Session {
         return new SessionQueryDataSet(resp);
     }
 
-    public SessionQueryDataSet valueFilterQuery(List<String> paths, long startTime, long endTime, String booleanExpression)
-            throws SessionException, ExecutionException {
-        if (paths.isEmpty() || startTime > endTime) {
-            logger.error("Invalid query request!");
-            return null;
-        }
-        ValueFilterQueryReq req = new ValueFilterQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, booleanExpression);
-
-        ValueFilterQueryResp resp;
-
-        try {
-            do {
-                lock.readLock().lock();
-                try {
-                    resp = client.valueFilterQuery(req);
-                } finally {
-                    lock.readLock().unlock();
-                }
-            } while (checkRedirect(resp.status));
-            RpcUtils.verifySuccess(resp.status);
-        } catch (TException e) {
-            throw new SessionException(e);
-        }
-
-        return new SessionQueryDataSet(resp);
-    }
-
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
             throws SessionException, ExecutionException {
-        return aggregateQuery(paths, startTime, endTime, aggregateType, null);
-    }
-
-    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, Set<Integer> groupByLevels)
-            throws SessionException, ExecutionException {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, aggregateType);
-        if (groupByLevels != null && !groupByLevels.isEmpty()) {
-            if (aggregateType != AggregateType.AVG && aggregateType != AggregateType.COUNT && aggregateType != AggregateType.SUM) {
-                throw new IllegalArgumentException(aggregateType + " is not support of group by level.");
-            }
-            req.setGroupByLevels(new ArrayList<>(groupByLevels));
-        }
 
         AggregateQueryResp resp;
         try {
@@ -845,18 +781,8 @@ public class Session {
     }
 
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
-        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, null);
-    }
-
-    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, Set<Integer> groupByLevels) throws SessionException, ExecutionException {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime,
                 aggregateType, precision);
-        if (groupByLevels != null && !groupByLevels.isEmpty()) {
-            if (aggregateType != AggregateType.AVG && aggregateType != AggregateType.COUNT && aggregateType != AggregateType.SUM) {
-                throw new IllegalArgumentException(aggregateType + " is not support of group by level.");
-            }
-            req.setGroupByLevels(new ArrayList<>(groupByLevels));
-        }
 
         DownsampleQueryResp resp;
 
@@ -876,7 +802,6 @@ public class Session {
 
         return new SessionQueryDataSet(resp);
     }
-
 
     public int getReplicaNum() throws SessionException, ExecutionException {
         GetReplicaNumReq req = new GetReplicaNumReq(sessionId);
@@ -914,13 +839,14 @@ public class Session {
             } while (checkRedirect(resp.status));
             RpcUtils.verifySuccess(resp.status);
         } catch (TException e) {
+            e.printStackTrace();
             throw new SessionException(e);
         }
 
         return new SessionExecuteSqlResult(resp);
     }
 
-    public LastQueryDataSet queryLast(List<String> paths, long startTime)
+    public SessionQueryDataSet queryLast(List<String> paths, long startTime)
             throws SessionException, ExecutionException {
         if (paths.isEmpty()) {
             logger.error("Invalid query request!");
@@ -944,7 +870,7 @@ public class Session {
             throw new SessionException(e);
         }
 
-        return new LastQueryDataSet(resp);
+        return new SessionQueryDataSet(resp);
     }
 
     public void addUser(String username, String password, Set<AuthType> auths) throws SessionException, ExecutionException  {

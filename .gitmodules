@@ -1,3 +1,0 @@
-[submodule "session_go"]
-	path = session_go
-	url = git@github.com:thulab/iginx-client-go.git

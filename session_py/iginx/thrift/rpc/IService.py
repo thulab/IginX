@@ -107,14 +107,6 @@ class Iface(object):
         """
         pass
 
-    def valueFilterQuery(self, req):
-        """
-        Parameters:
-         - req
-
-        """
-        pass
-
     def lastQuery(self, req):
         """
         Parameters:
@@ -132,14 +124,6 @@ class Iface(object):
         pass
 
     def showColumns(self, req):
-        """
-        Parameters:
-         - req
-
-        """
-        pass
-
-    def showSubPaths(self, req):
         """
         Parameters:
          - req
@@ -563,38 +547,6 @@ class Client(Iface):
             return result.success
         raise TApplicationException(TApplicationException.MISSING_RESULT, "aggregateQuery failed: unknown result")
 
-    def valueFilterQuery(self, req):
-        """
-        Parameters:
-         - req
-
-        """
-        self.send_valueFilterQuery(req)
-        return self.recv_valueFilterQuery()
-
-    def send_valueFilterQuery(self, req):
-        self._oprot.writeMessageBegin('valueFilterQuery', TMessageType.CALL, self._seqid)
-        args = valueFilterQuery_args()
-        args.req = req
-        args.write(self._oprot)
-        self._oprot.writeMessageEnd()
-        self._oprot.trans.flush()
-
-    def recv_valueFilterQuery(self):
-        iprot = self._iprot
-        (fname, mtype, rseqid) = iprot.readMessageBegin()
-        if mtype == TMessageType.EXCEPTION:
-            x = TApplicationException()
-            x.read(iprot)
-            iprot.readMessageEnd()
-            raise x
-        result = valueFilterQuery_result()
-        result.read(iprot)
-        iprot.readMessageEnd()
-        if result.success is not None:
-            return result.success
-        raise TApplicationException(TApplicationException.MISSING_RESULT, "valueFilterQuery failed: unknown result")
-
     def lastQuery(self, req):
         """
         Parameters:
@@ -690,38 +642,6 @@ class Client(Iface):
         if result.success is not None:
             return result.success
         raise TApplicationException(TApplicationException.MISSING_RESULT, "showColumns failed: unknown result")
-
-    def showSubPaths(self, req):
-        """
-        Parameters:
-         - req
-
-        """
-        self.send_showSubPaths(req)
-        return self.recv_showSubPaths()
-
-    def send_showSubPaths(self, req):
-        self._oprot.writeMessageBegin('showSubPaths', TMessageType.CALL, self._seqid)
-        args = showSubPaths_args()
-        args.req = req
-        args.write(self._oprot)
-        self._oprot.writeMessageEnd()
-        self._oprot.trans.flush()
-
-    def recv_showSubPaths(self):
-        iprot = self._iprot
-        (fname, mtype, rseqid) = iprot.readMessageBegin()
-        if mtype == TMessageType.EXCEPTION:
-            x = TApplicationException()
-            x.read(iprot)
-            iprot.readMessageEnd()
-            raise x
-        result = showSubPaths_result()
-        result.read(iprot)
-        iprot.readMessageEnd()
-        if result.success is not None:
-            return result.success
-        raise TApplicationException(TApplicationException.MISSING_RESULT, "showSubPaths failed: unknown result")
 
     def getReplicaNum(self, req):
         """
@@ -963,11 +883,9 @@ class Processor(Iface, TProcessor):
         self._processMap["queryData"] = Processor.process_queryData
         self._processMap["addStorageEngines"] = Processor.process_addStorageEngines
         self._processMap["aggregateQuery"] = Processor.process_aggregateQuery
-        self._processMap["valueFilterQuery"] = Processor.process_valueFilterQuery
         self._processMap["lastQuery"] = Processor.process_lastQuery
         self._processMap["downsampleQuery"] = Processor.process_downsampleQuery
         self._processMap["showColumns"] = Processor.process_showColumns
-        self._processMap["showSubPaths"] = Processor.process_showSubPaths
         self._processMap["getReplicaNum"] = Processor.process_getReplicaNum
         self._processMap["executeSql"] = Processor.process_executeSql
         self._processMap["updateUser"] = Processor.process_updateUser
@@ -1250,29 +1168,6 @@ class Processor(Iface, TProcessor):
         oprot.writeMessageEnd()
         oprot.trans.flush()
 
-    def process_valueFilterQuery(self, seqid, iprot, oprot):
-        args = valueFilterQuery_args()
-        args.read(iprot)
-        iprot.readMessageEnd()
-        result = valueFilterQuery_result()
-        try:
-            result.success = self._handler.valueFilterQuery(args.req)
-            msg_type = TMessageType.REPLY
-        except TTransport.TTransportException:
-            raise
-        except TApplicationException as ex:
-            logging.exception('TApplication exception in handler')
-            msg_type = TMessageType.EXCEPTION
-            result = ex
-        except Exception:
-            logging.exception('Unexpected exception in handler')
-            msg_type = TMessageType.EXCEPTION
-            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
-        oprot.writeMessageBegin("valueFilterQuery", msg_type, seqid)
-        result.write(oprot)
-        oprot.writeMessageEnd()
-        oprot.trans.flush()
-
     def process_lastQuery(self, seqid, iprot, oprot):
         args = lastQuery_args()
         args.read(iprot)
@@ -1338,29 +1233,6 @@ class Processor(Iface, TProcessor):
             msg_type = TMessageType.EXCEPTION
             result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
         oprot.writeMessageBegin("showColumns", msg_type, seqid)
-        result.write(oprot)
-        oprot.writeMessageEnd()
-        oprot.trans.flush()
-
-    def process_showSubPaths(self, seqid, iprot, oprot):
-        args = showSubPaths_args()
-        args.read(iprot)
-        iprot.readMessageEnd()
-        result = showSubPaths_result()
-        try:
-            result.success = self._handler.showSubPaths(args.req)
-            msg_type = TMessageType.REPLY
-        except TTransport.TTransportException:
-            raise
-        except TApplicationException as ex:
-            logging.exception('TApplication exception in handler')
-            msg_type = TMessageType.EXCEPTION
-            result = ex
-        except Exception:
-            logging.exception('Unexpected exception in handler')
-            msg_type = TMessageType.EXCEPTION
-            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
-        oprot.writeMessageBegin("showSubPaths", msg_type, seqid)
         result.write(oprot)
         oprot.writeMessageEnd()
         oprot.trans.flush()
@@ -2904,131 +2776,6 @@ aggregateQuery_result.thrift_spec = (
 )
 
 
-class valueFilterQuery_args(object):
-    """
-    Attributes:
-     - req
-
-    """
-
-
-    def __init__(self, req=None,):
-        self.req = req
-
-    def read(self, iprot):
-        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
-            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
-            return
-        iprot.readStructBegin()
-        while True:
-            (fname, ftype, fid) = iprot.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            if fid == 1:
-                if ftype == TType.STRUCT:
-                    self.req = ValueFilterQueryReq()
-                    self.req.read(iprot)
-                else:
-                    iprot.skip(ftype)
-            else:
-                iprot.skip(ftype)
-            iprot.readFieldEnd()
-        iprot.readStructEnd()
-
-    def write(self, oprot):
-        if oprot._fast_encode is not None and self.thrift_spec is not None:
-            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
-            return
-        oprot.writeStructBegin('valueFilterQuery_args')
-        if self.req is not None:
-            oprot.writeFieldBegin('req', TType.STRUCT, 1)
-            self.req.write(oprot)
-            oprot.writeFieldEnd()
-        oprot.writeFieldStop()
-        oprot.writeStructEnd()
-
-    def validate(self):
-        return
-
-    def __repr__(self):
-        L = ['%s=%r' % (key, value)
-             for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not (self == other)
-all_structs.append(valueFilterQuery_args)
-valueFilterQuery_args.thrift_spec = (
-    None,  # 0
-    (1, TType.STRUCT, 'req', [ValueFilterQueryReq, None], None, ),  # 1
-)
-
-
-class valueFilterQuery_result(object):
-    """
-    Attributes:
-     - success
-
-    """
-
-
-    def __init__(self, success=None,):
-        self.success = success
-
-    def read(self, iprot):
-        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
-            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
-            return
-        iprot.readStructBegin()
-        while True:
-            (fname, ftype, fid) = iprot.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            if fid == 0:
-                if ftype == TType.STRUCT:
-                    self.success = ValueFilterQueryResp()
-                    self.success.read(iprot)
-                else:
-                    iprot.skip(ftype)
-            else:
-                iprot.skip(ftype)
-            iprot.readFieldEnd()
-        iprot.readStructEnd()
-
-    def write(self, oprot):
-        if oprot._fast_encode is not None and self.thrift_spec is not None:
-            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
-            return
-        oprot.writeStructBegin('valueFilterQuery_result')
-        if self.success is not None:
-            oprot.writeFieldBegin('success', TType.STRUCT, 0)
-            self.success.write(oprot)
-            oprot.writeFieldEnd()
-        oprot.writeFieldStop()
-        oprot.writeStructEnd()
-
-    def validate(self):
-        return
-
-    def __repr__(self):
-        L = ['%s=%r' % (key, value)
-             for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not (self == other)
-all_structs.append(valueFilterQuery_result)
-valueFilterQuery_result.thrift_spec = (
-    (0, TType.STRUCT, 'success', [ValueFilterQueryResp, None], None, ),  # 0
-)
-
-
 class lastQuery_args(object):
     """
     Attributes:
@@ -3395,128 +3142,6 @@ class showColumns_result(object):
 all_structs.append(showColumns_result)
 showColumns_result.thrift_spec = (
     (0, TType.STRUCT, 'success', [ShowColumnsResp, None], None, ),  # 0
-)
-
-
-class showSubPaths_args(object):
-    """
-    Attributes:
-     - req
-
-    """
-
-
-    def __init__(self, req=None,):
-        self.req = req
-
-    def read(self, iprot):
-        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
-            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
-            return
-        iprot.readStructBegin()
-        while True:
-            (fname, ftype, fid) = iprot.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            if fid == -1:
-                if ftype == TType.STRUCT:
-                    self.req = ShowSubPathsReq()
-                    self.req.read(iprot)
-                else:
-                    iprot.skip(ftype)
-            else:
-                iprot.skip(ftype)
-            iprot.readFieldEnd()
-        iprot.readStructEnd()
-
-    def write(self, oprot):
-        if oprot._fast_encode is not None and self.thrift_spec is not None:
-            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
-            return
-        oprot.writeStructBegin('showSubPaths_args')
-        if self.req is not None:
-            oprot.writeFieldBegin('req', TType.STRUCT, -1)
-            self.req.write(oprot)
-            oprot.writeFieldEnd()
-        oprot.writeFieldStop()
-        oprot.writeStructEnd()
-
-    def validate(self):
-        return
-
-    def __repr__(self):
-        L = ['%s=%r' % (key, value)
-             for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not (self == other)
-all_structs.append(showSubPaths_args)
-showSubPaths_args.thrift_spec = ()
-
-
-class showSubPaths_result(object):
-    """
-    Attributes:
-     - success
-
-    """
-
-
-    def __init__(self, success=None,):
-        self.success = success
-
-    def read(self, iprot):
-        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
-            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
-            return
-        iprot.readStructBegin()
-        while True:
-            (fname, ftype, fid) = iprot.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            if fid == 0:
-                if ftype == TType.STRUCT:
-                    self.success = ShowSubPathsResp()
-                    self.success.read(iprot)
-                else:
-                    iprot.skip(ftype)
-            else:
-                iprot.skip(ftype)
-            iprot.readFieldEnd()
-        iprot.readStructEnd()
-
-    def write(self, oprot):
-        if oprot._fast_encode is not None and self.thrift_spec is not None:
-            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
-            return
-        oprot.writeStructBegin('showSubPaths_result')
-        if self.success is not None:
-            oprot.writeFieldBegin('success', TType.STRUCT, 0)
-            self.success.write(oprot)
-            oprot.writeFieldEnd()
-        oprot.writeFieldStop()
-        oprot.writeStructEnd()
-
-    def validate(self):
-        return
-
-    def __repr__(self):
-        L = ['%s=%r' % (key, value)
-             for key, value in self.__dict__.items()]
-        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-    def __eq__(self, other):
-        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-    def __ne__(self, other):
-        return not (self == other)
-all_structs.append(showSubPaths_result)
-showSubPaths_result.thrift_spec = (
-    (0, TType.STRUCT, 'success', [ShowSubPathsResp, None], None, ),  # 0
 )
 
 

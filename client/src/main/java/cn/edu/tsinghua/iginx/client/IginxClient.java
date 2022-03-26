@@ -107,8 +107,8 @@ public class IginxClient {
             }
         } catch (ParseException e) {
             System.out.println(
-                    "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
-                            + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -pw xxx.");
+                "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
+                    + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -pw xxx.");
             System.out.println("For more information, please check the following hint.");
             hf.printHelp(SCRIPT_HINT, options, true);
             return false;
@@ -124,8 +124,8 @@ public class IginxClient {
 
         if (args == null || args.length == 0) {
             System.out.println(
-                    "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
-                            + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
+                "Require more params input, eg. ./start-cli.sh(start-cli.bat if Windows) "
+                    + "-h xxx.xxx.xxx.xxx -p xxxx -u xxx -p xxx.");
             System.out.println("For more information, please check the following hint.");
             hf.printHelp(SCRIPT_HINT, options, true);
             return;
@@ -142,8 +142,8 @@ public class IginxClient {
         if (str == null) {
             if (isRequired && defaultValue == null) {
                 String msg =
-                        String.format(
-                                "%s Required values for option '%s' not provided", IGINX_CLI_PREFIX, name);
+                    String.format(
+                        "%s Required values for option '%s' not provided", IGINX_CLI_PREFIX, name);
                 System.out.println(msg);
                 System.out.println("Use -help for more information");
                 throw new RuntimeException();
@@ -156,13 +156,13 @@ public class IginxClient {
     private static void serve(String[] args) {
         try {
             Terminal terminal = TerminalBuilder.builder()
-                    .system(true)
-                    .build();
+                .system(true)
+                .build();
 
             LineReader reader = LineReaderBuilder.builder()
-                    .terminal(terminal)
-                    .completer(buildIginxCompleter())
-                    .build();
+                .terminal(terminal)
+                .completer(buildIginxCompleter())
+                .build();
 
             host = parseArg(HOST_ARGS, HOST_NAME, false, "127.0.0.1");
             port = parseArg(PORT_ARGS, PORT_NAME, false, "6888");
@@ -282,10 +282,9 @@ public class IginxClient {
 
             if (res.isQuery()) {
                 res.print(true, timestampPrecision);
-            } else if (res.getSqlType() == SqlType.ShowTimeSeries ||
-                    res.getSqlType() == SqlType.ShowSubTimeSeries ||
-                    res.getSqlType() == SqlType.ShowClusterInfo ||
-                    res.getSqlType() == SqlType.ShowUser) {
+            } else if (res.getSqlType() == SqlType.ShowTimeSeries) {
+                res.print(false, "");
+            } else if (res.getSqlType() == SqlType.ShowClusterInfo) {
                 res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
@@ -326,27 +325,21 @@ public class IginxClient {
         List<Completer> iginxCompleters = new ArrayList<>();
 
         List<List<String>> withNullCompleters = Arrays.asList(
-                Arrays.asList("insert", "into"),
-                Arrays.asList("delete", "from"),
-                Arrays.asList("delete", "time", "series"),
-                Arrays.asList("select"),
-                Arrays.asList("add", "storageengine"),
-                Arrays.asList("set", "timeunit", "in"),
-                Arrays.asList("create", "user"),
-                Arrays.asList("grant"),
-                Arrays.asList("set", "password", "for"),
-                Arrays.asList("drop", "user"),
-                Arrays.asList("show", "user")
+            Arrays.asList("insert", "into"),
+            Arrays.asList("delete", "from"),
+            Arrays.asList("delete", "time", "series"),
+            Arrays.asList("select"),
+            Arrays.asList("add", "storageengine"),
+            Arrays.asList("set", "timeunit", "in")
         );
         addArgumentCompleters(iginxCompleters, withNullCompleters, true);
 
         List<List<String>> withoutNullCompleters = Arrays.asList(
-                Arrays.asList("show", "replica", "number"),
-                Arrays.asList("count", "points"),
-                Arrays.asList("clear", "data"),
-                Arrays.asList("show", "timeseries"),
-                Arrays.asList("show", "sub", "timeseries"),
-                Arrays.asList("show", "cluster", "info")
+            Arrays.asList("show", "replica", "number"),
+            Arrays.asList("count", "points"),
+            Arrays.asList("clear", "data"),
+            Arrays.asList("show", "time", "series"),
+            Arrays.asList("show", "cluster", "info")
         );
         addArgumentCompleters(iginxCompleters, withoutNullCompleters, false);
 
@@ -391,16 +384,16 @@ public class IginxClient {
 
     public static void displayLogo(String version) {
         System.out.println(
-                "  _____        _        __   __\n" +
-                        " |_   _|      (_)       \\ \\ / /\n" +
-                        "   | |   __ _  _  _ __   \\ V / \n" +
-                        "   | |  / _` || || '_ \\   > <  \n" +
-                        "  _| |_| (_| || || | | | / . \\ \n" +
-                        " |_____|\\__, ||_||_| |_|/_/ \\_\\\n" +
-                        "         __/ |                 \n" +
-                        "        |___/                       version " +
-                        version +
-                        "\n"
+            "  _____        _        __   __\n" +
+                " |_   _|      (_)       \\ \\ / /\n" +
+                "   | |   __ _  _  _ __   \\ V / \n" +
+                "   | |  / _` || || '_ \\   > <  \n" +
+                "  _| |_| (_| || || | | | / . \\ \n" +
+                " |_____|\\__, ||_||_| |_|/_/ \\_\\\n" +
+                "         __/ |                 \n" +
+                "        |___/                       version " +
+                version +
+                "\n"
         );
     }
 
