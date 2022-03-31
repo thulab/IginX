@@ -345,6 +345,8 @@ public class StatementExecutor {
         result.setPaths(paths);
         result.setDataTypes(types);
         ctx.setResult(result);
+
+        stream.close();
     }
 
     private void setShowTSRowStreamResult(RequestContext ctx, RowStream stream) throws PhysicalException {
