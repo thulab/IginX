@@ -115,6 +115,8 @@ public class Config {
 
     private boolean enablePushDown = true;
 
+    private boolean useStreamExecutor = true;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -489,5 +491,13 @@ public class Config {
 
     public void setEnablePushDown(boolean enablePushDown) {
         this.enablePushDown = enablePushDown;
+    }
+
+    public boolean isUseStreamExecutor() {
+        return useStreamExecutor;
+    }
+
+    public void setUseStreamExecutor(boolean useStreamExecutor) {
+        this.useStreamExecutor = useStreamExecutor;
     }
 }

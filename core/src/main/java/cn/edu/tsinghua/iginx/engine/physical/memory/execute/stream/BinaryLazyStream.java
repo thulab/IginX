@@ -16,17 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data.read;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 
-public interface RowStream {
+public abstract class BinaryLazyStream implements RowStream {
 
-    Header getHeader() throws PhysicalException;
+    protected final RowStream streamA;
 
-    void close() throws PhysicalException;
+    protected final RowStream streamB;
 
-    boolean hasNext() throws PhysicalException;
+    public BinaryLazyStream(RowStream streamA, RowStream streamB) {
+        this.streamA = streamA;
+        this.streamB = streamB;
+    }
 
-    Row next() throws PhysicalException;
+    @Override
+    public void close() throws PhysicalException {
+        PhysicalException pe = null;
+        try {
+            streamA.close();
+        } catch (PhysicalException e) {
+            pe = e;
+        }
+        try {
+            streamB.close();
+        } catch (PhysicalException e) {
+            pe = e;
+        }
+        if (pe != null) {
+            throw pe;
+        }
+    }
 }

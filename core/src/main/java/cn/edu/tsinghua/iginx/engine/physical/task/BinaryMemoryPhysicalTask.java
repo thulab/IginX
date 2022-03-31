@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.engine.physical.task;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutorFactory;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.NaiveOperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
@@ -74,7 +75,7 @@ public class BinaryMemoryPhysicalTask extends MemoryPhysicalTask {
         RowStream streamA = parentResultA.getRowStream();
         RowStream streamB = parentResultB.getRowStream();
         RowStream stream;
-        OperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
+        OperatorMemoryExecutor executor = OperatorMemoryExecutorFactory.getInstance().getMemoryExecutor();
         try {
             Operator op = operators.get(0);
             if (OperatorType.isUnaryOperator(op.getType())) {

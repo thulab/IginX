@@ -16,52 +16,45 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.data.read;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
 
-public class RowStreamWrapper implements RowStream {
+public class LimitLazyStream extends UnaryLazyStream {
 
-    private final RowStream rowStream;
+    private final Limit limit;
 
-    private Row nextRow; // 如果不为空，表示 row stream 的下一行已经取出来，并缓存在 wrapper 里
+    private int index = 0;
 
-    public RowStreamWrapper(RowStream rowStream) {
-        this.rowStream = rowStream;
+    public LimitLazyStream(Limit limit, RowStream stream) {
+        super(stream);
+        this.limit = limit;
     }
 
     @Override
     public Header getHeader() throws PhysicalException {
-        return rowStream.getHeader();
-    }
-
-    @Override
-    public void close() throws PhysicalException {
-        rowStream.close();
+        return stream.getHeader();
     }
 
     @Override
     public boolean hasNext() throws PhysicalException {
-        return nextRow != null || rowStream.hasNext();
+        while(index < limit.getOffset() && stream.hasNext()) {
+            stream.next();
+            index++;
+        }
+        return index - limit.getOffset() < limit.getLimit() && stream.hasNext();
     }
 
     @Override
     public Row next() throws PhysicalException {
-        Row row = null;
-        if (nextRow != null) { // 本地已经缓存了下一行
-            row = nextRow;
-            nextRow = null;
-        } else {
-            row = rowStream.next();
+        if (!hasNext()) {
+            throw new IllegalStateException("row stream doesn't have more data!");
         }
-        return row;
+        index++;
+        return stream.next();
     }
-
-    public long nextTimestamp() throws PhysicalException {
-        if (nextRow == null) { // 本地已经缓存了下一行
-            nextRow = rowStream.next();
-        }
-        return nextRow.getTimestamp();
-    }
-
 }

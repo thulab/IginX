@@ -1,9 +1,17 @@
 package cn.edu.tsinghua.iginx.engine.shared;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import lombok.Data;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -11,6 +19,8 @@ import java.util.List;
 
 @Data
 public class Result {
+
+    private static final Logger logger = LoggerFactory.getLogger(Result.class);
 
     private Status status;
     private List<String> paths;
@@ -27,6 +37,9 @@ public class Result {
     private List<StorageEngineInfo> storageEngineInfos;
     private List<MetaStorageInfo> metaStorageInfos;
     private LocalMetaStorageInfo localMetaStorageInfo;
+
+    private long queryId;
+    private RowStream resultStream;
 
     public Result(Status status) {
         this.status = status;
@@ -120,5 +133,115 @@ public class Result {
         resp.setLocalMetaStorageInfo(localMetaStorageInfo);
         return resp;
     }
+
+    public ExecuteStatementResp getExecuteStatementResp(int fetchSize) {
+        ExecuteStatementResp resp = new ExecuteStatementResp(status, sqlType);
+        if (status != RpcUtils.SUCCESS) {
+            return resp;
+        }
+        resp.setQueryId(queryId);
+        try {
+            List<String> paths = new ArrayList<>();
+            List<DataType> types = new ArrayList<>();
+
+            Header header = resultStream.getHeader();
+
+            if (header.hasTimestamp()) {
+                paths.add(Field.TIME.getName());
+                types.add(Field.TIME.getType());
+            }
+
+            resultStream.getHeader().getFields().forEach(field -> {
+                paths.add(field.getName());
+                types.add(field.getType());
+            });
+
+            List<ByteBuffer> valuesList = new ArrayList<>();
+            List<ByteBuffer> bitmapList = new ArrayList<>();
+
+            int cnt = 0;
+            boolean hasTimestamp = resultStream.getHeader().hasTimestamp();
+            while (resultStream.hasNext() && cnt < fetchSize) {
+                Row row = resultStream.next();
+
+                Object[] rawValues = row.getValues();
+                Object[] rowValues = rawValues;
+                if (hasTimestamp) {
+                    rowValues = new Object[rawValues.length + 1];
+                    rowValues[0] = row.getTimestamp();
+                    System.arraycopy(rawValues, 0, rowValues, 1, rawValues.length);
+                }
+                valuesList.add(ByteUtils.getRowByteBuffer(rowValues, types));
+
+                Bitmap bitmap = new Bitmap(rowValues.length);
+                for (int i = 0; i < rowValues.length; i++) {
+                    if (rowValues[i] != null) {
+                        bitmap.mark(i);
+                    }
+                }
+                bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
+            }
+            resp.setColumns(paths);
+            resp.setDataTypeList(dataTypes);
+            resp.setQueryDataSet(new QueryDataSetV2(valuesList, bitmapList));
+        } catch (PhysicalException e) {
+            logger.error("unexpected error when load row stream: ", e);
+            resp.setStatus(RpcUtils.FAILURE);
+        }
+        return resp;
+    }
+
+    public FetchResultsResp fetch(int fetchSize) {
+        FetchResultsResp resp = new FetchResultsResp(status, false);
+
+        if (status != RpcUtils.SUCCESS) {
+            return resp;
+        }
+        try {
+            List<DataType> types = new ArrayList<>();
+
+            Header header = resultStream.getHeader();
+
+            if (header.hasTimestamp()) {
+                types.add(Field.TIME.getType());
+            }
+
+            resultStream.getHeader().getFields().forEach(field -> types.add(field.getType()));
+
+            List<ByteBuffer> valuesList = new ArrayList<>();
+            List<ByteBuffer> bitmapList = new ArrayList<>();
+
+            int cnt = 0;
+            boolean hasTimestamp = resultStream.getHeader().hasTimestamp();
+            while (resultStream.hasNext() && cnt < fetchSize) {
+                Row row = resultStream.next();
+
+                Object[] rawValues = row.getValues();
+                Object[] rowValues = rawValues;
+                if (hasTimestamp) {
+                    rowValues = new Object[rawValues.length + 1];
+                    rowValues[0] = row.getTimestamp();
+                    System.arraycopy(rawValues, 0, rowValues, 1, rawValues.length);
+                }
+                valuesList.add(ByteUtils.getRowByteBuffer(rowValues, types));
+
+                Bitmap bitmap = new Bitmap(rowValues.length);
+                for (int i = 0; i < rowValues.length; i++) {
+                    if (rowValues[i] != null) {
+                        bitmap.mark(i);
+                    }
+                }
+                bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
+            }
+            resp.setHasMoreResults(resultStream.hasNext());
+            resp.setQueryDataSet(new QueryDataSetV2(valuesList, bitmapList));
+        } catch (PhysicalException e) {
+            logger.error("unexpected error when load row stream: ", e);
+            resp.setStatus(RpcUtils.FAILURE);
+        }
+        return resp;
+    }
+
+
 
 }
