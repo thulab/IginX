@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
@@ -86,7 +87,7 @@ public class DownsampleLazyStream extends UnaryLazyStream {
         long timestamp = 0;
         long bias = downsample.getTimeRange().getBeginTime();
         long precision = downsample.getPrecision();
-        while(row == null) {
+        while(row == null && wrapper.hasNext()) {
             timestamp = wrapper.nextTimestamp() - (wrapper.nextTimestamp() - bias) % precision;
             List<Row> rows = new ArrayList<>();
             while(wrapper.hasNext() && wrapper.nextTimestamp() < timestamp + precision) {
@@ -99,7 +100,7 @@ public class DownsampleLazyStream extends UnaryLazyStream {
                 throw new PhysicalTaskExecuteFailureException("encounter error when execute set mapping function " + function.getIdentifier() + ".", e);
             }
         }
-        return new Row(row.getHeader(), timestamp, row.getValues());
+        return row == null ? null : new Row(new Header(Field.TIME, row.getHeader().getFields()), timestamp, row.getValues());
     }
 
     @Override
