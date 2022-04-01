@@ -34,6 +34,8 @@ public class RequestContext {
 
     private Result result;
 
+    private boolean useStream;
+
     private void init() {
         this.id = SnowFlakeUtils.getInstance().nextId();
         this.startTime = System.currentTimeMillis();
@@ -53,11 +55,16 @@ public class RequestContext {
     }
 
     public RequestContext(long sessionId, String sql) {
+        this(sessionId, sql, false);
+    }
+
+    public RequestContext(long sessionId, String sql, boolean useStream) {
         init();
         this.sessionId = sessionId;
         this.sql = sql;
         this.fromSQL = true;
         this.sqlType = SqlType.Unknown;
+        this.useStream = useStream;
     }
 
     public Object getExtraParam(String key) {
@@ -66,5 +73,9 @@ public class RequestContext {
 
     public void setExtraParam(String key, Object value) {
         extraParams.put(key, value);
+    }
+
+    public boolean isUseStream() {
+        return useStream;
     }
 }

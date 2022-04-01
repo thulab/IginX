@@ -299,6 +299,12 @@ public class StatementExecutor {
     }
 
     private void setResultFromRowStream(RequestContext ctx, RowStream stream) throws PhysicalException {
+        if (ctx.isUseStream()) {
+            Result result = new Result(RpcUtils.SUCCESS);
+            result.setResultStream(stream);
+            ctx.setResult(result);
+            return;
+        }
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         stream.getHeader().getFields().forEach(field -> {
