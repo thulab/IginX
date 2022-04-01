@@ -37,11 +37,19 @@ import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
 
 public class IoTDBQueryRowStream implements RowStream {
 
+    enum State {
+        HAS_NEXT,
+        NO_NEXT,
+        UNKNOWN,
+    }
+
     private static final String PREFIX = "root.";
 
     private final SessionDataSetWrapper dataset;
 
     private final Header header;
+
+    private State state;
 
     public IoTDBQueryRowStream(SessionDataSetWrapper dataset) {
         this.dataset = dataset;
@@ -67,6 +75,8 @@ public class IoTDBQueryRowStream implements RowStream {
         } else {
             this.header = new Header(time, fields);
         }
+
+        this.state = State.UNKNOWN;
     }
 
     private String transformColumnName(String columnName) {
@@ -92,7 +102,14 @@ public class IoTDBQueryRowStream implements RowStream {
     @Override
     public boolean hasNext() throws PhysicalException {
         try {
-            return dataset.hasNext();
+            if (state == State.UNKNOWN) {
+                if (dataset.hasNext()) {
+                    state = State.HAS_NEXT;
+                } else {
+                    state = State.NO_NEXT;
+                }
+            }
+            return state == State.HAS_NEXT;
         } catch (StatementExecutionException | IoTDBConnectionException e) {
             throw new RowFetchException(e);
         }
@@ -112,6 +129,7 @@ public class IoTDBQueryRowStream implements RowStream {
                     fields[i] = field.getObjectValue(field.getDataType());
                 }
             }
+            state = State.UNKNOWN;
             return new Row(header, timestamp, fields);
         } catch (StatementExecutionException | IoTDBConnectionException e) {
             throw new RowFetchException(e);

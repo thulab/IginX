@@ -18,15 +18,27 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute;
 
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.NaiveOperatorMemoryExecutor;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream.StreamOperatorMemoryExecutor;
 
-public interface OperatorMemoryExecutor {
+public class OperatorMemoryExecutorFactory {
 
-    RowStream executeUnaryOperator(UnaryOperator operator, RowStream stream) throws PhysicalException;
+    private static final OperatorMemoryExecutorFactory INSTANCE = new OperatorMemoryExecutorFactory();
 
-    RowStream executeBinaryOperator(BinaryOperator operator, RowStream streamA, RowStream streamB) throws PhysicalException;
+    private OperatorMemoryExecutorFactory() {
+
+    }
+
+    public OperatorMemoryExecutor getMemoryExecutor() {
+        if (ConfigDescriptor.getInstance().getConfig().isUseStreamExecutor()) {
+            return StreamOperatorMemoryExecutor.getInstance();
+        }
+        return NaiveOperatorMemoryExecutor.getInstance();
+    }
+
+    public static OperatorMemoryExecutorFactory getInstance() {
+        return INSTANCE;
+    }
 
 }

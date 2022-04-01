@@ -16,8 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.session_v2;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 
-public interface SQLClient {
+public abstract class UnaryLazyStream implements RowStream {
+
+    protected final RowStream stream;
+
+    public UnaryLazyStream(RowStream stream) {
+        this.stream = stream;
+    }
+
+    @Override
+    public void close() throws PhysicalException {
+        stream.close();
+    }
 }

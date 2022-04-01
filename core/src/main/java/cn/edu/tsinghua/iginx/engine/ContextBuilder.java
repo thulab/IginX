@@ -126,6 +126,10 @@ public class ContextBuilder {
         return new RequestContext(req.getSessionId(), req.getStatement());
     }
 
+    public RequestContext build(ExecuteStatementReq req) {
+        return new RequestContext(req.getSessionId(), req.getStatement());
+    }
+
     public RequestContext build(LastQueryReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),

@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
+import cn.edu.tsinghua.iginx.thrift.CloseStatementReq;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
@@ -35,6 +36,10 @@ import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
 import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
+import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
+import cn.edu.tsinghua.iginx.thrift.ExecuteStatementResp;
+import cn.edu.tsinghua.iginx.thrift.FetchResultsReq;
+import cn.edu.tsinghua.iginx.thrift.FetchResultsResp;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
@@ -50,6 +55,7 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.QueryDataSetV2;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
@@ -57,7 +63,9 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -986,5 +994,78 @@ public class Session {
         }
         mergedPaths.sort(String::compareTo);
         return mergedPaths;
+    }
+
+    public QueryDataSet executeQuery(String statement) throws SessionException, ExecutionException {
+        return executeQuery(statement, Integer.MAX_VALUE);
+    }
+
+    public QueryDataSet executeQuery(String statement, int fetchSize) throws SessionException, ExecutionException  {
+        ExecuteStatementReq req = new ExecuteStatementReq(sessionId, statement);
+        req.setFetchSize(fetchSize);
+        ExecuteStatementResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.executeStatement(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            e.printStackTrace();
+            throw new SessionException(e);
+        }
+
+        long queryId = resp.getQueryId();
+        List<String> columns = resp.getColumns();
+        List<DataType> dataTypes = resp.getDataTypeList();
+        QueryDataSetV2 dataSetV2 = resp.getQueryDataSet();
+
+        return new QueryDataSet(this, queryId, columns, dataTypes, fetchSize, dataSetV2.bitmapList, dataSetV2.valuesList);
+    }
+
+    Pair<QueryDataSetV2, Boolean> fetchResult(long queryId, int fetchSize) throws SessionException, ExecutionException {
+        FetchResultsReq req = new FetchResultsReq(sessionId, queryId);
+        req.setFetchSize(fetchSize);
+        FetchResultsResp resp;
+
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.fetchResults(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            e.printStackTrace();
+            throw new SessionException(e);
+        }
+
+        return new Pair<>(resp.getQueryDataSet(), resp.isHasMoreResults());
+    }
+
+
+    void closeQuery(long queryId) throws SessionException, ExecutionException {
+        CloseStatementReq req = new CloseStatementReq(sessionId, queryId);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.closeStatement(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
     }
 }
