@@ -65,7 +65,6 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
