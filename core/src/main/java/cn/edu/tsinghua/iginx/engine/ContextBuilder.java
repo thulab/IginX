@@ -127,7 +127,7 @@ public class ContextBuilder {
     }
 
     public RequestContext build(ExecuteStatementReq req) {
-        return new RequestContext(req.getSessionId(), req.getStatement());
+        return new RequestContext(req.getSessionId(), req.getStatement(), true);
     }
 
     public RequestContext build(LastQueryReq req) {
