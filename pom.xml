@@ -17,11 +17,11 @@
   <modules>
     <module>core</module>
     <module>thrift</module>
-    <module>iotdb11</module>
-    <module>iotdb12</module>
-    <module>influxdb</module>
-    <!--module>opentsdb</module-->
-    <!--module>timescaledb</module-->
+    <module>dataSources/iotdb11</module>
+    <module>dataSources/iotdb12</module>
+    <module>dataSources/influxdb</module>
+    <!--module>dataSources/opentsdb</module-->
+    <!--module>dataSources/timescaledb</module-->
     <module>shared</module>
     <module>client</module>
     <module>antlr</module>
