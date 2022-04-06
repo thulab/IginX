@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 public class Row {
 
@@ -103,5 +104,20 @@ public class Row {
             "timestamp=" + timestamp +
             ", values=" + Arrays.toString(values) +
             '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Row row = (Row) o;
+        return timestamp == row.timestamp && Objects.equals(header, row.header) && Arrays.equals(values, row.values);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Objects.hash(header, timestamp);
+        result = 31 * result + Arrays.hashCode(values);
+        return result;
     }
 }
