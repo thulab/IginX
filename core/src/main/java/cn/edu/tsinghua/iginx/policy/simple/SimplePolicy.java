@@ -250,6 +250,14 @@ public class SimplePolicy implements IPolicy {
         return new Pair<>(fragmentList, storageUnitList);
     }
 
+    @Override
+    public void executeReshardAndMigration(Map<Long, NodeResource> nodeUsedResourcesMap,
+        Map<String, List<FragmentMeta>> nodeFragmentMap,
+        Map<FragmentMeta, Long> fragmentWriteLoadMap,
+        Map<FragmentMeta, Long> fragmentReadLoadMap) {
+
+    }
+
     private List<String> getNewFragment(Map<String, Double> data) {
         List<String> ret = new ArrayList<>();
         int n = data.size();
@@ -327,13 +335,5 @@ public class SimplePolicy implements IPolicy {
         } else {
             return true;
         }
-    }
-
-    @Override
-    public List<MigrationTask> generateReshardFinalStatus(
-        Map<Long, NodeResource> nodeRestResourcesMap, Map<Long, NodeResource> nodeUsedResourcesMap,
-        Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
-        Map<FragmentMeta, Long> fragmentReadLoadMap) {
-        return new ArrayList<>();
     }
 }

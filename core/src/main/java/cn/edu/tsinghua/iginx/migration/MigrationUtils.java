@@ -8,14 +8,14 @@ import java.util.Queue;
 
 public class MigrationUtils {
 
-  public static void migrateData(long sourceNode, long targetNode, FragmentMeta fragmentMeta) {
+  public static void migrateData(String sourceStorageUnitId, String targetStorageUnitId, FragmentMeta fragmentMeta) {
 
   }
 
-  public static void reshardFragment(long sourceNode, long targetNode, FragmentMeta fragmentMeta) {
+  public static void reshardFragment(String sourceStorageUnitId, String targetStorageUnitId, FragmentMeta fragmentMeta) {
   }
 
-  public static void operateTaskAndRequest(long sourceNode, long targetNode,
+  public static void operateTaskAndRequest(String sourceStorageUnitId, String targetStorageUnitId,
       FragmentMeta fragmentMeta) {
 
   }

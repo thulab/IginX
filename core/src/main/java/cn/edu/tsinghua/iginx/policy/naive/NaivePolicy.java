@@ -261,11 +261,12 @@ public class NaivePolicy implements IPolicy {
         return new Pair<>(fragmentList, storageUnitList);
     }
 
-    public List<MigrationTask> generateReshardFinalStatus(
-        Map<Long, NodeResource> nodeRestResourcesMap, Map<Long, NodeResource> nodeUsedResourcesMap,
-        Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+    @Override
+    public void executeReshardAndMigration(Map<Long, NodeResource> nodeUsedResourcesMap,
+        Map<String, List<FragmentMeta>> nodeFragmentMap,
+        Map<FragmentMeta, Long> fragmentWriteLoadMap,
         Map<FragmentMeta, Long> fragmentReadLoadMap) {
-        return new ArrayList<>();
+
     }
 
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {

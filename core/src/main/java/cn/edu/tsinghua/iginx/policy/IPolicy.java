@@ -5,7 +5,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.monitor.NodeResource;
-import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
@@ -26,9 +25,8 @@ public interface IPolicy {
   Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(
       DataStatement statement);
 
-  List<MigrationTask> generateReshardFinalStatus(Map<Long, NodeResource> nodeRestResourcesMap,
-      Map<Long, NodeResource> nodeUsedResourcesMap,
-      Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+  void executeReshardAndMigration(Map<Long, NodeResource> nodeUsedResourcesMap,
+      Map<String, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
       Map<FragmentMeta, Long> fragmentReadLoadMap);
 
   boolean isNeedReAllocate();

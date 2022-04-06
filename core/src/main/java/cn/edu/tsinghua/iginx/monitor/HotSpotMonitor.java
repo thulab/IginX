@@ -42,6 +42,9 @@ public class HotSpotMonitor implements IMonitor {
   }
 
   public void recordAfter(long taskId, FragmentMeta fragmentMeta, OperatorType operatorType) {
+    if (operatorType == OperatorType.Insert) {
+      fragmentMeta.incrementPoint();
+    }
     if (isStart && taskIdStartTimeMap.containsKey(taskId)) {
       long duration = System.currentTimeMillis() - taskIdStartTimeMap.get(taskId);
       if (operatorType == OperatorType.Project) {
@@ -49,7 +52,6 @@ public class HotSpotMonitor implements IMonitor {
         readHotspotMap.put(fragmentMeta, prevDuration + duration);
       } else if (operatorType == OperatorType.Insert) {
         long prevDuration = writeHotspotMap.getOrDefault(fragmentMeta, 0L);
-        fragmentMeta.incrementPoint();
         writeHotspotMap.put(fragmentMeta, prevDuration + duration);
       }
       taskIdStartTimeMap.remove(taskId);

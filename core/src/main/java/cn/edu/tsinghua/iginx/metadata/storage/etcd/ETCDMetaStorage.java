@@ -18,8 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
-import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
-
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
@@ -32,6 +30,7 @@ import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import com.google.gson.reflect.TypeToken;
 import io.etcd.jetcd.ByteSequence;
@@ -916,23 +915,48 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateNodeLoadScore(double score) throws Exception {
+    public void updateNodeLoadScore(NodeResource nodeResource, long iginxId) throws Exception {
 
     }
 
     @Override
-    public Map<Long, Double> loadNodeLoadScores() {
+    public Map<Long, NodeResource> loadNodeLoadScores() {
         return null;
     }
 
     @Override
-    public void updateNodePerformance(double writeLatency, double readLatency) throws Exception {
+    public void updateNodePerformance(double writeLatency, double readLatency, long iginxId) throws Exception {
 
     }
 
     @Override
     public Map<Long, Pair<Double, Double>> loadNodePerformance() {
         return null;
+    }
+
+    @Override
+    public void lockNodePerformanceCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementNodePerformanceCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetNodePerformanceCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseNodePerformanceCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getNodePerformanceCounter() throws MetaStorageException {
+        return 0;
     }
 
     @Override
@@ -944,6 +968,36 @@ public class ETCDMetaStorage implements IMetaStorage {
     @Override
     public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() {
         return null;
+    }
+
+    @Override
+    public void removeFragmentHeat() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseFragmentHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getFragmentHeatCounter() throws MetaStorageException {
+        return 0;
     }
 
     @Override

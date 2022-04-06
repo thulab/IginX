@@ -9,4 +9,8 @@ public class NodeResource {
   private double memory; //剩余内存
   private double diskIO; //剩余磁盘占用率
   private double netIO; //剩余带宽流量
+
+  public double getScore() {
+    return memory;
+  }
 }

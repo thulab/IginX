@@ -71,6 +71,9 @@ public class ConfigDescriptor {
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
             config.setEnableMonitor(Boolean.parseBoolean(properties.getProperty("enableMonitor", "true")));
             config.setLoadBalanceCheckInterval(Integer.parseInt(properties.getProperty("loadBalanceCheckInterval", "30")));
+            config.setRequestFilterMonitorPeriod(Integer.parseInt(properties.getProperty("requestFilterMonitorPeriod", "60")));
+            config.setUnbalanceThreshold(Double.parseDouble(properties.getProperty("unbalanceThreshold", "60")));
+            config.setMaxLoadThreshold(Double.parseDouble(properties.getProperty("maxLoadThreshold", "60")));
             config.setMigrationPolicyClassName(properties.getProperty("migrationPolicyClassName", "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy"));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
 

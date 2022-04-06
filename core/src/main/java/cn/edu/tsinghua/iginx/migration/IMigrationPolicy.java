@@ -7,8 +7,7 @@ import java.util.Map;
 
 public interface IMigrationPolicy {
 
-  void migrate(List<MigrationTask> migrationTasks, Map<Long, NodeResource> nodeRestResourcesMap,
-      double[] costParams);
+  void migrate(List<MigrationTask> migrationTasks, Map<Long, NodeResource> nodeRestResourcesMap);
 
   void interrupt();
 

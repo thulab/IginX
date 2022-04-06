@@ -28,6 +28,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
 import java.util.Map;
@@ -68,6 +69,8 @@ public interface IMetaStorage {
 
   Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException;
 
+  Map<String, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException;
+
   void lockFragment() throws MetaStorageException;
 
   void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
@@ -103,18 +106,45 @@ public interface IMetaStorage {
 
   int updateVersion();
 
-  void updateNodeLoadScore(double score) throws Exception;
+  void updateEnableMonitor(boolean enableMonitor) throws Exception;
 
-  Map<Long, Double> loadNodeLoadScores();
+  void registerEnableMonitorChangeHook(EnableMonitorChangeHook hook);
 
-  void updateNodePerformance(double writeLatency, double readLatency) throws Exception;
+  void updateNodeLoadScore(NodeResource nodeResource, long iginxId) throws Exception;
+
+  Map<Long, NodeResource> loadNodeLoadScores();
+
+  void updateNodePerformance(double writeLatency, double readLatency, long iginxId)
+      throws Exception;
 
   Map<Long, Pair<Double, Double>> loadNodePerformance();
+
+  void lockNodePerformanceCounter() throws MetaStorageException;
+
+  void incrementNodePerformanceCounter() throws MetaStorageException;
+
+  void resetNodePerformanceCounter() throws MetaStorageException;
+
+  void releaseNodePerformanceCounter() throws MetaStorageException;
+
+  int getNodePerformanceCounter() throws MetaStorageException;
 
   void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
       Map<FragmentMeta, Long> readHotspotMap) throws Exception;
 
-  Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat();
+  Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() throws Exception;
+
+  void removeFragmentHeat() throws MetaStorageException;
+
+  void lockFragmentHeatCounter() throws MetaStorageException;
+
+  void incrementFragmentHeatCounter() throws MetaStorageException;
+
+  void resetFragmentHeatCounter() throws MetaStorageException;
+
+  void releaseFragmentHeatCounter() throws MetaStorageException;
+
+  int getFragmentHeatCounter() throws MetaStorageException;
 
   boolean proposeToReshard() throws MetaStorageException;
 

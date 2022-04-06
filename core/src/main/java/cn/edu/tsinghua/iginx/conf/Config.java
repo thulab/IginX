@@ -51,6 +51,12 @@ public class Config {
 
     private int loadBalanceCheckInterval = 30;
 
+    private int requestFilterMonitorPeriod = 30;
+
+    private double unbalanceThreshold = 0.2;
+
+    private double maxLoadThreshold = 0.8;
+
     private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy";
 
     private int storageUnitNum = 30;
@@ -245,6 +251,30 @@ public class Config {
 
     public void setLoadBalanceCheckInterval(int loadBalanceCheckInterval) {
         this.loadBalanceCheckInterval = loadBalanceCheckInterval;
+    }
+
+    public int getRequestFilterMonitorPeriod() {
+        return requestFilterMonitorPeriod;
+    }
+
+    public void setRequestFilterMonitorPeriod(int requestFilterMonitorPeriod) {
+        this.requestFilterMonitorPeriod = requestFilterMonitorPeriod;
+    }
+
+    public double getUnbalanceThreshold() {
+        return unbalanceThreshold;
+    }
+
+    public void setUnbalanceThreshold(double unbalanceThreshold) {
+        this.unbalanceThreshold = unbalanceThreshold;
+    }
+
+    public double getMaxLoadThreshold() {
+        return maxLoadThreshold;
+    }
+
+    public void setMaxLoadThreshold(double maxLoadThreshold) {
+        this.maxLoadThreshold = maxLoadThreshold;
     }
 
     public String getMigrationPolicyClassName() {

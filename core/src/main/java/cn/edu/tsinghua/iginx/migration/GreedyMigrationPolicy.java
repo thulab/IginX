@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.migration;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationType;
@@ -9,39 +11,44 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class GreedyMigrationPolicy implements IMigrationPolicy {
 
   private ExecutorService executor;
+  private static final Config config = ConfigDescriptor.getInstance().getConfig();
+  private static final Logger logger = LoggerFactory.getLogger(GreedyMigrationPolicy.class);
 
   @Override
   public void migrate(List<MigrationTask> migrationTasks,
-      Map<Long, NodeResource> nodeRestResourcesMap, double[] costParams) {
+      Map<Long, NodeResource> nodeRestResourcesMap) {
     List<Queue<MigrationTask>> migrationTaskQueueList = createParallelQueueByPriority(
         migrationTasks);
     executor = Executors.newCachedThreadPool();
 
     while (!isAllQueueEmpty(migrationTaskQueueList)) {
-      executeOneRoundMigration(migrationTaskQueueList, nodeRestResourcesMap, costParams);
+      executeOneRoundMigration(migrationTaskQueueList, nodeRestResourcesMap);
     }
   }
 
   private void executeOneRoundMigration(List<Queue<MigrationTask>> migrationTaskQueueList,
-      Map<Long, NodeResource> nodeRestResourcesMap, double[] costParams) {
+      Map<Long, NodeResource> nodeRestResourcesMap) {
     for (Queue<MigrationTask> migrationTaskQueue : migrationTaskQueueList) {
       MigrationTask migrationTask = migrationTaskQueue.peek();
-      //使用costParams，根据CPU、内存、磁盘、带宽判断是否能进行该任务
-      if (canDo(migrationTask, costParams, nodeRestResourcesMap)) {
+      //根据CPU、内存、磁盘、带宽判断是否能进行该任务
+      if (canExecuteTargetMigrationTask(migrationTask, nodeRestResourcesMap)) {
         executor.submit(() -> {
           //异步执行耗时的操作
           if (migrationTask.getMigrationType() == MigrationType.QUERY) {
             MigrationUtils
-                .migrateData(migrationTask.getSourceNodeId(), migrationTask.getTargetNodeId(),
+                .migrateData(migrationTask.getSourceStorageUnitId(),
+                    migrationTask.getTargetStorageUnitId(),
                     migrationTask.getFragmentMeta());
           } else {
             MigrationUtils
-                .reshardFragment(migrationTask.getSourceNodeId(),
-                    migrationTask.getTargetNodeId(),
+                .reshardFragment(migrationTask.getSourceStorageUnitId(),
+                    migrationTask.getTargetStorageUnitId(),
                     migrationTask.getFragmentMeta());
           }
           executeNextRoundMigration(migrationTaskQueueList, nodeRestResourcesMap, costParams);
@@ -51,10 +58,15 @@ public class GreedyMigrationPolicy implements IMigrationPolicy {
     }
   }
 
+  private boolean canExecuteTargetMigrationTask(MigrationTask migrationTask,
+      Map<Long, NodeResource> nodeRestResourcesMap) {
+
+  }
+
   private void executeNextRoundMigration(List<Queue<MigrationTask>> migrationTaskQueueList,
-      Map<Long, NodeResource> nodeRestResourcesMap, double[] costParams) {
+      Map<Long, NodeResource> nodeRestResourcesMap) {
     while (!isAllQueueEmpty(migrationTaskQueueList)) {
-      executeOneRoundMigration(migrationTaskQueueList, nodeRestResourcesMap, costParams);
+      executeOneRoundMigration(migrationTaskQueueList, nodeRestResourcesMap);
     }
   }
 

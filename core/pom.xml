@@ -41,6 +41,26 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+        <repository>
+            <id>bintray</id>
+            <url>https://repo.typesafe.com/typesafe/maven-releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>bintray</id>
+            <url>	https://bio.informatik.uni-jena.de/repository/libs-release-oss</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -187,6 +207,21 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.32</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hyperic</groupId>
+            <artifactId>sigar</artifactId>
+            <version>1.6.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math3</artifactId>
+            <version>3.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>cplex</groupId>
+            <artifactId>cplex</artifactId>
+            <version>12.7.1</version>
         </dependency>
     </dependencies>
     <build>
