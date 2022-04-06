@@ -16,22 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
+package cn.edu.tsinghua.iginx.engine.physical.memory.execute.stream;
 
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.AbstractOperatorMemoryExecutorTest;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
-import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
-import java.util.Arrays;
+public class StreamOperatorMemoryExecutorTest extends AbstractOperatorMemoryExecutorTest {
 
-public class NaiveOperatorMemoryExecutorTest extends AbstractOperatorMemoryExecutorTest {
+    private final StreamOperatorMemoryExecutor executor;
 
-    private final NaiveOperatorMemoryExecutor executor;
-
-    public NaiveOperatorMemoryExecutorTest() {
-        executor = NaiveOperatorMemoryExecutor.getInstance();
+    public StreamOperatorMemoryExecutorTest() {
+        this.executor = StreamOperatorMemoryExecutor.getInstance();
     }
 
     @Override

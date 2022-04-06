@@ -18,10 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class Header {
 
@@ -90,5 +87,18 @@ public final class Header {
             "time=" + time +
             ", fields=" + fields +
             '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Header header = (Header) o;
+        return Objects.equals(time, header.time) && Objects.equals(fields, header.fields) && Objects.equals(indexMap, header.indexMap);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(time, fields, indexMap);
     }
 }
