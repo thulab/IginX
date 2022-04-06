@@ -403,14 +403,4 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         assertFalse(stream.hasNext());
     }
 
-    @Test
-    public void testJoin() throws PhysicalException {
-
-    }
-
-    @Test
-    public void testUnion() throws PhysicalException {
-
-    }
-
 }
