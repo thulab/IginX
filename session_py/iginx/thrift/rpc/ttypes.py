@@ -83,56 +83,41 @@ class SqlType(object):
     Unknown = 0
     Insert = 1
     Delete = 2
-    SimpleQuery = 3
-    AggregateQuery = 4
-    DownsampleQuery = 5
-    ValueFilterQuery = 6
-    NotSupportQuery = 7
-    GetReplicaNum = 8
-    AddStorageEngines = 9
-    CountPoints = 10
-    ClearData = 11
-    DeleteTimeSeries = 12
-    ShowTimeSeries = 13
-    ShowClusterInfo = 14
-    NewQuery = 15
+    Query = 3
+    GetReplicaNum = 4
+    AddStorageEngines = 5
+    CountPoints = 6
+    ClearData = 7
+    DeleteTimeSeries = 8
+    ShowTimeSeries = 9
+    ShowClusterInfo = 10
 
     _VALUES_TO_NAMES = {
         0: "Unknown",
         1: "Insert",
         2: "Delete",
-        3: "SimpleQuery",
-        4: "AggregateQuery",
-        5: "DownsampleQuery",
-        6: "ValueFilterQuery",
-        7: "NotSupportQuery",
-        8: "GetReplicaNum",
-        9: "AddStorageEngines",
-        10: "CountPoints",
-        11: "ClearData",
-        12: "DeleteTimeSeries",
-        13: "ShowTimeSeries",
-        14: "ShowClusterInfo",
-        15: "NewQuery",
+        3: "Query",
+        4: "GetReplicaNum",
+        5: "AddStorageEngines",
+        6: "CountPoints",
+        7: "ClearData",
+        8: "DeleteTimeSeries",
+        9: "ShowTimeSeries",
+        10: "ShowClusterInfo",
     }
 
     _NAMES_TO_VALUES = {
         "Unknown": 0,
         "Insert": 1,
         "Delete": 2,
-        "SimpleQuery": 3,
-        "AggregateQuery": 4,
-        "DownsampleQuery": 5,
-        "ValueFilterQuery": 6,
-        "NotSupportQuery": 7,
-        "GetReplicaNum": 8,
-        "AddStorageEngines": 9,
-        "CountPoints": 10,
-        "ClearData": 11,
-        "DeleteTimeSeries": 12,
-        "ShowTimeSeries": 13,
-        "ShowClusterInfo": 14,
-        "NewQuery": 15,
+        "Query": 3,
+        "GetReplicaNum": 4,
+        "AddStorageEngines": 5,
+        "CountPoints": 6,
+        "ClearData": 7,
+        "DeleteTimeSeries": 8,
+        "ShowTimeSeries": 9,
+        "ShowClusterInfo": 10,
     }
 
 
@@ -4239,6 +4224,573 @@ class GetClusterInfoResp(object):
 
     def __ne__(self, other):
         return not (self == other)
+
+
+class ExecuteStatementReq(object):
+    """
+    Attributes:
+     - sessionId
+     - statement
+     - fetchSize
+     - timeout
+
+    """
+
+
+    def __init__(self, sessionId=None, statement=None, fetchSize=None, timeout=None,):
+        self.sessionId = sessionId
+        self.statement = statement
+        self.fetchSize = fetchSize
+        self.timeout = timeout
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.I64:
+                    self.sessionId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.STRING:
+                    self.statement = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I32:
+                    self.fetchSize = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.I64:
+                    self.timeout = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('ExecuteStatementReq')
+        if self.sessionId is not None:
+            oprot.writeFieldBegin('sessionId', TType.I64, 1)
+            oprot.writeI64(self.sessionId)
+            oprot.writeFieldEnd()
+        if self.statement is not None:
+            oprot.writeFieldBegin('statement', TType.STRING, 2)
+            oprot.writeString(self.statement.encode('utf-8') if sys.version_info[0] == 2 else self.statement)
+            oprot.writeFieldEnd()
+        if self.fetchSize is not None:
+            oprot.writeFieldBegin('fetchSize', TType.I32, 3)
+            oprot.writeI32(self.fetchSize)
+            oprot.writeFieldEnd()
+        if self.timeout is not None:
+            oprot.writeFieldBegin('timeout', TType.I64, 4)
+            oprot.writeI64(self.timeout)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.sessionId is None:
+            raise TProtocolException(message='Required field sessionId is unset!')
+        if self.statement is None:
+            raise TProtocolException(message='Required field statement is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class ExecuteStatementResp(object):
+    """
+    Attributes:
+     - status
+     - type
+     - queryId
+     - columns
+     - dataTypeList
+     - queryDataSet
+
+    """
+
+
+    def __init__(self, status=None, type=None, queryId=None, columns=None, dataTypeList=None, queryDataSet=None,):
+        self.status = status
+        self.type = type
+        self.queryId = queryId
+        self.columns = columns
+        self.dataTypeList = dataTypeList
+        self.queryDataSet = queryDataSet
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRUCT:
+                    self.status = Status()
+                    self.status.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.I32:
+                    self.type = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I64:
+                    self.queryId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.LIST:
+                    self.columns = []
+                    (_etype433, _size430) = iprot.readListBegin()
+                    for _i434 in range(_size430):
+                        _elem435 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        self.columns.append(_elem435)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 5:
+                if ftype == TType.LIST:
+                    self.dataTypeList = []
+                    (_etype439, _size436) = iprot.readListBegin()
+                    for _i440 in range(_size436):
+                        _elem441 = iprot.readI32()
+                        self.dataTypeList.append(_elem441)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 6:
+                if ftype == TType.STRUCT:
+                    self.queryDataSet = QueryDataSetV2()
+                    self.queryDataSet.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('ExecuteStatementResp')
+        if self.status is not None:
+            oprot.writeFieldBegin('status', TType.STRUCT, 1)
+            self.status.write(oprot)
+            oprot.writeFieldEnd()
+        if self.type is not None:
+            oprot.writeFieldBegin('type', TType.I32, 2)
+            oprot.writeI32(self.type)
+            oprot.writeFieldEnd()
+        if self.queryId is not None:
+            oprot.writeFieldBegin('queryId', TType.I64, 3)
+            oprot.writeI64(self.queryId)
+            oprot.writeFieldEnd()
+        if self.columns is not None:
+            oprot.writeFieldBegin('columns', TType.LIST, 4)
+            oprot.writeListBegin(TType.STRING, len(self.columns))
+            for iter442 in self.columns:
+                oprot.writeString(iter442.encode('utf-8') if sys.version_info[0] == 2 else iter442)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.dataTypeList is not None:
+            oprot.writeFieldBegin('dataTypeList', TType.LIST, 5)
+            oprot.writeListBegin(TType.I32, len(self.dataTypeList))
+            for iter443 in self.dataTypeList:
+                oprot.writeI32(iter443)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.queryDataSet is not None:
+            oprot.writeFieldBegin('queryDataSet', TType.STRUCT, 6)
+            self.queryDataSet.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.status is None:
+            raise TProtocolException(message='Required field status is unset!')
+        if self.type is None:
+            raise TProtocolException(message='Required field type is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class QueryDataSetV2(object):
+    """
+    Attributes:
+     - valuesList
+     - bitmapList
+
+    """
+
+
+    def __init__(self, valuesList=None, bitmapList=None,):
+        self.valuesList = valuesList
+        self.bitmapList = bitmapList
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.LIST:
+                    self.valuesList = []
+                    (_etype447, _size444) = iprot.readListBegin()
+                    for _i448 in range(_size444):
+                        _elem449 = iprot.readBinary()
+                        self.valuesList.append(_elem449)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.LIST:
+                    self.bitmapList = []
+                    (_etype453, _size450) = iprot.readListBegin()
+                    for _i454 in range(_size450):
+                        _elem455 = iprot.readBinary()
+                        self.bitmapList.append(_elem455)
+                    iprot.readListEnd()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('QueryDataSetV2')
+        if self.valuesList is not None:
+            oprot.writeFieldBegin('valuesList', TType.LIST, 1)
+            oprot.writeListBegin(TType.STRING, len(self.valuesList))
+            for iter456 in self.valuesList:
+                oprot.writeBinary(iter456)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        if self.bitmapList is not None:
+            oprot.writeFieldBegin('bitmapList', TType.LIST, 2)
+            oprot.writeListBegin(TType.STRING, len(self.bitmapList))
+            for iter457 in self.bitmapList:
+                oprot.writeBinary(iter457)
+            oprot.writeListEnd()
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.valuesList is None:
+            raise TProtocolException(message='Required field valuesList is unset!')
+        if self.bitmapList is None:
+            raise TProtocolException(message='Required field bitmapList is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class CloseStatementReq(object):
+    """
+    Attributes:
+     - sessionId
+     - queryId
+
+    """
+
+
+    def __init__(self, sessionId=None, queryId=None,):
+        self.sessionId = sessionId
+        self.queryId = queryId
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.I64:
+                    self.sessionId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.I64:
+                    self.queryId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('CloseStatementReq')
+        if self.sessionId is not None:
+            oprot.writeFieldBegin('sessionId', TType.I64, 1)
+            oprot.writeI64(self.sessionId)
+            oprot.writeFieldEnd()
+        if self.queryId is not None:
+            oprot.writeFieldBegin('queryId', TType.I64, 2)
+            oprot.writeI64(self.queryId)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.sessionId is None:
+            raise TProtocolException(message='Required field sessionId is unset!')
+        if self.queryId is None:
+            raise TProtocolException(message='Required field queryId is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class FetchResultsReq(object):
+    """
+    Attributes:
+     - sessionId
+     - queryId
+     - fetchSize
+     - timeout
+
+    """
+
+
+    def __init__(self, sessionId=None, queryId=None, fetchSize=None, timeout=None,):
+        self.sessionId = sessionId
+        self.queryId = queryId
+        self.fetchSize = fetchSize
+        self.timeout = timeout
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.I64:
+                    self.sessionId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.I64:
+                    self.queryId = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.I32:
+                    self.fetchSize = iprot.readI32()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 4:
+                if ftype == TType.I64:
+                    self.timeout = iprot.readI64()
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('FetchResultsReq')
+        if self.sessionId is not None:
+            oprot.writeFieldBegin('sessionId', TType.I64, 1)
+            oprot.writeI64(self.sessionId)
+            oprot.writeFieldEnd()
+        if self.queryId is not None:
+            oprot.writeFieldBegin('queryId', TType.I64, 2)
+            oprot.writeI64(self.queryId)
+            oprot.writeFieldEnd()
+        if self.fetchSize is not None:
+            oprot.writeFieldBegin('fetchSize', TType.I32, 3)
+            oprot.writeI32(self.fetchSize)
+            oprot.writeFieldEnd()
+        if self.timeout is not None:
+            oprot.writeFieldBegin('timeout', TType.I64, 4)
+            oprot.writeI64(self.timeout)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.sessionId is None:
+            raise TProtocolException(message='Required field sessionId is unset!')
+        if self.queryId is None:
+            raise TProtocolException(message='Required field queryId is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+
+
+class FetchResultsResp(object):
+    """
+    Attributes:
+     - status
+     - hasMoreResults
+     - queryDataSet
+
+    """
+
+
+    def __init__(self, status=None, hasMoreResults=None, queryDataSet=None,):
+        self.status = status
+        self.hasMoreResults = hasMoreResults
+        self.queryDataSet = queryDataSet
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRUCT:
+                    self.status = Status()
+                    self.status.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            elif fid == 2:
+                if ftype == TType.BOOL:
+                    self.hasMoreResults = iprot.readBool()
+                else:
+                    iprot.skip(ftype)
+            elif fid == 3:
+                if ftype == TType.STRUCT:
+                    self.queryDataSet = QueryDataSetV2()
+                    self.queryDataSet.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('FetchResultsResp')
+        if self.status is not None:
+            oprot.writeFieldBegin('status', TType.STRUCT, 1)
+            self.status.write(oprot)
+            oprot.writeFieldEnd()
+        if self.hasMoreResults is not None:
+            oprot.writeFieldBegin('hasMoreResults', TType.BOOL, 2)
+            oprot.writeBool(self.hasMoreResults)
+            oprot.writeFieldEnd()
+        if self.queryDataSet is not None:
+            oprot.writeFieldBegin('queryDataSet', TType.STRUCT, 3)
+            self.queryDataSet.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        if self.status is None:
+            raise TProtocolException(message='Required field status is unset!')
+        if self.hasMoreResults is None:
+            raise TProtocolException(message='Required field hasMoreResults is unset!')
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
 all_structs.append(Status)
 Status.thrift_spec = (
     None,  # 0
@@ -4537,6 +5089,51 @@ GetClusterInfoResp.thrift_spec = (
     (3, TType.LIST, 'storageEngineInfos', (TType.STRUCT, [StorageEngineInfo, None], False), None, ),  # 3
     (4, TType.LIST, 'metaStorageInfos', (TType.STRUCT, [MetaStorageInfo, None], False), None, ),  # 4
     (5, TType.STRUCT, 'localMetaStorageInfo', [LocalMetaStorageInfo, None], None, ),  # 5
+)
+all_structs.append(ExecuteStatementReq)
+ExecuteStatementReq.thrift_spec = (
+    None,  # 0
+    (1, TType.I64, 'sessionId', None, None, ),  # 1
+    (2, TType.STRING, 'statement', 'UTF8', None, ),  # 2
+    (3, TType.I32, 'fetchSize', None, None, ),  # 3
+    (4, TType.I64, 'timeout', None, None, ),  # 4
+)
+all_structs.append(ExecuteStatementResp)
+ExecuteStatementResp.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'status', [Status, None], None, ),  # 1
+    (2, TType.I32, 'type', None, None, ),  # 2
+    (3, TType.I64, 'queryId', None, None, ),  # 3
+    (4, TType.LIST, 'columns', (TType.STRING, 'UTF8', False), None, ),  # 4
+    (5, TType.LIST, 'dataTypeList', (TType.I32, None, False), None, ),  # 5
+    (6, TType.STRUCT, 'queryDataSet', [QueryDataSetV2, None], None, ),  # 6
+)
+all_structs.append(QueryDataSetV2)
+QueryDataSetV2.thrift_spec = (
+    None,  # 0
+    (1, TType.LIST, 'valuesList', (TType.STRING, 'BINARY', False), None, ),  # 1
+    (2, TType.LIST, 'bitmapList', (TType.STRING, 'BINARY', False), None, ),  # 2
+)
+all_structs.append(CloseStatementReq)
+CloseStatementReq.thrift_spec = (
+    None,  # 0
+    (1, TType.I64, 'sessionId', None, None, ),  # 1
+    (2, TType.I64, 'queryId', None, None, ),  # 2
+)
+all_structs.append(FetchResultsReq)
+FetchResultsReq.thrift_spec = (
+    None,  # 0
+    (1, TType.I64, 'sessionId', None, None, ),  # 1
+    (2, TType.I64, 'queryId', None, None, ),  # 2
+    (3, TType.I32, 'fetchSize', None, None, ),  # 3
+    (4, TType.I64, 'timeout', None, None, ),  # 4
+)
+all_structs.append(FetchResultsResp)
+FetchResultsResp.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'status', [Status, None], None, ),  # 1
+    (2, TType.BOOL, 'hasMoreResults', None, None, ),  # 2
+    (3, TType.STRUCT, 'queryDataSet', [QueryDataSetV2, None], None, ),  # 3
 )
 fix_spec(all_structs)
 del all_structs

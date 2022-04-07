@@ -43,6 +43,9 @@ from .thrift.rpc.ttypes import (
     InsertColumnRecordsReq,
     InsertNonAlignedColumnRecordsReq,
     ExecuteSqlReq,
+    ExecuteStatementReq,
+    FetchResultsReq,
+    CloseStatementReq,
 
     StorageEngine,
 )
@@ -433,7 +436,27 @@ class Session(object):
         req = ExecuteSqlReq(sessionId=self.__session_id, statement=statement)
         resp = self.__client.executeSql(req)
         Session.verify_status(resp.status)
-        logger.warning("unsupported function: execute sql")
+        return resp
+
+
+    def execute_statement(self, statement, fetch_size=2147483647):
+        req = ExecuteStatementReq(sessionId=self.__session_id, statement=statement, fetchSize=fetch_size)
+        resp = self.__client.executeStatement(req)
+        Session.verify_status(resp.status)
+        return resp
+
+
+    def fetch(self, query_id, fetch_size):
+        req = FetchResultsReq(sessionId=self.__session_id, queryId=query_id, fetchSize=fetch_size)
+        resp = self.__client.fetchResults(req)
+        Session.verify_status(resp.status)
+        return resp
+
+    def close_statement(self, query_id):
+        req = CloseStatementReq(sessionId=self.__session_id, queryId=query_id)
+        status = self.__client.closeStatement(req)
+        Session.verify_status(status)
+
 
     @staticmethod
     def verify_status(status):
