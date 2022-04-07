@@ -18,12 +18,18 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
 import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
+import cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -32,6 +38,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
@@ -57,7 +64,7 @@ public class PostgreSQLStorage implements IStorage {
 
   private static final String DEFAULT_DBNAME = "timeseries";
 
-  private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE time >= to_timestamp(%d) and time < to_timestamp(%d)";
+  private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE %s";
 
   private static final String DELETE_DATA = "DELETE FROM %s WHERE time >= to_timestamp(%d) and time < to_timestamp(%d)";
 
@@ -120,8 +127,15 @@ public class PostgreSQLStorage implements IStorage {
 
     if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
       Project project = (Project) op;
-      return executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit,
-          project);
+      Filter filter;
+      if (operators.size() == 2) {
+        filter = ((Select) operators.get(1)).getFilter();
+      } else {
+        filter = new AndFilter(Arrays
+            .asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
+                new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
+      }
+      return executeProjectTask(storageUnit, project, filter);
     } else if (op.getType() == OperatorType.Insert) {
       Insert insert = (Insert) op;
       return executeInsertTask(storageUnit, insert);
@@ -157,9 +171,8 @@ public class PostgreSQLStorage implements IStorage {
     return timeseries;
   }
 
-  private TaskExecuteResult executeProjectTask(TimeInterval timeInterval,
-      TimeSeriesInterval tsInterval, String storageUnit,
-      Project project) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+  private TaskExecuteResult executeProjectTask(String storageUnit,
+      Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
     try {
       List<ResultSet> resultSets = new ArrayList<>();
       List<Field> fields = new ArrayList<>();
@@ -178,8 +191,7 @@ public class PostgreSQLStorage implements IStorage {
                   + sensor.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR)
                   , DataTypeTransformer.fromPostgreSQL(typeName)));
           String statement = String
-              .format(QUERY_DATA, sensor, table,
-                  timeInterval.getStartTime(), Math.min(timeInterval.getEndTime(), MAX_TIMESTAMP));
+              .format(QUERY_DATA, sensor, table, FilterTransformer.toString(filter));
           Statement stmt = connection.createStatement();
           ResultSet rs = stmt.executeQuery(statement);
           resultSets.add(rs);
