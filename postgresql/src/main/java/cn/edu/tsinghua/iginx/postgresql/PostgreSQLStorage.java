@@ -221,7 +221,6 @@ public class PostgreSQLStorage implements IStorage {
         stmt.execute(String
             .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s %s NULL)", table, column,
                 DataTypeTransformer.toPostgreSQL(dataType)));
-        stmt.execute(String.format("SELECT create_hypertable('%s', 'time')", table));
       } else {
         ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, column);
         if (!columnSet.next()) {
