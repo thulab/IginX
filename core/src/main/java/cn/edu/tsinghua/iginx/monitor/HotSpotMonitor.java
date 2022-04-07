@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.monitor;
 
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import java.util.Map;
@@ -7,10 +8,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class HotSpotMonitor implements IMonitor {
 
-  private volatile boolean isStart = false;
-  private Map<FragmentMeta, Long> writeHotspotMap = new ConcurrentHashMap<>(); // 数据分区->写入总请求时间
-  private Map<FragmentMeta, Long> readHotspotMap = new ConcurrentHashMap<>(); // 数据分区->查询总请求时间
-  private Map<Long, Long> taskIdStartTimeMap = new ConcurrentHashMap<>(); // 任务ID->任务开始时间
+  private final boolean isEnableMonitor = ConfigDescriptor.getInstance().getConfig().isEnableMonitor();
+  private final Map<FragmentMeta, Long> writeHotspotMap = new ConcurrentHashMap<>(); // 数据分区->写入总请求时间
+  private final Map<FragmentMeta, Long> readHotspotMap = new ConcurrentHashMap<>(); // 数据分区->查询总请求时间
+  private final Map<Long, Long> taskIdStartTimeMap = new ConcurrentHashMap<>(); // 任务ID->任务开始时间
   private static final HotSpotMonitor instance = new HotSpotMonitor();
 
   public static HotSpotMonitor getInstance() {
@@ -25,27 +26,14 @@ public class HotSpotMonitor implements IMonitor {
     return readHotspotMap;
   }
 
-  @Override
-  public void start() {
-    isStart = true;
-  }
-
-  @Override
-  public void stop() {
-    isStart = false;
-  }
-
   public void recordBefore(long taskId) {
-    if (isStart) {
+    if (isEnableMonitor) {
       taskIdStartTimeMap.put(taskId, System.currentTimeMillis());
     }
   }
 
   public void recordAfter(long taskId, FragmentMeta fragmentMeta, OperatorType operatorType) {
-    if (operatorType == OperatorType.Insert) {
-      fragmentMeta.incrementPoint();
-    }
-    if (isStart && taskIdStartTimeMap.containsKey(taskId)) {
+    if (isEnableMonitor && taskIdStartTimeMap.containsKey(taskId)) {
       long duration = System.currentTimeMillis() - taskIdStartTimeMap.get(taskId);
       if (operatorType == OperatorType.Project) {
         long prevDuration = readHotspotMap.getOrDefault(fragmentMeta, 0L);
@@ -56,5 +44,12 @@ public class HotSpotMonitor implements IMonitor {
       }
       taskIdStartTimeMap.remove(taskId);
     }
+  }
+
+  @Override
+  public void clear() {
+    writeHotspotMap.clear();
+    readHotspotMap.clear();
+    taskIdStartTimeMap.clear();
   }
 }

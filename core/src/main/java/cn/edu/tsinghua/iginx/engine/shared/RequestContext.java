@@ -1,6 +1,5 @@
 package cn.edu.tsinghua.iginx.engine.shared;
 
-import cn.edu.tsinghua.iginx.monitor.NodePerformanceMonitor;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import cn.edu.tsinghua.iginx.thrift.Status;
@@ -70,13 +69,6 @@ public class RequestContext {
   }
 
   public Result getResult() {
-    endTime = System.currentTimeMillis();
-    long duration = endTime - startTime;
-    if (sqlType == SqlType.Insert) {
-      NodePerformanceMonitor.getInstance().recordWrite(duration);
-    } else if (sqlType == SqlType.Query) {
-      NodePerformanceMonitor.getInstance().recordRead(duration);
-    }
     return result;
   }
 }

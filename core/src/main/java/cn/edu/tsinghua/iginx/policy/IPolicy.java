@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
@@ -25,7 +24,7 @@ public interface IPolicy {
   Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(
       DataStatement statement);
 
-  void executeReshardAndMigration(Map<Long, NodeResource> nodeUsedResourcesMap,
+  void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap,
       Map<String, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
       Map<FragmentMeta, Long> fragmentReadLoadMap);
 

@@ -1,6 +1,6 @@
 package cn.edu.tsinghua.iginx.migration;
 
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import java.util.ArrayList;
 import java.util.List;
@@ -15,35 +15,39 @@ public class SimulationBasedMigrationPolicy implements IMigrationPolicy {
 
   @Override
   public void migrate(List<MigrationTask> migrationTasks,
-      Map<Long, NodeResource> nodeRestResourcesMap, double[] costParams) {
+      Map<String, List<FragmentMeta>> nodeFragmentMap,
+      Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap) {
     executor = Executors.newCachedThreadPool();
     List<List<Queue<MigrationTask>>> candidateMigrationTaskQueueList = createParallelQueueByPriority(
         migrationTasks);
 
     double minUnbalance = Double.MAX_VALUE;
     int targetIndex = -1;
-    for (int currIndex = 0;currIndex<candidateMigrationTaskQueueList.size() ; currIndex++) {
-      List<Queue<MigrationTask>> migrationTaskQueueList = candidateMigrationTaskQueueList.get(currIndex);
+    for (int currIndex = 0; currIndex < candidateMigrationTaskQueueList.size(); currIndex++) {
+      List<Queue<MigrationTask>> migrationTaskQueueList = candidateMigrationTaskQueueList
+          .get(currIndex);
       double currUnbalance = 0;
       while (!isAllQueueEmpty(migrationTaskQueueList)) {
-        for(Queue<MigrationTask> migrationTaskQueue:migrationTaskQueueList){
+        for (Queue<MigrationTask> migrationTaskQueue : migrationTaskQueueList) {
           MigrationTask migrationTask = migrationTaskQueue.peek();
           //使用costParams，根据CPU、内存、磁盘、带宽判断是否能进行该任务
           if (canDo(migrationTask, costParams, nodeRestResourcesMap)) {
             //更改nodeRestResourcesMap
-            currUnbalance+=calculateUnbalance(nodeRestResourcesMap) * migrationTask.getFragmentMeta().getNumOfPoints();
+            currUnbalance +=
+                calculateUnbalance(nodeRestResourcesMap) * migrationTask.getFragmentMeta()
+                    .getNumOfPoints();
             migrationTaskQueue.poll();
           }
         }
       }
-      if(currUnbalance < minUnbalance){
+      if (currUnbalance < minUnbalance) {
         minUnbalance = currUnbalance;
         targetIndex = currIndex;
       }
     }
   }
 
-  private double calculateUnbalance(Map<Long, NodeResource> nodeRestResourcesMap){
+  private double calculateUnbalance(Map<Long, NodeResource> nodeRestResourcesMap) {
     //计算不均衡值并返回
   }
 

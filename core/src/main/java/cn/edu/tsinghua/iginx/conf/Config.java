@@ -51,8 +51,6 @@ public class Config {
 
     private int loadBalanceCheckInterval = 30;
 
-    private int requestFilterMonitorPeriod = 30;
-
     private double unbalanceThreshold = 0.2;
 
     private double maxLoadThreshold = 0.8;
@@ -251,14 +249,6 @@ public class Config {
 
     public void setLoadBalanceCheckInterval(int loadBalanceCheckInterval) {
         this.loadBalanceCheckInterval = loadBalanceCheckInterval;
-    }
-
-    public int getRequestFilterMonitorPeriod() {
-        return requestFilterMonitorPeriod;
-    }
-
-    public void setRequestFilterMonitorPeriod(int requestFilterMonitorPeriod) {
-        this.requestFilterMonitorPeriod = requestFilterMonitorPeriod;
     }
 
     public double getUnbalanceThreshold() {

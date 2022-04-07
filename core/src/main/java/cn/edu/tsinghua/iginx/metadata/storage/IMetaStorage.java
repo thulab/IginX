@@ -28,7 +28,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
 
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
 import java.util.Map;
@@ -106,28 +105,24 @@ public interface IMetaStorage {
 
   int updateVersion();
 
-  void updateEnableMonitor(boolean enableMonitor) throws Exception;
+  void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
+      Map<FragmentMeta, Long> readRequestsMap) throws Exception;
 
-  void registerEnableMonitorChangeHook(EnableMonitorChangeHook hook);
+  Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentRequests() throws Exception;
 
-  void updateNodeLoadScore(NodeResource nodeResource, long iginxId) throws Exception;
+  void removeFragmentRequests() throws MetaStorageException;
 
-  Map<Long, NodeResource> loadNodeLoadScores();
+  void lockFragmentRequestsCounter() throws MetaStorageException;
 
-  void updateNodePerformance(double writeLatency, double readLatency, long iginxId)
-      throws Exception;
+  void incrementFragmentRequestsCounter() throws MetaStorageException;
 
-  Map<Long, Pair<Double, Double>> loadNodePerformance();
+  void resetFragmentRequestsCounter() throws MetaStorageException;
 
-  void lockNodePerformanceCounter() throws MetaStorageException;
+  void releaseFragmentRequestsCounter() throws MetaStorageException;
 
-  void incrementNodePerformanceCounter() throws MetaStorageException;
+  int getFragmentRequestsCounter() throws MetaStorageException;
 
-  void resetNodePerformanceCounter() throws MetaStorageException;
-
-  void releaseNodePerformanceCounter() throws MetaStorageException;
-
-  int getNodePerformanceCounter() throws MetaStorageException;
+  Map<FragmentMeta, Long> loadFragmentPoints() throws Exception;
 
   void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
       Map<FragmentMeta, Long> readHotspotMap) throws Exception;

@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
@@ -196,24 +195,19 @@ public interface IMetaManager {
 
     Map<Integer, Integer> getTimeseriesVersionMap();
 
-    void updateNodeLoadScore(NodeResource nodeResource) throws Exception;
-
-    Map<Long, NodeResource> loadNodeLoadScores();
-
-    void updateNodePerformance(double writeLatency, double readLatency) throws Exception;
-
-    Map<Long, Pair<Double, Double>> loadNodePerformance();
+    void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
+        Map<FragmentMeta, Long> readRequestsMap) throws Exception;
 
     void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
         Map<FragmentMeta, Long> readHotspotMap) throws Exception;
 
     Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() throws Exception;
 
-    void startMonitors();
+    Map<FragmentMeta, Long> loadFragmentPoints() throws Exception;
 
     boolean isAllMonitorsCompleteCollection();
 
-    void clearFragmentHeat();
+    void clearMonitors();
 
     void executeReshard();
 

@@ -15,7 +15,6 @@ import cn.edu.tsinghua.iginx.metadata.hook.*;
 import cn.edu.tsinghua.iginx.metadata.storage.IMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.JsonUtils;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
@@ -369,6 +368,11 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public Map<String, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException {
+        return null;
+    }
+
+    @Override
     public void lockFragment() throws MetaStorageException {
         fragmentUnitLock.lock();
     }
@@ -525,48 +529,50 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void updateNodeLoadScore(NodeResource nodeResource, long iginxId) throws Exception {
+    public void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
+        Map<FragmentMeta, Long> readRequestsMap) throws Exception {
 
     }
 
     @Override
-    public Map<Long, NodeResource> loadNodeLoadScores() {
+    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentRequests()
+        throws Exception {
         return null;
     }
 
     @Override
-    public void updateNodePerformance(double writeLatency, double readLatency, long iginxId) throws Exception {
+    public void removeFragmentRequests() throws MetaStorageException {
 
     }
 
     @Override
-    public Map<Long, Pair<Double, Double>> loadNodePerformance() {
-        return null;
-    }
-
-    @Override
-    public void lockNodePerformanceCounter() throws MetaStorageException {
+    public void lockFragmentRequestsCounter() throws MetaStorageException {
 
     }
 
     @Override
-    public void incrementNodePerformanceCounter() throws MetaStorageException {
+    public void incrementFragmentRequestsCounter() throws MetaStorageException {
 
     }
 
     @Override
-    public void resetNodePerformanceCounter() throws MetaStorageException {
+    public void resetFragmentRequestsCounter() throws MetaStorageException {
 
     }
 
     @Override
-    public void releaseNodePerformanceCounter() throws MetaStorageException {
+    public void releaseFragmentRequestsCounter() throws MetaStorageException {
 
     }
 
     @Override
-    public int getNodePerformanceCounter() throws MetaStorageException {
+    public int getFragmentRequestsCounter() throws MetaStorageException {
         return 0;
+    }
+
+    @Override
+    public Map<FragmentMeta, Long> loadFragmentPoints() throws Exception {
+        return null;
     }
 
     @Override

@@ -2,7 +2,7 @@ package cn.edu.tsinghua.iginx.migration;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationType;
 import java.util.ArrayList;
@@ -22,7 +22,8 @@ public class GreedyMigrationPolicy implements IMigrationPolicy {
 
   @Override
   public void migrate(List<MigrationTask> migrationTasks,
-      Map<Long, NodeResource> nodeRestResourcesMap) {
+      Map<String, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+      Map<FragmentMeta, Long> fragmentReadLoadMap) {
     List<Queue<MigrationTask>> migrationTaskQueueList = createParallelQueueByPriority(
         migrationTasks);
     executor = Executors.newCachedThreadPool();

@@ -40,8 +40,6 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
-import cn.edu.tsinghua.iginx.monitor.MonitorManager;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
@@ -119,7 +117,6 @@ public class DefaultMetaManager implements IMetaManager {
       initUser();
       initReshardStatus();
       initReshardCounter();
-      initEnableMonitor();
     } catch (MetaStorageException e) {
       logger.error("init meta manager error: ", e);
       System.exit(-1);
@@ -285,20 +282,6 @@ public class DefaultMetaManager implements IMetaManager {
     } catch (Exception e) {
       e.printStackTrace();
     }
-  }
-
-  private void initEnableMonitor() throws MetaStorageException {
-    storage.registerEnableMonitorChangeHook(enableMonitor -> {
-      try {
-        if (!enableMonitor) {
-          return;
-        }
-        MonitorManager.getInstance().monitorNodePerformanceAndHotSpot();
-        storage.updateEnableMonitor(false);
-      } catch (Exception e) {
-        logger.error("encounter error when updating reshard counter: ", e);
-      }
-    });
   }
 
   private void initUser() throws MetaStorageException {
@@ -799,34 +782,16 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void updateNodeLoadScore(NodeResource nodeResource) {
+  public void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
+      Map<FragmentMeta, Long> readRequestsMap) {
     try {
-      storage.updateNodeLoadScore(nodeResource, getIginxId());
+      storage.updateFragmentRequests(writeRequestsMap, readRequestsMap);
+      storage.lockFragmentRequestsCounter();
+      storage.incrementFragmentRequestsCounter();
+      storage.releaseFragmentRequestsCounter();
     } catch (Exception e) {
-      logger.error("encounter error when update node load score: ", e);
+      logger.error("encounter error when update fragment requests: ", e);
     }
-  }
-
-  @Override
-  public Map<Long, NodeResource> loadNodeLoadScores() {
-    return storage.loadNodeLoadScores();
-  }
-
-  @Override
-  public void updateNodePerformance(double writeLatency, double readLatency) {
-    try {
-      storage.updateNodePerformance(writeLatency, readLatency, getIginxId());
-      storage.lockNodePerformanceCounter();
-      storage.incrementNodePerformanceCounter();
-      storage.releaseNodePerformanceCounter();
-    } catch (Exception e) {
-      logger.error("encounter error when update node performance: ", e);
-    }
-  }
-
-  @Override
-  public Map<Long, Pair<Double, Double>> loadNodePerformance() {
-    return storage.loadNodePerformance();
   }
 
   @Override
@@ -843,26 +808,27 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void startMonitors() {
+  public boolean isAllMonitorsCompleteCollection() {
     try {
-      storage.resetNodePerformanceCounter();
-      storage.resetFragmentHeatCounter();
-      storage.updateEnableMonitor(true);
-    } catch (Exception e) {
-      logger.error("encounter error when start monitors: ", e);
+      int fragmentRequestsCount = storage.getFragmentRequestsCounter();
+      int fragmentHeatCount = storage.getFragmentHeatCounter();
+      int count = getIginxList().size();
+      return fragmentRequestsCount == count && fragmentHeatCount == count;
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when get monitor counter: ", e);
+      return false;
     }
   }
 
   @Override
-  public boolean isAllMonitorsCompleteCollection() {
+  public void clearMonitors() {
     try {
-      int nodePerformanceCount = storage.getNodePerformanceCounter();
-      int fragmentHeatCount = storage.getFragmentHeatCounter();
-      int count = getIginxList().size();
-      return nodePerformanceCount == count && fragmentHeatCount == count;
-    } catch (MetaStorageException e) {
-      logger.error("encounter error when get monitor counter: ", e);
-      return false;
+      storage.resetFragmentRequestsCounter();
+      storage.resetFragmentHeatCounter();
+      storage.removeFragmentRequests();
+      storage.removeFragmentHeat();
+    } catch (Exception e) {
+      logger.error("encounter error when clear monitors: ", e);
     }
   }
 
@@ -877,11 +843,12 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void clearFragmentHeat() {
+  public Map<FragmentMeta, Long> loadFragmentPoints() {
     try {
-      storage.removeFragmentHeat();
-    } catch (MetaStorageException e) {
-      logger.error("encounter error when remove fragment heat: ", e);
+      return storage.loadFragmentPoints();
+    } catch (Exception e) {
+      logger.error("encounter error when load fragment points: ", e);
+      return new HashMap<>();
     }
   }
 

@@ -40,135 +40,133 @@ import java.util.Objects;
 
 public final class FragmentMeta {
 
-    private final TimeInterval timeInterval;
+  private final TimeInterval timeInterval;
 
-    private final TimeSeriesInterval tsInterval;
+  private final TimeSeriesInterval tsInterval;
 
-    private long createdBy;
+  private long createdBy;
 
-    private long updatedBy;
+  private long updatedBy;
 
-    private String masterStorageUnitId;
+  private String masterStorageUnitId;
 
-    private transient StorageUnitMeta masterStorageUnit;
+  private transient StorageUnitMeta masterStorageUnit;
 
-    private transient String fakeStorageUnitId;
+  private transient String fakeStorageUnitId;
 
-    private boolean initialFragment = true;
+  private boolean initialFragment = true;
 
-    private long numOfPoints = 0L;
+  public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
+    this.timeInterval = new TimeInterval(startTime, endTime);
+    this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+  }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-    }
+  public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime,
+      String fakeStorageUnitId) {
+    this.timeInterval = new TimeInterval(startTime, endTime);
+    this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+    this.fakeStorageUnitId = fakeStorageUnitId;
+  }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, String fakeStorageUnitId) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        this.fakeStorageUnitId = fakeStorageUnitId;
-    }
+  public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime,
+      StorageUnitMeta masterStorageUnit) {
+    this.timeInterval = new TimeInterval(startTime, endTime);
+    this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
+    this.masterStorageUnit = masterStorageUnit;
+    this.masterStorageUnitId = masterStorageUnit.getMasterId();
+  }
 
-    public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, StorageUnitMeta masterStorageUnit) {
-        this.timeInterval = new TimeInterval(startTime, endTime);
-        this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);
-        this.masterStorageUnit = masterStorageUnit;
-        this.masterStorageUnitId = masterStorageUnit.getMasterId();
-    }
+  public TimeInterval getTimeInterval() {
+    return timeInterval;
+  }
 
-    public TimeInterval getTimeInterval() {
-        return timeInterval;
-    }
+  public TimeSeriesInterval getTsInterval() {
+    return tsInterval;
+  }
 
-    public TimeSeriesInterval getTsInterval() {
-        return tsInterval;
-    }
+  public FragmentMeta endFragmentMeta(long endTime) {
+    FragmentMeta fragment = new FragmentMeta(tsInterval.getStartTimeSeries(),
+        tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
+    fragment.setMasterStorageUnit(masterStorageUnit);
+    fragment.setMasterStorageUnitId(masterStorageUnitId);
+    fragment.setCreatedBy(createdBy);
+    fragment.setInitialFragment(initialFragment);
+    return fragment;
+  }
 
-    public FragmentMeta endFragmentMeta(long endTime) {
-        FragmentMeta fragment = new FragmentMeta(tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(), timeInterval.getStartTime(), endTime);
-        fragment.setMasterStorageUnit(masterStorageUnit);
-        fragment.setMasterStorageUnitId(masterStorageUnitId);
-        fragment.setCreatedBy(createdBy);
-        fragment.setInitialFragment(initialFragment);
-        return fragment;
-    }
+  public long getCreatedBy() {
+    return createdBy;
+  }
 
-    public long getCreatedBy() {
-        return createdBy;
-    }
+  public void setCreatedBy(long createdBy) {
+    this.createdBy = createdBy;
+  }
 
-    public void setCreatedBy(long createdBy) {
-        this.createdBy = createdBy;
-    }
+  public long getUpdatedBy() {
+    return updatedBy;
+  }
 
-    public long getUpdatedBy() {
-        return updatedBy;
-    }
+  public void setUpdatedBy(long updatedBy) {
+    this.updatedBy = updatedBy;
+  }
 
-    public void setUpdatedBy(long updatedBy) {
-        this.updatedBy = updatedBy;
-    }
+  public StorageUnitMeta getMasterStorageUnit() {
+    return masterStorageUnit;
+  }
 
-    public StorageUnitMeta getMasterStorageUnit() {
-        return masterStorageUnit;
-    }
+  public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
+    this.masterStorageUnit = masterStorageUnit;
+    this.masterStorageUnitId = masterStorageUnit.getMasterId();
+  }
 
-    public void setMasterStorageUnit(StorageUnitMeta masterStorageUnit) {
-        this.masterStorageUnit = masterStorageUnit;
-        this.masterStorageUnitId = masterStorageUnit.getMasterId();
-    }
+  public String getFakeStorageUnitId() {
+    return fakeStorageUnitId;
+  }
 
-    public String getFakeStorageUnitId() {
-        return fakeStorageUnitId;
-    }
+  public void setFakeStorageUnitId(String fakeStorageUnitId) {
+    this.fakeStorageUnitId = fakeStorageUnitId;
+  }
 
-    public void setFakeStorageUnitId(String fakeStorageUnitId) {
-        this.fakeStorageUnitId = fakeStorageUnitId;
-    }
+  public String getMasterStorageUnitId() {
+    return masterStorageUnitId;
+  }
 
-    public String getMasterStorageUnitId() {
-        return masterStorageUnitId;
-    }
+  public void setMasterStorageUnitId(String masterStorageUnitId) {
+    this.masterStorageUnitId = masterStorageUnitId;
+  }
 
-    public void setMasterStorageUnitId(String masterStorageUnitId) {
-        this.masterStorageUnitId = masterStorageUnitId;
-    }
+  @Override
+  public String toString() {
+    return "FragmentMeta{" +
+        "timeInterval=" + timeInterval +
+        ", tsInterval=" + tsInterval +
+        ", masterStorageUnitId=" + masterStorageUnitId +
+        '}';
+  }
 
-    @Override
-    public String toString() {
-        return "FragmentMeta{" +
-                "timeInterval=" + timeInterval +
-                ", tsInterval=" + tsInterval +
-                ", masterStorageUnitId=" + masterStorageUnitId +
-                '}';
-    }
+  @Override
+  public boolean equals(Object o) {
+      if (this == o) {
+          return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+          return false;
+      }
+    FragmentMeta that = (FragmentMeta) o;
+    return Objects.equals(timeInterval, that.timeInterval) && Objects
+        .equals(tsInterval, that.tsInterval);
+  }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        FragmentMeta that = (FragmentMeta) o;
-        return Objects.equals(timeInterval, that.timeInterval) && Objects.equals(tsInterval, that.tsInterval);
-    }
+  @Override
+  public int hashCode() {
+    return Objects.hash(timeInterval, tsInterval);
+  }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(timeInterval, tsInterval);
-    }
+  public boolean isInitialFragment() {
+    return initialFragment;
+  }
 
-    public boolean isInitialFragment() {
-        return initialFragment;
-    }
-
-    public void setInitialFragment(boolean initialFragment) {
-        this.initialFragment = initialFragment;
-    }
-
-  public synchronized void incrementPoint(){
-        numOfPoints++;
-    }
-
-    public long getNumOfPoints() {
-        return numOfPoints;
-    }
+  public void setInitialFragment(boolean initialFragment) {
+    this.initialFragment = initialFragment;
+  }
 }

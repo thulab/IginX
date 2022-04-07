@@ -10,7 +10,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.migration.MigrationManager;
-import cn.edu.tsinghua.iginx.monitor.NodeResource;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
 import cn.edu.tsinghua.iginx.policy.simple.FragmentCreator;
@@ -74,7 +73,8 @@ public class DynamicPolicy implements IPolicy {
   public StorageEngineChangeHook getStorageEngineChangeHook() {
     return (before, after) -> {
       // 哪台机器加了分片，哪台机器初始化，并且在批量添加的时候只有最后一个存储引擎才会导致扩容发生
-      if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isLastOfBatch()) {
+      if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId()
+          && after.isLastOfBatch()) {
         needReAllocate.set(true);
       }
       // TODO: 针对节点退出的情况缩容
@@ -88,17 +88,21 @@ public class DynamicPolicy implements IPolicy {
     TimeInterval timeInterval = new TimeInterval(0, Long.MAX_VALUE);
 
     if (ConfigDescriptor.getInstance().getConfig().getClients().indexOf(",") > 0) {
-      Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(paths, timeInterval);
-      return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()), pair.v);
+      Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> pair = generateInitialFragmentsAndStorageUnitsByClients(
+          paths, timeInterval);
+      return new Pair<>(pair.k.values().stream().flatMap(List::stream).collect(Collectors.toList()),
+          pair.v);
     } else {
       return generateInitialFragmentsAndStorageUnitsDefault(paths, timeInterval);
     }
   }
 
   /**
-   * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
+   * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT
+   * tests
    */
-  public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+  public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(
+      List<String> paths, TimeInterval timeInterval) {
     Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
     List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
@@ -106,8 +110,10 @@ public class DynamicPolicy implements IPolicy {
     int storageEngineNum = storageEngineList.size();
 
     String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
-    int instancesNumPerClient = ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
-    int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+    int instancesNumPerClient =
+        ConfigDescriptor.getInstance().getConfig().getInstancesNumPerClient() - 1;
+    int replicaNum = Math
+        .min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
     String[] prefixes = new String[clients.length * instancesNumPerClient];
     for (int i = 0; i < clients.length; i++) {
       for (int j = 0; j < instancesNumPerClient; j++) {
@@ -122,12 +128,15 @@ public class DynamicPolicy implements IPolicy {
     for (int i = 0; i < clients.length * instancesNumPerClient - 1; i++) {
       fragmentMetaList = new ArrayList<>();
       masterId = RandomStringUtils.randomAlphanumeric(16);
-      storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
+      storageUnit = new StorageUnitMeta(masterId,
+          storageEngineList.get(i % storageEngineNum).getId(), masterId, true);
       for (int j = i + 1; j < i + replicaNum; j++) {
-        storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(j % storageEngineNum).getId(), masterId, false));
+        storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16),
+            storageEngineList.get(j % storageEngineNum).getId(), masterId, false));
       }
       storageUnitList.add(storageUnit);
-      fragmentMetaList.add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, masterId));
+      fragmentMetaList
+          .add(new FragmentMeta(prefixes[i], prefixes[i + 1], 0, Long.MAX_VALUE, masterId));
       fragmentMap.put(new TimeSeriesInterval(prefixes[i], prefixes[i + 1]), fragmentMetaList);
     }
 
@@ -135,7 +144,8 @@ public class DynamicPolicy implements IPolicy {
     masterId = RandomStringUtils.randomAlphanumeric(16);
     storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0).getId(), masterId, true);
     for (int i = 1; i < replicaNum; i++) {
-      storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i).getId(), masterId, false));
+      storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16),
+          storageEngineList.get(i).getId(), masterId, false));
     }
     storageUnitList.add(storageUnit);
     fragmentMetaList.add(new FragmentMeta(null, prefixes[0], 0, Long.MAX_VALUE, masterId));
@@ -143,21 +153,29 @@ public class DynamicPolicy implements IPolicy {
 
     fragmentMetaList = new ArrayList<>();
     masterId = RandomStringUtils.randomAlphanumeric(16);
-    storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(storageEngineNum - 1).getId(), masterId, true);
+    storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(storageEngineNum - 1).getId(),
+        masterId, true);
     for (int i = 1; i < replicaNum; i++) {
-      storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(storageEngineNum - 1 - i).getId(), masterId, false));
+      storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16),
+          storageEngineList.get(storageEngineNum - 1 - i).getId(), masterId, false));
     }
     storageUnitList.add(storageUnit);
-    fragmentMetaList.add(new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0, Long.MAX_VALUE, masterId));
-    fragmentMap.put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null), fragmentMetaList);
+    fragmentMetaList.add(
+        new FragmentMeta(prefixes[clients.length * instancesNumPerClient - 1], null, 0,
+            Long.MAX_VALUE, masterId));
+    fragmentMap
+        .put(new TimeSeriesInterval(prefixes[clients.length * instancesNumPerClient - 1], null),
+            fragmentMetaList);
 
     return new Pair<>(fragmentMap, storageUnitList);
   }
 
   /**
-   * This storage unit initialization method is used when no information about workloads is provided
+   * This storage unit initialization method is used when no information about workloads is
+   * provided
    */
-  public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> inspaths, TimeInterval timeInterval) {
+  public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(
+      List<String> inspaths, TimeInterval timeInterval) {
     List<FragmentMeta> fragmentList = new ArrayList<>();
     List<StorageUnitMeta> storageUnitList = new ArrayList<>();
     List<String> paths = new ArrayList<>();
@@ -170,7 +188,8 @@ public class DynamicPolicy implements IPolicy {
     }
 
     int storageEngineNum = iMetaManager.getStorageEngineNum();
-    int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+    int replicaNum = Math
+        .min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
     List<Long> storageEngineIdList;
     Pair<FragmentMeta, StorageUnitMeta> pair;
     int index = 0;
@@ -179,42 +198,53 @@ public class DynamicPolicy implements IPolicy {
     // 一般情况下该范围内几乎无数据，因此作为一个分片处理
     if (timeInterval.getStartTime() != 0) {
       storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0, timeInterval.getStartTime(), storageEngineIdList);
+      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, null, 0,
+          timeInterval.getStartTime(), storageEngineIdList);
       fragmentList.add(pair.k);
       storageUnitList.add(pair.v);
     }
 
     // [startTime, +∞) & (null, startPath)
     storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, paths.get(0),
+        timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
     fragmentList.add(pair.k);
     storageUnitList.add(pair.v);
-
 
     // [startTime, +∞) & [startPath, endPath)
     int splitNum = Math.max(Math.min(storageEngineNum, paths.size() - 1), 0);
     for (int i = 0; i < splitNum; i++) {
       storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(i * (paths.size() - 1) / splitNum), paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+          paths.get(i * (paths.size() - 1) / splitNum),
+          paths.get((i + 1) * (paths.size() - 1) / splitNum), timeInterval.getStartTime(),
+          Long.MAX_VALUE, storageEngineIdList);
       fragmentList.add(pair.k);
       storageUnitList.add(pair.v);
     }
 
     // [startTime, +∞) & [endPath, null)
     storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE, storageEngineIdList);
+    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+        paths.get(paths.size() - 1), null, timeInterval.getStartTime(), Long.MAX_VALUE,
+        storageEngineIdList);
     fragmentList.add(pair.k);
     storageUnitList.add(pair.v);
 
     return new Pair<>(fragmentList, storageUnitList);
   }
 
-  private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+  private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+      String startPath, String endPath, long startTime, long endTime,
+      List<Long> storageEngineList) {
     String masterId = RandomStringUtils.randomAlphanumeric(16);
-    StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true, false);
+    StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId,
+        true, false);
     FragmentMeta fragment = new FragmentMeta(startPath, endPath, startTime, endTime, masterId);
     for (int i = 1; i < storageEngineList.size(); i++) {
-      storageUnit.addReplica(new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i), masterId, false, false));
+      storageUnit.addReplica(
+          new StorageUnitMeta(RandomStringUtils.randomAlphanumeric(16), storageEngineList.get(i),
+              masterId, false, false));
     }
     return new Pair<>(fragment, storageUnit);
   }
@@ -233,9 +263,12 @@ public class DynamicPolicy implements IPolicy {
       DataStatement statement) {
     long startTime;
     if (statement.getType() == StatementType.INSERT) {
-      startTime = ((InsertStatement) statement).getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1;
+      startTime = ((InsertStatement) statement).getEndTime() +
+          TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin())
+              * 2 + 1;
     } else {
-      throw new IllegalArgumentException("function generateFragmentsAndStorageUnits only use insert statement for now.");
+      throw new IllegalArgumentException(
+          "function generateFragmentsAndStorageUnits only use insert statement for now.");
     }
 
     Map<String, Double> data = iMetaManager.getTimeseriesData();
@@ -245,14 +278,16 @@ public class DynamicPolicy implements IPolicy {
     List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
     int storageEngineNum = iMetaManager.getStorageEngineNum();
-    int replicaNum = Math.min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
+    int replicaNum = Math
+        .min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
     List<Long> storageEngineIdList;
     Pair<FragmentMeta, StorageUnitMeta> pair;
     int index = 0;
 
     // [startTime, +∞) & (null, startPath)
     storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null, prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
+    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null,
+        prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
     fragmentList.add(pair.k);
     storageUnitList.add(pair.v);
 
@@ -260,14 +295,17 @@ public class DynamicPolicy implements IPolicy {
     int splitNum = Math.max(prefixList.size() - 1, 0);
     for (int i = 0; i < splitNum; i++) {
       storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(i), prefixList.get(i + 1), startTime, Long.MAX_VALUE, storageEngineIdList);
+      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(i),
+          prefixList.get(i + 1), startTime, Long.MAX_VALUE, storageEngineIdList);
       fragmentList.add(pair.k);
       storageUnitList.add(pair.v);
     }
 
     // [startTime, +∞) & [endPath, null)
     storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE, storageEngineIdList);
+    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+        prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE,
+        storageEngineIdList);
     fragmentList.add(pair.k);
     storageUnitList.add(pair.v);
 
@@ -280,11 +318,13 @@ public class DynamicPolicy implements IPolicy {
     int m = iMetaManager.getStorageEngineNum() * config.getFragmentPerEngine();
     if (config.isEnableStorageGroupValueLimit()) {
       double totalValue = data.values().stream().mapToDouble(Double::doubleValue).sum();
-      m = new Double(Math.ceil(totalValue / config.getStorageGroupValueLimit() / iMetaManager.getStorageEngineNum())).
+      m = new Double(Math.ceil(
+          totalValue / config.getStorageGroupValueLimit() / iMetaManager.getStorageEngineNum())).
           intValue() * iMetaManager.getStorageEngineNum();
     }
-    List<Pair<String, Double>> tmp = data.entrySet().stream().map(entry -> new Pair<>(entry.getKey(), entry.getValue())).
-        sorted(Comparator.comparing(Pair::getK)).collect(Collectors.toList());
+    List<Pair<String, Double>> tmp = data.entrySet().stream()
+        .map(entry -> new Pair<>(entry.getKey(), entry.getValue())).
+            sorted(Comparator.comparing(Pair::getK)).collect(Collectors.toList());
     List<Double> sum = new ArrayList<>();
     sum.add(0.0);
     for (int i = 0; i < n; i++) {
@@ -313,7 +353,7 @@ public class DynamicPolicy implements IPolicy {
     int tmpn = n, tmpm = m;
     while (last[tmpn][tmpm] > 0) {
       tmpn = last[tmpn][tmpm];
-      tmpm --;
+      tmpm--;
       ret.add(tmp.get(tmpn - 1).k);
     }
     Collections.reverse(ret);
@@ -330,7 +370,7 @@ public class DynamicPolicy implements IPolicy {
 
   public boolean checkSuccess(Map<String, Double> timeseriesData) {
     Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-    Map<TimeSeriesInterval, Double> fragmentValue =  latestFragments.keySet().stream().collect(
+    Map<TimeSeriesInterval, Double> fragmentValue = latestFragments.keySet().stream().collect(
         Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
     );
     timeseriesData.forEach((key, value) -> {
@@ -343,11 +383,12 @@ public class DynamicPolicy implements IPolicy {
     });
     List<Double> value = fragmentValue.values().stream().sorted().collect(Collectors.toList());
     int num = 0;
-    for (Double v: value) {
-      logger.info("fragment value num : {}, value : {}", num ++, v);
+    for (Double v : value) {
+      logger.info("fragment value num : {}, value : {}", num++, v);
     }
     if (value.size() > 0) {
-      return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue()) > config.getStorageGroupValueLimit() * 3);
+      return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue())
+          > config.getStorageGroupValueLimit() * 3);
     } else {
       return true;
     }
@@ -355,37 +396,16 @@ public class DynamicPolicy implements IPolicy {
 
   @Override
   public void executeReshardAndMigration(
-      Map<Long, NodeResource> nodeUsedResourcesMap, Map<String, List<FragmentMeta>> nodeFragmentMap,
+      Map<FragmentMeta, Long> fragmentMetaPointsMap,
+      Map<String, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap) {
-    // 根据方程求解
-    List<NodeResource> usedResourcesListForCalculation = new ArrayList<>();
-    List<Long> writeLoadListForCalculation = new ArrayList<>();
-    List<Long> readLoadListForCalculation = new ArrayList<>();
-    int countNeededForCalculation = 2;
-    for (long key : nodeUsedResourcesMap.keySet()) {
-      if (countNeededForCalculation <= 0) {
-        break;
-      }
-      usedResourcesListForCalculation.add(nodeUsedResourcesMap.get(key));
-      List<FragmentMeta> fragments = nodeFragmentMap.get(key);
-      long writeLoadOfNode = 0;
-      long readLoadOfNode = 0;
-      for (FragmentMeta fragmentMeta : fragments) {
-        writeLoadOfNode += fragmentWriteLoadMap.get(fragmentMeta);
-        readLoadOfNode += fragmentReadLoadMap.get(fragmentMeta);
-      }
-      writeLoadListForCalculation.add(writeLoadOfNode);
-      readLoadListForCalculation.add(readLoadOfNode);
-      countNeededForCalculation--;
-    }
-    // 增广矩阵法求解，读写资源占比
-    double[] params = calculateWriteAndReadResourceUsed(usedResourcesListForCalculation,
-        writeLoadListForCalculation, readLoadListForCalculation);
-
     // 平均资源占用
-    double totalScore = 0;
-    for (NodeResource nodeResource : nodeUsedResourcesMap.values()) {
-      totalScore += nodeResource.getScore();
+    double totalHeat = 0;
+    for (long heat : fragmentWriteLoadMap.values()) {
+      totalHeat += heat;
+    }
+    for (long heat : fragmentReadLoadMap.values()) {
+      totalHeat += heat;
     }
     int totalFragmentNum = 0;
     for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
@@ -410,8 +430,9 @@ public class DynamicPolicy implements IPolicy {
       cumulativeSize += fragmentMetas.size();
       currNode++;
     }
-    int[][][] migrationResults = calculateMigrationFinalStatus(totalScore / nodeFragmentMap.size(),
-        nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap, params, totalFragmentNum, m);
+    int[][][] migrationResults = calculateMigrationFinalStatus(totalHeat / nodeFragmentMap.size(),
+        fragmentMetaPointsMap, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap,
+        totalFragmentNum, m);
 
     // 所有的分区
     FragmentMeta[] allFragmentMetas = new FragmentMeta[totalFragmentNum];
@@ -442,8 +463,8 @@ public class DynamicPolicy implements IPolicy {
               }
             }
             migrationTask = new MigrationTask(fragmentMeta,
-                fragmentWriteLoadMap.get(fragmentMeta) * params[0],
-                fragmentMeta.getNumOfPoints(), allNodes[j], allNodes[targetIndex],
+                fragmentWriteLoadMap.get(fragmentMeta),
+                fragmentMetaPointsMap.get(fragmentMeta), allNodes[j], allNodes[targetIndex],
                 MigrationType.WRITE);
           }
           // 读要迁移
@@ -455,8 +476,8 @@ public class DynamicPolicy implements IPolicy {
               }
             }
             migrationTask = new MigrationTask(fragmentMeta,
-                fragmentReadLoadMap.get(fragmentMeta) * params[1],
-                fragmentMeta.getNumOfPoints(), allNodes[j], allNodes[targetIndex],
+                fragmentReadLoadMap.get(fragmentMeta),
+                fragmentMetaPointsMap.get(fragmentMeta), allNodes[j], allNodes[targetIndex],
                 MigrationType.QUERY);
           }
 
@@ -468,13 +489,15 @@ public class DynamicPolicy implements IPolicy {
     }
 
     // 执行迁移
-    MigrationManager.getInstance().getMigration().migrate(migrationTasks, nodeUsedResourcesMap);
+    MigrationManager.getInstance().getMigration()
+        .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
   }
 
   private int[][][] calculateMigrationFinalStatus(double averageScore,
+      Map<FragmentMeta, Long> fragmentMetaPointsMap,
       Map<String, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
-      double[] params, int totalFragmentNum, int[][] m) {
+      int totalFragmentNum, int[][] m) {
     int[][][] result = new int[2][totalFragmentNum][nodeFragmentMap.size()];
 
     try {
@@ -502,7 +525,7 @@ public class DynamicPolicy implements IPolicy {
       int currIndex = 0;
       for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
         for (FragmentMeta fragmentMeta : fragmentMetas) {
-          fragmentSize[currIndex] = fragmentMeta.getNumOfPoints();
+          fragmentSize[currIndex] = fragmentMetaPointsMap.get(fragmentMeta);
           writeLoad[currIndex] = fragmentWriteLoadMap.get(fragmentMeta);
           readLoad[currIndex] = fragmentReadLoadMap.get(fragmentMeta);
           currIndex++;
@@ -524,8 +547,8 @@ public class DynamicPolicy implements IPolicy {
       for (int j = 0; j < nodeFragmentMap.size(); j++) {
         IloNumExpr[] currLoads = new IloNumExpr[totalFragmentNum];
         for (int i = 0; i < totalFragmentNum; i++) {
-          IloNumExpr wl = model.prod(xw[i][j], params[0] * writeLoad[i]);
-          IloNumExpr rl = model.prod(xr[i][j], params[1] * readLoad[i]);
+          IloNumExpr wl = model.prod(xw[i][j], writeLoad[i]);
+          IloNumExpr rl = model.prod(xr[i][j], readLoad[i]);
           currLoads[i] = model.sum(new IloNumExpr[]{wl, rl});
         }
         model.addGe(model.sum(currLoads), averageScore * (1 - unbalanceThreshold));
@@ -556,24 +579,5 @@ public class DynamicPolicy implements IPolicy {
       System.err.println("Concert exception caught: " + e);
     }
     return result;
-  }
-
-  private double[] calculateWriteAndReadResourceUsed(List<NodeResource> usedResourcesList,
-      List<Long> writeLoadList, List<Long> readLoadList) {
-    double[] results = new double[2];
-    RealMatrix coefficients =
-        new Array2DRowRealMatrix(new double[][]{{writeLoadList.get(0), readLoadList.get(0)},
-            {writeLoadList.get(1), readLoadList.get(1)}},
-            false);
-    //创建求解器
-    DecompositionSolver solver = new LUDecomposition(coefficients).getSolver();
-    //传入等号后面的值
-    RealVector constants = new ArrayRealVector(
-        new double[]{usedResourcesList.get(0).getMemory(), usedResourcesList.get(1).getMemory()},
-        false);
-    RealVector solution = solver.solve(constants);
-    results[0] = solution.getEntry(0);
-    results[1] = solution.getEntry(1);
-    return results;
   }
 }
