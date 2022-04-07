@@ -21,7 +21,8 @@
     <module>iotdb12</module>
     <module>influxdb</module>
     <!--module>opentsdb</module-->
-    <!--module>timescaledb</module-->
+    <module>timescaledb</module>
+    <module>postgresql</module>
     <module>shared</module>
     <module>client</module>
     <module>antlr</module>
