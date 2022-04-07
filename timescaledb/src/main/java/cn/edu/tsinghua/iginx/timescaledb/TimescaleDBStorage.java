@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.timescaledb;
 
+import static cn.edu.tsinghua.iginx.timescaledb.tools.FilterTransformer.MAX_TIMESTAMP;
+
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
@@ -87,8 +89,6 @@ public class TimescaleDBStorage implements IStorage {
   private static final String IGINX_SEPARATOR = ".";
 
   private static final String TIMESCALEDB_SEPARATOR = "$";
-
-  private static final long MAX_TIMESTAMP = Integer.MAX_VALUE;
 
   private final StorageEngineMeta meta;
 

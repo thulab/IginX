@@ -32,7 +32,7 @@ public class Config {
 
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
-    private String storageEngineList = "127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100";
+    private String storageEngineList = "11.101.17.21#5432#timescaledb#username=postgres#password=123456#dbname=timeseries";
 
     private int maxAsyncRetryTimes = 2;
 
@@ -42,8 +42,8 @@ public class Config {
 
     private int replicaNum = 1;
 
-    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
-    //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor
+    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor";
+    //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 

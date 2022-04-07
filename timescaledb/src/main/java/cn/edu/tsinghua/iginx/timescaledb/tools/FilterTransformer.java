@@ -29,6 +29,8 @@ import java.util.stream.Collectors;
 
 public class FilterTransformer {
 
+    public static final long MAX_TIMESTAMP = Integer.MAX_VALUE;
+
     public static String toString(Filter filter) {
         if (filter == null) {
             return "";
@@ -58,7 +60,7 @@ public class FilterTransformer {
     }
 
     private static String toString(TimeFilter filter) {
-        return "time " + Op.op2Str(filter.getOp()) + " to_timestamp(" + filter.getValue() + ")";
+        return "time " + Op.op2Str(filter.getOp()) + " to_timestamp(" + Math.min(filter.getValue(), MAX_TIMESTAMP) + ")";
     }
 
     private static String toString(ValueFilter filter) {

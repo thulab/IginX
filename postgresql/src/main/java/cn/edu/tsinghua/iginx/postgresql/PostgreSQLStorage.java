@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.postgresql;
 
+import static cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer.MAX_TIMESTAMP;
+
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
@@ -25,8 +27,6 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
 import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer;
@@ -71,8 +71,6 @@ public class PostgreSQLStorage implements IStorage {
   private static final String IGINX_SEPARATOR = ".";
 
   private static final String POSTGRESQL_SEPARATOR = "$";
-
-  private static final long MAX_TIMESTAMP = Integer.MAX_VALUE;
 
   private final StorageEngineMeta meta;
 
