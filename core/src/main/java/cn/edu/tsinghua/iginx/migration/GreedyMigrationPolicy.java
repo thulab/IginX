@@ -1,83 +1,45 @@
 package cn.edu.tsinghua.iginx.migration;
 
-import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
-import cn.edu.tsinghua.iginx.policy.dynamic.MigrationType;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class GreedyMigrationPolicy implements IMigrationPolicy {
+public class GreedyMigrationPolicy extends MigrationPolicy {
 
-  private ExecutorService executor;
-  private static final Config config = ConfigDescriptor.getInstance().getConfig();
   private static final Logger logger = LoggerFactory.getLogger(GreedyMigrationPolicy.class);
+
+  public GreedyMigrationPolicy(Logger logger) {
+    super(logger);
+  }
 
   @Override
   public void migrate(List<MigrationTask> migrationTasks,
       Map<String, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
       Map<FragmentMeta, Long> fragmentReadLoadMap) {
+    long startTime = System.currentTimeMillis();
+
+    Map<String, Long> nodeLoadMap = calculateNodeLoadMap(nodeFragmentMap, fragmentWriteLoadMap,
+        fragmentReadLoadMap);
     List<Queue<MigrationTask>> migrationTaskQueueList = createParallelQueueByPriority(
         migrationTasks);
+
     executor = Executors.newCachedThreadPool();
 
     while (!isAllQueueEmpty(migrationTaskQueueList)) {
-      executeOneRoundMigration(migrationTaskQueueList, nodeRestResourcesMap);
+      executeOneRoundMigration(migrationTaskQueueList, nodeLoadMap);
     }
-  }
 
-  private void executeOneRoundMigration(List<Queue<MigrationTask>> migrationTaskQueueList,
-      Map<Long, NodeResource> nodeRestResourcesMap) {
-    for (Queue<MigrationTask> migrationTaskQueue : migrationTaskQueueList) {
-      MigrationTask migrationTask = migrationTaskQueue.peek();
-      //根据CPU、内存、磁盘、带宽判断是否能进行该任务
-      if (canExecuteTargetMigrationTask(migrationTask, nodeRestResourcesMap)) {
-        executor.submit(() -> {
-          //异步执行耗时的操作
-          if (migrationTask.getMigrationType() == MigrationType.QUERY) {
-            MigrationUtils
-                .migrateData(migrationTask.getSourceStorageUnitId(),
-                    migrationTask.getTargetStorageUnitId(),
-                    migrationTask.getFragmentMeta());
-          } else {
-            MigrationUtils
-                .reshardFragment(migrationTask.getSourceStorageUnitId(),
-                    migrationTask.getTargetStorageUnitId(),
-                    migrationTask.getFragmentMeta());
-          }
-          executeNextRoundMigration(migrationTaskQueueList, nodeRestResourcesMap, costParams);
-        });
-        migrationTaskQueue.poll();
-      }
-    }
-  }
-
-  private boolean canExecuteTargetMigrationTask(MigrationTask migrationTask,
-      Map<Long, NodeResource> nodeRestResourcesMap) {
-
-  }
-
-  private void executeNextRoundMigration(List<Queue<MigrationTask>> migrationTaskQueueList,
-      Map<Long, NodeResource> nodeRestResourcesMap) {
-    while (!isAllQueueEmpty(migrationTaskQueueList)) {
-      executeOneRoundMigration(migrationTaskQueueList, nodeRestResourcesMap);
-    }
-  }
-
-  private boolean isAllQueueEmpty(List<Queue<MigrationTask>> migrationTaskQueueList) {
-    for (Queue<MigrationTask> migrationTaskQueue : migrationTaskQueueList) {
-      if (!migrationTaskQueue.isEmpty()) {
-        return false;
-      }
-    }
-    return true;
+    logger.info("complete all migration task with time consumption: {} ms",
+        System.currentTimeMillis() - startTime);
   }
 
   @Override
@@ -92,6 +54,25 @@ public class GreedyMigrationPolicy implements IMigrationPolicy {
 
   private List<Queue<MigrationTask>> createParallelQueueByPriority(
       List<MigrationTask> migrationTasks) {
-    return new ArrayList<>();
+    Map<String, List<MigrationTask>> edgeMigrationTasksMap = new HashMap<>();
+    for (MigrationTask migrationTask : migrationTasks) {
+      String edgeId =
+          migrationTask.getSourceStorageUnitId() + "-" + migrationTask.getTargetStorageUnitId();
+      List<MigrationTask> edgeMigrationTasks = edgeMigrationTasksMap
+          .computeIfAbsent(edgeId, k -> new ArrayList<>());
+      edgeMigrationTasks.add(migrationTask);
+    }
+    List<Queue<MigrationTask>> results = new ArrayList<>();
+    for (Entry<String, List<MigrationTask>> edgeMigrationTasksEntry : edgeMigrationTasksMap
+        .entrySet()) {
+      List<MigrationTask> edgeMigrationTasks = edgeMigrationTasksEntry.getValue();
+      //倒序排列
+      edgeMigrationTasks
+          .sort((o1, o2) -> (int) (o2.getPriorityScore() - o1.getPriorityScore()));
+      Queue<MigrationTask> migrationTaskQueue = new LinkedBlockingQueue<>(edgeMigrationTasks);
+      results.add(migrationTaskQueue);
+    }
+    sortQueueListByFirstItem(results);
+    return results;
   }
 }

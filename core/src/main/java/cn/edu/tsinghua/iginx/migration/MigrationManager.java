@@ -15,7 +15,7 @@ public class MigrationManager {
 
   private static final MigrationManager instance = new MigrationManager();
 
-  private final Map<String, IMigrationPolicy> policies;
+  private final Map<String, MigrationPolicy> policies;
 
   private MigrationManager() {
     this.policies = new HashMap<>();
@@ -25,15 +25,15 @@ public class MigrationManager {
     return instance;
   }
 
-  public IMigrationPolicy getMigration() {
+  public MigrationPolicy getMigration() {
     String policyClassName = ConfigDescriptor.getInstance().getConfig()
         .getMigrationPolicyClassName();
-    IMigrationPolicy policy;
+    MigrationPolicy policy;
     synchronized (policies) {
       policy = policies.get(policyClassName);
       if (policy == null) {
         try {
-          Class<? extends IMigrationPolicy> clazz = (Class<? extends IMigrationPolicy>) this
+          Class<? extends MigrationPolicy> clazz = (Class<? extends MigrationPolicy>) this
               .getClass().getClassLoader().loadClass(policyClassName);
           policy = clazz.getConstructor().newInstance();
           policies.put(policyClassName, policy);

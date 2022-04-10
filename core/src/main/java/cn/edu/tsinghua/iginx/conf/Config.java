@@ -53,7 +53,7 @@ public class Config {
 
     private double unbalanceThreshold = 0.2;
 
-    private double maxLoadThreshold = 0.8;
+    private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * unbalanceThreshold * 0.8;
 
     private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy";
 

@@ -67,13 +67,12 @@ public class ConfigDescriptor {
 
             config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor
-          
+
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
             config.setEnableMonitor(Boolean.parseBoolean(properties.getProperty("enableMonitor", "true")));
             config.setLoadBalanceCheckInterval(Integer.parseInt(properties.getProperty("loadBalanceCheckInterval", "30")));
-            config.setRequestFilterMonitorPeriod(Integer.parseInt(properties.getProperty("requestFilterMonitorPeriod", "60")));
             config.setUnbalanceThreshold(Double.parseDouble(properties.getProperty("unbalanceThreshold", "60")));
-            config.setMaxLoadThreshold(Double.parseDouble(properties.getProperty("maxLoadThreshold", "60")));
+            config.setMaxLoadThreshold(Double.parseDouble(properties.getProperty("maxLoadThreshold", String.valueOf(Runtime.getRuntime().availableProcessors() * config.getUnbalanceThreshold() * 0.8))));
             config.setMigrationPolicyClassName(properties.getProperty("migrationPolicyClassName", "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy"));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
 
