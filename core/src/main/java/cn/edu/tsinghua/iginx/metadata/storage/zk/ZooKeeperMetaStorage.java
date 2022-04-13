@@ -119,6 +119,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
   private static final String STATISTICS_FRAGMENT_HEAT_COUNTER_PREFIX = "/statistics/fragment/heat/counter";
 
+  private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE = "/statistics/end/time/active/max/node";
+
+  private static final String MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX = "/statistics/end/time/active/max";
+
   private static final String TIMESERIES_NODE_PREFIX = "/timeseries";
 
   private static final String RESHARD_STATUS_NODE_PREFIX = "/status/reshard";
@@ -142,6 +146,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   private final InterProcessMutex reshardStatusMutex;
   private final Lock reshardCounterMutexLock = new ReentrantLock();
   private final InterProcessMutex reshardCounterMutex;
+  private final Lock maxActiveEndTimeStatisticsMutexLock = new ReentrantLock();
 
   protected TreeCache schemaMappingsCache;
   protected TreeCache iginxCache;
@@ -150,6 +155,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   protected TreeCache fragmentCache;
   protected TreeCache reshardStatusCache;
   protected TreeCache reshardCounterCache;
+  protected TreeCache maxActiveEndTimeStatisticsCache;
 
   private SchemaMappingChangeHook schemaMappingChangeHook = null;
   private IginxChangeHook iginxChangeHook = null;
@@ -161,6 +167,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   private ReshardCounterChangeHook reshardCounterChangeHook = null;
   private TimeSeriesChangeHook timeSeriesChangeHook = null;
   private VersionChangeHook versionChangeHook = null;
+  private MaxActiveEndTimeStatisticsChangeHook maxActiveEndTimeStatisticsChangeHook = null;
 
   private TreeCache userCache;
 
@@ -461,6 +468,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         storageEngineMetaMap.putIfAbsent(storageEngineMeta.getId(), storageEngineMeta);
       }
 
+      registerMaxActiveEndTimeStatisticsListener();
       registerReshardStatusListener();
       registerReshardCounterListener();
       return storageEngineMetaMap;
@@ -705,9 +713,9 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
-  public Map<String, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException {
+  public Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException {
     try {
-      Map<String, List<FragmentMeta>> fragmentListMap = new HashMap<>();
+      Map<Long, List<FragmentMeta>> fragmentListMap = new HashMap<>();
       if (this.client.checkExists().forPath(FRAGMENT_NODE_PREFIX) == null) {
         // 当前还没有数据，创建父节点，然后不需要解析数据
         this.client.create().withMode(CreateMode.PERSISTENT).forPath(FRAGMENT_NODE_PREFIX);
@@ -720,7 +728,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
                     .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName),
                 FragmentMeta.class);
-            String storageId = fragmentMeta.getMasterStorageUnitId();
+            long storageId = fragmentMeta.getMasterStorageUnit().getStorageEngineId();
             List<FragmentMeta> fragmentMetas = fragmentListMap
                 .computeIfAbsent(storageId, k -> new ArrayList<>());
             fragmentMetas.add(fragmentMeta);
@@ -1706,6 +1714,66 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   @Override
   public void registerReshardCounterChangeHook(ReshardCounterChangeHook hook) {
     this.reshardCounterChangeHook = hook;
+  }
+
+  private void registerMaxActiveEndTimeStatisticsListener() throws Exception {
+    this.maxActiveEndTimeStatisticsCache = new TreeCache(this.client, MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX);
+    TreeCacheListener listener = (curatorFramework, event) -> {
+      if (maxActiveEndTimeStatisticsChangeHook == null) {
+        return;
+      }
+      String path;
+      byte[] data;
+      long id;
+      long endTime;
+      switch (event.getType()) {
+        case NODE_ADDED:
+        case NODE_UPDATED:
+          path = event.getData().getPath();
+          data = event.getData().getData();
+          String[] pathParts = path.split("/");
+          if (pathParts.length == 7) {
+            id = Long.parseLong(pathParts[6].substring(5));
+            endTime = JsonUtils.fromJson(data, Long.class);
+            maxActiveEndTimeStatisticsChangeHook.onChange(id, endTime);
+          }
+          break;
+        default:
+          break;
+      }
+    };
+    this.maxActiveEndTimeStatisticsCache.getListenable().addListener(listener);
+    this.maxActiveEndTimeStatisticsCache.start();
+  }
+
+  @Override
+  public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+    maxActiveEndTimeStatisticsMutexLock.lock();
+  }
+
+  @Override
+  public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
+    try {
+      if (this.client.checkExists().forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
+        this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+      } else {
+        this.client.setData()
+            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+      }
+    } catch (Exception e) {
+      throw new MetaStorageException("encounter error when adding or updating max active end time statistics: ", e);
+    }
+  }
+
+  @Override
+  public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+    maxActiveEndTimeStatisticsMutexLock.unlock();
+  }
+
+  @Override
+  public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+    this.maxActiveEndTimeStatisticsChangeHook = hook;
   }
 
   private void registerReshardCounterListener() throws Exception {

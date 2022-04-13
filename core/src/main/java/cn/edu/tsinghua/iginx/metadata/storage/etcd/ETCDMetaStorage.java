@@ -735,7 +735,7 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<String, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException {
+    public Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException {
         return null;
     }
 

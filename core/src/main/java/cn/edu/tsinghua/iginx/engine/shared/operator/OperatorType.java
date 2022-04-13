@@ -40,7 +40,9 @@ public enum OperatorType {
     Insert,
     CombineNonQuery,
 
-    ShowTimeSeries;
+    ShowTimeSeries,
+
+    Migration;
 
     public static boolean isBinaryOperator(OperatorType op) {
         return op == Join || op == Union;
@@ -55,7 +57,7 @@ public enum OperatorType {
     }
 
     public static boolean isGlobalOperator(OperatorType op) {
-        return op == ShowTimeSeries;
+        return op == ShowTimeSeries || op == Migration;
     }
 
     public static boolean isNeedBroadcasting(OperatorType op) {

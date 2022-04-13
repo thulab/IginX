@@ -55,6 +55,10 @@ public class Config {
 
     private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * unbalanceThreshold * 0.8;
 
+    private long migrationBatchSize = 100;
+
+    private long reshardFragmentTimeMargin = 60;
+
     private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy";
 
     private int storageUnitNum = 30;
@@ -265,6 +269,22 @@ public class Config {
 
     public void setMaxLoadThreshold(double maxLoadThreshold) {
         this.maxLoadThreshold = maxLoadThreshold;
+    }
+
+    public long getReshardFragmentTimeMargin() {
+        return reshardFragmentTimeMargin;
+    }
+
+    public long getMigrationBatchSize() {
+        return migrationBatchSize;
+    }
+
+    public void setMigrationBatchSize(long migrationBatchSize) {
+        this.migrationBatchSize = migrationBatchSize;
+    }
+
+    public void setReshardFragmentTimeMargin(long reshardFragmentTimeMargin) {
+        this.reshardFragmentTimeMargin = reshardFragmentTimeMargin;
     }
 
     public String getMigrationPolicyClassName() {

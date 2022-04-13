@@ -21,11 +21,15 @@ public interface IPolicy {
   Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnits(
       DataStatement statement);
 
-  Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(
+  Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsByStatement(
       DataStatement statement);
 
+  Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+      String startPath, String endPath, long startTime, long endTime,
+      List<Long> storageEngineList);
+
   void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap,
-      Map<String, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+      Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
       Map<FragmentMeta, Long> fragmentReadLoadMap);
 
   boolean isNeedReAllocate();

@@ -23,7 +23,7 @@ public class GreedyMigrationPolicy extends MigrationPolicy {
 
   @Override
   public void migrate(List<MigrationTask> migrationTasks,
-      Map<String, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
+      Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
       Map<FragmentMeta, Long> fragmentReadLoadMap) {
     long startTime = System.currentTimeMillis();
 
@@ -57,7 +57,7 @@ public class GreedyMigrationPolicy extends MigrationPolicy {
     Map<String, List<MigrationTask>> edgeMigrationTasksMap = new HashMap<>();
     for (MigrationTask migrationTask : migrationTasks) {
       String edgeId =
-          migrationTask.getSourceStorageUnitId() + "-" + migrationTask.getTargetStorageUnitId();
+          migrationTask.getSourceStorageId() + "-" + migrationTask.getTargetStorageId();
       List<MigrationTask> edgeMigrationTasks = edgeMigrationTasksMap
           .computeIfAbsent(edgeId, k -> new ArrayList<>());
       edgeMigrationTasks.add(migrationTask);

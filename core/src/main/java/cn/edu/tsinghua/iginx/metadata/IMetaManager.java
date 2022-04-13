@@ -117,6 +117,11 @@ public interface IMetaManager {
     boolean createFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> fragments);
 
     /**
+     * 创建分片和存储单元
+     */
+    boolean createFragmentAndStorageUnit(StorageUnitMeta storageUnit, FragmentMeta fragment);
+
+    /**
      * 是否已经创建过分片
      */
     boolean hasFragment();
@@ -211,5 +216,5 @@ public interface IMetaManager {
 
     void executeReshard();
 
-    Map<String, List<FragmentMeta>> loadFragmentOfEachNode();
+    Map<Long, List<FragmentMeta>> loadFragmentOfEachNode();
 }

@@ -16,13 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.shared.source;
+package cn.edu.tsinghua.iginx.metadata.hook;
 
-public enum SourceType {
+public interface MaxActiveEndTimeStatisticsChangeHook {
 
-    Unknown,
+    void onChange(long iginxId, long endTime);
 
-    Fragment,
-    Operator,
-    Global
 }

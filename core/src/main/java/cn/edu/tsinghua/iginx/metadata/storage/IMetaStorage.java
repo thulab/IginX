@@ -68,7 +68,7 @@ public interface IMetaStorage {
 
   Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException;
 
-  Map<String, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException;
+  Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException;
 
   void lockFragment() throws MetaStorageException;
 
@@ -164,4 +164,12 @@ public interface IMetaStorage {
   void removeReshardCounter() throws MetaStorageException;
 
   void registerReshardCounterChangeHook(ReshardCounterChangeHook hook);
+
+  void lockMaxActiveEndTimeStatistics() throws MetaStorageException;
+
+  void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException;
+
+  void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
+
+  void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException;
 }

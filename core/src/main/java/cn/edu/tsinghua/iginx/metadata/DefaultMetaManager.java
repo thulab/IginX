@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.EXECUTING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
 
@@ -55,6 +56,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,6 +72,10 @@ public class DefaultMetaManager implements IMetaManager {
   private final List<StorageEngineChangeHook> storageEngineChangeHooks;
   private final List<StorageUnitHook> storageUnitHooks;
   private long id;
+
+  // 当前活跃的最大的结束时间
+  private AtomicLong maxActiveEndTime = new AtomicLong(-1L);
+  private AtomicInteger maxActiveEndTimeStatisticsCounter = new AtomicInteger(0);
 
   // 重分片状态
   private ReshardStatus reshardStatus = NON_RESHARDING;
@@ -115,6 +122,7 @@ public class DefaultMetaManager implements IMetaManager {
       initSchemaMapping();
       initPolicy();
       initUser();
+      initMaxActiveEndTimeStatistics();
       initReshardStatus();
       initReshardCounter();
     } catch (MetaStorageException e) {
@@ -460,6 +468,15 @@ public class DefaultMetaManager implements IMetaManager {
       }
     }
     return false;
+  }
+
+  @Override
+  public boolean createFragmentAndStorageUnit(StorageUnitMeta storageUnit, FragmentMeta fragment) {
+    List<StorageUnitMeta> storageUnitMetas = new ArrayList<>();
+    storageUnitMetas.add(storageUnit);
+    List<FragmentMeta> fragmentMetas = new ArrayList<>();
+    fragmentMetas.add(fragment);
+    return createFragmentsAndStorageUnits(storageUnitMetas, fragmentMetas);
   }
 
   @Override
@@ -875,7 +892,7 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public Map<String, List<FragmentMeta>> loadFragmentOfEachNode() {
+  public Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() {
     try {
       return storage.loadFragmentOfEachNode();
     } catch (MetaStorageException e) {
@@ -884,9 +901,48 @@ public class DefaultMetaManager implements IMetaManager {
     return new HashMap<>();
   }
 
+  private void initMaxActiveEndTimeStatistics() throws MetaStorageException {
+    storage.registerMaxActiveEndTimeStatisticsChangeHook((iginxId, endTime) -> {
+      if (endTime <= 0L) {
+        return;
+      }
+      if (iginxId == DefaultMetaManager.this.id) {
+        return;
+      }
+      updateMaxActiveEndTime(endTime);
+      int updatedCounter = maxActiveEndTimeStatisticsCounter.incrementAndGet();
+      if (isProposer) {
+        logger.info("iginx node {}(proposer) increment max active end time statistics counter {}",
+            this.id, updatedCounter);
+      } else {
+        logger.info("iginx node {} increment max active end time statistics counter {}", this.id,
+            updatedCounter);
+      }
+    });
+  }
+
   private void initReshardStatus() throws MetaStorageException {
     storage.registerReshardStatusHook(status -> {
-      reshardStatus = status;
+      try {
+        reshardStatus = status;
+        if (reshardStatus.equals(EXECUTING)) {
+          storage.lockMaxActiveEndTimeStatistics();
+          storage.addOrUpdateMaxActiveEndTimeStatistics(id, maxActiveEndTime.get());
+          storage.releaseMaxActiveEndTimeStatistics();
+        }
+        if (reshardStatus.equals(NON_RESHARDING)) {
+          if (isProposer) {
+            logger.info("iginx node {}(proposer) finish to reshard", id);
+          } else {
+            logger.info("iginx node {} finish to reshard", id);
+          }
+
+          isProposer = false;
+          maxActiveEndTimeStatisticsCounter.set(0);
+        }
+      } catch (MetaStorageException e) {
+        logger.error("encounter error when switching reshard status: ", e);
+      }
     });
     storage.lockReshardStatus();
     storage.removeReshardStatus();
@@ -915,5 +971,14 @@ public class DefaultMetaManager implements IMetaManager {
     storage.lockReshardCounter();
     storage.removeReshardCounter();
     storage.releaseReshardCounter();
+  }
+
+  public void updateMaxActiveEndTime(long endTime) {
+    maxActiveEndTime.getAndUpdate(e -> Math.max(e, endTime
+        + ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
+  }
+
+  public long getMaxActiveEndTime() {
+    return maxActiveEndTime.get();
   }
 }

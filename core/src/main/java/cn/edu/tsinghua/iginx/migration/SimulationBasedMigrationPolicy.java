@@ -11,8 +11,6 @@ import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +25,11 @@ public class SimulationBasedMigrationPolicy extends MigrationPolicy {
 
   @Override
   public void migrate(List<MigrationTask> migrationTasks,
-      Map<String, List<FragmentMeta>> nodeFragmentMap,
+      Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap) {
     long startTime = System.currentTimeMillis();
 
-    Map<String, Long> nodeLoadMap = calculateNodeLoadMap(nodeFragmentMap, fragmentWriteLoadMap,
+    Map<Long, Long> nodeLoadMap = calculateNodeLoadMap(nodeFragmentMap, fragmentWriteLoadMap,
         fragmentReadLoadMap);
     List<List<Queue<MigrationTask>>> candidateMigrationTaskQueueList = createParallelQueueWithoutPriority(
         migrationTasks);
@@ -78,7 +76,7 @@ public class SimulationBasedMigrationPolicy extends MigrationPolicy {
 
   private synchronized void simulateOneRoundMigration(
       List<Queue<MigrationTask>> migrationTaskQueueList,
-      Map<String, Long> nodeLoadMap, Map<MigrationTask, Long> workingMigrationTask, long currTime) {
+      Map<Long, Long> nodeLoadMap, Map<MigrationTask, Long> workingMigrationTask, long currTime) {
     for (Queue<MigrationTask> migrationTaskQueue : migrationTaskQueueList) {
       MigrationTask migrationTask = migrationTaskQueue.peek();
       //根据负载判断是否能进行该任务
@@ -93,7 +91,7 @@ public class SimulationBasedMigrationPolicy extends MigrationPolicy {
   /**
    * 计算不均衡值并返回（当前为标准差）
    */
-  private double calculateUnbalance(Map<String, Long> nodeLoadMap) {
+  private double calculateUnbalance(Map<Long, Long> nodeLoadMap) {
     return MigrationUtils.variance(nodeLoadMap.values());
   }
 
@@ -123,7 +121,7 @@ public class SimulationBasedMigrationPolicy extends MigrationPolicy {
     Map<String, List<MigrationTask>> edgeMigrationTasksMap = new HashMap<>();
     for (MigrationTask migrationTask : migrationTasks) {
       String edgeId =
-          migrationTask.getSourceStorageUnitId() + "-" + migrationTask.getTargetStorageUnitId();
+          migrationTask.getSourceStorageId() + "-" + migrationTask.getTargetStorageId();
       List<MigrationTask> edgeMigrationTasks = edgeMigrationTasksMap
           .computeIfAbsent(edgeId, k -> new ArrayList<>());
       edgeMigrationTasks.add(migrationTask);

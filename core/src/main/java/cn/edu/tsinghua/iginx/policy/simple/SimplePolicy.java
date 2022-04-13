@@ -184,7 +184,8 @@ public class SimplePolicy implements IPolicy {
         return new Pair<>(fragmentList, storageUnitList);
     }
 
-    private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    @Override
+    public Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true, false);
         FragmentMeta fragment = new FragmentMeta(startPath, endPath, startTime, endTime, masterId);
@@ -204,7 +205,7 @@ public class SimplePolicy implements IPolicy {
     }
 
     @Override
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(DataStatement statement) {
+    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsByStatement(DataStatement statement) {
         long startTime;
         if (statement.getType() == StatementType.INSERT) {
             startTime = ((InsertStatement) statement).getEndTime() + TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin()) * 2 + 1;
@@ -250,7 +251,7 @@ public class SimplePolicy implements IPolicy {
 
     @Override
     public void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap,
-        Map<String, List<FragmentMeta>> nodeFragmentMap,
+        Map<Long, List<FragmentMeta>> nodeFragmentMap,
         Map<FragmentMeta, Long> fragmentWriteLoadMap,
         Map<FragmentMeta, Long> fragmentReadLoadMap) {
 

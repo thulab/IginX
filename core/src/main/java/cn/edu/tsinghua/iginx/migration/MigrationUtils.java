@@ -1,29 +1,11 @@
 package cn.edu.tsinghua.iginx.migration;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class MigrationUtils {
-
-  public static void migrateData(String sourceStorageUnitId, String targetStorageUnitId,
-      FragmentMeta fragmentMeta) {
-
-  }
-
-  public static void reshardFragment(String sourceStorageUnitId, String targetStorageUnitId,
-      FragmentMeta fragmentMeta) {
-  }
-
-  public static void operateTaskAndRequest(String sourceStorageUnitId, String targetStorageUnitId,
-      FragmentMeta fragmentMeta) {
-
-  }
 
   /**
    * 获取列表的排列组合

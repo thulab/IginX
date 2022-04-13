@@ -11,18 +11,18 @@ public class MigrationTask {
   private FragmentMeta fragmentMeta;
   private long load;
   private long size;
-  private String sourceStorageUnitId;
-  private String targetStorageUnitId;
+  private Long sourceStorageId;
+  private Long targetStorageId;
   private MigrationType migrationType;
 
   public MigrationTask(FragmentMeta fragmentMeta, long load, long size,
-      String sourceStorageUnitId, String targetStorageUnitId,
+      Long sourceStorageId, Long targetStorageId,
       MigrationType migrationType) {
     this.fragmentMeta = fragmentMeta;
     this.load = load;
     this.size = size;
-    this.sourceStorageUnitId = sourceStorageUnitId;
-    this.targetStorageUnitId = targetStorageUnitId;
+    this.sourceStorageId = sourceStorageId;
+    this.targetStorageId = targetStorageId;
     this.migrationType = migrationType;
   }
 

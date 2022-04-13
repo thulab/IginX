@@ -47,7 +47,6 @@ public class DynamicPolicy implements IPolicy {
 
   protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
   private IMetaManager iMetaManager;
-  private FragmentCreator fragmentCreator;
   private static final Config config = ConfigDescriptor.getInstance().getConfig();
   private static final Logger logger = LoggerFactory.getLogger(DynamicPolicy.class);
   private static final double unbalanceThreshold = config.getUnbalanceThreshold();
@@ -62,7 +61,6 @@ public class DynamicPolicy implements IPolicy {
   @Override
   public void init(IMetaManager iMetaManager) {
     this.iMetaManager = iMetaManager;
-    this.fragmentCreator = new FragmentCreator(this, this.iMetaManager);
     StorageEngineChangeHook hook = getStorageEngineChangeHook();
     if (hook != null) {
       iMetaManager.registerStorageEngineChangeHook(hook);
@@ -234,7 +232,8 @@ public class DynamicPolicy implements IPolicy {
     return new Pair<>(fragmentList, storageUnitList);
   }
 
-  private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+  @Override
+  public Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
       String startPath, String endPath, long startTime, long endTime,
       List<Long> storageEngineList) {
     String masterId = RandomStringUtils.randomAlphanumeric(16);
@@ -259,105 +258,10 @@ public class DynamicPolicy implements IPolicy {
   }
 
   @Override
-  public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(
+  public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnitsByStatement(
       DataStatement statement) {
-    long startTime;
-    if (statement.getType() == StatementType.INSERT) {
-      startTime = ((InsertStatement) statement).getEndTime() +
-          TimeUnit.SECONDS.toMillis(ConfigDescriptor.getInstance().getConfig().getDisorderMargin())
-              * 2 + 1;
-    } else {
-      throw new IllegalArgumentException(
-          "function generateFragmentsAndStorageUnits only use insert statement for now.");
-    }
-
-    Map<String, Double> data = iMetaManager.getTimeseriesData();
-    List<String> prefixList = getNewFragment(data);
-
-    List<FragmentMeta> fragmentList = new ArrayList<>();
-    List<StorageUnitMeta> storageUnitList = new ArrayList<>();
-
-    int storageEngineNum = iMetaManager.getStorageEngineNum();
-    int replicaNum = Math
-        .min(1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum(), storageEngineNum);
-    List<Long> storageEngineIdList;
-    Pair<FragmentMeta, StorageUnitMeta> pair;
-    int index = 0;
-
-    // [startTime, +∞) & (null, startPath)
-    storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(null,
-        prefixList.get(0), startTime, Long.MAX_VALUE, storageEngineIdList);
-    fragmentList.add(pair.k);
-    storageUnitList.add(pair.v);
-
-    // [startTime, +∞) & [startPath, endPath)
-    int splitNum = Math.max(prefixList.size() - 1, 0);
-    for (int i = 0; i < splitNum; i++) {
-      storageEngineIdList = generateStorageEngineIdList(index++, replicaNum);
-      pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(prefixList.get(i),
-          prefixList.get(i + 1), startTime, Long.MAX_VALUE, storageEngineIdList);
-      fragmentList.add(pair.k);
-      storageUnitList.add(pair.v);
-    }
-
-    // [startTime, +∞) & [endPath, null)
-    storageEngineIdList = generateStorageEngineIdList(index, replicaNum);
-    pair = generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
-        prefixList.get(prefixList.size() - 1), null, startTime, Long.MAX_VALUE,
-        storageEngineIdList);
-    fragmentList.add(pair.k);
-    storageUnitList.add(pair.v);
-
-    return new Pair<>(fragmentList, storageUnitList);
-  }
-
-  private List<String> getNewFragment(Map<String, Double> data) {
-    List<String> ret = new ArrayList<>();
-    int n = data.size();
-    int m = iMetaManager.getStorageEngineNum() * config.getFragmentPerEngine();
-    if (config.isEnableStorageGroupValueLimit()) {
-      double totalValue = data.values().stream().mapToDouble(Double::doubleValue).sum();
-      m = new Double(Math.ceil(
-          totalValue / config.getStorageGroupValueLimit() / iMetaManager.getStorageEngineNum())).
-          intValue() * iMetaManager.getStorageEngineNum();
-    }
-    List<Pair<String, Double>> tmp = data.entrySet().stream()
-        .map(entry -> new Pair<>(entry.getKey(), entry.getValue())).
-            sorted(Comparator.comparing(Pair::getK)).collect(Collectors.toList());
-    List<Double> sum = new ArrayList<>();
-    sum.add(0.0);
-    for (int i = 0; i < n; i++) {
-      sum.add(sum.get(i) + tmp.get(i).v);
-    }
-    double[][] dp = new double[n + 1][m + 1];
-    int[][] last = new int[n + 1][m + 1];
-    for (int i = 0; i <= n; i++) {
-      for (int j = 0; j <= m; j++) {
-        dp[i][j] = Double.MAX_VALUE / 10;
-        last[i][j] = -1;
-      }
-    }
-    dp[0][0] = 0;
-    for (int i = 1; i <= n; i++) {
-      for (int j = 1; j <= m; j++) {
-        for (int k = 0; k < i; k++) {
-          double tmpValue = dp[k][j - 1] + Math.pow(sum.get(i) - sum.get(k), 2);
-          if (tmpValue < dp[i][j]) {
-            dp[i][j] = tmpValue;
-            last[i][j] = k;
-          }
-        }
-      }
-    }
-    int tmpn = n, tmpm = m;
-    while (last[tmpn][tmpm] > 0) {
-      tmpn = last[tmpn][tmpm];
-      tmpm--;
-      ret.add(tmp.get(tmpn - 1).k);
-    }
-    Collections.reverse(ret);
-    return ret;
+    logger.debug("dynamic policy do not have to reallocate fragments by one statement");
+    return new Pair<>(new ArrayList<>(), new ArrayList<>());
   }
 
   public boolean isNeedReAllocate() {
@@ -397,7 +301,7 @@ public class DynamicPolicy implements IPolicy {
   @Override
   public void executeReshardAndMigration(
       Map<FragmentMeta, Long> fragmentMetaPointsMap,
-      Map<String, List<FragmentMeta>> nodeFragmentMap,
+      Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap) {
     // 平均资源占用
     double totalHeat = 0;
@@ -444,7 +348,7 @@ public class DynamicPolicy implements IPolicy {
       }
     }
     // 所有的节点
-    String[] allNodes = new String[nodeFragmentMap.size()];
+    Long[] allNodes = new Long[nodeFragmentMap.size()];
     nodeFragmentMap.keySet().toArray(allNodes);
     // 计算迁移计划
     List<MigrationTask> migrationTasks = new ArrayList<>();
@@ -453,7 +357,6 @@ public class DynamicPolicy implements IPolicy {
       for (int j = 0; j < allNodes.length; j++) {
         // 只找迁移的源节点
         if (m[i][j] == 1) {
-          MigrationTask migrationTask = null;
           // 写要迁移
           if (migrationResults[0][i][j] == 0) {
             int targetIndex;
@@ -462,10 +365,10 @@ public class DynamicPolicy implements IPolicy {
                 break;
               }
             }
-            migrationTask = new MigrationTask(fragmentMeta,
+            migrationTasks.add(new MigrationTask(fragmentMeta,
                 fragmentWriteLoadMap.get(fragmentMeta),
                 fragmentMetaPointsMap.get(fragmentMeta), allNodes[j], allNodes[targetIndex],
-                MigrationType.WRITE);
+                MigrationType.WRITE));
           }
           // 读要迁移
           else if (migrationResults[1][i][j] == 0) {
@@ -475,14 +378,10 @@ public class DynamicPolicy implements IPolicy {
                 break;
               }
             }
-            migrationTask = new MigrationTask(fragmentMeta,
+            migrationTasks.add(new MigrationTask(fragmentMeta,
                 fragmentReadLoadMap.get(fragmentMeta),
                 fragmentMetaPointsMap.get(fragmentMeta), allNodes[j], allNodes[targetIndex],
-                MigrationType.QUERY);
-          }
-
-          if (migrationTask != null) {
-            migrationTasks.add(migrationTask);
+                MigrationType.QUERY));
           }
         }
       }
@@ -495,7 +394,7 @@ public class DynamicPolicy implements IPolicy {
 
   private int[][][] calculateMigrationFinalStatus(double averageScore,
       Map<FragmentMeta, Long> fragmentMetaPointsMap,
-      Map<String, List<FragmentMeta>> nodeFragmentMap,
+      Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
       int totalFragmentNum, int[][] m) {
     int[][][] result = new int[2][totalFragmentNum][nodeFragmentMap.size()];

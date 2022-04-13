@@ -62,12 +62,12 @@ public class MonitorManager implements Runnable {
         Map<FragmentMeta, Long> fragmentHeatWriteMap = fragmentHeatPair.getK();
         Map<FragmentMeta, Long> fragmentHeatReadMap = fragmentHeatPair.getV();
         Map<FragmentMeta, Long> fragmentMetaPointsMap = metaManager.loadFragmentPoints();
-        Map<String, List<FragmentMeta>> fragmentOfEachNode = metaManager.loadFragmentOfEachNode();
+        Map<Long, List<FragmentMeta>> fragmentOfEachNode = metaManager.loadFragmentOfEachNode();
 
         long totalHeats = 0;
         long maxHeat = 0;
         long minHeat = Long.MAX_VALUE;
-        for (Entry<String, List<FragmentMeta>> fragmentOfEachNodeEntry : fragmentOfEachNode
+        for (Entry<Long, List<FragmentMeta>> fragmentOfEachNodeEntry : fragmentOfEachNode
             .entrySet()) {
           long heat = 0;
           List<FragmentMeta> fragmentMetas = fragmentOfEachNodeEntry.getValue();

@@ -31,8 +31,4 @@ public interface IStorage {
     TaskExecuteResult execute(StoragePhysicalTask task);
 
     List<Timeseries> getTimeSeries() throws PhysicalException;
-
-    String exportData(FragmentMeta fragmentMeta);
-
-    void importData(String filePath);
 }
