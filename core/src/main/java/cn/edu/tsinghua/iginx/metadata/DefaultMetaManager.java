@@ -892,6 +892,20 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public void doneReshard() {
+    try {
+      if (!reshardStatus.equals(EXECUTING)) {
+        return;
+      }
+      storage.lockReshardStatus();
+      reshardStatus = NON_RESHARDING;
+      storage.releaseReshardStatus();
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when proposing to reshard: ", e);
+    }
+  }
+
+  @Override
   public Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() {
     try {
       return storage.loadFragmentOfEachNode();
@@ -925,10 +939,14 @@ public class DefaultMetaManager implements IMetaManager {
     storage.registerReshardStatusHook(status -> {
       try {
         reshardStatus = status;
-        if (reshardStatus.equals(EXECUTING)) {
+        if (reshardStatus.equals(JUDGING)) {
           storage.lockMaxActiveEndTimeStatistics();
           storage.addOrUpdateMaxActiveEndTimeStatistics(id, maxActiveEndTime.get());
           storage.releaseMaxActiveEndTimeStatistics();
+
+          storage.lockReshardCounter();
+          storage.incrementReshardCounter();
+          storage.releaseReshardCounter();
         }
         if (reshardStatus.equals(NON_RESHARDING)) {
           if (isProposer) {
@@ -960,9 +978,15 @@ public class DefaultMetaManager implements IMetaManager {
           storage.resetReshardCounter();
           storage.releaseReshardCounter();
 
-          storage.lockReshardStatus();
-          storage.updateReshardStatus(NON_RESHARDING);
-          storage.releaseReshardStatus();
+          if (reshardStatus == JUDGING) {
+            storage.lockReshardStatus();
+            storage.updateReshardStatus(EXECUTING);
+            storage.releaseReshardStatus();
+          } else {
+            storage.lockReshardStatus();
+            storage.updateReshardStatus(NON_RESHARDING);
+            storage.releaseReshardStatus();
+          }
         }
       } catch (MetaStorageException e) {
         logger.error("encounter error when updating reshard counter: ", e);

@@ -46,7 +46,7 @@ public class MonitorManager implements Runnable {
       try {
         //清空节点信息
         metaManager.clearMonitors();
-        Thread.sleep(interval);
+        Thread.sleep(interval * 1000L);
         metaManager.updateFragmentRequests(RequestsMonitor.getInstance().getWriteRequestsMap(),
             RequestsMonitor.getInstance()
                 .getReadRequestsMap());
@@ -86,6 +86,8 @@ public class MonitorManager implements Runnable {
           //发起负载均衡
           policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
               fragmentHeatWriteMap, fragmentHeatReadMap);
+          //完成负载均衡
+          DefaultMetaManager.getInstance().doneReshard();
         }
       } catch (Exception e) {
         logger.error("monitor manager error ", e);

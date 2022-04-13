@@ -1438,33 +1438,39 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat()
       throws Exception {
     Map<String, FragmentMeta> pathFragmentMetaMap = new HashMap<>();
-    Iterator<ChildData> iterator = fragmentCache.iterator();
-    while (iterator.hasNext()) {
-      FragmentMeta fragmentMeta = JsonUtils.fromJson(iterator.next().getData(), FragmentMeta.class);
-      pathFragmentMetaMap.put(
-          fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString(),
-          fragmentMeta);
-    }
-    Map<FragmentMeta, Long> writeHotspotMap = new HashMap<>();
-    List<String> children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE);
-    for (String child : children) {
-      byte[] data = this.client.getData()
-          .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child);
-      long heat = JsonUtils.fromJson(data, Long.class);
-      FragmentMeta fragmentMeta = pathFragmentMetaMap.get(child);
-      writeHotspotMap.put(fragmentMeta, heat);
-    }
+    if (fragmentCache != null) {
+      Iterator<ChildData> iterator = fragmentCache.iterator();
+      while (iterator.hasNext()) {
+        FragmentMeta fragmentMeta = JsonUtils
+            .fromJson(iterator.next().getData(), FragmentMeta.class);
+        pathFragmentMetaMap.put(
+            fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval()
+                .toString(),
+            fragmentMeta);
+      }
+      Map<FragmentMeta, Long> writeHotspotMap = new HashMap<>();
+      List<String> children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE);
+      for (String child : children) {
+        byte[] data = this.client.getData()
+            .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child);
+        long heat = JsonUtils.fromJson(data, Long.class);
+        FragmentMeta fragmentMeta = pathFragmentMetaMap.get(child);
+        writeHotspotMap.put(fragmentMeta, heat);
+      }
 
-    Map<FragmentMeta, Long> readHotspotMap = new HashMap<>();
-    children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ);
-    for (String child : children) {
-      byte[] data = this.client.getData()
-          .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ + "/" + child);
-      long heat = JsonUtils.fromJson(data, Long.class);
-      FragmentMeta fragmentMeta = pathFragmentMetaMap.get(child);
-      readHotspotMap.put(fragmentMeta, heat);
+      Map<FragmentMeta, Long> readHotspotMap = new HashMap<>();
+      children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ);
+      for (String child : children) {
+        byte[] data = this.client.getData()
+            .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ + "/" + child);
+        long heat = JsonUtils.fromJson(data, Long.class);
+        FragmentMeta fragmentMeta = pathFragmentMetaMap.get(child);
+        readHotspotMap.put(fragmentMeta, heat);
+      }
+      return new Pair<>(writeHotspotMap, readHotspotMap);
+    } else {
+      return new Pair<>(new HashMap<>(), new HashMap<>());
     }
-    return new Pair<>(writeHotspotMap, readHotspotMap);
   }
 
   @Override
@@ -1717,7 +1723,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   private void registerMaxActiveEndTimeStatisticsListener() throws Exception {
-    this.maxActiveEndTimeStatisticsCache = new TreeCache(this.client, MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX);
+    this.maxActiveEndTimeStatisticsCache = new TreeCache(this.client,
+        MAX_ACTIVE_END_TIME_STATISTICS_NODE_PREFIX);
     TreeCacheListener listener = (curatorFramework, event) -> {
       if (maxActiveEndTimeStatisticsChangeHook == null) {
         return;
@@ -1752,17 +1759,22 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
-  public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException {
+  public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime)
+      throws MetaStorageException {
     try {
-      if (this.client.checkExists().forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
+      if (this.client.checkExists()
+          .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
         this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id),
+                JsonUtils.toJson(endTime));
       } else {
         this.client.setData()
-            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id), JsonUtils.toJson(endTime));
+            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id),
+                JsonUtils.toJson(endTime));
       }
     } catch (Exception e) {
-      throw new MetaStorageException("encounter error when adding or updating max active end time statistics: ", e);
+      throw new MetaStorageException(
+          "encounter error when adding or updating max active end time statistics: ", e);
     }
   }
 
@@ -1772,7 +1784,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
-  public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+  public void registerMaxActiveEndTimeStatisticsChangeHook(
+      MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
     this.maxActiveEndTimeStatisticsChangeHook = hook;
   }
 

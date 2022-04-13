@@ -727,4 +727,26 @@ public class FileMetaStorage implements IMetaStorage {
             reshardCounterChangeHook = hook;
         }
     }
+
+    @Override
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime)
+        throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(
+        MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+
+    }
 }

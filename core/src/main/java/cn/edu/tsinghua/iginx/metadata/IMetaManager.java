@@ -216,5 +216,7 @@ public interface IMetaManager {
 
     void executeReshard();
 
+    void doneReshard();
+
     Map<Long, List<FragmentMeta>> loadFragmentOfEachNode();
 }
