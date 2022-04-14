@@ -25,7 +25,9 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class IoTDBSessionExample {
 
@@ -45,7 +47,7 @@ public class IoTDBSessionExample {
     private static Session session;
 
     public static void main(String[] args) throws SessionException, ExecutionException {
-        session = new Session("127.0.0.1", 6888, "root", "root");
+        session = new Session("11.101.17.23", 2333, "root", "root");
         // 打开 Session
         session.openSession();
 
@@ -66,7 +68,7 @@ public class IoTDBSessionExample {
         // 降采样聚合查询
         downsampleQuery();
         // 删除数据
-        deleteDataInColumns();
+        //deleteDataInColumns();
         // 再次查询数据
         queryData();
         // 查看集群信息
