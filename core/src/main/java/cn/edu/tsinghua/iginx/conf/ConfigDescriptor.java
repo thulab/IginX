@@ -118,6 +118,11 @@ public class ConfigDescriptor {
 
             config.setEnablePushDown(Boolean.parseBoolean(properties.getProperty("enablePushDown", "true")));
             config.setUseStreamExecutor(Boolean.parseBoolean(properties.getProperty("useStreamExecutor", "true")));
+
+            config.setSystemResourceMetrics(properties.getProperty("system_resource_metrics", "default"));
+            config.setHeapMemoryThreshold(Double.parseDouble(properties.getProperty("heap_memory_threshold", "0.9")));
+            config.setSystemMemoryThreshold(Double.parseDouble(properties.getProperty("system_memory_threshold", "0.9")));
+            config.setSystemCpuThreshold(Double.parseDouble(properties.getProperty("system_cpu_threshold", "0.9")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -169,6 +174,10 @@ public class ConfigDescriptor {
         config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
         config.setEnablePushDown(EnvUtils.loadEnv("enablePushDown", config.isEnablePushDown()));
         config.setUseStreamExecutor(EnvUtils.loadEnv("useStreamExecutor", config.isUseStreamExecutor()));
+        config.setSystemResourceMetrics(EnvUtils.loadEnv("system_resource_metrics", config.getSystemResourceMetrics()));
+        config.setHeapMemoryThreshold(EnvUtils.loadEnv("heap_memory_threshold", config.getHeapMemoryThreshold()));
+        config.setSystemMemoryThreshold(EnvUtils.loadEnv("system_memory_threshold", config.getSystemMemoryThreshold()));
+        config.setSystemCpuThreshold(EnvUtils.loadEnv("system_cpu_threshold", config.getSystemCpuThreshold()));
     }
 
 

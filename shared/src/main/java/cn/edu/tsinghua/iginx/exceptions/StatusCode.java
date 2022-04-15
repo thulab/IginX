@@ -29,7 +29,9 @@ public enum StatusCode {
 
     SESSION_ERROR(400),
     STATEMENT_EXECUTION_ERROR(401),
-    STATEMENT_PARSE_ERROR(402);
+    STATEMENT_PARSE_ERROR(402),
+
+    SERVICE_UNAVAILABLE(503);
 
     private int statusCode;
 

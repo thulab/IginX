@@ -117,6 +117,14 @@ public class Config {
 
     private boolean useStreamExecutor = true;
 
+    private String systemResourceMetrics = "default";
+
+    private double heapMemoryThreshold = 0.9;
+
+    private double systemMemoryThreshold = 0.9;
+
+    private double systemCpuThreshold = 0.9;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -499,5 +507,37 @@ public class Config {
 
     public void setUseStreamExecutor(boolean useStreamExecutor) {
         this.useStreamExecutor = useStreamExecutor;
+    }
+
+    public String getSystemResourceMetrics() {
+        return systemResourceMetrics;
+    }
+
+    public void setSystemResourceMetrics(String systemResourceMetrics) {
+        this.systemResourceMetrics = systemResourceMetrics;
+    }
+
+    public double getHeapMemoryThreshold() {
+        return heapMemoryThreshold;
+    }
+
+    public void setHeapMemoryThreshold(double heapMemoryThreshold) {
+        this.heapMemoryThreshold = heapMemoryThreshold;
+    }
+
+    public double getSystemMemoryThreshold() {
+        return systemMemoryThreshold;
+    }
+
+    public void setSystemMemoryThreshold(double systemMemoryThreshold) {
+        this.systemMemoryThreshold = systemMemoryThreshold;
+    }
+
+    public double getSystemCpuThreshold() {
+        return systemCpuThreshold;
+    }
+
+    public void setSystemCpuThreshold(double systemCpuThreshold) {
+        this.systemCpuThreshold = systemCpuThreshold;
     }
 }

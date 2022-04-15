@@ -18,25 +18,14 @@
  */
 package cn.edu.tsinghua.iginx.resource.system;
 
-public class DefaultSystemMetrics implements SystemMetrics {
+public interface SystemMetricsService {
 
-    @Override
-    public double getRecentCpuUsage() {
-        return 0;
-    }
+    void start();
 
-    @Override
-    public double getRecentMemoryUsage() {
-        return 0;
-    }
+    void stop();
 
-    @Override
-    public double getCpuUsage() {
-        return 0;
-    }
+    double getRecentCpuUsage();
 
-    @Override
-    public double getMemoryUsage() {
-        return 0;
-    }
+    double getRecentMemoryUsage();
+
 }
