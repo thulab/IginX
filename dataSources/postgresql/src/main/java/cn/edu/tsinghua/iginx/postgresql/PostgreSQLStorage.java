@@ -1,24 +1,6 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-package cn.edu.tsinghua.iginx.timescaledb;
+package cn.edu.tsinghua.iginx.postgresql;
 
-import static cn.edu.tsinghua.iginx.timescaledb.tools.FilterTransformer.MAX_TIMESTAMP;
+import static cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer.MAX_TIMESTAMP;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
@@ -45,10 +27,10 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
+import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
+import cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.timescaledb.entity.TimescaleDBQueryRowStream;
-import cn.edu.tsinghua.iginx.timescaledb.tools.DataTypeTransformer;
-import cn.edu.tsinghua.iginx.timescaledb.tools.FilterTransformer;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -62,13 +44,13 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class TimescaleDBStorage implements IStorage {
+public class PostgreSQLStorage implements IStorage {
 
-  private static final Logger logger = LoggerFactory.getLogger(TimescaleDBStorage.class);
+  private static final Logger logger = LoggerFactory.getLogger(PostgreSQLStorage.class);
 
   private static final int BATCH_SIZE = 10000;
 
-  private static final String STORAGE_ENGINE = "timescaledb";
+  private static final String STORAGE_ENGINE = "postgresql";
 
   private static final String USERNAME = "username";
 
@@ -88,13 +70,13 @@ public class TimescaleDBStorage implements IStorage {
 
   private static final String IGINX_SEPARATOR = ".";
 
-  private static final String TIMESCALEDB_SEPARATOR = "$";
+  private static final String POSTGRESQL_SEPARATOR = "$";
 
   private final StorageEngineMeta meta;
 
   private final Connection connection;
 
-  public TimescaleDBStorage(StorageEngineMeta meta) throws StorageInitializationException {
+  public PostgreSQLStorage(StorageEngineMeta meta) throws StorageInitializationException {
     this.meta = meta;
     if (!testConnection()) {
       throw new StorageInitializationException("cannot connect to " + meta.toString());
@@ -176,9 +158,9 @@ public class TimescaleDBStorage implements IStorage {
           String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
           String typeName = columnSet.getString("TYPE_NAME");//列字段类型
           timeseries.add(new Timeseries(
-              tableName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
-                  + columnName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR),
-              DataTypeTransformer.fromTimescaleDB(typeName)));
+              tableName.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
+                  + columnName.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR),
+              DataTypeTransformer.fromPostgreSQL(typeName)));
         }
       }
     } catch (SQLException e) {
@@ -187,25 +169,25 @@ public class TimescaleDBStorage implements IStorage {
     return timeseries;
   }
 
-  private TaskExecuteResult executeProjectTask( String storageUnit,
+  private TaskExecuteResult executeProjectTask(String storageUnit,
       Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
     try {
       List<ResultSet> resultSets = new ArrayList<>();
       List<Field> fields = new ArrayList<>();
       for (String path : project.getPatterns()) {
         String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
-        table = table.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+        table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
-        sensor = sensor.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+        sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         // 查询序列类型
         DatabaseMetaData databaseMetaData = connection.getMetaData();
         ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, sensor);
         if (columnSet.next()) {
           String typeName = columnSet.getString("TYPE_NAME");//列字段类型
           fields
-              .add(new Field(table.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
-                  + sensor.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR)
-                  , DataTypeTransformer.fromTimescaleDB(typeName)));
+              .add(new Field(table.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
+                  + sensor.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR)
+                  , DataTypeTransformer.fromPostgreSQL(typeName)));
           String statement = String
               .format(QUERY_DATA, sensor, table, FilterTransformer.toString(filter));
           Statement stmt = connection.createStatement();
@@ -213,11 +195,11 @@ public class TimescaleDBStorage implements IStorage {
           resultSets.add(rs);
         }
       }
-      RowStream rowStream = new TimescaleDBQueryRowStream(resultSets, fields);
+      RowStream rowStream = new PostgreSQLQueryRowStream(resultSets, fields);
       return new TaskExecuteResult(rowStream);
     } catch (SQLException e) {
       return new TaskExecuteResult(
-          new PhysicalTaskExecuteFailureException("execute project task in timescaledb failure",
+          new PhysicalTaskExecuteFailureException("execute project task in postgresql failure",
               e));
     }
   }
@@ -248,14 +230,13 @@ public class TimescaleDBStorage implements IStorage {
         Statement stmt = connection.createStatement();
         stmt.execute(String
             .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s %s NULL)", table, column,
-                DataTypeTransformer.toTimescaleDB(dataType)));
-        stmt.execute(String.format("SELECT create_hypertable('%s', 'time')", table));
+                DataTypeTransformer.toPostgreSQL(dataType)));
       } else {
         ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, column);
         if (!columnSet.next()) {
           Statement stmt = connection.createStatement();
           stmt.execute(String.format("ALTER TABLE %s ADD COLUMN %s %s NULL", table, column,
-              DataTypeTransformer.toTimescaleDB(dataType)));
+              DataTypeTransformer.toPostgreSQL(dataType)));
         }
       }
     } catch (SQLException e) {
@@ -272,12 +253,12 @@ public class TimescaleDBStorage implements IStorage {
         String path = data.getPath(i);
         DataType dataType = data.getDataType(i);
         String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
-        table = table.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+        table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
-        sensor = sensor.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+        sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         createTimeSeriesIfNotExists(table, sensor, dataType);
         for (int j = 0; j < data.getTimeSize(); j++) {
-          long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+          long time = data.getTimestamp(j) / 1000; // postgresql存10位时间戳，java为13位时间戳
           String value = data.getValue(j, i).toString();
           stmt.addBatch(String
               .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
@@ -304,9 +285,9 @@ public class TimescaleDBStorage implements IStorage {
         String path = delete.getPatterns().get(i);
         TimeRange timeRange = delete.getTimeRanges().get(i);
         String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
-        table = table.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+        table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
-        sensor = sensor.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
+        sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         // 查询序列类型
         DatabaseMetaData databaseMetaData = connection.getMetaData();
         ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, sensor);
@@ -321,7 +302,7 @@ public class TimescaleDBStorage implements IStorage {
       return new TaskExecuteResult(null, null);
     } catch (SQLException e) {
       return new TaskExecuteResult(
-          new PhysicalTaskExecuteFailureException("execute delete task in timescaledb failure",
+          new PhysicalTaskExecuteFailureException("execute delete task in postgresql failure",
               e));
     }
   }

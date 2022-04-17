@@ -24,7 +24,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimescaleDBSessionExample {
+public class PostgreSQLSessionExample {
 
     private static final String S1 = "sg.d1.s1";
     private static final String S2 = "sg.d1.s2";
@@ -47,8 +47,8 @@ public class TimescaleDBSessionExample {
         session.openSession();
         // 行式插入对齐数据
 //        insertRowRecords();
-        queryData();
-//        deleteDataInColumns();
+//        queryData();
+        deleteDataInColumns();
         // 关闭 Session
         session.closeSession();
     }
@@ -69,6 +69,8 @@ public class TimescaleDBSessionExample {
             for (long j = 0; j < 4; j++) {
                 if (j < 2) {
                     values[(int) j] = i + j;
+                } else {
+//                    values[(int) j] = RandomStringUtils.randomAlphanumeric(10).getBytes();
                 }
             }
             valuesList[(int) i] = values;
@@ -78,6 +80,9 @@ public class TimescaleDBSessionExample {
         for (int i = 0; i < 2; i++) {
             dataTypeList.add(DataType.LONG);
         }
+//        for (int i = 0; i < 2; i++) {
+//            dataTypeList.add(DataType.BINARY);
+//        }
 
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
