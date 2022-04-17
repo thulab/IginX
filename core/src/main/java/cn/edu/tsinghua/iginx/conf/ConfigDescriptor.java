@@ -117,6 +117,7 @@ public class ConfigDescriptor {
             config.setStorageGroupValueLimit(Double.parseDouble(properties.getProperty("storageGroupValueLimit", "200.0")));
 
             config.setEnablePushDown(Boolean.parseBoolean(properties.getProperty("enablePushDown", "true")));
+            config.setUseStreamExecutor(Boolean.parseBoolean(properties.getProperty("useStreamExecutor", "true")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -167,6 +168,7 @@ public class ConfigDescriptor {
         config.setEnableStorageGroupValueLimit(EnvUtils.loadEnv("enableStorageGroupValueLimit", config.isEnableStorageGroupValueLimit()));
         config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
         config.setEnablePushDown(EnvUtils.loadEnv("enablePushDown", config.isEnablePushDown()));
+        config.setUseStreamExecutor(EnvUtils.loadEnv("useStreamExecutor", config.isUseStreamExecutor()));
     }
 
 

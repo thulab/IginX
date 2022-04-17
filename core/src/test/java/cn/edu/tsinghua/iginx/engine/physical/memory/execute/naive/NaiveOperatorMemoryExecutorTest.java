@@ -18,25 +18,24 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.AbstractOperatorMemoryExecutorTest;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 import java.util.Arrays;
 
-public class NaiveOperatorMemoryExecutorTest {
+public class NaiveOperatorMemoryExecutorTest extends AbstractOperatorMemoryExecutorTest {
 
-    private final NaiveOperatorMemoryExecutor executor = NaiveOperatorMemoryExecutor.getInstance();
+    private final NaiveOperatorMemoryExecutor executor;
 
-    private final Source source = new AbstractSource() {
-        @Override
-        public Source copy() {
-            return null;
-        }
-    };
-
-    public void testProject() {
-        Project project = new Project(source, Arrays.asList("a", "b"));
+    public NaiveOperatorMemoryExecutorTest() {
+        executor = NaiveOperatorMemoryExecutor.getInstance();
     }
 
+    @Override
+    protected OperatorMemoryExecutor getExecutor() {
+        return executor;
+    }
 }

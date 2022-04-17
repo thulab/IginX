@@ -7,7 +7,7 @@
     <parent>
         <groupId>cn.edu.tsinghua</groupId>
         <artifactId>iginx</artifactId>
-        <version>0.4.0-SNAPSHOT</version>
+        <version>0.5.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
@@ -76,6 +76,17 @@
 <!--                        </goals>-->
 <!--                        <configuration>-->
 <!--                            <generator>py</generator>-->
+<!--                        </configuration>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>generate-thrift-sources-go</id>-->
+<!--                        <phase>generate-sources</phase>-->
+<!--                        <goals>-->
+<!--                            <goal>compile</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <generator>go</generator>-->
+<!--                            <outputDirectory>${project.build.directory}/generated-sources/thrift</outputDirectory>-->
 <!--                        </configuration>-->
 <!--                    </execution>-->
                 </executions>
@@ -194,6 +205,7 @@
                                 <configuration>
                                     <generator>java</generator>
 <!--                                    <generator>py</generator>-->
+<!--                                    <generator>go</generator>-->
                                     <thriftExecutable>${thrift.exec.absolute.path}</thriftExecutable>
                                     <thriftSourceRoot>src/main/proto</thriftSourceRoot>
                                 </configuration>

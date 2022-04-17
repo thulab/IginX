@@ -31,7 +31,7 @@ public class RowStreamWrapper implements RowStream {
     }
 
     @Override
-    public Header getHeader() {
+    public Header getHeader() throws PhysicalException {
         return rowStream.getHeader();
     }
 

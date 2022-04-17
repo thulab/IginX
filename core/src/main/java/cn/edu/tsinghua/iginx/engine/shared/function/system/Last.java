@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.function.system;
 
 
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.Table;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;

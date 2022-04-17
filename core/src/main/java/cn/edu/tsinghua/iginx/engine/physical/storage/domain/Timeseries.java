@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.physical.storage.domain;
 
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive.Table;
+import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;

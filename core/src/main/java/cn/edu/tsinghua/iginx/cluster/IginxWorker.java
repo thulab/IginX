@@ -27,13 +27,16 @@ import cn.edu.tsinghua.iginx.engine.ContextBuilder;
 import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.resource.QueryManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +58,8 @@ public class IginxWorker implements IService.Iface {
     private final UserManager userManager = UserManager.getInstance();
 
     private final SessionManager sessionManager = SessionManager.getInstance();
+
+    private final QueryManager queryManager = QueryManager.getInstance();
 
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 
@@ -387,5 +392,28 @@ public class IginxWorker implements IService.Iface {
         }
         resp.setStatus(RpcUtils.SUCCESS);
         return resp;
+    }
+
+    @Override
+    public ExecuteStatementResp executeStatement(ExecuteStatementReq req) {
+        StatementExecutor executor = StatementExecutor.getInstance();
+        RequestContext ctx = contextBuilder.build(req);
+        executor.execute(ctx);
+        return ctx.getResult().getExecuteStatementResp(req.getFetchSize());
+    }
+
+    @Override
+    public FetchResultsResp fetchResults(FetchResultsReq req) {
+        RequestContext context = queryManager.getQuery(req.queryId);
+        if (context == null) {
+            return new FetchResultsResp(RpcUtils.SUCCESS, false);
+        }
+        return context.getResult().fetch(req.getFetchSize());
+    }
+
+    @Override
+    public Status closeStatement(CloseStatementReq req) {
+        queryManager.releaseQuery(req.queryId);
+        return RpcUtils.SUCCESS;
     }
 }

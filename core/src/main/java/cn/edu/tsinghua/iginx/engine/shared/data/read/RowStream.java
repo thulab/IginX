@@ -22,7 +22,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 
 public interface RowStream {
 
-    Header getHeader();
+    Header getHeader() throws PhysicalException;
 
     void close() throws PhysicalException;
 
