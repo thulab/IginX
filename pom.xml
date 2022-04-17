@@ -22,7 +22,7 @@
     <module>dataSources/influxdb</module>
     <!--module>dataSources/opentsdb</module-->
     <!--module>dataSources/timescaledb</module-->
-    <module>postgresql</module>
+    <module>dataSources/postgresql</module>
     <module>shared</module>
     <module>client</module>
     <module>antlr</module>
