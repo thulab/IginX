@@ -68,9 +68,9 @@ public class DefaultMetaCache implements IMetaCache {
 
     private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
 
-    private Random random = new Random();
+    private final Random random = new Random();
 
-    private Config config = ConfigDescriptor.getInstance().getConfig();
+    private final Config config = ConfigDescriptor.getInstance().getConfig();
 
     private DefaultMetaCache() {
         // 分片相关

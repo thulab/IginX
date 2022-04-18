@@ -127,6 +127,12 @@ public class Config {
 
     private double systemCpuThreshold = 0.9;
 
+    private boolean enableMetaCacheControl = false;
+
+    private long fragmentCacheThreshold = 1024 * 128;
+
+    private double fragmentLRUCacheRatio = 0.3;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -549,5 +555,29 @@ public class Config {
 
     public void setSystemCpuThreshold(double systemCpuThreshold) {
         this.systemCpuThreshold = systemCpuThreshold;
+    }
+
+    public boolean isEnableMetaCacheControl() {
+        return enableMetaCacheControl;
+    }
+
+    public void setEnableMetaCacheControl(boolean enableMetaCacheControl) {
+        this.enableMetaCacheControl = enableMetaCacheControl;
+    }
+
+    public long getFragmentCacheThreshold() {
+        return fragmentCacheThreshold;
+    }
+
+    public void setFragmentCacheThreshold(long fragmentCacheThreshold) {
+        this.fragmentCacheThreshold = fragmentCacheThreshold;
+    }
+
+    public double getFragmentLRUCacheRatio() {
+        return fragmentLRUCacheRatio;
+    }
+
+    public void setFragmentLRUCacheRatio(double fragmentLRUCacheRatio) {
+        this.fragmentLRUCacheRatio = fragmentLRUCacheRatio;
     }
 }

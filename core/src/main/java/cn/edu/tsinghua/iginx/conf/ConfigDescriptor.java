@@ -124,6 +124,10 @@ public class ConfigDescriptor {
             config.setHeapMemoryThreshold(Double.parseDouble(properties.getProperty("heap_memory_threshold", "0.9")));
             config.setSystemMemoryThreshold(Double.parseDouble(properties.getProperty("system_memory_threshold", "0.9")));
             config.setSystemCpuThreshold(Double.parseDouble(properties.getProperty("system_cpu_threshold", "0.9")));
+
+            config.setEnableMetaCacheControl(Boolean.parseBoolean(properties.getProperty("enable_meta_cache_control", "false")));
+            config.setFragmentCacheThreshold(Long.parseLong(properties.getProperty("fragment_cache_threshold", "131072")));
+            config.setFragmentLRUCacheRatio(Double.parseDouble(properties.getProperty("fragment_lru_cache_ratio", "0.3")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -180,6 +184,9 @@ public class ConfigDescriptor {
         config.setHeapMemoryThreshold(EnvUtils.loadEnv("heap_memory_threshold", config.getHeapMemoryThreshold()));
         config.setSystemMemoryThreshold(EnvUtils.loadEnv("system_memory_threshold", config.getSystemMemoryThreshold()));
         config.setSystemCpuThreshold(EnvUtils.loadEnv("system_cpu_threshold", config.getSystemCpuThreshold()));
+        config.setEnableMetaCacheControl(EnvUtils.loadEnv("enable_meta_cache_control", config.isEnableMetaCacheControl()));
+        config.setFragmentCacheThreshold(EnvUtils.loadEnv("fragment_cache_threshold", config.getFragmentCacheThreshold()));
+        config.setFragmentLRUCacheRatio(EnvUtils.loadEnv("fragment_lru_cache_ratio", config.getFragmentLRUCacheRatio()));
     }
 
 
