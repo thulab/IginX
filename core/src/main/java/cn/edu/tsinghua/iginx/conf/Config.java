@@ -117,6 +117,8 @@ public class Config {
 
     private boolean useStreamExecutor = true;
 
+    private boolean enableMemoryControl = true;
+
     private String systemResourceMetrics = "default";
 
     private double heapMemoryThreshold = 0.9;
@@ -507,6 +509,14 @@ public class Config {
 
     public void setUseStreamExecutor(boolean useStreamExecutor) {
         this.useStreamExecutor = useStreamExecutor;
+    }
+
+    public boolean isEnableMemoryControl() {
+        return enableMemoryControl;
+    }
+
+    public void setEnableMemoryControl(boolean enableMemoryControl) {
+        this.enableMemoryControl = enableMemoryControl;
     }
 
     public String getSystemResourceMetrics() {

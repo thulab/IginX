@@ -164,7 +164,7 @@ public class StatementExecutor {
     }
 
     public void execute(RequestContext ctx) {
-        if (resourceManager.reject(ctx)) {
+        if (config.isEnableMemoryControl() && resourceManager.reject(ctx)) {
             ctx.setResult(new Result(RpcUtils.SERVICE_UNAVAILABLE));
             return;
         }
