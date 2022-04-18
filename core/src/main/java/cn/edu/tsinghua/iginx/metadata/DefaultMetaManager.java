@@ -830,7 +830,7 @@ public class DefaultMetaManager implements IMetaManager {
       int fragmentRequestsCount = storage.getFragmentRequestsCounter();
       int fragmentHeatCount = storage.getFragmentHeatCounter();
       int count = getIginxList().size();
-      return fragmentRequestsCount == count && fragmentHeatCount == count;
+      return fragmentRequestsCount >= count && fragmentHeatCount >= count;
     } catch (MetaStorageException e) {
       logger.error("encounter error when get monitor counter: ", e);
       return false;
@@ -852,7 +852,7 @@ public class DefaultMetaManager implements IMetaManager {
   @Override
   public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() {
     try {
-      return storage.loadFragmentHeat();
+      return storage.loadFragmentHeat(cache);
     } catch (Exception e) {
       logger.error("encounter error when remove fragment heat: ", e);
       return new Pair<>(new HashMap<>(), new HashMap<>());
@@ -862,7 +862,7 @@ public class DefaultMetaManager implements IMetaManager {
   @Override
   public Map<FragmentMeta, Long> loadFragmentPoints() {
     try {
-      return storage.loadFragmentPoints();
+      return storage.loadFragmentPoints(cache);
     } catch (Exception e) {
       logger.error("encounter error when load fragment points: ", e);
       return new HashMap<>();
@@ -878,7 +878,7 @@ public class DefaultMetaManager implements IMetaManager {
       storage.lockReshardStatus();
       // 提议进入重分片流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
       if (storage.proposeToReshard()) {
-        reshardStatus = JUDGING;
+        reshardStatus = EXECUTING;
         isProposer = true;
         // 生成最终节点状态和整体迁移计划
         // 根据整体迁移计划进行迁移
@@ -905,16 +905,6 @@ public class DefaultMetaManager implements IMetaManager {
     }
   }
 
-  @Override
-  public Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() {
-    try {
-      return storage.loadFragmentOfEachNode();
-    } catch (MetaStorageException e) {
-      logger.error("encounter error when load fragment of each node: ", e);
-    }
-    return new HashMap<>();
-  }
-
   private void initMaxActiveEndTimeStatistics() throws MetaStorageException {
     storage.registerMaxActiveEndTimeStatisticsChangeHook((iginxId, endTime) -> {
       if (endTime <= 0L) {
@@ -939,7 +929,7 @@ public class DefaultMetaManager implements IMetaManager {
     storage.registerReshardStatusHook(status -> {
       try {
         reshardStatus = status;
-        if (reshardStatus.equals(JUDGING)) {
+        if (reshardStatus.equals(EXECUTING)) {
           storage.lockMaxActiveEndTimeStatistics();
           storage.addOrUpdateMaxActiveEndTimeStatistics(id, maxActiveEndTime.get());
           storage.releaseMaxActiveEndTimeStatistics();
@@ -978,11 +968,7 @@ public class DefaultMetaManager implements IMetaManager {
           storage.resetReshardCounter();
           storage.releaseReshardCounter();
 
-          if (reshardStatus == JUDGING) {
-            storage.lockReshardStatus();
-            storage.updateReshardStatus(EXECUTING);
-            storage.releaseReshardStatus();
-          } else {
+          if (reshardStatus == EXECUTING) {
             storage.lockReshardStatus();
             storage.updateReshardStatus(NON_RESHARDING);
             storage.releaseReshardStatus();

@@ -72,7 +72,7 @@ public class ConfigDescriptor {
             config.setEnableMonitor(Boolean.parseBoolean(properties.getProperty("enableMonitor", "true")));
             config.setLoadBalanceCheckInterval(Integer.parseInt(properties.getProperty("loadBalanceCheckInterval", "30")));
             config.setUnbalanceThreshold(Double.parseDouble(properties.getProperty("unbalanceThreshold", "60")));
-            config.setMaxLoadThreshold(Double.parseDouble(properties.getProperty("maxLoadThreshold", String.valueOf(Runtime.getRuntime().availableProcessors() * config.getUnbalanceThreshold() * 0.8))));
+            config.setMaxLoadThreshold(Double.parseDouble(properties.getProperty("maxLoadThreshold", String.valueOf(Runtime.getRuntime().availableProcessors() * config.getLoadBalanceCheckInterval() * 1000 * 0.8))));
             config.setMigrationBatchSize(Long.parseLong(properties.getProperty("migrationBatchSize", "100")));
             config.setReshardFragmentTimeMargin(Long.parseLong(properties.getProperty("reshardFragmentTimeMargin", "60")));
             config.setMigrationPolicyClassName(properties.getProperty("migrationPolicyClassName", "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy"));

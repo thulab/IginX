@@ -4,14 +4,18 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.mqtt.MQTTService;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +54,9 @@ public class MonitorManager implements Runnable {
         metaManager.updateFragmentRequests(RequestsMonitor.getInstance().getWriteRequestsMap(),
             RequestsMonitor.getInstance()
                 .getReadRequestsMap());
-        metaManager.updateFragmentHeat(HotSpotMonitor.getInstance().getWriteHotspotMap(),
-            HotSpotMonitor.getInstance().getReadHotspotMap());
+        Map<FragmentMeta, Long> writeHotspotMap = HotSpotMonitor.getInstance().getWriteHotspotMap();
+        Map<FragmentMeta, Long> readHotspotMap = HotSpotMonitor.getInstance().getReadHotspotMap();
+        metaManager.updateFragmentHeat(writeHotspotMap, readHotspotMap);
         //等待收集完成
         while (!metaManager.isAllMonitorsCompleteCollection()) {
           Thread.sleep(1000);
@@ -62,7 +67,8 @@ public class MonitorManager implements Runnable {
         Map<FragmentMeta, Long> fragmentHeatWriteMap = fragmentHeatPair.getK();
         Map<FragmentMeta, Long> fragmentHeatReadMap = fragmentHeatPair.getV();
         Map<FragmentMeta, Long> fragmentMetaPointsMap = metaManager.loadFragmentPoints();
-        Map<Long, List<FragmentMeta>> fragmentOfEachNode = metaManager.loadFragmentOfEachNode();
+        Map<Long, List<FragmentMeta>> fragmentOfEachNode = loadFragmentOfEachNode(
+            fragmentHeatWriteMap, fragmentHeatReadMap);
 
         long totalHeats = 0;
         long maxHeat = 0;
@@ -83,6 +89,7 @@ public class MonitorManager implements Runnable {
         // 判断负载均衡
         if ((1 - unbalanceThreshold) * averageHeats >= minHeat
             || (1 + unbalanceThreshold) * averageHeats <= maxHeat) {
+          DefaultMetaManager.getInstance().executeReshard();
           //发起负载均衡
           policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
               fragmentHeatWriteMap, fragmentHeatReadMap);
@@ -93,5 +100,30 @@ public class MonitorManager implements Runnable {
         logger.error("monitor manager error ", e);
       }
     }
+  }
+
+  private Map<Long, List<FragmentMeta>> loadFragmentOfEachNode(
+      Map<FragmentMeta, Long> fragmentHeatWriteMap, Map<FragmentMeta, Long> fragmentHeatReadMap) {
+    Set<FragmentMeta> fragmentMetaSet = new HashSet<>();
+    Map<Long, List<FragmentMeta>> result = new HashMap<>();
+    fragmentMetaSet.addAll(fragmentHeatWriteMap.keySet());
+    fragmentMetaSet.addAll(fragmentHeatReadMap.keySet());
+
+    for (FragmentMeta fragmentMeta : fragmentMetaSet) {
+      fragmentMetaSet.add(fragmentMeta);
+      List<FragmentMeta> fragmentMetas = result
+          .computeIfAbsent(fragmentMeta.getMasterStorageUnit().getStorageEngineId(),
+              k -> new ArrayList<>());
+      fragmentMetas.add(fragmentMeta);
+    }
+
+    List<StorageEngineMeta> storageEngineMetas = metaManager.getStorageEngineList();
+    Set<Long> storageIds = result.keySet();
+    for (StorageEngineMeta storageEngineMeta : storageEngineMetas) {
+      if (!storageIds.contains(storageEngineMeta.getId())) {
+        result.put(storageEngineMeta.getId(), new ArrayList<>());
+      }
+    }
+    return result;
   }
 }

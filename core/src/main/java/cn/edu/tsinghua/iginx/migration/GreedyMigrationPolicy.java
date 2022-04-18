@@ -17,7 +17,7 @@ public class GreedyMigrationPolicy extends MigrationPolicy {
 
   private static final Logger logger = LoggerFactory.getLogger(GreedyMigrationPolicy.class);
 
-  public GreedyMigrationPolicy(Logger logger) {
+  public GreedyMigrationPolicy() {
     super(logger);
   }
 

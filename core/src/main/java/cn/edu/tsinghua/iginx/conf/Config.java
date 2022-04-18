@@ -32,7 +32,7 @@ public class Config {
 
     private String zookeeperConnectionString = "127.0.0.1:2181";
 
-    private String storageEngineList = "127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100,127.0.0.1#6668#iotdb#username=root#password=root#sessionPoolSize=100";
+    private String storageEngineList = "127.0.0.1#6667#iotdb12#username=root#password=root#sessionPoolSize=100,127.0.0.1#6668#iotdb12#username=root#password=root#sessionPoolSize=100";
 
     private int maxAsyncRetryTimes = 2;
 
@@ -49,17 +49,17 @@ public class Config {
 
     private boolean enableMonitor = true;
 
-    private int loadBalanceCheckInterval = 30;
+    private int loadBalanceCheckInterval = 10;
 
     private double unbalanceThreshold = 0.2;
 
-    private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * unbalanceThreshold * 0.5;
+    private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * loadBalanceCheckInterval * 1000 * 0.8;
 
     private long migrationBatchSize = 100;
 
     private long reshardFragmentTimeMargin = 60;
 
-    private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy";
+    private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.GreedyMigrationPolicy";
 
     private int storageUnitNum = 30;
 

@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.metadata.storage.etcd;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
+import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -735,11 +736,6 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<Long, List<FragmentMeta>> loadFragmentOfEachNode() throws MetaStorageException {
-        return null;
-    }
-
-    @Override
     public void lockFragment() throws MetaStorageException {
         try {
             fragmentLeaseLock.lock();
@@ -924,13 +920,7 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     }
 
-    @Override
-    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentRequests()
-        throws Exception {
-        return null;
-    }
-
-    @Override
+  @Override
     public void removeFragmentRequests() throws MetaStorageException {
 
     }
@@ -961,7 +951,8 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Map<FragmentMeta, Long> loadFragmentPoints() throws Exception {
+    public Map<FragmentMeta, Long> loadFragmentPoints(
+        IMetaCache cache) throws Exception {
         return null;
     }
 
@@ -973,7 +964,8 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() {
+    public Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat(
+        IMetaCache cache) {
         return null;
     }
 

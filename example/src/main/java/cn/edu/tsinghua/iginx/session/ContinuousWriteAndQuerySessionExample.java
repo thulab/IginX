@@ -18,16 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-
 import cn.edu.tsinghua.iginx.session_v2.IginXClient;
 import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
 import cn.edu.tsinghua.iginx.session_v2.QueryClient;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
-import cn.edu.tsinghua.iginx.session_v2.query.IginXRecord;
 import cn.edu.tsinghua.iginx.session_v2.query.IginXTable;
 import cn.edu.tsinghua.iginx.session_v2.query.SimpleQuery;
 import cn.edu.tsinghua.iginx.session_v2.write.Point;
-import java.util.Arrays;
 
 public class ContinuousWriteAndQuerySessionExample {
 
@@ -39,13 +36,12 @@ public class ContinuousWriteAndQuerySessionExample {
   }
 
   void start() {
-    new Thread(new WriteThread("a.b.c", 10)).start();
-    new Thread(new WriteThread("b.c.a", 5)).start();
-    new Thread(new WriteThread("c.b.a", 20)).start();
-    new Thread(new ReadThread("a.b.c", 5)).start();
+//    new Thread(new WriteThread("b.c.a", 5)).start();
+//    new Thread(new WriteThread("a.b.c", 10)).start();
+//    new Thread(new WriteThread("c.b.a", 20)).start();
     new Thread(new ReadThread("b.c.a", 5)).start();
+    new Thread(new ReadThread("a.b.c", 5)).start();
     new Thread(new ReadThread("c.b.a", 5)).start();
-    client.close();
   }
 
   class WriteThread implements Runnable {

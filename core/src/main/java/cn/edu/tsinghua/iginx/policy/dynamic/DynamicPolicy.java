@@ -2,6 +2,7 @@ package cn.edu.tsinghua.iginx.policy.dynamic;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -12,7 +13,6 @@ import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.migration.MigrationManager;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
-import cn.edu.tsinghua.iginx.policy.simple.FragmentCreator;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
@@ -24,22 +24,13 @@ import ilog.concert.IloNumExpr;
 import ilog.cplex.IloCplex;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.math3.linear.Array2DRowRealMatrix;
-import org.apache.commons.math3.linear.ArrayRealVector;
-import org.apache.commons.math3.linear.DecompositionSolver;
-import org.apache.commons.math3.linear.LUDecomposition;
-import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +45,9 @@ public class DynamicPolicy implements IPolicy {
   @Override
   public void notify(DataStatement statement) {
     if (statement.getType() == StatementType.INSERT) {
-      iMetaManager.saveTimeSeriesData((InsertStatement) statement);
+      InsertStatement insertStatement = (InsertStatement) statement;
+      iMetaManager.saveTimeSeriesData(insertStatement);
+      DefaultMetaManager.getInstance().updateMaxActiveEndTime(insertStatement.getEndTime());
     }
   }
 
@@ -356,7 +349,7 @@ public class DynamicPolicy implements IPolicy {
       FragmentMeta fragmentMeta = allFragmentMetas[i];
       for (int j = 0; j < allNodes.length; j++) {
         // 只找迁移的源节点
-        if (m[i][j] == 1) {
+        if (m[i][j] == 0) {
           // 写要迁移
           if (migrationResults[0][i][j] == 0) {
             int targetIndex;
@@ -364,6 +357,9 @@ public class DynamicPolicy implements IPolicy {
               if (migrationResults[0][i][targetIndex] == 1) {
                 break;
               }
+            }
+            if (targetIndex == allNodes.length) {
+              continue;
             }
             migrationTasks.add(new MigrationTask(fragmentMeta,
                 fragmentWriteLoadMap.get(fragmentMeta),
@@ -377,6 +373,9 @@ public class DynamicPolicy implements IPolicy {
               if (migrationResults[1][i][targetIndex] == 1) {
                 break;
               }
+            }
+            if (targetIndex == allNodes.length) {
+              continue;
             }
             migrationTasks.add(new MigrationTask(fragmentMeta,
                 fragmentReadLoadMap.get(fragmentMeta),
@@ -435,11 +434,22 @@ public class DynamicPolicy implements IPolicy {
       IloLinearNumExpr objExpr = model.linearNumExpr();
       for (int i = 0; i < totalFragmentNum; i++) {
         for (int j = 0; j < nodeFragmentMap.size(); j++) {
-          IloIntVar prodResult = (IloIntVar) model.prod(xr[i][j], 1 - m[i][j]);
-          objExpr.addTerm(prodResult, fragmentSize[i]);
+          if (m[i][j] == 1) {
+            objExpr.addTerm(xr[i][j], fragmentSize[i]);
+          }
         }
       }
       model.addMinimize(objExpr);
+
+      // 调整平衡阈值（防止出现有分区的部分负载过高造成无解的情况）
+      double maxLoad = averageScore * (1 + unbalanceThreshold);
+      double minLoad = averageScore * (1 - unbalanceThreshold);
+      long maxWriteLoad = Arrays.stream(writeLoad).max().getAsLong();
+      long maxReadLoad = Arrays.stream(readLoad).max().getAsLong();
+      if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
+        maxLoad = Math.max(maxWriteLoad, maxReadLoad);
+        minLoad = Arrays.stream(writeLoad).sum() + Arrays.stream(readLoad).sum() - maxLoad;
+      }
 
       // 定义约束条件
       // 负载均衡约束
@@ -450,8 +460,8 @@ public class DynamicPolicy implements IPolicy {
           IloNumExpr rl = model.prod(xr[i][j], readLoad[i]);
           currLoads[i] = model.sum(new IloNumExpr[]{wl, rl});
         }
-        model.addGe(model.sum(currLoads), averageScore * (1 - unbalanceThreshold));
-        model.addLe(model.sum(currLoads), averageScore * (1 + unbalanceThreshold));
+        model.addGe(model.sum(currLoads), minLoad);
+        model.addLe(model.sum(currLoads), maxLoad);
       }
       // 每个分区必须分配在一个节点上
       for (int i = 0; i < totalFragmentNum; i++) {

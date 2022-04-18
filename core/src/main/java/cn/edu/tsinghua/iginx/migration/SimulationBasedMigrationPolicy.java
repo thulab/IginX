@@ -19,7 +19,7 @@ public class SimulationBasedMigrationPolicy extends MigrationPolicy {
   private static final Logger logger = LoggerFactory
       .getLogger(SimulationBasedMigrationPolicy.class);
 
-  public SimulationBasedMigrationPolicy(Logger logger) {
+  public SimulationBasedMigrationPolicy() {
     super(logger);
   }
 

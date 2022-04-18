@@ -41,16 +41,6 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
-        <repository>
-            <id>informatik</id>
-            <url>	https://bio.informatik.uni-jena.de/repository/libs-release-oss</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-        </repository>
     </repositories>
     <dependencies>
         <dependency>
@@ -205,8 +195,10 @@
         </dependency>
         <dependency>
             <groupId>cplex</groupId>
-            <artifactId>cplex</artifactId>
-            <version>12.7.1</version>
+            <artifactId>cplex-22.1.0.0</artifactId>
+            <version>22.1.0.0</version>
+            <scope>system</scope>
+            <systemPath>/Applications/CPLEX_Studio_Community221/cplex/lib/cplex.jar</systemPath>
         </dependency>
     </dependencies>
     <build>
