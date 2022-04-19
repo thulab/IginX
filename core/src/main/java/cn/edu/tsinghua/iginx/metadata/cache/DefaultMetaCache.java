@@ -87,8 +87,7 @@ public class DefaultMetaCache implements IMetaCache {
     private DefaultMetaCache() {
         if (enableFragmentCacheControl) {
             long sizeOfFragment = FragmentMeta.sizeOf();
-            fragmentCacheMaxSize = (int) ((long)(config.getFragmentCacheThreshold() * 1024
-                    * (1 - config.getFragmentLRUCacheRatio())) / sizeOfFragment);
+            fragmentCacheMaxSize = (int) ((long)(config.getFragmentCacheThreshold() * 1024) / sizeOfFragment);
             fragmentCacheSize = 0;
         } else {
             fragmentCacheMaxSize = -1;

@@ -127,7 +127,6 @@ public class ConfigDescriptor {
 
             config.setEnableMetaCacheControl(Boolean.parseBoolean(properties.getProperty("enable_meta_cache_control", "false")));
             config.setFragmentCacheThreshold(Long.parseLong(properties.getProperty("fragment_cache_threshold", "131072")));
-            config.setFragmentLRUCacheRatio(Double.parseDouble(properties.getProperty("fragment_lru_cache_ratio", "0.3")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -186,7 +185,6 @@ public class ConfigDescriptor {
         config.setSystemCpuThreshold(EnvUtils.loadEnv("system_cpu_threshold", config.getSystemCpuThreshold()));
         config.setEnableMetaCacheControl(EnvUtils.loadEnv("enable_meta_cache_control", config.isEnableMetaCacheControl()));
         config.setFragmentCacheThreshold(EnvUtils.loadEnv("fragment_cache_threshold", config.getFragmentCacheThreshold()));
-        config.setFragmentLRUCacheRatio(EnvUtils.loadEnv("fragment_lru_cache_ratio", config.getFragmentLRUCacheRatio()));
     }
 
 

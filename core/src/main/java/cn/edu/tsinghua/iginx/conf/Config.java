@@ -131,8 +131,6 @@ public class Config {
 
     private long fragmentCacheThreshold = 1024 * 128;
 
-    private double fragmentLRUCacheRatio = 0.3;
-
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -571,13 +569,5 @@ public class Config {
 
     public void setFragmentCacheThreshold(long fragmentCacheThreshold) {
         this.fragmentCacheThreshold = fragmentCacheThreshold;
-    }
-
-    public double getFragmentLRUCacheRatio() {
-        return fragmentLRUCacheRatio;
-    }
-
-    public void setFragmentLRUCacheRatio(double fragmentLRUCacheRatio) {
-        this.fragmentLRUCacheRatio = fragmentLRUCacheRatio;
     }
 }
