@@ -163,6 +163,6 @@ public final class FragmentMeta {
     }
 
     public static long sizeOf() {
-        return 0L;
+        return 62L;
     }
 }
