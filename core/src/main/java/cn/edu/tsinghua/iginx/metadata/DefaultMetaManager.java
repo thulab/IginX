@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
@@ -51,6 +52,8 @@ public class DefaultMetaManager implements IMetaManager {
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
     private final List<StorageUnitHook> storageUnitHooks;
     private long id;
+
+    private final Config config = ConfigDescriptor.getInstance().getConfig();
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
