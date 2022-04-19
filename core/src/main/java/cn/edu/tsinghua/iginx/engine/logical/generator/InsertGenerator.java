@@ -53,15 +53,16 @@ public class InsertGenerator extends AbstractGenerator {
 
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(insertStatement.getPaths()));
 
-        TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+        TimeSeriesInterval tsInterval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
+        TimeInterval timeInterval = new TimeInterval(insertStatement.getStartTime(), insertStatement.getEndTime() + 1);
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
         if (fragments.isEmpty()) {
             //on startup
             policy.setNeedReAllocate(false);
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(insertStatement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+            fragments = metaManager.getFragmentMapByTimeSeriesInterval(tsInterval);
         } else if (policy.isNeedReAllocate()) {
             //on scale-out or any events requiring reallocation
             logger.debug("Trig ReAllocate!");
