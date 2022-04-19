@@ -90,6 +90,10 @@ public class InsertStatement extends DataStatement {
         this.bitmaps = bitmaps;
     }
 
+    public long getStartTime() {
+        return times.get(0);
+    }
+
     public long getEndTime() {
         return times.get(times.size() - 1);
     }
