@@ -649,6 +649,58 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
+        try {
+            List<FragmentMeta> fragments = new ArrayList<>();
+            GetResponse response = this.client.getKVClient()
+                    .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
+                            GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
+                    .get();
+            for (KeyValue kv : response.getKvs()) {
+                FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
+                if (fragment.getTimeInterval().isIntersect(timeInterval) && fragment.getTsInterval().isContain(tsName)) {
+                    fragments.add(fragment);
+                }
+            }
+            fragments.sort((o1, o2) -> {
+                long s1 = o1.getTimeInterval().getStartTime();
+                long s2 = o2.getTimeInterval().getStartTime();
+                return Long.compare(s2, s1);
+            });
+            return fragments;
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when get fragments by tsName and timeInterval: ", e);
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        try {
+            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+            GetResponse response = this.client.getKVClient()
+                    .get(ByteSequence.from(FRAGMENT_PREFIX.getBytes()),
+                            GetOption.newBuilder().withPrefix(ByteSequence.from(FRAGMENT_PREFIX.getBytes())).build())
+                    .get();
+            for (KeyValue kv : response.getKvs()) {
+                FragmentMeta fragment = JsonUtils.fromJson(kv.getValue().getBytes(), FragmentMeta.class);
+                if (fragment.getTimeInterval().isIntersect(timeInterval) && fragment.getTsInterval().isIntersect(tsInterval)) {
+                    fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>()).add(fragment);
+                }
+            }
+            fragmentsMap.values().forEach(e -> e.sort((o1, o2) -> {
+                long s1 = o1.getTimeInterval().getStartTime();
+                long s2 = o2.getTimeInterval().getStartTime();
+                return Long.compare(s1, s2);
+            }));
+            return fragmentsMap;
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when get fragments by tsName and timeInterval: ", e);
+        }
+        return new HashMap<>();
+    }
+
+    @Override
     public void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try {
             client.getKVClient().put(ByteSequence.from((FRAGMENT_PREFIX + fragmentMeta.getTsInterval().toString() + "/" + fragmentMeta.getTimeInterval().toString()).getBytes()),

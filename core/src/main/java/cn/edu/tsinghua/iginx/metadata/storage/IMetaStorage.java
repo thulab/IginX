@@ -61,6 +61,10 @@ public interface IMetaStorage {
 
     void lockFragment() throws MetaStorageException;
 
+    List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
+
+    Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+
     void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
     void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;

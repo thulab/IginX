@@ -28,6 +28,8 @@ import java.util.Set;
 
 public interface IMetaCache {
 
+    boolean enableFragmentCacheControl();
+
     // 分片相关的缓存读写接口
     void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap);
 
@@ -50,6 +52,8 @@ public interface IMetaCache {
     List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
 
     boolean hasFragment();
+
+    long getFragmentMinTimestamp();
 
     // 数据单元相关的缓存读写接口
     boolean hasStorageUnit();

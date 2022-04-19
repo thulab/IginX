@@ -110,13 +110,13 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private TimeSeriesChangeHook timeSeriesChangeHook = null;
     private VersionChangeHook versionChangeHook = null;
 
-    private TreeCache userCache;
+    protected TreeCache userCache;
 
-    private TreeCache policyCache;
+    protected TreeCache policyCache;
 
-    private TreeCache timeseriesCache;
+    protected TreeCache timeseriesCache;
 
-    private TreeCache versionCache;
+    protected TreeCache versionCache;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -587,6 +587,66 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         this.storageUnitChangeHook = hook;
     }
 
+
+    @Override
+    public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
+        try {
+            List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
+            for (String tsIntervalName: tsIntervalNames) {
+                TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                if (fragmentTimeSeries.isContain(tsName)) {
+                    List<FragmentMeta> fragments = new ArrayList<>();
+                    List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
+                    for (String timeIntervalName : timeIntervalNames) {
+                        if (Long.parseLong(timeIntervalName) >= timeInterval.getEndTime()) {
+                            break;
+                        }
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        if (fragmentMeta.getTimeInterval().getEndTime() > timeInterval.getStartTime()) {
+                            fragments.add(fragmentMeta);
+                        }
+                    }
+                    return fragments;
+                }
+            }
+        } catch (Exception e) {
+            logger.error("get error when query fragment by tsName and timeInterval");
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        try {
+            List<String> tsIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX);
+            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
+            for (String tsIntervalName: tsIntervalNames) {
+                TimeSeriesInterval fragmentTimeSeries = TimeSeriesInterval.fromString(tsIntervalName);
+                if (fragmentTimeSeries.isIntersect(tsInterval)) {
+                    List<FragmentMeta> fragments = new ArrayList<>();
+                    List<String> timeIntervalNames = this.client.getChildren().forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName);
+                    for (String timeIntervalName : timeIntervalNames) {
+                        if (Long.parseLong(timeIntervalName) >= timeInterval.getEndTime()) {
+                            break;
+                        }
+                        FragmentMeta fragmentMeta = JsonUtils.fromJson(this.client.getData()
+                                .forPath(FRAGMENT_NODE_PREFIX + "/" + tsIntervalName + "/" + timeIntervalName), FragmentMeta.class);
+                        if (fragmentMeta.getTimeInterval().getEndTime() > timeInterval.getStartTime()) {
+                            fragments.add(fragmentMeta);
+                        }
+                    }
+                    fragmentMap.put(fragmentTimeSeries, fragments);
+                }
+
+            }
+            return fragmentMap;
+        } catch (Exception e) {
+            logger.error("get error when query fragment by tsInterval and timeInterval");
+        }
+        return new HashMap<>();
+    }
+
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> loadFragment() throws MetaStorageException {
         try {
@@ -611,7 +671,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             registerFragmentListener();
             return fragmentListMap;
         } catch (Exception e) {
-            throw new MetaStorageException("get error when update schema mapping", e);
+            throw new MetaStorageException("get error when update fragment", e);
         }
     }
 

@@ -26,6 +26,8 @@ import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -35,12 +37,24 @@ import java.util.stream.Collectors;
 
 public class DefaultMetaCache implements IMetaCache {
 
+    private static final Logger logger = LoggerFactory.getLogger(DefaultMetaCache.class.getName());
+
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
     private static DefaultMetaCache INSTANCE = null;
 
     // 分片列表的缓存
     private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
 
     private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
+
+    private int fragmentCacheSize;
+
+    private final int fragmentCacheMaxSize;
+
+    private final boolean enableFragmentCacheControl = config.isEnableMetaCacheControl();
+
+    private long minTimestamp = 0L;
 
     private final ReadWriteLock fragmentLock;
 
@@ -70,9 +84,16 @@ public class DefaultMetaCache implements IMetaCache {
 
     private final Random random = new Random();
 
-    private final Config config = ConfigDescriptor.getInstance().getConfig();
-
     private DefaultMetaCache() {
+        if (enableFragmentCacheControl) {
+            long sizeOfFragment = FragmentMeta.sizeOf();
+            fragmentCacheMaxSize = (int) ((long)(config.getFragmentCacheThreshold() * 1024
+                    * (1 - config.getFragmentLRUCacheRatio())) / sizeOfFragment);
+            fragmentCacheSize = 0;
+        } else {
+            fragmentCacheMaxSize = -1;
+        }
+
         // 分片相关
         sortedFragmentMetaLists = new ArrayList<>();
         fragmentMetaListMap = new HashMap<>();
@@ -101,6 +122,16 @@ public class DefaultMetaCache implements IMetaCache {
             }
         }
         return INSTANCE;
+    }
+
+    @Override
+    public boolean enableFragmentCacheControl() {
+        return enableFragmentCacheControl;
+    }
+
+    @Override
+    public long getFragmentMinTimestamp() {
+        return minTimestamp;
     }
 
     private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
@@ -157,7 +188,31 @@ public class DefaultMetaCache implements IMetaCache {
         sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
             .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
         fragmentListMap.forEach(fragmentMetaListMap::put);
+        if (enableFragmentCacheControl) {
+            // 统计分片总数
+            fragmentCacheSize = sortedFragmentMetaLists.stream().mapToInt(e -> e.v.size()).sum();
+            while (fragmentCacheSize > fragmentCacheMaxSize) {
+                kickOffHistoryFragment();
+            }
+        }
         fragmentLock.writeLock().unlock();
+    }
+
+    private void kickOffHistoryFragment() {
+        long nextMinTimestamp = 0L;
+        for (List<FragmentMeta> fragmentList: fragmentMetaListMap.values()) {
+            FragmentMeta fragment = fragmentList.get(0);
+            if (fragment.getTimeInterval().getStartTime() == minTimestamp) {
+                fragmentList.remove(0);
+                nextMinTimestamp = fragment.getTimeInterval().getEndTime();
+                fragmentCacheSize--;
+            }
+        }
+        if (nextMinTimestamp == 0L || nextMinTimestamp == Long.MAX_VALUE) {
+            logger.error("unexpected next min timestamp " + nextMinTimestamp + "!");
+            System.exit(-1);
+        }
+        minTimestamp = nextMinTimestamp;
     }
 
     @Override
@@ -170,6 +225,16 @@ public class DefaultMetaCache implements IMetaCache {
             updateSortedFragmentsList(fragmentMeta.getTsInterval(), fragmentMetaList);
         }
         fragmentMetaList.add(fragmentMeta);
+        if (enableFragmentCacheControl) {
+            if (fragmentMeta.getTimeInterval().getStartTime() < minTimestamp) {
+                minTimestamp = fragmentMeta.getTimeInterval().getStartTime();
+            }
+            fragmentCacheSize++;
+            while (fragmentCacheSize > fragmentCacheMaxSize) {
+                kickOffHistoryFragment();
+            }
+        }
+
         fragmentLock.writeLock().unlock();
     }
 
@@ -291,7 +356,7 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public boolean hasFragment() {
-        return !sortedFragmentMetaLists.isEmpty();
+        return !sortedFragmentMetaLists.isEmpty() || (enableFragmentCacheControl && minTimestamp != 0L);
     }
 
     @Override
