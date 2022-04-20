@@ -28,7 +28,7 @@ public class Constants {
 
     public static final String CONFIG_FILE = "conf/config.properties";
 
-    public static final String DRIVER_DIR = "driver/";
+    public static final String DRIVER_DIR = "driver";
 
     public static final String FILE_META = "file";
 
