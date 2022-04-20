@@ -26,8 +26,8 @@ public class EnvUtils {
     private static final Logger logger = LoggerFactory.getLogger(EnvUtils.class);
 
     public static boolean loadEnv(String name, boolean defaultValue) {
-        String env = System.getenv(name);
-        env = env==null?System.getProperty(name):env;
+        String env = System.getProperty(name);
+        env = env==null?System.getenv(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -40,8 +40,8 @@ public class EnvUtils {
     }
 
     public static long loadEnv(String name, long defaultValue) {
-        String env = System.getenv(name);
-        env = env==null?System.getProperty(name):env;
+        String env = System.getProperty(name);
+        env = env==null?System.getenv(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -54,8 +54,8 @@ public class EnvUtils {
     }
 
     public static int loadEnv(String name, int defaultValue) {
-        String env = System.getenv(name);
-        env = env==null?System.getProperty(name):env;
+        String env = System.getProperty(name);
+        env = env==null?System.getenv(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -68,8 +68,8 @@ public class EnvUtils {
     }
 
     public static double loadEnv(String name, double defaultValue) {
-        String env = System.getenv(name);
-        env = env==null?System.getProperty(name):env;
+        String env = System.getProperty(name);
+        env = env==null?System.getenv(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -82,8 +82,8 @@ public class EnvUtils {
     }
 
     public static float loadEnv(String name, float defaultValue) {
-        String env = System.getenv(name);
-        env = env==null?System.getProperty(name):env;
+        String env = System.getProperty(name);
+        env = env==null?System.getenv(name):env;
         if (env == null) {
             return defaultValue;
         }
@@ -96,8 +96,8 @@ public class EnvUtils {
     }
 
     public static String loadEnv(String name, String defaultValue) {
-        String env = System.getenv(name);
-        env = env==null?System.getProperty(name):env;
+        String env = System.getProperty(name);
+        env = env==null?System.getenv(name):env;
         if (env == null) {
             return defaultValue;
         }
