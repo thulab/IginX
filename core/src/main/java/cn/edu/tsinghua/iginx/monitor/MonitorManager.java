@@ -5,6 +5,7 @@ import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.mqtt.MQTTService;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
@@ -78,15 +79,19 @@ public class MonitorManager implements Runnable {
           long heat = 0;
           List<FragmentMeta> fragmentMetas = fragmentOfEachNodeEntry.getValue();
           for (FragmentMeta fragmentMeta : fragmentMetas) {
-            heat += fragmentHeatWriteMap.get(fragmentMeta);
-            heat += fragmentHeatReadMap.get(fragmentMeta);
+            heat += fragmentHeatWriteMap.getOrDefault(fragmentMeta, 0L);
+            heat += fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L);
           }
+
           totalHeats += heat;
           maxHeat = Math.max(maxHeat, heat);
           minHeat = Math.min(minHeat, heat);
         }
         double averageHeats = totalHeats * 1.0 / fragmentOfEachNode.size();
         // 判断负载均衡
+        if (minHeat <= 0) {
+          continue;
+        }
         if ((1 - unbalanceThreshold) * averageHeats >= minHeat
             || (1 + unbalanceThreshold) * averageHeats <= maxHeat) {
           DefaultMetaManager.getInstance().executeReshard();

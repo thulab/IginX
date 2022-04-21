@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 public class MigrationTask {
 
-  private static final long WRITE_LOAD_MIGRATION_COST = 10;
+  public static final long RESHARD_MIGRATION_COST = 10;
 
   private FragmentMeta fragmentMeta;
   private long load;
@@ -29,7 +29,7 @@ public class MigrationTask {
   public double getPriorityScore() {
     switch (migrationType) {
       case WRITE:
-        return load * 1.0 / WRITE_LOAD_MIGRATION_COST;
+        return load * 1.0 / RESHARD_MIGRATION_COST;
       case QUERY:
       default:
         return load * 1.0 / size;
@@ -39,7 +39,7 @@ public class MigrationTask {
   public long getMigrationSize() {
     switch (migrationType) {
       case WRITE:
-        return WRITE_LOAD_MIGRATION_COST;
+        return RESHARD_MIGRATION_COST;
       case QUERY:
       default:
         return size;

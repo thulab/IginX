@@ -362,8 +362,10 @@ public class DynamicPolicy implements IPolicy {
               continue;
             }
             migrationTasks.add(new MigrationTask(fragmentMeta,
-                fragmentWriteLoadMap.get(fragmentMeta),
-                fragmentMetaPointsMap.get(fragmentMeta), allNodes[j], allNodes[targetIndex],
+                fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L),
+                fragmentMetaPointsMap
+                    .getOrDefault(fragmentMeta, MigrationTask.RESHARD_MIGRATION_COST), allNodes[j],
+                allNodes[targetIndex],
                 MigrationType.WRITE));
           }
           // 读要迁移
@@ -378,8 +380,10 @@ public class DynamicPolicy implements IPolicy {
               continue;
             }
             migrationTasks.add(new MigrationTask(fragmentMeta,
-                fragmentReadLoadMap.get(fragmentMeta),
-                fragmentMetaPointsMap.get(fragmentMeta), allNodes[j], allNodes[targetIndex],
+                fragmentReadLoadMap.getOrDefault(fragmentMeta, 0L),
+                fragmentMetaPointsMap
+                    .getOrDefault(fragmentMeta, MigrationTask.RESHARD_MIGRATION_COST), allNodes[j],
+                allNodes[targetIndex],
                 MigrationType.QUERY));
           }
         }
@@ -423,9 +427,10 @@ public class DynamicPolicy implements IPolicy {
       int currIndex = 0;
       for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
         for (FragmentMeta fragmentMeta : fragmentMetas) {
-          fragmentSize[currIndex] = fragmentMetaPointsMap.get(fragmentMeta);
-          writeLoad[currIndex] = fragmentWriteLoadMap.get(fragmentMeta);
-          readLoad[currIndex] = fragmentReadLoadMap.get(fragmentMeta);
+          fragmentSize[currIndex] = fragmentMetaPointsMap
+              .getOrDefault(fragmentMeta, MigrationTask.RESHARD_MIGRATION_COST);
+          writeLoad[currIndex] = fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L);
+          readLoad[currIndex] = fragmentReadLoadMap.getOrDefault(fragmentMeta, 0L);
           currIndex++;
         }
       }
@@ -436,6 +441,7 @@ public class DynamicPolicy implements IPolicy {
         for (int j = 0; j < nodeFragmentMap.size(); j++) {
           if (m[i][j] == 1) {
             objExpr.addTerm(xr[i][j], fragmentSize[i]);
+            objExpr.addTerm(xw[i][j], MigrationTask.RESHARD_MIGRATION_COST);
           }
         }
       }

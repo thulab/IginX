@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.EXECUTING;
-import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;

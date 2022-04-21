@@ -147,9 +147,11 @@ public abstract class MigrationPolicy {
       Migration migration = new Migration(new GlobalSource(), sourceStorageId, targetStorageId,
           fragmentMeta);
       RowStream rowStream = physicalEngine.execute(migration);
+      // 设置分片现在所属的storageId
+      fragmentMeta.getMasterStorageUnit().setStorageEngineId(targetStorageId);
+      // 迁移完开始删除原数据
       List<String> paths = new ArrayList<>();
       rowStream.getHeader().getFields().forEach(field -> paths.add(field.getName()));
-      // 迁移完开始删除原数据
       List<TimeRange> timeRanges = new ArrayList<>();
       timeRanges.add(new TimeRange(fragmentMeta.getTimeInterval().getStartTime(), true,
           fragmentMeta.getTimeInterval().getEndTime(), false));
@@ -180,6 +182,8 @@ public abstract class MigrationPolicy {
       DefaultMetaManager.getInstance()
           .createFragmentAndStorageUnit(fragmentMetaStorageUnitMetaPair.getV(),
               fragmentMetaStorageUnitMetaPair.getK());
+      // 切完分区要更新现在元数据里的统计信息
+
     }
   }
 

@@ -26,7 +26,7 @@ public final class StorageUnitMeta {
 
     private final String id;
 
-    private final long storageEngineId;
+    private long storageEngineId;
 
     private final String masterId;
 
@@ -71,6 +71,10 @@ public final class StorageUnitMeta {
 
     public long getStorageEngineId() {
         return storageEngineId;
+    }
+
+    public void setStorageEngineId(long storageEngineId) {
+        this.storageEngineId = storageEngineId;
     }
 
     public String getMasterId() {

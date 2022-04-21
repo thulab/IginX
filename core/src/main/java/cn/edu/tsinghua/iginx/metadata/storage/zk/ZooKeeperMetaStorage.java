@@ -1357,11 +1357,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
       if (this.client.checkExists().forPath(path) == null) {
         this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
             .forPath(path, JsonUtils.toJson(writeHotspotEntry.getValue()));
+      } else {
+        byte[] data = this.client.getData().forPath(path);
+        long heat = JsonUtils.fromJson(data, Long.class);
+        this.client.setData()
+            .forPath(path, JsonUtils.toJson(heat + writeHotspotEntry.getValue()));
       }
-      byte[] data = this.client.getData().forPath(path);
-      long heat = JsonUtils.fromJson(data, Long.class);
-      this.client.setData()
-          .forPath(path, JsonUtils.toJson(heat + writeHotspotEntry.getValue()));
     }
     for (Entry<FragmentMeta, Long> readHotspotEntry : readHotspotMap.entrySet()) {
       String path =
@@ -1370,11 +1371,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
       if (this.client.checkExists().forPath(path) == null) {
         this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
             .forPath(path, JsonUtils.toJson(readHotspotEntry.getValue()));
+      } else {
+        byte[] data = this.client.getData().forPath(path);
+        long heat = JsonUtils.fromJson(data, Long.class);
+        this.client.setData()
+            .forPath(path, JsonUtils.toJson(heat + readHotspotEntry.getValue()));
       }
-      byte[] data = this.client.getData().forPath(path);
-      long heat = JsonUtils.fromJson(data, Long.class);
-      this.client.setData()
-          .forPath(path, JsonUtils.toJson(heat + readHotspotEntry.getValue()));
     }
   }
 
@@ -1383,46 +1385,51 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
       IMetaCache cache)
       throws Exception {
     Map<FragmentMeta, Long> writeHotspotMap = new HashMap<>();
-    List<String> children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE);
-    for (String child : children) {
-      TimeSeriesInterval timeSeriesInterval = TimeSeriesInterval.fromString(child);
-      Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMapOfTimeSeriesInterval = cache
-          .getFragmentMapByTimeSeriesInterval(timeSeriesInterval);
-      List<FragmentMeta> fragmentMetas = fragmentMapOfTimeSeriesInterval.get(timeSeriesInterval);
+    if (this.client.checkExists().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE) != null) {
+      List<String> children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE);
+      for (String child : children) {
+        TimeSeriesInterval timeSeriesInterval = TimeSeriesInterval.fromString(child);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMapOfTimeSeriesInterval = cache
+            .getFragmentMapByTimeSeriesInterval(timeSeriesInterval);
+        List<FragmentMeta> fragmentMetas = fragmentMapOfTimeSeriesInterval.get(timeSeriesInterval);
 
-      List<String> timeIntervals = client.getChildren()
-          .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child);
-      for (String timeInterval : timeIntervals) {
-        long startTime = Long.parseLong(timeInterval);
-        for (FragmentMeta fragmentMeta : fragmentMetas) {
-          if (fragmentMeta.getTimeInterval().getStartTime() == startTime) {
-            byte[] data = this.client.getData()
-                .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child + "/" + timeInterval);
-            long heat = JsonUtils.fromJson(data, Long.class);
-            writeHotspotMap.put(fragmentMeta, heat);
+        List<String> timeIntervals = client.getChildren()
+            .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child);
+        for (String timeInterval : timeIntervals) {
+          long startTime = Long.parseLong(timeInterval);
+          for (FragmentMeta fragmentMeta : fragmentMetas) {
+            if (fragmentMeta.getTimeInterval().getStartTime() == startTime) {
+              byte[] data = this.client.getData()
+                  .forPath(
+                      STATISTICS_FRAGMENT_HEAT_PREFIX_WRITE + "/" + child + "/" + timeInterval);
+              long heat = JsonUtils.fromJson(data, Long.class);
+              writeHotspotMap.put(fragmentMeta, heat);
+            }
           }
         }
       }
     }
 
     Map<FragmentMeta, Long> readHotspotMap = new HashMap<>();
-    children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ);
-    for (String child : children) {
-      TimeSeriesInterval timeSeriesInterval = TimeSeriesInterval.fromString(child);
-      Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMapOfTimeSeriesInterval = cache
-          .getFragmentMapByTimeSeriesInterval(timeSeriesInterval);
-      List<FragmentMeta> fragmentMetas = fragmentMapOfTimeSeriesInterval.get(timeSeriesInterval);
+    if (this.client.checkExists().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ) != null) {
+      List<String> children = client.getChildren().forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ);
+      for (String child : children) {
+        TimeSeriesInterval timeSeriesInterval = TimeSeriesInterval.fromString(child);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMapOfTimeSeriesInterval = cache
+            .getFragmentMapByTimeSeriesInterval(timeSeriesInterval);
+        List<FragmentMeta> fragmentMetas = fragmentMapOfTimeSeriesInterval.get(timeSeriesInterval);
 
-      List<String> timeIntervals = client.getChildren()
-          .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ + "/" + child);
-      for (String timeInterval : timeIntervals) {
-        long startTime = Long.parseLong(timeInterval);
-        for (FragmentMeta fragmentMeta : fragmentMetas) {
-          if (fragmentMeta.getTimeInterval().getStartTime() == startTime) {
-            byte[] data = this.client.getData()
-                .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ + "/" + child + "/" + timeInterval);
-            long heat = JsonUtils.fromJson(data, Long.class);
-            readHotspotMap.put(fragmentMeta, heat);
+        List<String> timeIntervals = client.getChildren()
+            .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ + "/" + child);
+        for (String timeInterval : timeIntervals) {
+          long startTime = Long.parseLong(timeInterval);
+          for (FragmentMeta fragmentMeta : fragmentMetas) {
+            if (fragmentMeta.getTimeInterval().getStartTime() == startTime) {
+              byte[] data = this.client.getData()
+                  .forPath(STATISTICS_FRAGMENT_HEAT_PREFIX_READ + "/" + child + "/" + timeInterval);
+              long heat = JsonUtils.fromJson(data, Long.class);
+              readHotspotMap.put(fragmentMeta, heat);
+            }
           }
         }
       }
