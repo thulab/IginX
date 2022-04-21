@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.resource;
+package cn.edu.tsinghua.iginx.query;
 
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 

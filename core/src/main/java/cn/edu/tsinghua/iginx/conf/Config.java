@@ -117,6 +117,20 @@ public class Config {
 
     private boolean useStreamExecutor = true;
 
+    private boolean enableMemoryControl = true;
+
+    private String systemResourceMetrics = "default";
+
+    private double heapMemoryThreshold = 0.9;
+
+    private double systemMemoryThreshold = 0.9;
+
+    private double systemCpuThreshold = 0.9;
+
+    private boolean enableMetaCacheControl = false;
+
+    private long fragmentCacheThreshold = 1024 * 128;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -499,5 +513,61 @@ public class Config {
 
     public void setUseStreamExecutor(boolean useStreamExecutor) {
         this.useStreamExecutor = useStreamExecutor;
+    }
+
+    public boolean isEnableMemoryControl() {
+        return enableMemoryControl;
+    }
+
+    public void setEnableMemoryControl(boolean enableMemoryControl) {
+        this.enableMemoryControl = enableMemoryControl;
+    }
+
+    public String getSystemResourceMetrics() {
+        return systemResourceMetrics;
+    }
+
+    public void setSystemResourceMetrics(String systemResourceMetrics) {
+        this.systemResourceMetrics = systemResourceMetrics;
+    }
+
+    public double getHeapMemoryThreshold() {
+        return heapMemoryThreshold;
+    }
+
+    public void setHeapMemoryThreshold(double heapMemoryThreshold) {
+        this.heapMemoryThreshold = heapMemoryThreshold;
+    }
+
+    public double getSystemMemoryThreshold() {
+        return systemMemoryThreshold;
+    }
+
+    public void setSystemMemoryThreshold(double systemMemoryThreshold) {
+        this.systemMemoryThreshold = systemMemoryThreshold;
+    }
+
+    public double getSystemCpuThreshold() {
+        return systemCpuThreshold;
+    }
+
+    public void setSystemCpuThreshold(double systemCpuThreshold) {
+        this.systemCpuThreshold = systemCpuThreshold;
+    }
+
+    public boolean isEnableMetaCacheControl() {
+        return enableMetaCacheControl;
+    }
+
+    public void setEnableMetaCacheControl(boolean enableMetaCacheControl) {
+        this.enableMetaCacheControl = enableMetaCacheControl;
+    }
+
+    public long getFragmentCacheThreshold() {
+        return fragmentCacheThreshold;
+    }
+
+    public void setFragmentCacheThreshold(long fragmentCacheThreshold) {
+        this.fragmentCacheThreshold = fragmentCacheThreshold;
     }
 }

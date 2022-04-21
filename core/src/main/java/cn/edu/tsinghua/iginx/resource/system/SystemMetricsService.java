@@ -16,30 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.exceptions;
+package cn.edu.tsinghua.iginx.resource.system;
 
-public enum StatusCode {
-    WRONG_USERNAME_OR_PASSWORD(100),
-    ACCESS_DENY(101),
+public interface SystemMetricsService {
 
-    SUCCESS_STATUS(200),
-    PARTIAL_SUCCESS(204),
+    void start();
 
-    REDIRECT(300),
+    void stop();
 
-    SESSION_ERROR(400),
-    STATEMENT_EXECUTION_ERROR(401),
-    STATEMENT_PARSE_ERROR(402),
+    double getRecentCpuUsage();
 
-    SERVICE_UNAVAILABLE(503);
+    double getRecentMemoryUsage();
 
-    private int statusCode;
-
-    StatusCode(int statusCode) {
-        this.statusCode = statusCode;
-    }
-
-    public int getStatusCode() {
-        return statusCode;
-    }
 }

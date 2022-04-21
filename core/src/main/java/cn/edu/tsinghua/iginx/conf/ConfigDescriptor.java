@@ -118,6 +118,15 @@ public class ConfigDescriptor {
 
             config.setEnablePushDown(Boolean.parseBoolean(properties.getProperty("enablePushDown", "true")));
             config.setUseStreamExecutor(Boolean.parseBoolean(properties.getProperty("useStreamExecutor", "true")));
+
+            config.setEnableMemoryControl(Boolean.parseBoolean(properties.getProperty("enable_memory_control", "true")));
+            config.setSystemResourceMetrics(properties.getProperty("system_resource_metrics", "default"));
+            config.setHeapMemoryThreshold(Double.parseDouble(properties.getProperty("heap_memory_threshold", "0.9")));
+            config.setSystemMemoryThreshold(Double.parseDouble(properties.getProperty("system_memory_threshold", "0.9")));
+            config.setSystemCpuThreshold(Double.parseDouble(properties.getProperty("system_cpu_threshold", "0.9")));
+
+            config.setEnableMetaCacheControl(Boolean.parseBoolean(properties.getProperty("enable_meta_cache_control", "false")));
+            config.setFragmentCacheThreshold(Long.parseLong(properties.getProperty("fragment_cache_threshold", "131072")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -169,6 +178,13 @@ public class ConfigDescriptor {
         config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
         config.setEnablePushDown(EnvUtils.loadEnv("enablePushDown", config.isEnablePushDown()));
         config.setUseStreamExecutor(EnvUtils.loadEnv("useStreamExecutor", config.isUseStreamExecutor()));
+        config.setEnableMemoryControl(EnvUtils.loadEnv("enable_memory_control", config.isEnableMemoryControl()));
+        config.setSystemResourceMetrics(EnvUtils.loadEnv("system_resource_metrics", config.getSystemResourceMetrics()));
+        config.setHeapMemoryThreshold(EnvUtils.loadEnv("heap_memory_threshold", config.getHeapMemoryThreshold()));
+        config.setSystemMemoryThreshold(EnvUtils.loadEnv("system_memory_threshold", config.getSystemMemoryThreshold()));
+        config.setSystemCpuThreshold(EnvUtils.loadEnv("system_cpu_threshold", config.getSystemCpuThreshold()));
+        config.setEnableMetaCacheControl(EnvUtils.loadEnv("enable_meta_cache_control", config.isEnableMetaCacheControl()));
+        config.setFragmentCacheThreshold(EnvUtils.loadEnv("fragment_cache_threshold", config.getFragmentCacheThreshold()));
     }
 
 

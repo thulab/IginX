@@ -18,6 +18,7 @@ import cn.edu.tsinghua.iginx.engine.shared.processor.*;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.exceptions.StatusCode;
+import cn.edu.tsinghua.iginx.resource.ResourceManager;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.statistics.IStatisticsCollector;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
@@ -47,6 +48,8 @@ public class StatementExecutor {
 
     private final static ConstraintChecker checker = ConstraintCheckerManager.getInstance().getChecker(config.getConstraintChecker());
     private final static ConstraintManager constraintManager = engine.getConstraintManager();
+
+    private final static ResourceManager resourceManager = ResourceManager.getInstance();
 
     private final static Map<StatementType, List<LogicalGenerator>> generatorMap = new HashMap<>();
 
@@ -161,6 +164,10 @@ public class StatementExecutor {
     }
 
     public void execute(RequestContext ctx) {
+        if (config.isEnableMemoryControl() && resourceManager.reject(ctx)) {
+            ctx.setResult(new Result(RpcUtils.SERVICE_UNAVAILABLE));
+            return;
+        }
         before(ctx, preExecuteProcessors);
         if (ctx.isFromSQL()) {
             executeSQL(ctx);

@@ -161,4 +161,8 @@ public final class FragmentMeta {
     public void setInitialFragment(boolean initialFragment) {
         this.initialFragment = initialFragment;
     }
+
+    public static long sizeOf() {
+        return 62L;
+    }
 }

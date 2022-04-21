@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
@@ -321,6 +322,21 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        if (cache.enableFragmentCacheControl() && cache.getFragmentMinTimestamp() > 0L) { // 最老的分片被逐出去了
+            TimeInterval beforeTimeInterval = new TimeInterval(0L, cache.getFragmentMinTimestamp());
+            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = storage.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, beforeTimeInterval);
+            updateStorageUnitReference(fragmentsMap);
+            Map<TimeSeriesInterval, List<FragmentMeta>> recentFragmentsMap = cache.getFragmentMapByTimeSeriesInterval(tsInterval);
+            for (TimeSeriesInterval ts: recentFragmentsMap.keySet()) {
+                List<FragmentMeta> fragments = recentFragmentsMap.get(ts);
+                if (fragmentsMap.containsKey(ts)) {
+                    fragmentsMap.get(ts).addAll(fragments);
+                } else {
+                    recentFragmentsMap.put(ts, fragments);
+                }
+            }
+            return fragmentsMap;
+        }
         return cache.getFragmentMapByTimeSeriesInterval(tsInterval);
     }
 
@@ -336,21 +352,50 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        if (cache.enableFragmentCacheControl() && timeInterval.getStartTime() < cache.getFragmentMinTimestamp()) {
+            TimeInterval beforeTimeInterval = new TimeInterval(timeInterval.getStartTime(), cache.getFragmentMinTimestamp());
+            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = storage.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, beforeTimeInterval);
+            updateStorageUnitReference(fragmentsMap);
+            Map<TimeSeriesInterval, List<FragmentMeta>> recentFragmentsMap = cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
+            for (TimeSeriesInterval ts: recentFragmentsMap.keySet()) {
+                List<FragmentMeta> fragments = recentFragmentsMap.get(ts);
+                if (fragmentsMap.containsKey(ts)) {
+                    fragmentsMap.get(ts).addAll(fragments);
+                } else {
+                    recentFragmentsMap.put(ts, fragments);
+                }
+            }
+            return fragmentsMap;
+        }
         return cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
     }
 
     @Override
     public List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName) {
+        if (cache.enableFragmentCacheControl() && cache.getFragmentMinTimestamp() > 0L) {
+            TimeInterval beforeTimeInterval = new TimeInterval(0L, cache.getFragmentMinTimestamp());
+            List<FragmentMeta> fragments = storage.getFragmentListByTimeSeriesNameAndTimeInterval(tsName, beforeTimeInterval);
+            updateStorageUnitReference(fragments);
+            fragments.addAll(cache.getFragmentListByTimeSeriesName(tsName));
+            return fragments;
+        }
         return cache.getFragmentListByTimeSeriesName(tsName);
     }
 
     @Override
-    public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) {
+    public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) { // 最新的分片数据必须被缓存
         return cache.getLatestFragmentByTimeSeriesName(tsName);
     }
 
     @Override
     public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
+        if (cache.enableFragmentCacheControl() && timeInterval.getStartTime() < cache.getFragmentMinTimestamp()) {
+            TimeInterval beforeTimeInterval = new TimeInterval(timeInterval.getStartTime(), cache.getFragmentMinTimestamp());
+            List<FragmentMeta> fragments = storage.getFragmentListByTimeSeriesNameAndTimeInterval(tsName, beforeTimeInterval);
+            updateStorageUnitReference(fragments);
+            fragments.addAll(cache.getFragmentListByTimeSeriesNameAndTimeInterval(tsName, timeInterval));
+            return fragments;
+        }
         return cache.getFragmentListByTimeSeriesNameAndTimeInterval(tsName, timeInterval);
     }
 
@@ -687,6 +732,20 @@ public class DefaultMetaManager implements IMetaManager {
             return null;
         }
         return users.get(0);
+    }
+
+    protected void updateStorageUnitReference(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap) {
+        for (List<FragmentMeta> fragments: fragmentsMap.values()) {
+            for (FragmentMeta fragment: fragments) {
+                fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
+            }
+        }
+    }
+
+    protected void updateStorageUnitReference(List<FragmentMeta> fragments) {
+        for (FragmentMeta fragment: fragments) {
+            fragment.setMasterStorageUnit(cache.getStorageUnit(fragment.getMasterStorageUnitId()));
+        }
     }
 
     @Override

@@ -329,7 +329,7 @@ public class FileMetaStorage implements IMetaStorage {
                 }
             }
         } catch (IOException e) {
-            logger.error("encounter error when read storage unit log file: ", e);
+            logger.error("encounter error when read fragment log file: ", e);
             throw new MetaStorageException(e);
         }
         return fragmentsMap;
@@ -338,6 +338,65 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public void lockFragment() throws MetaStorageException {
         fragmentUnitLock.lock();
+    }
+
+    @Override
+    public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
+        List<FragmentMeta> fragments = new ArrayList<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, FRAGMENT_META_FILE).toFile())))) {
+            String line;
+            String[] params;
+            while ((line = reader.readLine()) != null) {
+                params = line.split(" ");
+                if (params[0].equals(UPDATE)) {
+                    FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
+                    if (fragment.getTsInterval().isContain(tsName) && fragment.getTimeInterval().isIntersect(timeInterval)) {
+                        fragments.remove(fragment);
+                        fragments.add(fragment);
+                    }
+                } else {
+                    logger.error("unknown log content: " + line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("encounter error when read storage unit log file: ", e);
+        }
+        fragments.sort((o1, o2) -> {
+            long s1 = o1.getTimeInterval().getStartTime();
+            long s2 = o2.getTimeInterval().getStartTime();
+            return Long.compare(s1, s2);
+        });
+        return fragments;
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = new HashMap<>();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, FRAGMENT_META_FILE).toFile())))) {
+            String line;
+            String[] params;
+            while ((line = reader.readLine()) != null) {
+                params = line.split(" ");
+                if (params[0].equals(UPDATE)) {
+                    FragmentMeta fragment = JsonUtils.getGson().fromJson(params[1], FragmentMeta.class);
+                    if (fragment.getTsInterval().isIntersect(tsInterval) && fragment.getTimeInterval().isIntersect(timeInterval)) {
+                        List<FragmentMeta> fragmentList = fragmentsMap.computeIfAbsent(fragment.getTsInterval(), e -> new ArrayList<>());
+                        fragmentList.remove(fragment);
+                        fragmentList.add(fragment);
+                    }
+                } else {
+                    logger.error("unknown log content: " + line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("encounter error when read storage unit log file: ", e);
+        }
+        fragmentsMap.values().forEach(e -> e.sort((o1, o2) -> {
+            long s1 = o1.getTimeInterval().getStartTime();
+            long s2 = o2.getTimeInterval().getStartTime();
+            return Long.compare(s1, s2);
+        }));
+        return fragmentsMap;
     }
 
     @Override
