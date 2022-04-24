@@ -160,6 +160,10 @@ public class StoragePhysicalTaskExecutor {
         commit(Collections.singletonList(task));
     }
 
+    public void commitWithTargetStorageUnitId(StoragePhysicalTask task, String storageUnitId) {
+        storageTaskQueues.get(storageUnitId).addTask(task);
+    }
+
     public TaskExecuteResult executeGlobalTask(GlobalPhysicalTask task) {
         List<StorageEngineMeta> storageList = metaManager.getStorageEngineList();
         switch (task.getOperator().getType()) {

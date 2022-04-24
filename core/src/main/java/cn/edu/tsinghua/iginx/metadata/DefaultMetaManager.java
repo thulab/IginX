@@ -286,6 +286,8 @@ public class DefaultMetaManager implements IMetaManager {
     int num = 0;
     try {
       storage.registerPolicy(getIginxId(), num);
+      // 从元数据管理器取写入的最大时间戳
+      maxActiveEndTime.set(storage.getMaxActiveEndTimeStatistics(id));
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -479,6 +481,67 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public FragmentMeta splitFragmentAndStorageUnit(StorageUnitMeta toAddStorageUnit,
+      FragmentMeta toAddFragment, FragmentMeta fragment) {
+    try {
+      storage.lockFragment();
+      storage.lockStorageUnit();
+
+      // 更新du
+      toAddStorageUnit.setCreatedBy(id);
+      String actualName = storage.addStorageUnit();
+      StorageUnitMeta actualMasterStorageUnit = toAddStorageUnit
+          .renameStorageUnitMeta(actualName, actualName);
+      cache.updateStorageUnit(actualMasterStorageUnit);
+      for (StorageUnitHook hook : storageUnitHooks) {
+        hook.onChange(null, actualMasterStorageUnit);
+      }
+      storage.updateStorageUnit(actualMasterStorageUnit);
+      for (StorageUnitMeta slaveStorageUnit : toAddStorageUnit.getReplicas()) {
+        slaveStorageUnit.setCreatedBy(id);
+        String slaveActualName = storage.addStorageUnit();
+        StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit
+            .renameStorageUnitMeta(slaveActualName, actualName);
+        actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+        for (StorageUnitHook hook : storageUnitHooks) {
+          hook.onChange(null, actualSlaveStorageUnit);
+        }
+        cache.updateStorageUnit(actualSlaveStorageUnit);
+        storage.updateStorageUnit(actualSlaveStorageUnit);
+      }
+
+      // 结束旧分片
+      fragment = fragment
+          .endFragmentMeta(toAddFragment.getTimeInterval().getStartTime());
+      fragment.setUpdatedBy(id);
+      cache.updateFragment(fragment);
+      storage.updateFragment(fragment);
+
+      // 更新新分片
+      toAddFragment.setCreatedBy(id);
+      toAddFragment.setInitialFragment(false);
+      if (toAddStorageUnit.isMaster()) {
+        toAddFragment.setMasterStorageUnit(actualMasterStorageUnit);
+      } else {
+        toAddFragment.setMasterStorageUnit(getStorageUnit(actualMasterStorageUnit.getMasterId()));
+      }
+      cache.addFragment(toAddFragment);
+      storage.addFragment(toAddFragment);
+    } catch (MetaStorageException e) {
+      logger.error("create fragment error: ", e);
+    } finally {
+      try {
+        storage.releaseFragment();
+        storage.releaseStorageUnit();
+      } catch (MetaStorageException e) {
+        logger.error("release fragment lock error: ", e);
+      }
+    }
+
+    return fragment;
+  }
+
+  @Override
   public boolean hasFragment() {
     return cache.hasFragment();
   }
@@ -577,6 +640,22 @@ public class DefaultMetaManager implements IMetaManager {
       }
     }
     return false;
+  }
+
+  @Override
+  public StorageUnitMeta generateNewStorageUnitMetaByFragment(FragmentMeta fragmentMeta,
+      long targetStorageId) throws MetaStorageException {
+    String actualName = storage.addStorageUnit();
+    StorageUnitMeta storageUnitMeta = new StorageUnitMeta(actualName, targetStorageId, actualName,
+        true, false);
+    storageUnitMeta.setCreatedBy(getIginxId());
+
+    cache.updateStorageUnit(storageUnitMeta);
+    for (StorageUnitHook hook : storageUnitHooks) {
+      hook.onChange(null, storageUnitMeta);
+    }
+    storage.updateStorageUnit(storageUnitMeta);
+    return storageUnitMeta;
   }
 
   @Override

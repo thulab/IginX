@@ -733,6 +733,11 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public long getMaxActiveEndTimeStatistics(long id) throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
     public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
 
     }

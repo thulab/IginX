@@ -4,9 +4,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
-import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Migration;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
@@ -113,9 +111,10 @@ public abstract class MigrationPolicy {
           if (migrationTask.getMigrationType() == MigrationType.QUERY) {
             // 如果之前没切过分区，需要优先切一下分区
             if (migrationTask.getFragmentMeta().getTimeInterval().getEndTime() == Long.MAX_VALUE) {
-              reshardFragment(migrationTask.getSourceStorageId(),
+              FragmentMeta fragmentMeta = reshardFragment(migrationTask.getSourceStorageId(),
                   migrationTask.getTargetStorageId(),
                   migrationTask.getFragmentMeta());
+              migrationTask.setFragmentMeta(fragmentMeta);
             }
             migrateData(migrationTask.getSourceStorageId(),
                 migrationTask.getTargetStorageId(),
@@ -146,24 +145,22 @@ public abstract class MigrationPolicy {
       // 开始迁移数据
       Migration migration = new Migration(new GlobalSource(), sourceStorageId, targetStorageId,
           fragmentMeta);
-      RowStream rowStream = physicalEngine.execute(migration);
-      // 设置分片现在所属的storageId
-      fragmentMeta.getMasterStorageUnit().setStorageEngineId(targetStorageId);
+      physicalEngine.execute(migration);
       // 迁移完开始删除原数据
       List<String> paths = new ArrayList<>();
-      rowStream.getHeader().getFields().forEach(field -> paths.add(field.getName()));
+      paths.add(fragmentMeta.getMasterStorageUnitId() + "*");
       List<TimeRange> timeRanges = new ArrayList<>();
       timeRanges.add(new TimeRange(fragmentMeta.getTimeInterval().getStartTime(), true,
           fragmentMeta.getTimeInterval().getEndTime(), false));
       Delete delete = new Delete(new FragmentSource(fragmentMeta), timeRanges, paths);
       physicalEngine.execute(delete);
-    } catch (PhysicalException e) {
-      logger.error("encounter error when migrate data from {} to {}", sourceStorageId,
-          targetStorageId);
+    } catch (Exception e) {
+      logger.error("encounter error when migrate data from {} to {} ", sourceStorageId,
+          targetStorageId, e);
     }
   }
 
-  private void reshardFragment(long sourceStorageId, long targetStorageId,
+  private FragmentMeta reshardFragment(long sourceStorageId, long targetStorageId,
       FragmentMeta fragmentMeta) {
     // [startTime, +∞) & (startPath, endPath)
     TimeSeriesInterval tsInterval = fragmentMeta.getTsInterval();
@@ -179,12 +176,11 @@ public abstract class MigrationPolicy {
               tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(),
               DefaultMetaManager.getInstance().getMaxActiveEndTime(), Long.MAX_VALUE,
               storageEngineList);
-      DefaultMetaManager.getInstance()
-          .createFragmentAndStorageUnit(fragmentMetaStorageUnitMetaPair.getV(),
-              fragmentMetaStorageUnitMetaPair.getK());
-      // 切完分区要更新现在元数据里的统计信息
-
+      return DefaultMetaManager.getInstance()
+          .splitFragmentAndStorageUnit(fragmentMetaStorageUnitMetaPair.getV(),
+              fragmentMetaStorageUnitMetaPair.getK(), fragmentMeta);
     }
+    return null;
   }
 
   private void operateTaskAndRequest(long sourceStorageId, long targetStorageId,

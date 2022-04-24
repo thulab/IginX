@@ -1745,6 +1745,23 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
+  public long getMaxActiveEndTimeStatistics(long id) throws MetaStorageException {
+    try {
+      if (this.client.checkExists()
+          .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
+        return JsonUtils.fromJson(
+            this.client.getData()
+                .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)),
+            Long.class);
+      }
+    } catch (Exception e) {
+      throw new MetaStorageException(
+          "encounter error when adding or updating max active end time statistics: ", e);
+    }
+    return -1;
+  }
+
+  @Override
   public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
     maxActiveEndTimeStatisticsMutexLock.unlock();
   }

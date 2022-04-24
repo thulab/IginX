@@ -167,6 +167,8 @@ public interface IMetaStorage {
 
   void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException;
 
+  long getMaxActiveEndTimeStatistics(long id) throws MetaStorageException;
+
   void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
 
   void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException;

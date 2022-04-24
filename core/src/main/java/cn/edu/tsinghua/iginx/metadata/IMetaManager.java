@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
+import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -122,6 +123,12 @@ public interface IMetaManager {
     boolean createFragmentAndStorageUnit(StorageUnitMeta storageUnit, FragmentMeta fragment);
 
     /**
+     * 用于负载均衡，切割分片和du
+     * @return
+     */
+    FragmentMeta splitFragmentAndStorageUnit(StorageUnitMeta toAddStorageUnit, FragmentMeta toAddFragment, FragmentMeta fragment);
+
+    /**
      * 是否已经创建过分片
      */
     boolean hasFragment();
@@ -130,6 +137,12 @@ public interface IMetaManager {
      * 创建初始分片和初始存储单元
      */
     boolean createInitialFragmentsAndStorageUnits(List<StorageUnitMeta> storageUnits, List<FragmentMeta> initialFragments);
+
+    /**
+     * 用于重分片，在目标节点创建相应的du
+     */
+    StorageUnitMeta generateNewStorageUnitMetaByFragment(FragmentMeta fragmentMeta, long targetStorageId)
+        throws MetaStorageException;
 
     /**
      * 为新创建的分片选择存储引擎实例
