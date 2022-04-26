@@ -17,11 +17,6 @@ import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
-import ilog.concert.IloException;
-import ilog.concert.IloIntVar;
-import ilog.concert.IloLinearNumExpr;
-import ilog.concert.IloNumExpr;
-import ilog.cplex.IloCplex;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,6 +25,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lpsolve.LpSolve;
+import lpsolve.LpSolveException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -400,52 +397,47 @@ public class DynamicPolicy implements IPolicy {
       Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
       int totalFragmentNum, int[][] m) {
+    //分区大小函数
+    long[] fragmentSize = new long[totalFragmentNum];
+    long[] writeLoad = new long[totalFragmentNum];
+    long[] readLoad = new long[totalFragmentNum];
+    int currIndex = 0;
+    for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
+      for (FragmentMeta fragmentMeta : fragmentMetas) {
+        fragmentSize[currIndex] = fragmentMetaPointsMap
+            .getOrDefault(fragmentMeta, MigrationTask.RESHARD_MIGRATION_COST);
+        writeLoad[currIndex] = fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L);
+        readLoad[currIndex] = fragmentReadLoadMap.getOrDefault(fragmentMeta, 0L);
+        currIndex++;
+      }
+    }
+
     int[][][] result = new int[2][totalFragmentNum][nodeFragmentMap.size()];
 
     try {
-      // 声明cplex优化模型
-      IloCplex model = new IloCplex();
-
-      // 定义两个二维优化变量
-      IloIntVar[][] xr = new IloIntVar[totalFragmentNum][nodeFragmentMap.size()];
-      for (int i = 0; i < totalFragmentNum; i++) {
-        for (int j = 0; j < nodeFragmentMap.size(); j++) {
-          xr[i][j] = model.intVar(0, 1, "xr[" + i + "," + j + "]");
-        }
-      }
-      IloIntVar[][] xw = new IloIntVar[totalFragmentNum][nodeFragmentMap.size()];
-      for (int i = 0; i < totalFragmentNum; i++) {
-        for (int j = 0; j < nodeFragmentMap.size(); j++) {
-          xw[i][j] = model.intVar(0, 1, "xw[" + i + "," + j + "]");
-        }
-      }
-
-      //分区大小函数
-      long[] fragmentSize = new long[totalFragmentNum];
-      long[] writeLoad = new long[totalFragmentNum];
-      long[] readLoad = new long[totalFragmentNum];
-      int currIndex = 0;
-      for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
-        for (FragmentMeta fragmentMeta : fragmentMetas) {
-          fragmentSize[currIndex] = fragmentMetaPointsMap
-              .getOrDefault(fragmentMeta, MigrationTask.RESHARD_MIGRATION_COST);
-          writeLoad[currIndex] = fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L);
-          readLoad[currIndex] = fragmentReadLoadMap.getOrDefault(fragmentMeta, 0L);
-          currIndex++;
-        }
+      int lpParamNum = 2 * totalFragmentNum * nodeFragmentMap.size();
+      // 声明lp_solve优化模型
+      LpSolve problem = LpSolve.makeLp(0, lpParamNum);
+      // 加速执行
+      problem.setAddRowmode(true);
+      // 设置为0,1变量
+      for (int i = 1; i <= lpParamNum; i++) {
+        problem.setBinary(i, true);
       }
 
       // 定义目标函数
-      IloLinearNumExpr objExpr = model.linearNumExpr();
+      double[] objFnList = new double[lpParamNum];
       for (int i = 0; i < totalFragmentNum; i++) {
         for (int j = 0; j < nodeFragmentMap.size(); j++) {
           if (m[i][j] == 1) {
-            objExpr.addTerm(xr[i][j], fragmentSize[i]);
-            objExpr.addTerm(xw[i][j], MigrationTask.RESHARD_MIGRATION_COST);
+            objFnList[i * totalFragmentNum + j] = MigrationTask.RESHARD_MIGRATION_COST;
+          } else {
+            objFnList[totalFragmentNum * nodeFragmentMap.size() + i * totalFragmentNum
+                + j] = fragmentSize[i];
           }
         }
       }
-      model.addMinimize(objExpr);
+      problem.setObjFn(objFnList);
 
       // 调整平衡阈值（防止出现有分区的部分负载过高造成无解的情况）
       double maxLoad = averageScore * (1 + unbalanceThreshold);
@@ -459,38 +451,46 @@ public class DynamicPolicy implements IPolicy {
 
       // 定义约束条件
       // 负载均衡约束
-      for (int j = 0; j < nodeFragmentMap.size(); j++) {
-        IloNumExpr[] currLoads = new IloNumExpr[totalFragmentNum];
-        for (int i = 0; i < totalFragmentNum; i++) {
-          IloNumExpr wl = model.prod(xw[i][j], writeLoad[i]);
-          IloNumExpr rl = model.prod(xr[i][j], readLoad[i]);
-          currLoads[i] = model.sum(new IloNumExpr[]{wl, rl});
+      double[] loadConstraintList = new double[lpParamNum];
+      for (int i = 0; i < totalFragmentNum; i++) {
+        for (int j = 0; j < nodeFragmentMap.size(); j++) {
+          loadConstraintList[i * totalFragmentNum + j] = writeLoad[i];
+          loadConstraintList[totalFragmentNum * nodeFragmentMap.size() + i * totalFragmentNum
+              + j] = readLoad[i];
         }
-        model.addGe(model.sum(currLoads), minLoad);
-        model.addLe(model.sum(currLoads), maxLoad);
       }
+      problem.addConstraint(loadConstraintList, LpSolve.GE, minLoad);
+      problem.addConstraint(loadConstraintList, LpSolve.LE, maxLoad);
+
       // 每个分区必须分配在一个节点上
       for (int i = 0; i < totalFragmentNum; i++) {
-        model.addEq(model.sum(xr[i]), 1);
-        model.addEq(model.sum(xw[i]), 1);
+        double[] writeFragmentConstraintList = new double[lpParamNum];
+        double[] readFragmentConstraintList = new double[lpParamNum];
+        for (int j = 0; j < nodeFragmentMap.size(); j++) {
+          writeFragmentConstraintList[i * totalFragmentNum + j] = 1;
+          readFragmentConstraintList[totalFragmentNum * nodeFragmentMap.size()
+              + i * totalFragmentNum
+              + j] = 1;
+        }
+        problem.addConstraint(writeFragmentConstraintList, LpSolve.EQ, 1);
+        problem.addConstraint(readFragmentConstraintList, LpSolve.EQ, 1);
       }
 
       // 优化计算，输出最优解
-      if (model.solve()) {
+      if (problem.solve() == LpSolve.OPTIMAL) {
+        double[] vars = new double[lpParamNum];
+        problem.getVariables(vars);
         for (int i = 0; i < totalFragmentNum; i++) {
           for (int j = 0; j < nodeFragmentMap.size(); j++) {
-            result[0][i][j] = (int) model.getValue(xw[i][j]);
-          }
-        }
-        for (int i = 0; i < totalFragmentNum; i++) {
-          for (int j = 0; j < nodeFragmentMap.size(); j++) {
-            result[1][i][j] = (int) model.getValue(xr[i][j]);
+            result[0][i][j] = (int) vars[i * totalFragmentNum + j];
+            result[1][i][j] = (int) vars[totalFragmentNum * nodeFragmentMap.size()
+                + i * totalFragmentNum + j];
           }
         }
       }
       // 退出优化模型
-      model.end();
-    } catch (IloException e) {
+      problem.deleteLp();
+    } catch (LpSolveException e) {
       System.err.println("Concert exception caught: " + e);
     }
     return result;

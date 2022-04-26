@@ -194,11 +194,9 @@
             <version>3.6.1</version>
         </dependency>
         <dependency>
-            <groupId>cplex</groupId>
-            <artifactId>cplex-22.1.0.0</artifactId>
-            <version>22.1.0.0</version>
-            <scope>system</scope>
-            <systemPath>/Applications/CPLEX_Studio_Community221/cplex/lib/cplex.jar</systemPath>
+            <groupId>com.datumbox</groupId>
+            <artifactId>lpsolve</artifactId>
+            <version>5.5.2.0</version>
         </dependency>
     </dependencies>
     <build>
