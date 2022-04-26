@@ -62,8 +62,6 @@ public class PostgreSQLStorage implements IStorage {
 
   private static final String DEFAULT_PASSWORD = "123456";
 
-  private static final String DEFAULT_DBNAME = "timeseries";
-
   private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE %s";
 
   private static final String DELETE_DATA = "DELETE FROM %s WHERE time >= to_timestamp(%d) and time < to_timestamp(%d)";
@@ -74,7 +72,7 @@ public class PostgreSQLStorage implements IStorage {
 
   private final StorageEngineMeta meta;
 
-  private final Connection connection;
+  private Connection connection;
 
   public PostgreSQLStorage(StorageEngineMeta meta) throws StorageInitializationException {
     this.meta = meta;
@@ -84,10 +82,9 @@ public class PostgreSQLStorage implements IStorage {
     Map<String, String> extraParams = meta.getExtraParams();
     String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
     String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
-    String dbName = extraParams.getOrDefault(DBNAME, DEFAULT_DBNAME);
     String connUrl = String
-        .format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s", meta.getIp(), meta.getPort(),
-            dbName, username, password);
+        .format("jdbc:postgresql://%s:%s/?user=%s&password=%s", meta.getIp(), meta.getPort(),
+            username, password);
     try {
       connection = DriverManager.getConnection(connUrl);
     } catch (SQLException e) {
@@ -99,10 +96,9 @@ public class PostgreSQLStorage implements IStorage {
     Map<String, String> extraParams = meta.getExtraParams();
     String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
     String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
-    String dbName = extraParams.getOrDefault(DBNAME, DEFAULT_DBNAME);
     String connUrl = String
-        .format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s", meta.getIp(), meta.getPort(),
-            dbName, username, password);
+        .format("jdbc:postgresql://%s:%s?user=%s&password=%s", meta.getIp(), meta.getPort(),
+            username, password);
     try {
       Class.forName("org.postgresql.Driver");
       DriverManager.getConnection(connUrl);
@@ -122,6 +118,8 @@ public class PostgreSQLStorage implements IStorage {
     FragmentMeta fragment = task.getTargetFragment();
     Operator op = operators.get(0);
     String storageUnit = task.getStorageUnit();
+    // 先切换数据库
+    useDatabase(storageUnit);
 
     if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
       Project project = (Project) op;
@@ -133,13 +131,13 @@ public class PostgreSQLStorage implements IStorage {
             .asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
                 new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
       }
-      return executeProjectTask(storageUnit, project, filter);
+      return executeProjectTask(project, filter);
     } else if (op.getType() == OperatorType.Insert) {
       Insert insert = (Insert) op;
-      return executeInsertTask(storageUnit, insert);
+      return executeInsertTask(insert);
     } else if (op.getType() == OperatorType.Delete) {
       Delete delete = (Delete) op;
-      return executeDeleteTask(storageUnit, delete);
+      return executeDeleteTask(delete);
     }
     return new TaskExecuteResult(
         new NonExecutablePhysicalTaskException("unsupported physical task"));
@@ -169,13 +167,12 @@ public class PostgreSQLStorage implements IStorage {
     return timeseries;
   }
 
-  private TaskExecuteResult executeProjectTask(String storageUnit,
-      Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+  private TaskExecuteResult executeProjectTask(Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
     try {
       List<ResultSet> resultSets = new ArrayList<>();
       List<Field> fields = new ArrayList<>();
       for (String path : project.getPatterns()) {
-        String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
+        String table = path.substring(0, path.lastIndexOf('.'));
         table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
         sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
@@ -204,7 +201,7 @@ public class PostgreSQLStorage implements IStorage {
     }
   }
 
-  private TaskExecuteResult executeInsertTask(String storageUnit, Insert insert) {
+  private TaskExecuteResult executeInsertTask(Insert insert) {
     DataView dataView = insert.getData();
     Exception e = null;
     switch (dataView.getRawDataType()) {
@@ -212,7 +209,7 @@ public class PostgreSQLStorage implements IStorage {
       case NonAlignedRow:
       case Column:
       case NonAlignedColumn:
-        e = insertRowRecords((RowDataView) dataView, storageUnit);
+        e = insertRowRecords((RowDataView) dataView);
         break;
     }
     if (e != null) {
@@ -244,7 +241,27 @@ public class PostgreSQLStorage implements IStorage {
     }
   }
 
-  private Exception insertRowRecords(RowDataView data, String storageUnit) {
+  private void useDatabase(String dbname) {
+    try {
+      Statement stmt = connection.createStatement();
+      stmt.execute(String.format("create database %s", dbname));
+    } catch (SQLException e) {
+      logger.info("create database error", e);
+    }
+    try {
+      Map<String, String> extraParams = meta.getExtraParams();
+      String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
+      String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
+      String connUrl = String
+          .format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s", meta.getIp(), meta.getPort(),
+              dbname, username, password);
+      connection = DriverManager.getConnection(connUrl);
+    } catch (SQLException e) {
+      logger.info("change database error", e);
+    }
+  }
+
+  private Exception insertRowRecords(RowDataView data) {
     // TODO 按timestamp进行行排序再插入
     int batchSize = Math.min(data.getTimeSize(), BATCH_SIZE);
     try {
@@ -252,7 +269,7 @@ public class PostgreSQLStorage implements IStorage {
       for (int i = 0; i < data.getPathNum(); i++) {
         String path = data.getPath(i);
         DataType dataType = data.getDataType(i);
-        String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
+        String table = path.substring(0, path.lastIndexOf('.'));
         table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
         sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
@@ -277,14 +294,14 @@ public class PostgreSQLStorage implements IStorage {
     return null;
   }
 
-  private TaskExecuteResult executeDeleteTask(String storageUnit, Delete delete) {
+  private TaskExecuteResult executeDeleteTask(Delete delete) {
     // only support to the level of device now
     // TODO support the delete to the level of sensor
     try {
       for (int i = 0; i < delete.getPatterns().size(); i++) {
         String path = delete.getPatterns().get(i);
         TimeRange timeRange = delete.getTimeRanges().get(i);
-        String table = storageUnit + IGINX_SEPARATOR + path.substring(0, path.lastIndexOf('.'));
+        String table = path.substring(0, path.lastIndexOf('.'));
         table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
         sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
