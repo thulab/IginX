@@ -1,27 +1,32 @@
 package cn.edu.tsinghua.iginx.engine.logical.optimizer;
 
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MultipleOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
+import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
-import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
-import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RemoveNotOptimizer implements Optimizer {
 
-    private final static RemoveNotOptimizer instance = new RemoveNotOptimizer();
+    private final static Logger logger = LoggerFactory.getLogger(RemoveNotOptimizer.class);
+
+    private static RemoveNotOptimizer instance;
 
     private RemoveNotOptimizer() {
     }
 
     public static RemoveNotOptimizer getInstance() {
+        if (instance == null) {
+            synchronized (FilterFragmentOptimizer.class) {
+                if (instance == null) {
+                    instance = new RemoveNotOptimizer();
+                }
+            }
+        }
         return instance;
     }
 
@@ -32,35 +37,23 @@ public class RemoveNotOptimizer implements Optimizer {
             return root;
         }
 
-        removeNot(root);
+        List<Select> selectOperatorList = new ArrayList<>();
+        OperatorUtils.findSelectOperators(selectOperatorList, root);
+
+        if (selectOperatorList.isEmpty()) {
+            logger.info("There is no filter in logical tree.");
+            return root;
+        }
+
+        for (Select selectOperator : selectOperatorList) {
+            removeNot(selectOperator);
+        }
         return root;
     }
 
-    private void removeNot(Operator operator) {
+    private void removeNot(Select selectOperator) {
         // remove not filter.
-        if (operator.getType() == OperatorType.Select) {
-            Select select = (Select) operator;
-            Filter filter = ExprUtils.removeNot(select.getFilter());
-            select.setFilter(filter);
-        }
-
-        // dfs to find select operator.
-        if (OperatorType.isUnaryOperator(operator.getType())) {
-            UnaryOperator unaryOp = (UnaryOperator) operator;
-            Source source = unaryOp.getSource();
-            if (source.getType() != SourceType.Fragment) {
-                removeNot(((OperatorSource) source).getOperator());
-            }
-        } else if (OperatorType.isBinaryOperator(operator.getType())) {
-            BinaryOperator binaryOperator = (BinaryOperator) operator;
-            removeNot(((OperatorSource) binaryOperator.getSourceA()).getOperator());
-            removeNot(((OperatorSource) binaryOperator.getSourceB()).getOperator());
-        } else {
-            MultipleOperator multipleOperator = (MultipleOperator) operator;
-            List<Source> sources = multipleOperator.getSources();
-            for (Source source : sources) {
-                removeNot(((OperatorSource) source).getOperator());
-            }
-        }
+        Filter filter = ExprUtils.removeNot(selectOperator.getFilter());
+        selectOperator.setFilter(filter);
     }
 }

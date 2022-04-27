@@ -3,20 +3,12 @@ package cn.edu.tsinghua.iginx.engine.logical.generator;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
+import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
-import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -33,7 +25,10 @@ import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
@@ -47,7 +42,7 @@ public class QueryGenerator extends AbstractGenerator {
     private final static FunctionManager functionManager = FunctionManager.getInstance();
     private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
     private final IPolicy policy = PolicyManager.getInstance()
-            .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+        .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
     private QueryGenerator() {
         this.type = GeneratorType.Query;
@@ -71,8 +66,6 @@ public class QueryGenerator extends AbstractGenerator {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        logger.debug("start path={}, end path={}", pathList.get(0), pathList.get(pathList.size() - 1));
-
         Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         if (fragments.isEmpty()) {
             //on startup
@@ -81,18 +74,14 @@ public class QueryGenerator extends AbstractGenerator {
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         }
 
-        logger.debug("fragment size={}", fragments.size());
-
         List<Operator> joinList = new ArrayList<>();
         fragments.forEach((k, v) -> {
             List<Operator> unionList = new ArrayList<>();
             v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList)));
-            joinList.add(unionOperators(unionList));
+            joinList.add(OperatorUtils.unionOperators(unionList));
         });
 
-        logger.debug("joinList size={}", joinList.size());
-
-        Operator root = joinOperatorsByTime(joinList);
+        Operator root = OperatorUtils.joinOperatorsByTime(joinList);
 
         if (selectStatement.hasValueFilter()) {
             root = new Select(new OperatorSource(root), selectStatement.getFilter());
@@ -111,12 +100,12 @@ public class QueryGenerator extends AbstractGenerator {
                 Operator copySelect = finalRoot.copy();
 
                 queryList.add(
-                        new Downsample(
-                                new OperatorSource(copySelect),
-                                selectStatement.getPrecision(),
-                                new FunctionCall(functionManager.getFunction(k), params),
-                                new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
-                        )
+                    new Downsample(
+                        new OperatorSource(copySelect),
+                        selectStatement.getPrecision(),
+                        new FunctionCall(functionManager.getFunction(k), params),
+                        new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
+                    )
                 );
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
@@ -131,10 +120,10 @@ public class QueryGenerator extends AbstractGenerator {
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
-                        new SetTransform(
-                                new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), params)
-                        )
+                    new SetTransform(
+                        new OperatorSource(copySelect),
+                        new FunctionCall(functionManager.getFunction(k), params)
+                    )
                 );
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
@@ -144,10 +133,10 @@ public class QueryGenerator extends AbstractGenerator {
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(
-                        new MappingTransform(
-                                new OperatorSource(copySelect),
-                                new FunctionCall(functionManager.getFunction(k), params)
-                        )
+                    new MappingTransform(
+                        new OperatorSource(copySelect),
+                        new FunctionCall(functionManager.getFunction(k), params)
+                    )
                 );
             }));
         } else {
@@ -157,57 +146,29 @@ public class QueryGenerator extends AbstractGenerator {
         }
 
         if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
-            root = unionOperators(queryList);
+            root = OperatorUtils.unionOperators(queryList);
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
-            root = joinOperatorsByTime(queryList);
+            root = OperatorUtils.joinOperatorsByTime(queryList);
         } else {
-            root = joinOperators(queryList, ORDINAL);
+            root = OperatorUtils.joinOperators(queryList, ORDINAL);
         }
 
         if (!selectStatement.getOrderByPath().equals("")) {
             root = new Sort(
-                    new OperatorSource(root),
-                    selectStatement.getOrderByPath(),
-                    selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
+                new OperatorSource(root),
+                selectStatement.getOrderByPath(),
+                selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
             );
         }
 
         if (selectStatement.getLimit() != Integer.MAX_VALUE || selectStatement.getOffset() != 0) {
             root = new Limit(
-                    new OperatorSource(root),
-                    (int) selectStatement.getLimit(),
-                    (int) selectStatement.getOffset()
+                new OperatorSource(root),
+                (int) selectStatement.getLimit(),
+                (int) selectStatement.getOffset()
             );
         }
 
         return root;
-    }
-
-    private Operator unionOperators(List<Operator> operators) {
-        if (operators == null || operators.isEmpty())
-            return null;
-        if (operators.size() == 1)
-            return operators.get(0);
-        Operator union = operators.get(0);
-        for (int i = 1; i < operators.size(); i++) {
-            union = new Union(new OperatorSource(union), new OperatorSource(operators.get(i)));
-        }
-        return union;
-    }
-
-    private Operator joinOperatorsByTime(List<Operator> operators) {
-        return joinOperators(operators, TIMESTAMP);
-    }
-
-    private Operator joinOperators(List<Operator> operators, String joinBy) {
-        if (operators == null || operators.isEmpty())
-            return null;
-        if (operators.size() == 1)
-            return operators.get(0);
-        Operator join = operators.get(0);
-        for (int i = 1; i < operators.size(); i++) {
-            join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)), joinBy);
-        }
-        return join;
     }
 }

@@ -13,6 +13,8 @@ public class LogicalOptimizerManager {
 
     private final static String FILTER_PUSH_DOWN = "filter_push_down";
 
+    private final static String FILTER_FRAGMENT = "filter_fragment";
+
     private LogicalOptimizerManager() {
     }
 
@@ -31,6 +33,8 @@ public class LogicalOptimizerManager {
                 return RemoveNotOptimizer.getInstance();
             case FILTER_PUSH_DOWN:
                 return FilterPushDownOptimizer.getInstance();
+            case FILTER_FRAGMENT:
+                return FilterFragmentOptimizer.getInstance();
             default:
                 throw new IllegalArgumentException(String.format("unknown logical optimizer: %s", name));
         }
