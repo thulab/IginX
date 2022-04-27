@@ -35,8 +35,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         InsertStatement insertStatement = new InsertStatement();
         insertStatement.setPrefixPath(ctx.path().getText());
         // parse paths
-        List<MeasurementNameContext> measurementNames = ctx.insertColumnsSpec().measurementName();
-        measurementNames.forEach(e -> insertStatement.setPath(e.getText()));
+        ctx.insertColumnsSpec().path().forEach(e -> insertStatement.setPath(e.getText()));
         // parse times, values and types
         parseInsertValuesSpec(ctx.insertValuesSpec(), insertStatement);
 
@@ -140,6 +139,30 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
     public Statement visitShowClusterInfoStatement(ShowClusterInfoStatementContext ctx) {
         return new ShowClusterInfoStatement();
+    }
+
+    @Override
+    public Statement visitRegisterTaskStatement(RegisterTaskStatementContext ctx) {
+        String filePath = ctx.fileName.getText();
+        filePath = filePath.substring(1, filePath.length()-1);
+
+        String className = ctx.className.getText();
+        className = className.substring(1, className.length()-1);
+        return new RegisterTaskStatement(filePath, className);
+    }
+
+    @Override
+    public Statement visitDropTaskStatement(DropTaskStatementContext ctx) {
+        String fileName = ctx.fileName.getText();
+        fileName = fileName.substring(1, fileName.length()-1);
+        return new DropTaskStatement(fileName);
+    }
+
+    @Override
+    public Statement visitCommitTransformJobStatement(CommitTransformJobStatementContext ctx) {
+        String path = ctx.stringLiteral().getText();
+        path = path.substring(1, path.length() - 1);
+        return new CommitTransformJobStatement(path);
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {

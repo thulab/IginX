@@ -117,6 +117,12 @@ public class Config {
 
     private boolean useStreamExecutor = true;
 
+    private int batchSize = 50;
+
+    private String pythonCMD = "python3";
+
+    private int transformTaskThreadPoolSize = 10;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -499,5 +505,29 @@ public class Config {
 
     public void setUseStreamExecutor(boolean useStreamExecutor) {
         this.useStreamExecutor = useStreamExecutor;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public String getPythonCMD() {
+        return pythonCMD;
+    }
+
+    public void setPythonCMD(String pythonCMD) {
+        this.pythonCMD = pythonCMD;
+    }
+
+    public int getTransformTaskThreadPoolSize() {
+        return transformTaskThreadPoolSize;
+    }
+
+    public void setTransformTaskThreadPoolSize(int transformTaskThreadPoolSize) {
+        this.transformTaskThreadPoolSize = transformTaskThreadPoolSize;
     }
 }

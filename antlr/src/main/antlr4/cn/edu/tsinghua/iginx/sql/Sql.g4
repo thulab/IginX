@@ -15,6 +15,9 @@ statement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
+    | REGISTER PYTHON TASK className=stringLiteral IN fileName=stringLiteral #registerTaskStatement
+    | DROP PYTHON TASK fileName=stringLiteral #dropTaskStatement
+    | COMMIT TRANSFORM JOB stringLiteral #commitTransformJobStatement
     ;
 
 selectClause
@@ -111,12 +114,7 @@ comparisonOperator
     ;
 
 insertColumnsSpec
-    : LR_BRACKET (TIMESTAMP|TIME) (COMMA measurementName)+ RR_BRACKET
-    ;
-
-measurementName
-    : nodeName
-    | LR_BRACKET nodeName (COMMA nodeName)+ RR_BRACKET
+    : LR_BRACKET (TIMESTAMP|TIME) (COMMA path)+ RR_BRACKET
     ;
 
 insertValuesSpec
@@ -189,10 +187,16 @@ nodeName
     | POINTS
     | DATA
     | NULL
-    | SHOW
     | REPLICA
     | IOTDB
     | INFLUXDB
+    | DROP
+    | REGISTER
+    | PYTHON
+    | TASK
+    | COMMIT
+    | TRANSFORM
+    | JOB
     ;
 
 ip
@@ -408,6 +412,34 @@ DESC
 
 ASC
     : A S C
+    ;
+
+DROP
+    : D R O P
+    ;
+
+REGISTER
+    : R E G I S T E R
+    ;
+
+PYTHON
+    : P Y T H O N
+    ;
+
+TASK
+    : T A S K
+    ;
+
+COMMIT
+    : C O M M I T
+    ;
+
+TRANSFORM
+    : T R A N S F O R M
+    ;
+
+JOB
+    : J O B
     ;
 //============================
 // End of the keywords list

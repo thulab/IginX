@@ -118,6 +118,10 @@ public class ConfigDescriptor {
 
             config.setEnablePushDown(Boolean.parseBoolean(properties.getProperty("enablePushDown", "true")));
             config.setUseStreamExecutor(Boolean.parseBoolean(properties.getProperty("useStreamExecutor", "true")));
+
+            config.setBatchSize(Integer.parseInt(properties.getProperty("batchSize", "50")));
+            config.setPythonCMD(properties.getProperty("pythonCMD", "python3"));
+            config.setTransformTaskThreadPoolSize(Integer.parseInt(properties.getProperty("transformTaskThreadPoolSize", "10")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -169,6 +173,9 @@ public class ConfigDescriptor {
         config.setStorageGroupValueLimit(EnvUtils.loadEnv("storageGroupValueLimit", config.getStorageGroupValueLimit()));
         config.setEnablePushDown(EnvUtils.loadEnv("enablePushDown", config.isEnablePushDown()));
         config.setUseStreamExecutor(EnvUtils.loadEnv("useStreamExecutor", config.isUseStreamExecutor()));
+        config.setBatchSize(EnvUtils.loadEnv("batchSize", config.getBatchSize()));
+        config.setPythonCMD(EnvUtils.loadEnv("pythonCMD", config.getPythonCMD()));
+        config.setTransformTaskThreadPoolSize(EnvUtils.loadEnv("transformTaskThreadPoolSize", config.getTransformTaskThreadPoolSize()));
     }
 
 

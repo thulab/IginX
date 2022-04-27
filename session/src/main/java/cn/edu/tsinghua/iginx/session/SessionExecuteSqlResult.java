@@ -58,6 +58,7 @@ public class SessionExecuteSqlResult {
     private List<StorageEngineInfo> storageEngineInfos;
     private List<MetaStorageInfo> metaStorageInfos;
     private LocalMetaStorageInfo localMetaStorageInfo;
+    private long jobId;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -85,6 +86,9 @@ public class SessionExecuteSqlResult {
                 this.storageEngineInfos = resp.getStorageEngineInfos();
                 this.metaStorageInfos = resp.getMetaStorageInfos();
                 this.localMetaStorageInfo = resp.getLocalMetaStorageInfo();
+                break;
+            case CommitTransformJob:
+                this.jobId = resp.getJobId();
                 break;
             default:
                 break;
@@ -513,4 +517,7 @@ public class SessionExecuteSqlResult {
         return parseErrorMsg;
     }
 
+    public long getJobId() {
+        return jobId;
+    }
 }
