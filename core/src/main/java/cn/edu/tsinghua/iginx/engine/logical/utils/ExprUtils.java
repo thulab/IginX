@@ -318,6 +318,8 @@ public class ExprUtils {
     private static void extractTimeRange(List<TimeRange> timeRanges, Filter f) {
         FilterType type = f.getType();
         switch (type) {
+            case Value:
+                break;
             case Time:
                 timeRanges.add(getTimeRangesFromTimeFilter((TimeFilter) f));
                 break;
