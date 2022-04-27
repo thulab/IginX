@@ -13,10 +13,8 @@ import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
-import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,11 +87,16 @@ public class FilterFragmentOptimizer implements Optimizer {
                     unionList.add(new Project(new FragmentSource(meta), pathList));
                 }
             });
-            joinList.add(OperatorUtils.unionOperators(unionList));
+            Operator operator = OperatorUtils.unionOperators(unionList);
+            if (operator != null) {
+                joinList.add(operator);
+            }
         });
 
         Operator root = OperatorUtils.joinOperatorsByTime(joinList);
-        selectOperator.setSource(new OperatorSource(root));
+        if (root != null) {
+            selectOperator.setSource(new OperatorSource(root));
+        }
     }
 
     private boolean hasTimeRangeOverlap(FragmentMeta meta, List<TimeRange> timeRanges) {
