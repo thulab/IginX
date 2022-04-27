@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.engine.logical.generator;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
+import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
@@ -77,10 +78,10 @@ public class QueryGenerator extends AbstractGenerator {
         fragments.forEach((k, v) -> {
             List<Operator> unionList = new ArrayList<>();
             v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList)));
-            joinList.add(unionOperators(unionList));
+            joinList.add(OperatorUtils.unionOperators(unionList));
         });
 
-        Operator root = joinOperatorsByTime(joinList);
+        Operator root = OperatorUtils.joinOperatorsByTime(joinList);
 
         if (selectStatement.hasValueFilter()) {
             root = new Select(new OperatorSource(root), selectStatement.getFilter());
@@ -145,11 +146,11 @@ public class QueryGenerator extends AbstractGenerator {
         }
 
         if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
-            root = unionOperators(queryList);
+            root = OperatorUtils.unionOperators(queryList);
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
-            root = joinOperatorsByTime(queryList);
+            root = OperatorUtils.joinOperatorsByTime(queryList);
         } else {
-            root = joinOperators(queryList, ORDINAL);
+            root = OperatorUtils.joinOperators(queryList, ORDINAL);
         }
 
         if (!selectStatement.getOrderByPath().equals("")) {
@@ -169,33 +170,5 @@ public class QueryGenerator extends AbstractGenerator {
         }
 
         return root;
-    }
-
-    private Operator unionOperators(List<Operator> operators) {
-        if (operators == null || operators.isEmpty())
-            return null;
-        if (operators.size() == 1)
-            return operators.get(0);
-        Operator union = operators.get(0);
-        for (int i = 1; i < operators.size(); i++) {
-            union = new Union(new OperatorSource(union), new OperatorSource(operators.get(i)));
-        }
-        return union;
-    }
-
-    private Operator joinOperatorsByTime(List<Operator> operators) {
-        return joinOperators(operators, TIMESTAMP);
-    }
-
-    private Operator joinOperators(List<Operator> operators, String joinBy) {
-        if (operators == null || operators.isEmpty())
-            return null;
-        if (operators.size() == 1)
-            return operators.get(0);
-        Operator join = operators.get(0);
-        for (int i = 1; i < operators.size(); i++) {
-            join = new Join(new OperatorSource(join), new OperatorSource(operators.get(i)), joinBy);
-        }
-        return join;
     }
 }

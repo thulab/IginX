@@ -1,6 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.optimizer;
 
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
+import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.BoolFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
@@ -20,9 +21,16 @@ public class FilterPushDownOptimizer implements Optimizer {
 
     private final static Logger logger = LoggerFactory.getLogger(FilterPushDownOptimizer.class);
 
-    private final static FilterPushDownOptimizer instance = new FilterPushDownOptimizer();
+    private static FilterPushDownOptimizer instance;
 
     public static FilterPushDownOptimizer getInstance() {
+        if (instance == null) {
+            synchronized (FilterFragmentOptimizer.class) {
+                if (instance == null) {
+                    instance = new FilterPushDownOptimizer();
+                }
+            }
+        }
         return instance;
     }
 
@@ -34,9 +42,9 @@ public class FilterPushDownOptimizer implements Optimizer {
         }
 
         List<Select> selectOperatorList = new ArrayList<>();
-        findSelectOperator(selectOperatorList, root);
+        OperatorUtils.findSelectOperators(selectOperatorList, root);
 
-        if (selectOperatorList.size() == 0) {
+        if (selectOperatorList.isEmpty()) {
             logger.info("There is no filter in logical tree.");
             return root;
         }
@@ -45,32 +53,6 @@ public class FilterPushDownOptimizer implements Optimizer {
             pushDown(selectOperator);
         }
         return root;
-    }
-
-    private void findSelectOperator(List<Select> selectOperatorList, Operator operator) {
-        if (operator.getType() == OperatorType.Select) {
-            selectOperatorList.add((Select) operator);
-            return;
-        }
-
-        // dfs to find select operator.
-        if (OperatorType.isUnaryOperator(operator.getType())) {
-            UnaryOperator unaryOp = (UnaryOperator) operator;
-            Source source = unaryOp.getSource();
-            if (source.getType() != SourceType.Fragment) {
-                findSelectOperator(selectOperatorList, ((OperatorSource) source).getOperator());
-            }
-        } else if (OperatorType.isBinaryOperator(operator.getType())) {
-            BinaryOperator binaryOperator = (BinaryOperator) operator;
-            findSelectOperator(selectOperatorList, ((OperatorSource) binaryOperator.getSourceA()).getOperator());
-            findSelectOperator(selectOperatorList, ((OperatorSource) binaryOperator.getSourceB()).getOperator());
-        } else {
-            MultipleOperator multipleOperator = (MultipleOperator) operator;
-            List<Source> sources = multipleOperator.getSources();
-            for (Source source : sources) {
-                findSelectOperator(selectOperatorList, ((OperatorSource) source).getOperator());
-            }
-        }
     }
 
     private void pushDown(Select selectOperator) {
