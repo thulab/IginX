@@ -34,10 +34,15 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.QueryManager;
 import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
+import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -62,6 +67,8 @@ public class IginxWorker implements IService.Iface {
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 
     private final StatementExecutor executor = StatementExecutor.getInstance();
+
+    private final PythonDriver driver = PythonDriver.getInstance();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -414,5 +421,88 @@ public class IginxWorker implements IService.Iface {
     public Status closeStatement(CloseStatementReq req) {
         queryManager.releaseQuery(req.queryId);
         return RpcUtils.SUCCESS;
+    }
+
+    @Override
+    public CommitTransformJobResp commitTransformJob(CommitTransformJobReq req) {
+        TransformJobManager manager = TransformJobManager.getInstance();
+        long jobId = manager.commit(req);
+
+        CommitTransformJobResp resp = new CommitTransformJobResp();
+        if (jobId < 0) {
+            resp.setStatus(RpcUtils.FAILURE);
+        } else {
+            resp.setStatus(RpcUtils.SUCCESS);
+            resp.setJobId(jobId);
+        }
+        return resp;
+    }
+
+    @Override
+    public QueryTransformJobStatusResp queryTransformJobStatus(QueryTransformJobStatusReq req) {
+        TransformJobManager manager = TransformJobManager.getInstance();
+        JobState jobState = manager.queryJobState(req.getJobId());
+        if (jobState != null) {
+            return new QueryTransformJobStatusResp(RpcUtils.SUCCESS, jobState);
+        } else {
+            return new QueryTransformJobStatusResp(RpcUtils.FAILURE, JobState.JOB_UNKNOWN);
+        }
+    }
+
+    @Override
+    public Status cancelTransformJob(CancelTransformJobReq req) {
+        TransformJobManager manager = TransformJobManager.getInstance();
+        manager.cancel(req.getSessionId());
+        return RpcUtils.SUCCESS;
+    }
+
+    @Override
+    public Status registerTask(RegisterTaskReq req) {
+        String filePath = req.getFilePath();
+        File sourcefile = new File(filePath);
+        if (!sourcefile.exists()) {
+            logger.error(String.format("Register file not exist, path=%s", filePath));
+            return RpcUtils.FAILURE;
+        }
+
+        String fileName = sourcefile.getName();
+        String destPath = System.getProperty("user.dir") + File.separator +
+            "python_scripts" + File.separator + fileName;
+        File destFile = new File(destPath);
+
+        try {
+            Files.copy(sourcefile.toPath(), destFile.toPath());
+        } catch (IOException e) {
+            logger.error(String.format("Fail to copy register file, path=%s", filePath), e);
+            return RpcUtils.FAILURE;
+        }
+
+        // drive test
+        String className = req.getClassName();
+        if (driver.testWorker(fileName, className)) {
+            return RpcUtils.SUCCESS;
+        } else {
+            return RpcUtils.FAILURE;
+        }
+    }
+
+    @Override
+    public Status dropTask(DropTaskReq req) {
+        String filePath = System.getProperty("user.dir") + File.separator +
+            "python_scripts" + File.separator + req.getName();
+        File file = new File(filePath);
+
+        if (!file.exists()) {
+            logger.error(String.format("Register file not exist, path=%s", filePath));
+            return RpcUtils.FAILURE;
+        }
+
+        if (file.delete()) {
+            logger.info(String.format("Register file has been dropped, path=%s", filePath));
+            return RpcUtils.SUCCESS;
+        } else {
+            logger.error(String.format("Fail to delete register file, path=%s", filePath));
+            return RpcUtils.FAILURE;
+        }
     }
 }

@@ -41,6 +41,8 @@ public class Result {
     private long queryId;
     private RowStream resultStream;
 
+    private long jobId;
+
     public Result(Status status) {
         this.status = status;
         this.pointsNum = 0L;
@@ -131,6 +133,7 @@ public class Result {
         resp.setStorageEngineInfos(storageEngineInfos);
         resp.setMetaStorageInfos(metaStorageInfos);
         resp.setLocalMetaStorageInfo(localMetaStorageInfo);
+        resp.setJobId(jobId);
         return resp;
     }
 

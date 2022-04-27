@@ -23,12 +23,7 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.CommandLineParser;
-import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.*;
 import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -292,6 +287,8 @@ public class IginxClient {
             } else if (res.getSqlType() == SqlType.CountPoints) {
                 System.out.println(res.getPointsNum());
                 System.out.println("success");
+            } else if (res.getSqlType() == SqlType.CommitTransformJob) {
+                System.out.println("job id: " + res.getJobId());
             } else {
                 System.out.println("success");
             }

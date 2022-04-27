@@ -1,0 +1,26 @@
+taskList:
+  - taskType: iginx
+    dataFlowType: stream
+    timeout: 10000000
+    sql: select value1, value2, value3, value4 from transform;
+  - taskType: python
+    dataFlowType: stream
+    timeout: 10000000
+    fileName: transformer_add_one
+    className: AddOneTransformer
+  - taskType: python
+    dataFlowType: batch
+    timeout: 10000000
+    fileName: transformer_sum
+    className: SumTransformer
+  - taskType: python
+    dataFlowType: stream
+    timeout: 10000000
+    fileName: transformer_row_sum
+    className: RowSumTransformer
+
+#exportType: none
+#exportType: iginx
+exportType: file
+#exportFile: /path/to/your/output/dir
+exportFile: /Users/cauchy-ny/Downloads/export_file_sum_sql.txt
