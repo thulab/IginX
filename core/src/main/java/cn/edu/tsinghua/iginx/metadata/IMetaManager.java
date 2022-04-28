@@ -188,4 +188,12 @@ public interface IMetaManager {
 
     Map<Integer, Integer> getTimeseriesVersionMap();
 
+    boolean addTransformTask(TransformTaskMeta transformTask);
+
+    boolean dropTransformTask(String className);
+
+    TransformTaskMeta getTransformTask(String className);
+
+    List<TransformTaskMeta> getTransformTasks();
+
 }

@@ -87,6 +87,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private static final String TIMESERIES_NODE_PREFIX = "/timeseries";
 
+    private static final String TRANSFORM_NODE_PREFIX = "/transform";
+
+    private static final String TRANSFORM_LOCK_NODE = "/lock/transform";
+
     private boolean isMaster = false;
 
     private static ZooKeeperMetaStorage INSTANCE = null;
@@ -109,6 +113,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private UserChangeHook userChangeHook = null;
     private TimeSeriesChangeHook timeSeriesChangeHook = null;
     private VersionChangeHook versionChangeHook = null;
+    private TransformChangeHook transformChangeHook = null;
 
     private TreeCache userCache;
 
@@ -117,6 +122,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     private TreeCache timeseriesCache;
 
     private TreeCache versionCache;
+
+    private TreeCache transformCache;
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -1060,6 +1067,120 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
             e.printStackTrace();
         }
         return version + 1;
+    }
+
+    @Override
+    public void registerTransformChangeHook(TransformChangeHook hook) {
+        this.transformChangeHook = hook;
+    }
+
+    @Override
+    public List<TransformTaskMeta> loadTransformTask() throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, TRANSFORM_LOCK_NODE);
+        try {
+            mutex.acquire();
+            List<TransformTaskMeta> tasks = new ArrayList<>();
+            if (this.client.checkExists().forPath(TRANSFORM_NODE_PREFIX) == null) {
+                // 当前还没有数据，创建父节点，然后不需要解析数据
+                client.create()
+                    .creatingParentsIfNeeded()
+                    .withMode(CreateMode.PERSISTENT)
+                    .forPath(TRANSFORM_NODE_PREFIX);
+            } else {
+                List<String> classNames = this.client.getChildren().forPath(TRANSFORM_NODE_PREFIX);
+                for (String className: classNames) {
+                    byte[] data = this.client.getData()
+                        .forPath(TRANSFORM_NODE_PREFIX + "/" + className);
+                    TransformTaskMeta task = JsonUtils.fromJson(data, TransformTaskMeta.class);
+                    if (task == null) {
+                        logger.error("resolve data from " + TRANSFORM_NODE_PREFIX + "/" + className + " error");
+                        continue;
+                    }
+                    tasks.add(task);
+                }
+            }
+            registerTransformListener();
+            return tasks;
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when load transform tasks", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + TRANSFORM_LOCK_NODE, e);
+            }
+        }
+    }
+
+    private void registerTransformListener() throws Exception {
+        this.transformCache = new TreeCache(this.client, TRANSFORM_NODE_PREFIX);
+        TreeCacheListener listener = (curatorFramework, event) -> {
+            if (transformChangeHook == null) {
+                return;
+            }
+            TransformTaskMeta taskMeta;
+            switch (event.getType()) {
+                case NODE_ADDED:
+                case NODE_UPDATED:
+                    if (event.getData() == null || event.getData().getPath() == null ||
+                        event.getData().getPath().equals(TRANSFORM_NODE_PREFIX)) {
+                        return; // 前缀事件，非含数据的节点的变化，不需要处理
+                    }
+                    taskMeta = JsonUtils.fromJson(event.getData().getData(), TransformTaskMeta.class);
+                    if (taskMeta != null) {
+                        transformChangeHook.onChange(taskMeta.getClassName(), taskMeta);
+                    } else {
+                        logger.error("resolve transform task from zookeeper error");
+                    }
+                    break;
+                case NODE_REMOVED:
+                    String path = event.getData().getPath();
+                    String[] pathParts = path.split("/");
+                    String className = pathParts[pathParts.length - 1];
+                    transformChangeHook.onChange(className, null);
+                    break;
+                default:
+                    break;
+            }
+        };
+        this.transformCache.getListenable().addListener(listener);
+        this.transformCache.start();
+    }
+
+    @Override
+    public void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, TRANSFORM_LOCK_NODE);
+        try {
+            mutex.acquire();
+            this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+                .forPath(TRANSFORM_NODE_PREFIX + "/" + transformTask.getClassName(), JsonUtils.toJson(transformTask));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when add transform task", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + TRANSFORM_LOCK_NODE, e);
+            }
+        }
+    }
+
+    @Override
+    public void dropTransformTask(String className) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, TRANSFORM_LOCK_NODE);
+        try {
+            mutex.acquire();
+            this.client.delete()
+                .forPath(TRANSFORM_NODE_PREFIX + "/" + className);
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when drop transform task", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + TRANSFORM_LOCK_NODE, e);
+            }
+        }
     }
 
     public static boolean isNumeric(String str) {

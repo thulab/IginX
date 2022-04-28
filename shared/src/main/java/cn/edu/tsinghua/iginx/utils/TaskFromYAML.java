@@ -5,7 +5,6 @@ public class TaskFromYAML {
     private String taskType;
     private String dataFlowType;
     private long timeout;
-    private String fileName;
     private String className;
     private String sql;
 
@@ -35,14 +34,6 @@ public class TaskFromYAML {
 
     public void setTimeout(long timeout) {
         this.timeout = timeout;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public void setFileName(String fileName) {
-        this.fileName = fileName;
     }
 
     public String getClassName() {

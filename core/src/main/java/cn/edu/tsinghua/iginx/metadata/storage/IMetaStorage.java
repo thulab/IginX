@@ -92,4 +92,12 @@ public interface IMetaStorage {
     void registerPolicy(long iginxId, int num) throws Exception;
 
     int updateVersion();
+
+    void registerTransformChangeHook(TransformChangeHook hook);
+
+    List<TransformTaskMeta> loadTransformTask() throws MetaStorageException;
+
+    void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException;
+
+    void dropTransformTask(String className) throws MetaStorageException;
 }

@@ -31,12 +31,14 @@ import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TransformTaskMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.resource.QueryManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,6 +71,8 @@ public class IginxWorker implements IService.Iface {
     private final StatementExecutor executor = StatementExecutor.getInstance();
 
     private final PythonDriver driver = PythonDriver.getInstance();
+
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
     public static IginxWorker getInstance() {
         return instance;
@@ -458,9 +462,17 @@ public class IginxWorker implements IService.Iface {
     @Override
     public Status registerTask(RegisterTaskReq req) {
         String filePath = req.getFilePath();
+        String className = req.getClassName();
+
+        TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(className);
+        if (transformTaskMeta != null) {
+            logger.info(String.format("Register task %s already exist", transformTaskMeta.toString()));
+            return RpcUtils.FAILURE;
+        }
+
         File sourcefile = new File(filePath);
         if (!sourcefile.exists()) {
-            logger.error(String.format("Register file not exist, path=%s", filePath));
+            logger.error(String.format("Register file not exist in declared path, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
 
@@ -469,16 +481,21 @@ public class IginxWorker implements IService.Iface {
             "python_scripts" + File.separator + fileName;
         File destFile = new File(destPath);
 
+        if (destFile.exists()) {
+            logger.info(String.format("Register file already exist, fileName=%s", fileName));
+            return RpcUtils.FAILURE;
+        }
+
         try {
             Files.copy(sourcefile.toPath(), destFile.toPath());
         } catch (IOException e) {
-            logger.error(String.format("Fail to copy register file, path=%s", filePath), e);
+            logger.error(String.format("Fail to copy register file", filePath), e);
             return RpcUtils.FAILURE;
         }
 
         // drive test
-        String className = req.getClassName();
         if (driver.testWorker(fileName, className)) {
+            metaManager.addTransformTask(new TransformTaskMeta(className, fileName, config.getIp()));
             return RpcUtils.SUCCESS;
         } else {
             return RpcUtils.FAILURE;
@@ -487,21 +504,48 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status dropTask(DropTaskReq req) {
+        String className = req.getClassName();
+        TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(className);
+        if (transformTaskMeta == null) {
+            logger.info("Register task not exist");
+            return RpcUtils.FAILURE;
+        }
+
+        if (!transformTaskMeta.getIp().equals(config.getIp())) {
+            logger.info(String.format("Register task exists in node: %s", transformTaskMeta.getIp()));
+            return RpcUtils.FAILURE;
+        }
+
+
         String filePath = System.getProperty("user.dir") + File.separator +
-            "python_scripts" + File.separator + req.getName();
+            "python_scripts" + File.separator + transformTaskMeta.getFileName();
         File file = new File(filePath);
 
         if (!file.exists()) {
-            logger.error(String.format("Register file not exist, path=%s", filePath));
+            logger.info(String.format("Register file not exist, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
 
         if (file.delete()) {
+            metaManager.dropTransformTask(className);
             logger.info(String.format("Register file has been dropped, path=%s", filePath));
             return RpcUtils.SUCCESS;
         } else {
             logger.error(String.format("Fail to delete register file, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
+    }
+
+    @Override
+    public GetRegisterTaskInfoResp getRegisterTaskInfo(GetRegisterTaskInfoReq req) {
+        List<TransformTaskMeta> taskMetaList = metaManager.getTransformTasks();
+        List<RegisterTaskInfo> taskInfoList = new ArrayList<>();
+        for (TransformTaskMeta taskMeta: taskMetaList) {
+            RegisterTaskInfo taskInfo = new RegisterTaskInfo(taskMeta.getClassName(), taskMeta.getFileName(), taskMeta.getIp());
+            taskInfoList.add(taskInfo);
+        }
+        GetRegisterTaskInfoResp resp = new GetRegisterTaskInfoResp(RpcUtils.SUCCESS);
+        resp.setRegisterTaskInfoList(taskInfoList);
+        return resp;
     }
 }

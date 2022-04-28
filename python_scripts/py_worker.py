@@ -6,13 +6,7 @@ import pyarrow as pa
 from concurrent.futures.thread import ThreadPoolExecutor
 
 from class_loader import load_class
-
-
-def test(argv):
-    worker = Worker(argv[1], argv[2], int(argv[3]))
-    worker.test_transform()
-    # worker.run()
-    pass
+from constant import Status
 
 
 def main(argv):
@@ -29,6 +23,7 @@ class Worker(threading.Thread):
     def __init__(self, file_name, clazz_name, sender_port, host="127.0.0.1",
                  link_size=5, read_size=1024 * 1024, encoding='utf-8'):
         threading.Thread.__init__(self)
+        self._status = Status.SUCCESS
         self._file_name = file_name
         self._clazz_name = clazz_name
         self._sender_port = sender_port
@@ -40,14 +35,22 @@ class Worker(threading.Thread):
         try:
             self._receiver = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error as e:
+            self._status = Status.FAIL_TO_CREATE_SOCKET
             print("Failed to create socket. Error: %s" % e)
         try:
             self._receiver.bind((host, 0))
         except socket.error as e:
+            self._status = Status.FAIL_TO_BIND_ADDR
             print("Failed to bind address. Error: %s" % e)
+
         self._receive_port = self._receiver.getsockname()[1]
         self._receiver.listen(5)
         self._pool = ThreadPoolExecutor(max_workers=self._link_size)
+
+        # load class by name
+        self._clazz, success = load_class(file_name, clazz_name)
+        if not success:
+            self._status = Status.FAIL_TO_LOAD_CLASS
         pass
 
     def run(self):
@@ -72,8 +75,9 @@ class Worker(threading.Thread):
         # get the pid and py port
         print("python worker pid is", self._pid)
         print("python worker port is", self._receive_port)
-        data = [pa.array([self._pid]), pa.array([self._receive_port])]
-        batch = pa.record_batch(data, names=["pid", "port"])
+        print("python worker status is", self._status)
+        data = [pa.array([self._pid]), pa.array([self._receive_port]), pa.array([int(self._status)])]
+        batch = pa.record_batch(data, names=["pid", "port", "status"])
 
         try:
             with pa.ipc.new_stream(conn_file, batch.schema) as writer:
@@ -92,10 +96,8 @@ class Worker(threading.Thread):
         conn_file.close()
         client.close()
 
-        # load class by name
-        clazz = load_class(self._file_name, self._clazz_name)
         # user define logic
-        ret = clazz.transform(df)
+        ret = self._clazz.transform(df)
 
         self.send_msg(ret)
         pass
@@ -114,29 +116,6 @@ class Worker(threading.Thread):
             print("Failed to send msg: %s" % e)
         pass
 
-    def test_transform(self):
-        data = [pa.array([1, 2, 3, 4, 5]), pa.array([1, 2, 3, 4, 5]), pa.array([2, 3, 4, 5, 6])]
-        batch = pa.record_batch(data, names=["time", "root.value1", "root.value2"])
-        print(batch)
-
-        # import_module = __import__(self._file_name)
-        # import_class = getattr(import_module, self._clazz_name)
-        # clazz = import_class()
-        clazz = load_class(self._file_name, self._clazz_name)
-
-        ret = clazz.transform(batch.to_pandas())
-        # print(ret)
-        # data = [pa.array(row) for row in ret.iteritems()]
-        batch = pa.record_batch(ret, names=ret.columns.values.tolist())
-        print(batch.schema)
-        print(batch)
-        # table = pa.Table.from_pandas(ret)
-        # print(table)
-        # print(table.schema)
-        pass
-
 
 if __name__ == "__main__":
     main(sys.argv)
-    # test(["py_worker.py", "transformer_row_sum", "RowSumTransformer", 5556])
-    # test(["py_worker.py", "transformer_add_one", "AddOneTransformer", 5556])
