@@ -53,6 +53,8 @@ public class FileMetaStorage implements IMetaStorage {
 
     private UserChangeHook userChangeHook = null;
 
+    private TransformChangeHook transformChangeHook = null;
+
     private AtomicLong idGenerator = null; // 加载完数据之后赋值
 
     public FileMetaStorage() {
@@ -494,12 +496,36 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void registerTransformChangeHook(TransformChangeHook hook) {
-
+        if (transformChangeHook != null) {
+            transformChangeHook = hook;
+        }
     }
 
     @Override
     public List<TransformTaskMeta> loadTransformTask() throws MetaStorageException {
-        return new ArrayList<>();
+        Map<String, TransformTaskMeta> taskMetaMap = new HashMap<>();
+
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(Paths.get(PATH, TRANSFORM_META_FILE).toFile())))) {
+            String line;
+            String[] params;
+            while ((line = reader.readLine()) != null) {
+                params = line.split(" ");
+                if (params[0].equals(UPDATE)) {
+                    TransformTaskMeta taskMeta = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), TransformTaskMeta.class);
+                    taskMetaMap.put(taskMeta.getClassName(), taskMeta);
+                } else if (params[0].equals(REMOVE)) {
+                    String className = params[1];
+                    taskMetaMap.remove(className);
+                } else {
+                    logger.error("unknown log content: " + line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("encounter error when read task log file: ", e);
+            throw new MetaStorageException(e);
+        }
+
+        return new ArrayList<>(taskMetaMap.values());
     }
 
     @Override
@@ -510,13 +536,21 @@ public class FileMetaStorage implements IMetaStorage {
             logger.error("write transform file error: ", e);
             throw new MetaStorageException(e);
         }
-//        if (userChangeHook != null) {
-//            userChangeHook.onChange(userMeta.getUsername(), userMeta);
-//        }
+        if (transformChangeHook != null) {
+            transformChangeHook.onChange(transformTask.getClassName(), transformTask);
+        }
     }
 
     @Override
-    public void dropTransformTask(String className) {
-
+    public void dropTransformTask(String className) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, TRANSFORM_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", REMOVE, className));
+        } catch (IOException e) {
+            logger.error("write transform file error: ", e);
+            throw new MetaStorageException(e);
+        }
+        if (transformChangeHook != null) {
+            transformChangeHook.onChange(className, null);
+        }
     }
 }
