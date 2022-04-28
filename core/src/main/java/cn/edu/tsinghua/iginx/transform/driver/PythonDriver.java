@@ -2,11 +2,15 @@ package cn.edu.tsinghua.iginx.transform.driver;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
+import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.TransformTaskMeta;
 import cn.edu.tsinghua.iginx.transform.api.Driver;
 import cn.edu.tsinghua.iginx.transform.api.Writer;
 import cn.edu.tsinghua.iginx.transform.exception.CreateWorkerException;
 import cn.edu.tsinghua.iginx.transform.exception.TransformException;
 import cn.edu.tsinghua.iginx.transform.pojo.PythonTask;
+import cn.edu.tsinghua.iginx.transform.utils.Constants;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -22,15 +26,19 @@ import java.net.Socket;
 
 public class PythonDriver implements Driver {
 
-    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
-    private static final Logger logger = LoggerFactory.getLogger(PythonDriver.class);
+    private final static Config config = ConfigDescriptor.getInstance().getConfig();
+
+    private final static Logger logger = LoggerFactory.getLogger(PythonDriver.class);
 
     private final static String PYTHON_CMD = config.getPythonCMD();
 
     private final static String PYTHON_DIR = System.getProperty("user.dir");
 
     private final static String PY_WORKER = File.separator + "python_scripts" + File.separator + "py_worker.py";
+
+    private final static String PY_SUFFIX = ".py";
 
     private final static int TEST_WAIT_TIME = 10000;
 
@@ -56,8 +64,14 @@ public class PythonDriver implements Driver {
 
     @Override
     public Worker createWorker(PythonTask task, Writer writer) throws TransformException {
-        String fileName = task.getFileName();
         String className = task.getClassName();
+
+        TransformTaskMeta taskMeta = metaManager.getTransformTask(className);
+        if (taskMeta == null) {
+            throw new CreateWorkerException(String.format("Fail to load task info by className: %s", className));
+        }
+        String fileName = taskMeta.getFileName();
+        String moduleName = fileName.substring(0, fileName.indexOf(PY_SUFFIX));
 
         ServerSocket serverSocket = null;
         try {
@@ -68,7 +82,7 @@ public class PythonDriver implements Driver {
             pb.inheritIO().command(
                 PYTHON_CMD,
                 PYTHON_DIR + PY_WORKER,
-                fileName,
+                moduleName,
                 className,
                 String.valueOf(javaPort)
             );
@@ -88,11 +102,15 @@ public class PythonDriver implements Driver {
                 long pid = pidVector.get(0);
                 BigIntVector portVector = (BigIntVector) readBatch.getVector(1);
                 int pyPort = (int) portVector.get(0);
+                BigIntVector statusVector = (BigIntVector) readBatch.getVector(2);
+                int status = (int) statusVector.get(0);
 
                 socket.close();
 
                 if (pid < 0) {
-                    throw new CreateWorkerException(String.format("Failed to launch python worker with code=%d", pid));
+                    throw new CreateWorkerException(String.format("Failed to launch python worker with pid=%d", pid));
+                } else if (status < 0) {
+                    throw new CreateWorkerException(String.format("Failed to launch python worker with status=%s", Constants.getWorkerStatusInfo(status)));
                 } else {
                     Worker worker = new Worker(pid, javaPort, pyPort, process, serverSocket, writer);
                     logger.info(worker.toString() + " has started.");
@@ -110,12 +128,13 @@ public class PythonDriver implements Driver {
         try {
             serverSocket = new ServerSocket(0, 1, InetAddress.getByAddress(new byte[]{127, 0, 0, 1}));
             int javaPort = serverSocket.getLocalPort();
+            String moduleName = fileName.substring(0, fileName.indexOf(PY_SUFFIX));
 
             ProcessBuilder pb = new ProcessBuilder();
             pb.inheritIO().command(
                 PYTHON_CMD,
                 PYTHON_DIR + PY_WORKER,
-                fileName,
+                moduleName,
                 className,
                 String.valueOf(javaPort)
             );

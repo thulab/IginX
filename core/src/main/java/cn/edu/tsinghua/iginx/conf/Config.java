@@ -117,7 +117,6 @@ public class Config {
 
     private boolean useStreamExecutor = true;
 
-<<<<<<< HEAD
     private boolean enableMemoryControl = true;
 
     private String systemResourceMetrics = "default";
@@ -131,13 +130,12 @@ public class Config {
     private boolean enableMetaCacheControl = false;
 
     private long fragmentCacheThreshold = 1024 * 128;
-=======
+
     private int batchSize = 50;
 
     private String pythonCMD = "python3";
 
     private int transformTaskThreadPoolSize = 10;
->>>>>>> dev transform
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -523,7 +521,6 @@ public class Config {
         this.useStreamExecutor = useStreamExecutor;
     }
 
-<<<<<<< HEAD
     public boolean isEnableMemoryControl() {
         return enableMemoryControl;
     }
@@ -578,7 +575,8 @@ public class Config {
 
     public void setFragmentCacheThreshold(long fragmentCacheThreshold) {
         this.fragmentCacheThreshold = fragmentCacheThreshold;
-=======
+    }
+
     public int getBatchSize() {
         return batchSize;
     }
@@ -601,6 +599,5 @@ public class Config {
 
     public void setTransformTaskThreadPoolSize(int transformTaskThreadPoolSize) {
         this.transformTaskThreadPoolSize = transformTaskThreadPoolSize;
->>>>>>> dev transform
     }
 }

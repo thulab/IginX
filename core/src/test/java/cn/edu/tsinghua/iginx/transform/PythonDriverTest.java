@@ -2,14 +2,17 @@ package cn.edu.tsinghua.iginx.transform;
 
 import cn.edu.tsinghua.iginx.thrift.DataFlowType;
 import cn.edu.tsinghua.iginx.thrift.TaskType;
-import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
-import cn.edu.tsinghua.iginx.transform.driver.Worker;
 import cn.edu.tsinghua.iginx.transform.data.ArrowWriter;
 import cn.edu.tsinghua.iginx.transform.data.LogWriter;
+import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
+import cn.edu.tsinghua.iginx.transform.driver.Worker;
 import cn.edu.tsinghua.iginx.transform.exception.TransformException;
 import cn.edu.tsinghua.iginx.transform.pojo.PythonTask;
 import org.apache.arrow.memory.RootAllocator;
-import org.apache.arrow.vector.*;
+import org.apache.arrow.vector.BigIntVector;
+import org.apache.arrow.vector.FieldVector;
+import org.apache.arrow.vector.IntVector;
+import org.apache.arrow.vector.VectorSchemaRoot;
 import org.apache.arrow.vector.types.pojo.Field;
 import org.junit.Test;
 
@@ -22,7 +25,7 @@ public class PythonDriverTest {
     public void test() throws InterruptedException, TransformException {
         PythonDriver driver = PythonDriver.getInstance();
         PythonTask task = new PythonTask(TaskType.Python, DataFlowType.Stream, Long.MAX_VALUE,
-            "transformer_row_sum", "RowSumTransformer");
+            "RowSumTransformer");
 
         Worker worker = driver.createWorker(task, new LogWriter());
         worker.start();

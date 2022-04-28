@@ -32,6 +32,7 @@ public class FileMetaStorage implements IMetaStorage {
     private static final String STORAGE_UNIT_META_FILE = "storage_unit.log";
     private static final String ID_FILE = "id.log";
     private static final String USER_META_FILE = "user.log";
+    private static final String TRANSFORM_META_FILE = "transform.log";
     private static final long ID_INTERVAL = 100000;
     private static final String UPDATE = "update";
     private static final String REMOVE = "remove";
@@ -548,5 +549,33 @@ public class FileMetaStorage implements IMetaStorage {
     @Override
     public int updateVersion() {
         return 0;
+    }
+
+    @Override
+    public void registerTransformChangeHook(TransformChangeHook hook) {
+
+    }
+
+    @Override
+    public List<TransformTaskMeta> loadTransformTask() throws MetaStorageException {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
+        try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, TRANSFORM_META_FILE).toFile(), true))) {
+            writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(transformTask)));
+        } catch (IOException e) {
+            logger.error("write transform file error: ", e);
+            throw new MetaStorageException(e);
+        }
+//        if (userChangeHook != null) {
+//            userChangeHook.onChange(userMeta.getUsername(), userMeta);
+//        }
+    }
+
+    @Override
+    public void dropTransformTask(String className) {
+
     }
 }

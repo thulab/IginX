@@ -92,6 +92,7 @@ public class DefaultMetaManager implements IMetaManager {
             initSchemaMapping();
             initPolicy();
             initUser();
+            initTransform();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -263,6 +264,19 @@ public class DefaultMetaManager implements IMetaManager {
         });
         for (UserMeta user : storage.loadUser(resolveUserFromConf())) {
             cache.addOrUpdateUser(user);
+        }
+    }
+
+    private void initTransform() throws MetaStorageException {
+        storage.registerTransformChangeHook(((className, transformTask) -> {
+            if (transformTask == null) {
+                cache.dropTransformTask(className);
+            } else {
+                cache.addOrUpdateTransformTask(transformTask);
+            }
+        }));
+        for (TransformTaskMeta task: storage.loadTransformTask()) {
+            cache.addOrUpdateTransformTask(task);
         }
     }
 
@@ -791,5 +805,39 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public Map<Integer, Integer> getTimeseriesVersionMap() {
         return cache.getTimeseriesVersionMap();
+    }
+
+    @Override
+    public boolean addTransformTask(TransformTaskMeta transformTask) {
+        try {
+            storage.addTransformTask(transformTask);
+            cache.addOrUpdateTransformTask(transformTask);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("add transform task error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean dropTransformTask(String className) {
+        try {
+            cache.dropTransformTask(className);
+            storage.dropTransformTask(className);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("drop transform task error: ", e);
+            return false;
+        }
+    }
+
+    @Override
+    public TransformTaskMeta getTransformTask(String className) {
+        return cache.getTransformTask(className);
+    }
+
+    @Override
+    public List<TransformTaskMeta> getTransformTasks() {
+        return cache.getTransformTasks();
     }
 }

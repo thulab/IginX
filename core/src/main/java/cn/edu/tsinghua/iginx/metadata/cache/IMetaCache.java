@@ -114,4 +114,12 @@ public interface IMetaCache {
     double getSumFromTimeSeries();
 
     Map<Integer, Integer> getTimeseriesVersionMap();
+
+    void addOrUpdateTransformTask(TransformTaskMeta transformTask);
+
+    void dropTransformTask(String className);
+
+    TransformTaskMeta getTransformTask(String className);
+
+    List<TransformTaskMeta> getTransformTasks();
 }

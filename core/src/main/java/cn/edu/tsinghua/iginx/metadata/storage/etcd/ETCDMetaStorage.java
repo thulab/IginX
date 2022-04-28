@@ -867,6 +867,26 @@ public class ETCDMetaStorage implements IMetaStorage {
         return 0;
     }
 
+    @Override
+    public void registerTransformChangeHook(TransformChangeHook hook) {
+
+    }
+
+    @Override
+    public List<TransformTaskMeta> loadTransformTask() throws MetaStorageException {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void addTransformTask(TransformTaskMeta transformTask) {
+
+    }
+
+    @Override
+    public void dropTransformTask(String className) {
+
+    }
+
     public void close() throws MetaStorageException {
         this.schemaMappingWatcher.close();
         this.schemaMappingWatcher = null;

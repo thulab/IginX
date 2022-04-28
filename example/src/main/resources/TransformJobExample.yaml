@@ -6,17 +6,14 @@ taskList:
   - taskType: python
     dataFlowType: stream
     timeout: 10000000
-    fileName: transformer_add_one
     className: AddOneTransformer
   - taskType: python
     dataFlowType: batch
     timeout: 10000000
-    fileName: transformer_sum
     className: SumTransformer
   - taskType: python
     dataFlowType: stream
     timeout: 10000000
-    fileName: transformer_row_sum
     className: RowSumTransformer
 
 #exportType: none

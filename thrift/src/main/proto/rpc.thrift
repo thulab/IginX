@@ -52,9 +52,11 @@ enum SqlType {
     DeleteTimeSeries,
     ShowTimeSeries,
     ShowClusterInfo,
+    ShowRegisterTask,
     RegisterTask,
     DropTask,
-    CommitTransformJob
+    CommitTransformJob,
+    ShowJobStatus
 }
 
 enum AuthType {
@@ -290,7 +292,9 @@ struct ExecuteSqlResp {
     17: optional list<StorageEngineInfo> storageEngineInfos
     18: optional list<MetaStorageInfo>  metaStorageInfos
     19: optional LocalMetaStorageInfo localMetaStorageInfo
-    20: optional i64 jobId
+    20: optional list<RegisterTaskInfo> registerTaskInfos
+    21: optional i64 jobId
+    22: optional JobState jobState
 }
 
 struct UpdateUserReq {
@@ -403,8 +407,7 @@ struct TaskInfo {
     2: required DataFlowType dataFlowType
     3: optional i64 timeout
     4: optional string sql
-    5: optional string fileName
-    6: optional string className
+    5: optional string className
 }
 
 struct CommitTransformJobReq {
@@ -442,7 +445,22 @@ struct RegisterTaskReq {
 
 struct DropTaskReq {
     1: required i64 sessionId
-    2: required string name
+    2: required string className
+}
+
+struct GetRegisterTaskInfoReq {
+    1: required i64 sessionId
+}
+
+struct RegisterTaskInfo {
+    1: required string className
+    2: required string fileName
+    3: required string ip
+}
+
+struct GetRegisterTaskInfoResp {
+    1: required Status status
+    2: optional list<RegisterTaskInfo> registerTaskInfoList
 }
 
 service IService {
@@ -504,4 +522,6 @@ service IService {
     Status registerTask(1: RegisterTaskReq req);
 
     Status dropTask(1: DropTaskReq req);
+
+    GetRegisterTaskInfoResp getRegisterTaskInfo(1: GetRegisterTaskInfoReq req);
 }

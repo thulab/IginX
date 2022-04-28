@@ -15,9 +15,11 @@ statement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
-    | REGISTER PYTHON TASK className=stringLiteral IN fileName=stringLiteral #registerTaskStatement
-    | DROP PYTHON TASK fileName=stringLiteral #dropTaskStatement
-    | COMMIT TRANSFORM JOB stringLiteral #commitTransformJobStatement
+    | SHOW REGISTER PYTHON TASK #showRegisterTaskStatement
+    | REGISTER PYTHON TASK className=stringLiteral IN filePath=stringLiteral #registerTaskStatement
+    | DROP PYTHON TASK className=stringLiteral #dropTaskStatement
+    | COMMIT TRANSFORM JOB filePath=stringLiteral #commitTransformJobStatement
+    | SHOW TRANSFORM JOB STATUS jobId=INT #showJobStatusStatement
     ;
 
 selectClause
@@ -203,6 +205,7 @@ nodeName
     | COMMIT
     | TRANSFORM
     | JOB
+    | STATUS
     ;
 
 ip
@@ -451,6 +454,11 @@ TRANSFORM
 JOB
     : J O B
     ;
+
+STATUS
+    : S T A T U S
+    ;
+
 //============================
 // End of the keywords list
 //============================

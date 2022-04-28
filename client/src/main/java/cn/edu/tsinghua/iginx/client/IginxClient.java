@@ -281,6 +281,8 @@ public class IginxClient {
                 res.print(false, "");
             } else if (res.getSqlType() == SqlType.ShowClusterInfo) {
                 res.print(false, "");
+            } else if (res.getSqlType() == SqlType.ShowRegisterTask) {
+                res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
                 System.out.println("success");
@@ -289,6 +291,8 @@ public class IginxClient {
                 System.out.println("success");
             } else if (res.getSqlType() == SqlType.CommitTransformJob) {
                 System.out.println("job id: " + res.getJobId());
+            } else if (res.getSqlType() == SqlType.ShowJobStatus) {
+                System.out.println("Job status: " + res.getJobState());
             } else {
                 System.out.println("success");
             }
@@ -327,7 +331,11 @@ public class IginxClient {
             Arrays.asList("delete", "time", "series"),
             Arrays.asList("select"),
             Arrays.asList("add", "storageengine"),
-            Arrays.asList("set", "timeunit", "in")
+            Arrays.asList("set", "timeunit", "in"),
+            Arrays.asList("register", "python", "task"),
+            Arrays.asList("drop", "python", "task"),
+            Arrays.asList("commit", "transform", "job"),
+            Arrays.asList("show", "transform", "job", "status")
         );
         addArgumentCompleters(iginxCompleters, withNullCompleters, true);
 
@@ -336,7 +344,8 @@ public class IginxClient {
             Arrays.asList("count", "points"),
             Arrays.asList("clear", "data"),
             Arrays.asList("show", "time", "series"),
-            Arrays.asList("show", "cluster", "info")
+            Arrays.asList("show", "cluster", "info"),
+            Arrays.asList("show", "register", "python", "task")
         );
         addArgumentCompleters(iginxCompleters, withoutNullCompleters, false);
 

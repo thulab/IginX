@@ -150,8 +150,13 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
 =======
     @Override
+    public Statement visitShowRegisterTaskStatement(ShowRegisterTaskStatementContext ctx) {
+        return new ShowRegisterTaskStatement();
+    }
+
+    @Override
     public Statement visitRegisterTaskStatement(RegisterTaskStatementContext ctx) {
-        String filePath = ctx.fileName.getText();
+        String filePath = ctx.filePath.getText();
         filePath = filePath.substring(1, filePath.length()-1);
 
         String className = ctx.className.getText();
@@ -161,17 +166,23 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     @Override
     public Statement visitDropTaskStatement(DropTaskStatementContext ctx) {
-        String fileName = ctx.fileName.getText();
+        String fileName = ctx.className.getText();
         fileName = fileName.substring(1, fileName.length()-1);
         return new DropTaskStatement(fileName);
     }
 
     @Override
     public Statement visitCommitTransformJobStatement(CommitTransformJobStatementContext ctx) {
-        String path = ctx.stringLiteral().getText();
+        String path = ctx.filePath.getText();
         path = path.substring(1, path.length() - 1);
         return new CommitTransformJobStatement(path);
 >>>>>>> dev transform
+    }
+
+    @Override
+    public Statement visitShowJobStatusStatement(ShowJobStatusStatementContext ctx) {
+        long jobId = Long.parseLong(ctx.jobId.getText());
+        return new ShowJobStatusStatement(jobId);
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {
