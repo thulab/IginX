@@ -61,6 +61,8 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String USER_LOCK = "/lock/user/";
 
+    private static final String TRANSFORM_LOCK = "/lock/transform/";
+
     private static final String SCHEMA_MAPPING_PREFIX = "/schema/";
 
     private static final String IGINX_PREFIX = "/iginx/";
@@ -73,16 +75,22 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     private static final String USER_PREFIX = "/user/";
 
+    private static final String TRANSFORM_PREFIX = "/transform/";
+
     private static final long MAX_LOCK_TIME = 30; // 最长锁住 30 秒
 
     private static final long HEART_BEAT_INTERVAL = 5; // 和 etcd 之间的心跳包的时间间隔
 
     private static ETCDMetaStorage INSTANCE = null;
+
     private final Lock storageLeaseLock = new ReentrantLock();
     private final Lock storageUnitLeaseLock = new ReentrantLock();
     private final Lock fragmentLeaseLock = new ReentrantLock();
     private final Lock userLeaseLock = new ReentrantLock();
+    private final Lock transformLeaseLock = new ReentrantLock();
+
     private Client client;
+
     private Watch.Watcher schemaMappingWatcher;
     private SchemaMappingChangeHook schemaMappingChangeHook = null;
     private Watch.Watcher iginxWatcher;
@@ -99,6 +107,9 @@ public class ETCDMetaStorage implements IMetaStorage {
     private Watch.Watcher userWatcher;
     private UserChangeHook userChangeHook = null;
     private long userLease = -1L;
+    private Watch.Watcher transformWatcher;
+    private TransformChangeHook transformChangeHook = null;
+    private long transformLease = -1L;
 
     public ETCDMetaStorage() {
         client = Client.builder()
@@ -313,6 +324,44 @@ public class ETCDMetaStorage implements IMetaStorage {
                             case DELETE:
                                 userMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), UserMeta.class);
                                 userChangeHook.onChange(userMeta.getUsername(), null);
+                                break;
+                            default:
+                                logger.error("unexpected watchEvent: " + event.getEventType());
+                                break;
+                        }
+                    }
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+
+                }
+
+                @Override
+                public void onCompleted() {
+
+                }
+            });
+
+        // 注册 transform 的监听
+        this.transformWatcher = client.getWatchClient().watch(ByteSequence.from(TRANSFORM_PREFIX.getBytes()),
+            WatchOption.newBuilder().withPrefix(ByteSequence.from(TRANSFORM_PREFIX.getBytes())).withPrevKV(true).build(),
+            new Watch.Listener() {
+                @Override
+                public void onNext(WatchResponse watchResponse) {
+                    if (ETCDMetaStorage.this.transformChangeHook == null) {
+                        return;
+                    }
+                    for (WatchEvent event : watchResponse.getEvents()) {
+                        TransformTaskMeta taskMeta;
+                        switch (event.getEventType()) {
+                            case PUT:
+                                taskMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), TransformTaskMeta.class);
+                                transformChangeHook.onChange(taskMeta.getClassName(), taskMeta);
+                                break;
+                            case DELETE:
+                                taskMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), TransformTaskMeta.class);
+                                transformChangeHook.onChange(taskMeta.getClassName(), null);
                                 break;
                             default:
                                 logger.error("unexpected watchEvent: " + event.getEventType());
@@ -867,24 +916,95 @@ public class ETCDMetaStorage implements IMetaStorage {
         return 0;
     }
 
+    private void lockTransform() throws MetaStorageException {
+        try {
+            transformLeaseLock.lock();
+            transformLease = client.getLeaseClient().grant(MAX_LOCK_TIME).get().getID();
+            client.getLockClient().lock(ByteSequence.from(TRANSFORM_LOCK.getBytes()), transformLease);
+        } catch (Exception e) {
+            transformLeaseLock.unlock();
+            throw new MetaStorageException("acquire transform mutex error: ", e);
+        }
+    }
+
+    private void releaseTransform() throws MetaStorageException {
+        try {
+            client.getLockClient().unlock(ByteSequence.from(TRANSFORM_LOCK.getBytes())).get();
+            client.getLeaseClient().revoke(transformLease).get();
+            transformLease = -1L;
+        } catch (Exception e) {
+            throw new MetaStorageException("release user mutex error: ", e);
+        } finally {
+            transformLeaseLock.unlock();
+        }
+    }
+
     @Override
     public void registerTransformChangeHook(TransformChangeHook hook) {
-
+        transformChangeHook = hook;
     }
 
     @Override
     public List<TransformTaskMeta> loadTransformTask() throws MetaStorageException {
-        return new ArrayList<>();
+        try {
+            lockTransform();
+            Map<String, TransformTaskMeta> taskMetaMap = new HashMap<>();
+            GetResponse response = this.client.getKVClient().get(ByteSequence.from(TRANSFORM_PREFIX.getBytes()),
+                GetOption.newBuilder().withPrefix(ByteSequence.from(TRANSFORM_PREFIX.getBytes())).build())
+                .get();
+            if (response.getCount() != 0L) {
+                response.getKvs().forEach(e -> {
+                    TransformTaskMeta taskMeta = JsonUtils.fromJson(e.getValue().getBytes(), TransformTaskMeta.class);
+                    taskMetaMap.put(taskMeta.getClassName(), taskMeta);
+                });
+            }
+            return new ArrayList<>(taskMetaMap.values());
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when load transform: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (transformLease != -1) {
+                releaseTransform();
+            }
+        }
     }
 
     @Override
-    public void addTransformTask(TransformTaskMeta transformTask) {
-
+    public void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
+        try {
+            lockTransform();
+            this.client.getKVClient()
+                .put(ByteSequence.from((TRANSFORM_PREFIX + transformTask.getClassName()).getBytes()), ByteSequence.from(JsonUtils.toJson(transformTask))).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when add/update transform: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (transformLease != -1) {
+                releaseTransform();
+            }
+        }
+        if (transformChangeHook != null) {
+            transformChangeHook.onChange(transformTask.getClassName(), transformTask);
+        }
     }
 
     @Override
-    public void dropTransformTask(String className) {
-
+    public void dropTransformTask(String className) throws MetaStorageException {
+        try {
+            lockTransform();
+            this.client.getKVClient()
+                .delete(ByteSequence.from((TRANSFORM_PREFIX + className).getBytes())).get();
+        } catch (ExecutionException | InterruptedException e) {
+            logger.error("got error when remove transform: ", e);
+            throw new MetaStorageException(e);
+        } finally {
+            if (transformLease != -1) {
+                releaseTransform();
+            }
+        }
+        if (transformChangeHook != null) {
+            transformChangeHook.onChange(className, null);
+        }
     }
 
     public void close() throws MetaStorageException {
@@ -905,6 +1025,9 @@ public class ETCDMetaStorage implements IMetaStorage {
 
         this.userWatcher.close();
         this.userWatcher = null;
+
+        this.transformWatcher.close();
+        this.transformWatcher = null;
 
         this.client.close();
         this.client = null;
