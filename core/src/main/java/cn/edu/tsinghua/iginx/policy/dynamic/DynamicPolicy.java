@@ -418,22 +418,20 @@ public class DynamicPolicy implements IPolicy {
       int lpParamNum = 2 * totalFragmentNum * nodeFragmentMap.size();
       // 声明lp_solve优化模型
       LpSolve problem = LpSolve.makeLp(0, lpParamNum);
-      // 加速执行
-      problem.setAddRowmode(true);
+      problem.setMinim();
       // 设置为0,1变量
       for (int i = 1; i <= lpParamNum; i++) {
         problem.setBinary(i, true);
       }
 
       // 定义目标函数
-      double[] objFnList = new double[lpParamNum];
+      double[] objFnList = new double[lpParamNum + 1];
       for (int i = 0; i < totalFragmentNum; i++) {
         for (int j = 0; j < nodeFragmentMap.size(); j++) {
           if (m[i][j] == 1) {
-            objFnList[i * totalFragmentNum + j] = MigrationTask.RESHARD_MIGRATION_COST;
-          } else {
-            objFnList[totalFragmentNum * nodeFragmentMap.size() + i * totalFragmentNum
-                + j] = fragmentSize[i];
+            objFnList[i * nodeFragmentMap.size() + j + 1] = MigrationTask.RESHARD_MIGRATION_COST;
+            objFnList[totalFragmentNum * nodeFragmentMap.size() + i * nodeFragmentMap.size()
+                + j + 1] = fragmentSize[i];
           }
         }
       }
@@ -451,26 +449,26 @@ public class DynamicPolicy implements IPolicy {
 
       // 定义约束条件
       // 负载均衡约束
-      double[] loadConstraintList = new double[lpParamNum];
-      for (int i = 0; i < totalFragmentNum; i++) {
-        for (int j = 0; j < nodeFragmentMap.size(); j++) {
-          loadConstraintList[i * totalFragmentNum + j] = writeLoad[i];
-          loadConstraintList[totalFragmentNum * nodeFragmentMap.size() + i * totalFragmentNum
-              + j] = readLoad[i];
+      for (int j = 0; j < nodeFragmentMap.size(); j++) {
+        double[] loadConstraintList = new double[lpParamNum + 1];
+        for (int i = 0; i < totalFragmentNum; i++) {
+          loadConstraintList[i * nodeFragmentMap.size() + j + 1] = writeLoad[i];
+          loadConstraintList[totalFragmentNum * nodeFragmentMap.size() + i * nodeFragmentMap.size()
+              + j + 1] = readLoad[i];
         }
+        problem.addConstraint(loadConstraintList, LpSolve.GE, minLoad);
+        problem.addConstraint(loadConstraintList, LpSolve.LE, maxLoad);
       }
-      problem.addConstraint(loadConstraintList, LpSolve.GE, minLoad);
-      problem.addConstraint(loadConstraintList, LpSolve.LE, maxLoad);
 
       // 每个分区必须分配在一个节点上
       for (int i = 0; i < totalFragmentNum; i++) {
-        double[] writeFragmentConstraintList = new double[lpParamNum];
-        double[] readFragmentConstraintList = new double[lpParamNum];
+        double[] writeFragmentConstraintList = new double[lpParamNum + 1];
+        double[] readFragmentConstraintList = new double[lpParamNum + 1];
         for (int j = 0; j < nodeFragmentMap.size(); j++) {
-          writeFragmentConstraintList[i * totalFragmentNum + j] = 1;
+          writeFragmentConstraintList[i * nodeFragmentMap.size() + j + 1] = 1;
           readFragmentConstraintList[totalFragmentNum * nodeFragmentMap.size()
-              + i * totalFragmentNum
-              + j] = 1;
+              + i * nodeFragmentMap.size()
+              + j + 1] = 1;
         }
         problem.addConstraint(writeFragmentConstraintList, LpSolve.EQ, 1);
         problem.addConstraint(readFragmentConstraintList, LpSolve.EQ, 1);
@@ -482,9 +480,9 @@ public class DynamicPolicy implements IPolicy {
         problem.getVariables(vars);
         for (int i = 0; i < totalFragmentNum; i++) {
           for (int j = 0; j < nodeFragmentMap.size(); j++) {
-            result[0][i][j] = (int) vars[i * totalFragmentNum + j];
+            result[0][i][j] = (int) vars[i * nodeFragmentMap.size() + j];
             result[1][i][j] = (int) vars[totalFragmentNum * nodeFragmentMap.size()
-                + i * totalFragmentNum + j];
+                + i * nodeFragmentMap.size() + j];
           }
         }
       }

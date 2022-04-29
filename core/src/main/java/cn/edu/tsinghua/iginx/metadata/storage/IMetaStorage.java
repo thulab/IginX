@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
@@ -165,9 +164,9 @@ public interface IMetaStorage {
 
   void lockMaxActiveEndTimeStatistics() throws MetaStorageException;
 
-  void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime) throws MetaStorageException;
+  void addOrUpdateMaxActiveEndTimeStatistics(long endTime) throws MetaStorageException;
 
-  long getMaxActiveEndTimeStatistics(long id) throws MetaStorageException;
+  long getMaxActiveEndTimeStatistics() throws MetaStorageException;
 
   void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
 

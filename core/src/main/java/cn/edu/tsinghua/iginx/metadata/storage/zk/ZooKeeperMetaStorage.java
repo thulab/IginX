@@ -19,7 +19,6 @@
 package cn.edu.tsinghua.iginx.metadata.storage.zk;
 
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.EXECUTING;
-import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
@@ -29,7 +28,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
@@ -41,7 +39,6 @@ import com.google.gson.reflect.TypeToken;
 import java.util.Map.Entry;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.TreeCache;
 import org.apache.curator.framework.recipes.cache.TreeCacheListener;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
@@ -1725,18 +1722,16 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
-  public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime)
+  public void addOrUpdateMaxActiveEndTimeStatistics(long endTime)
       throws MetaStorageException {
     try {
       if (this.client.checkExists()
-          .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
+          .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE) == null) {
         this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id),
-                JsonUtils.toJson(endTime));
+            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE, JsonUtils.toJson(endTime));
       } else {
         this.client.setData()
-            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id),
-                JsonUtils.toJson(endTime));
+            .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE, JsonUtils.toJson(endTime));
       }
     } catch (Exception e) {
       throw new MetaStorageException(
@@ -1745,13 +1740,13 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
-  public long getMaxActiveEndTimeStatistics(long id) throws MetaStorageException {
+  public long getMaxActiveEndTimeStatistics() throws MetaStorageException {
     try {
       if (this.client.checkExists()
-          .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)) == null) {
+          .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE) != null) {
         return JsonUtils.fromJson(
             this.client.getData()
-                .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE + String.format("%010d", id)),
+                .forPath(MAX_ACTIVE_END_TIME_STATISTICS_NODE),
             Long.class);
       }
     } catch (Exception e) {

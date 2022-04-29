@@ -55,6 +55,7 @@ public class MonitorManager implements Runnable {
         metaManager.updateFragmentRequests(RequestsMonitor.getInstance().getWriteRequestsMap(),
             RequestsMonitor.getInstance()
                 .getReadRequestsMap());
+        metaManager.submitMaxActiveEndTime();
         Map<FragmentMeta, Long> writeHotspotMap = HotSpotMonitor.getInstance().getWriteHotspotMap();
         Map<FragmentMeta, Long> readHotspotMap = HotSpotMonitor.getInstance().getReadHotspotMap();
         metaManager.updateFragmentHeat(writeHotspotMap, readHotspotMap);
@@ -82,6 +83,7 @@ public class MonitorManager implements Runnable {
             heat += fragmentHeatWriteMap.getOrDefault(fragmentMeta, 0L);
             heat += fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L);
           }
+          logger.info("heat of node {} : {}", fragmentOfEachNodeEntry.getKey(), heat);
 
           totalHeats += heat;
           maxHeat = Math.max(maxHeat, heat);
@@ -92,15 +94,15 @@ public class MonitorManager implements Runnable {
         if (minHeat <= 0) {
           continue;
         }
-        if ((1 - unbalanceThreshold) * averageHeats >= minHeat
-            || (1 + unbalanceThreshold) * averageHeats <= maxHeat) {
-          DefaultMetaManager.getInstance().executeReshard();
-          //发起负载均衡
-          policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
-              fragmentHeatWriteMap, fragmentHeatReadMap);
-          //完成负载均衡
-          DefaultMetaManager.getInstance().doneReshard();
-        }
+//        if (((1 - unbalanceThreshold) * averageHeats >= minHeat
+//            || (1 + unbalanceThreshold) * averageHeats <= maxHeat)) {
+//          DefaultMetaManager.getInstance().executeReshard();
+//          //发起负载均衡
+//          policy.executeReshardAndMigration(fragmentMetaPointsMap, fragmentOfEachNode,
+//              fragmentHeatWriteMap, fragmentHeatReadMap);
+//          //完成负载均衡
+//          DefaultMetaManager.getInstance().doneReshard();
+//        }
       } catch (Exception e) {
         logger.error("monitor manager error ", e);
       }

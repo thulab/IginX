@@ -230,4 +230,6 @@ public interface IMetaManager {
     void executeReshard();
 
     void doneReshard();
+
+    void submitMaxActiveEndTime();
 }

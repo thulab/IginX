@@ -25,7 +25,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
@@ -1153,13 +1152,13 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void addOrUpdateMaxActiveEndTimeStatistics(long id, long endTime)
+    public void addOrUpdateMaxActiveEndTimeStatistics(long endTime)
         throws MetaStorageException {
 
     }
 
     @Override
-    public long getMaxActiveEndTimeStatistics(long id) throws MetaStorageException {
+    public long getMaxActiveEndTimeStatistics() throws MetaStorageException {
         return 0;
     }
 

@@ -40,6 +40,8 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.monitor.HotSpotMonitor;
+import cn.edu.tsinghua.iginx.monitor.RequestsMonitor;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
@@ -287,7 +289,7 @@ public class DefaultMetaManager implements IMetaManager {
     try {
       storage.registerPolicy(getIginxId(), num);
       // 从元数据管理器取写入的最大时间戳
-      maxActiveEndTime.set(storage.getMaxActiveEndTimeStatistics(id));
+      maxActiveEndTime.set(storage.getMaxActiveEndTimeStatistics());
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -922,6 +924,8 @@ public class DefaultMetaManager implements IMetaManager {
       storage.resetFragmentHeatCounter();
       storage.removeFragmentRequests();
       storage.removeFragmentHeat();
+      HotSpotMonitor.getInstance().clear();
+      RequestsMonitor.getInstance().clear();
     } catch (Exception e) {
       logger.error("encounter error when clear monitors: ", e);
     }
@@ -1009,7 +1013,7 @@ public class DefaultMetaManager implements IMetaManager {
         reshardStatus = status;
         if (reshardStatus.equals(EXECUTING)) {
           storage.lockMaxActiveEndTimeStatistics();
-          storage.addOrUpdateMaxActiveEndTimeStatistics(id, maxActiveEndTime.get());
+          storage.addOrUpdateMaxActiveEndTimeStatistics(maxActiveEndTime.get());
           storage.releaseMaxActiveEndTimeStatistics();
 
           storage.lockReshardCounter();
@@ -1068,5 +1072,15 @@ public class DefaultMetaManager implements IMetaManager {
 
   public long getMaxActiveEndTime() {
     return maxActiveEndTime.get();
+  }
+
+  public void submitMaxActiveEndTime() {
+    try {
+      storage.lockMaxActiveEndTimeStatistics();
+      storage.addOrUpdateMaxActiveEndTimeStatistics(maxActiveEndTime.get());
+      storage.releaseMaxActiveEndTimeStatistics();
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when submitting max active time: ", e);
+    }
   }
 }
