@@ -27,7 +27,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +39,8 @@ public interface IMetaCache {
     void addFragment(FragmentMeta fragmentMeta);
 
     void updateFragment(FragmentMeta fragmentMeta);
+
+    void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 

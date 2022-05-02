@@ -53,6 +53,8 @@ public class Config {
 
     private double unbalanceThreshold = 0.2;
 
+    private double unbalanceFinalStatusThreshold = 0.1;
+
     private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * loadBalanceCheckInterval * 1000 * 0.8;
 
     private long migrationBatchSize = 100;
@@ -261,6 +263,14 @@ public class Config {
 
     public void setUnbalanceThreshold(double unbalanceThreshold) {
         this.unbalanceThreshold = unbalanceThreshold;
+    }
+
+    public double getUnbalanceFinalStatusThreshold() {
+        return unbalanceFinalStatusThreshold;
+    }
+
+    public void setUnbalanceFinalStatusThreshold(double unbalanceFinalStatusThreshold) {
+        this.unbalanceFinalStatusThreshold = unbalanceFinalStatusThreshold;
     }
 
     public double getMaxLoadThreshold() {

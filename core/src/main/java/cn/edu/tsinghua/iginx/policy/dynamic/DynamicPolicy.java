@@ -37,7 +37,8 @@ public class DynamicPolicy implements IPolicy {
   private IMetaManager iMetaManager;
   private static final Config config = ConfigDescriptor.getInstance().getConfig();
   private static final Logger logger = LoggerFactory.getLogger(DynamicPolicy.class);
-  private static final double unbalanceThreshold = config.getUnbalanceThreshold();
+  private static final double unbalanceFinalStatusThreshold = config
+      .getUnbalanceFinalStatusThreshold();
 
   @Override
   public void notify(DataStatement statement) {
@@ -387,9 +388,26 @@ public class DynamicPolicy implements IPolicy {
       }
     }
 
-    // 执行迁移
-    MigrationManager.getInstance().getMigration()
-        .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
+    // 没找到迁移方案，可能是因为分区过大了，则根据序列拆分分区
+    if (migrationTasks.size() == 0) {
+      FragmentMeta maxLoadFragment = null;
+      long maxLoad = 0;
+      for (FragmentMeta fragmentMeta : allFragmentMetas) {
+        long currLoad = fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L) + fragmentReadLoadMap
+            .getOrDefault(fragmentMeta, 0L);
+        if (maxLoad < currLoad) {
+          maxLoad = currLoad;
+          maxLoadFragment = fragmentMeta;
+        }
+      }
+      if (maxLoadFragment != null) {
+        MigrationManager.getInstance().getMigration().reshardByTimeseries(maxLoadFragment);
+      }
+    } else {
+      // 执行迁移
+      MigrationManager.getInstance().getMigration()
+          .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
+    }
   }
 
   private int[][][] calculateMigrationFinalStatus(double averageScore,
@@ -438,8 +456,8 @@ public class DynamicPolicy implements IPolicy {
       problem.setObjFn(objFnList);
 
       // 调整平衡阈值（防止出现有分区的部分负载过高造成无解的情况）
-      double maxLoad = averageScore * (1 + unbalanceThreshold);
-      double minLoad = averageScore * (1 - unbalanceThreshold);
+      double maxLoad = averageScore * (1 + unbalanceFinalStatusThreshold);
+      double minLoad = averageScore * (1 - unbalanceFinalStatusThreshold);
       long maxWriteLoad = Arrays.stream(writeLoad).max().getAsLong();
       long maxReadLoad = Arrays.stream(readLoad).max().getAsLong();
       if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {

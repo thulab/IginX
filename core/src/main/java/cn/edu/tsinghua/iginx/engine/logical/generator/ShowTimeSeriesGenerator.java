@@ -23,6 +23,6 @@ public class ShowTimeSeriesGenerator extends AbstractGenerator {
 
     @Override
     protected Operator generateRoot(Statement statement) {
-        return new ShowTimeSeries(new GlobalSource());
+        return new ShowTimeSeries(new GlobalSource(), "");
     }
 }

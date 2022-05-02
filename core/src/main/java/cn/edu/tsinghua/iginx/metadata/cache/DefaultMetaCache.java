@@ -216,6 +216,18 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval,
+        FragmentMeta fragmentMeta) {
+        fragmentLock.writeLock().lock();
+        // 更新 fragmentMetaListMap
+        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
+        fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
+        fragmentMetaListMap.put(fragmentMeta.getTsInterval(), fragmentMetaList);
+        fragmentMetaListMap.remove(tsInterval);
+        fragmentLock.writeLock().unlock();
+    }
+
+    @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();

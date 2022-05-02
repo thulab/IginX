@@ -231,5 +231,9 @@ public interface IMetaManager {
 
     void doneReshard();
 
+    void addFragment(FragmentMeta fragmentMeta);
+
+    void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
+
     void submitMaxActiveEndTime();
 }

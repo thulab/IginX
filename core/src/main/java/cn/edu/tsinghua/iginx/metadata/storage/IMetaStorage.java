@@ -73,6 +73,8 @@ public interface IMetaStorage {
 
   void updateFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
+  void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) throws MetaStorageException;
+
   void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException;
 
   void releaseFragment() throws MetaStorageException;

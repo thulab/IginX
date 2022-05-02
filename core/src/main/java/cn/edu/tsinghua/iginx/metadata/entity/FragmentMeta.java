@@ -94,6 +94,10 @@ public final class FragmentMeta {
     return fragment;
   }
 
+  public void endFragmentMetaByTimeSeries(String endTimeSeries) {
+    tsInterval.setEndTimeSeries(endTimeSeries);
+  }
+
   public long getCreatedBy() {
     return createdBy;
   }
@@ -146,12 +150,12 @@ public final class FragmentMeta {
 
   @Override
   public boolean equals(Object o) {
-      if (this == o) {
-          return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-          return false;
-      }
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
     FragmentMeta that = (FragmentMeta) o;
     return Objects.equals(timeInterval, that.timeInterval) && Objects
         .equals(tsInterval, that.tsInterval);

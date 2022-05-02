@@ -23,12 +23,11 @@ import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 
-import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import java.util.List;
 
 public interface IStorage {
 
     TaskExecuteResult execute(StoragePhysicalTask task);
 
-    List<Timeseries> getTimeSeries() throws PhysicalException;
+    List<Timeseries> getTimeSeries(String timeSeriesPrefix) throws PhysicalException;
 }

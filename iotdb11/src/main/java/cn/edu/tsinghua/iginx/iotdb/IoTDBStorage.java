@@ -162,7 +162,7 @@ public class IoTDBStorage implements IStorage {
     }
 
     @Override
-    public List<Timeseries> getTimeSeries() throws PhysicalException {
+    public List<Timeseries> getTimeSeries(String timeSeriesPrefix) throws PhysicalException {
         List<Timeseries> timeseries = new ArrayList<>();
         try {
             SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);

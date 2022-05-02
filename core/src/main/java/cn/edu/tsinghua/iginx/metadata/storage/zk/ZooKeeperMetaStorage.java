@@ -774,6 +774,21 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
+  public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+      throws MetaStorageException {
+    try {
+      this.client.delete()
+          .forPath(FRAGMENT_NODE_PREFIX + "/" + tsInterval.toString() + "/" + fragmentMeta
+              .getTimeInterval().toString());
+      this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+          .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/"
+              + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+    } catch (Exception e) {
+      throw new MetaStorageException("get error when update fragment", e);
+    }
+  }
+
+  @Override
   public void addFragment(FragmentMeta fragmentMeta)
       throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
     try {

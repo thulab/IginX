@@ -544,6 +544,40 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public void addFragment(FragmentMeta fragmentMeta) {
+    try {
+      storage.lockFragment();
+      cache.addFragment(fragmentMeta);
+      storage.addFragment(fragmentMeta);
+    } catch (MetaStorageException e) {
+      logger.error("add fragment error: ", e);
+    } finally {
+      try {
+        storage.releaseFragment();
+      } catch (MetaStorageException e) {
+        logger.error("release fragment lock error: ", e);
+      }
+    }
+  }
+
+  @Override
+  public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) {
+    try {
+      storage.lockFragment();
+      cache.updateFragmentByTsInterval(tsInterval, fragmentMeta);
+      storage.updateFragmentByTsInterval(tsInterval, fragmentMeta);
+    } catch (MetaStorageException e) {
+      logger.error("update fragment error: ", e);
+    } finally {
+      try {
+        storage.releaseFragment();
+      } catch (MetaStorageException e) {
+        logger.error("release fragment lock error: ", e);
+      }
+    }
+  }
+
+  @Override
   public boolean hasFragment() {
     return cache.hasFragment();
   }

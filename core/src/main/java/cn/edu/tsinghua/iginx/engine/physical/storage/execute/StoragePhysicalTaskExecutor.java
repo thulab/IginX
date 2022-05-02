@@ -32,6 +32,7 @@ import cn.edu.tsinghua.iginx.engine.physical.task.GlobalPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.MemoryPhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import cn.edu.tsinghua.iginx.engine.shared.operator.ShowTimeSeries;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -176,7 +177,8 @@ public class StoragePhysicalTaskExecutor {
                         continue;
                     }
                     try {
-                        List<Timeseries> timeseriesList = pair.k.getTimeSeries();
+                        ShowTimeSeries showTimeSeries = (ShowTimeSeries) task.getOperator();
+                        List<Timeseries> timeseriesList = pair.k.getTimeSeries(showTimeSeries.getTimeSeriesPrefix());
                         timeseries.addAll(timeseriesList);
                     } catch (PhysicalException e) {
                         return new TaskExecuteResult(e);

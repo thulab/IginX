@@ -139,7 +139,7 @@ public class InfluxDBStorage implements IStorage {
     }
 
     @Override
-    public List<Timeseries> getTimeSeries() {
+    public List<Timeseries> getTimeSeries(String timeSeriesPrefix) {
         return null;
     }
 

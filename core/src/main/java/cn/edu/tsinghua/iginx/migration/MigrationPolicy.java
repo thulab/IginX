@@ -4,9 +4,12 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Migration;
+import cn.edu.tsinghua.iginx.engine.shared.operator.ShowTimeSeries;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -25,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
 import org.slf4j.Logger;
 
@@ -48,6 +53,40 @@ public abstract class MigrationPolicy {
   public abstract void migrate(List<MigrationTask> migrationTasks,
       Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap);
+
+  /**
+   * 在时间序列层面将分片在同一个du下分为两块
+   */
+  public void reshardByTimeseries(FragmentMeta fragmentMeta) {
+    try {
+      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
+          fragmentMeta.getMasterStorageUnitId());
+      RowStream rowStream = physicalEngine.execute(showTimeSeries);
+      SortedSet<String> pathSet = new TreeSet<>();
+      rowStream.getHeader().getFields().forEach(field -> {
+        String timeSeries = field.getName();
+        if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
+          pathSet.add(timeSeries);
+        }
+      });
+      String middlePath = new ArrayList<>(pathSet).get(pathSet.size() / 2);
+      fragmentMeta.endFragmentMetaByTimeSeries(middlePath);
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+          fragmentMeta.getTsInterval().getStartTimeSeries(),
+          fragmentMeta.getTsInterval().getEndTimeSeries());
+      fragmentMeta.endFragmentMetaByTimeSeries(middlePath);
+      DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+      FragmentMeta newFragment = new FragmentMeta(middlePath,
+          fragmentMeta.getTsInterval().getEndTimeSeries(),
+          fragmentMeta.getTimeInterval().getStartTime(),
+          fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
+      DefaultMetaManager.getInstance().addFragment(newFragment);
+    } catch (PhysicalException e) {
+      logger.error("encounter error when reshard fragment by {} to {} ",
+          fragmentMeta.getTsInterval().getStartTimeSeries(),
+          fragmentMeta.getTsInterval().getEndTimeSeries(), e);
+    }
+  }
 
   public void interrupt() {
     executor.shutdown();

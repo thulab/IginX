@@ -152,7 +152,7 @@ public class TimescaleDBStorage implements IStorage {
   }
 
   @Override
-  public List<Timeseries> getTimeSeries() throws PhysicalException {
+  public List<Timeseries> getTimeSeries(String timeSeriesPrefix) throws PhysicalException {
     List<Timeseries> timeseries = new ArrayList<>();
     try {
       DatabaseMetaData databaseMetaData = connection.getMetaData();
