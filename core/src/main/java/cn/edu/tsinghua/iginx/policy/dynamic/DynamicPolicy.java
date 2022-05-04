@@ -22,8 +22,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import lpsolve.LpSolve;
 import lpsolve.LpSolveException;
@@ -66,7 +66,7 @@ public class DynamicPolicy implements IPolicy {
           && after.isLastOfBatch()) {
         needReAllocate.set(true);
       }
-      // TODO: 针对节点退出的情况缩容
+      // TODO: 针对节点异常退出的情况缩容
     };
   }
 
@@ -263,37 +263,12 @@ public class DynamicPolicy implements IPolicy {
     this.needReAllocate.set(needReAllocate);
   }
 
-  public boolean checkSuccess(Map<String, Double> timeseriesData) {
-    Map<TimeSeriesInterval, FragmentMeta> latestFragments = iMetaManager.getLatestFragmentMap();
-    Map<TimeSeriesInterval, Double> fragmentValue = latestFragments.keySet().stream().collect(
-        Collectors.toMap(Function.identity(), e1 -> 0.0, (e1, e2) -> e1)
-    );
-    timeseriesData.forEach((key, value) -> {
-      for (TimeSeriesInterval timeSeriesInterval : fragmentValue.keySet()) {
-        if (timeSeriesInterval.isContain(key)) {
-          Double tmp = fragmentValue.get(timeSeriesInterval);
-          fragmentValue.put(timeSeriesInterval, value + tmp);
-        }
-      }
-    });
-    List<Double> value = fragmentValue.values().stream().sorted().collect(Collectors.toList());
-    int num = 0;
-    for (Double v : value) {
-      logger.info("fragment value num : {}, value : {}", num++, v);
-    }
-    if (value.size() > 0) {
-      return !(value.get(new Double(Math.ceil(value.size() - 1) * 0.9).intValue())
-          > config.getStorageGroupValueLimit() * 3);
-    } else {
-      return true;
-    }
-  }
-
   @Override
   public void executeReshardAndMigration(
       Map<FragmentMeta, Long> fragmentMetaPointsMap,
       Map<Long, List<FragmentMeta>> nodeFragmentMap,
-      Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap) {
+      Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
+      List<Long> toScaleInNodes) {
     // 平均资源占用
     double totalHeat = 0;
     for (long heat : fragmentWriteLoadMap.values()) {
@@ -327,7 +302,7 @@ public class DynamicPolicy implements IPolicy {
     }
     int[][][] migrationResults = calculateMigrationFinalStatus(totalHeat / nodeFragmentMap.size(),
         fragmentMetaPointsMap, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap,
-        totalFragmentNum, m);
+        totalFragmentNum, m, toScaleInNodes);
 
     // 所有的分区
     FragmentMeta[] allFragmentMetas = new FragmentMeta[totalFragmentNum];
@@ -414,13 +389,19 @@ public class DynamicPolicy implements IPolicy {
       Map<FragmentMeta, Long> fragmentMetaPointsMap,
       Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
-      int totalFragmentNum, int[][] m) {
+      int totalFragmentNum, int[][] m, List<Long> toScaleInNodes) {
     //分区大小函数
     long[] fragmentSize = new long[totalFragmentNum];
     long[] writeLoad = new long[totalFragmentNum];
     long[] readLoad = new long[totalFragmentNum];
+    List<Integer> toScaleInNodeIndexList = new ArrayList<>();
+    int currNodeIndex = 0;
     int currIndex = 0;
-    for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
+    for (Entry<Long, List<FragmentMeta>> nodeFragmentEntry : nodeFragmentMap.entrySet()) {
+      if (toScaleInNodes.contains(nodeFragmentEntry.getKey())) {
+        toScaleInNodeIndexList.add(currNodeIndex);
+      }
+      List<FragmentMeta> fragmentMetas = nodeFragmentEntry.getValue();
       for (FragmentMeta fragmentMeta : fragmentMetas) {
         fragmentSize[currIndex] = fragmentMetaPointsMap
             .getOrDefault(fragmentMeta, MigrationTask.RESHARD_MIGRATION_COST);
@@ -428,6 +409,7 @@ public class DynamicPolicy implements IPolicy {
         readLoad[currIndex] = fragmentReadLoadMap.getOrDefault(fragmentMeta, 0L);
         currIndex++;
       }
+      currNodeIndex++;
     }
 
     int[][][] result = new int[2][totalFragmentNum][nodeFragmentMap.size()];
@@ -490,6 +472,32 @@ public class DynamicPolicy implements IPolicy {
         }
         problem.addConstraint(writeFragmentConstraintList, LpSolve.EQ, 1);
         problem.addConstraint(readFragmentConstraintList, LpSolve.EQ, 1);
+      }
+
+      // 缩容条件限定
+      if (toScaleInNodes.size() > 0) {
+        for (int j = 0; j < nodeFragmentMap.size(); j++) {
+          double[] loadConstraintList = new double[lpParamNum + 1];
+          for (int i = 0; i < totalFragmentNum; i++) {
+            loadConstraintList[i * nodeFragmentMap.size() + j + 1] = writeLoad[i];
+            loadConstraintList[totalFragmentNum * nodeFragmentMap.size() + i * nodeFragmentMap
+                .size()
+                + j + 1] = readLoad[i];
+          }
+          problem.addConstraint(loadConstraintList, LpSolve.GE, minLoad);
+          problem.addConstraint(loadConstraintList, LpSolve.LE, maxLoad);
+        }
+      }
+
+      for (int nodeIndex : toScaleInNodeIndexList) {
+        double[] scaleInNodeConstraintList = new double[lpParamNum + 1];
+        for (int i = 0; i < totalFragmentNum; i++) {
+          scaleInNodeConstraintList[i * nodeFragmentMap.size() + nodeIndex + 1] = 1;
+          scaleInNodeConstraintList[totalFragmentNum * nodeFragmentMap.size() + i * nodeFragmentMap
+              .size()
+              + nodeIndex + 1] = 1;
+        }
+        problem.addConstraint(scaleInNodeConstraintList, LpSolve.EQ, 0);
       }
 
       // 优化计算，输出最优解

@@ -30,7 +30,7 @@ public interface IPolicy {
 
   void executeReshardAndMigration(Map<FragmentMeta, Long> fragmentMetaPointsMap,
       Map<Long, List<FragmentMeta>> nodeFragmentMap, Map<FragmentMeta, Long> fragmentWriteLoadMap,
-      Map<FragmentMeta, Long> fragmentReadLoadMap);
+      Map<FragmentMeta, Long> fragmentReadLoadMap, List<Long> toScaleInNodes);
 
   boolean isNeedReAllocate();
 

@@ -485,6 +485,25 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
+  public void removeStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
+    InterProcessMutex mutex = new InterProcessMutex(this.client, STORAGE_ENGINE_LOCK_NODE);
+    try {
+      mutex.acquire();
+      this.client.delete()
+          .forPath(STORAGE_ENGINE_NODE + storageEngine.getId());
+    } catch (Exception e) {
+      throw new MetaStorageException("get error when remove storage engine", e);
+    } finally {
+      try {
+        mutex.release();
+      } catch (Exception e) {
+        throw new MetaStorageException(
+            "get error when release interprocess lock for " + SCHEMA_MAPPING_LOCK_NODE, e);
+      }
+    }
+  }
+
+  @Override
   public long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
     InterProcessMutex mutex = new InterProcessMutex(this.client, STORAGE_ENGINE_LOCK_NODE);
     try {

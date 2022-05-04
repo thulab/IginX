@@ -46,6 +46,7 @@ enum SqlType {
     Delete,
     Query,
     GetReplicaNum,
+    ScaleInStorageEngines,
     AddStorageEngines,
     CountPoints,
     ClearData,
@@ -156,6 +157,11 @@ struct QueryDataResp {
     2: optional list<string> paths
     3: optional list<DataType> dataTypeList
     4: optional QueryDataSet queryDataSet
+}
+
+struct ScaleInStorageEnginesReq {
+    1: required i64 sessionId
+    2: required list<StorageEngine> storageEngines
 }
 
 struct AddStorageEnginesReq {
@@ -347,6 +353,8 @@ service IService {
     Status deleteDataInColumns(1:DeleteDataInColumnsReq req);
 
     QueryDataResp queryData(1:QueryDataReq req);
+
+    Status scaleInStorageEngines(1: ScaleInStorageEnginesReq req);
 
     Status addStorageEngines(1: AddStorageEnginesReq req);
 

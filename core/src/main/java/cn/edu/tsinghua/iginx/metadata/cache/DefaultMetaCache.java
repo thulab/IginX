@@ -390,6 +390,11 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public void removeStorageEngine(StorageEngineMeta storageEngineMeta) {
+        storageEngineMetaMap.remove(storageEngineMeta.getId());
+    }
+
+    @Override
     public void addStorageEngine(StorageEngineMeta storageEngineMeta) {
         storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
     }

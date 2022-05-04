@@ -51,6 +51,8 @@ public interface IMetaStorage {
   Map<Long, StorageEngineMeta> loadStorageEngine(List<StorageEngineMeta> storageEngines)
       throws MetaStorageException;
 
+  void removeStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException;
+
   long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException;
 
   void registerStorageChangeHook(StorageChangeHook hook);

@@ -13,6 +13,7 @@ statement
     | CLEAR DATA #clearDataStatement
     | SHOW TIME SERIES #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
+    | SCALE IN STORAGEENGINE storageEngineSpec #scaleInStorageEngineStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
     ;

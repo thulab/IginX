@@ -387,6 +387,12 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+        throws MetaStorageException {
+
+    }
+
+    @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, FRAGMENT_META_FILE).toFile(), true))) {
             writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(fragmentMeta)));

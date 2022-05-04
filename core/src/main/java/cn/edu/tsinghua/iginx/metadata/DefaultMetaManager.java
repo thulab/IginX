@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata;
 
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.EXECUTING;
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
@@ -306,6 +307,20 @@ public class DefaultMetaManager implements IMetaManager {
     for (UserMeta user : storage.loadUser(resolveUserFromConf())) {
       cache.addOrUpdateUser(user);
     }
+  }
+
+  @Override
+  public boolean scaleInStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
+    try {
+      for (StorageEngineMeta storageEngineMeta : storageEngineMetas) {
+        storage.removeStorageEngine(storageEngineMeta);
+        cache.removeStorageEngine(storageEngineMeta);
+      }
+      return true;
+    } catch (MetaStorageException e) {
+      logger.error("add storage engines error:", e);
+    }
+    return false;
   }
 
   @Override
@@ -986,9 +1001,31 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void executeReshard() {
+  public void executeReshardJudging(){
     try {
       if (!reshardStatus.equals(NON_RESHARDING)) {
+        return;
+      }
+      storage.lockReshardStatus();
+      // 提议进入重分片判断流程，返回值为 true 代表提议成功，本节点成为 proposer；为 false 代表提议失败，说明已有其他节点提议成功
+      if (storage.proposeToReshard()) {
+        reshardStatus = JUDGING;
+        isProposer = true;
+        // 生成最终节点状态和整体迁移计划
+        // 根据整体迁移计划进行迁移
+        logger.info("iginx node {} propose to judge reshard", id);
+        // 在重分片判断阶段，proposer 节点不需要推送本地的存储后端统计信息
+      }
+      storage.releaseReshardStatus();
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when proposing to reshard: ", e);
+    }
+  }
+
+  @Override
+  public void executeReshard() {
+    try {
+      if (!reshardStatus.equals(JUDGING)) {
         return;
       }
       storage.lockReshardStatus();
@@ -1010,15 +1047,17 @@ public class DefaultMetaManager implements IMetaManager {
   @Override
   public void doneReshard() {
     try {
-      if (!reshardStatus.equals(EXECUTING)) {
-        return;
-      }
       storage.lockReshardStatus();
       reshardStatus = NON_RESHARDING;
       storage.releaseReshardStatus();
     } catch (MetaStorageException e) {
       logger.error("encounter error when proposing to reshard: ", e);
     }
+  }
+
+  @Override
+  public boolean isResharding() {
+    return reshardStatus != NON_RESHARDING;
   }
 
   private void initMaxActiveEndTimeStatistics() throws MetaStorageException {

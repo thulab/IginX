@@ -42,6 +42,11 @@ public interface IMetaManager {
     /**
      * 批量新增存储引擎节点
      */
+    boolean scaleInStorageEngines(List<StorageEngineMeta> storageEngineMetas);
+
+    /**
+     * 批量新增存储引擎节点
+     */
     boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas);
 
     /**
@@ -226,6 +231,10 @@ public interface IMetaManager {
     boolean isAllMonitorsCompleteCollection();
 
     void clearMonitors();
+
+    boolean isResharding();
+
+    void executeReshardJudging();
 
     void executeReshard();
 

@@ -81,6 +81,9 @@ public interface IMetaCache {
     void removeIginx(long id);
 
     // 数据后端相关的缓存读写接口
+    void removeStorageEngine(StorageEngineMeta storageEngineMeta);
+
+    // 数据后端相关的缓存读写接口
     void addStorageEngine(StorageEngineMeta storageEngineMeta);
 
     List<StorageEngineMeta> getStorageEngineList();

@@ -130,6 +130,22 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     @Override
+    public Statement visitScaleInStorageEngineStatement(ScaleInStorageEngineStatementContext ctx) {
+        ScaleInStorageEngineStatement scaleInStorageEngineStatement = new ScaleInStorageEngineStatement();
+        // parse engines
+        List<StorageEngineContext> engines = ctx.storageEngineSpec().storageEngine();
+        for (StorageEngineContext engine : engines) {
+            String ip = engine.ip().getText();
+            int port = Integer.parseInt(engine.port.getText());
+            String typeStr = engine.engineType.getText().trim();
+            String type = typeStr.substring(typeStr.indexOf(SQLConstant.QUOTE) + 1, typeStr.lastIndexOf(SQLConstant.QUOTE));
+            Map<String, String> extra = parseExtra(engine.extra);
+            scaleInStorageEngineStatement.setEngines(new StorageEngine(ip, port, type, extra));
+        }
+        return scaleInStorageEngineStatement;
+    }
+
+    @Override
     public Statement visitAddStorageEngineStatement(AddStorageEngineStatementContext ctx) {
         AddStorageEngineStatement addStorageEngineStatement = new AddStorageEngineStatement();
         // parse engines

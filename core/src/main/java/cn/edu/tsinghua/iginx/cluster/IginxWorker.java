@@ -32,6 +32,8 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.monitor.MonitorManager;
+import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.AddUserReq;
 import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
@@ -65,6 +67,7 @@ import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
 import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ScaleInStorageEnginesReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
 import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 import cn.edu.tsinghua.iginx.thrift.Status;
@@ -73,6 +76,7 @@ import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
 import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,6 +196,30 @@ public class IginxWorker implements IService.Iface {
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getQueryDataResp();
+    }
+
+    @Override
+    public Status scaleInStorageEngines(ScaleInStorageEnginesReq req) {
+        if (!sessionManager.checkSession(req.getSessionId(), AuthType.Cluster)) {
+            return RpcUtils.ACCESS_DENY;
+        }
+        List<StorageEngine> storageEngines = req.getStorageEngines();
+        List<StorageEngineMeta> storageEngineMetas = new ArrayList<>();
+
+        for (StorageEngine storageEngine : storageEngines) {
+            String type = storageEngine.getType();
+            StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
+                storageEngine.getExtraParams(), type, metaManager.getIginxId());
+            storageEngineMetas.add(meta);
+        }
+        Status status = RpcUtils.SUCCESS;
+
+        if (!MonitorManager.getInstance().scaleInStorageEngines(storageEngineMetas)) {
+            status = RpcUtils.FAILURE;
+        }
+        //完成负载均衡
+        DefaultMetaManager.getInstance().doneReshard();
+        return status;
     }
 
     @Override

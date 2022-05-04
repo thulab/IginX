@@ -758,6 +758,12 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+        throws MetaStorageException {
+
+    }
+
+    @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         updateFragment(fragmentMeta);
     }
