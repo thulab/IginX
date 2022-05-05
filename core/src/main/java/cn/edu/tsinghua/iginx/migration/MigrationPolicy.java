@@ -12,16 +12,22 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Migration;
 import cn.edu.tsinghua.iginx.engine.shared.operator.ShowTimeSeries;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
+import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteTask;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteType;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationLogger;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationLoggerAnalyzer;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import cn.edu.tsinghua.iginx.policy.dynamic.MigrationType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -44,10 +50,16 @@ public abstract class MigrationPolicy {
   private final IPolicy policy = PolicyManager.getInstance()
       .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
 
+  private MigrationLogger migrationLogger;
+
   private final static PhysicalEngine physicalEngine = PhysicalEngineImpl.getInstance();
 
   public MigrationPolicy(Logger logger) {
     this.logger = logger;
+  }
+
+  public void setMigrationLogger(MigrationLogger migrationLogger) {
+    this.migrationLogger = migrationLogger;
   }
 
   public abstract void migrate(List<MigrationTask> migrationTasks,
@@ -59,6 +71,9 @@ public abstract class MigrationPolicy {
    */
   public void reshardByTimeseries(FragmentMeta fragmentMeta) {
     try {
+      migrationLogger.logMigrationExecuteTaskStart(
+          new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
+              MigrationExecuteType.RESHARD_TIME_SERIES));
       ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
           fragmentMeta.getMasterStorageUnitId());
       RowStream rowStream = physicalEngine.execute(showTimeSeries);
@@ -85,6 +100,8 @@ public abstract class MigrationPolicy {
       logger.error("encounter error when reshard fragment by {} to {} ",
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries(), e);
+    } finally {
+      migrationLogger.logMigrationExecuteTaskEnd();
     }
   }
 
@@ -92,7 +109,28 @@ public abstract class MigrationPolicy {
     executor.shutdown();
   }
 
-  public abstract void recover();
+  public void recover() {
+    try {
+      MigrationLoggerAnalyzer migrationLoggerAnalyzer = new MigrationLoggerAnalyzer();
+      migrationLoggerAnalyzer.analyze();
+      if (migrationLoggerAnalyzer.isStartMigration() && !migrationLoggerAnalyzer
+          .isMigrationFinished() && !migrationLoggerAnalyzer.isLastMigrationExecuteTaskFinished()) {
+        MigrationExecuteTask migrationExecuteTask = migrationLoggerAnalyzer
+            .getLastMigrationExecuteTask();
+        if (migrationExecuteTask.getMigrationExecuteType() == MigrationExecuteType.MIGRATION) {
+          FragmentMeta fragmentMeta = migrationExecuteTask.getFragmentMeta();
+          // 直接删除整个du
+          List<String> paths = new ArrayList<>();
+          paths.add(migrationExecuteTask.getMasterStorageUnitId() + "*");
+          Delete delete = new Delete(new FragmentSource(fragmentMeta), new ArrayList<>(), paths);
+          physicalEngine.execute(delete);
+        }
+      }
+    } catch (IOException | PhysicalException e) {
+      e.printStackTrace();
+    }
+
+  }
 
   protected boolean canExecuteTargetMigrationTask(MigrationTask migrationTask,
       Map<Long, Long> nodeLoadMap) {
@@ -181,9 +219,22 @@ public abstract class MigrationPolicy {
   private void migrateData(long sourceStorageId, long targetStorageId,
       FragmentMeta fragmentMeta) {
     try {
+      // 在目标节点创建新du
+      StorageUnitMeta storageUnitMeta;
+      try {
+        storageUnitMeta = DefaultMetaManager.getInstance()
+            .generateNewStorageUnitMetaByFragment(fragmentMeta, targetStorageId);
+      } catch (MetaStorageException e) {
+        logger.error("cannot create storage unit in target storage engine", e);
+        throw new PhysicalException(e);
+      }
+      migrationLogger.logMigrationExecuteTaskStart(
+          new MigrationExecuteTask(fragmentMeta, storageUnitMeta.getId(), sourceStorageId,
+              targetStorageId,
+              MigrationExecuteType.MIGRATION));
       // 开始迁移数据
       Migration migration = new Migration(new GlobalSource(), sourceStorageId, targetStorageId,
-          fragmentMeta);
+          fragmentMeta, storageUnitMeta);
       physicalEngine.execute(migration);
       // 迁移完开始删除原数据
       List<String> paths = new ArrayList<>();
@@ -196,30 +247,40 @@ public abstract class MigrationPolicy {
     } catch (Exception e) {
       logger.error("encounter error when migrate data from {} to {} ", sourceStorageId,
           targetStorageId, e);
+    } finally {
+      migrationLogger.logMigrationExecuteTaskEnd();
     }
   }
 
   private FragmentMeta reshardFragment(long sourceStorageId, long targetStorageId,
       FragmentMeta fragmentMeta) {
-    // [startTime, +∞) & (startPath, endPath)
-    TimeSeriesInterval tsInterval = fragmentMeta.getTsInterval();
-    TimeInterval timeInterval = fragmentMeta.getTimeInterval();
-    List<Long> storageEngineList = new ArrayList<>();
-    storageEngineList.add(targetStorageId);
+    try {
+      migrationLogger.logMigrationExecuteTaskStart(
+          new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(),
+              sourceStorageId, targetStorageId,
+              MigrationExecuteType.RESHARD_TIME));
+      // [startTime, +∞) & (startPath, endPath)
+      TimeSeriesInterval tsInterval = fragmentMeta.getTsInterval();
+      TimeInterval timeInterval = fragmentMeta.getTimeInterval();
+      List<Long> storageEngineList = new ArrayList<>();
+      storageEngineList.add(targetStorageId);
 
-    // 排除乱序写入问题
-    if (timeInterval.getEndTime() == Long.MAX_VALUE) {
-      operateTaskAndRequest(sourceStorageId, targetStorageId, fragmentMeta);
-      Pair<FragmentMeta, StorageUnitMeta> fragmentMetaStorageUnitMetaPair = policy
-          .generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
-              tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(),
-              DefaultMetaManager.getInstance().getMaxActiveEndTime(), Long.MAX_VALUE,
-              storageEngineList);
-      return DefaultMetaManager.getInstance()
-          .splitFragmentAndStorageUnit(fragmentMetaStorageUnitMetaPair.getV(),
-              fragmentMetaStorageUnitMetaPair.getK(), fragmentMeta);
+      // 排除乱序写入问题
+      if (timeInterval.getEndTime() == Long.MAX_VALUE) {
+        operateTaskAndRequest(sourceStorageId, targetStorageId, fragmentMeta);
+        Pair<FragmentMeta, StorageUnitMeta> fragmentMetaStorageUnitMetaPair = policy
+            .generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+                tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(),
+                DefaultMetaManager.getInstance().getMaxActiveEndTime(), Long.MAX_VALUE,
+                storageEngineList);
+        return DefaultMetaManager.getInstance()
+            .splitFragmentAndStorageUnit(fragmentMetaStorageUnitMetaPair.getV(),
+                fragmentMetaStorageUnitMetaPair.getK(), fragmentMeta);
+      }
+      return null;
+    } finally {
+      migrationLogger.logMigrationExecuteTaskEnd();
     }
-    return null;
   }
 
   private void operateTaskAndRequest(long sourceStorageId, long targetStorageId,

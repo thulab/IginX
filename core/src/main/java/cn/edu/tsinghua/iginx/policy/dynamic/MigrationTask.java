@@ -1,11 +1,14 @@
 package cn.edu.tsinghua.iginx.policy.dynamic;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import lombok.Data;
 
 @Data
 public class MigrationTask {
 
+  public static final String SEPARATOR = "-";
   public static final long RESHARD_MIGRATION_COST = 10;
 
   private FragmentMeta fragmentMeta;
@@ -44,5 +47,35 @@ public class MigrationTask {
       default:
         return size;
     }
+  }
+
+  @Override
+  public String toString() {
+    return fragmentMeta.getTimeInterval().getStartTime()
+        + SEPARATOR
+        + fragmentMeta.getTimeInterval().getEndTime()
+        + SEPARATOR
+        + fragmentMeta.getTsInterval().getStartTimeSeries()
+        + SEPARATOR
+        + fragmentMeta.getTsInterval().getEndTimeSeries()
+        + SEPARATOR
+        + fragmentMeta.getMasterStorageUnitId()
+        + SEPARATOR
+        + load
+        + SEPARATOR
+        + size
+        + SEPARATOR
+        + sourceStorageId
+        + SEPARATOR
+        + targetStorageId
+        + SEPARATOR
+        + migrationType;
+  }
+
+  public static MigrationTask fromString(String input) {
+    String[] tuples = input.split(SEPARATOR);
+    return new MigrationTask(new FragmentMeta(tuples[2], tuples[3], Long.parseLong(tuples[0]),
+        Long.parseLong(tuples[1]), tuples[4]), Long.parseLong(tuples[5]), Long.parseLong(tuples[6]),
+        Long.parseLong(tuples[7]), Long.parseLong(tuples[8]), MigrationType.valueOf(tuples[9]));
   }
 }

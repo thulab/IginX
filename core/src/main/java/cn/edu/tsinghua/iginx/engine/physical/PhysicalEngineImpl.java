@@ -104,6 +104,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
       if (root.getType() == OperatorType.Migration) {
         Migration migration = (Migration) root;
         FragmentMeta toMigrateFragment = migration.getFragmentMeta();
+        StorageUnitMeta targetStorageUnitMeta = migration.getTargetStorageUnitMeta();
         TimeInterval timeInterval = toMigrateFragment.getTimeInterval();
 
         // 查询时间序列
@@ -143,18 +144,6 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         List<Bitmap> bitmapList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
 
-        // TODO
-        // 在目标节点创建新du
-        StorageUnitMeta storageUnitMeta;
-        try {
-          storageUnitMeta = DefaultMetaManager.getInstance()
-              .generateNewStorageUnitMetaByFragment(toMigrateFragment,
-                  migration.getTargetStorageEngineId());
-        } catch (MetaStorageException e) {
-          logger.error("cannot create storage unit in target storage engine", e);
-          throw new PhysicalException(e);
-        }
-
         boolean hasTimestamp = selectRowStream.getHeader().hasTimestamp();
         while (selectRowStream.hasNext()) {
           Row row = selectRowStream.next();
@@ -176,7 +165,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
           if (timestampList.size() == ConfigDescriptor.getInstance().getConfig()
               .getMigrationBatchSize()) {
             insertDataByBatch(timestampList, valuesList, bitmapList, bitmapBufferList,
-                toMigrateFragment, selectResultPaths, selectResultTypes, storageUnitMeta.getId());
+                toMigrateFragment, selectResultPaths, selectResultTypes, targetStorageUnitMeta.getId());
             timestampList.clear();
             valuesList.clear();
             bitmapList.clear();
@@ -184,10 +173,10 @@ public class PhysicalEngineImpl implements PhysicalEngine {
           }
         }
         insertDataByBatch(timestampList, valuesList, bitmapList, bitmapBufferList,
-            toMigrateFragment, selectResultPaths, selectResultTypes, storageUnitMeta.getId());
+            toMigrateFragment, selectResultPaths, selectResultTypes, targetStorageUnitMeta.getId());
 
         // 设置分片现在所属的du
-        toMigrateFragment.setMasterStorageUnit(storageUnitMeta);
+        toMigrateFragment.setMasterStorageUnit(targetStorageUnitMeta);
         return selectResult.getRowStream();
       } else {
         GlobalPhysicalTask task = new GlobalPhysicalTask(root);

@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.metadata;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.EXECUTING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.JUDGING;
 import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.NON_RESHARDING;
+import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.RECOVER;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
@@ -41,6 +42,7 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
+import cn.edu.tsinghua.iginx.migration.MigrationManager;
 import cn.edu.tsinghua.iginx.monitor.HotSpotMonitor;
 import cn.edu.tsinghua.iginx.monitor.RequestsMonitor;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
@@ -127,6 +129,7 @@ public class DefaultMetaManager implements IMetaManager {
       initMaxActiveEndTimeStatistics();
       initReshardStatus();
       initReshardCounter();
+      recover();
     } catch (MetaStorageException e) {
       logger.error("init meta manager error: ", e);
       System.exit(-1);
@@ -1136,6 +1139,22 @@ public class DefaultMetaManager implements IMetaManager {
     storage.lockReshardCounter();
     storage.removeReshardCounter();
     storage.releaseReshardCounter();
+  }
+
+  private void recover() {
+    try {
+      storage.lockReshardStatus();
+      reshardStatus = RECOVER;
+      storage.releaseReshardStatus();
+
+      MigrationManager.getInstance().getMigration().recover();
+
+      storage.lockReshardStatus();
+      reshardStatus = NON_RESHARDING;
+      storage.releaseReshardStatus();
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when proposing to reshard: ", e);
+    }
   }
 
   public void updateMaxActiveEndTime(long endTime) {

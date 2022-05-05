@@ -11,6 +11,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.migration.MigrationManager;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationLogger;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
@@ -362,6 +363,10 @@ public class DynamicPolicy implements IPolicy {
         }
       }
     }
+
+    MigrationLogger migrationLogger = new MigrationLogger();
+    migrationLogger.logMigrationTasks(migrationTasks);
+    MigrationManager.getInstance().getMigration().setMigrationLogger(migrationLogger);
 
     // 没找到迁移方案，可能是因为分区过大了，则根据序列拆分分区
     if (migrationTasks.size() == 0) {
