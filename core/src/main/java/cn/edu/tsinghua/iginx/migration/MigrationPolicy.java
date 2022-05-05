@@ -232,11 +232,23 @@ public abstract class MigrationPolicy {
           new MigrationExecuteTask(fragmentMeta, storageUnitMeta.getId(), sourceStorageId,
               targetStorageId,
               MigrationExecuteType.MIGRATION));
+
+      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
+          fragmentMeta.getMasterStorageUnitId());
+      RowStream rowStream = physicalEngine.execute(showTimeSeries);
+      SortedSet<String> pathSet = new TreeSet<>();
+      rowStream.getHeader().getFields().forEach(field -> {
+        String timeSeries = field.getName();
+        if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
+          pathSet.add(timeSeries);
+        }
+      });
       // 开始迁移数据
       Migration migration = new Migration(new GlobalSource(), sourceStorageId, targetStorageId,
-          fragmentMeta, storageUnitMeta);
+          fragmentMeta, new ArrayList<>(pathSet), storageUnitMeta);
       physicalEngine.execute(migration);
       // 迁移完开始删除原数据
+
       List<String> paths = new ArrayList<>();
       paths.add(fragmentMeta.getMasterStorageUnitId() + "*");
       List<TimeRange> timeRanges = new ArrayList<>();

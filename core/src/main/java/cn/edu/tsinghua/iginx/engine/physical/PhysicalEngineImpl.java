@@ -46,31 +46,23 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
-import cn.edu.tsinghua.iginx.engine.shared.operator.ShowTimeSeries;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
-import cn.edu.tsinghua.iginx.engine.shared.source.GlobalSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
-import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
-import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
-import cn.edu.tsinghua.iginx.utils.DataTypeUtils;
 import java.nio.ByteBuffer;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PhysicalEngineImpl implements PhysicalEngine {
 
@@ -106,10 +98,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         FragmentMeta toMigrateFragment = migration.getFragmentMeta();
         StorageUnitMeta targetStorageUnitMeta = migration.getTargetStorageUnitMeta();
         TimeInterval timeInterval = toMigrateFragment.getTimeInterval();
-
-        // 查询时间序列
-        List<String> paths = new ArrayList<>();
-        paths.add(toMigrateFragment.getMasterStorageUnitId() + "*");
+        List<String> paths = migration.getPaths();
 
         // 查询分区数据
         List<Operator> projectOperators = new ArrayList<>();
