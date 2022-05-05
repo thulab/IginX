@@ -596,6 +596,22 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public void updateFragmentPoints(FragmentMeta fragmentMeta, long points){
+    try {
+      storage.lockFragment();
+      storage.updateFragmentPoints(fragmentMeta, points);
+    } catch (Exception e) {
+      logger.error("update fragment error: ", e);
+    } finally {
+      try {
+        storage.releaseFragment();
+      } catch (MetaStorageException e) {
+        logger.error("release fragment lock error: ", e);
+      }
+    }
+  }
+
+  @Override
   public boolean hasFragment() {
     return cache.hasFragment();
   }

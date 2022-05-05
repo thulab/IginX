@@ -613,6 +613,11 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void removeStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
+
+    }
+
+    @Override
     public long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
         try {
             lockStorage();
@@ -960,6 +965,11 @@ public class ETCDMetaStorage implements IMetaStorage {
     public Map<FragmentMeta, Long> loadFragmentPoints(
         IMetaCache cache) throws Exception {
         return null;
+    }
+
+    @Override
+    public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception {
+
     }
 
 

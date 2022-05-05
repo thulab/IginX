@@ -1288,6 +1288,18 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   }
 
   @Override
+  public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception {
+    String path =
+        STATISTICS_FRAGMENT_POINTS_PREFIX + "/" + fragmentMeta.getTsInterval()
+            .toString() + "/" + fragmentMeta.getTimeInterval().toString();
+    if (this.client.checkExists().forPath(path) == null) {
+      this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(path, JsonUtils.toJson(points));
+    } else {
+      this.client.setData().forPath(path, JsonUtils.toJson(points));
+    }
+  }
+
+  @Override
   public void removeFragmentRequests() throws MetaStorageException {
     try {
       if (this.client.checkExists().forPath(STATISTICS_FRAGMENT_REQUESTS_PREFIX_WRITE) != null) {

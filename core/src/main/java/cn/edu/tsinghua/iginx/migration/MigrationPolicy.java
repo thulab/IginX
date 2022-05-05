@@ -69,7 +69,7 @@ public abstract class MigrationPolicy {
   /**
    * 在时间序列层面将分片在同一个du下分为两块
    */
-  public void reshardByTimeseries(FragmentMeta fragmentMeta) {
+  public void reshardByTimeseries(FragmentMeta fragmentMeta, long points) {
     try {
       migrationLogger.logMigrationExecuteTaskStart(
           new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
@@ -91,11 +91,13 @@ public abstract class MigrationPolicy {
           fragmentMeta.getTsInterval().getEndTimeSeries());
       fragmentMeta.endFragmentMetaByTimeSeries(middlePath);
       DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
       FragmentMeta newFragment = new FragmentMeta(middlePath,
           fragmentMeta.getTsInterval().getEndTimeSeries(),
           fragmentMeta.getTimeInterval().getStartTime(),
           fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
       DefaultMetaManager.getInstance().addFragment(newFragment);
+      DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
     } catch (PhysicalException e) {
       logger.error("encounter error when reshard fragment by {} to {} ",
           fragmentMeta.getTsInterval().getStartTimeSeries(),

@@ -263,6 +263,11 @@ public class FileMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void removeStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
+
+    }
+
+    @Override
     public long addStorageEngine(StorageEngineMeta storageEngine) throws MetaStorageException {
         long id = nextId();
         storageEngine.setId(id);
@@ -570,6 +575,11 @@ public class FileMetaStorage implements IMetaStorage {
     public Map<FragmentMeta, Long> loadFragmentPoints(
         IMetaCache cache) throws Exception {
         return null;
+    }
+
+    @Override
+    public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception {
+
     }
 
     @Override

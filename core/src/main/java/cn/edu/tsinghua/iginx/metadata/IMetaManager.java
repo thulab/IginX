@@ -244,5 +244,7 @@ public interface IMetaManager {
 
     void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 
+    void updateFragmentPoints(FragmentMeta fragmentMeta, long points);
+
     void submitMaxActiveEndTime();
 }

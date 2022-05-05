@@ -20,6 +20,7 @@ import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -270,6 +271,9 @@ public class DynamicPolicy implements IPolicy {
       Map<Long, List<FragmentMeta>> nodeFragmentMap,
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap,
       List<Long> toScaleInNodes) {
+    MigrationLogger migrationLogger = new MigrationLogger();
+    MigrationManager.getInstance().getMigration().setMigrationLogger(migrationLogger);
+
     // 平均资源占用
     double totalHeat = 0;
     for (long heat : fragmentWriteLoadMap.values()) {
@@ -301,6 +305,38 @@ public class DynamicPolicy implements IPolicy {
       cumulativeSize += fragmentMetas.size();
       currNode++;
     }
+
+    // 无法找到迁移方案的情况，可能是因为分区过大了，则根据序列拆分分区
+    double maxLoad = totalHeat / nodeFragmentMap.size() * (1 + unbalanceFinalStatusThreshold);
+    long maxWriteLoad = 0L;
+    FragmentMeta maxWriteLoadFragment = null;
+    long maxReadLoad = 0L;
+    FragmentMeta maxReadLoadFragment = null;
+    for (Entry<FragmentMeta, Long> fragmentWriteLoadEntry : fragmentWriteLoadMap.entrySet()) {
+      long load = fragmentWriteLoadEntry.getValue();
+      if (maxWriteLoad < load) {
+        maxWriteLoadFragment = fragmentWriteLoadEntry.getKey();
+        maxWriteLoad = load;
+      }
+    }
+    for (Entry<FragmentMeta, Long> fragmentReadLoadEntry : fragmentReadLoadMap.entrySet()) {
+      long load = fragmentReadLoadEntry.getValue();
+      if (maxReadLoad < load) {
+        maxReadLoadFragment = fragmentReadLoadEntry.getKey();
+        maxReadLoad = load;
+      }
+    }
+    if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
+      if (maxWriteLoad >= maxReadLoad) {
+        MigrationManager.getInstance().getMigration()
+            .reshardByTimeseries(maxWriteLoadFragment, fragmentMetaPointsMap.get(maxWriteLoadFragment));
+      } else {
+        MigrationManager.getInstance().getMigration()
+            .reshardByTimeseries(maxReadLoadFragment, fragmentMetaPointsMap.get(maxReadLoadFragment));
+      }
+      return;
+    }
+
     int[][][] migrationResults = calculateMigrationFinalStatus(totalHeat / nodeFragmentMap.size(),
         fragmentMetaPointsMap, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap,
         totalFragmentNum, m, toScaleInNodes);
@@ -364,30 +400,10 @@ public class DynamicPolicy implements IPolicy {
       }
     }
 
-    MigrationLogger migrationLogger = new MigrationLogger();
     migrationLogger.logMigrationTasks(migrationTasks);
-    MigrationManager.getInstance().getMigration().setMigrationLogger(migrationLogger);
-
-    // 没找到迁移方案，可能是因为分区过大了，则根据序列拆分分区
-    if (migrationTasks.size() == 0) {
-      FragmentMeta maxLoadFragment = null;
-      long maxLoad = 0;
-      for (FragmentMeta fragmentMeta : allFragmentMetas) {
-        long currLoad = fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L) + fragmentReadLoadMap
-            .getOrDefault(fragmentMeta, 0L);
-        if (maxLoad < currLoad) {
-          maxLoad = currLoad;
-          maxLoadFragment = fragmentMeta;
-        }
-      }
-      if (maxLoadFragment != null) {
-        MigrationManager.getInstance().getMigration().reshardByTimeseries(maxLoadFragment);
-      }
-    } else {
-      // 执行迁移
-      MigrationManager.getInstance().getMigration()
-          .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
-    }
+    // 执行迁移
+    MigrationManager.getInstance().getMigration()
+        .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
   }
 
   private int[][][] calculateMigrationFinalStatus(double averageScore,
@@ -442,16 +458,8 @@ public class DynamicPolicy implements IPolicy {
       }
       problem.setObjFn(objFnList);
 
-      // 调整平衡阈值（防止出现有分区的部分负载过高造成无解的情况）
       double maxLoad = averageScore * (1 + unbalanceFinalStatusThreshold);
       double minLoad = averageScore * (1 - unbalanceFinalStatusThreshold);
-      long maxWriteLoad = Arrays.stream(writeLoad).max().getAsLong();
-      long maxReadLoad = Arrays.stream(readLoad).max().getAsLong();
-      if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
-        maxLoad = Math.max(maxWriteLoad, maxReadLoad);
-        minLoad = Arrays.stream(writeLoad).sum() + Arrays.stream(readLoad).sum() - maxLoad;
-      }
-
       // 定义约束条件
       // 负载均衡约束
       for (int j = 0; j < nodeFragmentMap.size(); j++) {

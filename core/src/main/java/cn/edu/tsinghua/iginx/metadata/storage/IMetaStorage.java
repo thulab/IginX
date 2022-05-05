@@ -125,6 +125,8 @@ public interface IMetaStorage {
 
   Map<FragmentMeta, Long> loadFragmentPoints(IMetaCache cache) throws Exception;
 
+  void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception;
+
   void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
       Map<FragmentMeta, Long> readHotspotMap) throws Exception;
 
