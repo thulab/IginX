@@ -15,9 +15,11 @@
 # specific language governing permissions and limitations
 # under the License.
 #
+from enum import Enum
 from .thrift.rpc.ttypes import SqlType, AggregateType, ExecuteSqlResp
 from .utils.bitmap import Bitmap
 from .utils.byte_utils import get_long_array, get_values_by_data_type, BytesParser
+
 
 
 class Point(object):
@@ -142,69 +144,84 @@ class AggregateQueryDataSet(object):
         return value
 
 
-class SqlExecuteResult(object):
+class StatementExecuteDataSet(object):
 
-    def __init__(self, resp):
-        self.__type = resp.type
-        self.__parse_error_message = resp.parseErrorMsg
+    class State(Enum):
+        HAS_MORE = 1,
+        NO_MORE = 2,
+        UNKNOWN = 3
 
-        if self.__type == SqlType.GetReplicaNum:
-            self.__replica_num = resp.replicaNum
-        elif self.__type == SqlType.CountPoints:
-            self.__points_num = resp.pointsNum
-        elif self.__type in [SqlType.AggregateQuery, SqlType.SimpleQuery, SqlType.DownsampleQuery, SqlType.ValueFilterQuery]:
-            self._construct_query_result(resp)
-        elif self.__type == SqlType.ShowTimeSeries:
-            self.__paths = resp.paths
-            self.__data_type_list = resp.dataTypeList
-        elif self.__type == SqlType.ShowClusterInfo:
-            self.__iginx_list = resp.iginxInfos
-            self.__storage_engine_list = resp.storageEngineInfos
-            self.__meta_storage_list = resp.metaStorageInfos
-            self.__local_meta_storage = resp.localMetaStorageInfo
+    def __init__(self, session, query_id, columns, types, fetch_size, values_list, bitmap_list):
+        self.__session = session
+        self.__query_id = query_id
+        self.__columns = columns
+        self.__types = types
+        self.__fetch_size = fetch_size
+        self.__values_list = values_list
+        self.__bitmap_list = bitmap_list
+        self.__state = StatementExecuteDataSet.State.UNKNOWN
+        self.__index = 0
 
 
-    def _construct_query_result(self, resp=ExecuteSqlResp()):
-        self.__paths = resp.paths
-        self.__data_type_list = resp.dataTypeList
-        self.__limit = resp.limit
-        self.__offset = resp.offset
-        self.__order_by = resp.orderByPath
-        self.__ascending = resp.ascending
+    def fetch(self):
+        if self.__bitmap_list and self.__index != len(self.__bitmap_list):
+            return
 
-        if resp.timestamps is not None:
-            self.__timestamps = get_long_array(resp.timestamps)
+        self.__bitmap_list = None
+        self.__values_list = None
+        self.__index = 0
 
-        pass
+        tp = self.__session._fetch(self.__query_id, self.__fetch_size)
 
+        if tp[0]:
+            self.__state = StatementExecuteDataSet.State.HAS_MORE
+        else:
+            self.__state = StatementExecuteDataSet.State.NO_MORE
 
-    def is_query(self):
-        return self.__type in [SqlType.AggregateQuery, SqlType.SimpleQuery, SqlType.DownsampleQuery, SqlType.ValueFilterQuery]
-
-
-    def get_replica_num(self):
-        return self.__replica_num
+        if tp[1]:
+            self.__bitmap_list = tp[1].bitmapList
+            self.__values_list = tp[1].valuesList
 
 
-    def get_points_num(self):
-        return self.__points_num
+    def has_more(self):
+        if self.__values_list and self.__index < len(self.__values_list):
+            return True
+
+        self.__bitmap_list = None
+        self.__values_list = None
+        self.__index = 0
+
+        if self.__state == StatementExecuteDataSet.State.HAS_MORE or self.__state == StatementExecuteDataSet.State.UNKNOWN:
+            self.fetch()
+
+        return self.__values_list
 
 
-    def get_parse_error_msg(self):
-        return self.__parse_error_message
+    def next(self):
+        if not self.has_more():
+            return None
+
+        values_buffer = self.__values_list[self.__index]
+        bitmap_buffer = self.__bitmap_list[self.__index]
+        self.__index += 1
+
+        bitmap = Bitmap(len(self.__types), bitmap_buffer)
+        value_parser = BytesParser(values_buffer)
+        values = []
+        for i in range(len(self.__types)):
+            if bitmap.get(i):
+                values.append(value_parser.next(self.__types[i]))
+            else:
+                values.append(None)
+        return values
 
 
-    def get_iginx_list(self):
-        return self.__iginx_list
 
+    def close(self):
+        self.__session._close_statement(query_id=self.__query_id)
 
-    def get_storage_engine_list(self):
-        return self.__storage_engine_list
+    def columns(self):
+        return self.__columns
 
-
-    def get_meta_storage_list(self):
-        return self.__meta_storage_list
-
-
-    def get_local_meta_storage(self):
-        return self.__local_meta_storage
+    def types(self):
+        return self.__types
