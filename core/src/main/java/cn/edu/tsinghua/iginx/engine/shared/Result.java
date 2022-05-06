@@ -180,9 +180,10 @@ public class Result {
                     }
                 }
                 bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
+                cnt++;
             }
             resp.setColumns(paths);
-            resp.setDataTypeList(dataTypes);
+            resp.setDataTypeList(types);
             resp.setQueryDataSet(new QueryDataSetV2(valuesList, bitmapList));
         } catch (PhysicalException e) {
             logger.error("unexpected error when load row stream: ", e);
@@ -232,6 +233,7 @@ public class Result {
                     }
                 }
                 bitmapList.add(ByteBuffer.wrap(bitmap.getBytes()));
+                cnt++;
             }
             resp.setHasMoreResults(resultStream.hasNext());
             resp.setQueryDataSet(new QueryDataSetV2(valuesList, bitmapList));

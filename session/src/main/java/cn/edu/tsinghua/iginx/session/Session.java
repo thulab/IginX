@@ -1023,7 +1023,7 @@ public class Session {
         List<DataType> dataTypes = resp.getDataTypeList();
         QueryDataSetV2 dataSetV2 = resp.getQueryDataSet();
 
-        return new QueryDataSet(this, queryId, columns, dataTypes, fetchSize, dataSetV2.bitmapList, dataSetV2.valuesList);
+        return new QueryDataSet(this, queryId, columns, dataTypes, fetchSize, dataSetV2.valuesList, dataSetV2.bitmapList);
     }
 
     Pair<QueryDataSetV2, Boolean> fetchResult(long queryId, int fetchSize) throws SessionException, ExecutionException {

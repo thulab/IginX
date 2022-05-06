@@ -43,6 +43,23 @@ if __name__ == '__main__':
     dataset = session.query(["*"], 0, 10)
     print(dataset)
 
+    dataset = session.execute_statement("select * from a", fetch_size=2)
+
+    columns = dataset.columns()
+    for column in columns:
+        print(column, end="\t")
+    print()
+
+    while dataset.has_more():
+        row = dataset.next()
+        for field in row:
+            print(str(field), end="\t\t")
+        print()
+    print()
+
+    dataset.close()
+
+
 
     # 统计每个序列的点数
     dataset = session.aggregate_query(["*"], 0, 10, AggregateType.COUNT)

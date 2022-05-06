@@ -20,7 +20,7 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport import TSocket, TTransport
 
 from .cluster_info import ClusterInfo
-from .dataset import QueryDataSet, AggregateQueryDataSet
+from .dataset import QueryDataSet, AggregateQueryDataSet, StatementExecuteDataSet
 from .thrift.rpc.IService import Client
 from .thrift.rpc.ttypes import (
     OpenSessionReq,
@@ -443,16 +443,17 @@ class Session(object):
         req = ExecuteStatementReq(sessionId=self.__session_id, statement=statement, fetchSize=fetch_size)
         resp = self.__client.executeStatement(req)
         Session.verify_status(resp.status)
-        return resp
+        return StatementExecuteDataSet(self, resp.queryId, resp.columns, resp.dataTypeList, fetch_size,
+                                       resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList)
 
 
-    def fetch(self, query_id, fetch_size):
+    def _fetch(self, query_id, fetch_size):
         req = FetchResultsReq(sessionId=self.__session_id, queryId=query_id, fetchSize=fetch_size)
         resp = self.__client.fetchResults(req)
         Session.verify_status(resp.status)
-        return resp
+        return (resp.hasMoreResults, resp.queryDataSet)
 
-    def close_statement(self, query_id):
+    def _close_statement(self, query_id):
         req = CloseStatementReq(sessionId=self.__session_id, queryId=query_id)
         status = self.__client.closeStatement(req)
         Session.verify_status(status)

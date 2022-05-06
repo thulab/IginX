@@ -78,4 +78,11 @@ public class RequestContext {
     public boolean isUseStream() {
         return useStream;
     }
+
+    public void setResult(Result result) {
+        this.result = result;
+        if (this.result != null) {
+            this.result.setQueryId(id);
+        }
+    }
 }
