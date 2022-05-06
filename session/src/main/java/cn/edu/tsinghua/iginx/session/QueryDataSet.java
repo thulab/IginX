@@ -25,8 +25,6 @@ import cn.edu.tsinghua.iginx.thrift.QueryDataSetV2;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
-import java.io.Closeable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.List;
 
@@ -75,7 +73,7 @@ public class QueryDataSet {
     }
 
     private void fetch() throws SessionException, ExecutionException {
-        if (index != bitmapList.size()) { // 只有之前的被消费完才有可能继续取数据
+        if (bitmapList != null && index != bitmapList.size()) { // 只有之前的被消费完才有可能继续取数据
             return;
         }
         bitmapList = null;
@@ -91,7 +89,7 @@ public class QueryDataSet {
     }
 
     public boolean hasMore() throws SessionException, ExecutionException {
-        if (index < valuesList.size()) {
+        if (valuesList != null && index < valuesList.size()) {
             return true;
         }
         bitmapList = null;
@@ -108,8 +106,8 @@ public class QueryDataSet {
             return null;
         }
         // nextRow 只会返回本地的 row，如果本地没有，在进行 hasMore 操作时候，就一定也已经取回来了
-        ByteBuffer valuesBuffer = bitmapList.get(index);
-        ByteBuffer bitmapBuffer = valuesList.get(index);
+        ByteBuffer valuesBuffer = valuesList.get(index);
+        ByteBuffer bitmapBuffer = bitmapList.get(index);
         index++;
         Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapBuffer.array());
         Object[] values = new Object[dataTypeList.size()];
@@ -121,4 +119,11 @@ public class QueryDataSet {
         return values;
     }
 
+    public List<String> getColumnList() {
+        return columnList;
+    }
+
+    public List<DataType> getDataTypeList() {
+        return dataTypeList;
+    }
 }

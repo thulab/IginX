@@ -397,6 +397,7 @@ public class IginxWorker implements IService.Iface {
         StatementExecutor executor = StatementExecutor.getInstance();
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
+        queryManager.registerQuery(ctx.getId(), ctx);
         return ctx.getResult().getExecuteStatementResp(req.getFetchSize());
     }
 
