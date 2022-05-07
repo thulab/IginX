@@ -57,6 +57,8 @@ public class IoTDBSessionExample {
         insertRowRecords();
         // 行式插入非对齐数据
         insertNonAlignedRowRecords();
+        // 查询序列
+        showTimeSeries();
         // 查询数据
         queryData();
         // 聚合查询
@@ -228,6 +230,11 @@ public class IoTDBSessionExample {
 
         System.out.println("insertNonAlignedRowRecords...");
         session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    private static void showTimeSeries() throws ExecutionException, SessionException {
+        List<Column> columnList = session.showColumns();
+        columnList.forEach(column -> System.out.println(column.toString()));
     }
 
     private static void queryData() throws SessionException, ExecutionException {
