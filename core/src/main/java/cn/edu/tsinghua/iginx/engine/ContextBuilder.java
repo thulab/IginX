@@ -2,10 +2,7 @@ package cn.edu.tsinghua.iginx.engine;
 
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteStatement;
-import cn.edu.tsinghua.iginx.sql.statement.DeleteTimeSeriesStatement;
-import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
-import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
+import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
@@ -119,7 +116,8 @@ public class ContextBuilder {
     }
 
     public RequestContext build(ShowColumnsReq req) {
-        return new RequestContext(req.getSessionId());
+        ShowTimeSeriesStatement statement = new ShowTimeSeriesStatement();
+        return new RequestContext(req.getSessionId(), statement);
     }
 
     public RequestContext build(ExecuteSqlReq req) {
