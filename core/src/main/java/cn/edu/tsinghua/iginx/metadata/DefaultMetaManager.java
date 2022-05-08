@@ -25,6 +25,11 @@ import static cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus.RECOVER;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
+import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
+import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
+import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
@@ -43,6 +48,9 @@ import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
 import cn.edu.tsinghua.iginx.migration.MigrationManager;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteTask;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteType;
+import cn.edu.tsinghua.iginx.migration.recover.MigrationLoggerAnalyzer;
 import cn.edu.tsinghua.iginx.monitor.HotSpotMonitor;
 import cn.edu.tsinghua.iginx.monitor.RequestsMonitor;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
@@ -51,6 +59,7 @@ import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -63,6 +72,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import org.apache.commons.math3.analysis.function.Expm1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,6 +81,7 @@ public class DefaultMetaManager implements IMetaManager {
   private static final Logger logger = LoggerFactory.getLogger(DefaultMetaManager.class);
   private static DefaultMetaManager INSTANCE;
   private final IMetaCache cache;
+  private final static PhysicalEngine physicalEngine = PhysicalEngineImpl.getInstance();
 
   private final IMetaStorage storage;
   private final List<StorageEngineChangeHook> storageEngineChangeHooks;
@@ -584,7 +595,7 @@ public class DefaultMetaManager implements IMetaManager {
       storage.lockFragment();
       cache.updateFragmentByTsInterval(tsInterval, fragmentMeta);
       storage.updateFragmentByTsInterval(tsInterval, fragmentMeta);
-    } catch (MetaStorageException e) {
+    } catch (Exception e) {
       logger.error("update fragment error: ", e);
     } finally {
       try {
@@ -1163,12 +1174,30 @@ public class DefaultMetaManager implements IMetaManager {
       reshardStatus = RECOVER;
       storage.releaseReshardStatus();
 
-      MigrationManager.getInstance().getMigration().recover();
+      try {
+        MigrationLoggerAnalyzer migrationLoggerAnalyzer = new MigrationLoggerAnalyzer();
+        migrationLoggerAnalyzer.analyze();
+        if (migrationLoggerAnalyzer.isStartMigration() && !migrationLoggerAnalyzer
+            .isMigrationFinished() && !migrationLoggerAnalyzer.isLastMigrationExecuteTaskFinished()) {
+          MigrationExecuteTask migrationExecuteTask = migrationLoggerAnalyzer
+              .getLastMigrationExecuteTask();
+          if (migrationExecuteTask.getMigrationExecuteType() == MigrationExecuteType.MIGRATION) {
+            FragmentMeta fragmentMeta = migrationExecuteTask.getFragmentMeta();
+            // 直接删除整个du
+            List<String> paths = new ArrayList<>();
+            paths.add(migrationExecuteTask.getMasterStorageUnitId() + "*");
+            Delete delete = new Delete(new FragmentSource(fragmentMeta), new ArrayList<>(), paths);
+            physicalEngine.execute(delete);
+          }
+        }
+      } catch (IOException | PhysicalException e) {
+        e.printStackTrace();
+      }
 
       storage.lockReshardStatus();
       reshardStatus = NON_RESHARDING;
       storage.releaseReshardStatus();
-    } catch (MetaStorageException e) {
+    } catch (Exception e) {
       logger.error("encounter error when proposing to reshard: ", e);
     }
   }

@@ -37,7 +37,7 @@ public class MigrationManager {
               .getClass().getClassLoader().loadClass(policyClassName);
           policy = clazz.getConstructor().newInstance();
           policies.put(policyClassName, policy);
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
+        } catch (Exception e) {
           logger.error(e.getMessage());
         }
       }

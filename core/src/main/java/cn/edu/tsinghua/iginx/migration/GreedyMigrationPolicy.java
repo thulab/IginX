@@ -47,11 +47,6 @@ public class GreedyMigrationPolicy extends MigrationPolicy {
 
   }
 
-  @Override
-  public void recover() {
-
-  }
-
   private List<Queue<MigrationTask>> createParallelQueueByPriority(
       List<MigrationTask> migrationTasks) {
     Map<String, List<MigrationTask>> edgeMigrationTasksMap = new HashMap<>();

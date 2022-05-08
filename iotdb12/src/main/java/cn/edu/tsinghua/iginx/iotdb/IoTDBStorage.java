@@ -166,7 +166,7 @@ public class IoTDBStorage implements IStorage {
         try {
             String statement = SHOW_TIMESERIES;
             if(timeSeriesPrefix.length() > 0){
-                statement += " " + timeSeriesPrefix;
+                statement += " root." + timeSeriesPrefix;
             }
             SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(statement);
             while(dataSet.hasNext()) {

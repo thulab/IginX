@@ -11,14 +11,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MigrationLoggerAnalyzer {
 
   private File logFile;
 
-  private List<MigrationTask> migrationTasks;
-  private List<MigrationExecuteTask> migrationExecuteTasks;
+  private List<MigrationTask> migrationTasks = new ArrayList<>();
+  private List<MigrationExecuteTask> migrationExecuteTasks = new ArrayList<>();
   private boolean isStartMigration;
   private boolean isLastMigrationExecuteTaskFinished;
   private boolean isMigrationFinished;
@@ -33,6 +34,8 @@ public class MigrationLoggerAnalyzer {
       try (BufferedReader bufferedReader = new BufferedReader(new FileReader(logFile))) {
         while ((currLine = bufferedReader.readLine()) != null) {
           switch (currLine) {
+            case "\n":
+              break;
             case SOURCE_NAME:
               isStartMigration = true;
               break;

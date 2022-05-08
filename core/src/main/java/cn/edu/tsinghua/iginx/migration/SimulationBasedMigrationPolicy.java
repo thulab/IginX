@@ -111,11 +111,6 @@ public class SimulationBasedMigrationPolicy extends MigrationPolicy {
     return nextFinishedMigrationTask;
   }
 
-  @Override
-  public void recover() {
-
-  }
-
   private List<List<Queue<MigrationTask>>> createParallelQueueWithoutPriority(
       List<MigrationTask> migrationTasks) {
     Map<String, List<MigrationTask>> edgeMigrationTasksMap = new HashMap<>();

@@ -36,20 +36,20 @@ public class ContinuousWriteAndQuerySessionExample {
   }
 
   void start() {
-//    new Thread(new WriteThread("b.c.a", 5)).start();
-//    try {
-//      Thread.sleep(3000);
-//    } catch (InterruptedException e) {
-//      e.printStackTrace();
-//    }
-//    new Thread(new WriteThread("a.b.c", 10)).start();
-//    new Thread(new WriteThread("c.b.a", 20)).start();
-    new Thread(new ReadThread("b.c.a", 10)).start();
-    new Thread(new ReadThread("a.b.c", 10)).start();
-    new Thread(new ReadThread("c.b.a", 10)).start();
-    new Thread(new ReadThread("d.b.a", 1)).start();
-    new Thread(new ReadThread("e.b.a", 1)).start();
-    new Thread(new ReadThread("f.b.a", 1)).start();
+    new Thread(new WriteThread("b.c.a", 10)).start();
+    try {
+      Thread.sleep(3000);
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    new Thread(new WriteThread("a.b.c", 10)).start();
+    new Thread(new WriteThread("c.b.a", 20)).start();
+    new Thread(new ReadThread("b.c.a", 1)).start();
+    new Thread(new ReadThread("a.b.c", 20)).start();
+    new Thread(new ReadThread("c.b.a", 20)).start();
+//    new Thread(new ReadThread("d.b.a", 1)).start();
+//    new Thread(new ReadThread("e.b.a", 1)).start();
+//    new Thread(new ReadThread("f.b.a", 1)).start();
   }
 
   class WriteThread implements Runnable {

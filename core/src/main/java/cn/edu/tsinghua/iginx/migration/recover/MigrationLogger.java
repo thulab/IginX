@@ -39,6 +39,7 @@ public class MigrationLogger {
       logStream.newLine();
       for (MigrationTask migrationTask : migrationTasks) {
         logStream.write(migrationTask.toString());
+        logStream.newLine();
       }
       logStream.flush();
     } catch (IOException e) {

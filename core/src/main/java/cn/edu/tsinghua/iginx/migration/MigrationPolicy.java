@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngine;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Migration;
@@ -78,14 +79,14 @@ public abstract class MigrationPolicy {
           fragmentMeta.getMasterStorageUnitId());
       RowStream rowStream = physicalEngine.execute(showTimeSeries);
       SortedSet<String> pathSet = new TreeSet<>();
-      rowStream.getHeader().getFields().forEach(field -> {
-        String timeSeries = field.getName();
+      while (rowStream.hasNext()) {
+        Row row = rowStream.next();
+        String timeSeries = new String((byte[]) row.getValue(0));
         if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
           pathSet.add(timeSeries);
         }
-      });
+      }
       String middlePath = new ArrayList<>(pathSet).get(pathSet.size() / 2);
-      fragmentMeta.endFragmentMetaByTimeSeries(middlePath);
       TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
@@ -109,29 +110,6 @@ public abstract class MigrationPolicy {
 
   public void interrupt() {
     executor.shutdown();
-  }
-
-  public void recover() {
-    try {
-      MigrationLoggerAnalyzer migrationLoggerAnalyzer = new MigrationLoggerAnalyzer();
-      migrationLoggerAnalyzer.analyze();
-      if (migrationLoggerAnalyzer.isStartMigration() && !migrationLoggerAnalyzer
-          .isMigrationFinished() && !migrationLoggerAnalyzer.isLastMigrationExecuteTaskFinished()) {
-        MigrationExecuteTask migrationExecuteTask = migrationLoggerAnalyzer
-            .getLastMigrationExecuteTask();
-        if (migrationExecuteTask.getMigrationExecuteType() == MigrationExecuteType.MIGRATION) {
-          FragmentMeta fragmentMeta = migrationExecuteTask.getFragmentMeta();
-          // 直接删除整个du
-          List<String> paths = new ArrayList<>();
-          paths.add(migrationExecuteTask.getMasterStorageUnitId() + "*");
-          Delete delete = new Delete(new FragmentSource(fragmentMeta), new ArrayList<>(), paths);
-          physicalEngine.execute(delete);
-        }
-      }
-    } catch (IOException | PhysicalException e) {
-      e.printStackTrace();
-    }
-
   }
 
   protected boolean canExecuteTargetMigrationTask(MigrationTask migrationTask,

@@ -51,7 +51,7 @@ public class Config {
 
     private int loadBalanceCheckInterval = 10;
 
-    private double unbalanceThreshold = 0.2;
+    private double unbalanceThreshold = 0.1;
 
     private double unbalanceFinalStatusThreshold = 0.1;
 
