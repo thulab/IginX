@@ -70,7 +70,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         // Step 1. parse as much information as possible.
         // parse from paths
         if (ctx.fromClause() != null) {
-            selectStatement.setFromPath(ctx.fromClause().path().getText());
+            parseFromPaths(ctx.fromClause(), selectStatement);
         }
         // parse select paths
         if (ctx.selectClause() != null) {
@@ -140,6 +140,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
     public Statement visitShowClusterInfoStatement(ShowClusterInfoStatementContext ctx) {
         return new ShowClusterInfoStatement();
+    }
+
+    private void parseFromPaths(FromClauseContext ctx, SelectStatement selectStatement) {
+        List<PathContext> fromPaths = ctx.path();
+
+        for (PathContext fromPath: fromPaths) {
+            selectStatement.setFromPath(fromPath.getText());
+        }
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {
@@ -239,9 +247,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             throw new SQLParserException("Not support ORDER BY clause in aggregate query.");
         }
         if (ctx.path() != null) {
-            String suffixPath = ctx.path().getText();
-            String prefixPath = selectStatement.getFromPath();
-            String orderByPath = prefixPath + SQLConstant.DOT + suffixPath;
+            String orderByPath = ctx.path().getText();
             if (orderByPath.contains("*")) {
                 throw new SQLParserException(String.format("ORDER BY path '%s' has '*', which is not supported.", orderByPath));
             }
@@ -304,7 +310,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             Filter filter = parseOrExpression(ctx.orExpression(), statement);
             return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
-            if (ctx.path() == null) {
+            if (ctx.predicatePath() == null) {
                 return parseTimeFilter(ctx);
             } else {
                 StatementType type = statement.getType();
@@ -329,16 +335,33 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new TimeFilter(op, time);
     }
 
-    private ValueFilter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
-        statement.setPathSet(ctx.path().getText());
-        String path = statement.getFromPath() + SQLConstant.DOT + ctx.path().getText();
-        Op op = Op.str2Op(ctx.comparisonOperator().getText());
-        // deal with sub clause like 100 < path
-        if (ctx.children.get(0) instanceof ConstantContext) {
-            op = Op.getDirectionOpposite(op);
+    private Filter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
+        if (ctx.predicatePath().INTACT() == null) {
+            // need to contact from path
+            statement.setPathSet(ctx.predicatePath().path().getText());
+            List<Filter> valueFilters = new ArrayList<>();
+            for (String fromPath: statement.getFromPaths()) {
+                String path = fromPath + SQLConstant.DOT + ctx.predicatePath().path().getText();
+                Op op = Op.str2Op(ctx.comparisonOperator().getText());
+                // deal with sub clause like 100 < path
+                if (ctx.children.get(0) instanceof ConstantContext) {
+                    op = Op.getDirectionOpposite(op);
+                }
+                Value value = new Value(parseValue(ctx.constant()));
+                valueFilters.add(new ValueFilter(path, op, value));
+            }
+            return new AndFilter(valueFilters);
+        } else {
+            String intactPath = ctx.predicatePath().path().getText();
+            statement.setIntactPathSet(intactPath);
+            Op op = Op.str2Op(ctx.comparisonOperator().getText());
+            // deal with sub clause like 100 < path
+            if (ctx.children.get(0) instanceof ConstantContext) {
+                op = Op.getDirectionOpposite(op);
+            }
+            Value value = new Value(parseValue(ctx.constant()));
+            return new ValueFilter(intactPath, op, value);
         }
-        Value value = new Value(parseValue(ctx.constant()));
-        return new ValueFilter(path, op, value);
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

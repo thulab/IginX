@@ -792,6 +792,56 @@ public abstract class SQLSessionIT {
     }
 
     @Test
+    public void testFromMultiPath() {
+        String insert = "INSERT INTO us.d2 (timestamp, s1, s2) values " +
+            "(1, 1, 1), (2, 2, 2), (3, 3, 3), (4, 4, 4), (5, 5, 5), (6, 6, 6);";
+        execute(insert);
+
+        insert = "INSERT INTO us.d3 (timestamp, s1, s2) values " +
+            "(1, 2, 2), (2, 3, 3), (3, 4, 4), (4, 5, 5), (5, 6, 6), (6, 7, 7);";
+        execute(insert);
+
+        String queryFromMultiPath = "SELECT s1, s2 FROM us.d2, us.d3;";
+        String excepted = "ResultSets:\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "|Time|us.d2.s1|us.d2.s2|us.d3.s1|us.d3.s2|\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "|   1|       1|       1|       2|       2|\n" +
+            "|   2|       2|       2|       3|       3|\n" +
+            "|   3|       3|       3|       4|       4|\n" +
+            "|   4|       4|       4|       5|       5|\n" +
+            "|   5|       5|       5|       6|       6|\n" +
+            "|   6|       6|       6|       7|       7|\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "Total line number = 6\n";
+        executeAndCompare(queryFromMultiPath, excepted);
+
+        String queryFromMultiPathWithCondition = "SELECT s1, s2 FROM us.d2, us.d3 WHERE s1 > 2;";
+        excepted = "ResultSets:\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "|Time|us.d2.s1|us.d2.s2|us.d3.s1|us.d3.s2|\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "|   3|       3|       3|       4|       4|\n" +
+            "|   4|       4|       4|       5|       5|\n" +
+            "|   5|       5|       5|       6|       6|\n" +
+            "|   6|       6|       6|       7|       7|\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(queryFromMultiPathWithCondition, excepted);
+
+        String queryFromMultiPathWithIntactCondition = "SELECT s1, s2 FROM us.d2, us.d3 WHERE INTACT(us.d2.s1) > 2 AND INTACT(us.d3.s2) < 6;";
+        excepted = "ResultSets:\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "|Time|us.d2.s1|us.d2.s2|us.d3.s1|us.d3.s2|\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "|   3|       3|       3|       4|       4|\n" +
+            "|   4|       4|       4|       5|       5|\n" +
+            "+----+--------+--------+--------+--------+\n" +
+            "Total line number = 2\n";
+        executeAndCompare(queryFromMultiPathWithIntactCondition, excepted);
+    }
+
+    @Test
     public void testErrorClause() {
         String errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND time >= 120 AND time <= 230;";
         executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter again.");

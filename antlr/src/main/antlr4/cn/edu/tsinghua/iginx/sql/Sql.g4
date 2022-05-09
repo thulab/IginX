@@ -51,13 +51,18 @@ andExpression
     ;
 
 predicate
-    : (TIME | TIMESTAMP | path) comparisonOperator constant
-    | constant comparisonOperator (TIME | TIMESTAMP | path)
+    : (TIME | TIMESTAMP | predicatePath) comparisonOperator constant
+    | constant comparisonOperator (TIME | TIMESTAMP | predicatePath)
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
+predicatePath
+    : INTACT LR_BRACKET path RR_BRACKET
+    | path
+    ;
+
 fromClause
-    : FROM path
+    : FROM path (COMMA path)*
     ;
 
 specialClause
@@ -193,6 +198,7 @@ nodeName
     | REPLICA
     | IOTDB
     | INFLUXDB
+    | INTACT
     ;
 
 ip
@@ -408,6 +414,10 @@ DESC
 
 ASC
     : A S C
+    ;
+
+INTACT
+    : I N T A C T
     ;
 //============================
 // End of the keywords list
