@@ -6,10 +6,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -49,7 +46,7 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT MAX(c), MAX(d), MAX(e), MAX(f), MIN(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 10ms, LEVEL = 2, 3;";
+        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 10ms, LEVEL = 2, 3;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
         assertTrue(statement.hasFunc());
@@ -58,16 +55,16 @@ public class ParseTest {
         assertEquals(SelectStatement.QueryType.DownSampleQuery, statement.getQueryType());
 
         assertEquals(2, statement.getSelectedFuncsAndPaths().size());
-        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("max"));
-        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("min"));
+        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("sum"));
+        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("count"));
 
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("max").get(0));
-        assertEquals("a.b.d", statement.getSelectedFuncsAndPaths().get("max").get(1));
-        assertEquals("a.b.e", statement.getSelectedFuncsAndPaths().get("max").get(2));
-        assertEquals("a.b.f", statement.getSelectedFuncsAndPaths().get("max").get(3));
-        assertEquals("a.b.g", statement.getSelectedFuncsAndPaths().get("min").get(0));
+        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("sum").get(0));
+        assertEquals("a.b.d", statement.getSelectedFuncsAndPaths().get("sum").get(1));
+        assertEquals("a.b.e", statement.getSelectedFuncsAndPaths().get("sum").get(2));
+        assertEquals("a.b.f", statement.getSelectedFuncsAndPaths().get("count").get(0));
+        assertEquals("a.b.g", statement.getSelectedFuncsAndPaths().get("count").get(1));
 
-        assertEquals("a.b", statement.getFromPath());
+        assertEquals(Collections.singletonList("a.b"), statement.getFromPaths());
 
 //        assertEquals("((time > 100 && time < 1000) || (a.b.d == abc) || (a.b.c >= 666) || (((a.b.e < 10 && !((a.b.f < 10))))))", statement.getFilter().toString());
 
@@ -86,9 +83,9 @@ public class ParseTest {
         assertEquals(1000, statement.getEndTime());
         assertEquals(10L, statement.getPrecision());
 
-        selectStr = "SELECT MAX(c) FROM a.b GROUP BY LEVEL = 1, 2;";
+        selectStr = "SELECT SUM(c) FROM a.b GROUP BY LEVEL = 1, 2;";
         statement = (SelectStatement) TestUtils.buildStatement(selectStr);
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("max").get(0));
+        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("sum").get(0));
         assertEquals(Arrays.asList(1, 2), statement.getLayers());
     }
 
@@ -104,7 +101,7 @@ public class ParseTest {
         assertEquals(SQLConstant.TIME, statement.getOrderByPath());
         assertTrue(statement.isAscending());
 
-        String orderByAndLimit = "SELECT a FROM test ORDER BY a DESC LIMIT 10 OFFSET 5;";
+        String orderByAndLimit = "SELECT a FROM test ORDER BY test.a DESC LIMIT 10 OFFSET 5;";
         statement = (SelectStatement) TestUtils.buildStatement(orderByAndLimit);
         assertEquals("test.a", statement.getOrderByPath());
         assertFalse(statement.isAscending());

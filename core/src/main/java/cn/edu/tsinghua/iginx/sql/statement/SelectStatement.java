@@ -22,7 +22,7 @@ public class SelectStatement extends DataStatement {
     private Map<String, List<String>> selectedFuncsAndPaths;
     private Set<FuncType> funcTypeSet;
     private Set<String> pathSet;
-    private String fromPath;
+    private List<String> fromPaths;
     private String orderByPath;
     private Filter filter;
     private long precision;
@@ -40,7 +40,7 @@ public class SelectStatement extends DataStatement {
         this.selectedFuncsAndPaths = new HashMap<>();
         this.funcTypeSet = new HashSet<>();
         this.pathSet = new HashSet<>();
-        this.fromPath = "";
+        this.fromPaths = new ArrayList<>();
         this.orderByPath = "";
         this.limit = Integer.MAX_VALUE;
         this.offset = 0;
@@ -216,22 +216,25 @@ public class SelectStatement extends DataStatement {
 
     public void setSelectedFuncsAndPaths(String func, String path) {
         func = func.toLowerCase();
-        String fullPath = fromPath + SQLConstant.DOT + path;
-        List<String> pathList = this.selectedFuncsAndPaths.get(func);
-        if (pathList == null) {
-            pathList = new ArrayList<>();
-            pathList.add(fullPath);
-            this.selectedFuncsAndPaths.put(func, pathList);
-        } else {
-            pathList.add(fullPath);
+
+        for (String fromPath: fromPaths) {
+            String fullPath = fromPath + SQLConstant.DOT + path;
+            List<String> pathList = this.selectedFuncsAndPaths.get(func);
+            if (pathList == null) {
+                pathList = new ArrayList<>();
+                pathList.add(fullPath);
+                this.selectedFuncsAndPaths.put(func, pathList);
+            } else {
+                pathList.add(fullPath);
+            }
+
+            this.pathSet.add(fullPath);
         }
 
         FuncType type = str2FuncType(func);
         if (type != null) {
             this.funcTypeSet.add(type);
         }
-
-        this.pathSet.add(fullPath);
     }
 
     public Set<FuncType> getFuncTypeSet() {
@@ -247,16 +250,22 @@ public class SelectStatement extends DataStatement {
     }
 
     public void setPathSet(String path) {
-        String fullPath = fromPath + SQLConstant.DOT + path;
-        this.pathSet.add(fullPath);
+        for (String fromPath: fromPaths) {
+            String fullPath = fromPath + SQLConstant.DOT + path;
+            this.pathSet.add(fullPath);
+        }
     }
 
-    public String getFromPath() {
-        return fromPath;
+    public void setIntactPathSet(String path) {
+        this.pathSet.add(path);
     }
 
-    public void setFromPath(String path) {
-        this.fromPath = path;
+    public List<String> getFromPaths() {
+        return fromPaths;
+    }
+
+    public void setFromPath(String fromPath) {
+        this.fromPaths.add(fromPath);
     }
 
     public String getOrderByPath() {
