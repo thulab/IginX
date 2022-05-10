@@ -125,6 +125,8 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
 
     private TreeCache transformCache;
 
+    private TreeCache transformCache;
+
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
             .connectString(ConfigDescriptor.getInstance().getConfig().getZookeeperConnectionString())
