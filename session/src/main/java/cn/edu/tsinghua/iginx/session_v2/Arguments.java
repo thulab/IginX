@@ -19,7 +19,9 @@
 package cn.edu.tsinghua.iginx.session_v2;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.TaskType;
 
+import java.util.List;
 import java.util.Objects;
 
 public final class Arguments {
@@ -74,6 +76,18 @@ public final class Arguments {
                     throw new IllegalArgumentException("Expecting a byte array for " + name);
                 }
                 break;
+        }
+    }
+
+    public static <T> void checkListNonEmpty(final List<T> list, final String name) {
+        if (list == null || list.isEmpty()) {
+            throw new IllegalArgumentException("Expecting a non-empty list for " + name);
+        }
+    }
+
+    public static void checkTaskType(TaskType expected, TaskType actual) {
+        if (actual != null && !expected.equals(actual)) {
+            throw new IllegalArgumentException("Expecting task type: " + expected + ", actual: " + actual);
         }
     }
 

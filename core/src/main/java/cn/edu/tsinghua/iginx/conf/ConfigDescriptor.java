@@ -122,6 +122,7 @@ public class ConfigDescriptor {
             config.setBatchSize(Integer.parseInt(properties.getProperty("batchSize", "50")));
             config.setPythonCMD(properties.getProperty("pythonCMD", "python3"));
             config.setTransformTaskThreadPoolSize(Integer.parseInt(properties.getProperty("transformTaskThreadPoolSize", "10")));
+            config.setTransformMaxRetryTimes(Integer.parseInt(properties.getProperty("transformMaxRetryTimes", "3")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -176,6 +177,7 @@ public class ConfigDescriptor {
         config.setBatchSize(EnvUtils.loadEnv("batchSize", config.getBatchSize()));
         config.setPythonCMD(EnvUtils.loadEnv("pythonCMD", config.getPythonCMD()));
         config.setTransformTaskThreadPoolSize(EnvUtils.loadEnv("transformTaskThreadPoolSize", config.getTransformTaskThreadPoolSize()));
+        config.setTransformMaxRetryTimes(EnvUtils.loadEnv("transformMaxRetryTimes", config.getTransformMaxRetryTimes()));
     }
 
 

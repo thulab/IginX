@@ -5,8 +5,7 @@ import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.thrift.CommitTransformJobReq;
 import cn.edu.tsinghua.iginx.thrift.JobState;
 import cn.edu.tsinghua.iginx.transform.api.Checker;
-import cn.edu.tsinghua.iginx.transform.exception.TransformException;
-import cn.edu.tsinghua.iginx.transform.pojo.*;
+import cn.edu.tsinghua.iginx.transform.pojo.Job;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +57,7 @@ public class TransformJobManager {
     public long commitJob(Job job) {
         if (checker.check(job)) {
             jobMap.put(job.getJobId(), job);
-            threadPool.submit(() -> process(job));
+            threadPool.submit(() -> processWithRetry(job, config.getTransformMaxRetryTimes()));
             return job.getJobId();
         } else {
             logger.error("Committed job is illegal.");
@@ -66,7 +65,19 @@ public class TransformJobManager {
         }
     }
 
-    private void process(Job job) {
+    private void processWithRetry(Job job, int retryTimes) {
+        // this process will be executed at most retryTimes+1 times.
+        for (int processCnt = 0; processCnt <= retryTimes; processCnt++) {
+            try {
+                process(job);
+                processCnt = retryTimes;  // don't retry
+            } catch (Exception e) {
+                logger.error("retry process, executed times: " + (processCnt + 1));
+            }
+        }
+    }
+
+    private void process(Job job) throws Exception {
         JobRunner runner = new JobRunner(job);
         job.setStartTime(System.currentTimeMillis());
         try {
@@ -75,8 +86,8 @@ public class TransformJobManager {
             runner.run();
             jobRunnerMap.remove(job.getJobId());
         } catch (Exception e) {
-            logger.error(String.format("Fail to process transform job id=%d", job.getJobId()));
-            e.printStackTrace();
+            logger.error(String.format("Fail to process transform job id=%d, because", job.getJobId()), e);
+            throw e;
         } finally {
             runner.close();
             job.setEndTime(System.currentTimeMillis());

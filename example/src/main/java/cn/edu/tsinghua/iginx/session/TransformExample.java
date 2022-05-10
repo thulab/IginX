@@ -2,6 +2,11 @@ package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.session_v2.IginXClient;
+import cn.edu.tsinghua.iginx.session_v2.IginXClientFactory;
+import cn.edu.tsinghua.iginx.session_v2.TransformClient;
+import cn.edu.tsinghua.iginx.session_v2.domain.Task;
+import cn.edu.tsinghua.iginx.session_v2.domain.Transform;
 import cn.edu.tsinghua.iginx.thrift.*;
 
 import java.io.File;
@@ -10,6 +15,7 @@ import java.util.*;
 public class TransformExample {
 
     private static Session session;
+    private static IginXClient client;
 
     private static final String S1 = "transform.value1";
     private static final String S2 = "transform.value2";
@@ -26,6 +32,8 @@ public class TransformExample {
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 1000L;
 
+    private static final long TIMEOUT = 10000L;
+
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
         TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py\"");
@@ -34,9 +42,22 @@ public class TransformExample {
     }
 
     public static void main(String[] args) throws SessionException, ExecutionException, InterruptedException {
+        before();
+
+        // session
+        runWithSession();
+        // session v2
+        runWithSessionV2();
+
+        after();
+    }
+
+    private static void before() throws SessionException, ExecutionException {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
+
+        client = IginXClientFactory.create();
 
         // 准备数据
         session.deleteColumns(Collections.singletonList("*"));
@@ -48,7 +69,19 @@ public class TransformExample {
 
         // 注册任务
         registerTask();
+    }
 
+    private static void after() throws ExecutionException, SessionException {
+        // 注销任务
+        dropTask();
+
+        // 清除数据
+        session.deleteColumns(Collections.singletonList("*"));
+        // 关闭 Session
+        session.closeSession();
+    }
+
+    private static void runWithSession() throws SessionException, ExecutionException, InterruptedException {
         // 导出到日志
         commitStdJob();
 
@@ -66,14 +99,6 @@ public class TransformExample {
 
         // SQL提交
         commitBySQL();
-
-        // 注销任务
-        dropTask();
-
-        // 清除数据
-        session.deleteColumns(Collections.singletonList("*"));
-        // 关闭 Session
-        session.closeSession();
     }
 
     private static void registerTask() {
@@ -111,7 +136,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.None, "");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.Log, "");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -279,5 +304,36 @@ public class TransformExample {
 
         System.out.println("insertRowRecords...");
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    private static void runWithSessionV2() throws InterruptedException {
+
+        TransformClient transformClient = client.getTransformClient();
+        long jobId = transformClient.commitTransformJob(
+            Transform
+                .builder()
+                .addTask(
+                    Task.builder()
+                        .dataFlowType(DataFlowType.Stream)
+                        .timeout(TIMEOUT)
+                        .sql(QUERY_SQL)
+                        .build())
+                .addTask(
+                    Task.builder()
+                        .dataFlowType(DataFlowType.Stream)
+                        .timeout(TIMEOUT)
+                        .className("RowSumTransformer")
+                        .build())
+                .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt")
+                .build()
+        );
+
+        // 轮询查看任务情况
+        JobState jobState = JobState.JOB_CREATED;
+        while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
+            Thread.sleep(500);
+            jobState = transformClient.queryTransformJobStatus(jobId);
+        }
+        System.out.println("job state is " + jobState.toString());
     }
 }

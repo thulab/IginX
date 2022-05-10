@@ -91,7 +91,7 @@ public class Job {
             this.needExport = true;
             this.writer = new IginXWriter(sessionId);
         } else {
-            this.exportType = ExportType.None;
+            this.exportType = ExportType.Log;
             this.needExport = false;
             this.writer = new LogWriter();
         }
