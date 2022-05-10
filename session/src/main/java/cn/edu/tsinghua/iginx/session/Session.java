@@ -1029,10 +1029,10 @@ public class Session {
     }
 
     public long commitTransformJob(List<TaskInfo> taskInfoList, ExportType exportType,
-                                   String filePath) throws SessionException, ExecutionException {
+                                   String fileName) throws SessionException, ExecutionException {
         CommitTransformJobReq req = new CommitTransformJobReq(sessionId, taskInfoList, exportType);
-        if (filePath != null) {
-            req.setFileName(filePath);
+        if (fileName != null) {
+            req.setFileName(fileName);
         }
 
         CommitTransformJobResp resp;

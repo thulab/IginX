@@ -19,15 +19,7 @@
 package cn.edu.tsinghua.iginx.session_v2.internal;
 
 
-import cn.edu.tsinghua.iginx.session_v2.Arguments;
-import cn.edu.tsinghua.iginx.session_v2.AsyncWriteClient;
-import cn.edu.tsinghua.iginx.session_v2.ClusterClient;
-import cn.edu.tsinghua.iginx.session_v2.DeleteClient;
-import cn.edu.tsinghua.iginx.session_v2.IginXClient;
-import cn.edu.tsinghua.iginx.session_v2.IginXClientOptions;
-import cn.edu.tsinghua.iginx.session_v2.QueryClient;
-import cn.edu.tsinghua.iginx.session_v2.UsersClient;
-import cn.edu.tsinghua.iginx.session_v2.WriteClient;
+import cn.edu.tsinghua.iginx.session_v2.*;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
 import cn.edu.tsinghua.iginx.thrift.IService;
@@ -127,6 +119,12 @@ public class IginXClientImpl implements IginXClient {
     public synchronized ClusterClient getClusterClient() {
         checkIsClosed();
         return new ClusterClientImpl(this);
+    }
+
+    @Override
+    public TransformClient getTransformClient() {
+        checkIsClosed();
+        return new TransformClientImpl(this);
     }
 
     void checkIsClosed() {

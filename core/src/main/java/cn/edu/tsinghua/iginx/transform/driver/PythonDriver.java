@@ -11,6 +11,7 @@ import cn.edu.tsinghua.iginx.transform.exception.CreateWorkerException;
 import cn.edu.tsinghua.iginx.transform.exception.TransformException;
 import cn.edu.tsinghua.iginx.transform.pojo.PythonTask;
 import cn.edu.tsinghua.iginx.transform.utils.Constants;
+import cn.edu.tsinghua.iginx.transform.utils.RedirectLogger;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.BigIntVector;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -20,6 +21,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -88,6 +90,9 @@ public class PythonDriver implements Driver {
             );
             Process process = pb.start();
 
+            // Redirect worker process stdout and stderr
+//            redirectStreamsToLogger(process.getInputStream(), process.getErrorStream());
+
             // Wait for it to connect to our socket.
 //            serverSocket.setSoTimeout(TEST_WAIT_TIME);
 
@@ -140,6 +145,9 @@ public class PythonDriver implements Driver {
             );
             process = pb.start();
 
+            // Redirect worker process stdout and stderr
+//            redirectStreamsToLogger(process.getInputStream(), process.getErrorStream());
+
             // Wait for it to connect to our socket.
             serverSocket.setSoTimeout(TEST_WAIT_TIME);
 
@@ -177,5 +185,10 @@ public class PythonDriver implements Driver {
                 }
             }
         }
+    }
+
+    private void redirectStreamsToLogger(InputStream stdout, InputStream stderr) {
+        new RedirectLogger(stdout, "stdout").start();
+        new RedirectLogger(stderr, "stderr").start();
     }
 }

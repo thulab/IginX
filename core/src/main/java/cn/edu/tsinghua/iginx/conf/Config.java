@@ -137,6 +137,8 @@ public class Config {
 
     private int transformTaskThreadPoolSize = 10;
 
+    private int transformMaxRetryTimes = 3;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -599,5 +601,13 @@ public class Config {
 
     public void setTransformTaskThreadPoolSize(int transformTaskThreadPoolSize) {
         this.transformTaskThreadPoolSize = transformTaskThreadPoolSize;
+    }
+
+    public int getTransformMaxRetryTimes() {
+        return transformMaxRetryTimes;
+    }
+
+    public void setTransformMaxRetryTimes(int transformMaxRetryTimes) {
+        this.transformMaxRetryTimes = transformMaxRetryTimes;
     }
 }

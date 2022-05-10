@@ -72,7 +72,7 @@ enum UserType {
 }
 
 enum ExportType {
-    None,
+    Log,
     File,
     IginX
 }
