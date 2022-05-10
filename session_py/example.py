@@ -40,9 +40,10 @@ if __name__ == '__main__':
     session.insert_row_records(paths, timestamps, values_list, data_type_list)
 
     # 查询写入的数据
-    dataset = session.query(["*"], 0, 10)
+    dataset = session.query(["a.*"], 0, 10)
     print(dataset)
 
+    # 使用 SQL 语句查询写入的数据
     dataset = session.execute_statement("select * from a", fetch_size=2)
 
     columns = dataset.columns()
@@ -59,6 +60,61 @@ if __name__ == '__main__':
 
     dataset.close()
 
+    # 使用 SQL 语句查询集群信息
+    dataset = session.execute_statement("show cluster info", fetch_size=2)
+
+    columns = dataset.columns()
+    for column in columns:
+        print(column, end="\t")
+    print()
+
+    while dataset.has_more():
+        row = dataset.next()
+        for field in row:
+            print(str(field), end="\t\t")
+        print()
+    print()
+
+    dataset.close()
+
+    # 使用 SQL 语句查询副本数量
+    dataset = session.execute_statement("show replica number", fetch_size=2)
+
+    columns = dataset.columns()
+    for column in columns:
+        print(column, end="\t")
+    print()
+
+    while dataset.has_more():
+        row = dataset.next()
+        for field in row:
+            print(str(field), end="\t\t")
+        print()
+    print()
+
+    dataset.close()
+
+    # 使用 SQL 语句查询时间序列
+    dataset = session.execute_statement("show time series", fetch_size=2)
+
+    columns = dataset.columns()
+    for column in columns:
+        print(column, end="\t")
+    print()
+
+    while dataset.has_more():
+        row = dataset.next()
+        for field in row:
+            print(str(field), end="\t\t")
+        print()
+    print()
+
+    dataset.close()
+
+
+    # 查询写入的数据
+    dataset = session.query(["*"], 0, 10)
+    print(dataset)
 
 
     # 统计每个序列的点数
