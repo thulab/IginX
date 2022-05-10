@@ -36,6 +36,7 @@ import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -675,7 +676,17 @@ public class DefaultMetaManager implements IMetaManager {
                     extraParams.put(KAndV[0], KAndV[1]);
                 }
             }
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, id));
+            boolean hasData = Boolean.parseBoolean(extraParams.getOrDefault(Constants.HAS_DATA, "false"));
+            extraParams.remove(Constants.HAS_DATA);
+            String dataPrefix = null;
+            if (hasData && extraParams.containsKey(Constants.DATA_PREFIX)) {
+                dataPrefix = extraParams.get(Constants.DATA_PREFIX);
+                extraParams.remove(Constants.DATA_PREFIX);
+            }
+            boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.DATA_PREFIX, "false"));
+            extraParams.remove(Constants.DATA_PREFIX);
+            // TODO: 核验并计算初始分片范围
+            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, hasData, dataPrefix, readOnly, extraParams, storageEngine, id));
         }
         return storageEngineMetaList;
     }

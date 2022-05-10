@@ -73,23 +73,23 @@ public interface IMetaManager {
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
-     * 获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片）
+     * 获取某个时间区间的所有最新的分片（这些分片一定也都是未终结的分片），不会返回虚拟堆叠分片
      */
     Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     /**
-     * 获取全部最新的分片
+     * 获取全部最新的分片，不会返回虚拟堆叠分片
      */
     Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
 
     /**
-     * 获取某个时间序列区间在某个时间区间的所有分片。
+     * 获取某个时间序列区间在某个时间区间的所有分片，会返回虚拟堆叠分片。
      */
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval,
                                                                                                   TimeInterval timeInterval);
 
     /**
-     * 获取某个时间序列的所有分片（按照分片时间戳排序）
+     * 获取某个时间序列的所有分片（按照分片时间戳排序），会返回虚拟堆叠分片
      */
     List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
 

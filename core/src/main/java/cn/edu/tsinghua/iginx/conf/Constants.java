@@ -40,5 +40,11 @@ public class Constants {
 
     public static final String LEVEL_PLACEHOLDER = "*";
 
+    public static final String HAS_DATA = "has_data";
+
+    public static final String IS_READ_ONLY = "is_read_only";
+
+    public static final String DATA_PREFIX = "data_prefix";
+
 }
 

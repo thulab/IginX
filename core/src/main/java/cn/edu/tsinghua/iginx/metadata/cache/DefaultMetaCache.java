@@ -48,6 +48,8 @@ public class DefaultMetaCache implements IMetaCache {
 
     private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
+    private final List<FragmentMeta> dummyFragments;
+
     private int fragmentCacheSize;
 
     private final int fragmentCacheMaxSize;
@@ -60,6 +62,9 @@ public class DefaultMetaCache implements IMetaCache {
 
     // 数据单元的缓存
     private final Map<String, StorageUnitMeta> storageUnitMetaMap;
+
+    // 已有数据对应的数据单元
+    private final Map<String, StorageUnitMeta> dummyStorageUnitMetaMap;
 
     private final ReadWriteLock storageUnitLock;
 
@@ -99,9 +104,11 @@ public class DefaultMetaCache implements IMetaCache {
         // 分片相关
         sortedFragmentMetaLists = new ArrayList<>();
         fragmentMetaListMap = new HashMap<>();
+        dummyFragments = new ArrayList<>();
         fragmentLock = new ReentrantReadWriteLock();
         // 数据单元相关
         storageUnitMetaMap = new HashMap<>();
+        dummyStorageUnitMetaMap = new HashMap<>();
         storageUnitLock = new ReentrantReadWriteLock();
         // iginx 相关
         iginxMetaMap = new ConcurrentHashMap<>();
@@ -383,6 +390,9 @@ public class DefaultMetaCache implements IMetaCache {
         StorageUnitMeta storageUnit;
         storageUnitLock.readLock().lock();
         storageUnit = storageUnitMetaMap.get(id);
+        if (storageUnit == null) {
+            storageUnit = dummyStorageUnitMetaMap.get(id);
+        }
         storageUnitLock.readLock().unlock();
         return storageUnit;
     }
@@ -395,6 +405,11 @@ public class DefaultMetaCache implements IMetaCache {
             StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
             if (storageUnit != null) {
                 resultMap.put(id, storageUnit);
+            } else {
+                storageUnit = dummyStorageUnitMetaMap.get(id);
+                if (storageUnit != null) {
+                    resultMap.put(id, storageUnit);
+                }
             }
         }
         storageUnitLock.readLock().unlock();
@@ -406,6 +421,7 @@ public class DefaultMetaCache implements IMetaCache {
         List<StorageUnitMeta> storageUnitMetaList;
         storageUnitLock.readLock().lock();
         storageUnitMetaList = new ArrayList<>(storageUnitMetaMap.values());
+        storageUnitMetaList.addAll(dummyStorageUnitMetaMap.values());
         storageUnitLock.readLock().unlock();
         return storageUnitMetaList;
     }
@@ -441,7 +457,18 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public void addStorageEngine(StorageEngineMeta storageEngineMeta) {
+        storageUnitLock.writeLock().lock();
+        fragmentLock.writeLock().lock();
         storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
+        if (storageEngineMeta.isHasData()) {
+            StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+            FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
+            dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+            dummyStorageUnitMetaMap.put(dummyStorageUnit.getId(), dummyStorageUnit);
+            dummyFragments.add(dummyFragment);
+        }
+        fragmentLock.writeLock().unlock();
+        storageUnitLock.writeLock().unlock();
     }
 
     @Override
