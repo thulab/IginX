@@ -70,6 +70,6 @@ public class BatchStageRunner implements Runner {
 
     @Override
     public void close() {
-        worker.destroy();
+        worker.close();
     }
 }

@@ -87,8 +87,7 @@ public class Worker extends Thread {
         }
     }
 
-    @Override
-    public void destroy() {
+    public void close() {
         if (process.isAlive()) {
             this.process.destroy();
         }

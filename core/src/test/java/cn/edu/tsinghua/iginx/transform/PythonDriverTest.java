@@ -45,7 +45,7 @@ public class PythonDriverTest {
 
         Thread.sleep(5000);
 
-        worker.destroy();
+        worker.close();
     }
 
     private VectorSchemaRoot prepareData() {

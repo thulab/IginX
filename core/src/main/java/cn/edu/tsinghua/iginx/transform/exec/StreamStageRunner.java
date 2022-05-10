@@ -108,6 +108,6 @@ public class StreamStageRunner implements Runner {
     @Override
     public void close() {
         reader.close();
-        workerList.forEach(Worker::destroy);
+        workerList.forEach(Worker::close);
     }
 }
