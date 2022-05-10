@@ -467,7 +467,12 @@ public class IginxWorker implements IService.Iface {
 
         TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(className);
         if (transformTaskMeta != null) {
-            logger.info(String.format("Register task %s already exist", transformTaskMeta.toString()));
+            logger.error(String.format("Register task %s already exist", transformTaskMeta.toString()));
+            return RpcUtils.FAILURE;
+        }
+
+        if (isIllegalPath(filePath)) {
+            logger.error(String.format("Register file path is illegal, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
 
@@ -483,7 +488,7 @@ public class IginxWorker implements IService.Iface {
         File destFile = new File(destPath);
 
         if (destFile.exists()) {
-            logger.info(String.format("Register file already exist, fileName=%s", fileName));
+            logger.error(String.format("Register file already exist, fileName=%s", fileName));
             return RpcUtils.FAILURE;
         }
 
@@ -501,6 +506,11 @@ public class IginxWorker implements IService.Iface {
         } else {
             return RpcUtils.FAILURE;
         }
+    }
+
+    private boolean isIllegalPath(String path) {
+        //todo
+        return false;
     }
 
     @Override
