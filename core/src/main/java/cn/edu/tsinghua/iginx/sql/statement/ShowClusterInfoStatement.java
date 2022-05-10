@@ -12,6 +12,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
 import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,16 +38,16 @@ public class ShowClusterInfoStatement extends SystemStatement {
             List<Row> rowList = new ArrayList<>();
 
             if (getClusterInfoResp.isSetIginxInfos()) {
-                getClusterInfoResp.getIginxInfos().forEach(iginxInfo -> rowList.add(new Row(header, new String[]{"IginX", iginxInfo.toString()})));
+                getClusterInfoResp.getIginxInfos().forEach(iginxInfo -> rowList.add(new Row(header, new Object[]{"IginX".getBytes(StandardCharsets.UTF_8), iginxInfo.toString().getBytes(StandardCharsets.UTF_8)})));
             }
             if (getClusterInfoResp.isSetStorageEngineInfos()) {
-                getClusterInfoResp.getStorageEngineInfos().forEach(storageEngineInfo -> rowList.add(new Row(header, new String[]{"StorageEngine", storageEngineInfo.toString()})));
+                getClusterInfoResp.getStorageEngineInfos().forEach(storageEngineInfo -> rowList.add(new Row(header, new Object[]{"StorageEngine".getBytes(StandardCharsets.UTF_8), storageEngineInfo.toString().getBytes(StandardCharsets.UTF_8)})));
             }
             if (getClusterInfoResp.isSetMetaStorageInfos()) {
-                getClusterInfoResp.getMetaStorageInfos().forEach(metaStorageInfo -> rowList.add(new Row(header, new String[]{"MetaStorage", metaStorageInfo.toString()})));
+                getClusterInfoResp.getMetaStorageInfos().forEach(metaStorageInfo -> rowList.add(new Row(header, new Object[]{"MetaStorage".getBytes(StandardCharsets.UTF_8), metaStorageInfo.toString().getBytes(StandardCharsets.UTF_8)})));
             }
             if (getClusterInfoResp.isSetLocalMetaStorageInfo()) {
-                rowList.add(new Row(header, new String[]{"LocalMetaStorage", getClusterInfoResp.getLocalMetaStorageInfo().toString()}));
+                rowList.add(new Row(header, new Object[]{"LocalMetaStorage".getBytes(StandardCharsets.UTF_8), getClusterInfoResp.getLocalMetaStorageInfo().toString().getBytes(StandardCharsets.UTF_8)}));
             }
 
             RowStream table = new Table(header, rowList);

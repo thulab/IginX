@@ -40,7 +40,7 @@ if __name__ == '__main__':
     session.insert_row_records(paths, timestamps, values_list, data_type_list)
 
     # 查询写入的数据
-    dataset = session.query(["*"], 0, 10)
+    dataset = session.query(["a.*"], 0, 10)
     print(dataset)
 
     # 使用 SQL 语句查询写入的数据
