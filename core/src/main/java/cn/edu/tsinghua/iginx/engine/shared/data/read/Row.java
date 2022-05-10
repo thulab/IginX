@@ -98,6 +98,16 @@ public class Row {
         return new Value(header.getField(index).getType(), values[index]);
     }
 
+    public String toCSVTypeString() {
+        StringBuilder builder = new StringBuilder();
+        if (header.hasTimestamp()) {
+            builder.append(timestamp).append(",");
+        }
+        String arrStr = Arrays.toString(values);
+        builder.append(arrStr, 1, arrStr.length()-1);
+        return builder.toString();
+    }
+
     @Override
     public String toString() {
         return "Row{" +

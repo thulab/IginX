@@ -20,47 +20,7 @@ package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
-import cn.edu.tsinghua.iginx.thrift.AddStorageEnginesReq;
-import cn.edu.tsinghua.iginx.thrift.AddUserReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryReq;
-import cn.edu.tsinghua.iginx.thrift.AggregateQueryResp;
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.AuthType;
-import cn.edu.tsinghua.iginx.thrift.CloseSessionReq;
-import cn.edu.tsinghua.iginx.thrift.CloseStatementReq;
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.DeleteColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteDataInColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.DeleteUserReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryReq;
-import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlReq;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
-import cn.edu.tsinghua.iginx.thrift.ExecuteStatementResp;
-import cn.edu.tsinghua.iginx.thrift.FetchResultsReq;
-import cn.edu.tsinghua.iginx.thrift.FetchResultsResp;
-import cn.edu.tsinghua.iginx.thrift.GetClusterInfoReq;
-import cn.edu.tsinghua.iginx.thrift.GetClusterInfoResp;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumReq;
-import cn.edu.tsinghua.iginx.thrift.GetReplicaNumResp;
-import cn.edu.tsinghua.iginx.thrift.IService;
-import cn.edu.tsinghua.iginx.thrift.InsertColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.InsertRowRecordsReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryReq;
-import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionReq;
-import cn.edu.tsinghua.iginx.thrift.OpenSessionResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataReq;
-import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
-import cn.edu.tsinghua.iginx.thrift.QueryDataSetV2;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsReq;
-import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
-import cn.edu.tsinghua.iginx.thrift.Status;
-import cn.edu.tsinghua.iginx.thrift.StorageEngine;
-import cn.edu.tsinghua.iginx.thrift.UpdateUserReq;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -1058,6 +1018,68 @@ public class Session {
                 lock.readLock().lock();
                 try {
                     status = client.closeStatement(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(status));
+            RpcUtils.verifySuccess(status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+    }
+
+    public long commitTransformJob(List<TaskInfo> taskInfoList, ExportType exportType,
+                                   String fileName) throws SessionException, ExecutionException {
+        CommitTransformJobReq req = new CommitTransformJobReq(sessionId, taskInfoList, exportType);
+        if (fileName != null) {
+            req.setFileName(fileName);
+        }
+
+        CommitTransformJobResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.commitTransformJob(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while (checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            e.printStackTrace();
+            throw new SessionException(e);
+        }
+        return resp.getJobId();
+    }
+
+    public JobState queryTransformJobStatus(long jobId) throws SessionException, ExecutionException {
+        QueryTransformJobStatusReq req = new QueryTransformJobStatusReq(sessionId, jobId);
+        QueryTransformJobStatusResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.queryTransformJobStatus(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+        return resp.getJobState();
+    }
+
+    public void cancelTransformJob(long jobId) throws SessionException, ExecutionException {
+        CancelTransformJobReq req = new CancelTransformJobReq(sessionId, jobId);
+        try {
+            Status status;
+            do {
+                lock.readLock().lock();
+                try {
+                    status = client.cancelTransformJob(req);
                 } finally {
                     lock.readLock().unlock();
                 }

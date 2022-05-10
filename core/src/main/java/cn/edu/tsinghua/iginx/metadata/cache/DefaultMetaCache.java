@@ -84,6 +84,9 @@ public class DefaultMetaCache implements IMetaCache {
 
     private final Random random = new Random();
 
+    // transform task 的缓存
+    private final Map<String, TransformTaskMeta> transformTaskMetaMap;
+
     private DefaultMetaCache() {
         if (enableFragmentCacheControl) {
             long sizeOfFragment = FragmentMeta.sizeOf();
@@ -110,6 +113,8 @@ public class DefaultMetaCache implements IMetaCache {
         userMetaMap = new ConcurrentHashMap<>();
         // 时序列信息版本号相关
         timeSeriesVersionMap = new ConcurrentHashMap<>();
+        // transform task 相关
+        transformTaskMetaMap = new ConcurrentHashMap<>();
     }
 
     public static DefaultMetaCache getInstance() {
@@ -633,5 +638,25 @@ public class DefaultMetaCache implements IMetaCache {
     @Override
     public Map<Integer, Integer> getTimeseriesVersionMap() {
         return timeSeriesVersionMap;
+    }
+
+    @Override
+    public void addOrUpdateTransformTask(TransformTaskMeta transformTask) {
+        transformTaskMetaMap.put(transformTask.getClassName(), transformTask);
+    }
+
+    @Override
+    public void dropTransformTask(String className) {
+        transformTaskMetaMap.remove(className);
+    }
+
+    @Override
+    public TransformTaskMeta getTransformTask(String className) {
+        return transformTaskMetaMap.getOrDefault(className, null);
+    }
+
+    @Override
+    public List<TransformTaskMeta> getTransformTasks() {
+        return transformTaskMetaMap.values().stream().map(TransformTaskMeta::copy).collect(Collectors.toList());
     }
 }

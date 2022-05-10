@@ -18,27 +18,13 @@
  */
 package cn.edu.tsinghua.iginx.session;
 
-import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.thrift.ExecuteSqlResp;
-import cn.edu.tsinghua.iginx.thrift.IginxInfo;
-import cn.edu.tsinghua.iginx.thrift.LocalMetaStorageInfo;
-import cn.edu.tsinghua.iginx.thrift.MetaStorageInfo;
-import cn.edu.tsinghua.iginx.thrift.SqlType;
-import cn.edu.tsinghua.iginx.thrift.StorageEngineInfo;
+import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
-import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
+import java.util.*;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -58,6 +44,9 @@ public class SessionExecuteSqlResult {
     private List<StorageEngineInfo> storageEngineInfos;
     private List<MetaStorageInfo> metaStorageInfos;
     private LocalMetaStorageInfo localMetaStorageInfo;
+    private List<RegisterTaskInfo> registerTaskInfos;
+    private long jobId;
+    private JobState jobState;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -85,6 +74,15 @@ public class SessionExecuteSqlResult {
                 this.storageEngineInfos = resp.getStorageEngineInfos();
                 this.metaStorageInfos = resp.getMetaStorageInfos();
                 this.localMetaStorageInfo = resp.getLocalMetaStorageInfo();
+                break;
+            case ShowRegisterTask:
+                this.registerTaskInfos = resp.getRegisterTaskInfos();
+                break;
+            case CommitTransformJob:
+                this.jobId = resp.getJobId();
+                break;
+            case ShowJobStatus:
+                this.jobState = resp.getJobState();
                 break;
             default:
                 break;
@@ -195,6 +193,8 @@ public class SessionExecuteSqlResult {
             return buildShowTimeSeriesResult();
         } else if (sqlType == SqlType.ShowClusterInfo) {
             return buildShowClusterInfoResult();
+        } else if (sqlType == SqlType.ShowRegisterTask) {
+            return buildShowRegisterTaskResult();
         } else if (sqlType == SqlType.GetReplicaNum) {
             return "Replica num: " + replicaNum + "\n";
         } else if (sqlType == SqlType.CountPoints) {
@@ -310,9 +310,9 @@ public class SessionExecuteSqlResult {
             cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(
-                        needFormatTime ? formatTime(timestamps[i], timePrecision) : String.valueOf(timestamps[i]),
-                        paths.get(i),
-                        valueToString(values.get(0).get(i))
+                    needFormatTime ? formatTime(timestamps[i], timePrecision) : String.valueOf(timestamps[i]),
+                    paths.get(i),
+                    valueToString(values.get(0).get(i))
                 )));
             }
 
@@ -349,9 +349,9 @@ public class SessionExecuteSqlResult {
             for (int i = 0; i < iginxInfos.size(); i++) {
                 IginxInfo info = iginxInfos.get(i);
                 cache.add(new ArrayList<>(Arrays.asList(
-                        String.valueOf(info.getId()),
-                        info.getIp(),
-                        String.valueOf(info.getPort())
+                    String.valueOf(info.getId()),
+                    info.getIp(),
+                    String.valueOf(info.getPort())
                 )));
             }
             buildFromStringList(builder, cache);
@@ -364,10 +364,10 @@ public class SessionExecuteSqlResult {
             for (int i = 0; i < storageEngineInfos.size(); i++) {
                 StorageEngineInfo info = storageEngineInfos.get(i);
                 cache.add(new ArrayList<>(Arrays.asList(
-                        String.valueOf(info.getId()),
-                        info.getIp(),
-                        String.valueOf(info.getPort()),
-                        info.getType()
+                    String.valueOf(info.getId()),
+                    info.getIp(),
+                    String.valueOf(info.getPort()),
+                    info.getType()
                 )));
             }
             buildFromStringList(builder, cache);
@@ -380,9 +380,9 @@ public class SessionExecuteSqlResult {
             for (int i = 0; i < metaStorageInfos.size(); i++) {
                 MetaStorageInfo info = metaStorageInfos.get(i);
                 cache.add(new ArrayList<>(Arrays.asList(
-                        info.getIp(),
-                        String.valueOf(info.getPort()),
-                        info.getType()
+                    info.getIp(),
+                    String.valueOf(info.getPort()),
+                    info.getType()
                 )));
             }
             buildFromStringList(builder, cache);
@@ -391,8 +391,29 @@ public class SessionExecuteSqlResult {
         if (localMetaStorageInfo != null) {
             builder.append("Meta Storage path:").append("\n");
             List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("PATH")));
-            cache.add(new ArrayList<>(Arrays.asList(localMetaStorageInfo.getPath())));
+            cache.add(new ArrayList<>(Collections.singletonList("PATH")));
+            cache.add(new ArrayList<>(Collections.singletonList(localMetaStorageInfo.getPath())));
+            buildFromStringList(builder, cache);
+        }
+
+        return builder.toString();
+    }
+
+    private String buildShowRegisterTaskResult() {
+        StringBuilder builder = new StringBuilder();
+
+        if (registerTaskInfos != null && !registerTaskInfos.isEmpty()) {
+            builder.append("Register task infos:").append("\n");
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Arrays.asList("CLASS_NAME", "FILE_NAME", "IP")));
+            for (int i = 0; i < registerTaskInfos.size(); i++) {
+                RegisterTaskInfo info = registerTaskInfos.get(i);
+                cache.add(new ArrayList<>(Arrays.asList(
+                    info.getClassName(),
+                    info.getFileName(),
+                    info.getIp()
+                )));
+            }
             buildFromStringList(builder, cache);
         }
 
@@ -513,4 +534,11 @@ public class SessionExecuteSqlResult {
         return parseErrorMsg;
     }
 
+    public long getJobId() {
+        return jobId;
+    }
+
+    public JobState getJobState() {
+        return jobState;
+    }
 }

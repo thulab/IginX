@@ -30,6 +30,11 @@ public class StatementBuilder {
         typeMap.put(StatementType.DELETE_TIME_SERIES, SqlType.DeleteTimeSeries);
         typeMap.put(StatementType.SHOW_TIME_SERIES, SqlType.ShowTimeSeries);
         typeMap.put(StatementType.SHOW_CLUSTER_INFO, SqlType.ShowClusterInfo);
+        typeMap.put(StatementType.SHOW_REGISTER_TASK, SqlType.ShowRegisterTask);
+        typeMap.put(StatementType.REGISTER_TASK, SqlType.RegisterTask);
+        typeMap.put(StatementType.DROP_TASK, SqlType.DropTask);
+        typeMap.put(StatementType.COMMIT_TRANSFORM_JOB, SqlType.CommitTransformJob);
+        typeMap.put(StatementType.SHOW_JOB_STATUS, SqlType.ShowJobStatus);
     }
 
     private static final StatementBuilder instance = new StatementBuilder();

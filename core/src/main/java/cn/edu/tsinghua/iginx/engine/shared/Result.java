@@ -38,8 +38,13 @@ public class Result {
     private List<MetaStorageInfo> metaStorageInfos;
     private LocalMetaStorageInfo localMetaStorageInfo;
 
+    private List<RegisterTaskInfo> registerTaskInfos;
+
     private long queryId;
+    private JobState jobState;
     private RowStream resultStream;
+
+    private long jobId;
 
     public Result(Status status) {
         this.status = status;
@@ -131,6 +136,9 @@ public class Result {
         resp.setStorageEngineInfos(storageEngineInfos);
         resp.setMetaStorageInfos(metaStorageInfos);
         resp.setLocalMetaStorageInfo(localMetaStorageInfo);
+        resp.setRegisterTaskInfos(registerTaskInfos);
+        resp.setJobId(jobId);
+        resp.setJobState(jobState);
         return resp;
     }
 

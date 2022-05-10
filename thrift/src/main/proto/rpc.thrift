@@ -51,7 +51,12 @@ enum SqlType {
     ClearData,
     DeleteTimeSeries,
     ShowTimeSeries,
-    ShowClusterInfo
+    ShowClusterInfo,
+    ShowRegisterTask,
+    RegisterTask,
+    DropTask,
+    CommitTransformJob,
+    ShowJobStatus
 }
 
 enum AuthType {
@@ -64,6 +69,33 @@ enum AuthType {
 enum UserType {
     Administrator,
     OrdinaryUser
+}
+
+enum ExportType {
+    Log,
+    File,
+    IginX
+}
+
+enum TaskType {
+    IginX,
+    Python
+}
+
+enum DataFlowType {
+    Batch,
+    Stream
+}
+
+enum JobState {
+    JOB_UNKNOWN,
+    JOB_FINISHED,
+    JOB_CREATED,
+    JOB_RUNNING,
+    JOB_FAILING,
+    JOB_FAILED,
+    JOB_CLOSING,
+    JOB_CLOSED
 }
 
 struct Status {
@@ -260,6 +292,9 @@ struct ExecuteSqlResp {
     17: optional list<StorageEngineInfo> storageEngineInfos
     18: optional list<MetaStorageInfo>  metaStorageInfos
     19: optional LocalMetaStorageInfo localMetaStorageInfo
+    20: optional list<RegisterTaskInfo> registerTaskInfos
+    21: optional i64 jobId
+    22: optional JobState jobState
 }
 
 struct UpdateUserReq {
@@ -367,6 +402,67 @@ struct FetchResultsResp {
     3: optional QueryDataSetV2 queryDataSet
 }
 
+struct TaskInfo {
+    1: required TaskType taskType
+    2: required DataFlowType dataFlowType
+    3: optional i64 timeout
+    4: optional string sql
+    5: optional string className
+}
+
+struct CommitTransformJobReq {
+    1: required i64 sessionId
+    2: required list<TaskInfo> taskList
+    3: required ExportType exportType
+    4: optional string fileName
+}
+
+struct CommitTransformJobResp {
+    1: required Status status
+    2: required i64 jobId
+}
+
+struct QueryTransformJobStatusReq {
+    1: required i64 sessionId
+    2: required i64 jobId
+}
+
+struct QueryTransformJobStatusResp {
+    1: required Status status
+    2: required JobState jobState
+}
+
+struct CancelTransformJobReq {
+    1: required i64 sessionId
+    2: required i64 jobId
+}
+
+struct RegisterTaskReq {
+    1: required i64 sessionId
+    2: required string filePath
+    3: required string className
+}
+
+struct DropTaskReq {
+    1: required i64 sessionId
+    2: required string className
+}
+
+struct GetRegisterTaskInfoReq {
+    1: required i64 sessionId
+}
+
+struct RegisterTaskInfo {
+    1: required string className
+    2: required string fileName
+    3: required string ip
+}
+
+struct GetRegisterTaskInfoResp {
+    1: required Status status
+    2: optional list<RegisterTaskInfo> registerTaskInfoList
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -416,4 +512,16 @@ service IService {
     FetchResultsResp fetchResults(1:FetchResultsReq req);
 
     Status closeStatement(1:CloseStatementReq req);
+
+    CommitTransformJobResp commitTransformJob(1: CommitTransformJobReq req);
+
+    QueryTransformJobStatusResp queryTransformJobStatus(1: QueryTransformJobStatusReq req);
+
+    Status cancelTransformJob (1: CancelTransformJobReq req);
+
+    Status registerTask(1: RegisterTaskReq req);
+
+    Status dropTask(1: DropTaskReq req);
+
+    GetRegisterTaskInfoResp getRegisterTaskInfo(1: GetRegisterTaskInfoReq req);
 }

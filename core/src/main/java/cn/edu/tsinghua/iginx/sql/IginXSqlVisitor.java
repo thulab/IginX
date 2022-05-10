@@ -35,8 +35,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         InsertStatement insertStatement = new InsertStatement();
         insertStatement.setPrefixPath(ctx.path().getText());
         // parse paths
-        List<MeasurementNameContext> measurementNames = ctx.insertColumnsSpec().measurementName();
-        measurementNames.forEach(e -> insertStatement.setPath(e.getText()));
+        ctx.insertColumnsSpec().path().forEach(e -> insertStatement.setPath(e.getText()));
         // parse times, values and types
         parseInsertValuesSpec(ctx.insertValuesSpec(), insertStatement);
 
@@ -145,9 +144,44 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseFromPaths(FromClauseContext ctx, SelectStatement selectStatement) {
         List<PathContext> fromPaths = ctx.path();
 
-        for (PathContext fromPath: fromPaths) {
+        for (PathContext fromPath : fromPaths) {
             selectStatement.setFromPath(fromPath.getText());
         }
+    }
+
+    @Override
+    public Statement visitShowRegisterTaskStatement(ShowRegisterTaskStatementContext ctx) {
+        return new ShowRegisterTaskStatement();
+    }
+
+    @Override
+    public Statement visitRegisterTaskStatement(RegisterTaskStatementContext ctx) {
+        String filePath = ctx.filePath.getText();
+        filePath = filePath.substring(1, filePath.length()-1);
+
+        String className = ctx.className.getText();
+        className = className.substring(1, className.length()-1);
+        return new RegisterTaskStatement(filePath, className);
+    }
+
+    @Override
+    public Statement visitDropTaskStatement(DropTaskStatementContext ctx) {
+        String fileName = ctx.className.getText();
+        fileName = fileName.substring(1, fileName.length()-1);
+        return new DropTaskStatement(fileName);
+    }
+
+    @Override
+    public Statement visitCommitTransformJobStatement(CommitTransformJobStatementContext ctx) {
+        String path = ctx.filePath.getText();
+        path = path.substring(1, path.length() - 1);
+        return new CommitTransformJobStatement(path);
+    }
+
+    @Override
+    public Statement visitShowJobStatusStatement(ShowJobStatusStatementContext ctx) {
+        long jobId = Long.parseLong(ctx.jobId.getText());
+        return new ShowJobStatusStatement(jobId);
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {

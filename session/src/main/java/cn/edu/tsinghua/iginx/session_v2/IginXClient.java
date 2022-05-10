@@ -32,5 +32,7 @@ public interface IginXClient extends AutoCloseable {
 
     ClusterClient getClusterClient();
 
+    TransformClient getTransformClient();
+
     void close();
 }
