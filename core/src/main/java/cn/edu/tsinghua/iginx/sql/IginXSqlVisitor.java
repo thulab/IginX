@@ -141,14 +141,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new ShowClusterInfoStatement();
     }
 
-<<<<<<< HEAD
     private void parseFromPaths(FromClauseContext ctx, SelectStatement selectStatement) {
         List<PathContext> fromPaths = ctx.path();
 
-        for (PathContext fromPath: fromPaths) {
+        for (PathContext fromPath : fromPaths) {
             selectStatement.setFromPath(fromPath.getText());
         }
-=======
+    }
+
     @Override
     public Statement visitShowRegisterTaskStatement(ShowRegisterTaskStatementContext ctx) {
         return new ShowRegisterTaskStatement();
@@ -176,7 +176,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         String path = ctx.filePath.getText();
         path = path.substring(1, path.length() - 1);
         return new CommitTransformJobStatement(path);
->>>>>>> dev transform
     }
 
     @Override

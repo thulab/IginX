@@ -38,9 +38,8 @@ public class RpcUtils {
 
     public static Status FAILURE = new Status(StatusCode.STATEMENT_EXECUTION_ERROR.getStatusCode());
 
-<<<<<<< HEAD
     public static Status SERVICE_UNAVAILABLE = new Status(StatusCode.SERVICE_UNAVAILABLE.getStatusCode());
-=======
+
     public static Status JOB_FINISHED = new Status(StatusCode.JOB_FINISHED.getStatusCode());
     public static Status JOB_CREATED = new Status(StatusCode.JOB_CREATED.getStatusCode());
     public static Status JOB_RUNNING = new Status(StatusCode.JOB_RUNNING.getStatusCode());
@@ -48,7 +47,6 @@ public class RpcUtils {
     public static Status JOB_FAILED = new Status(StatusCode.JOB_FAILED.getStatusCode());
     public static Status JOB_CLOSING = new Status(StatusCode.JOB_CLOSING.getStatusCode());
     public static Status JOB_CLOSED = new Status(StatusCode.JOB_CLOSED.getStatusCode());
->>>>>>> dev transform
 
     static {
         WRONG_USERNAME_OR_PASSWORD.setMessage("wrong username or password");

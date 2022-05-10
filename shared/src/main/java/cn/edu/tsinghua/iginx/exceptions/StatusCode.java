@@ -31,17 +31,15 @@ public enum StatusCode {
     STATEMENT_EXECUTION_ERROR(401),
     STATEMENT_PARSE_ERROR(402),
 
-<<<<<<< HEAD
-    SERVICE_UNAVAILABLE(503);
-=======
-    JOB_FINISHED(500),
-    JOB_CREATED(501),
-    JOB_RUNNING(502),
-    JOB_FAILING(503),
-    JOB_FAILED(504),
-    JOB_CLOSING(505),
-    JOB_CLOSED(506);
->>>>>>> dev transform
+    SERVICE_UNAVAILABLE(503),
+
+    JOB_FINISHED(600),
+    JOB_CREATED(601),
+    JOB_RUNNING(602),
+    JOB_FAILING(603),
+    JOB_FAILED(604),
+    JOB_CLOSING(605),
+    JOB_CLOSED(606);
 
     private int statusCode;
 
