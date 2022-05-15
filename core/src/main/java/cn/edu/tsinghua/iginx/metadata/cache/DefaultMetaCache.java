@@ -294,6 +294,19 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public List<FragmentMeta> getDummyFragmentsByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        fragmentLock.readLock().lock();
+        List<FragmentMeta> results = new ArrayList<>();
+        for (FragmentMeta fragmentMeta: dummyFragments) {
+            if (fragmentMeta.getTsInterval().isIntersect(tsInterval)) {
+                results.add(fragmentMeta);
+            }
+        }
+        fragmentLock.readLock().unlock();
+        return results;
+    }
+
+    @Override
     public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap() {
         Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
         fragmentLock.readLock().lock();
@@ -325,6 +338,19 @@ public class DefaultMetaCache implements IMetaCache {
         });
         fragmentLock.readLock().unlock();
         return resultMap;
+    }
+
+    @Override
+    public List<FragmentMeta> getDummyFragmentsByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        fragmentLock.readLock().lock();
+        List<FragmentMeta> results = new ArrayList<>();
+        for (FragmentMeta fragmentMeta: dummyFragments) {
+            if (fragmentMeta.getTsInterval().isIntersect(tsInterval) && fragmentMeta.getTimeInterval().isIntersect(timeInterval)) {
+                results.add(fragmentMeta);
+            }
+        }
+        fragmentLock.readLock().unlock();
+        return results;
     }
 
     @Override
