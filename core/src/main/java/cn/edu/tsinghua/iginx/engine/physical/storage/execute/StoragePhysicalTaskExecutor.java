@@ -74,6 +74,7 @@ public class StoragePhysicalTaskExecutor {
             if (before == null && after != null) { // 新增加 du，处理这种事件，其他事件暂时不处理
                 logger.info("new storage unit " + after.getId() + " come!");
                 String id = after.getId();
+                boolean isDummy = after.isDummy();
                 storageTaskQueues.put(id, new StoragePhysicalTaskQueue());
                 // 为拥有该分片的存储创建一个调度线程，用于调度任务执行
                 ExecutorService dispatcher = Executors.newSingleThreadExecutor();
@@ -85,6 +86,7 @@ public class StoragePhysicalTaskExecutor {
                     while (true) {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
+                        task.setDummyStorageUnit(isDummy);
                         logger.info("take out new task: " + task);
                         if (pair.v.getQueue().size() > maxCachedPhysicalTaskPerStorage) {
                             task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
@@ -140,6 +142,12 @@ public class StoragePhysicalTaskExecutor {
         };
         metaManager.registerStorageEngineChangeHook(storageEngineChangeHook);
         metaManager.registerStorageUnitHook(storageUnitHook);
+        List<StorageEngineMeta> storages = metaManager.getStorageEngineList();
+        for (StorageEngineMeta storage: storages) {
+            if (storage.isHasData()) {
+                storageUnitHook.onChange(null, storage.getDummyStorageUnit());
+            }
+        }
     }
 
     public static StoragePhysicalTaskExecutor getInstance() {

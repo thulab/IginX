@@ -94,6 +94,8 @@ public class IoTDBStorage implements IStorage {
 
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s WHERE %s";
 
+    private static final String QUERY_HISTORY_DATA = "SELECT %s FROM root WHERE %s";
+
     private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
     private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
@@ -114,7 +116,7 @@ public class IoTDBStorage implements IStorage {
             throw new StorageInitializationException("unexpected database: " + meta.getStorageEngine());
         }
         if (!testConnection()) {
-            throw new StorageInitializationException("cannot connect to " + meta.toString());
+            throw new StorageInitializationException("cannot connect to " + meta);
         }
         sessionPool = createSessionPool();
         logger.info(meta + " is initialized.");
@@ -152,6 +154,7 @@ public class IoTDBStorage implements IStorage {
         }
         Operator op = operators.get(0);
         String storageUnit = task.getStorageUnit();
+        boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) {
             Project project = (Project) op;
             Filter filter;
@@ -161,7 +164,7 @@ public class IoTDBStorage implements IStorage {
                 FragmentMeta fragment = task.getTargetFragment();
                 filter = new AndFilter(Arrays.asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()), new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
             }
-            return executeQueryTask(storageUnit, project, filter);
+            return isDummyStorageUnit ? executeQueryHistoryTask(project, filter) : executeQueryTask(storageUnit, project, filter);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -223,7 +226,24 @@ public class IoTDBStorage implements IStorage {
             }
             String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), storageUnit, FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement));
+            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), true);
+            return new TaskExecuteResult(rowStream);
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in iotdb11 failure", e));
+        }
+    }
+
+    private TaskExecuteResult executeQueryHistoryTask(Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+        try {
+            StringBuilder builder = new StringBuilder();
+            for (String path : project.getPatterns()) {
+                builder.append(path);
+                builder.append(',');
+            }
+            String statement = String.format(QUERY_HISTORY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), FilterTransformer.toString(filter));
+            logger.info("[Query] execute query: " + statement);
+            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false);
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());

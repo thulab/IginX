@@ -32,6 +32,7 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
     private final boolean needBroadcasting;
     private String storageUnit;
     private long storage;
+    private boolean dummyStorageUnit;
 
     public StoragePhysicalTask(List<Operator> operators) {
         this(operators, ((FragmentSource) ((UnaryOperator) operators.get(0)).getSource()).getFragment(), true, false);
@@ -58,6 +59,14 @@ public class StoragePhysicalTask extends AbstractPhysicalTask {
 
     public void setStorageUnit(String storageUnit) {
         this.storageUnit = storageUnit;
+    }
+
+    public boolean isDummyStorageUnit() {
+        return dummyStorageUnit;
+    }
+
+    public void setDummyStorageUnit(boolean dummyStorageUnit) {
+        this.dummyStorageUnit = dummyStorageUnit;
     }
 
     public long getStorage() {

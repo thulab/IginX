@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
@@ -45,7 +44,7 @@ import java.util.stream.Collectors;
 public class DefaultMetaManager implements IMetaManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultMetaManager.class);
-    private static DefaultMetaManager INSTANCE;
+    private static volatile DefaultMetaManager INSTANCE;
     private final IMetaCache cache;
 
     private final IMetaStorage storage;
@@ -134,12 +133,14 @@ public class DefaultMetaManager implements IMetaManager {
                 for (StorageEngineChangeHook hook : storageEngineChangeHooks) {
                     hook.onChanged(null, storageEngine);
                 }
+                if (storageEngine.isHasData()) {
+                    for (StorageUnitHook storageUnitHook : storageUnitHooks) {
+                        storageUnitHook.onChange(null, storageEngine.getDummyStorageUnit());
+                    }
+                }
             }
         });
-        for (StorageEngineMeta storageEngine : storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
-            cache.addStorageEngine(storageEngine);
-        }
-
+        storage.loadStorageEngine(resolveStorageEngineFromConf());
     }
 
     private void initStorageUnit() throws MetaStorageException {
@@ -723,10 +724,17 @@ public class DefaultMetaManager implements IMetaManager {
                 dataPrefix = extraParams.get(Constants.DATA_PREFIX);
                 extraParams.remove(Constants.DATA_PREFIX);
             }
-            boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.DATA_PREFIX, "false"));
-            extraParams.remove(Constants.DATA_PREFIX);
-            // TODO: 核验并计算初始分片范围
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, hasData, dataPrefix, readOnly, extraParams, storageEngine, id));
+            boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.IS_READ_ONLY, "false"));
+            extraParams.remove(Constants.IS_READ_ONLY);
+            StorageEngineMeta storage = new StorageEngineMeta(i, ip, port, hasData, dataPrefix, readOnly, extraParams, storageEngine, id);
+            // TODO: 核验并计算初始分片范围，目前暂时跳过，生成一个最大范围的空分片
+            if (hasData) {
+                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", i), i);
+                FragmentMeta dummyFragment = new FragmentMeta(null, null, 0, Long.MAX_VALUE, dummyStorageUnit);
+                storage.setDummyStorageUnit(dummyStorageUnit);
+                storage.setDummyFragment(dummyFragment);
+            }
+            storageEngineMetaList.add(storage);
         }
         return storageEngineMetaList;
     }

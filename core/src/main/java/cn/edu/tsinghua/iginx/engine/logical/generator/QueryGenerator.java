@@ -66,12 +66,12 @@ public class QueryGenerator extends AbstractGenerator {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
-        if (fragments.isEmpty()) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        if (!metaManager.hasFragment()) {
             //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
         }
 
         List<Operator> joinList = new ArrayList<>();

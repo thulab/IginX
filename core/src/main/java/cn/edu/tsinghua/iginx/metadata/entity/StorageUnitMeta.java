@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.metadata.entity;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,7 +27,7 @@ public final class StorageUnitMeta {
 
     private final String id;
 
-    private final long storageEngineId;
+    private long storageEngineId;
 
     private final String masterId;
 
@@ -36,6 +37,8 @@ public final class StorageUnitMeta {
 
     private boolean initialStorageUnit = true;
 
+    private boolean dummy = false;
+
     private transient List<StorageUnitMeta> replicas = new ArrayList<>();
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster) {
@@ -43,6 +46,15 @@ public final class StorageUnitMeta {
         this.storageEngineId = storageEngineId;
         this.masterId = masterId;
         this.isMaster = isMaster;
+    }
+
+    public StorageUnitMeta(String id, long storageEngineId) {
+        this.id = id;
+        this.storageEngineId = storageEngineId;
+        this.masterId = id;
+        this.isMaster = true;
+        this.dummy = true;
+        this.replicas = Collections.emptyList();
     }
 
     public StorageUnitMeta(String id, long storageEngineId, String masterId, boolean isMaster, boolean initialStorageUnit) {
@@ -124,10 +136,12 @@ public final class StorageUnitMeta {
         builder.append(isMaster);
         builder.append(", createdBy = ");
         builder.append(createdBy);
-        builder.append(", replica id list = ");
-        for (StorageUnitMeta storageUnit : replicas) {
-            builder.append(" ");
-            builder.append(storageUnit.getId());
+        if (replicas != null) {
+            builder.append(", replica id list = ");
+            for (StorageUnitMeta storageUnit : replicas) {
+                builder.append(" ");
+                builder.append(storageUnit.getId());
+            }
         }
         builder.append("}");
         return builder.toString();
@@ -147,5 +161,13 @@ public final class StorageUnitMeta {
 
     public void setInitialStorageUnit(boolean initialStorageUnit) {
         this.initialStorageUnit = initialStorageUnit;
+    }
+
+    public void setStorageEngineId(long storageEngineId) {
+        this.storageEngineId = storageEngineId;
+    }
+
+    public boolean isDummy() {
+        return dummy;
     }
 }

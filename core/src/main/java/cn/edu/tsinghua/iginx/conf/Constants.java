@@ -46,5 +46,7 @@ public class Constants {
 
     public static final String DATA_PREFIX = "data_prefix";
 
+    public static final String DUMMY = "dummy";
+
 }
 

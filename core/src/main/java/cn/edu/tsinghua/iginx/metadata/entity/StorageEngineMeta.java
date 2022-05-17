@@ -100,6 +100,9 @@ public final class StorageEngineMeta {
 
     public void setId(long id) {
         this.id = id;
+        if (hasData) {
+            dummyStorageUnit.setStorageEngineId(id);
+        }
     }
 
     public String getIp() {
