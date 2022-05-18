@@ -485,13 +485,15 @@ public class DefaultMetaCache implements IMetaCache {
     public void addStorageEngine(StorageEngineMeta storageEngineMeta) {
         storageUnitLock.writeLock().lock();
         fragmentLock.writeLock().lock();
-        storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
-        if (storageEngineMeta.isHasData()) {
-            StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
-            FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
-            dummyFragment.setMasterStorageUnit(dummyStorageUnit);
-            dummyStorageUnitMetaMap.put(dummyStorageUnit.getId(), dummyStorageUnit);
-            dummyFragments.add(dummyFragment);
+        if (!storageEngineMetaMap.containsKey(storageEngineMeta.getId())) {
+            storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
+            if (storageEngineMeta.isHasData()) {
+                StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+                FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
+                dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+                dummyStorageUnitMetaMap.put(dummyStorageUnit.getId(), dummyStorageUnit);
+                dummyFragments.add(dummyFragment);
+            }
         }
         fragmentLock.writeLock().unlock();
         storageUnitLock.writeLock().unlock();

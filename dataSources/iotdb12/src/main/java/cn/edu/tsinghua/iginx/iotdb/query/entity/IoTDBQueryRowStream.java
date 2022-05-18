@@ -47,12 +47,15 @@ public class IoTDBQueryRowStream implements RowStream {
 
     private final SessionDataSetWrapper dataset;
 
+    private final boolean trimStorageUnit;
+
     private final Header header;
 
     private State state;
 
-    public IoTDBQueryRowStream(SessionDataSetWrapper dataset) {
+    public IoTDBQueryRowStream(SessionDataSetWrapper dataset, boolean trimStorageUnit) {
         this.dataset = dataset;
+        this.trimStorageUnit = trimStorageUnit;
 
         List<String> names = dataset.getColumnNames();
         List<String> types = dataset.getColumnTypes();
@@ -84,7 +87,7 @@ public class IoTDBQueryRowStream implements RowStream {
             columnName = columnName.substring(columnName.indexOf('(') + 1, columnName.length() - 1);
         }
         if (columnName.startsWith(PREFIX)) {
-            columnName = columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1);
+            columnName = columnName.substring(columnName.indexOf('.', trimStorageUnit ? columnName.indexOf('.') + 1: 0) + 1);
         }
         return columnName;
     }

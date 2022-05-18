@@ -75,6 +75,9 @@ public class StoragePhysicalTaskExecutor {
                 logger.info("new storage unit " + after.getId() + " come!");
                 String id = after.getId();
                 boolean isDummy = after.isDummy();
+                if (storageTaskQueues.containsKey(id)) {
+                    return;
+                }
                 storageTaskQueues.put(id, new StoragePhysicalTaskQueue());
                 // 为拥有该分片的存储创建一个调度线程，用于调度任务执行
                 ExecutorService dispatcher = Executors.newSingleThreadExecutor();
@@ -82,7 +85,17 @@ public class StoragePhysicalTaskExecutor {
                 dispatchers.put(id, dispatcher);
                 dispatcher.submit(() -> {
                     StoragePhysicalTaskQueue taskQueue = storageTaskQueues.get(id);
-                    Pair<IStorage, ThreadPoolExecutor> pair = storageManager.getStorage(storageId);
+                    Pair<IStorage, ThreadPoolExecutor> p = storageManager.getStorage(storageId);
+                    while (p == null) {
+                        p = storageManager.getStorage(storageId);
+                        logger.info("spinning for IStorage!");
+                        try {
+                            Thread.sleep(5);
+                        } catch (InterruptedException e) {
+                            logger.error("encounter error when spinning: ", e);
+                        }
+                    }
+                    Pair<IStorage, ThreadPoolExecutor> pair = p;
                     while (true) {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
@@ -131,6 +144,7 @@ public class StoragePhysicalTaskExecutor {
                         });
                     }
                 });
+                logger.info("process for new storage unit finished!");
             }
         };
         StorageEngineChangeHook storageEngineChangeHook = (before, after) -> {

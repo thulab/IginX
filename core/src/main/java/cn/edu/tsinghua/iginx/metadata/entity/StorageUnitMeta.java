@@ -25,11 +25,11 @@ import java.util.Objects;
 
 public final class StorageUnitMeta {
 
-    private final String id;
+    private String id;
 
     private long storageEngineId;
 
-    private final String masterId;
+    private String masterId;
 
     private final boolean isMaster;
 
@@ -81,12 +81,20 @@ public final class StorageUnitMeta {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public long getStorageEngineId() {
         return storageEngineId;
     }
 
     public String getMasterId() {
         return masterId;
+    }
+
+    public void setMasterId(String masterId) {
+        this.masterId = masterId;
     }
 
     public boolean isMaster() {

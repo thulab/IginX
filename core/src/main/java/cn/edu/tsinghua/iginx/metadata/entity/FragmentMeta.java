@@ -74,6 +74,13 @@ public final class FragmentMeta {
         this.masterStorageUnitId = masterStorageUnit.getMasterId();
     }
 
+    public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval, StorageUnitMeta masterStorageUnit) {
+        this.timeInterval = timeInterval;
+        this.tsInterval = tsInterval;
+        this.masterStorageUnit = masterStorageUnit;
+        this.masterStorageUnitId = masterStorageUnit.getMasterId();
+    }
+
     public TimeInterval getTimeInterval() {
         return timeInterval;
     }

@@ -49,6 +49,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
@@ -122,6 +124,11 @@ public class IoTDBStorage implements IStorage {
         logger.info(meta + " is initialized.");
     }
 
+    @Override
+    public void release() throws PhysicalException {
+        sessionPool.close();
+    }
+
     private boolean testConnection() {
         Map<String, String> extraParams = meta.getExtraParams();
         String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
@@ -173,6 +180,50 @@ public class IoTDBStorage implements IStorage {
             return executeDeleteTask(storageUnit, delete);
         }
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+    }
+
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+        List<String> paths = new ArrayList<>();
+        try {
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
+            while (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                if (record == null || record.getFields().size() < 4) {
+                    continue;
+                }
+                String path = record.getFields().get(0).getStringValue();
+                path = path.substring(5);
+                paths.add(path);
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        paths.sort(String::compareTo);
+        if (paths.size() == 0) {
+            throw new PhysicalTaskExecuteFailureException("no data!");
+        }
+        TimeSeriesInterval tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
+
+        long minTime = 0, maxTime = Long.MAX_VALUE;
+        try {
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement("select * from root");
+            if (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                minTime = record.getTimestamp();
+            }
+            dataSet.close();
+            dataSet = sessionPool.executeQueryStatement("select * from root order by time desc");
+            if (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                maxTime = record.getTimestamp();
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        TimeInterval timeInterval = new TimeInterval(minTime, maxTime + 1);
+        return new Pair<>(tsInterval, timeInterval);
     }
 
     @Override

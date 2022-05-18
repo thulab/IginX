@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.engine.physical.storage;
 
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,11 +38,13 @@ public class StorageManager {
 
     private static final Logger logger = LoggerFactory.getLogger(StorageManager.class);
 
-    private final Map<String, ClassLoader> classLoaders = new ConcurrentHashMap<>();
+    private static final Map<String, ClassLoader> classLoaders = new ConcurrentHashMap<>();
 
-    private final Map<String, String> drivers = new ConcurrentHashMap<>();
+    private static boolean hasInitLoaders = false;
 
-    private final Map<Long, Pair<IStorage, ThreadPoolExecutor>> storageMap = new ConcurrentHashMap<>();
+    private static final Map<String, String> drivers = new ConcurrentHashMap<>();
+
+    private static final Map<Long, Pair<IStorage, ThreadPoolExecutor>> storageMap = new ConcurrentHashMap<>();
 
     public StorageManager(List<StorageEngineMeta> metaList) {
         initClassLoaderAndDrivers();
@@ -49,6 +53,39 @@ public class StorageManager {
                 System.exit(-1);
             }
         }
+    }
+
+    public static Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage(StorageEngineMeta meta) {
+        initClassLoaderAndDrivers();
+        String engine = meta.getStorageEngine();
+        String driver = drivers.get(engine);
+        long id = meta.getId();
+        boolean needRelease = false;
+        IStorage storage = null;
+        try {
+            if (storageMap.containsKey(id)) {
+                storage = storageMap.get(id).k;
+            } else {
+                ClassLoader loader = classLoaders.get(engine);
+                storage = (IStorage) loader.loadClass(driver)
+                        .getConstructor(StorageEngineMeta.class).newInstance(meta);
+                needRelease = true;
+            }
+            return storage.getBoundaryOfStorage();
+        } catch (ClassNotFoundException e) {
+            logger.error("load class {} for engine {} failure: {}", driver, engine, e);
+        } catch (Exception e) {
+            logger.error("unexpected error when process engine {}: {}", engine, e);
+        } finally {
+            try {
+                if (needRelease) {
+                    storage.release();
+                }
+            } catch (Exception e) {
+                logger.error("release session pool failure!");
+            }
+        }
+        return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(0, Long.MAX_VALUE));
     }
 
     private static String getDriverClassName(String storageEngine) {
@@ -66,15 +103,18 @@ public class StorageManager {
     private boolean initStorage(StorageEngineMeta meta) {
         String engine = meta.getStorageEngine();
         String driver = drivers.get(engine);
+        long id = meta.getId();
         try {
-            ClassLoader loader = classLoaders.get(engine);
-            IStorage storage = (IStorage) loader.loadClass(driver)
-                .getConstructor(StorageEngineMeta.class).newInstance(meta);
-            // 启动一个派发线程池
-            ThreadPoolExecutor dispatcher = new ThreadPoolExecutor(ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
-                Integer.MAX_VALUE,
-                60L, TimeUnit.SECONDS, new SynchronousQueue<>());
-            storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
+            if (!storageMap.containsKey(id)) {
+                ClassLoader loader = classLoaders.get(engine);
+                IStorage storage = (IStorage) loader.loadClass(driver)
+                        .getConstructor(StorageEngineMeta.class).newInstance(meta);
+                // 启动一个派发线程池
+                ThreadPoolExecutor dispatcher = new ThreadPoolExecutor(ConfigDescriptor.getInstance().getConfig().getPhysicalTaskThreadPoolSizePerStorage(),
+                        Integer.MAX_VALUE,
+                        60L, TimeUnit.SECONDS, new SynchronousQueue<>());
+                storageMap.put(meta.getId(), new Pair<>(storage, dispatcher));
+            }
         } catch (ClassNotFoundException e) {
             logger.error("load class {} for engine {} failure: {}", driver, engine, e);
             return false;
@@ -85,7 +125,10 @@ public class StorageManager {
         return true;
     }
 
-    private void initClassLoaderAndDrivers() {
+    private static void initClassLoaderAndDrivers() {
+        if (hasInitLoaders) {
+            return;
+        }
         String[] parts = ConfigDescriptor.getInstance().getConfig().getDatabaseClassNames().split(",");
         for (String part : parts) {
             String[] kAndV = part.split("=");
@@ -104,6 +147,7 @@ public class StorageManager {
                 System.exit(-1);
             }
         }
+        hasInitLoaders = true;
     }
 
     public Map<Long, Pair<IStorage, ThreadPoolExecutor>> getStorageMap() {
