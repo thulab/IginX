@@ -323,6 +323,11 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public List<StorageEngineMeta> getWriteableStorageEngineList() {
+        return cache.getStorageEngineList().stream().filter(e -> !e.isReadOnly()).collect(Collectors.toList());
+    }
+
+    @Override
     public int getStorageEngineNum() {
         return cache.getStorageEngineList().size();
     }
@@ -645,7 +650,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public List<Long> selectStorageEngineIdList() {
-        List<Long> storageEngineIdList = getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+        List<Long> storageEngineIdList = getWriteableStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
         if (storageEngineIdList.size() <= 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum()) {
             return storageEngineIdList;
         }

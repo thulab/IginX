@@ -66,7 +66,7 @@ public final class StorageEngineMeta {
 
     private final long createdBy;
 
-    private boolean lastOfBatch;
+    private boolean needReAllocate;
 
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy) {
         this(id, ip, port, false, null, false, extraParams, storageEngine, createdBy);
@@ -79,7 +79,7 @@ public final class StorageEngineMeta {
 
     public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment,
                              Map<String, String> extraParams, String storageEngine,
-                             long createdBy, boolean lastOfBatch) {
+                             long createdBy, boolean needReAllocate) {
         this.id = id;
         this.ip = ip;
         this.port = port;
@@ -91,7 +91,7 @@ public final class StorageEngineMeta {
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
         this.createdBy = createdBy;
-        this.lastOfBatch = lastOfBatch;
+        this.needReAllocate = needReAllocate;
     }
 
     public long getId() {
@@ -174,12 +174,12 @@ public final class StorageEngineMeta {
         return createdBy;
     }
 
-    public boolean isLastOfBatch() {
-        return lastOfBatch;
+    public boolean isNeedReAllocate() {
+        return needReAllocate;
     }
 
-    public void setLastOfBatch(boolean lastOfBatch) {
-        this.lastOfBatch = lastOfBatch;
+    public void setNeedReAllocate(boolean needReAllocate) {
+        this.needReAllocate = needReAllocate;
     }
 
     @Override

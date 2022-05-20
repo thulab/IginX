@@ -85,7 +85,9 @@ public class InfluxDBStorage implements IStorage {
 
     private final InfluxDBClient client;
 
-    private final String organization;
+    private final String organizationName;
+
+    private final Organization organization;
 
     private final Map<String, Bucket> bucketMap = new ConcurrentHashMap<>();
 
@@ -100,7 +102,15 @@ public class InfluxDBStorage implements IStorage {
         Map<String, String> extraParams = meta.getExtraParams();
         String url = extraParams.getOrDefault("url", "http://localhost:8086/");
         client = InfluxDBClientFactory.create(url, extraParams.get("token").toCharArray());
-        organization = extraParams.get("organization");
+        organizationName = extraParams.get("organization");
+        organization = client.getOrganizationsApi()
+                .findOrganizations().stream()
+                .filter(o -> o.getName().equals(this.organizationName))
+                .findFirst()
+                .orElseThrow(IllegalStateException::new);
+        if (meta.isHasData()) {
+            reloadHistoryData();
+        }
     }
 
     private boolean testConnection() {
@@ -114,6 +124,10 @@ public class InfluxDBStorage implements IStorage {
             return false;
         }
         return true;
+    }
+
+    private void reloadHistoryData() {
+
     }
 
     @Override
@@ -150,15 +164,10 @@ public class InfluxDBStorage implements IStorage {
 
     @Override
     public void release() throws PhysicalException {
-
+        client.close();
     }
 
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, TimeSeriesInterval tsInterval, String storageUnit, Project project) {
-        Organization organization = client.getOrganizationsApi()
-                .findOrganizations().stream()
-                .filter(o -> o.getName().equals(this.organization))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
 
         if (client.getBucketsApi().findBucketByName(storageUnit) == null) {
             logger.warn("storage engine {} doesn't exist", storageUnit);
@@ -255,19 +264,13 @@ public class InfluxDBStorage implements IStorage {
     }
 
     private Exception insertRowRecords(RowDataView data, String storageUnit) {
-        Organization organization = client.getOrganizationsApi()
-                .findOrganizations().stream()
-                .filter(o -> o.getName().equals(this.organization))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
-
         Bucket bucket = bucketMap.get(storageUnit);
         if (bucket == null) {
             synchronized (this) {
                 bucket = bucketMap.get(storageUnit);
                 if (bucket == null) {
                     List<Bucket> bucketList = client.getBucketsApi()
-                            .findBucketsByOrgName(this.organization).stream()
+                            .findBucketsByOrgName(this.organizationName).stream()
                             .filter(b -> b.getName().equals(storageUnit))
                             .collect(Collectors.toList());
                     if (bucketList.isEmpty()) {
@@ -332,19 +335,13 @@ public class InfluxDBStorage implements IStorage {
     }
 
     private Exception insertColumnRecords(ColumnDataView data, String storageUnit) {
-        Organization organization = client.getOrganizationsApi()
-                .findOrganizations().stream()
-                .filter(o -> o.getName().equals(this.organization))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
-
         Bucket bucket = bucketMap.get(storageUnit);
         if (bucket == null) {
             synchronized (this) {
                 bucket = bucketMap.get(storageUnit);
                 if (bucket == null) {
                     List<Bucket> bucketList = client.getBucketsApi()
-                            .findBucketsByOrgName(this.organization).stream()
+                            .findBucketsByOrgName(this.organizationName).stream()
                             .filter(b -> b.getName().equals(storageUnit))
                             .collect(Collectors.toList());
                     if (bucketList.isEmpty()) {
@@ -415,19 +412,13 @@ public class InfluxDBStorage implements IStorage {
             return new TaskExecuteResult(null, null);
         }
         // 删除某些序列的某一段数据
-        Organization organization = client.getOrganizationsApi()
-                .findOrganizations().stream()
-                .filter(o -> o.getName().equals(this.organization))
-                .findFirst()
-                .orElseThrow(IllegalStateException::new);
-
         Bucket bucket = bucketMap.get(storageUnit);
         if (bucket == null) {
             synchronized (this) {
                 bucket = bucketMap.get(storageUnit);
                 if (bucket == null) {
                     List<Bucket> bucketList = client.getBucketsApi()
-                            .findBucketsByOrgName(this.organization).stream()
+                            .findBucketsByOrgName(this.organizationName).stream()
                             .filter(b -> b.getName().equals(storageUnit))
                             .collect(Collectors.toList());
                     if (bucketList.isEmpty()) {

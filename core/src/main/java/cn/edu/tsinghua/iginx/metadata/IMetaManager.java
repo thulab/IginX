@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.metadata.hook.StorageUnitHook;
 import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
+import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,8 @@ public interface IMetaManager {
      * 获取所有的存储引擎实例的原信息（包括每个存储引擎的存储单元列表）
      */
     List<StorageEngineMeta> getStorageEngineList();
+
+    List<StorageEngineMeta> getWriteableStorageEngineList();
 
     /**
      * 获取存储引擎实例的数量

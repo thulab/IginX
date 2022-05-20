@@ -169,6 +169,18 @@ public class QueryGenerator extends AbstractGenerator {
             );
         }
 
+        int normalFragmentCnt = 0, dummyFragmentCnt = 0;
+        for (List<FragmentMeta> fragmentList: fragments.values()) {
+            for (FragmentMeta fragment: fragmentList) {
+                if (fragment.getMasterStorageUnit().isDummy()) {
+                    dummyFragmentCnt++;
+                } else {
+                    normalFragmentCnt++;
+                }
+            }
+        }
+        logger.info("当前查询涉及 " + normalFragmentCnt + " 个普通分片, " + dummyFragmentCnt + " 个堆叠分片。");
+
         return root;
     }
 }

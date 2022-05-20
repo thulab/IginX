@@ -38,7 +38,6 @@ import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
-import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -209,8 +208,8 @@ public class IginxWorker implements IService.Iface {
             }
             status.setMessage("unexpected repeated add");
         }
-        if (!storageEngineMetas.isEmpty()) {
-            storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
+        if (!storageEngineMetas.isEmpty() && storageEngineMetas.stream().anyMatch(e -> !e.isReadOnly())) {
+            storageEngineMetas.get(storageEngineMetas.size() - 1).setNeedReAllocate(true); // 如果这批节点不是只读的话，每一批最后一个是 true，表示需要进行扩容
         }
         for (StorageEngineMeta meta: storageEngineMetas) {
             if (meta.isHasData()) {

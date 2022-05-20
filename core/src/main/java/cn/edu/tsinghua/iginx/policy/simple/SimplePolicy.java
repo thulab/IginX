@@ -50,7 +50,7 @@ public class SimplePolicy implements IPolicy {
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             // 哪台机器加了分片，哪台机器初始化，并且在批量添加的时候只有最后一个存储引擎才会导致扩容发生
-            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isLastOfBatch()) {
+            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isNeedReAllocate()) {
                 needReAllocate.set(true);
             }
             // TODO: 针对节点退出的情况缩容
@@ -77,7 +77,7 @@ public class SimplePolicy implements IPolicy {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        List<StorageEngineMeta> storageEngineList = iMetaManager.getStorageEngineList();
+        List<StorageEngineMeta> storageEngineList = iMetaManager.getWriteableStorageEngineList();
         int storageEngineNum = storageEngineList.size();
 
         String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
@@ -196,7 +196,7 @@ public class SimplePolicy implements IPolicy {
 
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {
         List<Long> storageEngineIdList = new ArrayList<>();
-        List<StorageEngineMeta> storageEngines = iMetaManager.getStorageEngineList();
+        List<StorageEngineMeta> storageEngines = iMetaManager.getWriteableStorageEngineList();
         for (int i = startIndex; i < startIndex + num; i++) {
             storageEngineIdList.add(storageEngines.get(i % storageEngines.size()).getId());
         }
