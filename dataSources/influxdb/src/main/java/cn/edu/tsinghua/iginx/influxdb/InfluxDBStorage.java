@@ -36,19 +36,23 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBHistoryQueryRowStream;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryRowStream;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBSchema;
+import cn.edu.tsinghua.iginx.influxdb.tools.SchemaTransformer;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.InfluxDBClientFactory;
 import com.influxdb.client.domain.Bucket;
 import com.influxdb.client.domain.Organization;
 import com.influxdb.client.domain.WritePrecision;
 import com.influxdb.client.write.Point;
+import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +62,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -90,6 +91,8 @@ public class InfluxDBStorage implements IStorage {
     private final Organization organization;
 
     private final Map<String, Bucket> bucketMap = new ConcurrentHashMap<>();
+
+    private final Map<String, Bucket> historyBucketMap = new ConcurrentHashMap<>();
 
     public InfluxDBStorage(StorageEngineMeta meta) throws StorageInitializationException {
         this.meta = meta;
@@ -127,12 +130,55 @@ public class InfluxDBStorage implements IStorage {
     }
 
     private void reloadHistoryData() {
-
+        List<Bucket> buckets = client.getBucketsApi().findBucketsByOrg(organization);
+        for (Bucket bucket: buckets) {
+            if (bucket.getType() == Bucket.TypeEnum.SYSTEM) {
+                continue;
+            }
+            if (bucket.getName().startsWith("unit")) {
+                continue;
+            }
+            historyBucketMap.put(bucket.getName(), bucket);
+        }
     }
 
     @Override
     public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
-        return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(0, Long.MAX_VALUE));
+        List<String> bucketNames = new ArrayList<>(historyBucketMap.keySet());
+        bucketNames.sort(String::compareTo);
+        if (bucketNames.size() == 0) {
+            throw new PhysicalTaskExecuteFailureException("no data!");
+        }
+        TimeSeriesInterval tsInterval = new TimeSeriesInterval(bucketNames.get(0), StringUtils.nextString(bucketNames.get(bucketNames.size() - 1)));
+        long minTime = 0L, maxTime = Integer.MAX_VALUE;
+        for (Bucket bucket: historyBucketMap.values()) {
+            String statement = String.format(
+                    QUERY_DATA,
+                    bucket.getName(),
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.of("UTC")).format(FORMATTER),
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(((long) Integer.MAX_VALUE) * 10), ZoneId.of("UTC")).format(FORMATTER)
+            );
+            // 查询 first
+            List<FluxTable> tables = client.getQueryApi().query(statement + " |> first()");
+            for (FluxTable table: tables) {
+                for (FluxRecord record: table.getRecords()) {
+                    long time = record.getTime().toEpochMilli();
+                    minTime = Math.min(time, minTime);
+                    maxTime = Math.max(time, maxTime);
+                }
+            }
+            // 查询 last
+            tables = client.getQueryApi().query(statement + " |> last()");
+            for (FluxTable table: tables) {
+                for (FluxRecord record: table.getRecords()) {
+                    long time = record.getTime().toEpochMilli();
+                    minTime = Math.min(time, minTime);
+                    maxTime = Math.max(time, maxTime);
+                }
+            }
+        }
+        TimeInterval timeInterval = new TimeInterval(minTime, maxTime + 1);
+        return new Pair<>(tsInterval, timeInterval);
     }
     @Override
     public TaskExecuteResult execute(StoragePhysicalTask task) {
@@ -143,10 +189,10 @@ public class InfluxDBStorage implements IStorage {
         FragmentMeta fragment = task.getTargetFragment();
         Operator op = operators.get(0);
         String storageUnit = task.getStorageUnit();
-
+        boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) { // 目前只实现 project 操作符
             Project project = (Project) op;
-            return executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
+            return isDummyStorageUnit ? executeHistoryProjectTask(fragment.getTimeInterval(), project) : executeProjectTask(fragment.getTimeInterval(), fragment.getTsInterval(), storageUnit, project);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -156,6 +202,45 @@ public class InfluxDBStorage implements IStorage {
         }
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
     }
+
+    private TaskExecuteResult executeHistoryProjectTask(TimeInterval timeInterval, Project project) {
+        Map<String, String> bucketQueries = new HashMap<>();
+        for (String pattern: project.getPatterns()) {
+            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(pattern);
+            String bucketName = pair.k;
+            String query = pair.v;
+            String fullQuery = "";
+            if (bucketQueries.containsKey(bucketName)) {
+                fullQuery = bucketQueries.get(bucketName);
+                fullQuery += " or ";
+            }
+            fullQuery += query;
+            bucketQueries.put(bucketName, fullQuery);
+        }
+
+        long startTime = timeInterval.getStartTime();
+        long endTime = timeInterval.getEndTime();
+        if (endTime == Long.MAX_VALUE) {
+            endTime = Integer.MAX_VALUE;
+            endTime *= 1000;
+        }
+
+        Map<String, List<FluxTable>> bucketQueryResults = new HashMap<>();
+        for (String bucket: bucketQueries.keySet()) {
+            String statement = String.format("from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => %s)",
+                    bucket,
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of("UTC")).format(FORMATTER),
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER),
+                    bucketQueries.get(bucket)
+            );
+            logger.info("execute query: " + statement);
+            bucketQueryResults.put(bucket, client.getQueryApi().query(statement, organization.getId()));
+        }
+
+        InfluxDBHistoryQueryRowStream rowStream = new InfluxDBHistoryQueryRowStream(bucketQueryResults, project.getPatterns());
+        return new TaskExecuteResult(rowStream);
+    }
+
 
     @Override
     public List<Timeseries> getTimeSeries() {
