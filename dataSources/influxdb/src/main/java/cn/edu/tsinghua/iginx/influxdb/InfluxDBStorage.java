@@ -132,6 +132,7 @@ public class InfluxDBStorage implements IStorage {
     private void reloadHistoryData() {
         List<Bucket> buckets = client.getBucketsApi().findBucketsByOrg(organization);
         for (Bucket bucket: buckets) {
+            logger.info("bucket info: " + bucket);
             if (bucket.getType() == Bucket.TypeEnum.SYSTEM) {
                 continue;
             }
@@ -150,7 +151,7 @@ public class InfluxDBStorage implements IStorage {
             throw new PhysicalTaskExecuteFailureException("no data!");
         }
         TimeSeriesInterval tsInterval = new TimeSeriesInterval(bucketNames.get(0), StringUtils.nextString(bucketNames.get(bucketNames.size() - 1)));
-        long minTime = 0L, maxTime = Integer.MAX_VALUE;
+        long minTime = Long.MAX_VALUE, maxTime = 0;
         for (Bucket bucket: historyBucketMap.values()) {
             String statement = String.format(
                     QUERY_DATA,
@@ -159,7 +160,7 @@ public class InfluxDBStorage implements IStorage {
                     ZonedDateTime.ofInstant(Instant.ofEpochMilli(((long) Integer.MAX_VALUE) * 10), ZoneId.of("UTC")).format(FORMATTER)
             );
             // 查询 first
-            List<FluxTable> tables = client.getQueryApi().query(statement + " |> first()");
+            List<FluxTable> tables = client.getQueryApi().query(statement + " |> first()", organization.getId());
             for (FluxTable table: tables) {
                 for (FluxRecord record: table.getRecords()) {
                     long time = record.getTime().toEpochMilli();
@@ -168,7 +169,7 @@ public class InfluxDBStorage implements IStorage {
                 }
             }
             // 查询 last
-            tables = client.getQueryApi().query(statement + " |> last()");
+            tables = client.getQueryApi().query(statement + " |> last()", organization.getId());
             for (FluxTable table: tables) {
                 for (FluxRecord record: table.getRecords()) {
                     long time = record.getTime().toEpochMilli();
@@ -176,6 +177,12 @@ public class InfluxDBStorage implements IStorage {
                     maxTime = Math.max(time, maxTime);
                 }
             }
+        }
+        if (minTime == Long.MAX_VALUE) {
+            minTime = 0;
+        }
+        if (maxTime == 0) {
+            maxTime = Long.MAX_VALUE - 1;
         }
         TimeInterval timeInterval = new TimeInterval(minTime, maxTime + 1);
         return new Pair<>(tsInterval, timeInterval);
@@ -227,12 +234,14 @@ public class InfluxDBStorage implements IStorage {
 
         Map<String, List<FluxTable>> bucketQueryResults = new HashMap<>();
         for (String bucket: bucketQueries.keySet()) {
-            String statement = String.format("from(bucket:\"%s\") |> range(start: %s, stop: %s) |> filter(fn: (r) => %s)",
+            String statement = String.format("from(bucket:\"%s\") |> range(start: %s, stop: %s)",
                     bucket,
                     ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of("UTC")).format(FORMATTER),
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER),
-                    bucketQueries.get(bucket)
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER)
             );
+            if (!bucketQueries.get(bucket).equals("()")) {
+                statement += String.format(" |> filter(fn: (r) => %s)", bucketQueries.get(bucket));
+            }
             logger.info("execute query: " + statement);
             bucketQueryResults.put(bucket, client.getQueryApi().query(statement, organization.getId()));
         }
