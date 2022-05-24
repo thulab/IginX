@@ -42,7 +42,7 @@ export PATH=$PATH:$JAVA_HOME/bin
 $ source ~/.bashrc
 ```
 
-1. 使用 java -version 判断 JDK 是否安装成功
+2. 使用 java -version 判断 JDK 是否安装成功
 
 ```shell
 $ java -version
