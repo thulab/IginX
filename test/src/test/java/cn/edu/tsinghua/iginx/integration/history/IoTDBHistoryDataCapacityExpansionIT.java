@@ -38,7 +38,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     @Test
-    public void testQueryHistoryDataFromInitialNode() throws Exception {
+    public void test1QueryHistoryDataFromInitialNode() throws Exception {
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
                 "+----+-------------------+------------------------+\n" +
@@ -66,7 +66,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     @Test
-    public void testQueryAfterInsertNewData() throws Exception {
+    public void test2QueryAfterInsertNewData() throws Exception {
         session.executeSql("insert into ln.wf02 (time, status, version) values (100, true, \"v1\");");
         session.executeSql("insert into ln.wf02 (time, status, version) values (400, false, \"v4\");");
         session.executeSql("insert into ln.wf02 (time, version) values (800, \"v8\");");
@@ -100,7 +100,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     @Test
-    public void testCapacityExpansion() throws Exception {
+    public void test3CapacityExpansion() throws Exception {
         session.executeSql("ADD STORAGEENGINE (127.0.0.1, 6668, \"iotdb11\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
 
         String statement = "select * from ln.wf03";
@@ -135,7 +135,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     @Test
-    public void testWriteAndQueryAfterCapacityExpansion() throws Exception {
+    public void test4WriteAndQueryAfterCapacityExpansion() throws Exception {
         session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
 
         String statement = "select * from ln";
