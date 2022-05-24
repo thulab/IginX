@@ -97,6 +97,51 @@ jobs:
           file: ./**/target/site/jacoco/jacoco.xml
           name: codecov
 
+  IoTDB11-Capacity-Expansion-Test:
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        java: [ 8 ]
+        os: [ ubuntu-latest ]
+    runs-on: ${{ matrix.os}}
+    env:
+      VERSION: 0.5.0-SNAPSHOT
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v1
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache Maven packages
+        uses: actions/cache@v2.1.5
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Run ZooKeeper
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+          "${GITHUB_WORKSPACE}/.github/zk.sh"
+      - name: Run IoTDB11, change default config
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+          "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+      - name: Install with Maven
+        run: mvn clean package -DskipTests
+      - name: Write history Data
+        run: mvn test -q -Dtest=IoTDBHistoryDataGeneratorIT -DfailIfNoTests=false
+      - name: Start IginX
+        run: |
+          chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
+          nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
+      - name: A Lame Integration Test with Maven for IoTDB
+        run: mvn test -q -Dtest=IoTDBHistoryDataCapacityExpansionIT -DfailIfNoTests=false
+      - uses: codecov/codecov-action@v1
+        with:
+          file: ./**/target/site/jacoco/jacoco.xml
+          name: codecov
+
   IoTDB11-SQL-Test:
     strategy:
       fail-fast: false
