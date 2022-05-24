@@ -42,7 +42,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
         testWriteAndQueryAfterCapacityExpansion();
     }
 
-    @Test
+    //@Test
     public void testQueryHistoryDataFromInitialNode() throws Exception {
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
@@ -70,7 +70,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
 
-    @Test
+    //@Test
     public void testQueryAfterInsertNewData() throws Exception {
         session.executeSql("insert into ln.wf02 (time, status, version) values (100, true, \"v1\");");
         session.executeSql("insert into ln.wf02 (time, status, version) values (400, false, \"v4\");");
@@ -104,7 +104,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
         SQLTestTools.executeAndCompare(session, statement, expect);
     }
 
-    @Test
+    //@Test
     public void testCapacityExpansion() throws Exception {
         session.executeSql("ADD STORAGEENGINE (127.0.0.1, 6668, \"iotdb11\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
 
@@ -139,7 +139,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
 
     }
 
-    @Test
+    //@Test
     public void testWriteAndQueryAfterCapacityExpansion() throws Exception {
         session.executeSql("insert into ln.wf02 (time, version) values (1600, \"v48\");");
 
