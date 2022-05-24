@@ -9,11 +9,17 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class IoTDBHistoryDataCapacityExpansionIT {
+public abstract class IoTDBHistoryDataCapacityExpansionIT {
 
     private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
     private static Session session;
+
+    private final String ENGINE_TYPE;
+
+    public IoTDBHistoryDataCapacityExpansionIT(String engineType) {
+        this.ENGINE_TYPE = engineType;
+    }
 
     @BeforeClass
     public static void setUp() {
@@ -106,7 +112,7 @@ public class IoTDBHistoryDataCapacityExpansionIT {
 
     //@Test
     public void testCapacityExpansion() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (127.0.0.1, 6668, \"iotdb11\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (127.0.0.1, 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
