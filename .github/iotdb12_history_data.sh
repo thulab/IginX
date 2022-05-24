@@ -29,5 +29,3 @@ sudo sh -c "cd apache-iotdb2-0.12.5-server-bin/; nohup sbin/start-server.sh &"
 sed -i "s/iotdb11/iotdb12/g" conf/config.properties
 
 sed -i "s/has_data=false/has_data=true#data_prefix=ln.wf01/g" conf/config.properties
-
-sed -i "s/0.11.4/0.12.5/g" test/pom.xml

@@ -174,12 +174,19 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+          mv test/pom.xml test/pom.xml.backup
+          mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
           mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest -DfailIfNoTests=false
           sleep 10
+      - name: Install with Maven Again
+        run: |
+          mv test/pom.xml test/pom.xml.iotdb12
+          mv test/pom.xml.backup test/pom.xml
+          mvn clean package -DskipTests
       - name: Start IginX
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
