@@ -57,6 +57,16 @@ public class QueryGenerator extends AbstractGenerator {
         return instance;
     }
 
+    private static TimeSeriesInterval processTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        if (tsInterval.getStartTimeSeries().equals("*")) {
+            tsInterval.setStartTimeSeries(null);
+        }
+        if (tsInterval.getEndTimeSeries().equals("*")) {
+            tsInterval.setEndTimeSeries(null);
+        }
+        return tsInterval;
+    }
+
     protected Operator generateRoot(Statement statement) {
         SelectStatement selectStatement = (SelectStatement) statement;
 
@@ -66,7 +76,7 @@ public class QueryGenerator extends AbstractGenerator {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(processTimeSeriesInterval(interval), true);
         if (!metaManager.hasFragment()) {
             //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);

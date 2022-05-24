@@ -132,13 +132,13 @@ public class InfluxDBStorage implements IStorage {
     private void reloadHistoryData() {
         List<Bucket> buckets = client.getBucketsApi().findBucketsByOrg(organization);
         for (Bucket bucket: buckets) {
-            logger.info("bucket info: " + bucket);
             if (bucket.getType() == Bucket.TypeEnum.SYSTEM) {
                 continue;
             }
             if (bucket.getName().startsWith("unit")) {
                 continue;
             }
+            logger.debug("history data bucket info: " + bucket);
             historyBucketMap.put(bucket.getName(), bucket);
         }
     }
@@ -157,8 +157,9 @@ public class InfluxDBStorage implements IStorage {
                     QUERY_DATA,
                     bucket.getName(),
                     ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.of("UTC")).format(FORMATTER),
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(((long) Integer.MAX_VALUE) * 10), ZoneId.of("UTC")).format(FORMATTER)
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(((long) Integer.MAX_VALUE) * 1000), ZoneId.of("UTC")).format(FORMATTER)
             );
+            logger.debug("execute statement: " + statement);
             // 查询 first
             List<FluxTable> tables = client.getQueryApi().query(statement + " |> first()", organization.getId());
             for (FluxTable table: tables) {
@@ -166,6 +167,7 @@ public class InfluxDBStorage implements IStorage {
                     long time = record.getTime().toEpochMilli();
                     minTime = Math.min(time, minTime);
                     maxTime = Math.max(time, maxTime);
+                    logger.debug("record: " + InfluxDBStorage.toString(table, record));
                 }
             }
             // 查询 last
@@ -175,6 +177,7 @@ public class InfluxDBStorage implements IStorage {
                     long time = record.getTime().toEpochMilli();
                     minTime = Math.min(time, minTime);
                     maxTime = Math.max(time, maxTime);
+                    logger.debug("record: " + InfluxDBStorage.toString(table, record));
                 }
             }
         }
@@ -542,6 +545,14 @@ public class InfluxDBStorage implements IStorage {
             }
         }
         return new TaskExecuteResult(null, null);
+    }
+
+    public static String toString(FluxTable table, FluxRecord record) {
+        StringBuilder str = new StringBuilder("measurement: " + record.getMeasurement() + ", field: " + record.getField() + ", value: " + record.getValue() + ", time: " + record.getTime().toEpochMilli());
+        for (int i = 8; i < table.getColumns().size(); i++) {
+            str.append(", ").append(table.getColumns().get(i).getLabel()).append(" = ").append(record.getValueByIndex(i));
+        }
+        return str.toString();
     }
 
 }
