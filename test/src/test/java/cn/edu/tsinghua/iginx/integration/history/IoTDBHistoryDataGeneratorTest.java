@@ -32,7 +32,7 @@ public class IoTDBHistoryDataGeneratorTest {
 
         session.close();
 
-        logger.info("write data to 127.0.0.1:6667 success!");
+        logger.info("write data to 127.0.0.1:6668 success!");
     }
 
 }

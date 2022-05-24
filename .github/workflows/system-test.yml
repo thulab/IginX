@@ -131,7 +131,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorIT -DfailIfNoTests=false
+          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest -DfailIfNoTests=false
           sleep 10
       - name: Start IginX
         run: |
@@ -178,7 +178,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorIT -DfailIfNoTests=false
+          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest -DfailIfNoTests=false
           sleep 10
       - name: Start IginX
         run: |
