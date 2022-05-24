@@ -193,10 +193,6 @@ jobs:
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=IoTDB12HistoryDataCapacityExpansionIT -DfailIfNoTests=false
-      - uses: codecov/codecov-action@v1
-        with:
-          file: ./**/target/site/jacoco/jacoco.xml
-          name: codecov
 
   InfluxDB-Capacity-Expansion-Test:
     strategy:
