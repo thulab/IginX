@@ -49,6 +49,10 @@ public class StringUtils {
         }
     }
 
+    public static String nextString(String str) {
+        return str.substring(0, str.length() - 1) + (char)(str.charAt(str.length() - 1) + 1);
+    }
+
     public static boolean isPattern(String path) {
         return path.contains("*");
     }

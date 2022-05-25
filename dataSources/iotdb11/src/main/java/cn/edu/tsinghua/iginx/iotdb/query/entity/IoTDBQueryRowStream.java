@@ -46,14 +46,21 @@ public class IoTDBQueryRowStream implements RowStream {
 
     private static final String PREFIX = "root.";
 
+    private static final String UNIT = "unit";
+
+    private boolean[] filterMap;
+
     private final SessionDataSetWrapper dataset;
+
+    private final boolean trimStorageUnit;
 
     private final Header header;
 
     private State state;
 
-    public IoTDBQueryRowStream(SessionDataSetWrapper dataset) {
+    public IoTDBQueryRowStream(SessionDataSetWrapper dataset, boolean trimStorageUnit) {
         this.dataset = dataset;
+        this.trimStorageUnit = trimStorageUnit;
 
         List<String> names = dataset.getColumnNames();
         List<TSDataType> types = dataset.getColumnTypes();
@@ -68,7 +75,25 @@ public class IoTDBQueryRowStream implements RowStream {
                 time = Field.TIME;
                 continue;
             }
-            fields.add(new Field(transformColumnName(name), DataTypeTransformer.fromIoTDB(type)));
+            Field field = new Field(transformColumnName(name), DataTypeTransformer.fromIoTDB(type));
+            if (!this.trimStorageUnit && field.getName().startsWith(UNIT)) {
+                continue;
+            }
+            fields.add(field);
+        }
+
+        if (!this.trimStorageUnit) {
+            if (time == null) {
+                this.filterMap = new boolean[names.size()];
+                for (int i = 0; i < names.size(); i++) {
+                    filterMap[i] = names.get(i).startsWith(PREFIX + UNIT);
+                }
+            } else {
+                this.filterMap = new boolean[names.size() - 1];
+                for (int i = 1; i < names.size(); i++) {
+                    filterMap[i - 1] = names.get(i).startsWith(PREFIX + UNIT);
+                }
+            }
         }
 
         if (time == null) {
@@ -85,7 +110,7 @@ public class IoTDBQueryRowStream implements RowStream {
             columnName = columnName.substring(columnName.indexOf('(') + 1, columnName.length() - 1);
         }
         if (columnName.startsWith(PREFIX)) {
-            columnName = columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1);
+            columnName = columnName.substring(columnName.indexOf('.', trimStorageUnit ? columnName.indexOf('.') + 1: 0) + 1);
         }
         return columnName;
     }
@@ -121,13 +146,17 @@ public class IoTDBQueryRowStream implements RowStream {
         try {
             RowRecord record = dataset.next();
             long timestamp = record.getTimestamp();
-            Object[] fields = new Object[record.getFields().size()];
+            Object[] fields = new Object[header.getFieldSize()];
+            int index = 0;
             for (int i = 0; i < fields.length; i++) {
+                if (!trimStorageUnit && filterMap[i]) {
+                    continue;
+                }
                 org.apache.iotdb.tsfile.read.common.Field field = record.getFields().get(i);
                 if (field.getDataType() == TEXT) {
-                    fields[i] = field.getBinaryV().getValues();
+                    fields[index++] = field.getBinaryV().getValues();
                 } else {
-                    fields[i] = field.getObjectValue(field.getDataType());
+                    fields[index++] = field.getObjectValue(field.getDataType());
                 }
             }
             state = State.UNKNOWN;

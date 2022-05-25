@@ -49,6 +49,8 @@ import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.Session;
@@ -94,6 +96,8 @@ public class IoTDBStorage implements IStorage {
 
     private static final String QUERY_DATA = "SELECT %s FROM " + PREFIX + "%s WHERE %s";
 
+    private static final String QUERY_HISTORY_DATA = "SELECT %s FROM root WHERE %s";
+
     private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
     private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
@@ -114,10 +118,15 @@ public class IoTDBStorage implements IStorage {
             throw new StorageInitializationException("unexpected database: " + meta.getStorageEngine());
         }
         if (!testConnection()) {
-            throw new StorageInitializationException("cannot connect to " + meta.toString());
+            throw new StorageInitializationException("cannot connect to " + meta);
         }
         sessionPool = createSessionPool();
         logger.info(meta + " is initialized.");
+    }
+
+    @Override
+    public void release() throws PhysicalException {
+        sessionPool.close();
     }
 
     private boolean testConnection() {
@@ -152,6 +161,7 @@ public class IoTDBStorage implements IStorage {
         }
         Operator op = operators.get(0);
         String storageUnit = task.getStorageUnit();
+        boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) {
             Project project = (Project) op;
             Filter filter;
@@ -161,7 +171,7 @@ public class IoTDBStorage implements IStorage {
                 FragmentMeta fragment = task.getTargetFragment();
                 filter = new AndFilter(Arrays.asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()), new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
             }
-            return executeQueryTask(storageUnit, project, filter);
+            return isDummyStorageUnit ? executeQueryHistoryTask(project, filter) : executeQueryTask(storageUnit, project, filter);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -170,6 +180,50 @@ public class IoTDBStorage implements IStorage {
             return executeDeleteTask(storageUnit, delete);
         }
         return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+    }
+
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+        List<String> paths = new ArrayList<>();
+        try {
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement(SHOW_TIMESERIES);
+            while (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                if (record == null || record.getFields().size() < 4) {
+                    continue;
+                }
+                String path = record.getFields().get(0).getStringValue();
+                path = path.substring(5);
+                paths.add(path);
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        paths.sort(String::compareTo);
+        if (paths.size() == 0) {
+            throw new PhysicalTaskExecuteFailureException("no data!");
+        }
+        TimeSeriesInterval tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
+
+        long minTime = 0, maxTime = Long.MAX_VALUE;
+        try {
+            SessionDataSetWrapper dataSet = sessionPool.executeQueryStatement("select * from root");
+            if (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                minTime = record.getTimestamp();
+            }
+            dataSet.close();
+            dataSet = sessionPool.executeQueryStatement("select * from root order by time desc");
+            if (dataSet.hasNext()) {
+                RowRecord record = dataSet.next();
+                maxTime = record.getTimestamp();
+            }
+            dataSet.close();
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        TimeInterval timeInterval = new TimeInterval(minTime, maxTime + 1);
+        return new Pair<>(tsInterval, timeInterval);
     }
 
     @Override
@@ -223,7 +277,24 @@ public class IoTDBStorage implements IStorage {
             }
             String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), storageUnit, FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement));
+            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), true);
+            return new TaskExecuteResult(rowStream);
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
+            logger.error(e.getMessage());
+            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in iotdb11 failure", e));
+        }
+    }
+
+    private TaskExecuteResult executeQueryHistoryTask(Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+        try {
+            StringBuilder builder = new StringBuilder();
+            for (String path : project.getPatterns()) {
+                builder.append(path);
+                builder.append(',');
+            }
+            String statement = String.format(QUERY_HISTORY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), FilterTransformer.toString(filter));
+            logger.info("[Query] execute query: " + statement);
+            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false);
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());

@@ -74,7 +74,7 @@ public class FilterFragmentOptimizer implements Optimizer {
         }
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
 
         Filter filter = selectOperator.getFilter();
         List<TimeRange> timeRanges = ExprUtils.getTimeRangesFromFilter(filter);

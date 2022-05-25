@@ -17,9 +17,11 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.opentsdb.query.entity.OpenTSDBRowStream;
 import cn.edu.tsinghua.iginx.opentsdb.query.entity.OpenTSDBSchema;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.opentsdb.client.OpenTSDBClient;
 import org.opentsdb.client.OpenTSDBClientFactory;
@@ -280,7 +282,17 @@ public class OpenTSDBStorage implements IStorage {
     }
 
     @Override
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+        return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(0, Long.MAX_VALUE));
+    }
+
+    @Override
     public List<Timeseries> getTimeSeries() throws PhysicalException {
         return null;
+    }
+
+    @Override
+    public void release() throws PhysicalException {
+
     }
 }
