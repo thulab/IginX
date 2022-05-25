@@ -31,6 +31,7 @@
     <module>example</module>
     <module>test</module>
     <module>zeppelin-interpreter</module>
+    <module>tools</module>
   </modules>
 
   <distributionManagement>
