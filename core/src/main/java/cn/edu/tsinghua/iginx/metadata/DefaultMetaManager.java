@@ -47,7 +47,6 @@ import cn.edu.tsinghua.iginx.metadata.storage.etcd.ETCDMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.file.FileMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.storage.zk.ZooKeeperMetaStorage;
 import cn.edu.tsinghua.iginx.metadata.utils.ReshardStatus;
-import cn.edu.tsinghua.iginx.migration.MigrationManager;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteTask;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationExecuteType;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationLoggerAnalyzer;
@@ -72,7 +71,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import org.apache.commons.math3.analysis.function.Expm1;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -607,6 +605,22 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval){
+    try {
+      storage.lockFragment();
+      storage.deleteFragmentPoints(tsInterval, timeInterval);
+    } catch (Exception e) {
+      logger.error("delete fragment error: ", e);
+    } finally {
+      try {
+        storage.releaseFragment();
+      } catch (MetaStorageException e) {
+        logger.error("release fragment lock error: ", e);
+      }
+    }
+  }
+
+  @Override
   public void updateFragmentPoints(FragmentMeta fragmentMeta, long points){
     try {
       storage.lockFragment();
@@ -984,6 +998,18 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public void updateTimeseriesHeat(Map<String, Long> timeseriesHeatMap) throws Exception{
+    try {
+      storage.updateTimeseriesLoad(timeseriesHeatMap);
+      storage.lockTimeseriesHeatCounter();
+      storage.incrementTimeseriesHeatCounter();
+      storage.releaseTimeseriesHeatCounter();
+    } catch (Exception e) {
+      logger.error("encounter error when update timeseries heat: ", e);
+    }
+  }
+
+  @Override
   public boolean isAllMonitorsCompleteCollection() {
     try {
       int fragmentRequestsCount = storage.getFragmentRequestsCounter();
@@ -996,13 +1022,26 @@ public class DefaultMetaManager implements IMetaManager {
     }
   }
 
+  public boolean isAllTimeseriesMonitorsCompleteCollection() {
+    try {
+      int timeseriesHeatCount = storage.getTimeseriesHeatCounter();
+      int count = getIginxList().size();
+      return timeseriesHeatCount >= count;
+    } catch (MetaStorageException e) {
+      logger.error("encounter error when get monitor counter: ", e);
+      return false;
+    }
+  }
+
   @Override
   public void clearMonitors() {
     try {
       storage.resetFragmentRequestsCounter();
       storage.resetFragmentHeatCounter();
+      storage.resetTimeseriesHeatCounter();
       storage.removeFragmentRequests();
       storage.removeFragmentHeat();
+      storage.removeTimeseriesHeat();
       HotSpotMonitor.getInstance().clear();
       RequestsMonitor.getInstance().clear();
     } catch (Exception e) {
@@ -1024,6 +1063,15 @@ public class DefaultMetaManager implements IMetaManager {
   public Map<FragmentMeta, Long> loadFragmentPoints() {
     try {
       return storage.loadFragmentPoints(cache);
+    } catch (Exception e) {
+      logger.error("encounter error when load fragment points: ", e);
+      return new HashMap<>();
+    }
+  }
+
+  public Map<String, Long> loadTimeseriesHeat() throws Exception {
+    try {
+      return storage.load(cache);
     } catch (Exception e) {
       logger.error("encounter error when load fragment points: ", e);
       return new HashMap<>();
@@ -1091,11 +1139,8 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   private void initMaxActiveEndTimeStatistics() throws MetaStorageException {
-    storage.registerMaxActiveEndTimeStatisticsChangeHook((iginxId, endTime) -> {
+    storage.registerMaxActiveEndTimeStatisticsChangeHook((endTime) -> {
       if (endTime <= 0L) {
-        return;
-      }
-      if (iginxId == DefaultMetaManager.this.id) {
         return;
       }
       updateMaxActiveEndTime(endTime);

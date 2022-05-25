@@ -221,14 +221,22 @@ public interface IMetaManager {
     void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
         Map<FragmentMeta, Long> readRequestsMap) throws Exception;
 
+    void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+
     void updateFragmentHeat(Map<FragmentMeta, Long> writeHotspotMap,
         Map<FragmentMeta, Long> readHotspotMap) throws Exception;
+
+    void updateTimeseriesHeat(Map<String, Long> timeseriesHeatMap) throws Exception;
 
     Pair<Map<FragmentMeta, Long>, Map<FragmentMeta, Long>> loadFragmentHeat() throws Exception;
 
     Map<FragmentMeta, Long> loadFragmentPoints() throws Exception;
 
+    Map<String, Long> loadTimeseriesHeat() throws Exception;
+
     boolean isAllMonitorsCompleteCollection();
+
+    boolean isAllTimeseriesMonitorsCompleteCollection();
 
     void clearMonitors();
 

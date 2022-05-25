@@ -59,6 +59,12 @@ public class Config {
 
     private long migrationBatchSize = 100;
 
+    private int maxReshardFragmentsNum = 3;
+
+    private double maxTimeseriesLoadBalanceThreshold = 2;
+
+    private int timeseriesloadBalanceCheckInterval = 30;
+
     private long reshardFragmentTimeMargin = 60;
 
     private String migrationPolicyClassName = "cn.edu.tsinghua.iginx.migration.GreedyMigrationPolicy";
@@ -291,6 +297,30 @@ public class Config {
 
     public void setMigrationBatchSize(long migrationBatchSize) {
         this.migrationBatchSize = migrationBatchSize;
+    }
+
+    public int getMaxReshardFragmentsNum() {
+        return maxReshardFragmentsNum;
+    }
+
+    public void setMaxReshardFragmentsNum(int maxReshardFragmentsNum) {
+        this.maxReshardFragmentsNum = maxReshardFragmentsNum;
+    }
+
+    public double getMaxTimeseriesLoadBalanceThreshold() {
+        return maxTimeseriesLoadBalanceThreshold;
+    }
+
+    public void setMaxTimeseriesLoadBalanceThreshold(double maxTimeseriesLoadBalanceThreshold) {
+        this.maxTimeseriesLoadBalanceThreshold = maxTimeseriesLoadBalanceThreshold;
+    }
+
+    public int getTimeseriesloadBalanceCheckInterval() {
+        return timeseriesloadBalanceCheckInterval;
+    }
+
+    public void setTimeseriesloadBalanceCheckInterval(int timeseriesloadBalanceCheckInterval) {
+        this.timeseriesloadBalanceCheckInterval = timeseriesloadBalanceCheckInterval;
     }
 
     public void setReshardFragmentTimeMargin(long reshardFragmentTimeMargin) {

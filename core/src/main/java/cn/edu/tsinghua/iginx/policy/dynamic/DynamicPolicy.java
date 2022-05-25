@@ -12,6 +12,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.hook.StorageEngineChangeHook;
 import cn.edu.tsinghua.iginx.migration.MigrationManager;
 import cn.edu.tsinghua.iginx.migration.recover.MigrationLogger;
+import cn.edu.tsinghua.iginx.monitor.HotSpotMonitor;
+import cn.edu.tsinghua.iginx.monitor.RequestsMonitor;
+import cn.edu.tsinghua.iginx.monitor.TimeseriesMonitor;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.Utils;
 import cn.edu.tsinghua.iginx.sql.statement.DataStatement;
@@ -41,6 +44,12 @@ public class DynamicPolicy implements IPolicy {
   private static final Logger logger = LoggerFactory.getLogger(DynamicPolicy.class);
   private static final double unbalanceFinalStatusThreshold = config
       .getUnbalanceFinalStatusThreshold();
+  private static final int timeseriesloadBalanceCheckInterval = ConfigDescriptor.getInstance()
+      .getConfig().getTimeseriesloadBalanceCheckInterval();
+  private static final double maxTimeseriesLoadBalanceThreshold = ConfigDescriptor.getInstance()
+      .getConfig().getMaxTimeseriesLoadBalanceThreshold();
+
+  private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
   @Override
   public void notify(DataStatement statement) {
@@ -328,11 +337,9 @@ public class DynamicPolicy implements IPolicy {
     }
     if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
       if (maxWriteLoad >= maxReadLoad) {
-        MigrationManager.getInstance().getMigration()
-            .reshardByTimeseries(maxWriteLoadFragment, fragmentMetaPointsMap.get(maxWriteLoadFragment));
+        executeTimeseriesReshard(maxWriteLoadFragment, fragmentMetaPointsMap.get(maxWriteLoadFragment));
       } else {
-        MigrationManager.getInstance().getMigration()
-            .reshardByTimeseries(maxReadLoadFragment, fragmentMetaPointsMap.get(maxReadLoadFragment));
+        executeTimeseriesReshard(maxReadLoadFragment, fragmentMetaPointsMap.get(maxReadLoadFragment));
       }
       return;
     }
@@ -404,6 +411,46 @@ public class DynamicPolicy implements IPolicy {
     // 执行迁移
     MigrationManager.getInstance().getMigration()
         .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
+  }
+
+  private void executeTimeseriesReshard(FragmentMeta fragmentMeta, long points) {
+    try {
+      TimeseriesMonitor.getInstance().start();
+      Thread.sleep(timeseriesloadBalanceCheckInterval * 1000L);
+      TimeseriesMonitor.getInstance().stop();
+      metaManager.updateTimeseriesHeat(TimeseriesMonitor.getInstance().getTimeseriesLoadMap());
+      //等待收集完成
+      while (!metaManager.isAllTimeseriesMonitorsCompleteCollection()) {
+        Thread.sleep(1000);
+      }
+      long totalHeat = 0L;
+      Map<String, Long> timeseriesHeat = metaManager.loadTimeseriesHeat();
+      for (Entry<String, Long> timeseriesHeatEntry : timeseriesHeat.entrySet()) {
+        totalHeat += timeseriesHeatEntry.getValue();
+      }
+      double averageHeat = totalHeat * 1.0 / timeseriesHeat.size();
+      Map<String, Long> overLoadTimeseriesMap = new HashMap<>();
+      for (Entry<String, Long> timeseriesHeatEntry : timeseriesHeat.entrySet()) {
+        if (timeseriesHeatEntry.getValue() > averageHeat * (1
+            + maxTimeseriesLoadBalanceThreshold)) {
+          overLoadTimeseriesMap.put(timeseriesHeatEntry.getKey(), timeseriesHeatEntry.getValue());
+        }
+      }
+
+      if (overLoadTimeseriesMap.size() > 0) {
+        MigrationManager.getInstance().getMigration()
+            .reshardByCustomizableReplica(fragmentMeta, timeseriesHeat,
+                overLoadTimeseriesMap.keySet(), totalHeat, points);
+      } else {
+        MigrationManager.getInstance().getMigration()
+            .reshardByTimeseries(fragmentMeta, timeseriesHeat);
+      }
+    } catch (Exception e) {
+      logger.error("execute timeseries reshard failed :", e);
+    } finally {
+      //完成一轮负载均衡
+      DefaultMetaManager.getInstance().doneReshard();
+    }
   }
 
   private int[][][] calculateMigrationFinalStatus(double averageScore,

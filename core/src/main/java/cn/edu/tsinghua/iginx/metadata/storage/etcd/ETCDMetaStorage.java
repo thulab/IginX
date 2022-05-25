@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
@@ -926,6 +927,46 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception {
+
+    }
+
+    @Override
+    public Map<String, Long> loadTimeseriesHeat() throws MetaStorageException, Exception {
+        return null;
+    }
+
+    @Override
+    public void removeTimeseriesHeat() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void lockTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void incrementTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void resetTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void releaseTimeseriesHeatCounter() throws MetaStorageException {
+
+    }
+
+    @Override
+    public int getTimeseriesHeatCounter() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
     public void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
         Map<FragmentMeta, Long> readRequestsMap) throws Exception {
 
@@ -965,6 +1006,12 @@ public class ETCDMetaStorage implements IMetaStorage {
     public Map<FragmentMeta, Long> loadFragmentPoints(
         IMetaCache cache) throws Exception {
         return null;
+    }
+
+    @Override
+    public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval)
+        throws Exception {
+
     }
 
     @Override

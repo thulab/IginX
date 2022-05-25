@@ -224,6 +224,12 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
         fragmentMetaListMap.put(fragmentMeta.getTsInterval(), fragmentMetaList);
         fragmentMetaListMap.remove(tsInterval);
+
+        for(Pair<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListPair: sortedFragmentMetaLists) {
+            if(timeSeriesIntervalListPair.getK().equals(tsInterval)){
+                timeSeriesIntervalListPair.k = fragmentMeta.getTsInterval();
+            }
+        }
         fragmentLock.writeLock().unlock();
     }
 

@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
@@ -108,6 +109,22 @@ public interface IMetaStorage {
 
   int updateVersion();
 
+  void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception;
+
+  Map<String, Long> loadTimeseriesHeat() throws MetaStorageException, Exception;
+
+  void removeTimeseriesHeat() throws MetaStorageException;
+
+  void lockTimeseriesHeatCounter() throws MetaStorageException;
+
+  void incrementTimeseriesHeatCounter() throws MetaStorageException;
+
+  void resetTimeseriesHeatCounter() throws MetaStorageException;
+
+  void releaseTimeseriesHeatCounter() throws MetaStorageException;
+
+  int getTimeseriesHeatCounter() throws MetaStorageException;
+
   void updateFragmentRequests(Map<FragmentMeta, Long> writeRequestsMap,
       Map<FragmentMeta, Long> readRequestsMap) throws Exception;
 
@@ -124,6 +141,8 @@ public interface IMetaStorage {
   int getFragmentRequestsCounter() throws MetaStorageException;
 
   Map<FragmentMeta, Long> loadFragmentPoints(IMetaCache cache) throws Exception;
+
+  void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval) throws Exception;
 
   void updateFragmentPoints(FragmentMeta fragmentMeta, long points) throws Exception;
 

@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.ExecutorService;
@@ -50,6 +51,9 @@ public abstract class MigrationPolicy {
 
   private final IPolicy policy = PolicyManager.getInstance()
       .getPolicy(ConfigDescriptor.getInstance().getConfig().getPolicyClassName());
+  private final int maxReshardFragmentsNum = config.getMaxReshardFragmentsNum();
+  private static final double maxTimeseriesLoadBalanceThreshold = ConfigDescriptor.getInstance()
+      .getConfig().getMaxTimeseriesLoadBalanceThreshold();
 
   private MigrationLogger migrationLogger;
 
@@ -68,41 +72,170 @@ public abstract class MigrationPolicy {
       Map<FragmentMeta, Long> fragmentWriteLoadMap, Map<FragmentMeta, Long> fragmentReadLoadMap);
 
   /**
-   * 在时间序列层面将分片在同一个du下分为两块
+   * 可定制化副本
    */
-  public void reshardByTimeseries(FragmentMeta fragmentMeta, long points) {
+  public void reshardByCustomizableReplica(FragmentMeta fragmentMeta,
+      Map<String, Long> timeseriesLoadMap, Set<String> overLoadTimeseries, long totalLoad, long points) {
     try {
       migrationLogger.logMigrationExecuteTaskStart(
           new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
               MigrationExecuteType.RESHARD_TIME_SERIES));
-      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
-          fragmentMeta.getMasterStorageUnitId());
-      RowStream rowStream = physicalEngine.execute(showTimeSeries);
-      SortedSet<String> pathSet = new TreeSet<>();
-      while (rowStream.hasNext()) {
-        Row row = rowStream.next();
-        String timeSeries = new String((byte[]) row.getValue(0));
-        if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
-          pathSet.add(timeSeries);
+
+      List<String> timeseries = new ArrayList<>(timeseriesLoadMap.keySet());
+      String currStartTimeseries = fragmentMeta.getTsInterval().getStartTimeSeries();
+      long currLoad = 0L;
+      String endTimeseries = fragmentMeta.getTsInterval().getEndTimeSeries();
+      long startTime = fragmentMeta.getTimeInterval().getStartTime();
+      long endTime = fragmentMeta.getTimeInterval().getEndTime();
+      StorageUnitMeta storageUnitMeta = fragmentMeta.getMasterStorageUnit();
+      List<FragmentMeta> fakedFragmentMetas = new ArrayList<>();
+      List<Long> fakedFragmentMetaLoads = new ArrayList<>();
+      // 按超负载序列进行分片
+      for (int i = 0; i < timeseries.size(); i++) {
+        if (overLoadTimeseries.contains(timeseries.get(i))) {
+          fakedFragmentMetas.add(new FragmentMeta(currStartTimeseries, timeseries.get(i), startTime,
+              endTime, storageUnitMeta));
+          fakedFragmentMetaLoads.add(currLoad);
+          currLoad = 0;
+          if (i != (timeseries.size() - 1)) {
+            fakedFragmentMetas
+                .add(new FragmentMeta(timeseries.get(i), timeseries.get(i + 1), startTime,
+                    endTime, storageUnitMeta));
+            fakedFragmentMetaLoads.add(timeseriesLoadMap.get(timeseries.get(i)));
+            currStartTimeseries = timeseries.get(i + 1);
+          } else {
+            currStartTimeseries = timeseries.get(i);
+            currLoad = timeseriesLoadMap.get(timeseries.get(i));
+          }
+        }
+        currLoad += timeseriesLoadMap.get(timeseries.get(i));
+      }
+      fakedFragmentMetas.add(new FragmentMeta(currStartTimeseries, endTimeseries, startTime,
+          endTime, storageUnitMeta));
+      fakedFragmentMetaLoads.add(currLoad);
+
+      // 模拟进行时间序列分片
+      while (fakedFragmentMetas.size() > maxReshardFragmentsNum) {
+        double currAverageLoad = totalLoad * 1.0 / fakedFragmentMetaLoads.size();
+        boolean canMergeFragments = false;
+        for (int i = 0; i < fakedFragmentMetaLoads.size(); i++) {
+          FragmentMeta currFragmentMeta = fakedFragmentMetas.get(i);
+          // 合并时间序列分片
+          if (fakedFragmentMetaLoads.get(i) <= currAverageLoad * (1
+              + maxTimeseriesLoadBalanceThreshold) && overLoadTimeseries
+              .contains(currFragmentMeta.getTsInterval().getStartTimeSeries())) {
+            // 不是最后一个默认和右边合并
+            if (i != (fakedFragmentMetaLoads.size() - 1)) {
+              FragmentMeta toMergeFragmentMeta = fakedFragmentMetas.get(i);
+              toMergeFragmentMeta.getTsInterval().setEndTimeSeries(
+                  fakedFragmentMetas.get(i + 1).getTsInterval().getEndTimeSeries());
+              fakedFragmentMetas.remove(i + 1);
+              fakedFragmentMetaLoads
+                  .set(i, fakedFragmentMetaLoads.get(i) + fakedFragmentMetaLoads.get(i + 1));
+              fakedFragmentMetaLoads.remove(i + 1);
+            }
+            // 是最后一个就和左边合并
+            else {
+              FragmentMeta toMergeFragmentMeta = fakedFragmentMetas.get(i - 1);
+              toMergeFragmentMeta.getTsInterval().setEndTimeSeries(
+                  fakedFragmentMetas.get(i).getTsInterval().getEndTimeSeries());
+              fakedFragmentMetas.remove(i);
+              fakedFragmentMetaLoads
+                  .set(i - 1, fakedFragmentMetaLoads.get(i - 1) + fakedFragmentMetaLoads.get(i));
+              fakedFragmentMetaLoads.remove(i);
+            }
+            // 需要合并
+            canMergeFragments = true;
+          }
+        }
+        // 合并最小分片
+        if (canMergeFragments) {
+          long maxTwoFragmentLoads = 0L;
+          int startIndex = 0;
+          for (int i = 0; i < fakedFragmentMetaLoads.size(); i++) {
+            if (i < fakedFragmentMetaLoads.size() - 1) {
+              long currTwoFragmentLoad =
+                  fakedFragmentMetaLoads.get(i) + fakedFragmentMetaLoads.get(i + 1);
+              if (currTwoFragmentLoad > maxTwoFragmentLoads) {
+                maxTwoFragmentLoads = currTwoFragmentLoad;
+                startIndex = i;
+              }
+            }
+          }
+          FragmentMeta toMergeFragmentMeta = fakedFragmentMetas.get(startIndex);
+          toMergeFragmentMeta.getTsInterval().setEndTimeSeries(
+              fakedFragmentMetas.get(startIndex + 1).getTsInterval().getEndTimeSeries());
+          fakedFragmentMetas.remove(startIndex + 1);
+          fakedFragmentMetaLoads.set(startIndex,
+              fakedFragmentMetaLoads.get(startIndex) + fakedFragmentMetaLoads.get(startIndex + 1));
+          fakedFragmentMetaLoads.remove(startIndex + 1);
         }
       }
-      String middlePath = new ArrayList<>(pathSet).get(pathSet.size() / 2);
+
+      // 开始实际切分片
       TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
-      fragmentMeta.endFragmentMetaByTimeSeries(middlePath);
+      for (int i = 0; i < fakedFragmentMetas.size(); i++) {
+        FragmentMeta targetFragmentMeta = fakedFragmentMetas.get(i);
+        if (i == 0) {
+          fragmentMeta.endFragmentMetaByTimeSeries(targetFragmentMeta.getTsInterval().getEndTimeSeries());
+          DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+          DefaultMetaManager.getInstance()
+              .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
+          DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta,
+              (long) (points * (fakedFragmentMetaLoads.get(i) * 1.0 / totalLoad)));//暂且认为每个分区的点数和load成正比
+        } else {
+          FragmentMeta newFragment = new FragmentMeta(targetFragmentMeta.getTsInterval().getStartTimeSeries(),
+              targetFragmentMeta.getTsInterval().getEndTimeSeries(),
+              fragmentMeta.getTimeInterval().getStartTime(),
+              fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
+          DefaultMetaManager.getInstance().addFragment(newFragment);
+          DefaultMetaManager.getInstance().updateFragmentPoints(newFragment,
+              (long) (points * (fakedFragmentMetaLoads.get(i) * 1.0 / totalLoad)));//暂且认为每个分区的点数和load成正比
+        }
+      }
+    } finally {
+      migrationLogger.logMigrationExecuteTaskEnd();
+    }
+  }
+
+
+  /**
+   * 在时间序列层面将分片在同一个du下分为两块
+   */
+  public void reshardByTimeseries(FragmentMeta fragmentMeta, Map<String, Long> timeseriesLoadMap) {
+    try {
+      migrationLogger.logMigrationExecuteTaskStart(
+          new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
+              MigrationExecuteType.RESHARD_TIME_SERIES));
+      long totalLoad = 0L;
+      for (Entry<String, Long> timeseriesLoadEntry : timeseriesLoadMap.entrySet()) {
+        totalLoad += timeseriesLoadEntry.getValue();
+      }
+      String middleTimeseries = null;
+      long currLoad = 0L;
+      for (Entry<String, Long> timeseriesLoadEntry : timeseriesLoadMap.entrySet()) {
+        currLoad += timeseriesLoadEntry.getValue();
+        if (currLoad >= totalLoad / 2) {
+          middleTimeseries = timeseriesLoadEntry.getKey();
+        }
+      }
+
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+          fragmentMeta.getTsInterval().getStartTimeSeries(),
+          fragmentMeta.getTsInterval().getEndTimeSeries());
+      fragmentMeta.endFragmentMetaByTimeSeries(middleTimeseries);
       DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
-      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
-      FragmentMeta newFragment = new FragmentMeta(middlePath,
-          fragmentMeta.getTsInterval().getEndTimeSeries(),
+      DefaultMetaManager.getInstance()
+          .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
+      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, currLoad);
+      FragmentMeta newFragment = new FragmentMeta(middleTimeseries,
+          sourceTsInterval.getEndTimeSeries(),
           fragmentMeta.getTimeInterval().getStartTime(),
           fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
       DefaultMetaManager.getInstance().addFragment(newFragment);
-      DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
-    } catch (PhysicalException e) {
-      logger.error("encounter error when reshard fragment by {} to {} ",
-          fragmentMeta.getTsInterval().getStartTimeSeries(),
-          fragmentMeta.getTsInterval().getEndTimeSeries(), e);
+      DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, totalLoad - currLoad);
     } finally {
       migrationLogger.logMigrationExecuteTaskEnd();
     }

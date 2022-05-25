@@ -72,10 +72,13 @@ public class ConfigDescriptor {
             config.setEnableMonitor(Boolean.parseBoolean(properties.getProperty("enableMonitor", "true")));
             config.setLoadBalanceCheckInterval(Integer.parseInt(properties.getProperty("loadBalanceCheckInterval", "30")));
             config.setUnbalanceThreshold(Double.parseDouble(properties.getProperty("unbalanceThreshold", "0.1")));
-            config.setUnbalanceThreshold(Double.parseDouble(properties.getProperty("unbalanceFinalStatusThreshold", "0.1")));
+            config.setUnbalanceFinalStatusThreshold(Double.parseDouble(properties.getProperty("unbalanceFinalStatusThreshold", "0.1")));
             config.setMaxLoadThreshold(Double.parseDouble(properties.getProperty("maxLoadThreshold", String.valueOf(Runtime.getRuntime().availableProcessors() * config.getLoadBalanceCheckInterval() * 1000 * 0.8))));
             config.setMigrationBatchSize(Long.parseLong(properties.getProperty("migrationBatchSize", "100")));
             config.setReshardFragmentTimeMargin(Long.parseLong(properties.getProperty("reshardFragmentTimeMargin", "60")));
+            config.setMaxReshardFragmentsNum(Integer.parseInt(properties.getProperty("maxReshardFragmentsNum", "3")));
+            config.setMaxTimeseriesLoadBalanceThreshold(Double.parseDouble(properties.getProperty("maxTimeseriesLoadBalanceThreshold", "2")));
+            config.setTimeseriesloadBalanceCheckInterval(Integer.parseInt(properties.getProperty("timeseriesloadBalanceCheckInterval", "30")));
             config.setMigrationPolicyClassName(properties.getProperty("migrationPolicyClassName", "cn.edu.tsinghua.iginx.migration.SimulationBasedMigrationPolicy"));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
 
