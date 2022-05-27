@@ -45,12 +45,20 @@ public class TimescaleDBSessionExample {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
+        showTimeseries();
         // 行式插入对齐数据
 //        insertRowRecords();
-        queryData();
+//        queryData();
 //        deleteDataInColumns();
         // 关闭 Session
         session.closeSession();
+    }
+
+    private static void showTimeseries() throws SessionException, ExecutionException {
+        List<Column> columns = session.showColumns();
+        for(Column column: columns){
+            System.out.println(column.getPath());
+        }
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
