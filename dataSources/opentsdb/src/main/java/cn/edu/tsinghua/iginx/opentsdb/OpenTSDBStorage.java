@@ -22,6 +22,7 @@ import cn.edu.tsinghua.iginx.opentsdb.query.entity.OpenTSDBRowStream;
 import cn.edu.tsinghua.iginx.opentsdb.query.entity.OpenTSDBSchema;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.opentsdb.client.OpenTSDBClient;
 import org.opentsdb.client.OpenTSDBClientFactory;
@@ -29,6 +30,7 @@ import org.opentsdb.client.OpenTSDBConfig;
 import org.opentsdb.client.bean.request.Point;
 import org.opentsdb.client.bean.request.Query;
 import org.opentsdb.client.bean.request.SubQuery;
+import org.opentsdb.client.bean.request.SuggestQuery;
 import org.opentsdb.client.bean.response.QueryResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,10 +41,13 @@ import java.util.List;
 import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.DATA_TYPE;
+import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.fromOpenTSDB;
 
 public class OpenTSDBStorage implements IStorage {
 
     private static final String STORAGE_ENGINE = "opentsdb";
+
+    private static final String DU_PREFIX = "unit";
 
     private static final int HTTP_CONNECT_POOL_SIZE = 100;
 
@@ -66,10 +71,10 @@ public class OpenTSDBStorage implements IStorage {
         String url = extraParams.getOrDefault("url", "http://127.0.0.1");
 
         OpenTSDBConfig config = OpenTSDBConfig
-                .address(url, meta.getPort())
-                .httpConnectionPool(HTTP_CONNECT_POOL_SIZE)
-                .httpConnectTimeout(HTTP_CONNECT_TIMEOUT)
-                .config();
+            .address(url, meta.getPort())
+            .httpConnectionPool(HTTP_CONNECT_POOL_SIZE)
+            .httpConnectTimeout(HTTP_CONNECT_TIMEOUT)
+            .config();
         try {
             client = OpenTSDBClientFactory.connect(config);
         } catch (IOReactorException e) {
@@ -102,9 +107,10 @@ public class OpenTSDBStorage implements IStorage {
         Operator op = operators.get(0);
         String storageUnit = task.getStorageUnit();
 
+        boolean isDummyStorageUnit = task.isDummyStorageUnit();
         if (op.getType() == OperatorType.Project) {
             Project project = (Project) op;
-            return executeProjectTask(fragment.getTimeInterval(), storageUnit, project);
+            return isDummyStorageUnit ? executeProjectHistoryTask(fragment.getTimeInterval(), storageUnit, project) : executeProjectTask(fragment.getTimeInterval(), storageUnit, project);
         } else if (op.getType() == OperatorType.Insert) {
             Insert insert = (Insert) op;
             return executeInsertTask(storageUnit, insert);
@@ -122,11 +128,11 @@ public class OpenTSDBStorage implements IStorage {
         if (delete.getTimeRanges() == null || delete.getTimeRanges().size() == 0) { // 没有传任何 time range
             for (OpenTSDBSchema schema : schemas) {
                 Query query = Query
-                        .begin(0L)
-                        .end(Long.MAX_VALUE)
-                        .sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build())
-                        .msResolution()
-                        .build();
+                    .begin(0L)
+                    .end(Long.MAX_VALUE)
+                    .sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build())
+                    .msResolution()
+                    .build();
                 try {
                     client.delete(query);
                 } catch (Exception e) {
@@ -139,11 +145,11 @@ public class OpenTSDBStorage implements IStorage {
         for (OpenTSDBSchema schema : schemas) {
             for (TimeRange timeRange : delete.getTimeRanges()) {
                 Query query = Query
-                        .begin(timeRange.getActualBeginTime())
-                        .end(timeRange.getActualEndTime())
-                        .sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build())
-                        .msResolution()
-                        .build();
+                    .begin(timeRange.getActualBeginTime())
+                    .end(timeRange.getActualEndTime())
+                    .sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build())
+                    .msResolution()
+                    .build();
                 try {
                     client.delete(query);
                 } catch (Exception e) {
@@ -274,7 +280,22 @@ public class OpenTSDBStorage implements IStorage {
         Query query = builder.build();
         try {
             List<QueryResult> resultList = client.query(query);
-            OpenTSDBRowStream rowStream = new OpenTSDBRowStream(resultList);
+            OpenTSDBRowStream rowStream = new OpenTSDBRowStream(resultList, true);
+            return new TaskExecuteResult(rowStream);
+        } catch (Exception e) {
+            return new TaskExecuteResult(new PhysicalException("encounter error when query data in opentsdb: ", e));
+        }
+    }
+
+    private TaskExecuteResult executeProjectHistoryTask(TimeInterval timeInterval, String storageUnit, Project project) {
+        Query.Builder builder = Query.begin(timeInterval.getStartTime()).end(timeInterval.getEndTime()).msResolution();
+        for (String pattern : project.getPatterns()) {
+            builder = builder.sub(SubQuery.metric(pattern).aggregator(SubQuery.Aggregator.NONE).build());
+        }
+        Query query = builder.build();
+        try {
+            List<QueryResult> resultList = client.query(query);
+            OpenTSDBRowStream rowStream = new OpenTSDBRowStream(resultList, false);
             return new TaskExecuteResult(rowStream);
         } catch (Exception e) {
             return new TaskExecuteResult(new PhysicalException("encounter error when query data in opentsdb: ", e));
@@ -283,16 +304,99 @@ public class OpenTSDBStorage implements IStorage {
 
     @Override
     public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
-        return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(0, Long.MAX_VALUE));
+        List<String> paths = new ArrayList<>();
+        SuggestQuery suggestQuery = SuggestQuery.type(SuggestQuery.Type.METRICS).max(Integer.MAX_VALUE).build();
+        try {
+            List<String> suggests = client.querySuggest(suggestQuery);
+            for (String metric: suggests) {
+                if (metric.startsWith(DU_PREFIX)) {
+                    paths.add(metric.substring(metric.indexOf(".") + 1));
+                } else {
+                    paths.add(metric);
+                }
+            }
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        paths.sort(String::compareTo);
+        if (paths.isEmpty()) {
+            throw new PhysicalTaskExecuteFailureException("no data!");
+        }
+        TimeSeriesInterval tsInterval = new TimeSeriesInterval(paths.get(0), StringUtils.nextString(paths.get(paths.size() - 1)));
+
+        long minTime = 0, maxTime = Long.MAX_VALUE - 1;
+        Query.Builder builder = Query.begin(0L).end(Long.MAX_VALUE).msResolution();
+        for (String path : paths) {
+            builder = builder.sub(SubQuery.metric(path).aggregator(SubQuery.Aggregator.NONE).build());
+        }
+        Query query = builder.build();
+        try {
+            List<QueryResult> resultList = client.query(query);
+            List<Long> times = new ArrayList<>();
+            for (QueryResult result : resultList) {
+                times.addAll(result.getDps().keySet());
+            }
+            if (!times.isEmpty()) {
+                times.sort(Long::compareTo);
+                minTime = times.get(0);
+                maxTime = times.get(times.size() - 1);
+            }
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when query data in opentsdb: ", e);
+        }
+        TimeInterval timeInterval = new TimeInterval(minTime, maxTime + 1);
+        return new Pair<>(tsInterval, timeInterval);
     }
 
     @Override
     public List<Timeseries> getTimeSeries() throws PhysicalException {
-        return null;
+        List<Timeseries> timeseries = new ArrayList<>();
+
+        List<String> paths = new ArrayList<>();
+        SuggestQuery suggestQuery = SuggestQuery.type(SuggestQuery.Type.METRICS).max(Integer.MAX_VALUE).build();
+        try {
+            List<String> suggests = client.querySuggest(suggestQuery);
+            for (String metric: suggests) {
+                if (metric.startsWith(DU_PREFIX)) {
+                    paths.add(metric.substring(metric.indexOf(".") + 1));
+                } else {
+                    paths.add(metric);
+                }
+            }
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
+        if (paths.isEmpty()) {
+            return timeseries;
+        }
+
+        Query.Builder builder = Query.begin(0L).end(Long.MAX_VALUE).msResolution();
+        for (String path : paths) {
+            builder = builder.sub(SubQuery.metric(path).aggregator(SubQuery.Aggregator.NONE).build());
+        }
+        Query query = builder.build();
+        try {
+            List<QueryResult> resultList = client.query(query);
+            for (QueryResult result : resultList) {
+                timeseries.add(new Timeseries(result.getMetric(), fromOpenTSDB(result.getTags().get(DATA_TYPE))));
+            }
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("encounter error when query data in opentsdb: ", e);
+        }
+        return timeseries;
     }
 
     @Override
     public void release() throws PhysicalException {
-
+        try {
+            client.gracefulClose();
+        } catch (IOException e) {
+            logger.error("can not close opentsdb gracefully, because " + e.getMessage());
+            try {
+                client.forceClose();
+            } catch (IOException ioException) {
+                throw new PhysicalTaskExecuteFailureException("can not close opentsdb, because " + e.getMessage());
+            }
+        }
     }
 }

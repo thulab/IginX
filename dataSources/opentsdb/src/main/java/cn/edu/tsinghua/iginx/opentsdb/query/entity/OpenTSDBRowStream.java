@@ -17,6 +17,8 @@ import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.*;
 
 public class OpenTSDBRowStream implements RowStream {
 
+    private static final String STORAGE_UNIT = "du";
+
     private final Header header;
 
     private final List<QueryResult> resultList;
@@ -27,18 +29,26 @@ public class OpenTSDBRowStream implements RowStream {
 
     private final boolean[] finished;
 
+    private final boolean trimStorageUnit;
+
     private int hasMoreRecords;
 
-    public OpenTSDBRowStream(List<QueryResult> resultList) {
+    public OpenTSDBRowStream(List<QueryResult> resultList, boolean trimStorageUnit) {
         this.resultList = resultList;
+        this.trimStorageUnit = trimStorageUnit;
+
         List<Field> fields = new ArrayList<>();
         for (QueryResult res : resultList) {
             String metric = res.getMetric();
-            String path = metric.substring(metric.indexOf(".") + 1);
+            String path = metric;
+            if (trimStorageUnit && res.getTags().containsKey(STORAGE_UNIT)) {
+                path = metric.substring(metric.indexOf(".") + 1);
+            }
             DataType dataType = fromOpenTSDB(res.getTags().get(DATA_TYPE));
             fields.add(new Field(path, dataType));
         }
         this.header = new Header(Field.TIME, fields);
+
         this.iterators = new Iterator[this.resultList.size()];
         this.curData = new Map.Entry[this.resultList.size()];
         this.finished = new boolean[this.resultList.size()];

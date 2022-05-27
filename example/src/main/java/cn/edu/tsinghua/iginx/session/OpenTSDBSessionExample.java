@@ -31,6 +31,8 @@ public class OpenTSDBSessionExample {
 
         insertRowRecords();
 
+        showTimeSeries();
+
 //        queryData();
 
 //        deleteDataInColumns();
@@ -61,6 +63,13 @@ public class OpenTSDBSessionExample {
         }
 
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    private static void showTimeSeries() throws SessionException, ExecutionException {
+        List<Column> columns = session.showColumns();
+        for(Column column: columns){
+            System.out.println(String.format("Path: %s, Type: %s", column.getPath(), column.getDataType()));
+        }
     }
 
     private static void queryData() throws SessionException, ExecutionException {
