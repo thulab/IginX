@@ -20,16 +20,16 @@ package cn.edu.tsinghua.iginx.engine.shared.function;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FunctionCall {
 
     private final Function function;
 
-    private final List<Value> params;
+    private final Map<String, Value> params;
 
-    public FunctionCall(Function function, List<Value> params) {
+    public FunctionCall(Function function, Map<String, Value> params) {
         this.function = function;
         this.params = params;
     }
@@ -38,11 +38,11 @@ public class FunctionCall {
         return function;
     }
 
-    public List<Value> getParams() {
+    public Map<String, Value> getParams() {
         return params;
     }
 
     public FunctionCall copy() {
-        return new FunctionCall(function, new ArrayList<>(params));
+        return new FunctionCall(function, new HashMap<>(params));
     }
 }

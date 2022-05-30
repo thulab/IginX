@@ -22,10 +22,10 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 
-import java.util.List;
+import java.util.Map;
 
 public interface SetMappingFunction extends Function {
 
-    Row transform(RowStream rows, List<Value> params) throws Exception;
+    Row transform(RowStream rows, Map<String, Value> params) throws Exception;
 
 }

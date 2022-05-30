@@ -26,13 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static cn.edu.tsinghua.iginx.engine.shared.Constants.ORDINAL;
-import static cn.edu.tsinghua.iginx.engine.shared.Constants.TIMESTAMP;
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.*;
 
 public class QueryGenerator extends AbstractGenerator {
 
@@ -92,10 +91,10 @@ public class QueryGenerator extends AbstractGenerator {
             // DownSample Query
             Operator finalRoot = root;
             selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> params = new ArrayList<>();
-                params.add(new Value(str));
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_PATHS, new Value(str));
                 if (!selectStatement.getLayers().isEmpty()) {
-                    params.add(new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                    params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
                 }
                 Operator copySelect = finalRoot.copy();
 
@@ -112,24 +111,41 @@ public class QueryGenerator extends AbstractGenerator {
             // Aggregate Query
             Operator finalRoot = root;
             selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> params = new ArrayList<>();
-                params.add(new Value(str));
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_PATHS, new Value(str));
                 if (!selectStatement.getLayers().isEmpty()) {
-                    params.add(new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                    params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
                 }
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
-                queryList.add(
-                    new SetTransform(
-                        new OperatorSource(copySelect),
-                        new FunctionCall(functionManager.getFunction(k), params)
-                    )
-                );
+                if (functionManager.isUDTF(k)) {
+                    queryList.add(
+                        new RowTransform(
+                            new OperatorSource(copySelect),
+                            new FunctionCall(functionManager.getFunction(k), params)
+                        )
+                    );
+                } else if (functionManager.isUDSF(k)) {
+                    queryList.add(
+                        new MappingTransform(
+                            new OperatorSource(copySelect),
+                            new FunctionCall(functionManager.getFunction(k), params)
+                        )
+                    );
+                } else {
+                    queryList.add(
+                        new SetTransform(
+                            new OperatorSource(copySelect),
+                            new FunctionCall(functionManager.getFunction(k), params)
+                        )
+                    );
+                }
             }));
         } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
             Operator finalRoot = root;
             selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                List<Value> params = new ArrayList<>(Collections.singletonList(new Value(str)));
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_PATHS, new Value(str));
                 Operator copySelect = finalRoot.copy();
                 logger.info("function: " + k + ", wrapped path: " + v);
                 queryList.add(

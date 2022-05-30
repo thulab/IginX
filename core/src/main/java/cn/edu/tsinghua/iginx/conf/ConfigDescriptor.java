@@ -131,6 +131,8 @@ public class ConfigDescriptor {
             config.setPythonCMD(properties.getProperty("pythonCMD", "python3"));
             config.setTransformTaskThreadPoolSize(Integer.parseInt(properties.getProperty("transformTaskThreadPoolSize", "10")));
             config.setTransformMaxRetryTimes(Integer.parseInt(properties.getProperty("transformMaxRetryTimes", "3")));
+
+            config.setNeedInitBasicUDFFunctions(Boolean.parseBoolean(properties.getProperty("needInitBasicUDFFunctions", "true")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -193,6 +195,7 @@ public class ConfigDescriptor {
         config.setPythonCMD(EnvUtils.loadEnv("pythonCMD", config.getPythonCMD()));
         config.setTransformTaskThreadPoolSize(EnvUtils.loadEnv("transformTaskThreadPoolSize", config.getTransformTaskThreadPoolSize()));
         config.setTransformMaxRetryTimes(EnvUtils.loadEnv("transformMaxRetryTimes", config.getTransformMaxRetryTimes()));
+        config.setNeedInitBasicUDFFunctions(EnvUtils.loadEnv("needInitBasicUDFFunctions", config.isNeedInitBasicUDFFunctions()));
     }
 
 

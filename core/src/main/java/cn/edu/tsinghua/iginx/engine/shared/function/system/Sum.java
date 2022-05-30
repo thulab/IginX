@@ -34,6 +34,9 @@ import cn.edu.tsinghua.iginx.utils.StringUtils;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_LEVELS;
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_PATHS;
+
 public class Sum implements SetMappingFunction {
 
     public static final String SUM = "sum";
@@ -63,17 +66,17 @@ public class Sum implements SetMappingFunction {
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) throws Exception {
+    public Row transform(RowStream rows, Map<String, Value> params) throws Exception {
         if (params.size() == 0 || params.size() > 2) {
             throw new IllegalArgumentException("unexpected params for sum.");
         }
-        Value param = params.get(0);
-        if (param.getDataType() != DataType.BINARY) {
+        Value param = params.get(PARAM_PATHS);
+        if (param == null || param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for sum.");
         }
         List<Integer> groupByLevels = null;
-        if (params.size() == 2) {
-            groupByLevels = GroupByUtils.parseLevelsFromValue(params.get(1));
+        if (params.containsKey(PARAM_LEVELS)) {
+            groupByLevels = GroupByUtils.parseLevelsFromValue(params.get(PARAM_LEVELS));
         }
         String target = param.getBinaryVAsString();
         if (StringUtils.isPattern(target)) {

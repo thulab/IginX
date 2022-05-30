@@ -642,17 +642,17 @@ public class DefaultMetaCache implements IMetaCache {
 
     @Override
     public void addOrUpdateTransformTask(TransformTaskMeta transformTask) {
-        transformTaskMetaMap.put(transformTask.getClassName(), transformTask);
+        transformTaskMetaMap.put(transformTask.getName(), transformTask);
     }
 
     @Override
-    public void dropTransformTask(String className) {
-        transformTaskMetaMap.remove(className);
+    public void dropTransformTask(String name) {
+        transformTaskMetaMap.remove(name);
     }
 
     @Override
-    public TransformTaskMeta getTransformTask(String className) {
-        return transformTaskMetaMap.getOrDefault(className, null);
+    public TransformTaskMeta getTransformTask(String name) {
+        return transformTaskMetaMap.getOrDefault(name, null);
     }
 
     @Override

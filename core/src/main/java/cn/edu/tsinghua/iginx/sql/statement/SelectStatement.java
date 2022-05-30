@@ -138,7 +138,7 @@ public class SelectStatement extends DataStatement {
                 return FuncType.Count;
             case "sum":
                 return FuncType.Sum;
-            case "":
+            case "":  // no func
                 return null;
             default:
                 return FuncType.Udf;
@@ -215,7 +215,7 @@ public class SelectStatement extends DataStatement {
     }
 
     public void setSelectedFuncsAndPaths(String func, String path) {
-        func = func.toLowerCase();
+        func = func.trim().toLowerCase();
 
         for (String fromPath: fromPaths) {
             String fullPath = fromPath + SQLConstant.DOT + path;

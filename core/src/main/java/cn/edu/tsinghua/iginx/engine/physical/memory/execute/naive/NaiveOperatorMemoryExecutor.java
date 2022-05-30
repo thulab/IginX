@@ -187,7 +187,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         long precision = downsample.getPrecision();
         TreeMap<Long, List<Row>> groups = new TreeMap<>();
         SetMappingFunction function = (SetMappingFunction) downsample.getFunctionCall().getFunction();
-        List<Value> params = downsample.getFunctionCall().getParams();
+        Map<String, Value> params = downsample.getFunctionCall().getParams();
         for (Row row : rows) {
             long timestamp = row.getTimestamp() - (row.getTimestamp() - bias) % precision;
             groups.compute(timestamp, (k, v) -> v == null ? new ArrayList<>() : v).add(row);
@@ -218,7 +218,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeRowTransform(RowTransform rowTransform, Table table) throws PhysicalException {
         RowMappingFunction function = (RowMappingFunction) rowTransform.getFunctionCall().getFunction();
-        List<Value> params = rowTransform.getFunctionCall().getParams();
+        Map<String, Value> params = rowTransform.getFunctionCall().getParams();
         List<Row> rows = new ArrayList<>();
         try {
             while (table.hasNext()) {
@@ -239,7 +239,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeSetTransform(SetTransform setTransform, Table table) throws PhysicalException {
         SetMappingFunction function = (SetMappingFunction) setTransform.getFunctionCall().getFunction();
-        List<Value> params = setTransform.getFunctionCall().getParams();
+        Map<String, Value> params = setTransform.getFunctionCall().getParams();
         try {
             Row row = function.transform(table, params);
             if (row == null) {
@@ -255,7 +255,7 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeMappingTransform(MappingTransform mappingTransform, Table table) throws PhysicalException {
         MappingFunction function = (MappingFunction) mappingTransform.getFunctionCall().getFunction();
-        List<Value> params = mappingTransform.getFunctionCall().getParams();
+        Map<String, Value> params = mappingTransform.getFunctionCall().getParams();
         try {
             return function.transform(table, params);
         } catch (Exception e) {

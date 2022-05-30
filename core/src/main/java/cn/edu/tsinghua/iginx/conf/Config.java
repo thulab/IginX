@@ -139,6 +139,8 @@ public class Config {
 
     private int transformMaxRetryTimes = 3;
 
+    private boolean needInitBasicUDFFunctions = true;
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -609,5 +611,13 @@ public class Config {
 
     public void setTransformMaxRetryTimes(int transformMaxRetryTimes) {
         this.transformMaxRetryTimes = transformMaxRetryTimes;
+    }
+
+    public boolean isNeedInitBasicUDFFunctions() {
+        return needInitBasicUDFFunctions;
+    }
+
+    public void setNeedInitBasicUDFFunctions(boolean needInitBasicUDFFunctions) {
+        this.needInitBasicUDFFunctions = needInitBasicUDFFunctions;
     }
 }

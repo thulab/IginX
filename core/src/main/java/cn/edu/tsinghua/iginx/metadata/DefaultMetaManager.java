@@ -268,9 +268,9 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     private void initTransform() throws MetaStorageException {
-        storage.registerTransformChangeHook(((className, transformTask) -> {
+        storage.registerTransformChangeHook(((name, transformTask) -> {
             if (transformTask == null) {
-                cache.dropTransformTask(className);
+                cache.dropTransformTask(name);
             } else {
                 cache.addOrUpdateTransformTask(transformTask);
             }
@@ -820,10 +820,10 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public boolean dropTransformTask(String className) {
+    public boolean dropTransformTask(String name) {
         try {
-            cache.dropTransformTask(className);
-            storage.dropTransformTask(className);
+            cache.dropTransformTask(name);
+            storage.dropTransformTask(name);
             return true;
         } catch (MetaStorageException e) {
             logger.error("drop transform task error: ", e);
@@ -832,8 +832,8 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public TransformTaskMeta getTransformTask(String className) {
-        return cache.getTransformTask(className);
+    public TransformTaskMeta getTransformTask(String name) {
+        return cache.getTransformTask(name);
     }
 
     @Override

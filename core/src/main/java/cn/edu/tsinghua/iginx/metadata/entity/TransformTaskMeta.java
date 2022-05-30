@@ -1,6 +1,10 @@
 package cn.edu.tsinghua.iginx.metadata.entity;
 
+import cn.edu.tsinghua.iginx.thrift.UDFType;
+
 public class TransformTaskMeta {
+
+    private String name;
 
     private String className;
 
@@ -8,10 +12,22 @@ public class TransformTaskMeta {
 
     private String ip;
 
-    public TransformTaskMeta(String className, String fileName, String ip) {
+    private UDFType type;
+
+    public TransformTaskMeta(String name, String className, String fileName, String ip, UDFType type) {
+        this.name = name;
         this.className = className;
         this.fileName = fileName;
         this.ip = ip;
+        this.type = type;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getClassName() {
@@ -38,16 +54,26 @@ public class TransformTaskMeta {
         this.ip = ip;
     }
 
+    public UDFType getType() {
+        return type;
+    }
+
+    public void setType(UDFType type) {
+        this.type = type;
+    }
+
     public TransformTaskMeta copy() {
-        return new TransformTaskMeta(className, fileName, ip);
+        return new TransformTaskMeta(name, className, fileName, ip, type);
     }
 
     @Override
     public String toString() {
         return "TransformTaskMeta{" +
-            "className='" + className + '\'' +
+            "name='" + name + '\'' +
+            ", className='" + className + '\'' +
             ", fileName='" + fileName + '\'' +
             ", ip='" + ip + '\'' +
+            ", type=" + type +
             '}';
     }
 }

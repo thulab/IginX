@@ -190,9 +190,9 @@ public interface IMetaManager {
 
     boolean addTransformTask(TransformTaskMeta transformTask);
 
-    boolean dropTransformTask(String className);
+    boolean dropTransformTask(String name);
 
-    TransformTaskMeta getTransformTask(String className);
+    TransformTaskMeta getTransformTask(String name);
 
     List<TransformTaskMeta> getTransformTasks();
 

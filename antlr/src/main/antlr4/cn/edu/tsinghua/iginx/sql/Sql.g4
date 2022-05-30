@@ -16,8 +16,8 @@ statement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
     | SHOW REGISTER PYTHON TASK #showRegisterTaskStatement
-    | REGISTER PYTHON TASK className=stringLiteral IN filePath=stringLiteral #registerTaskStatement
-    | DROP PYTHON TASK className=stringLiteral #dropTaskStatement
+    | REGISTER udfType PYTHON TASK className=stringLiteral IN filePath=stringLiteral AS name=stringLiteral#registerTaskStatement
+    | DROP PYTHON TASK name=stringLiteral #dropTaskStatement
     | COMMIT TRANSFORM JOB filePath=stringLiteral #commitTransformJobStatement
     | SHOW TRANSFORM JOB STATUS jobId=INT #showJobStatusStatement
     ;
@@ -151,6 +151,13 @@ path
     : nodeName (DOT nodeName)*
     ;
 
+udfType
+    : UDAF
+    | UDTF
+    | UDSF
+    | TRANSFORM
+    ;
+
 nodeName
     : ID
     | STAR
@@ -206,6 +213,10 @@ nodeName
     | TRANSFORM
     | JOB
     | STATUS
+    | AS
+    | UDAF
+    | UDTF
+    | UDSF
     ;
 
 ip
@@ -459,6 +470,21 @@ STATUS
     : S T A T U S
     ;
 
+AS
+    : A S
+    ;
+
+UDAF
+    : U D A F
+    ;
+
+UDTF
+    : U D T F
+    ;
+
+UDSF
+    : U D S F
+    ;
 //============================
 // End of the keywords list
 //============================

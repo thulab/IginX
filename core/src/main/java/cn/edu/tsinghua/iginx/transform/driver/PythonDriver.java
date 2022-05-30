@@ -66,13 +66,18 @@ public class PythonDriver implements Driver {
 
     @Override
     public Worker createWorker(PythonTask task, Writer writer) throws TransformException {
-        String className = task.getClassName();
+        String name = task.getPyTaskName();
 
-        TransformTaskMeta taskMeta = metaManager.getTransformTask(className);
+        TransformTaskMeta taskMeta = metaManager.getTransformTask(name);
         if (taskMeta == null) {
-            throw new CreateWorkerException(String.format("Fail to load task info by className: %s", className));
+            throw new CreateWorkerException(String.format("Fail to load task info by task name: %s", name));
         }
+        if (!taskMeta.getIp().equals(config.getIp())) {
+            throw new CreateWorkerException(String.format("Fail to load task file, because current ip is: %s, and register ip is: %s", config.getIp(), taskMeta.getIp()));
+        }
+
         String fileName = taskMeta.getFileName();
+        String className = taskMeta.getClassName();
         String moduleName = fileName.substring(0, fileName.indexOf(PY_SUFFIX));
 
         ServerSocket serverSocket = null;

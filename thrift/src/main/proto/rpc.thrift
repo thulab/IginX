@@ -98,6 +98,13 @@ enum JobState {
     JOB_CLOSED
 }
 
+enum UDFType {
+    UDAF,
+    UDTF,
+    UDSF,
+    TRANSFORM
+}
+
 struct Status {
     1: required i32 code
     2: optional string message
@@ -407,7 +414,7 @@ struct TaskInfo {
     2: required DataFlowType dataFlowType
     3: optional i64 timeout
     4: optional string sql
-    5: optional string className
+    5: optional string pyTaskName
 }
 
 struct CommitTransformJobReq {
@@ -439,13 +446,15 @@ struct CancelTransformJobReq {
 
 struct RegisterTaskReq {
     1: required i64 sessionId
-    2: required string filePath
-    3: required string className
+    2: required string name
+    3: required string filePath
+    4: required string className
+    5: required UDFType type;
 }
 
 struct DropTaskReq {
     1: required i64 sessionId
-    2: required string className
+    2: required string name
 }
 
 struct GetRegisterTaskInfoReq {
@@ -453,9 +462,11 @@ struct GetRegisterTaskInfoReq {
 }
 
 struct RegisterTaskInfo {
-    1: required string className
-    2: required string fileName
-    3: required string ip
+    1: required string name
+    2: required string className
+    3: required string fileName
+    4: required string ip
+    5: required UDFType type;
 }
 
 struct GetRegisterTaskInfoResp {

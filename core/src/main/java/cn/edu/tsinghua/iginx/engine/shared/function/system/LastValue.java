@@ -32,7 +32,11 @@ import cn.edu.tsinghua.iginx.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_LEVELS;
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_PATHS;
 
 public class LastValue implements SetMappingFunction {
 
@@ -63,12 +67,12 @@ public class LastValue implements SetMappingFunction {
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) throws Exception {
+    public Row transform(RowStream rows, Map<String, Value> params) throws Exception {
         if (params.size() != 1) {
             throw new IllegalArgumentException("unexpected params for last value.");
         }
-        Value param = params.get(0);
-        if (param.getDataType() != DataType.BINARY) {
+        Value param = params.get(PARAM_PATHS);
+        if (param == null || param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for last value.");
         }
         String target = param.getBinaryVAsString();

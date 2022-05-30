@@ -9,6 +9,7 @@ import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import cn.edu.tsinghua.iginx.thrift.UDFType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -157,18 +158,30 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
     public Statement visitRegisterTaskStatement(RegisterTaskStatementContext ctx) {
         String filePath = ctx.filePath.getText();
-        filePath = filePath.substring(1, filePath.length()-1);
+        filePath = filePath.substring(1, filePath.length() - 1);
 
         String className = ctx.className.getText();
-        className = className.substring(1, className.length()-1);
-        return new RegisterTaskStatement(filePath, className);
+        className = className.substring(1, className.length() - 1);
+
+        String name = ctx.name.getText();
+        name = name.substring(1, name.length() - 1);
+
+        UDFType type = UDFType.TRANSFORM;
+        if (ctx.udfType().UDTF() != null) {
+            type = UDFType.UDTF;
+        } else if (ctx.udfType().UDAF() != null) {
+            type = UDFType.UDAF;
+        } else if (ctx.udfType().UDSF() != null) {
+            type = UDFType.UDSF;
+        }
+        return new RegisterTaskStatement(name, filePath, className, type);
     }
 
     @Override
     public Statement visitDropTaskStatement(DropTaskStatementContext ctx) {
-        String fileName = ctx.className.getText();
-        fileName = fileName.substring(1, fileName.length()-1);
-        return new DropTaskStatement(fileName);
+        String name = ctx.name.getText();
+        name = name.substring(1, name.length() - 1);
+        return new DropTaskStatement(name);
     }
 
     @Override
@@ -374,7 +387,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             // need to contact from path
             statement.setPathSet(ctx.predicatePath().path().getText());
             List<Filter> valueFilters = new ArrayList<>();
-            for (String fromPath: statement.getFromPaths()) {
+            for (String fromPath : statement.getFromPaths()) {
                 String path = fromPath + SQLConstant.DOT + ctx.predicatePath().path().getText();
                 Op op = Op.str2Op(ctx.comparisonOperator().getText());
                 // deal with sub clause like 100 < path
