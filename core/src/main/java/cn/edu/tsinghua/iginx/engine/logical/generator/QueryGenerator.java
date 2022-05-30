@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
 import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
+import cn.edu.tsinghua.iginx.engine.logical.utils.PathUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
@@ -57,16 +58,6 @@ public class QueryGenerator extends AbstractGenerator {
         return instance;
     }
 
-    private static TimeSeriesInterval processTimeSeriesInterval(TimeSeriesInterval tsInterval) {
-        if (tsInterval.getStartTimeSeries().equals("*")) {
-            tsInterval.setStartTimeSeries(null);
-        }
-        if (tsInterval.getEndTimeSeries().equals("*")) {
-            tsInterval.setEndTimeSeries(null);
-        }
-        return tsInterval;
-    }
-
     protected Operator generateRoot(Statement statement) {
         SelectStatement selectStatement = (SelectStatement) statement;
 
@@ -76,7 +67,7 @@ public class QueryGenerator extends AbstractGenerator {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(processTimeSeriesInterval(interval), true);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
         if (!metaManager.hasFragment()) {
             //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
