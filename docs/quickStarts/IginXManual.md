@@ -17,7 +17,7 @@ IginX 为您提供了两种安装方式，您可以参考下面的建议，任�
 
 由于 ZooKeeper、IginX 以及 IoTDB 都是使用 Java 开发的，因此首先需要安装 Java。如果本地已经安装了 JDK>=1.8 的运行环境，**直接跳过此步骤**。
 
-1. 首先访问 [Java官方网站](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)下载适用于当前系统的 JDK 包。
+1. 首先访问 [Java官方网站](https://www.oracle.com/java/technologies/javase/javase-jdk8-downloads.html)下载适用于当前系统的 JDK  包。
 2. 安装
 
 ```shell
@@ -56,6 +56,8 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
 #### Maven 安装
 
 Maven 是 Java 项目管理和自动构建工具，如果您需要从源码进行编译，还需要安装 Maven >= 3.6 的环境，否则，**直接跳过此步骤**。
+
+在安装 ZooKeeper 之前添加了一个步骤。 在使用之前检查 wget 的安装将节省时间。
 
 1. 访问[官网](http://maven.apache.org/download.cgi)下载并解压 Maven
 
