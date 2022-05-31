@@ -1071,7 +1071,7 @@ public class DefaultMetaManager implements IMetaManager {
 
   public Map<String, Long> loadTimeseriesHeat() throws Exception {
     try {
-      return storage.load(cache);
+      return storage.loadTimeseriesHeat();
     } catch (Exception e) {
       logger.error("encounter error when load fragment points: ", e);
       return new HashMap<>();
