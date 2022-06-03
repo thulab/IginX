@@ -95,6 +95,9 @@ Apache Maven 3.6.1 (d66c9c0b3152b2e69ee9bac180bb8fcc8e6af555; 2019-04-05T03:00:2
 
 ZooKeeper 是 Apache 推出的开源的分布式应用程序协调服务。如果您需要部署大于一个 IginX 实例，则需要安装 ZooKeeper，否则，**直接跳过此步骤**。
 
+首先，如果你从未安装 wget， 安装 Homebrew。
+访问[官网]（https://brew.sh）安装 Homebrew 与 wget。
+
 ZooKeeper 是 Apache 推出的开源的分布式应用程序协调服务。具体安装方式如下：
 
 1. 访问[官网](https://zookeeper.apache.org/releases.html)下载并解压 ZooKeeper
