@@ -10,6 +10,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -64,6 +65,7 @@ public class QueryGenerator extends AbstractGenerator {
         policy.notify(selectStatement);
 
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(selectStatement.getPathSet()));
+        TagFilter tagFilter = selectStatement.getTagFilter();
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
@@ -78,14 +80,14 @@ public class QueryGenerator extends AbstractGenerator {
         List<Operator> joinList = new ArrayList<>();
         fragments.forEach((k, v) -> {
             List<Operator> unionList = new ArrayList<>();
-            v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList)));
+            v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList, tagFilter)));
             joinList.add(OperatorUtils.unionOperators(unionList));
         });
 
         Operator root = OperatorUtils.joinOperatorsByTime(joinList);
 
         if (selectStatement.hasValueFilter()) {
-            root = new Select(new OperatorSource(root), selectStatement.getFilter());
+            root = new Select(new OperatorSource(root), selectStatement.getFilter(), tagFilter);
         }
 
         List<Operator> queryList = new ArrayList<>();
@@ -143,7 +145,7 @@ public class QueryGenerator extends AbstractGenerator {
         } else {
             List<String> selectedPath = new ArrayList<>();
             selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> selectedPath.addAll(v));
-            queryList.add(new Project(new OperatorSource(root), selectedPath));
+            queryList.add(new Project(new OperatorSource(root), selectedPath, tagFilter));
         }
 
         if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
@@ -169,19 +171,6 @@ public class QueryGenerator extends AbstractGenerator {
                 (int) selectStatement.getOffset()
             );
         }
-
-        int normalFragmentCnt = 0, dummyFragmentCnt = 0;
-        for (List<FragmentMeta> fragmentList: fragments.values()) {
-            for (FragmentMeta fragment: fragmentList) {
-                if (fragment.getMasterStorageUnit().isDummy()) {
-                    dummyFragmentCnt++;
-                } else {
-                    normalFragmentCnt++;
-                }
-            }
-        }
-        logger.info("当前查询涉及 " + normalFragmentCnt + " 个普通分片, " + dummyFragmentCnt + " 个堆叠分片。");
-
         return root;
     }
 }

@@ -79,8 +79,8 @@ public class FirstValue implements SetMappingFunction {
             List<Integer> indices = new ArrayList<>();
             for (int i = 0; i < fields.size(); i++) {
                 Field field = fields.get(i);
-                if (pattern.matcher(field.getName()).matches()) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", field.getType()));
+                if (pattern.matcher(field.getFullName()).matches()) {
+                    targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType()));
                     indices.add(i);
                 }
             }
@@ -102,7 +102,7 @@ public class FirstValue implements SetMappingFunction {
                 return Row.EMPTY_ROW;
             }
             Field field = rows.getHeader().getField(index);
-            Field targetField = new Field(getIdentifier() + "(" + field.getName() + ")", field.getType());
+            Field targetField = new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType());
             Object targetValue = null;
             while (rows.hasNext()) {
                 Row row = rows.next();

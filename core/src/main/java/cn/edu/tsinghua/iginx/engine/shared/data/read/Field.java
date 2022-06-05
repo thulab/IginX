@@ -21,7 +21,10 @@ package cn.edu.tsinghua.iginx.engine.shared.data.read;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.Objects;
+import java.util.TreeMap;
 
 public final class Field {
 
@@ -29,23 +32,48 @@ public final class Field {
 
     private final String name;
 
+    private final String fullName;
+
+    private final Map<String, String> tags;
+
     private final DataType type;
 
     public Field() {
-        this(Constants.TIMESTAMP, DataType.LONG);
+        this(Constants.TIMESTAMP, DataType.LONG, Collections.emptyMap());
     }
 
     public Field(String name, DataType type) {
+        this(name, type, Collections.emptyMap());
+    }
+
+    public Field(String name, DataType type, Map<String, String> tags) {
         this.name = name;
         this.type = type;
+        this.tags = tags;
+        if (this.tags == null || this.tags.isEmpty()) {
+            this.fullName = name;
+        } else {
+            StringBuilder builder = new StringBuilder();
+            builder.append(name);
+            TreeMap<String, String> treeMap = new TreeMap<>(tags);
+            treeMap.forEach((key, value) -> builder.append('.').append(key).append('.').append(value));
+            this.fullName = builder.toString();
+        }
     }
 
     public String getName() {
         return name;
     }
 
+    public String getFullName() {
+        return fullName;
+    }
     public DataType getType() {
         return type;
+    }
+
+    public Map<String, String> getTags() {
+        return tags;
     }
 
     @Override

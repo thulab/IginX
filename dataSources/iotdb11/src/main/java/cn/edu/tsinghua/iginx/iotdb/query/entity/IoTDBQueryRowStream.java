@@ -76,7 +76,7 @@ public class IoTDBQueryRowStream implements RowStream {
                 continue;
             }
             Field field = new Field(transformColumnName(name), DataTypeTransformer.fromIoTDB(type));
-            if (!this.trimStorageUnit && field.getName().startsWith(UNIT)) {
+            if (!this.trimStorageUnit && field.getFullName().startsWith(UNIT)) {
                 continue;
             }
             fields.add(field);

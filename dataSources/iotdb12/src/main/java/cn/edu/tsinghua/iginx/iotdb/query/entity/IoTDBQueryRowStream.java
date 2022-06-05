@@ -28,7 +28,6 @@ import cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
-import org.apache.iotdb.tsfile.file.metadata.enums.TSDataType;
 import org.apache.iotdb.tsfile.read.common.RowRecord;
 
 import java.util.ArrayList;
@@ -76,7 +75,7 @@ public class IoTDBQueryRowStream implements RowStream {
                 continue;
             }
             Field field = new Field(transformColumnName(name), DataTypeTransformer.strFromIoTDB(type));
-            if (!this.trimStorageUnit && field.getName().startsWith(UNIT)) {
+            if (!this.trimStorageUnit && field.getFullName().startsWith(UNIT)) {
                 continue;
             }
             fields.add(field);

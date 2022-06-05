@@ -84,7 +84,7 @@ public class FilterFragmentOptimizer implements Optimizer {
             List<Operator> unionList = new ArrayList<>();
             v.forEach(meta -> {
                 if (hasTimeRangeOverlap(meta, timeRanges)) {
-                    unionList.add(new Project(new FragmentSource(meta), pathList));
+                    unionList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
                 }
             });
             Operator operator = OperatorUtils.unionOperators(unionList);

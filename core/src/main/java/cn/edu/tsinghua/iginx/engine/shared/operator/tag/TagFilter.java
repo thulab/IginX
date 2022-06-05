@@ -16,23 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
+package cn.edu.tsinghua.iginx.engine.shared.operator.tag;
 
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.AbstractOperatorMemoryExecutorTest;
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+public interface TagFilter {
 
-import java.util.Arrays;
+    TagFilterType getType();
 
-public class NaiveOperatorMemoryExecutorTest extends AbstractOperatorMemoryExecutorTest {
+    TagFilter copy();
 
-    private final NaiveOperatorMemoryExecutor executor;
-
-    public NaiveOperatorMemoryExecutorTest() {
-        executor = NaiveOperatorMemoryExecutor.getInstance();
-    }
-
-    @Override
-    protected OperatorMemoryExecutor getExecutor() {
-        return executor;
-    }
 }

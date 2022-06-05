@@ -85,11 +85,11 @@ public class Count implements SetMappingFunction {
             Map<Integer, Integer> groupOrderIndexMap = new HashMap<>();
             for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
                 Field field = rows.getHeader().getField(i);
-                if (pattern.matcher(field.getName()).matches()) {
+                if (pattern.matcher(field.getFullName()).matches()) {
                     if (groupByLevels == null) {
-                        targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                        targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.LONG));
                     } else {
-                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
                         int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
                         if (index != -1) {
                             groupOrderIndexMap.put(i, index);
@@ -131,9 +131,9 @@ public class Count implements SetMappingFunction {
             Field targetField;
             String targetFieldName;
             if (groupByLevels == null) {
-                targetFieldName = getIdentifier() + "(" + field.getName() + ")";
+                targetFieldName = getIdentifier() + "(" + field.getFullName() + ")";
             } else {
-                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
             }
             targetField = new Field(targetFieldName, DataType.LONG);
             long count = 0L;

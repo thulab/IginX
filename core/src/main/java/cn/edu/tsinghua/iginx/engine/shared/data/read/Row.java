@@ -67,7 +67,7 @@ public class Row {
     }
 
     public String getName(int i) {
-        return header.getField(i).getName();
+        return header.getField(i).getFullName();
     }
 
     public DataType getType(int i) {

@@ -109,11 +109,11 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         for (Field field : header.getFields()) {
             for (String pattern : patterns) {
                 if (!StringUtils.isPattern(pattern)) {
-                    if (pattern.equals(field.getName()) || field.getName().startsWith(pattern)) {
+                    if (pattern.equals(field.getFullName()) || field.getFullName().startsWith(pattern)) {
                         targetFields.add(field);
                     }
                 } else {
-                    if (Pattern.matches(StringUtils.reformatPath(pattern), field.getName())) {
+                    if (Pattern.matches(StringUtils.reformatPath(pattern), field.getFullName())) {
                         targetFields.add(field);
                     }
                 }

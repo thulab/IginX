@@ -4,6 +4,10 @@ import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.OrTagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
@@ -81,6 +85,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             filter = ExprUtils.removeSingleFilter(filter);
             selectStatement.setFilter(filter);
             selectStatement.setHasValueFilter(true);
+        }
+        // parse with clause
+        if (ctx.withClause() != null) {
+            TagFilter tagFilter = parseOrTagExpression(ctx.withClause().orTagExpression());
+            selectStatement.setTagFilter(tagFilter);
         }
         // parse special clause
         if (ctx.specialClause() != null) {
@@ -329,6 +338,32 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             children.add(parseAndExpression(andCtx, statement));
         }
         return new OrFilter(children);
+    }
+
+    private TagFilter parseOrTagExpression(OrTagExpressionContext ctx) {
+        List<TagFilter> children = new ArrayList<>();
+        for (AndTagExpressionContext andCtx: ctx.andTagExpression()) {
+            children.add(parseAndTagExpression(andCtx));
+        }
+        return new OrTagFilter(children);
+    }
+
+    private TagFilter parseAndTagExpression(AndTagExpressionContext ctx) {
+        List<TagFilter> children = new ArrayList<>();
+        for (TagExpressionContext tagCtx: ctx.tagExpression()) {
+            children.add(parseTagExpression(tagCtx));
+        }
+        return new AndTagFilter(children);
+    }
+
+    private TagFilter parseTagExpression(TagExpressionContext ctx) {
+        if (ctx.orTagExpression() != null) {
+            return parseOrTagExpression(ctx.orTagExpression());
+        }
+        String tagKey = ctx.tagKey().getText();
+        String tagValue = ctx.tagKey().getText();
+        tagValue = tagValue.substring(1, tagValue.length() - 1);
+        return new BaseTagFilter(tagKey, tagValue);
     }
 
     private Filter parseAndExpression(AndExpressionContext ctx, Statement statement) {
