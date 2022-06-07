@@ -52,7 +52,7 @@ experience.
 Quick starts in Chinese ([A complete version](./docs/quickStarts/IginXManual.md)——完整版部署说明文档): 
 
 - [Use IginX in one shot](./docs/quickStarts/IginXInOneShot.md)：单机版IginX一键运行使用
-- [Use IginX by compiling sources](./docs/quickStarts/IginXBySource.md)：基于代码编译使用IginX
+- [Use IginX by compiling sources](./docs/quickStarts/IginXBySource-EnglishVersion.md)：[基于代码编译使用IginX](./docs/quickStarts/IginXBySource.md)
 - [Use IginX by docker](./docs/quickStarts/IginXByDocker.md)：基于 Docker 使用IginX
 - [Deploy an IginX Cluster](./docs/quickStarts/IginXCluster.md)：IginX集群版部署
 
