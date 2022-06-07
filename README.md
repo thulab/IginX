@@ -53,7 +53,7 @@ Quick starts in Chinese (A complete version--[完整版部署说明文档](./doc
 
 - Use IginX in one shot：[单机版IginX一键运行使用](./docs/quickStarts/IginXInOneShot.md)
 - [Use IginX by compiling sources](./docs/quickStarts/IginXBySource-EnglishVersion.md)：[基于代码编译使用IginX](./docs/quickStarts/IginXBySource.md)
-- Use IginX by docker：[基于 Docker 使用IginX](./docs/quickStarts/IginXByDocker.md)
+- [Use IginX by docker](./docs/quickStarts/IginXByDocker-EnglishVersion.md)：[基于 Docker 使用IginX](./docs/quickStarts/IginXByDocker.md)
 - Deploy an IginX Cluster：[IginX集群版部署](./docs/quickStarts/IginXCluster.md)
 
 Or, please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is
