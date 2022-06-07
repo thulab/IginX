@@ -1,5 +1,4 @@
-# IginX Installation Manual - By Source (Compilation and Installation)
-
+# IginX Installation and Use Manual (Cluster)
 
 [TOC]
 
@@ -48,43 +47,41 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
 
 If the words above are displayed, it means the installation was successful.
 
-### Maven Installation
+#### ZooKeeper Installation
 
-Maven is a build automation tool used primarily to build and managa Java projects. If you need to compile from the source code, you also need to install a Maven environment >= 3.6. Otherwise, **skip this step entirely**.
+ ZooKeeper is an open-source server for highly reliable distributed coordination of cloud applications, launched by Apache. If you need to deploy more than one instance of IginX, you will need to install ZooKeeper. Otherwise, **skip this step entirely**
 
-1. Visit the [official website](http://maven.apache.org/download.cgi)to download and unzip Maven
+The specific installation method is as follows,
 
-```shell
-$ wget http://mirrors.hust.edu.cn/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
-$ tar -xvf  apache-maven-3.3.9-bin.tar.gz
-$ sudo mv -f apache-maven-3.3.9 /usr/local/
-```
-
-2. Set the path
-
-Edit the ~/.bashrc file and add the following two lines at the end of the file:
+1. Visit the [official website](https://zookeeper.apache.org/releases.html)to download and unzip ZooKeeper
 
 ```shell
-export MAVEN_HOME=/usr/local/apache-maven-3.3.9
-export PATH=${PATH}:${MAVEN_HOME}/bin
+$ cd ~
+$ wget https://mirrors.bfsu.edu.cn/apache/zookeeper/zookeeper-3.7.0/apache-zookeeper-3.7.0-bin.tar.gz
+$ tar -zxvf apache-zookeeper-3.7.0-bin.tar.gz
 ```
 
-Load the file with the changed configuration (into shell scripts):
+2. Modify the default ZooKeeper profile
 
 ```shell
-$ source ~/.bashrc
+$ cd apache-zookeeper-3.7.0-bin/
+$ mkdir data
+$ cp conf/zoo_sample.cfg conf/zoo.cfg
 ```
 
-3. Type mvn -v to determine whether Maven installed successfully.
+Then edit the conf/zoo.cfg file and
 
 ```shell
-$ mvn -v
-Apache Maven 3.6.1 (d66c9c0b3152b2e69ee9bac180bb8fcc8e6af555; 2019-04-05T03:00:29+08:00)
+dataDir=/tmp/zookeeper
 ```
 
-If the words above are displayed, that means the installation was successful.
+Modify to
 
-### IoTDB Installation
+```shell
+dataDir=data
+```
+
+#### IoTDB Installation
 
 IoTDB is Apache's Apache IoT native database with high performance for data management and analysis, deployable on the edge and the cloud.
 
@@ -98,109 +95,116 @@ $ unzip apache-iotdb-0.12.0-server-bin.zip
 
 ### IginX Installation
 
-Compile with source code. If you need to modify code yourself, you can use this installation method. 
+Go directly to the [IginX project](https://github.com/thulab/IginX/) and download the [IginX project release package](https://github.com/thulab/IginX/releases/download/rc/v0.2.0/IginX-release-v0.2.0-bin.tar.gz). That's it.
 
-#### Compilation with source code
-
-Fetch the latest development version and build it locally.
-
-```shell
-$ cd ~
-$ git clone git@github.com:thulab/IginX.git
-$ cd IginX
-$ mvn clean install -Dmaven.test.skip=true
-$ mvn package -pl core -Dmaven.test.skip=true
-```
-
-The following words are displayed, indicating that the IginX build is successful:
-
-```shell
-[INFO] Reactor Summary for IginX 0.1.0-SNAPSHOT:
-[INFO]
-[INFO] IginX .............................................. SUCCESS [  0.252 s]
-[INFO] IginX Thrift ....................................... SUCCESS [  5.961 s]
-[INFO] IginX Core ......................................... SUCCESS [  4.383 s]
-[INFO] IginX IoTDB ........................................ SUCCESS [  0.855 s]
-[INFO] IginX InfluxDB ..................................... SUCCESS [  0.772 s]
-[INFO] IginX Client ....................................... SUCCESS [  7.713 s]
-[INFO] IginX Example ...................................... SUCCESS [  0.677 s]
-[INFO] IginX Test ......................................... SUCCESS [  0.114 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  20.887 s
-[INFO] Finished at: 2021-07-12T16:01:31+08:00
-[INFO] ------------------------------------------------------------------------
-```
-
-Additionally, IginX supports Docker. Use the following command to build a local IginX image:
-
-```shell
-mvn clean package -pl core -DskipTests docker:build
-```
-
-This may not work, which is not an immediate issue because you don't need Docker for IginX installation.
 
 ## Launch
 
-### IoTDB 
+Here is an example of starting one or two IginX instances and two IoTDB instances to demonstrate how to start an IginX cluster.
 
-First of all, you need to launch IoTDB.
+### Start multiple IoTDB instances
+
+Here is an example of starting two instances with ports 6667 and 7667 on a single machine.
+
+Modify the configuration file IoTDB_HOME/conf/iotdb-engine.properties
+
+```shell
+rpc_port=6667
+```
+
+Start the first instance:
 
 ```shell
 $ cd ~
 $ cd apache-iotdb-0.12.0-server-bin/
-$ ./sbin/start-server.sh
+$ ./sbin/start-server.sh # start instance one 127.0.0.1:6667
 ```
 
-The following display of words means the IoTDB installation was successful：
+Modify the configuration file conf/iotdb-engine.properties
 
 ```shell
-2021-05-27 08:21:07,440 [main] INFO  o.a.i.d.s.t.ThriftService:125 - IoTDB: start RPC ServerService successfully, listening on ip 0.0.0.0 port 6667
-2021-05-27 08:21:07,440 [main] INFO  o.a.i.db.service.IoTDB:129 - IoTDB is set up, now may some sgs are not ready, please wait several seconds...
-2021-05-27 08:21:07,448 [main] INFO  o.a.i.d.s.UpgradeSevice:109 - finish counting upgrading files, total num:0
-2021-05-27 08:21:07,449 [main] INFO  o.a.i.d.s.UpgradeSevice:74 - Waiting for upgrade task pool to shut down
-2021-05-27 08:21:07,449 [main] INFO  o.a.i.d.s.UpgradeSevice:76 - Upgrade service stopped
-2021-05-27 08:21:07,449 [main] INFO  o.a.i.db.service.IoTDB:146 - Congratulation, IoTDB is set up successfully. Now, enjoy yourself!
-2021-05-27 08:21:07,450 [main] INFO  o.a.i.db.service.IoTDB:93 - IoTDB has started.
+rpc_port=7667
 ```
 
-### IginX
+Start the second instance:
 
-Using source code to launch
+```shell
+$ ./sbin/start-server.sh # Start instance two 127.0.0.1: 7667
+```
+
+### Start ZooKeeper
+
+```shell
+$ cd ~
+$ cd apache-zookeeper-3.7.0-bin/
+$ ./bin/zkServer.sh start
+```
+
+The following display of words means the ZooKeeper installation and launch was successful：
+
+```shell
+ZooKeeper JMX enabled by default
+Using config: /home/root/apache-zookeeper-3.7.0-bin/bin/../conf/zoo.cfg
+Starting zookeeper ... STARTED
+```
+
+### Start multiple IginX instances
+
+Modify IginX_HOME/conf/config.Properties to join the two IoTDB instances that already started
+
+```shell
+storageEngineList=127.0.0.1#6667#iotdb#username=root#password=root#sessionPoolSize=100#dataDir=/path/to/your/data/,127.0.0.1#6688#iotdb#username=root#password=root# sessionPoolSize=100#dataDir=/path/to/your/data/
+
+#Storage method selection ZooKeeper
+metaStorage=zookeeper
+
+# Provide ZooKeeper port
+zookeeperConnectionString=127.0.0.1:2181
+
+# Comment out file, etcd related configuration
+# fileDataDir=meta
+# etcdEndpoints=http://localhost:2379
+```
+
+Start the first IginX instance
 
 ```shell
 $ cd ~
 $ cd Iginx
-$ chmod +x startIginX.sh # enable permissions for startup scripts
-$ ./startIginX.sh
-```
+$ chmod +x sbin/start_iginx.sh # Add startup permissions to the startup script
+$ ./sbin/start_iginx.sh
+````
 
-The following display of words means the IginX installation was successful：
+Modify conf/config.Properties
 
 ```shell
-May 27, 2021 8:32:19 AM org.glassfish.grizzly.http.server.NetworkListener start
-INFO: Started listener bound to [127.0.0.1:6666]
-May 27, 2021 8:32:19 AM org.glassfish.grizzly.http.server.HttpServer start
-INFO: [HttpServer] Started.
-08:32:19.446 [Thread-0] INFO cn.edu.tsinghua.iginx.rest.RestServer - Iginx REST server has been available at http://127.0.0.1:6666/.
-```
+# iginx binding port
+port=7888
+# rest bind port
+restPort=7666
+````
 
-## Using IginX
+Launch a second instance of IginX.
+
+```shell
+$ ./sbin/start_iginx.sh
+````
+
+## Access IginX
 
 ### RESTful Interface
 
 After the startup is complete, you can easily use the RESTful interface to write and query data to IginX.
 
-Create a file insert.json and add the following into it:
+Create the file insert.json and add the following to it:
 
-```json
+````json
 [
   {
     "name": "archive_file_tracked",
     "datapoints": [
         [1359788400000, 123.3],
-        [1359788300000, 13.2 ],
+        [1359788300000, 13.2],
         [1359788410000, 23.1 ]
     ],
     "tags": {
@@ -217,42 +221,42 @@ Create a file insert.json and add the following into it:
       }
   }
 ]
-```
+````
 
-Insert data into the database using the following command:
+Insert data into the database from an IginX instance using the following command:
 
 ```shell
 $ curl -XPOST -H'Content-Type: application/json' -d @insert.json http://127.0.0.1:6666/api/v1/datapoints
-```
+````
 
 After inserting data, you can also query the data just written using the RESTful interface.
 
-Create a file query.json and write the following data into it:
+Create a file query.json and write the following data to it:
 
-```json
+````json
 {
-    "start_absolute" : 1,
-    "end_relative": {
-        "value": "5",
-        "unit": "days"
-    },
-    "time_zone": "Asia/Kabul",
-    "metrics": [
-        {
-        "name": "archive_file_tracked"
-        },
-        {
-        "name": "archive_file_search"
-        }
-    ]
+"start_absolute" : 1,
+"end_relative": {
+"value": "5",
+"unit": "days"
+},
+"time_zone": "Asia/Kabul",
+"metrics": [
+{
+"name": "archive_file_tracked"
+},
+{
+"name": "archive_file_search"
 }
-```
+]
+}
+````
 
-Enter the following command to query the data:
+Use the following command to query data from IginX instance two:
 
 ```shell
 $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1:6666/api/v1/datapoints/query
-```
+````
 
 The command will return information about the data point just inserted:
 
@@ -324,56 +328,45 @@ The command will return information about the data point just inserted:
 }
 ```
 
-If you see the following information returned, it means you are able to successfully use RESTful interface to write and query data to IginX.
-
-For more interfaces, please refer to the official [IginX manual](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf).
-
-If you want to use a different interface, there is another option.
-
-In addition to the RESTful interface, IginX also provides the RPC data access interface. For this specific interface, please refer to the official [IginX manual](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf).
-
-At the same time, IginX also provides some official examples, showing the most common usage of the RPC interface.
-
-Below is a short tutorial on how to use it.
+For more interfaces, please refer to the official IginX manual.
 
 ### RPC Interface
 
-Since the IginX 0.2 version has not been released to the Maven central repository, if you want to use it, you need to manually install it to the local Maven repository. 
+In addition to the RESTful interface, IginX also provides RPC data access interface. For that specific interface, please refer to the official[IginX Official Manual](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf). At the same time, IginX also provides some [official examples](https://github.com/thulab/IginX/tree/main/example/src/main/java/cn/edu/tsinghua/iginx/session), showing the most common usage of the RPC interface.
 
-The specific installation method is as follows:
+Below is a short tutorial on how to use it.
+
+Since the IginX 0.2 version has not been released to the maven central repository, if you want to use it, you need to manually install it to the local maven repository. The specific installation method is as follows:
 
 ```shell
-# download iginx 0.2 rc version source code package
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz 
+# Download IginX 0.2 rc version source package
+$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz
 # Unzip the source package
 $ tar -zxvf v0.2.0.tar.gz
-# go to the main project's directory
+# Enter the project's main directory
 $ cd IginX-rc-v0.2.0
-# Install to local Maven repository
+# Install to local maven repository
 $ mvn clean install -DskipTests
-```
+````
 
-Specifically, when using it, you only need to introduce the following dependencies in the pom file of the corresponding project:
+Only when you are using it, you need to introduce the following dependencies in the pom file of the corresponding project:
 
 ```xml
 <dependency>
-    <groupId>cn.edu.tsinghua</groupId>
-    <artifactId>iginx-core</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+  <groupId>cn.edu.tsinghua</groupId>
+  <artifactId>iginx-core</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
 </dependency>
 ```
 
-Before accessing Iginx, you first need to create a session and try to connect. The Session constructor has 4 parameters, which are the ip and port IginX will to connect to, and the username and password for IginX authentication. The current authentication system is still being written, so the account name and password to access the backend IginX can directly fill in root:
+Before accessing IginX, you first need to open a session and try to connect. The session constructor has 4 parameters, which are the ip and port of IginX to connect to, and the username and password for IginX authentication. The current authentication system is still being written, so the account name and password to access the backend IginX can directly fill in root:
 
 ```Java
 Session session = new Session("127.0.0.1", 6888, "root", "root");
 session.openSession();
 ```
 
-You can then try to insert data into IginX. Since IginX supports the creation of time-series when data is written for the first time, there is no need to call the relevant series creation interface in advance. IginX provides row-style and column-style data writing interfaces. 
-
-The following is an example of using the column-style data writing interface:
-
+You can then try to insert data into IginX. Since IginX supports the creation of time series when data is written for the first time, there is no need to call the relevant series creation interface in advance. IginX provides a row-style and column-style data-writing interface. The following is a usage example of the column-style data writing interface:
 
 ```java
 private static void insertColumnRecords(Session session) throws SessionException, ExecutionException {
@@ -391,7 +384,7 @@ private static void insertColumnRecords(Session session) throws SessionException
 
         Object[] valuesList = new Object[4];
         for (long i = 0; i < 4; i++) {
-            Object[] values = new Object[size];
+            Object[] values ​​= new Object[size];
             for (long j = 0; j < size; j++) {
                 if (i < 2) {
                   values[(int) j] = i + j;
@@ -443,7 +436,7 @@ private static void downsampleQuery(Session session) throws SessionException, Ex
         long startTime = 100L;
         long endTime = 1101L;
 
-        // MAX
+        //MAX
         SessionQueryDataSet dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MAX, 100);
         dataSet.print();
 
@@ -451,7 +444,7 @@ private static void downsampleQuery(Session session) throws SessionException, Ex
         dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.MIN, ROW_INTERVAL * 100);
         dataSet.print();
 
-        // FIRST
+        //FIRST
         dataSet = session.downsampleQuery(paths, startTime, endTime, AggregateType.FIRST, ROW_INTERVAL * 100);
         dataSet.print();
 
@@ -472,6 +465,7 @@ private static void downsampleQuery(Session session) throws SessionException, Ex
         dataSet.print();
 
 }
+
 ```
 
 After the session is completed, you need to manually close and release your connection from your terminal/backend:
