@@ -292,8 +292,15 @@ public class DynamicPolicy implements IPolicy {
       totalHeat += heat;
     }
     int totalFragmentNum = 0;
-    for (List<FragmentMeta> fragmentMetas : nodeFragmentMap.values()) {
-      totalFragmentNum += fragmentMetas.size();
+    Map<Long, Long> nodeLoadMap = new HashMap<>();
+    for (Entry<Long, List<FragmentMeta>> nodeFragmentEntry : nodeFragmentMap.entrySet()) {
+      totalFragmentNum += nodeFragmentEntry.getValue().size();
+      long nodeTotalHeat = 0L;
+      for (FragmentMeta fragmentMeta : nodeFragmentEntry.getValue()) {
+        nodeTotalHeat += fragmentWriteLoadMap.get(fragmentMeta);
+        nodeTotalHeat += fragmentReadLoadMap.get(fragmentMeta);
+      }
+      nodeLoadMap.put(nodeFragmentEntry.getKey(), nodeTotalHeat);
     }
 
     // 确定m矩阵，原来分区在节点上的分布
@@ -337,9 +344,11 @@ public class DynamicPolicy implements IPolicy {
     }
     if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
       if (maxWriteLoad >= maxReadLoad) {
-        executeTimeseriesReshard(maxWriteLoadFragment, fragmentMetaPointsMap.get(maxWriteLoadFragment));
+        executeTimeseriesReshard(maxWriteLoadFragment,
+            fragmentMetaPointsMap.get(maxWriteLoadFragment), nodeLoadMap);
       } else {
-        executeTimeseriesReshard(maxReadLoadFragment, fragmentMetaPointsMap.get(maxReadLoadFragment));
+        executeTimeseriesReshard(maxReadLoadFragment,
+            fragmentMetaPointsMap.get(maxReadLoadFragment), nodeLoadMap);
       }
       return;
     }
@@ -413,7 +422,8 @@ public class DynamicPolicy implements IPolicy {
         .migrate(migrationTasks, nodeFragmentMap, fragmentWriteLoadMap, fragmentReadLoadMap);
   }
 
-  private void executeTimeseriesReshard(FragmentMeta fragmentMeta, long points) {
+  private void executeTimeseriesReshard(FragmentMeta fragmentMeta, long points,
+      Map<Long, Long> storageHeat) {
     try {
       TimeseriesMonitor.getInstance().start();
       Thread.sleep(timeseriesloadBalanceCheckInterval * 1000L);
@@ -437,10 +447,11 @@ public class DynamicPolicy implements IPolicy {
         }
       }
 
-      if (overLoadTimeseriesMap.size() > 0) {
+      if (overLoadTimeseriesMap.size() > 0
+          && fragmentMeta.getTimeInterval().getEndTime() != Long.MAX_VALUE) {
         MigrationManager.getInstance().getMigration()
             .reshardByCustomizableReplica(fragmentMeta, timeseriesHeat,
-                overLoadTimeseriesMap.keySet(), totalHeat, points);
+                overLoadTimeseriesMap.keySet(), totalHeat, points, storageHeat);
       } else {
         MigrationManager.getInstance().getMigration()
             .reshardByTimeseries(fragmentMeta, timeseriesHeat);
