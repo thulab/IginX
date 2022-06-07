@@ -81,7 +81,7 @@ Apache Maven 3.6.1 (d66c9c0b3152b2e69ee9bac180bb8fcc8e6af555; 2019-04-05T03:00:2
 
 If the words above are displayed, that means the installation was successful.
 
-### Docker installation
+### Docker Installation
 
 Docker provides an official installation script that allows users to automatically install it by entering the command:
 
@@ -200,7 +200,7 @@ REPOSITORY TAG IMAGE ID CREATED SIZE
 iginx latest 7f00b2b9510b 36 seconds ago 702MB
 ```
 
-## Mirror-based operation
+## Mirror-Based Operation
 
 First you need to pull the IoTDB image from DockerHub:
 
