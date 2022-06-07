@@ -5,7 +5,7 @@ sqlStatement
     ;
 
 statement
-    : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
+    : INSERT INTO path tagList? insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
     | selectClause fromClause whereClause? withClause? specialClause? #selectStatement
     | COUNT POINTS #countPointsStatement
@@ -83,12 +83,21 @@ tagExpression
     | LR_BRACKET orTagExpression RR_BRACKET
     ;
 
+tagList
+    : LS_BRACKET tagEquation (COMMA tagEquation)*  RS_BRACKET
+    ;
+
+tagEquation
+    : tagKey OPERATOR_EQ tagValue
+    ;
+
 tagKey
     : ID
     ;
 
 tagValue
-    : stringLiteral
+    : ID
+    | STAR
     ;
 
 fromClause
@@ -146,7 +155,11 @@ comparisonOperator
     ;
 
 insertColumnsSpec
-    : LR_BRACKET (TIMESTAMP|TIME) (COMMA path)+ RR_BRACKET
+    : LR_BRACKET (TIMESTAMP|TIME) (COMMA insertPath)+ RR_BRACKET
+    ;
+
+insertPath
+    : path tagList?
     ;
 
 insertValuesSpec

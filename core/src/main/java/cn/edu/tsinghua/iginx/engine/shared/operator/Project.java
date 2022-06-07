@@ -25,6 +25,10 @@ public class Project extends AbstractUnaryOperator {
         return patterns;
     }
 
+    public TagFilter getTagFilter() {
+        return tagFilter;
+    }
+
     @Override
     public Operator copy() {
         return new Project(getSource().copy(), new ArrayList<>(patterns), tagFilter.copy());

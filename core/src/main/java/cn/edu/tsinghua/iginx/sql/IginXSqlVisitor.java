@@ -38,8 +38,25 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     public Statement visitInsertStatement(InsertStatementContext ctx) {
         InsertStatement insertStatement = new InsertStatement();
         insertStatement.setPrefixPath(ctx.path().getText());
+
+        if (ctx.tagList() != null) {
+            Map<String, String> globalTags = parseTagList(ctx.tagList());
+            insertStatement.setGlobalTags(globalTags);
+        }
         // parse paths
-        ctx.insertColumnsSpec().path().forEach(e -> insertStatement.setPath(e.getText()));
+        ctx.insertColumnsSpec().insertPath().forEach(e -> {
+            String path = e.path().getText();
+            Map<String, String> tags;
+            if (e.tagList() != null) {
+                if (insertStatement.hasGlobalTags()) {
+                    throw new SQLParserException("Insert path couldn't has global tags and local tags at the same time.");
+                }
+                tags = parseTagList(e.tagList());
+            } else {
+                tags = insertStatement.getGlobalTags();
+            }
+            insertStatement.setPath(path, tags);
+        });
         // parse times, values and types
         parseInsertValuesSpec(ctx.insertValuesSpec(), insertStatement);
 
@@ -361,8 +378,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             return parseOrTagExpression(ctx.orTagExpression());
         }
         String tagKey = ctx.tagKey().getText();
-        String tagValue = ctx.tagKey().getText();
-        tagValue = tagValue.substring(1, tagValue.length() - 1);
+        String tagValue = ctx.tagValue().getText();
         return new BaseTagFilter(tagKey, tagValue);
     }
 
@@ -586,4 +602,15 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
                     timestampStr));
         }
     }
+
+    private Map<String, String> parseTagList(TagListContext ctx) {
+        Map<String, String> tags = new HashMap<>();
+        for (TagEquationContext tagCtx: ctx.tagEquation()) {
+            String tagKey = tagCtx.tagKey().getText();
+            String tagValue = tagCtx.tagValue().getText();
+            tags.put(tagKey, tagValue);
+        }
+        return tags;
+    }
+
 }

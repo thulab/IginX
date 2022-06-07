@@ -43,6 +43,8 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.ClearEmptyRowStreamWrapper;
+import cn.edu.tsinghua.iginx.iotdb.tools.DataViewWrapper;
 import cn.edu.tsinghua.iginx.iotdb.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -275,9 +277,9 @@ public class IoTDBStorage implements IStorage {
                 builder.append(path);
                 builder.append(',');
             }
-            String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), storageUnit, FilterTransformer.toString(filter));
+            String statement = String.format(QUERY_DATA, builder.deleteCharAt(builder.length() - 1), storageUnit, FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), true);
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), true, project));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
@@ -294,7 +296,7 @@ public class IoTDBStorage implements IStorage {
             }
             String statement = String.format(QUERY_HISTORY_DATA, builder.deleteCharAt(builder.length() - 1).toString(), FilterTransformer.toString(filter));
             logger.info("[Query] execute query: " + statement);
-            RowStream rowStream = new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false);
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(new IoTDBQueryRowStream(sessionPool.executeQueryStatement(statement), false, project));
             return new TaskExecuteResult(rowStream);
         } catch (IoTDBConnectionException | StatementExecutionException e) {
             logger.error(e.getMessage());
@@ -325,7 +327,8 @@ public class IoTDBStorage implements IStorage {
         return new TaskExecuteResult(null, null);
     }
 
-    private Exception insertRowRecords(RowDataView data, String storageUnit) {
+    private Exception insertRowRecords(RowDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<MeasurementSchema>> schemasMap = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
@@ -403,7 +406,8 @@ public class IoTDBStorage implements IStorage {
         return null;
     }
 
-    private Exception insertNonAlignedRowRecords(RowDataView data, String storageUnit) {
+    private Exception insertNonAlignedRowRecords(RowDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<Integer, Map<String, Tablet>> tabletsMap = new HashMap<>();
         Map<Integer, Integer> pathIndexToTabletIndex = new HashMap<>();
         Map<String, Integer> deviceIdToCnt = new HashMap<>();
@@ -481,7 +485,8 @@ public class IoTDBStorage implements IStorage {
         return null;
     }
 
-    private Exception insertColumnRecords(ColumnDataView data, String storageUnit) {
+    private Exception insertColumnRecords(ColumnDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<MeasurementSchema>> schemasMap = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
@@ -555,7 +560,8 @@ public class IoTDBStorage implements IStorage {
         return null;
     }
 
-    private Exception insertNonAlignedColumnRecords(ColumnDataView data, String storageUnit) {
+    private Exception insertNonAlignedColumnRecords(ColumnDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<Integer, Map<String, Tablet>> tabletsMap = new HashMap<>();
         Map<Integer, List<Integer>> tabletIndexToPathIndexes = new HashMap<>();
         Map<String, Integer> deviceIdToCnt = new HashMap<>();

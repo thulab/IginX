@@ -124,6 +124,15 @@ public class Row {
         return timestamp == row.timestamp && Objects.equals(header, row.header) && Arrays.equals(values, row.values);
     }
 
+    public boolean isEmpty() {
+        for (Object value : values) {
+            if (value != null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public int hashCode() {
         int result = Objects.hash(header, timestamp);

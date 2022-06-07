@@ -43,6 +43,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
+import cn.edu.tsinghua.iginx.iotdb.tools.DataViewWrapper;
 import cn.edu.tsinghua.iginx.iotdb.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -324,7 +325,8 @@ public class IoTDBStorage implements IStorage {
         return new TaskExecuteResult(null, null);
     }
 
-    private Exception insertRowRecords(RowDataView data, String storageUnit) {
+    private Exception insertRowRecords(RowDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<MeasurementSchema>> schemasMap = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
@@ -402,7 +404,8 @@ public class IoTDBStorage implements IStorage {
         return null;
     }
 
-    private Exception insertNonAlignedRowRecords(RowDataView data, String storageUnit) {
+    private Exception insertNonAlignedRowRecords(RowDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<Integer, Map<String, Tablet>> tabletsMap = new HashMap<>();
         Map<Integer, Integer> pathIndexToTabletIndex = new HashMap<>();
         Map<String, Integer> deviceIdToCnt = new HashMap<>();
@@ -480,7 +483,8 @@ public class IoTDBStorage implements IStorage {
         return null;
     }
 
-    private Exception insertColumnRecords(ColumnDataView data, String storageUnit) {
+    private Exception insertColumnRecords(ColumnDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<String, Tablet> tablets = new HashMap<>();
         Map<String, List<MeasurementSchema>> schemasMap = new HashMap<>();
         Map<String, List<Integer>> deviceIdToPathIndexes = new HashMap<>();
@@ -554,7 +558,8 @@ public class IoTDBStorage implements IStorage {
         return null;
     }
 
-    private Exception insertNonAlignedColumnRecords(ColumnDataView data, String storageUnit) {
+    private Exception insertNonAlignedColumnRecords(ColumnDataView dataView, String storageUnit) {
+        DataViewWrapper data = new DataViewWrapper(dataView);
         Map<Integer, Map<String, Tablet>> tabletsMap = new HashMap<>();
         Map<Integer, List<Integer>> tabletIndexToPathIndexes = new HashMap<>();
         Map<String, Integer> deviceIdToCnt = new HashMap<>();

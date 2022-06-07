@@ -20,6 +20,8 @@ package cn.edu.tsinghua.iginx.engine.shared.data.write;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.Map;
+
 public abstract class DataView {
 
     protected final RawData data;
@@ -93,5 +95,10 @@ public abstract class DataView {
     public abstract Object getValue(int index1, int index2);
 
     public abstract BitmapView getBitmapView(int index);
+
+    public Map<String, String> getTags(int index) {
+        checkPathIndexRange(index);
+        return data.getTagsList().get(startPathIndex + index);
+    }
 
 }
