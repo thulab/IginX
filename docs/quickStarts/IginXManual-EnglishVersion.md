@@ -344,7 +344,7 @@ After the startup is complete, you can easily use the RESTful interface to write
 
 Create the file insert.json and add the following to it:
 
-````json
+```json
 [
   {
     "name": "archive_file_tracked",
@@ -367,19 +367,19 @@ Create the file insert.json and add the following to it:
       }
   }
 ]
-````
+```
 
 Use the following command to insert data into the database:
 
 ```shell
 $ curl -XPOST -H'Content-Type: application/json' -d @insert.json http://127.0.0.1:6666/api/v1/datapoints
-````
+```
 
 After inserting data, you can also query the data just written using the RESTful interface.
 
 Create a file query.json and write the following data to it:
 
-````json
+```json
 {
 "start_absolute" : 1,
 "end_relative": {
@@ -396,17 +396,17 @@ Create a file query.json and write the following data to it:
 }
 ]
 }
-````
+```
 
 Use the following command to query the data:
 
 ```shell
 $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1:6666/api/v1/datapoints/query
-````
+```
 
 The command will return information about the data point just inserted:
 
-````json
+```json
 {
     "queries": [
         {
@@ -472,7 +472,7 @@ The command will return information about the data point just inserted:
         }
     ]
 }
-````
+```
 
 For more interfaces, please refer to [IginX Official Manual](https://github.com/thulab/IginX/blob/main/docs/pdf/userManualC.pdf).
 
@@ -493,28 +493,28 @@ $ tar -zxvf v0.2.0.tar.gz
 $ cd IginX-rc-v0.2.0
 # Install to local maven repository
 $ mvn clean install -DskipTests
-````
+```
 
 Only when you are using it, you need to introduce the following dependencies in the pom file of the corresponding project:
 
-````xml
+```xml
 <dependency>
   <groupId>cn.edu.tsinghua</groupId>
   <artifactId>iginx-core</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 </dependency>
-````
+```
 
 Before accessing IginX, you first need to open a session and try to connect. The session constructor has 4 parameters, which are the ip and port of IginX to connect to, and the username and password for IginX authentication. The current authentication system is still being written, so the account name and password to access the backend IginX can directly fill in root:
 
-````Java
+```Java
 Session session = new Session("127.0.0.1", 6888, "root", "root");
 session.openSession();
-````
+```
 
 You can then try to insert data into IginX. Since IginX supports the creation of time series when data is written for the first time, there is no need to call the relevant series creation interface in advance. IginX provides a row-style and column-style data-writing interface. The following is a usage example of the column-style data writing interface:
 
-````java
+```java
 private static void insertColumnRecords(Session session) throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add("sg.d1.s1");
@@ -551,7 +551,7 @@ private static void insertColumnRecords(Session session) throws SessionException
 
         session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
 }
-````
+```
 
 After completing the data writing, you can use the data query interface to query the data just written:
 
