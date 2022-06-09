@@ -555,7 +555,7 @@ private static void insertColumnRecords(Session session) throws SessionException
 
 After completing the data writing, you can use the data query interface to query the data just written:
 
-````java
+```java
 private static void queryData(Session session) throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add("sg.d1.s1");
@@ -569,11 +569,11 @@ private static void queryData(Session session) throws SessionException, Executio
         SessionQueryDataSet dataSet = session.queryData(paths, startTime, endTime);
         dataSet.print();
 }
-````
+```
 
 You can also use the downsampling aggregation query interface to query the interval statistics of the data:
 
-````java
+```java
 private static void downsampleQuery(Session session) throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add("sg.d1.s1");
@@ -612,7 +612,7 @@ private static void downsampleQuery(Session session) throws SessionException, Ex
 
 }
 
-````
+```
 
 After the session is completed, you need to manually close and release your connection from your terminal/backend:
 
