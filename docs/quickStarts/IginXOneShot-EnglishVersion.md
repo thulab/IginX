@@ -1,11 +1,10 @@
-# IginX Installation Manual - By Source (Compilation and Installation)
-
+# IginX Installation and Use Manual (One-Click Start)
 
 [TOC]
 
 IginX is is a new-generation highly scalable time series database distributed middleware, designed to meet industrial Internet scenarios. It was launched by Tsinghua University's National Engineering Laboratory of Big Data System Software. It currently supports IoTDB，InfluxDB as data backends.
 
-## Download and Installation
+## Installation
 
 ### Java Installation
 
@@ -48,159 +47,51 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.181-b13, mixed mode)
 
 If the words above are displayed, it means the installation was successful.
 
-### Maven Installation
+### IginX installation
 
-Maven is a build automation tool used primarily to build and managa Java projects. If you need to compile from the source code, you also need to install a Maven environment >= 3.6. Otherwise, **skip this step entirely**.
-
-1. Visit the [official website](http://maven.apache.org/download.cgi)to download and unzip Maven
-
-```shell
-$ wget http://mirrors.hust.edu.cn/apache/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.tar.gz
-$ tar -xvf  apache-maven-3.3.9-bin.tar.gz
-$ sudo mv -f apache-maven-3.3.9 /usr/local/
-```
-
-2. Set the path
-
-Edit the ~/.bashrc file and add the following two lines at the end of the file:
-
-```shell
-export MAVEN_HOME=/usr/local/apache-maven-3.3.9
-export PATH=${PATH}:${MAVEN_HOME}/bin
-```
-
-Load the file with the changed configuration (into shell scripts):
-
-```shell
-$ source ~/.bashrc
-```
-
-3. Type mvn -v to determine whether Maven installed successfully.
-
-```shell
-$ mvn -v
-Apache Maven 3.6.1 (d66c9c0b3152b2e69ee9bac180bb8fcc8e6af555; 2019-04-05T03:00:29+08:00)
-```
-
-If the words above are displayed, that means the installation was successful.
-
-### IoTDB Installation
-
-IoTDB is Apache's Apache IoT native database with high performance for data management and analysis, deployable on the edge and the cloud.
-
-The specific installation method is as follows:
+IginX is the main part of the system, and the installation package can be downloaded and started with one click:
 
 ```shell
 $ cd ~
-$ wget https://mirrors.bfsu.edu.cn/apache/iotdb/0.12.0/apache-iotdb-0.12.0-server-bin.zip
-$ unzip apache-iotdb-0.12.0-server-bin.zip
-```
-
-### IginX Installation
-
-Compile with source code. If you need to modify code yourself, you can use this installation method. 
-
-#### Compilation with source code
-
-Fetch the latest development version and build it locally.
-
-```shell
-$ cd ~
-$ git clone git@github.com:thulab/IginX.git
-$ cd IginX
-$ mvn clean install -Dmaven.test.skip=true
-$ mvn package -pl core -Dmaven.test.skip=true
-```
-
-The following words are displayed, indicating that the IginX build is successful:
-
-```shell
-[INFO] Reactor Summary for IginX 0.1.0-SNAPSHOT:
-[INFO]
-[INFO] IginX .............................................. SUCCESS [  0.252 s]
-[INFO] IginX Thrift ....................................... SUCCESS [  5.961 s]
-[INFO] IginX Core ......................................... SUCCESS [  4.383 s]
-[INFO] IginX IoTDB ........................................ SUCCESS [  0.855 s]
-[INFO] IginX InfluxDB ..................................... SUCCESS [  0.772 s]
-[INFO] IginX Client ....................................... SUCCESS [  7.713 s]
-[INFO] IginX Example ...................................... SUCCESS [  0.677 s]
-[INFO] IginX Test ......................................... SUCCESS [  0.114 s]
-[INFO] ------------------------------------------------------------------------
-[INFO] BUILD SUCCESS
-[INFO] ------------------------------------------------------------------------
-[INFO] Total time:  20.887 s
-[INFO] Finished at: 2021-07-12T16:01:31+08:00
-[INFO] ------------------------------------------------------------------------
-```
-
-Additionally, IginX supports Docker. Use the following command to build a local IginX image:
-
-```shell
-mvn clean package -pl core -DskipTests docker:build
-```
-
-This may not work, which is not an immediate issue because you don't need Docker for IginX installation.
+$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.2.0/IginX-release-v0.2.0-bin-3in1.zip
+$ unzip IginX-release-v0.2.0-bin-3in1.zip
+````
 
 ## Launch
 
-### IoTDB 
-
-First of all, you need to launch IoTDB.
-
 ```shell
 $ cd ~
-$ cd apache-iotdb-0.12.0-server-bin/
-$ ./sbin/start-server.sh
-```
-
-The following display of words means the IoTDB installation was successful：
-
-```shell
-2021-05-27 08:21:07,440 [main] INFO  o.a.i.d.s.t.ThriftService:125 - IoTDB: start RPC ServerService successfully, listening on ip 0.0.0.0 port 6667
-2021-05-27 08:21:07,440 [main] INFO  o.a.i.db.service.IoTDB:129 - IoTDB is set up, now may some sgs are not ready, please wait several seconds...
-2021-05-27 08:21:07,448 [main] INFO  o.a.i.d.s.UpgradeSevice:109 - finish counting upgrading files, total num:0
-2021-05-27 08:21:07,449 [main] INFO  o.a.i.d.s.UpgradeSevice:74 - Waiting for upgrade task pool to shut down
-2021-05-27 08:21:07,449 [main] INFO  o.a.i.d.s.UpgradeSevice:76 - Upgrade service stopped
-2021-05-27 08:21:07,449 [main] INFO  o.a.i.db.service.IoTDB:146 - Congratulation, IoTDB is set up successfully. Now, enjoy yourself!
-2021-05-27 08:21:07,450 [main] INFO  o.a.i.db.service.IoTDB:93 - IoTDB has started.
-```
-
-### IginX
-
-Using source code to launch
-
-```shell
-$ cd ~
-$ cd Iginx
-$ chmod +x startIginX.sh # enable permissions for startup scripts
-$ ./startIginX.sh
-```
+$ cd IginX-release-v0.2.0-bin-3in1
+$ chmod +x ./startAllOnSingleMachine.sh
+$ ./startAllOnSingleMachine.sh
+````
 
 The following display of words means the IginX installation was successful：
 
 ```shell
-May 27, 2021 8:32:19 AM org.glassfish.grizzly.http.server.NetworkListener start
-INFO: Started listener bound to [127.0.0.1:6666]
-May 27, 2021 8:32:19 AM org.glassfish.grizzly.http.server.HttpServer start
-INFO: [HttpServer] Started.
-08:32:19.446 [Thread-0] INFO cn.edu.tsinghua.iginx.rest.RestServer - Iginx REST server has been available at http://127.0.0.1:6666/.
-```
+ZooKeeper is started!
+IoTDB is started!
+IginX is started!
+=========================================
+You can now test IginX. Have fun!~
+=========================================
+````
 
 ## Using IginX
 
-### RESTful Interface
+### RESTful interface
 
 After the startup is complete, you can easily use the RESTful interface to write and query data to IginX.
 
-Create a file insert.json and add the following into it:
+Create the file insert.json and add the following to it:
 
-```json
+````json
 [
   {
     "name": "archive_file_tracked",
     "datapoints": [
         [1359788400000, 123.3],
-        [1359788300000, 13.2 ],
+        [1359788300000, 13.2],
         [1359788410000, 23.1 ]
     ],
     "tags": {
@@ -217,46 +108,46 @@ Create a file insert.json and add the following into it:
       }
   }
 ]
-```
+````
 
-Insert data into the database using the following command:
+Use the following command to insert data into the database:
 
 ```shell
 $ curl -XPOST -H'Content-Type: application/json' -d @insert.json http://127.0.0.1:6666/api/v1/datapoints
-```
+````
 
 After inserting data, you can also query the data just written using the RESTful interface.
 
-Create a file query.json and write the following data into it:
+Create a file query.json and write the following data to it:
 
-```json
+````json
 {
-    "start_absolute" : 1,
-    "end_relative": {
-        "value": "5",
-        "unit": "days"
-    },
-    "time_zone": "Asia/Kabul",
-    "metrics": [
-        {
-        "name": "archive_file_tracked"
-        },
-        {
-        "name": "archive_file_search"
-        }
-    ]
+"start_absolute" : 1,
+"end_relative": {
+"value": "5",
+"unit": "days"
+},
+"time_zone": "Asia/Kabul",
+"metrics": [
+{
+"name": "archive_file_tracked"
+},
+{
+"name": "archive_file_search"
 }
-```
+]
+}
+````
 
-Enter the following command to query the data:
+Use the following command to query the data:
 
 ```shell
 $ curl -XPOST -H'Content-Type: application/json' -d @query.json http://127.0.0.1:6666/api/v1/datapoints/query
-```
+````
 
 The command will return information about the data point just inserted:
 
-```json
+````json
 {
     "queries": [
         {
@@ -322,7 +213,7 @@ The command will return information about the data point just inserted:
         }
     ]
 }
-```
+````
 
 If you see the following information returned, it means you are able to successfully use RESTful interface to write and query data to IginX.
 
