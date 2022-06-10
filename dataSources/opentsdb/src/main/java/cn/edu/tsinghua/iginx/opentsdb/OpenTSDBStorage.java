@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.DATA_TYPE;
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.fromOpenTSDB;
@@ -272,10 +273,27 @@ public class OpenTSDBStorage implements IStorage {
     }
 
     private TaskExecuteResult executeProjectTask(TimeInterval timeInterval, String storageUnit, Project project) {
+        List<String> wholePathList;
+        try {
+            wholePathList = getPathList();
+        } catch (PhysicalTaskExecuteFailureException e) {
+            return new TaskExecuteResult(new PhysicalException("encounter error when query data in opentsdb: ", e));
+        }
+
         Query.Builder builder = Query.begin(timeInterval.getStartTime()).end(timeInterval.getEndTime()).msResolution();
-        for (String pattern : project.getPatterns()) {
-            OpenTSDBSchema schema = new OpenTSDBSchema(pattern, storageUnit);
-            builder = builder.sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build());
+        for (String queryPath : project.getPatterns()) {
+            if (StringUtils.isPattern(queryPath)) {
+                Pattern pattern = Pattern.compile(StringUtils.reformatPath(queryPath));
+                for (String path : wholePathList) {
+                    if (pattern.matcher(path).matches()) {
+                        OpenTSDBSchema schema = new OpenTSDBSchema(path, storageUnit);
+                        builder = builder.sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build());
+                    }
+                }
+            } else {
+                OpenTSDBSchema schema = new OpenTSDBSchema(queryPath, storageUnit);
+                builder = builder.sub(SubQuery.metric(schema.getMetric()).aggregator(SubQuery.Aggregator.NONE).build());
+            }
         }
         Query query = builder.build();
         try {
@@ -288,9 +306,25 @@ public class OpenTSDBStorage implements IStorage {
     }
 
     private TaskExecuteResult executeProjectHistoryTask(TimeInterval timeInterval, String storageUnit, Project project) {
+        List<String> wholePathList;
+        try {
+            wholePathList = getPathList();
+        } catch (PhysicalTaskExecuteFailureException e) {
+            return new TaskExecuteResult(new PhysicalException("encounter error when query data in opentsdb: ", e));
+        }
+
         Query.Builder builder = Query.begin(timeInterval.getStartTime()).end(timeInterval.getEndTime()).msResolution();
-        for (String pattern : project.getPatterns()) {
-            builder = builder.sub(SubQuery.metric(pattern).aggregator(SubQuery.Aggregator.NONE).build());
+        for (String queryPath : project.getPatterns()) {
+            if (StringUtils.isPattern(queryPath)) {
+                Pattern pattern = Pattern.compile(StringUtils.reformatPath(queryPath));
+                for (String path : wholePathList) {
+                    if (pattern.matcher(path).matches()) {
+                        builder = builder.sub(SubQuery.metric(path).aggregator(SubQuery.Aggregator.NONE).build());
+                    }
+                }
+            } else {
+                builder = builder.sub(SubQuery.metric(queryPath).aggregator(SubQuery.Aggregator.NONE).build());
+            }
         }
         Query query = builder.build();
         try {
@@ -304,20 +338,7 @@ public class OpenTSDBStorage implements IStorage {
 
     @Override
     public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
-        List<String> paths = new ArrayList<>();
-        SuggestQuery suggestQuery = SuggestQuery.type(SuggestQuery.Type.METRICS).max(Integer.MAX_VALUE).build();
-        try {
-            List<String> suggests = client.querySuggest(suggestQuery);
-            for (String metric: suggests) {
-                if (metric.startsWith(DU_PREFIX)) {
-                    paths.add(metric.substring(metric.indexOf(".") + 1));
-                } else {
-                    paths.add(metric);
-                }
-            }
-        } catch (Exception e) {
-            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
-        }
+        List<String> paths = getPathWithoutDUPrefixList();
         paths.sort(String::compareTo);
         if (paths.isEmpty()) {
             throw new PhysicalTaskExecuteFailureException("no data!");
@@ -352,20 +373,7 @@ public class OpenTSDBStorage implements IStorage {
     public List<Timeseries> getTimeSeries() throws PhysicalException {
         List<Timeseries> timeseries = new ArrayList<>();
 
-        List<String> paths = new ArrayList<>();
-        SuggestQuery suggestQuery = SuggestQuery.type(SuggestQuery.Type.METRICS).max(Integer.MAX_VALUE).build();
-        try {
-            List<String> suggests = client.querySuggest(suggestQuery);
-            for (String metric: suggests) {
-                if (metric.startsWith(DU_PREFIX)) {
-                    paths.add(metric.substring(metric.indexOf(".") + 1));
-                } else {
-                    paths.add(metric);
-                }
-            }
-        } catch (Exception e) {
-            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
-        }
+        List<String> paths = getPathWithoutDUPrefixList();
         if (paths.isEmpty()) {
             return timeseries;
         }
@@ -384,6 +392,29 @@ public class OpenTSDBStorage implements IStorage {
             throw new PhysicalTaskExecuteFailureException("encounter error when query data in opentsdb: ", e);
         }
         return timeseries;
+    }
+
+    private List<String> getPathWithoutDUPrefixList() throws PhysicalTaskExecuteFailureException {
+        List<String> suggests = getPathList();
+
+        List<String> paths = new ArrayList<>();
+        for (String metric : suggests) {
+            if (metric.startsWith(DU_PREFIX)) {
+                paths.add(metric.substring(metric.indexOf(".") + 1));
+            } else {
+                paths.add(metric);
+            }
+        }
+        return paths;
+    }
+
+    private List<String> getPathList() throws PhysicalTaskExecuteFailureException {
+        SuggestQuery suggestQuery = SuggestQuery.type(SuggestQuery.Type.METRICS).max(Integer.MAX_VALUE).build();
+        try {
+            return client.querySuggest(suggestQuery);
+        } catch (Exception e) {
+            throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
+        }
     }
 
     @Override

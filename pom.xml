@@ -20,7 +20,7 @@
     <module>dataSources/iotdb11</module>
     <module>dataSources/iotdb12</module>
     <module>dataSources/influxdb</module>
-    <!--module>dataSources/opentsdb</module-->
+    <module>dataSources/opentsdb</module>
     <!--module>dataSources/timescaledb</module-->
     <module>dataSources/postgresql</module>
     <module>shared</module>
