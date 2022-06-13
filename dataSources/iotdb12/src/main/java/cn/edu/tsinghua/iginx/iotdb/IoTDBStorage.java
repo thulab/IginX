@@ -45,6 +45,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
 import cn.edu.tsinghua.iginx.iotdb.tools.DataViewWrapper;
 import cn.edu.tsinghua.iginx.iotdb.tools.FilterTransformer;
+import cn.edu.tsinghua.iginx.iotdb.tools.TagKVUtils;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
@@ -188,6 +189,7 @@ public class IoTDBStorage implements IStorage {
                 }
                 String path = record.getFields().get(0).getStringValue();
                 path = path.substring(5);
+                path = TagKVUtils.splitFullName(path).k;
                 paths.add(path);
             }
             dataSet.close();
@@ -239,25 +241,26 @@ public class IoTDBStorage implements IStorage {
                 String path = record.getFields().get(0).getStringValue();
                 path = path.substring(5);
                 path = path.substring(path.indexOf('.') + 1);
+                Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(path);
                 String dataTypeName = record.getFields().get(3).getStringValue();
                 switch (dataTypeName) {
                     case "BOOLEAN":
-                        timeseries.add(new Timeseries(path, DataType.BOOLEAN));
+                        timeseries.add(new Timeseries(pair.k, DataType.BOOLEAN, pair.v));
                         break;
                     case "FLOAT":
-                        timeseries.add(new Timeseries(path, DataType.FLOAT));
+                        timeseries.add(new Timeseries(pair.k, DataType.FLOAT, pair.v));
                         break;
                     case "TEXT":
-                        timeseries.add(new Timeseries(path, DataType.BINARY));
+                        timeseries.add(new Timeseries(pair.k, DataType.BINARY, pair.v));
                         break;
                     case "DOUBLE":
-                        timeseries.add(new Timeseries(path, DataType.DOUBLE));
+                        timeseries.add(new Timeseries(pair.k, DataType.DOUBLE, pair.v));
                         break;
                     case "INT32":
-                        timeseries.add(new Timeseries(path, DataType.INTEGER));
+                        timeseries.add(new Timeseries(pair.k, DataType.INTEGER, pair.v));
                         break;
                     case "INT64":
-                        timeseries.add(new Timeseries(path, DataType.LONG));
+                        timeseries.add(new Timeseries(pair.k, DataType.LONG, pair.v));
                         break;
                 }
             }
