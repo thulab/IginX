@@ -78,8 +78,11 @@ public class NaivePhysicalOptimizer implements PhysicalOptimizer {
                 OperatorSource operatorSource = (OperatorSource) source;
                 Operator sourceOperator = operatorSource.getOperator();
                 PhysicalTask sourceTask = constructTask(operatorSource.getOperator());
-                if (ConfigDescriptor.getInstance().getConfig().isEnablePushDown() && sourceTask instanceof StoragePhysicalTask && sourceOperator.getType() == OperatorType.Project && ((UnaryOperator) sourceOperator).getSource().getType() == SourceType.Fragment
-                    && operator.getType() == OperatorType.Select) {
+                if (ConfigDescriptor.getInstance().getConfig().isEnablePushDown() && sourceTask instanceof StoragePhysicalTask
+                        && sourceOperator.getType() == OperatorType.Project
+                        && ((Project) sourceOperator).getTagFilter() == null
+                        && ((UnaryOperator) sourceOperator).getSource().getType() == SourceType.Fragment
+                    && operator.getType() == OperatorType.Select && ((Select) operator).getTagFilter() == null) {
                     sourceTask.getOperators().add(operator);
                     return sourceTask;
                 }

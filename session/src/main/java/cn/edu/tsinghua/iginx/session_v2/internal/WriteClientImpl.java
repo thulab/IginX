@@ -207,7 +207,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setAttributesList(new ArrayList<>());
+        req.setTagsList(new ArrayList<>());
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();
@@ -243,7 +243,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setAttributesList(new ArrayList<>());
+        req.setTagsList(new ArrayList<>());
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();

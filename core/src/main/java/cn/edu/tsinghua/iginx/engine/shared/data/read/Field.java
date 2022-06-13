@@ -55,8 +55,20 @@ public final class Field {
         } else {
             StringBuilder builder = new StringBuilder();
             builder.append(name);
+            builder.append('{');
             TreeMap<String, String> treeMap = new TreeMap<>(tags);
-            treeMap.forEach((key, value) -> builder.append('.').append(key).append('.').append(value));
+
+            int cnt = 0;
+            for (String key: treeMap.keySet()) {
+                if (cnt != 0) {
+                    builder.append(',');
+                }
+                builder.append(key);
+                builder.append("=");
+                builder.append(treeMap.get(key));
+                cnt++;
+            }
+            builder.append('}');
             this.fullName = builder.toString();
         }
     }
@@ -68,6 +80,7 @@ public final class Field {
     public String getFullName() {
         return fullName;
     }
+
     public DataType getType() {
         return type;
     }
@@ -95,6 +108,30 @@ public final class Field {
     @Override
     public int hashCode() {
         return Objects.hash(name, type);
+    }
+
+    public static String toFullName(String name, Map<String, String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return name;
+        } else {
+            StringBuilder builder = new StringBuilder();
+            builder.append(name);
+            builder.append('{');
+            TreeMap<String, String> treeMap = new TreeMap<>(tags);
+
+            int cnt = 0;
+            for (String key: treeMap.keySet()) {
+                if (cnt != 0) {
+                    builder.append(',');
+                }
+                builder.append(key);
+                builder.append("=");
+                builder.append(treeMap.get(key));
+                cnt++;
+            }
+            builder.append('}');
+            return builder.toString();
+        }
     }
 
 }
