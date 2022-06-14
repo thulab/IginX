@@ -21,6 +21,9 @@ package cn.edu.tsinghua.iginx.session_v2.write;
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Point {
 
     private final long timestamp;
@@ -31,15 +34,18 @@ public class Point {
 
     private final String measurement;
 
-    public Point(long timestamp, Object value, DataType dataType, String measurement) {
+    private final Map<String, String> tags;
+
+    public Point(long timestamp, Object value, DataType dataType, String measurement, Map<String, String> tags) {
         this.timestamp = timestamp;
         this.value = value;
         this.dataType = dataType;
         this.measurement = measurement;
+        this.tags = tags;
     }
 
     private Point(Point.Builder builder) {
-        this(builder.timestamp, builder.value, builder.dataType, builder.measurement);
+        this(builder.timestamp, builder.value, builder.dataType, builder.measurement, builder.tags);
     }
 
     public static Point.Builder builder() {
@@ -62,6 +68,10 @@ public class Point {
         return measurement;
     }
 
+    public Map<String, String> getTags() {
+        return tags;
+    }
+
     public static class Builder {
 
         private long timestamp = -1;
@@ -71,6 +81,8 @@ public class Point {
         private DataType dataType;
 
         private String measurement;
+
+        private Map<String, String> tags = new HashMap<>();
 
         private Builder() {
 
@@ -137,6 +149,11 @@ public class Point {
         public Point.Builder binaryValue(byte[] value) {
             this.value = value;
             this.dataType = DataType.BINARY;
+            return this;
+        }
+
+        public Point.Builder tagKV(String tagK, String tagV) {
+            this.tags.put(tagK, tagV);
             return this;
         }
 
