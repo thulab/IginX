@@ -28,9 +28,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedColumnRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
 import cn.edu.tsinghua.iginx.thrift.Status;
-import cn.edu.tsinghua.iginx.utils.Bitmap;
-import cn.edu.tsinghua.iginx.utils.ByteUtils;
-import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import cn.edu.tsinghua.iginx.utils.*;
 import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +68,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         SortedMap<String, DataType> measurementMap = new TreeMap<>();
         Set<Long> timestampSet = new HashSet<>();
         for (Point point : points) {
-            String measurement = point.getMeasurement();
+            String measurement = point.getFullName();
             DataType dataType = point.getDataType();
             if (measurementMap.getOrDefault(measurement, dataType) != dataType) {
                 throw new IllegalArgumentException("measurement " + measurement + " has multi data type, which is invalid.");
@@ -100,13 +98,20 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             valuesList[i] = new Object[timestamps.length];
         }
         for (Point point : points) {
-            String measurement = point.getMeasurement();
+            String measurement = point.getFullName();
             long timestamp = point.getTimestamp();
             int measurementIndex = measurementIndexMap.get(measurement);
             int timestampIndex = timestampIndexMap.get(timestamp);
             valuesList[measurementIndex][timestampIndex] = point.getValue();
         }
-        writeColumnData(measurements, timestamps, valuesList, dataTypeList);
+        List<Map<String, String>> tagsList = new ArrayList<>();
+        for (int i = 0; i < measurements.size(); i++) {
+            String measurement = measurements.get(i);
+            Pair<String, Map<String, String>> pair = TagKVUtils.fromFullName(measurement);
+            measurements.set(i, pair.k);
+            tagsList.add(pair.v);
+        }
+        writeColumnData(measurements, timestamps, valuesList, dataTypeList, tagsList);
     }
 
     @Override
@@ -119,7 +124,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         SortedMap<String, DataType> measurementMap = new TreeMap<>();
         for (Record record : records) {
             for (int index = 0; index < record.getLength(); index++) {
-                String measurement = record.getMeasurement(index);
+                String measurement = record.getFullName(index);
                 DataType dataType = record.getDataType(index);
                 if (measurementMap.getOrDefault(measurement, dataType) != dataType) {
                     throw new IllegalArgumentException("measurement " + measurement + " has multi data type, which is invalid.");
@@ -145,7 +150,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             long timestamp = record.getTimestamp();
             Object[] values = valuesMap.getOrDefault(timestamp, new Object[measurements.size()]);
             for (int i = 0; i < record.getValues().size(); i++) {
-                String measurement = record.getMeasurement(i);
+                String measurement = record.getFullName(i);
                 int measurementIndex = measurementIndexMap.get(measurement);
                 values[measurementIndex] = record.getValue(i);
             }
@@ -160,7 +165,14 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             valuesList[index] = entry.getValue();
             index++;
         }
-        writeRowData(measurements, timestamps, valuesList, dataTypeList);
+        List<Map<String, String>> tagsList = new ArrayList<>();
+        for (int i = 0; i < measurements.size(); i++) {
+            String measurement = measurements.get(i);
+            Pair<String, Map<String, String>> pair = TagKVUtils.fromFullName(measurement);
+            measurements.set(i, pair.k);
+            tagsList.add(pair.v);
+        }
+        writeRowData(measurements, timestamps, valuesList, dataTypeList, tagsList);
     }
 
     @Override
@@ -181,11 +193,19 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             timestamps[i] = table.getTimestamp(i);
             valuesList[i] = table.getValues(i);
         }
-        writeRowData(table.getMeasurements(), timestamps, valuesList, table.getDataTypes());
+        List<String> measurements = table.getMeasurements();
+        List<Map<String, String>> tagsList = new ArrayList<>();
+        for (int i = 0; i < measurements.size(); i++) {
+            String measurement = measurements.get(i);
+            Pair<String, Map<String, String>> pair = TagKVUtils.fromFullName(measurement);
+            measurements.set(i, pair.k);
+            tagsList.add(pair.v);
+        }
+        writeRowData(measurements, timestamps, valuesList, table.getDataTypes(), tagsList);
     }
 
     private void writeColumnData(List<String> paths, long[] timestamps, Object[][] valuesList,
-                                 List<DataType> dataTypeList) {
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList) {
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < valuesList.length; i++) {
@@ -207,7 +227,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setTagsList(new ArrayList<>());
+        req.setTagsList(tagsList);
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();
@@ -222,7 +242,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
     }
 
     private void writeRowData(List<String> paths, long[] timestamps, Object[][] valuesList,
-                              List<DataType> dataTypeList) {
+                              List<DataType> dataTypeList, List<Map<String, String>> tagsList) {
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (Object[] values : valuesList) {
@@ -243,7 +263,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setTagsList(new ArrayList<>());
+        req.setTagsList(tagsList);
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();

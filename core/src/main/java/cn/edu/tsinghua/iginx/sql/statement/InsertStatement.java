@@ -31,7 +31,7 @@ public class InsertStatement extends DataStatement {
     }
 
     public InsertStatement(RawDataType rawDataType, List<String> paths, List<Long> times,
-                           Object[] values, List<DataType> types, List<Bitmap> bitmaps) {
+                           Object[] values, List<DataType> types, List<Bitmap> bitmaps, List<Map<String, String>> tagsList) {
         this.statementType = StatementType.INSERT;
         this.rawDataType = rawDataType;
         this.paths = paths;
@@ -39,6 +39,7 @@ public class InsertStatement extends DataStatement {
         this.values = values;
         this.types = types;
         this.bitmaps = bitmaps;
+        this.tagsList = tagsList;
     }
 
     public String getPrefixPath() {

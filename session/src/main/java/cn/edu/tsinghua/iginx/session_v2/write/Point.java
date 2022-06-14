@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.session_v2.write;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.TagKVUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,12 +37,15 @@ public class Point {
 
     private final Map<String, String> tags;
 
+    private final String fullName;
+
     public Point(long timestamp, Object value, DataType dataType, String measurement, Map<String, String> tags) {
         this.timestamp = timestamp;
         this.value = value;
         this.dataType = dataType;
         this.measurement = measurement;
         this.tags = tags;
+        this.fullName = TagKVUtils.toFullName(measurement, tags);
     }
 
     private Point(Point.Builder builder) {
@@ -68,6 +72,10 @@ public class Point {
         return measurement;
     }
 
+    public String getFullName() {
+        return fullName;
+    }
+
     public Map<String, String> getTags() {
         return tags;
     }
@@ -82,7 +90,7 @@ public class Point {
 
         private String measurement;
 
-        private Map<String, String> tags = new HashMap<>();
+        private final Map<String, String> tags = new HashMap<>();
 
         private Builder() {
 
