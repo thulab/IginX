@@ -31,6 +31,6 @@ public class Project extends AbstractUnaryOperator {
 
     @Override
     public Operator copy() {
-        return new Project(getSource().copy(), new ArrayList<>(patterns), tagFilter.copy());
+        return new Project(getSource().copy(), new ArrayList<>(patterns), tagFilter == null ? null : tagFilter.copy());
     }
 }
