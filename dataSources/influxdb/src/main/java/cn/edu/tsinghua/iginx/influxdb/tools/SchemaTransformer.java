@@ -1,6 +1,8 @@
 package cn.edu.tsinghua.iginx.influxdb.tools;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
+import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBSchema;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import com.influxdb.query.FluxColumn;
@@ -46,47 +48,22 @@ public class SchemaTransformer {
         return new Field(pathBuilder.toString(), dataType);
     }
 
-    public static Pair<String, String> processPatternForQuery(String pattern) { // 返回的是 bucket_name, query 的信息
-        String[] parts = pattern.split("\\.");
+    public static Pair<String, String> processPatternForQuery(String pattern, TagFilter tagFilter) { // 返回的是 bucket_name, query 的信息
+        String[] parts = pattern.split("\\.", 3);
         int index = 0;
         String bucketName = parts[index++];
         if (index >= parts.length) {
             return new Pair<>(bucketName, "true");
         }
         StringBuilder queryBuilder = new StringBuilder("(");
-        boolean prefixAnd = false;
         String measurementName = parts[index++];
         if (!measurementName.equals("*")) {
             queryBuilder.append(String.format("r._measurement ==\"%s\"", measurementName));
-            prefixAnd = true;
         }
         if (index < parts.length) {
             // 接着处理 field
-            String fieldName = parts[index++];
-            if (!fieldName.equals("*")) {
-                if (prefixAnd) {
-                    queryBuilder.append(" and ");
-                } else {
-                    prefixAnd = true;
-                }
-                queryBuilder.append(String.format("r._field ==\"%s\"", fieldName));
-            }
-            while (index + 1 < parts.length) {
-                String tagK = parts[index++];
-                String tagV = parts[index++];
-                if (tagK.equals("*")) {
-                    throw new IllegalArgumentException("tag key shouldn't be \"*\"");
-                }
-                if (tagV.equals("*")) {
-                    continue;
-                }
-                if (prefixAnd) {
-                    queryBuilder.append(" and ");
-                } else {
-                    prefixAnd = true;
-                }
-                queryBuilder.append(String.format("r.%s ==\"%s\"", tagK, tagV));
-            }
+            String field = parts[index];
+            queryBuilder.append("r._field =~ /").append(InfluxDBSchema.transformField(field)).append("/");
         }
         queryBuilder.append(")");
         return new Pair<>(bucketName, queryBuilder.toString());

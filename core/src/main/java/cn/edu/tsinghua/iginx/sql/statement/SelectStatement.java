@@ -4,6 +4,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
@@ -25,6 +26,7 @@ public class SelectStatement extends DataStatement {
     private List<String> fromPaths;
     private String orderByPath;
     private Filter filter;
+    private TagFilter tagFilter;
     private long precision;
     private long startTime;
     private long endTime;
@@ -283,6 +285,14 @@ public class SelectStatement extends DataStatement {
 
     public void setFilter(Filter filter) {
         this.filter = filter;
+    }
+
+    public TagFilter getTagFilter() {
+        return tagFilter;
+    }
+
+    public void setTagFilter(TagFilter tagFilter) {
+        this.tagFilter = tagFilter;
     }
 
     public long getStartTime() {

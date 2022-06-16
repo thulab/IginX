@@ -155,12 +155,12 @@ public class Result {
             Header header = resultStream.getHeader();
 
             if (header.hasTimestamp()) {
-                paths.add(Field.TIME.getName());
+                paths.add(Field.TIME.getFullName());
                 types.add(Field.TIME.getType());
             }
 
             resultStream.getHeader().getFields().forEach(field -> {
-                paths.add(field.getName());
+                paths.add(field.getFullName());
                 types.add(field.getType());
             });
 

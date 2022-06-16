@@ -43,7 +43,7 @@ public class IginXWriter extends ExportWriter {
             return "";
         }
         builder.append("INSERT INTO transform(Time, ");
-        batchData.getHeader().getFields().forEach(field -> builder.append(field.getName()).append(","));
+        batchData.getHeader().getFields().forEach(field -> builder.append(field.getFullName()).append(","));
         builder.deleteCharAt(builder.length() - 1);
         builder.append(") VALUES");
         for (Row row : batchData.getRowList()) {

@@ -16,23 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
+package cn.edu.tsinghua.iginx.engine.shared.operator.tag;
 
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.AbstractOperatorMemoryExecutorTest;
-import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import java.util.Arrays;
+public class AndTagFilter implements TagFilter {
 
-public class NaiveOperatorMemoryExecutorTest extends AbstractOperatorMemoryExecutorTest {
+    private final List<TagFilter> children;
 
-    private final NaiveOperatorMemoryExecutor executor;
+    public AndTagFilter(List<TagFilter> children) {
+        this.children = children;
+    }
 
-    public NaiveOperatorMemoryExecutorTest() {
-        executor = NaiveOperatorMemoryExecutor.getInstance();
+    public List<TagFilter> getChildren() {
+        return children;
     }
 
     @Override
-    protected OperatorMemoryExecutor getExecutor() {
-        return executor;
+    public TagFilterType getType() {
+        return TagFilterType.And;
+    }
+
+    @Override
+    public TagFilter copy() {
+        List<TagFilter> newChildren = new ArrayList<>();
+        children.forEach(e -> newChildren.add(e.copy()));
+        return new AndTagFilter(newChildren);
+    }
+
+    @Override
+    public String toString() {
+        return children.stream().map(Object::toString).collect(Collectors.joining(" && ", "(", ")"));
     }
 }

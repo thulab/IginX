@@ -68,7 +68,7 @@ public class ArrowReader implements Reader {
         for (int i = 0; i < root.getRowCount(); i++) {
             Object[] objects = new Object[header.getFields().size()];
             for (int j = 0; j < header.getFields().size(); j++) {
-                String vectorName = header.getFields().get(j).getName();
+                String vectorName = header.getFields().get(j).getFullName();
                 objects[j] = root.getVector(vectorName).getObject(i);
             }
 

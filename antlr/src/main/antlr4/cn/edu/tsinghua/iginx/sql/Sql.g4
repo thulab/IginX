@@ -5,9 +5,9 @@ sqlStatement
     ;
 
 statement
-    : INSERT INTO path insertColumnsSpec VALUES insertValuesSpec #insertStatement
+    : INSERT INTO path tagList? insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
-    | selectClause fromClause whereClause? specialClause? #selectStatement
+    | selectClause fromClause whereClause? withClause? specialClause? #selectStatement
     | COUNT POINTS #countPointsStatement
     | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
     | CLEAR DATA #clearDataStatement
@@ -66,6 +66,40 @@ predicatePath
     | path
     ;
 
+withClause
+    : WITH orTagExpression
+    ;
+
+orTagExpression
+    : andTagExpression (OPERATOR_OR andTagExpression)*
+    ;
+
+andTagExpression
+    : tagExpression (OPERATOR_AND tagExpression)*
+    ;
+
+tagExpression
+    : tagKey OPERATOR_EQ tagValue
+    | LR_BRACKET orTagExpression RR_BRACKET
+    ;
+
+tagList
+    : LS_BRACKET tagEquation (COMMA tagEquation)*  RS_BRACKET
+    ;
+
+tagEquation
+    : tagKey OPERATOR_EQ tagValue
+    ;
+
+tagKey
+    : ID
+    ;
+
+tagValue
+    : ID
+    | STAR
+    ;
+
 fromClause
     : FROM path (COMMA path)*
     ;
@@ -121,7 +155,11 @@ comparisonOperator
     ;
 
 insertColumnsSpec
-    : LR_BRACKET (TIMESTAMP|TIME) (COMMA path)+ RR_BRACKET
+    : LR_BRACKET (TIMESTAMP|TIME) (COMMA insertPath)+ RR_BRACKET
+    ;
+
+insertPath
+    : path tagList?
     ;
 
 insertValuesSpec
@@ -459,6 +497,11 @@ STATUS
     : S T A T U S
     ;
 
+
+WITH
+    : W I T H
+    ;
+
 //============================
 // End of the keywords list
 //============================
@@ -529,7 +572,7 @@ NaN : 'NaN';
 INF : I N F;
 
 stringLiteral
-    : SINGLE_QUOTE_STRING_LITERAL
+    : SINGstringLiteralLE_QUOTE_STRING_LITERAL
     | DOUBLE_QUOTE_STRING_LITERAL
     ;
 

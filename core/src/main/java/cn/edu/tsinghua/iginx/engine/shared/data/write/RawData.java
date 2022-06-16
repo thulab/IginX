@@ -4,10 +4,13 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 
 import java.util.List;
+import java.util.Map;
 
 public class RawData {
 
     private final List<String> paths;
+
+    private final List<Map<String, String>> tagsList;
 
     private final List<Long> timestamps;
 
@@ -19,9 +22,10 @@ public class RawData {
 
     private final RawDataType type;
 
-    public RawData(List<String> paths, List<Long> timestamps, Object[] valuesList,
+    public RawData(List<String> paths, List<Map<String, String>> tagsList, List<Long> timestamps, Object[] valuesList,
                    List<DataType> dataTypeList, List<Bitmap> bitmaps, RawDataType type) {
         this.paths = paths;
+        this.tagsList = tagsList;
         this.timestamps = timestamps;
         this.valuesList = valuesList;
         this.dataTypeList = dataTypeList;
@@ -31,6 +35,10 @@ public class RawData {
 
     public List<String> getPaths() {
         return paths;
+    }
+
+    public List<Map<String, String>> getTagsList() {
+        return tagsList;
     }
 
     public List<Long> getTimestamps() {

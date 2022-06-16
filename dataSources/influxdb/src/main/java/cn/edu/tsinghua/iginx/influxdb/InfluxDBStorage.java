@@ -36,10 +36,12 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
 import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBHistoryQueryRowStream;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBQueryRowStream;
 import cn.edu.tsinghua.iginx.influxdb.query.entity.InfluxDBSchema;
 import cn.edu.tsinghua.iginx.influxdb.tools.SchemaTransformer;
+import cn.edu.tsinghua.iginx.influxdb.tools.TagFilterUtils;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
@@ -80,7 +82,7 @@ public class InfluxDBStorage implements IStorage {
 
     private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: %s, stop: %s)";
 
-    private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\" AND t=\"%s\"";
+    private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\"";
 
     private final StorageEngineMeta meta;
 
@@ -215,8 +217,9 @@ public class InfluxDBStorage implements IStorage {
 
     private TaskExecuteResult executeHistoryProjectTask(TimeInterval timeInterval, Project project) {
         Map<String, String> bucketQueries = new HashMap<>();
+        TagFilter tagFilter = project.getTagFilter();
         for (String pattern: project.getPatterns()) {
-            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(pattern);
+            Pair<String, String> pair = SchemaTransformer.processPatternForQuery(pattern, tagFilter);
             String bucketName = pair.k;
             String query = pair.v;
             String fullQuery = "";
@@ -271,13 +274,13 @@ public class InfluxDBStorage implements IStorage {
             return new TaskExecuteResult(new InfluxDBQueryRowStream(Collections.emptyList()));
         }
 
-        String statement = generateQueryStatement(storageUnit, project.getPatterns(), timeInterval.getStartTime(), timeInterval.getEndTime());
+        String statement = generateQueryStatement(storageUnit, project.getPatterns(), project.getTagFilter(), timeInterval.getStartTime(), timeInterval.getEndTime());
         List<FluxTable> tables = client.getQueryApi().query(statement, organization.getId());
         InfluxDBQueryRowStream rowStream = new InfluxDBQueryRowStream(tables);
         return new TaskExecuteResult(rowStream);
     }
 
-    private static String generateQueryStatement(String bucketName, List<String> paths, long startTime, long endTime) {
+    private static String generateQueryStatement(String bucketName, List<String> paths, TagFilter tagFilter, long startTime, long endTime) {
         if (endTime == Long.MAX_VALUE) {
             endTime = Integer.MAX_VALUE;
             endTime *= 1000;
@@ -300,7 +303,7 @@ public class InfluxDBStorage implements IStorage {
 
                 filterStr.append(schema.getMeasurement().equals("*") ? "r._measurement =~ /.*/" : "r._measurement == \"" + schema.getMeasurement() + "\"");
                 filterStr.append(" and ");
-                filterStr.append(schema.getField().equals("*") ? "r._field =~ /.*/" : "r._field == \"" + schema.getField() + "\"");
+                filterStr.append("r._field =~ /").append(InfluxDBSchema.transformField(schema.getField())).append("/");
 
                 Map<String, String> tags = schema.getTags();
                 if (!tags.isEmpty()) {
@@ -332,6 +335,9 @@ public class InfluxDBStorage implements IStorage {
                 }
 
                 filterStr.append(')');
+            }
+            if (tagFilter != null) {
+                filterStr.append(" and ").append(TagFilterUtils.transformToFilterStr(tagFilter));
             }
             filterStr.append(')');
             statement += filterStr;
@@ -385,7 +391,7 @@ public class InfluxDBStorage implements IStorage {
 
         List<InfluxDBSchema> schemas = new ArrayList<>();
         for (int i = 0; i < data.getPathNum(); i++) {
-            schemas.add(new InfluxDBSchema(data.getPath(i)));
+            schemas.add(new InfluxDBSchema(data.getPath(i), data.getTags(i)));
         }
 
         List<Point> points = new ArrayList<>();
@@ -456,7 +462,7 @@ public class InfluxDBStorage implements IStorage {
 
         List<Point> points = new ArrayList<>();
         for (int i = 0; i < data.getPathNum(); i++) {
-            InfluxDBSchema schema = new InfluxDBSchema(data.getPath(i));
+            InfluxDBSchema schema = new InfluxDBSchema(data.getPath(i), data.getTags(i));
             BitmapView bitmapView = data.getBitmapView(i);
             int index = 0;
             for (int j = 0; j < data.getTimeSize(); j++) {
@@ -537,7 +543,7 @@ public class InfluxDBStorage implements IStorage {
                 client.getDeleteApi().delete(
                         OffsetDateTime.ofInstant(Instant.ofEpochMilli(timeRange.getActualBeginTime()), ZoneId.of("UTC")),
                         OffsetDateTime.ofInstant(Instant.ofEpochMilli(timeRange.getActualEndTime()), ZoneId.of("UTC")),
-                        String.format(DELETE_DATA, schema.getMeasurement(), schema.getField(), schema.getTags().get(InfluxDBSchema.TAG)),
+                        String.format(DELETE_DATA, schema.getMeasurement(), schema.getField()),
                         bucket,
                         organization
                 );

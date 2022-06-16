@@ -25,26 +25,30 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public final class Timeseries {
 
     private final String path;
 
+    private final Map<String, String> tags;
+
     private final DataType dataType;
 
     public Timeseries(String path, DataType dataType) {
+        this(path, dataType, null);
+    }
+
+    public Timeseries(String path, DataType dataType, Map<String, String> tags) {
         this.path = path;
         this.dataType = dataType;
+        this.tags = tags;
     }
 
     public static RowStream toRowStream(Collection<Timeseries> timeseries) {
         Header header = new Header(Arrays.asList(new Field("path", DataType.BINARY), new Field("type", DataType.BINARY)));
-        List<Row> rows = timeseries.stream().map(e -> new Row(header, new Object[]{e.path.getBytes(), e.dataType.toString().getBytes()})).collect(Collectors.toList());
+        List<Row> rows = timeseries.stream().map(e -> new Row(header, new Object[]{Field.toFullName(e.path, e.tags).getBytes(), e.dataType.toString().getBytes()})).collect(Collectors.toList());
         return new Table(header, rows);
     }
 

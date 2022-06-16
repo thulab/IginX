@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.BoolFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.FilterType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
@@ -66,6 +67,7 @@ public class FilterPushDownOptimizer implements Optimizer {
         }
 
         Filter filter = selectOperator.getFilter().copy();
+        TagFilter tagFilter = selectOperator.getTagFilter().copy();
         Map<String, Filter> cache = new HashMap<>();
         for (Pair<Project, Operator> pair : projectAndFatherOperatorList) {
             Project project = pair.getK();
@@ -83,7 +85,7 @@ public class FilterPushDownOptimizer implements Optimizer {
                 // need to scan whole scope.
                 return;
             }
-            Select subSelect = new Select(new OperatorSource(project), filter);
+            Select subSelect = new Select(new OperatorSource(project), filter, tagFilter);
 
             Operator fatherOperator = pair.getV();
             if (fatherOperator != null) {
