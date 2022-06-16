@@ -572,7 +572,7 @@ NaN : 'NaN';
 INF : I N F;
 
 stringLiteral
-    : SINGstringLiteralLE_QUOTE_STRING_LITERAL
+    : SINGLE_QUOTE_STRING_LITERAL
     | DOUBLE_QUOTE_STRING_LITERAL
     ;
 
