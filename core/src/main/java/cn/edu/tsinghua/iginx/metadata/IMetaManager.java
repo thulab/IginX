@@ -102,6 +102,11 @@ public interface IMetaManager {
                                                                                                   TimeInterval timeInterval);
 
     /**
+     * 获取所有的时间序列（测试和日志使用）
+     */
+    List<FragmentMeta> getAllFragments();
+
+    /**
      * 获取某个时间序列的所有分片（按照分片时间戳排序）
      */
     List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);

@@ -42,7 +42,7 @@ public class Config {
 
     private int replicaNum = 0;
 
-    private String databaseClassNames = "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
+    private String databaseClassNames = "iotdb11=cn.edu.tsinghua.iginx.iotdb.IoTDBStorage,iotdb12=cn.edu.tsinghua.iginx.iotdb.IoTDBStorage,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor";
     //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.dynamic.DynamicPolicy";

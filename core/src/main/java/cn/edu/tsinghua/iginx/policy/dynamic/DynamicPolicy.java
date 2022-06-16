@@ -297,8 +297,8 @@ public class DynamicPolicy implements IPolicy {
       totalFragmentNum += nodeFragmentEntry.getValue().size();
       long nodeTotalHeat = 0L;
       for (FragmentMeta fragmentMeta : nodeFragmentEntry.getValue()) {
-        nodeTotalHeat += fragmentWriteLoadMap.get(fragmentMeta);
-        nodeTotalHeat += fragmentReadLoadMap.get(fragmentMeta);
+        nodeTotalHeat += fragmentWriteLoadMap.getOrDefault(fragmentMeta, 0L);
+        nodeTotalHeat += fragmentReadLoadMap.getOrDefault(fragmentMeta, 0L);
       }
       nodeLoadMap.put(nodeFragmentEntry.getKey(), nodeTotalHeat);
     }

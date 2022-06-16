@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.metadata.cache;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.*;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
@@ -39,9 +40,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DefaultMetaCache implements IMetaCache {
 
+    private static final Logger logger = LoggerFactory.getLogger(DefaultMetaCache.class);
     private static DefaultMetaCache INSTANCE = null;
 
     // 分片列表的缓存
@@ -234,6 +238,11 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval){
+        return fragmentMetaListMap.getOrDefault(tsInterval, new ArrayList<>());
+    }
+
+    @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();
@@ -274,6 +283,15 @@ public class DefaultMetaCache implements IMetaCache {
         });
         fragmentLock.readLock().unlock();
         return resultMap;
+    }
+
+    @Override
+    public List<FragmentMeta> getAllFragments() {
+        List<FragmentMeta> resultList = new ArrayList<>();
+        for(List<FragmentMeta> fragmentMetas: fragmentMetaListMap.values()){
+            resultList.addAll(fragmentMetas);
+        }
+        return resultList;
     }
 
     @Override

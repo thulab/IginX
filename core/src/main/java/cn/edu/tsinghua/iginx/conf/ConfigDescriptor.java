@@ -65,7 +65,7 @@ public class ConfigDescriptor {
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
 
-            config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
+            config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb11=cn.edu.tsinghua.iginx.iotdb.IoTDBStorage,iotdb12=cn.edu.tsinghua.iginx.iotdb.IoTDBStorage,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBPlanExecutor
 
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));

@@ -259,17 +259,17 @@ public abstract class MigrationPolicy {
       TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
-      fragmentMeta.endFragmentMetaByTimeSeries(middleTimeseries);
-      DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
-      DefaultMetaManager.getInstance()
-          .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
-      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, currLoad);
       FragmentMeta newFragment = new FragmentMeta(middleTimeseries,
           sourceTsInterval.getEndTimeSeries(),
           fragmentMeta.getTimeInterval().getStartTime(),
           fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
       DefaultMetaManager.getInstance().addFragment(newFragment);
       DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, totalLoad - currLoad);
+      fragmentMeta.endFragmentMetaByTimeSeries(middleTimeseries);
+      DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+      DefaultMetaManager.getInstance()
+          .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
+      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, currLoad);
     } finally {
       migrationLogger.logMigrationExecuteTaskEnd();
     }

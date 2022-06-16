@@ -80,6 +80,14 @@ public class InsertGenerator extends AbstractGenerator {
 
         List<Source> sources = new ArrayList<>();
         insertList.forEach(operator -> sources.add(new OperatorSource(operator)));
+
+        if(sources.isEmpty()){
+            System.out.println("123");
+            List<FragmentMeta> fragmentMetas = metaManager.getAllFragments();
+            for(FragmentMeta fragmentMeta: fragmentMetas){
+                logger.info(fragmentMeta.toString());
+            }
+        }
         return new CombineNonQuery(sources);
     }
 

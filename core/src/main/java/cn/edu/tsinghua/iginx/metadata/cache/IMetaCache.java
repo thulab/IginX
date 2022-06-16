@@ -42,6 +42,8 @@ public interface IMetaCache {
 
     void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 
+    List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval);
+
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap();
@@ -49,6 +51,8 @@ public interface IMetaCache {
     Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
 
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval);
+
+    List<FragmentMeta> getAllFragments();
 
     List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName);
 

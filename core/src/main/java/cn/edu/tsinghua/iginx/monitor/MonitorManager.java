@@ -69,6 +69,12 @@ public class MonitorManager implements Runnable {
           .loadFragmentHeat();
       Map<FragmentMeta, Long> fragmentHeatWriteMap = fragmentHeatPair.getK();
       Map<FragmentMeta, Long> fragmentHeatReadMap = fragmentHeatPair.getV();
+      if (fragmentHeatWriteMap == null) {
+        fragmentHeatWriteMap = new HashMap<>();
+      }
+      if (fragmentHeatReadMap == null) {
+        fragmentHeatReadMap = new HashMap<>();
+      }
       Map<FragmentMeta, Long> fragmentMetaPointsMap = metaManager.loadFragmentPoints();
       Map<Long, List<FragmentMeta>> fragmentOfEachNode = loadFragmentOfEachNode(
           fragmentHeatWriteMap, fragmentHeatReadMap);
@@ -100,6 +106,12 @@ public class MonitorManager implements Runnable {
       try {
         //清空节点信息
         metaManager.clearMonitors();
+        logger.info("start to print all fragments in the system");
+        List<FragmentMeta> fragmentMeta1s = DefaultMetaManager.getInstance().getAllFragments();
+        for (FragmentMeta fragmentMeta : fragmentMeta1s) {
+          logger.info(fragmentMeta.toString());
+        }
+        logger.info("end print all fragments in the system");
         Thread.sleep(interval * 1000L);
         //发起负载均衡判断
         DefaultMetaManager.getInstance().executeReshardJudging();
@@ -119,6 +131,12 @@ public class MonitorManager implements Runnable {
             .loadFragmentHeat();
         Map<FragmentMeta, Long> fragmentHeatWriteMap = fragmentHeatPair.getK();
         Map<FragmentMeta, Long> fragmentHeatReadMap = fragmentHeatPair.getV();
+        if (fragmentHeatWriteMap == null) {
+          fragmentHeatWriteMap = new HashMap<>();
+        }
+        if (fragmentHeatReadMap == null) {
+          fragmentHeatReadMap = new HashMap<>();
+        }
         Map<FragmentMeta, Long> fragmentMetaPointsMap = metaManager.loadFragmentPoints();
         Map<Long, List<FragmentMeta>> fragmentOfEachNode = loadFragmentOfEachNode(
             fragmentHeatWriteMap, fragmentHeatReadMap);
@@ -131,7 +149,11 @@ public class MonitorManager implements Runnable {
           long heat = 0;
           List<FragmentMeta> fragmentMetas = fragmentOfEachNodeEntry.getValue();
           for (FragmentMeta fragmentMeta : fragmentMetas) {
+            logger.info("fragment heat write: {} = {}", fragmentMeta,
+                fragmentHeatWriteMap.getOrDefault(fragmentMeta, 0L));
             heat += fragmentHeatWriteMap.getOrDefault(fragmentMeta, 0L);
+            logger.info("fragment heat read: {} = {}", fragmentMeta,
+                fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L));
             heat += fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L);
           }
           logger.info("heat of node {} : {}", fragmentOfEachNodeEntry.getKey(), heat);

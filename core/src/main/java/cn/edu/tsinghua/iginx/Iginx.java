@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.monitor.MonitorManager;
 import cn.edu.tsinghua.iginx.mqtt.MQTTService;
 import cn.edu.tsinghua.iginx.rest.RestServer;
 import cn.edu.tsinghua.iginx.thrift.IService;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.apache.thrift.TProcessor;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.server.TServer;
@@ -36,11 +37,16 @@ import org.slf4j.LoggerFactory;
 
 public class Iginx {
 
-    private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
+  private static final Logger logger = LoggerFactory.getLogger(Iginx.class);
 
-    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+  private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
-    public static void main(String[] args) throws Exception {
+  public static void main(String[] args) throws Exception {
+//    int i1 = StringUtils.compare("readings.truck_0.South.Trish.H-2.v2.3.elevation",
+//        "readings.truck_9.South.Andy.H-2.v2.3.velocity", false);
+//    int i2 = StringUtils.compare("readings.truck_9.South.Andy.H-2.v2.3.velocity",
+//        "readings.truck_0.South.Trish.H-2.v2.3.elevation", false);
+//    System.out.println(i1);
         if (config.isEnableRestService()) {
             new Thread(new RestServer()).start();
         }
@@ -52,19 +58,20 @@ public class Iginx {
         }
         Iginx iginx = new Iginx();
         iginx.startServer();
-    }
+  }
 
-    private void startServer() throws TTransportException {
-        TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
-        TServerSocket serverTransport = new TServerSocket(ConfigDescriptor.getInstance().getConfig().getPort());
-        TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport).processor(processor)
-                .minWorkerThreads(20);
-        args.protocolFactory(new TBinaryProtocol.Factory());
-        TServer server = new TThreadPoolServer(args);
-        logger.info("iginx starts successfully!");
-        System.out.print("\n\niginx is now in service......\n\n");
-        server.serve();
-    }
+  private void startServer() throws TTransportException {
+    TProcessor processor = new IService.Processor<IService.Iface>(IginxWorker.getInstance());
+    TServerSocket serverTransport = new TServerSocket(
+        ConfigDescriptor.getInstance().getConfig().getPort());
+    TThreadPoolServer.Args args = new TThreadPoolServer.Args(serverTransport).processor(processor)
+        .minWorkerThreads(20);
+    args.protocolFactory(new TBinaryProtocol.Factory());
+    TServer server = new TThreadPoolServer(args);
+    logger.info("iginx starts successfully!");
+    System.out.print("\n\niginx is now in service......\n\n");
+    server.serve();
+  }
 
 
 }

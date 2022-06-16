@@ -88,7 +88,7 @@ public class FilterUtils {
     private static boolean validateValueFilter(ValueFilter valueFilter, Row row) {
         Value value = row.getAsValue(valueFilter.getPath());
         Value targetValue = valueFilter.getValue();
-        if (value.isNull() || targetValue.isNull()) { // 如果任何一个是空值，则认为不可比较
+        if (value == null || value.isNull() || targetValue.isNull()) { // 如果任何一个是空值，则认为不可比较
             return false;
         }
         if (value.getDataType() != targetValue.getDataType()) { // 类型不同，直接否了

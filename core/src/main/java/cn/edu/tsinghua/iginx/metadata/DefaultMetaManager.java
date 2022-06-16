@@ -413,6 +413,11 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
+  public List<FragmentMeta> getAllFragments() {
+    return cache.getAllFragments();
+  }
+
+  @Override
   public List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName) {
     return cache.getFragmentListByTimeSeriesName(tsName);
   }
@@ -605,7 +610,7 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval){
+  public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
     try {
       storage.lockFragment();
       storage.deleteFragmentPoints(tsInterval, timeInterval);
@@ -621,7 +626,7 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void updateFragmentPoints(FragmentMeta fragmentMeta, long points){
+  public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) {
     try {
       storage.lockFragment();
       storage.updateFragmentPoints(fragmentMeta, points);
@@ -998,7 +1003,7 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void updateTimeseriesHeat(Map<String, Long> timeseriesHeatMap) throws Exception{
+  public void updateTimeseriesHeat(Map<String, Long> timeseriesHeatMap) throws Exception {
     try {
       storage.updateTimeseriesLoad(timeseriesHeatMap);
       storage.lockTimeseriesHeatCounter();
@@ -1079,7 +1084,7 @@ public class DefaultMetaManager implements IMetaManager {
   }
 
   @Override
-  public void executeReshardJudging(){
+  public void executeReshardJudging() {
     try {
       if (!reshardStatus.equals(NON_RESHARDING)) {
         return;
@@ -1223,7 +1228,8 @@ public class DefaultMetaManager implements IMetaManager {
         MigrationLoggerAnalyzer migrationLoggerAnalyzer = new MigrationLoggerAnalyzer();
         migrationLoggerAnalyzer.analyze();
         if (migrationLoggerAnalyzer.isStartMigration() && !migrationLoggerAnalyzer
-            .isMigrationFinished() && !migrationLoggerAnalyzer.isLastMigrationExecuteTaskFinished()) {
+            .isMigrationFinished() && !migrationLoggerAnalyzer
+            .isLastMigrationExecuteTaskFinished()) {
           MigrationExecuteTask migrationExecuteTask = migrationLoggerAnalyzer
               .getLastMigrationExecuteTask();
           if (migrationExecuteTask.getMigrationExecuteType() == MigrationExecuteType.MIGRATION) {
