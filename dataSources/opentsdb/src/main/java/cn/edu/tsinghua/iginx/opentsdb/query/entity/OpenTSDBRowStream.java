@@ -5,7 +5,9 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.opentsdb.tools.TagKVUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.opentsdb.client.bean.response.QueryResult;
 
 import java.util.ArrayList;
@@ -45,7 +47,8 @@ public class OpenTSDBRowStream implements RowStream {
                 path = metric.substring(metric.indexOf(".") + 1);
             }
             DataType dataType = fromOpenTSDB(res.getTags().get(DATA_TYPE));
-            fields.add(new Field(path, dataType));
+            Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(path);
+            fields.add(new Field(pair.getK(), dataType, pair.getV()));
         }
         this.header = new Header(Field.TIME, fields);
 
