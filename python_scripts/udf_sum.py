@@ -2,7 +2,7 @@ class UDFSum:
     def __init__(self):
         pass
 
-    def transform(self, rows, params):
+    def transform(self, rows):
         res = []
         for row in zip(*rows):
             sum = 0

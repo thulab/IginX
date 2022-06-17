@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.engine.shared.function.udf;
+package cn.edu.tsinghua.iginx.engine.shared.function.udf.python;
 
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
@@ -8,6 +8,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+import cn.edu.tsinghua.iginx.engine.shared.function.udf.UDSF;
 import cn.edu.tsinghua.iginx.engine.shared.function.udf.utils.TypeUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -53,9 +54,6 @@ public class PyUDSF implements UDSF {
             throw new IllegalArgumentException("unexpected params for PyUDAF.");
         }
 
-        Map<String, Object> extraParams = new HashMap<>();
-        params.forEach((k, v) -> extraParams.put(k, v.getValue()));
-
         String target = params.get(PARAM_PATHS).getBinaryVAsString();
         if (StringUtils.isPattern(target)) {
             Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
@@ -81,7 +79,7 @@ public class PyUDSF implements UDSF {
                 }
                 data.add(rowData);
             }
-            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data, extraParams);
+            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data);
             if (res == null || res.length == 0) {
                 return Table.EMPTY_TABLE;
             }
@@ -106,7 +104,7 @@ public class PyUDSF implements UDSF {
                 Row row = rows.next();
                 data.add(Collections.singletonList(row.getValues()[index]));
             }
-            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data, extraParams);
+            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data);
             if (res == null || res.length == 0) {
                 return Table.EMPTY_TABLE;
             }

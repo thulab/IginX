@@ -35,7 +35,6 @@ import cn.edu.tsinghua.iginx.metadata.entity.TransformTaskMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
 import cn.edu.tsinghua.iginx.query.QueryManager;
 import cn.edu.tsinghua.iginx.thrift.*;
-import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.slf4j.Logger;
@@ -68,8 +67,6 @@ public class IginxWorker implements IService.Iface {
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 
     private final StatementExecutor executor = StatementExecutor.getInstance();
-
-    private final PythonDriver driver = PythonDriver.getInstance();
 
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
@@ -493,13 +490,8 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.FAILURE;
         }
 
-        // drive test
-        if (driver.testWorker(fileName, className)) {
-            metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName, config.getIp(), req.getType()));
-            return RpcUtils.SUCCESS;
-        } else {
-            return RpcUtils.FAILURE;
-        }
+        metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName, config.getIp(), req.getType()));
+        return RpcUtils.SUCCESS;
     }
 
     @Override

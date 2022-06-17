@@ -1,13 +1,13 @@
-from transformer import BaseTransformer
 import pandas as pd
 import numpy as np
 
 
-class RowSumTransformer(BaseTransformer):
+class RowSumTransformer:
     def __init__(self):
         pass
 
-    def transform(self, df):
+    def transform(self, rows):
+        df = pd.DataFrame(rows)
         ret = np.zeros((df.shape[0], 2), dtype=np.integer)
         for index, row in df.iterrows():
             row_sum = 0
@@ -15,4 +15,4 @@ class RowSumTransformer(BaseTransformer):
                 row_sum += num
             ret[index][0] = row[0]
             ret[index][1] = row_sum
-        return pd.DataFrame(ret, columns=['time', 'sum'])
+        return pd.DataFrame(ret, columns=['time', 'sum']).values.tolist()

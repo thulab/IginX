@@ -1,12 +1,12 @@
-package cn.edu.tsinghua.iginx.engine.shared.function.udf;
+package cn.edu.tsinghua.iginx.engine.shared.function.udf.python;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
-import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionType;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingType;
+import cn.edu.tsinghua.iginx.engine.shared.function.udf.UDTF;
 import cn.edu.tsinghua.iginx.engine.shared.function.udf.utils.TypeUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -17,15 +17,15 @@ import java.util.regex.Pattern;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.*;
 
-public class PyUDAF implements UDAF {
+public class PyUDTF implements UDTF {
 
-    private static final String PY_UDAF = "py_udaf";
+    private static final String PY_UDTF = "py_udtf";
 
     private final PythonInterpreter interpreter;
 
     private final String funcName;
 
-    public PyUDAF(PythonInterpreter interpreter, String funcName) {
+    public PyUDTF(PythonInterpreter interpreter, String funcName) {
         this.interpreter = interpreter;
         this.funcName = funcName;
     }
@@ -37,49 +37,37 @@ public class PyUDAF implements UDAF {
 
     @Override
     public MappingType getMappingType() {
-        return MappingType.SetMapping;
+        return MappingType.RowMapping;
     }
 
     @Override
     public String getIdentifier() {
-        return PY_UDAF;
+        return PY_UDTF;
     }
 
     @Override
-    public Row transform(RowStream rows, Map<String, Value> params) throws Exception {
+    public Row transform(Row row, Map<String, Value> params) throws Exception {
         if (!isLegal(params)) {
-            throw new IllegalArgumentException("unexpected params for PyUDAF.");
+            throw new IllegalArgumentException("unexpected params for PyUDTF.");
         }
-
-        Map<String, Object> extraParams = new HashMap<>();
-        params.forEach((k, v) -> extraParams.put(k, v.getValue()));
 
         String target = params.get(PARAM_PATHS).getBinaryVAsString();
         if (StringUtils.isPattern(target)) {
             Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
             List<String> name = new ArrayList<>();
-            List<Integer> indices = new ArrayList<>();
-            for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
-                Field field = rows.getHeader().getField(i);
+            List<Object> data = new ArrayList<>();
+            for (int i = 0; i < row.getHeader().getFieldSize(); i++) {
+                Field field = row.getHeader().getField(i);
                 if (pattern.matcher(field.getName()).matches()) {
                     name.add(getFunctionName() + "(" + field.getName() + ")");
-                    indices.add(i);
+                    data.add(row.getValues()[i]);
                 }
             }
             if (name.isEmpty()) {
                 return Row.EMPTY_ROW;
             }
 
-            List<List<Object>> data = new ArrayList<>();
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                List<Object> rowData = new ArrayList<>();
-                for (Integer idx: indices) {
-                    rowData.add(row.getValues()[idx]);
-                }
-                data.add(rowData);
-            }
-            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data, extraParams);
+            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data);
             if (res.length != name.size()) {
                 return Row.EMPTY_ROW;
             }
@@ -91,17 +79,12 @@ public class PyUDAF implements UDAF {
             Header header = new Header(targetFields);
             return new Row(header, res);
         } else {
-            int index = rows.getHeader().indexOf(target);
+            int index = row.getHeader().indexOf(target);
             if (index == -1) {
                 return Row.EMPTY_ROW;
             }
 
-            List<List<Object>> data = new ArrayList<>();
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                data.add(Collections.singletonList(row.getValues()[index]));
-            }
-            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data, extraParams);
+            Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, Collections.singletonList(row.getValues()[index]));
             if (res.length != 1) {
                 return Row.EMPTY_ROW;
             }

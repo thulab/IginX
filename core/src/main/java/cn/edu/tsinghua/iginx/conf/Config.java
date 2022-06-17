@@ -141,6 +141,8 @@ public class Config {
 
     private boolean needInitBasicUDFFunctions = true;
 
+    private String udfList = "";
+
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
     }
@@ -619,5 +621,13 @@ public class Config {
 
     public void setNeedInitBasicUDFFunctions(boolean needInitBasicUDFFunctions) {
         this.needInitBasicUDFFunctions = needInitBasicUDFFunctions;
+    }
+
+    public String getUdfList() {
+        return udfList;
+    }
+
+    public void setUdfList(String udfList) {
+        this.udfList = udfList;
     }
 }

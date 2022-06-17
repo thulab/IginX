@@ -65,7 +65,7 @@ public class PythonDriver implements Driver {
     }
 
     @Override
-    public Worker createWorker(PythonTask task, Writer writer) throws TransformException {
+    public IPCWorker createWorker(PythonTask task, Writer writer) throws TransformException {
         String name = task.getPyTaskName();
 
         TransformTaskMeta taskMeta = metaManager.getTransformTask(name);
@@ -122,9 +122,9 @@ public class PythonDriver implements Driver {
                 } else if (status < 0) {
                     throw new CreateWorkerException(String.format("Failed to launch python worker with status=%s", Constants.getWorkerStatusInfo(status)));
                 } else {
-                    Worker worker = new Worker(pid, javaPort, pyPort, process, serverSocket, writer);
-                    logger.info(worker.toString() + " has started.");
-                    return worker;
+                    IPCWorker IPCWorker = new IPCWorker(pid, javaPort, pyPort, process, serverSocket, writer);
+                    logger.info(IPCWorker.toString() + " has started.");
+                    return IPCWorker;
                 }
             }
         } catch (IOException e) {

@@ -133,6 +133,7 @@ public class ConfigDescriptor {
             config.setTransformMaxRetryTimes(Integer.parseInt(properties.getProperty("transformMaxRetryTimes", "3")));
 
             config.setNeedInitBasicUDFFunctions(Boolean.parseBoolean(properties.getProperty("needInitBasicUDFFunctions", "true")));
+            config.setUdfList(properties.getProperty("udfList", ""));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -196,6 +197,7 @@ public class ConfigDescriptor {
         config.setTransformTaskThreadPoolSize(EnvUtils.loadEnv("transformTaskThreadPoolSize", config.getTransformTaskThreadPoolSize()));
         config.setTransformMaxRetryTimes(EnvUtils.loadEnv("transformMaxRetryTimes", config.getTransformMaxRetryTimes()));
         config.setNeedInitBasicUDFFunctions(EnvUtils.loadEnv("needInitBasicUDFFunctions", config.isNeedInitBasicUDFFunctions()));
+        config.setUdfList(EnvUtils.loadEnv("udfList", config.getUdfList()));
     }
 
 

@@ -22,9 +22,9 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.*;
-import cn.edu.tsinghua.iginx.engine.shared.function.udf.PyUDAF;
-import cn.edu.tsinghua.iginx.engine.shared.function.udf.PyUDSF;
-import cn.edu.tsinghua.iginx.engine.shared.function.udf.PyUDTF;
+import cn.edu.tsinghua.iginx.engine.shared.function.udf.python.PyUDAF;
+import cn.edu.tsinghua.iginx.engine.shared.function.udf.python.PyUDSF;
+import cn.edu.tsinghua.iginx.engine.shared.function.udf.python.PyUDTF;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.TransformTaskMeta;
@@ -49,7 +49,7 @@ public class FunctionManager {
 
     private static final String PY_SUFFIX = ".py";
 
-    private static final String path = String.join(File.separator, System.getProperty("user.dir"), "python_scripts");
+    private static final String PATH = String.join(File.separator, System.getProperty("user.dir"), "python_scripts");
 
     private FunctionManager() {
         this.functions = new HashMap<>();
@@ -76,13 +76,41 @@ public class FunctionManager {
     }
 
     private void initBasicUDFFunctions() {
-        List<TransformTaskMeta> metaList = Arrays.asList(
-            new TransformTaskMeta("udf_min", "UDFMin", "udf_min.py", config.getIp(), UDFType.UDAF),
-            new TransformTaskMeta("udf_max", "UDFMax", "udf_max.py", config.getIp(), UDFType.UDAF),
-            new TransformTaskMeta("udf_sum", "UDFSum", "udf_sum.py", config.getIp(), UDFType.UDAF),
-            new TransformTaskMeta("udf_avg", "UDFAvg", "udf_avg.py", config.getIp(), UDFType.UDAF),
-            new TransformTaskMeta("udf_count", "UDFCount", "udf_count.py", config.getIp(), UDFType.UDAF)
-        );
+        List<TransformTaskMeta> metaList = new ArrayList<>();
+        String[] udfList = config.getUdfList().split(",");
+        for (String udf: udfList) {
+            String[] udfInfo = udf.split("#");
+            if (udfInfo.length != 4) {
+                logger.error("udf info len must be 4.");
+                continue;
+            }
+            UDFType udfType;
+            switch (udfInfo[3].toLowerCase().trim()) {
+                case "udaf":
+                    udfType = UDFType.UDAF;
+                    break;
+                case "udtf":
+                    udfType = UDFType.UDTF;
+                    break;
+                case "udsf":
+                    udfType = UDFType.UDSF;
+                    break;
+                case "transform":
+                    udfType = UDFType.TRANSFORM;
+                    break;
+                default:
+                    logger.error("unknown udf type: " + udfInfo[3]);
+                    continue;
+            }
+            metaList.add(new TransformTaskMeta(udfInfo[0], udfInfo[1], udfInfo[2], config.getIp(), udfType));
+        }
+//        List<TransformTaskMeta> metaList = Arrays.asList(
+//            new TransformTaskMeta("udf_min", "UDFMin", "udf_min.py", config.getIp(), UDFType.UDAF),
+//            new TransformTaskMeta("udf_max", "UDFMax", "udf_max.py", config.getIp(), UDFType.UDAF),
+//            new TransformTaskMeta("udf_sum", "UDFSum", "udf_sum.py", config.getIp(), UDFType.UDAF),
+//            new TransformTaskMeta("udf_avg", "UDFAvg", "udf_avg.py", config.getIp(), UDFType.UDAF),
+//            new TransformTaskMeta("udf_count", "UDFCount", "udf_count.py", config.getIp(), UDFType.UDAF)
+//        );
 
         for (TransformTaskMeta meta : metaList) {
             TransformTaskMeta taskMeta = metaManager.getTransformTask(meta.getName());
@@ -125,7 +153,7 @@ public class FunctionManager {
         PythonInterpreterConfig config = PythonInterpreterConfig
             .newBuilder()
             .setPythonExec(pythonCMD)
-            .addPythonPaths(path)
+            .addPythonPaths(PATH)
             .build();
 
         PythonInterpreter interpreter = new PythonInterpreter(config);
