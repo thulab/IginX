@@ -488,13 +488,13 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.FAILURE;
         }
 
-        File sourcefile = new File(filePath);
-        if (!sourcefile.exists()) {
+        File sourceFile = new File(filePath);
+        if (!sourceFile.exists()) {
             logger.error(String.format("Register file not exist in declared path, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
 
-        String fileName = sourcefile.getName();
+        String fileName = sourceFile.getName();
         String destPath = String.join(File.separator, System.getProperty("user.dir"), "python_scripts", fileName);
         File destFile = new File(destPath);
 
