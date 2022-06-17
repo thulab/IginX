@@ -18,9 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.metadata;
 
-import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
+import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.cache.DefaultMetaCache;
 import cn.edu.tsinghua.iginx.metadata.cache.IMetaCache;
@@ -35,7 +35,9 @@ import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.UserType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +47,7 @@ import java.util.stream.Collectors;
 public class DefaultMetaManager implements IMetaManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultMetaManager.class);
-    private static DefaultMetaManager INSTANCE;
+    private static volatile DefaultMetaManager INSTANCE;
     private final IMetaCache cache;
 
     private final IMetaStorage storage;
@@ -130,16 +132,27 @@ public class DefaultMetaManager implements IMetaManager {
     private void initStorageEngine() throws MetaStorageException {
         storage.registerStorageChangeHook((id, storageEngine) -> {
             if (storageEngine != null) {
+                if (storageEngine.isHasData()) {
+                    StorageUnitMeta dummyStorageUnit = storageEngine.getDummyStorageUnit();
+                    dummyStorageUnit.setStorageEngineId(id);
+                    dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) id));
+                    dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
+                    FragmentMeta dummyFragment = storageEngine.getDummyFragment();
+                    dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+                    dummyFragment.setMasterStorageUnitId(dummyStorageUnit.getId());
+                }
                 cache.addStorageEngine(storageEngine);
                 for (StorageEngineChangeHook hook : storageEngineChangeHooks) {
                     hook.onChanged(null, storageEngine);
                 }
+                if (storageEngine.isHasData()) {
+                    for (StorageUnitHook storageUnitHook : storageUnitHooks) {
+                        storageUnitHook.onChange(null, storageEngine.getDummyStorageUnit());
+                    }
+                }
             }
         });
-        for (StorageEngineMeta storageEngine : storage.loadStorageEngine(resolveStorageEngineFromConf()).values()) {
-            cache.addStorageEngine(storageEngine);
-        }
-
+        storage.loadStorageEngine(resolveStorageEngineFromConf());
     }
 
     private void initStorageUnit() throws MetaStorageException {
@@ -284,7 +297,17 @@ public class DefaultMetaManager implements IMetaManager {
     public boolean addStorageEngines(List<StorageEngineMeta> storageEngineMetas) {
         try {
             for (StorageEngineMeta storageEngineMeta : storageEngineMetas) {
-                storageEngineMeta.setId(storage.addStorageEngine(storageEngineMeta));
+                long id = storage.addStorageEngine(storageEngineMeta);
+                storageEngineMeta.setId(id);
+                if (storageEngineMeta.isHasData()) {
+                    StorageUnitMeta dummyStorageUnit = storageEngineMeta.getDummyStorageUnit();
+                    dummyStorageUnit.setStorageEngineId(id);
+                    dummyStorageUnit.setId(String.format(Constants.DUMMY + "%04d", (int) id));
+                    dummyStorageUnit.setMasterId(dummyStorageUnit.getId());
+                    FragmentMeta dummyFragment = storageEngineMeta.getDummyFragment();
+                    dummyFragment.setMasterStorageUnit(dummyStorageUnit);
+                    dummyFragment.setMasterStorageUnitId(dummyStorageUnit.getId());
+                }
                 cache.addStorageEngine(storageEngineMeta);
             }
             return true;
@@ -297,6 +320,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<StorageEngineMeta> getStorageEngineList() {
         return new ArrayList<>(cache.getStorageEngineList());
+    }
+
+    @Override
+    public List<StorageEngineMeta> getWriteableStorageEngineList() {
+        return cache.getStorageEngineList().stream().filter(e -> !e.isReadOnly()).collect(Collectors.toList());
     }
 
     @Override
@@ -336,9 +364,15 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+        return getFragmentMapByTimeSeriesInterval(tsInterval, false);
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval, boolean withDummyFragment) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap;
         if (cache.enableFragmentCacheControl() && cache.getFragmentMinTimestamp() > 0L) { // 最老的分片被逐出去了
             TimeInterval beforeTimeInterval = new TimeInterval(0L, cache.getFragmentMinTimestamp());
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = storage.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, beforeTimeInterval);
+            fragmentsMap = storage.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, beforeTimeInterval);
             updateStorageUnitReference(fragmentsMap);
             Map<TimeSeriesInterval, List<FragmentMeta>> recentFragmentsMap = cache.getFragmentMapByTimeSeriesInterval(tsInterval);
             for (TimeSeriesInterval ts: recentFragmentsMap.keySet()) {
@@ -349,9 +383,14 @@ public class DefaultMetaManager implements IMetaManager {
                     recentFragmentsMap.put(ts, fragments);
                 }
             }
-            return fragmentsMap;
+        } else {
+            fragmentsMap = cache.getFragmentMapByTimeSeriesInterval(tsInterval);
         }
-        return cache.getFragmentMapByTimeSeriesInterval(tsInterval);
+        if (withDummyFragment) {
+            List<FragmentMeta> fragmentList = cache.getDummyFragmentsByTimeSeriesInterval(tsInterval);
+            mergeToFragmentMap(fragmentsMap, fragmentList);
+        }
+        return fragmentsMap;
     }
 
     @Override
@@ -366,9 +405,15 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        return getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval, false);
+    }
+
+    @Override
+    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval, boolean withDummyFragment) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap;
         if (cache.enableFragmentCacheControl() && timeInterval.getStartTime() < cache.getFragmentMinTimestamp()) {
             TimeInterval beforeTimeInterval = new TimeInterval(timeInterval.getStartTime(), cache.getFragmentMinTimestamp());
-            Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap = storage.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, beforeTimeInterval);
+            fragmentsMap = storage.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, beforeTimeInterval);
             updateStorageUnitReference(fragmentsMap);
             Map<TimeSeriesInterval, List<FragmentMeta>> recentFragmentsMap = cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
             for (TimeSeriesInterval ts: recentFragmentsMap.keySet()) {
@@ -379,9 +424,33 @@ public class DefaultMetaManager implements IMetaManager {
                     recentFragmentsMap.put(ts, fragments);
                 }
             }
-            return fragmentsMap;
+        } else {
+            fragmentsMap = cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
         }
-        return cache.getFragmentMapByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
+        if (withDummyFragment) {
+            List<FragmentMeta> fragmentList = cache.getDummyFragmentsByTimeSeriesIntervalAndTimeInterval(tsInterval, timeInterval);
+            mergeToFragmentMap(fragmentsMap, fragmentList);
+        }
+        return fragmentsMap;
+    }
+
+    private void mergeToFragmentMap(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsMap, List<FragmentMeta> fragmentList) {
+        for (FragmentMeta fragment: fragmentList) {
+            TimeSeriesInterval tsInterval = fragment.getTsInterval();
+            if (!fragmentsMap.containsKey(tsInterval)) {
+                fragmentsMap.put(tsInterval, new ArrayList<>());
+            }
+            List<FragmentMeta> currentFragmentList = fragmentsMap.get(tsInterval);
+            int index = 0;
+            while (index < currentFragmentList.size()) {
+                if (currentFragmentList.get(index).getTimeInterval().getStartTime() <= fragment.getTimeInterval().getStartTime()) {
+                    index++;
+                } else {
+                    break;
+                }
+            }
+            currentFragmentList.add(index, fragment);
+        }
     }
 
     @Override
@@ -581,7 +650,7 @@ public class DefaultMetaManager implements IMetaManager {
 
     @Override
     public List<Long> selectStorageEngineIdList() {
-        List<Long> storageEngineIdList = getStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
+        List<Long> storageEngineIdList = getWriteableStorageEngineList().stream().map(StorageEngineMeta::getId).collect(Collectors.toList());
         if (storageEngineIdList.size() <= 1 + ConfigDescriptor.getInstance().getConfig().getReplicaNum()) {
             return storageEngineIdList;
         }
@@ -675,7 +744,26 @@ public class DefaultMetaManager implements IMetaManager {
                     extraParams.put(KAndV[0], KAndV[1]);
                 }
             }
-            storageEngineMetaList.add(new StorageEngineMeta(i, ip, port, extraParams, storageEngine, id));
+            boolean hasData = Boolean.parseBoolean(extraParams.getOrDefault(Constants.HAS_DATA, "false"));
+            String dataPrefix = null;
+            if (hasData && extraParams.containsKey(Constants.DATA_PREFIX)) {
+                dataPrefix = extraParams.get(Constants.DATA_PREFIX);
+            }
+            boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.IS_READ_ONLY, "false"));
+            StorageEngineMeta storage = new StorageEngineMeta(i, ip, port, hasData, dataPrefix, readOnly, extraParams, storageEngine, id);
+            if (hasData) {
+                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", i), i);
+                Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(storage);
+                FragmentMeta dummyFragment;
+                if (dataPrefix == null) {
+                    dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
+                } else {
+                    dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
+                }
+                storage.setDummyStorageUnit(dummyStorageUnit);
+                storage.setDummyFragment(dummyFragment);
+            }
+            storageEngineMetaList.add(storage);
         }
         return storageEngineMetaList;
     }

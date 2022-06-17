@@ -30,6 +30,11 @@
             <artifactId>iotdb-session</artifactId>
             <version>0.11.4</version>
         </dependency>
+        <dependency>
+            <groupId>com.influxdb</groupId>
+            <artifactId>influxdb-client-java</artifactId>
+            <version>2.0.0</version>
+        </dependency>
     </dependencies>
 
     <build>

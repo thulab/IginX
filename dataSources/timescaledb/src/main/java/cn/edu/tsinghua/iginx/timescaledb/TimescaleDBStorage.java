@@ -45,6 +45,8 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.timescaledb.entity.TimescaleDBQueryRowStream;
 import cn.edu.tsinghua.iginx.timescaledb.tools.DataTypeTransformer;
@@ -59,6 +61,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +82,12 @@ public class TimescaleDBStorage implements IStorage {
 
   private static final String DEFAULT_PASSWORD = "123456";
 
+  private static final String QUERY_DATABASES = "SELECT datname FROM pg_database";
+
+  private static final String FIRST_QUERY = "select first(%s, time) from %s";
+
+  private static final String LAST_QUERY = "select last(%s, time) from %s";
+
   private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE %s";
 
   private static final String DELETE_DATA = "DELETE FROM %s WHERE time >= to_timestamp(%d) and time < to_timestamp(%d)";
@@ -85,6 +95,8 @@ public class TimescaleDBStorage implements IStorage {
   private static final String IGINX_SEPARATOR = ".";
 
   private static final String TIMESCALEDB_SEPARATOR = "$";
+
+  private static final String DATABASE_PREFIX = "unit";
 
   private final StorageEngineMeta meta;
 
@@ -106,6 +118,55 @@ public class TimescaleDBStorage implements IStorage {
     } catch (SQLException e) {
       throw new StorageInitializationException("cannot connect to " + meta.toString());
     }
+  }
+
+  @Override
+  public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    long minTime = Long.MAX_VALUE, maxTime = 0;
+    List<String> paths = new ArrayList<>();
+    try {
+      Statement stmt = connection.createStatement();
+      ResultSet databaseSet = stmt.executeQuery(QUERY_DATABASES);
+      while (databaseSet.next()) {
+        String databaseName = databaseSet.getString(1);//获取表名称
+        if (databaseName.startsWith(DATABASE_PREFIX)) {
+          useDatabase(databaseName);
+          DatabaseMetaData databaseMetaData = connection.getMetaData();
+          ResultSet tableSet = databaseMetaData.getTables(null, "%", "%", new String[]{"TABLE"});
+          while (tableSet.next()) {
+            String tableName = tableSet.getString(3);//获取表名称
+            ResultSet columnSet = databaseMetaData.getColumns(null, "%", tableName, "%");
+            while (columnSet.next()) {
+              String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
+              paths.add(tableName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
+                  + columnName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR));
+              // 获取first
+              String firstQueryStatement = String.format(FIRST_QUERY, columnName, tableName);
+              Statement firstQueryStmt = connection.createStatement();
+              ResultSet firstQuerySet = firstQueryStmt.executeQuery(firstQueryStatement);
+              if (firstQuerySet.next()) {
+                long currMinTime = firstQuerySet.getLong(1);
+                minTime = Math.min(currMinTime, minTime);
+              }
+              // 获取last
+              String lastQueryStatement = String.format(LAST_QUERY, columnName, tableName);
+              Statement lastQueryStmt = connection.createStatement();
+              ResultSet lastQuerySet = lastQueryStmt.executeQuery(lastQueryStatement);
+              if (lastQuerySet.next()) {
+                long currMaxTime = lastQuerySet.getLong(1);
+                maxTime = Math.max(currMaxTime, maxTime);
+              }
+            }
+          }
+        }
+      }
+    } catch (SQLException e) {
+      throw new PhysicalException(e);
+    }
+    paths.sort(String::compareTo);
+
+    return new Pair<>(new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1)),
+        new TimeInterval(minTime, maxTime + 1));
   }
 
   private boolean testConnection() {
@@ -163,18 +224,26 @@ public class TimescaleDBStorage implements IStorage {
   public List<Timeseries> getTimeSeries() throws PhysicalException {
     List<Timeseries> timeseries = new ArrayList<>();
     try {
-      DatabaseMetaData databaseMetaData = connection.getMetaData();
-      ResultSet tableSet = databaseMetaData.getTables(null, "%", "%", new String[]{"TABLE"});
-      while (tableSet.next()) {
-        String tableName = tableSet.getString(3);//获取表名称
-        ResultSet columnSet = databaseMetaData.getColumns(null, "%", tableName, "%");
-        while (columnSet.next()) {
-          String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
-          String typeName = columnSet.getString("TYPE_NAME");//列字段类型
-          timeseries.add(new Timeseries(
-              tableName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
-                  + columnName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR),
-              DataTypeTransformer.fromTimescaleDB(typeName)));
+      Statement stmt = connection.createStatement();
+      ResultSet databaseSet = stmt.executeQuery(QUERY_DATABASES);
+      while (databaseSet.next()) {
+        String databaseName = databaseSet.getString(1);//获取表名称
+        if (databaseName.startsWith(DATABASE_PREFIX)) {
+          useDatabase(databaseName);
+          DatabaseMetaData databaseMetaData = connection.getMetaData();
+          ResultSet tableSet = databaseMetaData.getTables(null, "%", "%", new String[]{"TABLE"});
+          while (tableSet.next()) {
+            String tableName = tableSet.getString(3);//获取表名称
+            ResultSet columnSet = databaseMetaData.getColumns(null, "%", tableName, "%");
+            while (columnSet.next()) {
+              String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
+              String typeName = columnSet.getString("TYPE_NAME");//列字段类型
+              timeseries.add(new Timeseries(
+                  tableName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
+                      + columnName.replace(TIMESCALEDB_SEPARATOR, IGINX_SEPARATOR),
+                  DataTypeTransformer.fromTimescaleDB(typeName)));
+            }
+          }
         }
       }
     } catch (SQLException e) {
@@ -338,6 +407,15 @@ public class TimescaleDBStorage implements IStorage {
       return new TaskExecuteResult(
           new PhysicalTaskExecuteFailureException("execute delete task in timescaledb failure",
               e));
+    }
+  }
+
+  @Override
+  public void release() throws PhysicalException {
+    try {
+      connection.close();
+    } catch (SQLException e) {
+      throw new PhysicalException(e);
     }
   }
 

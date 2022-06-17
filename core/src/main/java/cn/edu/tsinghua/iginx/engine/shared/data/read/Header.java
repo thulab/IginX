@@ -39,7 +39,7 @@ public final class Header {
         this.fields = fields;
         this.indexMap = new HashMap<>();
         for (int i = 0; i < fields.size(); i++) {
-            this.indexMap.put(fields.get(i).getName(), i);
+            this.indexMap.put(fields.get(i).getFullName(), i);
         }
     }
 
@@ -64,7 +64,7 @@ public final class Header {
     }
 
     public int indexOf(Field field) {
-        String name = field.getName();
+        String name = field.getFullName();
         int index = indexMap.getOrDefault(name, -1);
         if (index == -1) {
             return -1;

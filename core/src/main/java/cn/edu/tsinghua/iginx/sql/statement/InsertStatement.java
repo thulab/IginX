@@ -14,6 +14,8 @@ public class InsertStatement extends DataStatement {
 
     private String prefixPath;
     private List<String> paths;
+    private Map<String, String> globalTags;
+    private List<Map<String, String>> tagsList;
     private List<Long> times;
     private Object[] values;
     private List<DataType> types;
@@ -25,10 +27,11 @@ public class InsertStatement extends DataStatement {
         this.paths = new ArrayList<>();
         this.types = new ArrayList<>();
         this.bitmaps = new ArrayList<>();
+        this.tagsList = new ArrayList<>();
     }
 
     public InsertStatement(RawDataType rawDataType, List<String> paths, List<Long> times,
-                           Object[] values, List<DataType> types, List<Bitmap> bitmaps) {
+                           Object[] values, List<DataType> types, List<Bitmap> bitmaps, List<Map<String, String>> tagsList) {
         this.statementType = StatementType.INSERT;
         this.rawDataType = rawDataType;
         this.paths = paths;
@@ -36,6 +39,7 @@ public class InsertStatement extends DataStatement {
         this.values = values;
         this.types = types;
         this.bitmaps = bitmaps;
+        this.tagsList = tagsList;
     }
 
     public String getPrefixPath() {
@@ -55,7 +59,32 @@ public class InsertStatement extends DataStatement {
     }
 
     public void setPath(String path) {
+        setPath(path, null);
+    }
+
+    public void setPath(String path, Map<String, String> tags) {
         this.paths.add(prefixPath + SQLConstant.DOT + path);
+        this.tagsList.add(tags);
+    }
+
+    public Map<String, String> getGlobalTags() {
+        return globalTags;
+    }
+
+    public void setGlobalTags(Map<String, String> globalTags) {
+        this.globalTags = globalTags;
+    }
+
+    public boolean hasGlobalTags() {
+        return this.globalTags != null;
+    }
+
+    public List<Map<String, String>> getTagsList() {
+        return tagsList;
+    }
+
+    public void setTagsList(List<Map<String, String>> tagsList) {
+        this.tagsList = tagsList;
     }
 
     public List<Long> getTimes() {
@@ -121,9 +150,13 @@ public class InsertStatement extends DataStatement {
         Collections.sort(paths);
         Object[] sortedValuesList = new Object[values.length];
         List<DataType> sortedDataTypeList = new ArrayList<>();
+        List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < values.length; i++) {
             sortedValuesList[i] = values[index[i]];
             sortedDataTypeList.add(types.get(index[i]));
+            if (!hasGlobalTags()) {
+                sortedTagsList.add(tagsList.get(index[i]));
+            }
         }
 
         for (int i = 0; i < sortedValuesList.length; i++) {
@@ -139,9 +172,16 @@ public class InsertStatement extends DataStatement {
 
         values = sortedValuesList;
         types = sortedDataTypeList;
+        tagsList = sortedTagsList;
     }
 
     public RawData getRawData() {
-        return new RawData(paths, times, values, types, bitmaps, rawDataType);
+        List<Map<String, String>> tagsList = this.tagsList;
+        if (globalTags != null) {
+            for (int i = 0; i < paths.size(); i++) {
+                tagsList.add(globalTags);
+            }
+        }
+        return new RawData(paths, tagsList, times, values, types, bitmaps, rawDataType);
     }
 }

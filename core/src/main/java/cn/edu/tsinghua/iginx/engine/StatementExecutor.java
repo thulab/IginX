@@ -315,7 +315,7 @@ public class StatementExecutor {
         List<String> paths = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         stream.getHeader().getFields().forEach(field -> {
-            paths.add(field.getName());
+            paths.add(field.getFullName());
             types.add(field.getType());
         });
 

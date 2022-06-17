@@ -20,9 +20,6 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.naive;
 
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.AbstractOperatorMemoryExecutorTest;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
-import cn.edu.tsinghua.iginx.engine.shared.source.AbstractSource;
-import cn.edu.tsinghua.iginx.engine.shared.source.Source;
 
 import java.util.Arrays;
 

@@ -32,44 +32,66 @@ public final class StorageEngineMeta {
     /**
      * 时序数据库所在的 ip
      */
-    private String ip;
+    private final String ip;
 
     /**
      * 时序数据库开放的端口
      */
-    private int port;
+    private final int port;
+
+    private final boolean hasData;
+
+    private final String dataPrefix;
+
+    private final boolean readOnly;
+
+    private StorageUnitMeta dummyStorageUnit;
+
+    private FragmentMeta dummyFragment;
 
     /**
      * 时序数据库需要的其他参数信息，例如用户名、密码等
      */
-    private Map<String, String> extraParams;
+    private final Map<String, String> extraParams;
 
     /**
      * 数据库类型
      */
-    private String storageEngine;
+    private final String storageEngine;
 
     /**
      * 实例上管理的存储单元列表
      */
     private transient List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-    private long createdBy;
+    private final long createdBy;
 
-    private boolean lastOfBatch;
+    private boolean needReAllocate;
 
     public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy) {
-        this(id, ip, port, extraParams, storageEngine, createdBy, false);
+        this(id, ip, port, false, null, false, extraParams, storageEngine, createdBy);
     }
 
-    public StorageEngineMeta(long id, String ip, int port, Map<String, String> extraParams, String storageEngine, long createdBy, boolean lastOfBatch) {
+    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly,
+                             Map<String, String> extraParams, String storageEngine, long createdBy) {
+        this(id, ip, port, hasData, dataPrefix, readOnly, null, null, extraParams, storageEngine, createdBy, false);
+    }
+
+    public StorageEngineMeta(long id, String ip, int port, boolean hasData, String dataPrefix, boolean readOnly, StorageUnitMeta dummyStorageUnit, FragmentMeta dummyFragment,
+                             Map<String, String> extraParams, String storageEngine,
+                             long createdBy, boolean needReAllocate) {
         this.id = id;
         this.ip = ip;
         this.port = port;
+        this.hasData = hasData;
+        this.dataPrefix = dataPrefix;
+        this.readOnly = readOnly;
+        this.dummyStorageUnit = dummyStorageUnit;
+        this.dummyFragment = dummyFragment;
         this.extraParams = extraParams;
         this.storageEngine = storageEngine;
         this.createdBy = createdBy;
-        this.lastOfBatch = lastOfBatch;
+        this.needReAllocate = needReAllocate;
     }
 
     public long getId() {
@@ -78,38 +100,25 @@ public final class StorageEngineMeta {
 
     public void setId(long id) {
         this.id = id;
+        if (hasData) {
+            dummyStorageUnit.setStorageEngineId(id);
+        }
     }
 
     public String getIp() {
         return ip;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
     public int getPort() {
         return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
     }
 
     public Map<String, String> getExtraParams() {
         return extraParams;
     }
 
-    public void setExtraParams(Map<String, String> extraParams) {
-        this.extraParams = extraParams;
-    }
-
     public String getStorageEngine() {
         return storageEngine;
-    }
-
-    public void setStorageEngine(String storageEngine) {
-        this.storageEngine = storageEngine;
     }
 
     public List<StorageUnitMeta> getStorageUnitList() {
@@ -133,20 +142,44 @@ public final class StorageEngineMeta {
         storageUnitList.add(storageUnit);
     }
 
+    public boolean isHasData() {
+        return hasData;
+    }
+
+    public String getDataPrefix() {
+        return dataPrefix;
+    }
+
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public StorageUnitMeta getDummyStorageUnit() {
+        return dummyStorageUnit;
+    }
+
+    public FragmentMeta getDummyFragment() {
+        return dummyFragment;
+    }
+
+    public void setDummyStorageUnit(StorageUnitMeta dummyStorageUnit) {
+        this.dummyStorageUnit = dummyStorageUnit;
+    }
+
+    public void setDummyFragment(FragmentMeta dummyFragment) {
+        this.dummyFragment = dummyFragment;
+    }
+
     public long getCreatedBy() {
         return createdBy;
     }
 
-    public void setCreatedBy(long createdBy) {
-        this.createdBy = createdBy;
+    public boolean isNeedReAllocate() {
+        return needReAllocate;
     }
 
-    public boolean isLastOfBatch() {
-        return lastOfBatch;
-    }
-
-    public void setLastOfBatch(boolean lastOfBatch) {
-        this.lastOfBatch = lastOfBatch;
+    public void setNeedReAllocate(boolean needReAllocate) {
+        this.needReAllocate = needReAllocate;
     }
 
     @Override

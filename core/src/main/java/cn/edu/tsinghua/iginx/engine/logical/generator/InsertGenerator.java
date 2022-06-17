@@ -51,7 +51,7 @@ public class InsertGenerator extends AbstractGenerator {
 
         policy.notify(insertStatement);
 
-        List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(insertStatement.getPaths()));
+        List<String> pathList = new ArrayList<>(insertStatement.getPaths());
 
         TimeSeriesInterval tsInterval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
         TimeInterval timeInterval = new TimeInterval(insertStatement.getStartTime(), insertStatement.getEndTime() + 1);

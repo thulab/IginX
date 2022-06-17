@@ -11,6 +11,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ContextBuilder {
@@ -38,26 +39,27 @@ public class ContextBuilder {
 
     public RequestContext build(InsertColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Column, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
     public RequestContext build(InsertNonAlignedColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedColumn, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
     public RequestContext build(InsertRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Row, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
     public RequestContext build(InsertNonAlignedRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedRow, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
     private RequestContext buildFromInsertReq(long sessionId, RawDataType rawDataType, List<String> paths, List<DataType> types,
-                                              byte[] timestamps, List<ByteBuffer> valueList, List<ByteBuffer> bitmapList) {
+                                              byte[] timestamps, List<ByteBuffer> valueList, List<ByteBuffer> bitmapList,
+                                              List<Map<String, String>> tagsList) {
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(timestamps);
         List<Long> times = new ArrayList<>();
         Arrays.stream(timeArray).forEach(times::add);
@@ -78,7 +80,7 @@ public class ContextBuilder {
             times,
             values,
             types,
-            bitmaps
+            bitmaps, tagsList
         );
         return new RequestContext(sessionId, statement);
     }

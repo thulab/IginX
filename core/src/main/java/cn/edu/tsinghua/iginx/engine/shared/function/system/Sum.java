@@ -93,15 +93,15 @@ public class Sum implements SetMappingFunction {
             Map<Integer, Integer> groupOrderIndexMap = new HashMap<>();
             for (int i = 0; i < fields.size(); i++) {
                 Field field = fields.get(i);
-                if (pattern.matcher(field.getName()).matches()) {
+                if (pattern.matcher(field.getFullName()).matches()) {
                     if (groupByLevels == null) {
                         if (DataTypeUtils.isWholeNumber(field.getType())) {
-                            targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.LONG));
+                            targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.LONG));
                         } else {
-                            targetFields.add(new Field(getIdentifier() + "(" + field.getName() + ")", DataType.DOUBLE));
+                            targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.DOUBLE));
                         }
                     } else {
-                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
                         int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
                         if (index != -1) {
                             groupOrderIndexMap.put(i, index);
@@ -169,9 +169,9 @@ public class Sum implements SetMappingFunction {
             Object targetValue;
             String targetFieldName;
             if (groupByLevels == null) {
-                targetFieldName = getIdentifier() + "(" + field.getName() + ")";
+                targetFieldName = getIdentifier() + "(" + field.getFullName() + ")";
             } else {
-                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getName(), groupByLevels) + ")";
+                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
             }
             if (DataTypeUtils.isWholeNumber(field.getType())) {
                 targetField = new Field(targetFieldName, DataType.LONG);

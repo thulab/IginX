@@ -26,17 +26,18 @@ import cn.edu.tsinghua.iginx.conf.Constants;
 import cn.edu.tsinghua.iginx.engine.ContextBuilder;
 import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.physical.PhysicalEngineImpl;
+import cn.edu.tsinghua.iginx.engine.physical.storage.StorageManager;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
-import cn.edu.tsinghua.iginx.metadata.entity.IginxMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TransformTaskMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.UserMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.query.QueryManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import cn.edu.tsinghua.iginx.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,10 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class IginxWorker implements IService.Iface {
@@ -175,7 +173,14 @@ public class IginxWorker implements IService.Iface {
 
         for (StorageEngine storageEngine : storageEngines) {
             String type = storageEngine.getType();
-            StorageEngineMeta meta = new StorageEngineMeta(0, storageEngine.getIp(), storageEngine.getPort(),
+            Map<String, String> extraParams = storageEngine.getExtraParams();
+            boolean hasData = Boolean.parseBoolean(extraParams.getOrDefault(Constants.HAS_DATA, "false"));
+            String dataPrefix = null;
+            if (hasData && extraParams.containsKey(Constants.DATA_PREFIX)) {
+                dataPrefix = extraParams.get(Constants.DATA_PREFIX);
+            }
+            boolean readOnly = Boolean.parseBoolean(extraParams.getOrDefault(Constants.IS_READ_ONLY, "false"));
+            StorageEngineMeta meta = new StorageEngineMeta(-1, storageEngine.getIp(), storageEngine.getPort(), hasData, dataPrefix, readOnly,
                 storageEngine.getExtraParams(), type, metaManager.getIginxId());
             storageEngineMetas.add(meta);
 
@@ -201,8 +206,23 @@ public class IginxWorker implements IService.Iface {
             }
             status.setMessage("unexpected repeated add");
         }
-        if (!storageEngineMetas.isEmpty()) {
-            storageEngineMetas.get(storageEngineMetas.size() - 1).setLastOfBatch(true); // 每一批最后一个是 true，表示需要进行扩容
+        if (!storageEngineMetas.isEmpty() && storageEngineMetas.stream().anyMatch(e -> !e.isReadOnly())) {
+            storageEngineMetas.get(storageEngineMetas.size() - 1).setNeedReAllocate(true); // 如果这批节点不是只读的话，每一批最后一个是 true，表示需要进行扩容
+        }
+        for (StorageEngineMeta meta: storageEngineMetas) {
+            if (meta.isHasData()) {
+                String dataPrefix = meta.getDataPrefix();
+                StorageUnitMeta dummyStorageUnit = new StorageUnitMeta(Constants.DUMMY + String.format("%04d", 0), -1);
+                Pair<TimeSeriesInterval, TimeInterval> boundary = StorageManager.getBoundaryOfStorage(meta);
+                FragmentMeta dummyFragment;
+                if (dataPrefix == null) {
+                    dummyFragment = new FragmentMeta(boundary.k, boundary.v, dummyStorageUnit);
+                } else {
+                    dummyFragment = new FragmentMeta(new TimeSeriesInterval(dataPrefix, StringUtils.nextString(dataPrefix)), boundary.v, dummyStorageUnit);
+                }
+                meta.setDummyStorageUnit(dummyStorageUnit);
+                meta.setDummyFragment(dummyFragment);
+            }
         }
         if (!metaManager.addStorageEngines(storageEngineMetas)) {
             status = RpcUtils.FAILURE;
@@ -484,7 +504,7 @@ public class IginxWorker implements IService.Iface {
         }
 
         try {
-            Files.copy(sourcefile.toPath(), destFile.toPath());
+            Files.copy(sourceFile.toPath(), destFile.toPath());
         } catch (IOException e) {
             logger.error(String.format("Fail to copy register file, filePath=%s", filePath), e);
             return RpcUtils.FAILURE;

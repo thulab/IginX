@@ -79,6 +79,9 @@ public class FileMetaStorage implements IMetaStorage {
             if (Files.notExists(Paths.get(PATH, USER_META_FILE))) {
                 Files.createFile(Paths.get(PATH, USER_META_FILE));
             }
+            if (Files.notExists(Paths.get(PATH, TRANSFORM_META_FILE))) {
+                Files.createFile(Paths.get(PATH, TRANSFORM_META_FILE));
+            }
         } catch (IOException e) {
             logger.error("encounter error when create log file: ", e);
             System.exit(10);

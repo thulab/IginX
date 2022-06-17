@@ -4,11 +4,13 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.logical.optimizer.LogicalOptimizerManager;
 import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
+import cn.edu.tsinghua.iginx.engine.logical.utils.PathUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
@@ -62,28 +64,29 @@ public class QueryGenerator extends AbstractGenerator {
         policy.notify(selectStatement);
 
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(selectStatement.getPathSet()));
+        TagFilter tagFilter = selectStatement.getTagFilter();
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
-        if (fragments.isEmpty()) {
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
+        if (!metaManager.hasFragment()) {
             //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
         }
 
         List<Operator> joinList = new ArrayList<>();
         fragments.forEach((k, v) -> {
             List<Operator> unionList = new ArrayList<>();
-            v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList)));
+            v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList, tagFilter)));
             joinList.add(OperatorUtils.unionOperators(unionList));
         });
 
         Operator root = OperatorUtils.joinOperatorsByTime(joinList);
 
         if (selectStatement.hasValueFilter()) {
-            root = new Select(new OperatorSource(root), selectStatement.getFilter());
+            root = new Select(new OperatorSource(root), selectStatement.getFilter(), tagFilter);
         }
 
         List<Operator> queryList = new ArrayList<>();
@@ -158,7 +161,7 @@ public class QueryGenerator extends AbstractGenerator {
         } else {
             List<String> selectedPath = new ArrayList<>();
             selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> selectedPath.addAll(v));
-            queryList.add(new Project(new OperatorSource(root), selectedPath));
+            queryList.add(new Project(new OperatorSource(root), selectedPath, tagFilter));
         }
 
         if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
@@ -184,7 +187,6 @@ public class QueryGenerator extends AbstractGenerator {
                 (int) selectStatement.getOffset()
             );
         }
-
         return root;
     }
 }

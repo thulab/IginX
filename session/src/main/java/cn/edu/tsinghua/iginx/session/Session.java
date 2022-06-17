@@ -298,7 +298,12 @@ public class Session {
     }
 
     public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                    List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+                                    List<DataType> dataTypeList) throws SessionException, ExecutionException {
+        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                    List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -307,8 +312,8 @@ public class Session {
             logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
             return;
         }
-        if (attributesList != null && paths.size() != attributesList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
             return;
         }
 
@@ -334,14 +339,14 @@ public class Session {
         Collections.sort(paths);
         Object[] sortedValuesList = new Object[valuesList.length];
         List<DataType> sortedDataTypeList = new ArrayList<>();
-        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < valuesList.length; i++) {
             sortedValuesList[i] = valuesList[index[i]];
             sortedDataTypeList.add(dataTypeList.get(index[i]));
         }
-        if (attributesList != null) {
+        if (tagsList != null) {
             for (Integer i : index) {
-                sortedAttributesList.add(attributesList.get(i));
+                sortedTagsList.add(tagsList.get(i));
             }
         }
 
@@ -370,7 +375,7 @@ public class Session {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
-        req.setAttributesList(sortedAttributesList);
+        req.setTagsList(sortedTagsList);
 
         try {
             Status status;
@@ -389,7 +394,12 @@ public class Session {
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+                                              List<DataType> dataTypeList) throws SessionException, ExecutionException {
+        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -398,8 +408,8 @@ public class Session {
             logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
             return;
         }
-        if (attributesList != null && paths.size() != attributesList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
             return;
         }
 
@@ -425,14 +435,14 @@ public class Session {
         Collections.sort(paths);
         Object[] sortedValuesList = new Object[valuesList.length];
         List<DataType> sortedDataTypeList = new ArrayList<>();
-        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < valuesList.length; i++) {
             sortedValuesList[i] = valuesList[index[i]];
             sortedDataTypeList.add(dataTypeList.get(index[i]));
         }
-        if (attributesList != null) {
+        if (tagsList != null) {
             for (Integer i : index) {
-                sortedAttributesList.add(attributesList.get(i));
+                sortedTagsList.add(tagsList.get(i));
             }
         }
 
@@ -461,7 +471,7 @@ public class Session {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
-        req.setAttributesList(sortedAttributesList);
+        req.setTagsList(sortedTagsList);
 
         try {
             Status status;
@@ -480,7 +490,7 @@ public class Session {
     }
 
     public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                 List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -493,8 +503,8 @@ public class Session {
             logger.error("The sizes of timestamps and valuesList should be equal.");
             return;
         }
-        if (attributesList != null && paths.size() != attributesList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
             return;
         }
 
@@ -516,7 +526,7 @@ public class Session {
         Arrays.sort(index, Comparator.comparing(paths::get));
         Collections.sort(paths);
         List<DataType> sortedDataTypeList = new ArrayList<>();
-        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < sortedValuesList.length; i++) {
             Object[] values = new Object[index.length];
             for (int j = 0; j < index.length; j++) {
@@ -527,9 +537,9 @@ public class Session {
         for (Integer i : index) {
             sortedDataTypeList.add(dataTypeList.get(i));
         }
-        if (attributesList != null) {
+        if (tagsList != null) {
             for (Integer i : index) {
-                sortedAttributesList.add(attributesList.get(i));
+                sortedTagsList.add(tagsList.get(i));
             }
         }
 
@@ -558,7 +568,7 @@ public class Session {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
-        req.setAttributesList(sortedAttributesList);
+        req.setTagsList(sortedTagsList);
 
         try {
             Status status;
@@ -577,7 +587,12 @@ public class Session {
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                           List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws SessionException, ExecutionException {
+                                           List<DataType> dataTypeList) throws SessionException, ExecutionException {
+        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -590,8 +605,8 @@ public class Session {
             logger.error("The sizes of timestamps and valuesList should be equal.");
             return;
         }
-        if (attributesList != null && paths.size() != attributesList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
             return;
         }
 
@@ -613,7 +628,7 @@ public class Session {
         Arrays.sort(index, Comparator.comparing(paths::get));
         Collections.sort(paths);
         List<DataType> sortedDataTypeList = new ArrayList<>();
-        List<Map<String, String>> sortedAttributesList = new ArrayList<>();
+        List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < sortedValuesList.length; i++) {
             Object[] values = new Object[index.length];
             for (int j = 0; j < index.length; j++) {
@@ -624,9 +639,9 @@ public class Session {
         for (Integer i : index) {
             sortedDataTypeList.add(dataTypeList.get(i));
         }
-        if (attributesList != null) {
+        if (tagsList != null) {
             for (Integer i : index) {
-                sortedAttributesList.add(attributesList.get(i));
+                sortedTagsList.add(tagsList.get(i));
             }
         }
 
@@ -655,7 +670,7 @@ public class Session {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
-        req.setAttributesList(sortedAttributesList);
+        req.setTagsList(sortedTagsList);
 
         try {
             Status status;

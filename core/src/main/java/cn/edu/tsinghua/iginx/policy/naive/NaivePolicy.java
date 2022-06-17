@@ -11,6 +11,8 @@ import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -18,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class NaivePolicy implements IPolicy {
+
+    private static final Logger logger = LoggerFactory.getLogger(NaivePolicy.class);
 
     protected AtomicBoolean needReAllocate = new AtomicBoolean(false);
     private IMetaManager iMetaManager;
@@ -45,8 +49,9 @@ public class NaivePolicy implements IPolicy {
     public StorageEngineChangeHook getStorageEngineChangeHook() {
         return (before, after) -> {
             // 哪台机器加了分片，哪台机器初始化，并且在批量添加的时候只有最后一个存储引擎才会导致扩容发生
-            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isLastOfBatch()) {
+            if (before == null && after != null && after.getCreatedBy() == iMetaManager.getIginxId() && after.isNeedReAllocate()) {
                 needReAllocate.set(true);
+                logger.info("新的可写节点进入集群，集群需要重新分片");
             }
             // TODO: 针对节点退出的情况缩容
         };
@@ -118,7 +123,7 @@ public class NaivePolicy implements IPolicy {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
-        List<StorageEngineMeta> storageEngineList = iMetaManager.getStorageEngineList();
+        List<StorageEngineMeta> storageEngineList = iMetaManager.getWriteableStorageEngineList();
         int storageEngineNum = storageEngineList.size();
 
         String[] clients = ConfigDescriptor.getInstance().getConfig().getClients().split(",");
@@ -214,7 +219,7 @@ public class NaivePolicy implements IPolicy {
         } else {
             throw new IllegalArgumentException("function generateFragmentsAndStorageUnits only use insert statement for now.");
         }
-        List<String> prefixList = sampler.samplePrefix(iMetaManager.getStorageEngineList().size() - 1);
+        List<String> prefixList = sampler.samplePrefix(iMetaManager.getWriteableStorageEngineList().size() - 1);
 
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
@@ -251,7 +256,7 @@ public class NaivePolicy implements IPolicy {
 
     private List<Long> generateStorageEngineIdList(int startIndex, int num) {
         List<Long> storageEngineIdList = new ArrayList<>();
-        List<StorageEngineMeta> storageEngines = iMetaManager.getStorageEngineList();
+        List<StorageEngineMeta> storageEngines = iMetaManager.getWriteableStorageEngineList();
         for (int i = startIndex; i < startIndex + num; i++) {
             storageEngineIdList.add(storageEngines.get(i % storageEngines.size()).getId());
         }

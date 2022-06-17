@@ -88,7 +88,7 @@ public class First implements MappingFunction {
             Set<Integer> indices = new HashSet<>();
             for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
                 Field field = rows.getHeader().getField(i);
-                if (pattern.matcher(field.getName()).matches()) {
+                if (pattern.matcher(field.getFullName()).matches()) {
                     indices.add(i);
                 }
             }
@@ -106,7 +106,7 @@ public class First implements MappingFunction {
                 }
             }
             for (Map.Entry<Integer, Pair<Long, Object>> entry : valueMap.entrySet()) {
-                resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getName().getBytes(StandardCharsets.UTF_8),
+                resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getFullName().getBytes(StandardCharsets.UTF_8),
                     ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
             }
             resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
@@ -125,7 +125,7 @@ public class First implements MappingFunction {
                     }
                 }
                 if (value != null) {
-                    resultRows.add(new Row(header, timestamp, new Object[]{rows.getHeader().getField(index).getName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
+                    resultRows.add(new Row(header, timestamp, new Object[]{rows.getHeader().getField(index).getFullName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
                 }
             }
         }

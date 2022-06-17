@@ -67,7 +67,7 @@ public class Row {
     }
 
     public String getName(int i) {
-        return header.getField(i).getName();
+        return header.getField(i).getFullName();
     }
 
     public DataType getType(int i) {
@@ -122,6 +122,15 @@ public class Row {
         if (o == null || getClass() != o.getClass()) return false;
         Row row = (Row) o;
         return timestamp == row.timestamp && Objects.equals(header, row.header) && Arrays.equals(values, row.values);
+    }
+
+    public boolean isEmpty() {
+        for (Object value : values) {
+            if (value != null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

@@ -38,7 +38,7 @@ public class BatchData {
             vectors.add(new BigIntVector(Constants.TIMESTAMP, allocator));
         }
         header.getFields().forEach(field -> {
-            vectors.add(TypeUtils.getFieldVectorByType(field.getName(), field.getType(), allocator));
+            vectors.add(TypeUtils.getFieldVectorByType(field.getFullName(), field.getType(), allocator));
         });
 
         List<Field> fields = new ArrayList<>();

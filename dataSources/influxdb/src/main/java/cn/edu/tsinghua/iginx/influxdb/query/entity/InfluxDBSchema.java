@@ -18,6 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.influxdb.query.entity;
 
+import cn.edu.tsinghua.iginx.utils.Pair;
+
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,17 +34,20 @@ public class InfluxDBSchema {
 
     private final Map<String, String> tags;
 
-    public InfluxDBSchema(String path) {
-        int firstIndex = path.indexOf(".");
-        this.measurement = path.substring(0, firstIndex);
-        int lastIndex = path.lastIndexOf(".");
-        this.field = path.substring(lastIndex + 1);
+    public InfluxDBSchema(String path, Map<String, String> tags) {
+        int index = path.indexOf(".");
+        this.measurement = path.substring(0, index);
+        this.field = path.substring(index + 1);
 
-        this.tags = new HashMap<>();
-
-        if (firstIndex != lastIndex) {
-            this.tags.put(TAG, path.substring(firstIndex + 1, lastIndex));
+        if (tags == null) {
+            this.tags = Collections.emptyMap();
+        } else {
+            this.tags = tags;
         }
+    }
+
+    public InfluxDBSchema(String path) {
+        this(path, null);
     }
 
     public String getMeasurement() {
@@ -54,6 +60,22 @@ public class InfluxDBSchema {
 
     public Map<String, String> getTags() {
         return tags;
+    }
+
+    public static String transformField(String field) {
+        String[] parts = field.split("\\.");
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < parts.length; i++) {
+            if (i != 0) {
+                builder.append("\\.");
+            }
+            if (parts[i].equals("*")) {
+                builder.append(".+");
+            } else {
+                builder.append(parts[i]);
+            }
+        }
+        return builder.toString();
     }
 
     @Override

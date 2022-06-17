@@ -158,7 +158,7 @@ public class RestSession {
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                              List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -167,8 +167,8 @@ public class RestSession {
             logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
             return;
         }
-        if (attributesList != null && paths.size() != attributesList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
             return;
         }
 
@@ -211,7 +211,7 @@ public class RestSession {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
-        req.setAttributesList(attributesList);
+        req.setTagsList(tagsList);
 
         Status status;
         do {
@@ -226,7 +226,7 @@ public class RestSession {
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                           List<DataType> dataTypeList, List<Map<String, String>> attributesList) throws ExecutionException {
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -239,8 +239,8 @@ public class RestSession {
             logger.error("The sizes of timestamps and valuesList should be equal.");
             return;
         }
-        if (attributesList != null && paths.size() != attributesList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and attributesList should be equal.");
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
             return;
         }
 
@@ -273,9 +273,9 @@ public class RestSession {
         for (Integer i : index) {
             sortedDataTypeList.add(dataTypeList.get(i));
         }
-        if (attributesList != null) {
+        if (tagsList != null) {
             for (Integer i : index) {
-                sortedAttributesList.add(attributesList.get(i));
+                sortedAttributesList.add(tagsList.get(i));
             }
         }
 
@@ -304,7 +304,7 @@ public class RestSession {
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
-        req.setAttributesList(sortedAttributesList);
+        req.setTagsList(sortedAttributesList);
 
         Status status;
         do {

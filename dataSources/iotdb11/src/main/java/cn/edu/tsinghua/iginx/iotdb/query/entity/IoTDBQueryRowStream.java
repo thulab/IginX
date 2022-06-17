@@ -24,7 +24,11 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer;
+import cn.edu.tsinghua.iginx.iotdb.tools.TagKVUtils;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
 import org.apache.iotdb.rpc.StatementExecutionException;
 import org.apache.iotdb.session.pool.SessionDataSetWrapper;
@@ -33,6 +37,7 @@ import org.apache.iotdb.tsfile.read.common.RowRecord;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.apache.iotdb.tsfile.file.metadata.enums.TSDataType.TEXT;
 
@@ -46,14 +51,24 @@ public class IoTDBQueryRowStream implements RowStream {
 
     private static final String PREFIX = "root.";
 
+    private static final String UNIT = "unit";
+
+    private boolean[] filterMap;
+
     private final SessionDataSetWrapper dataset;
+
+    private final boolean trimStorageUnit;
+
+    private final boolean filterByTags;
 
     private final Header header;
 
     private State state;
 
-    public IoTDBQueryRowStream(SessionDataSetWrapper dataset) {
+    public IoTDBQueryRowStream(SessionDataSetWrapper dataset, boolean trimStorageUnit, Project project) {
         this.dataset = dataset;
+        this.trimStorageUnit = trimStorageUnit;
+        this.filterByTags = project.getTagFilter() != null;
 
         List<String> names = dataset.getColumnNames();
         List<TSDataType> types = dataset.getColumnTypes();
@@ -61,6 +76,8 @@ public class IoTDBQueryRowStream implements RowStream {
         Field time = null;
         List<Field> fields = new ArrayList<>();
 
+        List<Boolean> filterList = new ArrayList<>();
+        TagFilter tagFilter = project.getTagFilter();
         for (int i = 0; i < names.size(); i++) {
             String name = names.get(i);
             TSDataType type = types.get(i);
@@ -68,7 +85,33 @@ public class IoTDBQueryRowStream implements RowStream {
                 time = Field.TIME;
                 continue;
             }
-            fields.add(new Field(transformColumnName(name), DataTypeTransformer.fromIoTDB(type)));
+            name = transformColumnName(name);
+            Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(name);
+            Field field = new Field(pair.getK(), DataTypeTransformer.fromIoTDB(type), pair.getV());
+            if (!this.trimStorageUnit && field.getFullName().startsWith(UNIT)) {
+                filterList.add(true);
+                continue;
+            }
+            if (this.filterByTags && !TagKVUtils.match(pair.v, tagFilter)) {
+                filterList.add(true);
+                continue;
+            }
+            fields.add(field);
+            filterList.add(false);
+        }
+
+        if (needFilter()) {
+            if (time == null) {
+                this.filterMap = new boolean[names.size()];
+                for (int i = 0; i < names.size(); i++) {
+                    filterMap[i] = filterList.get(i);
+                }
+            } else {
+                this.filterMap = new boolean[names.size() - 1];
+                for (int i = 0; i < names.size() - 1; i++) {
+                    filterMap[i] = filterList.get(i);
+                }
+            }
         }
 
         if (time == null) {
@@ -85,7 +128,7 @@ public class IoTDBQueryRowStream implements RowStream {
             columnName = columnName.substring(columnName.indexOf('(') + 1, columnName.length() - 1);
         }
         if (columnName.startsWith(PREFIX)) {
-            columnName = columnName.substring(columnName.indexOf('.', columnName.indexOf('.') + 1) + 1);
+            columnName = columnName.substring(columnName.indexOf('.', trimStorageUnit ? columnName.indexOf('.') + 1: 0) + 1);
         }
         return columnName;
     }
@@ -121,13 +164,17 @@ public class IoTDBQueryRowStream implements RowStream {
         try {
             RowRecord record = dataset.next();
             long timestamp = record.getTimestamp();
-            Object[] fields = new Object[record.getFields().size()];
-            for (int i = 0; i < fields.length; i++) {
+            Object[] fields = new Object[header.getFieldSize()];
+            int index = 0;
+            for (int i = 0; i < record.getFields().size(); i++) {
+                if (needFilter() && filterMap[i]) {
+                    continue;
+                }
                 org.apache.iotdb.tsfile.read.common.Field field = record.getFields().get(i);
                 if (field.getDataType() == TEXT) {
-                    fields[i] = field.getBinaryV().getValues();
+                    fields[index++] = field.getBinaryV().getValues();
                 } else {
-                    fields[i] = field.getObjectValue(field.getDataType());
+                    fields[index++] = field.getObjectValue(field.getDataType());
                 }
             }
             state = State.UNKNOWN;
@@ -135,5 +182,9 @@ public class IoTDBQueryRowStream implements RowStream {
         } catch (StatementExecutionException | IoTDBConnectionException e) {
             throw new RowFetchException(e);
         }
+    }
+
+    private boolean needFilter() {
+        return !trimStorageUnit || filterByTags;
     }
 }

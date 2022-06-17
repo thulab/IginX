@@ -85,15 +85,15 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testProjectWithPattern() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
-        Project project = new Project(EmptySource.EMPTY_SOURCE, Collections.singletonList("a.a.*"));
+        Project project = new Project(EmptySource.EMPTY_SOURCE, Collections.singletonList("a.a.*"), null);
         RowStream stream = getExecutor().executeUnaryOperator(project, table);
 
         Header targetHeader = stream.getHeader();
         assertTrue(targetHeader.hasTimestamp());
         assertEquals(2, targetHeader.getFields().size());
-        assertEquals("a.a.b", targetHeader.getFields().get(0).getName());
+        assertEquals("a.a.b", targetHeader.getFields().get(0).getFullName());
         assertEquals(DataType.INTEGER, targetHeader.getFields().get(0).getType());
-        assertEquals("a.a.b", targetHeader.getFields().get(0).getName());
+        assertEquals("a.a.b", targetHeader.getFields().get(0).getFullName());
         assertEquals(DataType.INTEGER, targetHeader.getFields().get(1).getType());
 
         int index = 0;
@@ -111,13 +111,13 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testProjectWithoutPattern() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
-        Project project = new Project(EmptySource.EMPTY_SOURCE, Collections.singletonList("a.a.b"));
+        Project project = new Project(EmptySource.EMPTY_SOURCE, Collections.singletonList("a.a.b"), null);
         RowStream stream = getExecutor().executeUnaryOperator(project, table);
 
         Header targetHeader = stream.getHeader();
         assertTrue(targetHeader.hasTimestamp());
         assertEquals(1, targetHeader.getFields().size());
-        assertEquals("a.a.b", targetHeader.getFields().get(0).getName());
+        assertEquals("a.a.b", targetHeader.getFields().get(0).getFullName());
         assertEquals(DataType.INTEGER, targetHeader.getFields().get(0).getType());
 
         int index = 0;
@@ -134,7 +134,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testProjectWithMixedPattern() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
-        Project project = new Project(EmptySource.EMPTY_SOURCE, Arrays.asList("a.*.c", "a.a.b"));
+        Project project = new Project(EmptySource.EMPTY_SOURCE, Arrays.asList("a.*.c", "a.a.b"), null);
         RowStream stream = getExecutor().executeUnaryOperator(project, table);
 
         Header targetHeader = stream.getHeader();
@@ -161,7 +161,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     public void testSelectWithTimeFilter() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
         Filter filter = new TimeFilter(Op.GE, 5);
-        Select select = new Select(EmptySource.EMPTY_SOURCE, filter);
+        Select select = new Select(EmptySource.EMPTY_SOURCE, filter, null);
         RowStream stream = getExecutor().executeUnaryOperator(select, table);
 
         assertEquals(table.getHeader(), stream.getHeader());
@@ -178,7 +178,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     public void testSelectWithValueFilter() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
         Filter filter = new ValueFilter("a.a.b", Op.NE, new Value(3));
-        Select select = new Select(EmptySource.EMPTY_SOURCE, filter);
+        Select select = new Select(EmptySource.EMPTY_SOURCE, filter, null);
         RowStream stream = getExecutor().executeUnaryOperator(select, table);
 
         assertEquals(table.getHeader(), stream.getHeader());
@@ -198,7 +198,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     public void testSelectWithCompoundFilter() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
         Filter filter = new AndFilter(Arrays.asList(new TimeFilter(Op.LE, 5), new ValueFilter("a.a.b", Op.NE, new Value(3))));
-        Select select = new Select(EmptySource.EMPTY_SOURCE, filter);
+        Select select = new Select(EmptySource.EMPTY_SOURCE, filter, null);
         RowStream stream = getExecutor().executeUnaryOperator(select, table);
 
         assertEquals(table.getHeader(), stream.getHeader());
@@ -311,7 +311,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Header targetHeader = stream.getHeader();
         assertTrue(targetHeader.hasTimestamp());
         assertEquals(1, targetHeader.getFields().size());
-        assertEquals("avg(a.a.b)", targetHeader.getFields().get(0).getName());
+        assertEquals("avg(a.a.b)", targetHeader.getFields().get(0).getFullName());
         assertEquals(DataType.DOUBLE, targetHeader.getFields().get(0).getType());
 
         int index = 0;
@@ -360,9 +360,9 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Header targetHeader = stream.getHeader();
         assertTrue(targetHeader.hasTimestamp());
         assertEquals(2, targetHeader.getFields().size());
-        assertEquals("path", targetHeader.getFields().get(0).getName());
+        assertEquals("path", targetHeader.getFields().get(0).getFullName());
         assertEquals(DataType.BINARY, targetHeader.getFields().get(0).getType());
-        assertEquals("value", targetHeader.getFields().get(1).getName());
+        assertEquals("value", targetHeader.getFields().get(1).getFullName());
         assertEquals(DataType.BINARY, targetHeader.getFields().get(1).getType());
 
         assertTrue(stream.hasNext());
@@ -392,7 +392,7 @@ public abstract class AbstractOperatorMemoryExecutorTest {
         Header targetHeader = stream.getHeader();
         assertFalse(targetHeader.hasTimestamp());
         assertEquals(1, targetHeader.getFields().size());
-        assertEquals("avg(a.a.b)", targetHeader.getFields().get(0).getName());
+        assertEquals("avg(a.a.b)", targetHeader.getFields().get(0).getFullName());
         assertEquals(DataType.DOUBLE, targetHeader.getFields().get(0).getType());
 
         assertTrue(stream.hasNext());

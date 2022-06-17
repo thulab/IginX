@@ -50,7 +50,7 @@ public class IoTDBStorageTest {
     public void testProject() throws PhysicalException {
         FragmentMeta fragment = new FragmentMeta(null, null, 0, 1000);
         Source source = new FragmentSource(fragment);
-        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Project(source, Arrays.asList("wf01.wt01.status", "wf01.wt02.*"))));
+        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Project(source, Arrays.asList("wf01.wt01.status", "wf01.wt02.*"), null)));
         task.setStorageUnit("unit001");
         RowStream rowStream = this.storage.execute(task).getRowStream();
         Header header = rowStream.getHeader();;

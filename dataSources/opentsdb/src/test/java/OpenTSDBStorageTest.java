@@ -77,7 +77,7 @@ public class OpenTSDBStorageTest {
             }
             bitmapList.add(bitmap);
         }
-        RawData rawData = new RawData(paths, timestamps, valuesList, types, bitmapList, RawDataType.Row);
+        RawData rawData = new RawData(paths, Collections.emptyList(), timestamps, valuesList, types, bitmapList, RawDataType.Row);
         DataView dataView = new RowDataView(rawData, 0, paths.size(), 0, size);
         FragmentMeta fragment = new FragmentMeta(null, null, START_TIME, END_TIME);
         FragmentSource source = new FragmentSource(fragment);
@@ -95,7 +95,7 @@ public class OpenTSDBStorageTest {
     }
 
     private void project(Source source, List<String> paths) throws PhysicalException {
-        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Project(source, paths)));
+        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Project(source, paths, null)));
         task.setStorageUnit(DU);
         RowStream rowStream = this.storage.execute(task).getRowStream();
         Header header = rowStream.getHeader();

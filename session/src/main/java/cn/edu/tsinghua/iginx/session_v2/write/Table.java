@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.session_v2.write;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.TagKVUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -129,6 +130,12 @@ public class Table {
             return this;
         }
 
+        public Table.Builder addField(String field, DataType dataType, Map<String, String> tags) {
+            Arguments.checkNotNull(field, "field");
+            field = TagKVUtils.toFullName(field, tags);
+            return addField(field, dataType);
+        }
+
         public Table.Builder timestamp(long timestamp) {
             this.currentTimestamp = timestamp;
             return this;
@@ -160,6 +167,11 @@ public class Table {
             return this;
         }
 
+        public Table.Builder boolValue(String field, boolean value, Map<String, String> tags) {
+            field = TagKVUtils.toFullName(field, tags);
+            return boolValue(field, value);
+        }
+
         public Table.Builder intValue(String field, int value) {
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -170,6 +182,11 @@ public class Table {
             }
             this.currentValues.put(index, value);
             return this;
+        }
+
+        public Table.Builder intValue(String field, int value, Map<String, String> tags) {
+            field = TagKVUtils.toFullName(field, tags);
+            return intValue(field, value);
         }
 
         public Table.Builder longValue(String field, long value) {
@@ -184,6 +201,11 @@ public class Table {
             return this;
         }
 
+        public Table.Builder longValue(String field, long value, Map<String, String> tags) {
+            field = TagKVUtils.toFullName(field, tags);
+            return longValue(field, value);
+        }
+
         public Table.Builder floatValue(String field, float value) {
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -194,6 +216,11 @@ public class Table {
             }
             this.currentValues.put(index, value);
             return this;
+        }
+
+        public Table.Builder floatValue(String field, float value, Map<String, String> tags) {
+            field = TagKVUtils.toFullName(field, tags);
+            return floatValue(field, value);
         }
 
         public Table.Builder doubleValue(String field, double value) {
@@ -208,6 +235,11 @@ public class Table {
             return this;
         }
 
+        public Table.Builder doubleValue(String field, double value, Map<String, String> tags) {
+            field = TagKVUtils.toFullName(field, tags);
+            return doubleValue(field, value);
+        }
+
         public Table.Builder binaryValue(String field, byte[] value) {
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
@@ -218,6 +250,11 @@ public class Table {
             }
             this.currentValues.put(index, value);
             return this;
+        }
+
+        public Table.Builder binaryValue(String field, byte[] value, Map<String, String> tags) {
+            field = TagKVUtils.toFullName(field, tags);
+            return binaryValue(field, value);
         }
 
         public Table.Builder value(String field, Object value) {

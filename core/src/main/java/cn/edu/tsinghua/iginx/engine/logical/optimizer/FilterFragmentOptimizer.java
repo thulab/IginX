@@ -74,7 +74,7 @@ public class FilterFragmentOptimizer implements Optimizer {
         }
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
 
         Filter filter = selectOperator.getFilter();
         List<TimeRange> timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
@@ -84,7 +84,7 @@ public class FilterFragmentOptimizer implements Optimizer {
             List<Operator> unionList = new ArrayList<>();
             v.forEach(meta -> {
                 if (hasTimeRangeOverlap(meta, timeRanges)) {
-                    unionList.add(new Project(new FragmentSource(meta), pathList));
+                    unionList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
                 }
             });
             Operator operator = OperatorUtils.unionOperators(unionList);
