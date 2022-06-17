@@ -50,6 +50,7 @@ import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
 import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer;
+import cn.edu.tsinghua.iginx.postgresql.tools.TagFilterUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.sql.Connection;
@@ -62,6 +63,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +93,7 @@ public class PostgreSQLStorage implements IStorage {
 
   private static final String LAST_QUERY = "select last(%s, time) from %s";
 
-  private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE %s";
+  private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE %s and %s";
 
   private static final String DELETE_DATA = "DELETE FROM %s WHERE time >= to_timestamp(%d) and time < to_timestamp(%d)";
 
@@ -115,7 +117,6 @@ public class PostgreSQLStorage implements IStorage {
     Map<String, String> extraParams = meta.getExtraParams();
     String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
     String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
-    String dbName = extraParams.getOrDefault(DBNAME, DEFAULT_DBNAME);
     String connUrl = String
         .format("jdbc:postgresql://%s:%s/?user=%s&password=%s", meta.getIp(), meta.getPort(),
             username, password);
@@ -130,7 +131,6 @@ public class PostgreSQLStorage implements IStorage {
     Map<String, String> extraParams = meta.getExtraParams();
     String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
     String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
-    String dbName = extraParams.getOrDefault(DBNAME, DEFAULT_DBNAME);
     String connUrl = String
         .format("jdbc:postgresql://%s:%s/?user=%s&password=%s", meta.getIp(), meta.getPort(),
             username, password);
@@ -259,19 +259,21 @@ public class PostgreSQLStorage implements IStorage {
       for (String path : project.getPatterns()) {
         String table = path.substring(0, path.lastIndexOf('.'));
         table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
-        String sensor = path.substring(path.lastIndexOf('.') + 1);
-        sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
+        String field = path.substring(path.lastIndexOf('.') + 1);
+        field = field.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         // 查询序列类型
         DatabaseMetaData databaseMetaData = connection.getMetaData();
-        ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, sensor);
+        ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, field);
         if (columnSet.next()) {
           String typeName = columnSet.getString("TYPE_NAME");//列字段类型
           fields
               .add(new Field(table.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
-                  + sensor.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR)
+                  + field.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR)
                   , DataTypeTransformer.fromPostgreSQL(typeName)));
           String statement = String
-              .format(QUERY_DATA, sensor, table, FilterTransformer.toString(filter));
+              .format(QUERY_DATA, field, table,
+                  TagFilterUtils.transformToFilterStr(project.getTagFilter()),
+                  FilterTransformer.toString(filter));
           Statement stmt = connection.createStatement();
           ResultSet rs = stmt.executeQuery(statement);
           resultSets.add(rs);
@@ -306,20 +308,33 @@ public class PostgreSQLStorage implements IStorage {
     return new TaskExecuteResult(null, null);
   }
 
-  private void createTimeSeriesIfNotExists(String table, String column, DataType dataType) {
+  private void createTimeSeriesIfNotExists(String table, String field,
+      Map<String, String> tags, DataType dataType) {
     try {
       DatabaseMetaData databaseMetaData = connection.getMetaData();
       ResultSet tableSet = databaseMetaData.getTables(null, "%", table, new String[]{"TABLE"});
       if (!tableSet.next()) {
         Statement stmt = connection.createStatement();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Entry<String, String> tagsEntry : tags.entrySet()) {
+          stringBuilder.append(tagsEntry.getKey()).append(" TEXT,");
+        }
+        stringBuilder.append(field).append(" ").append(DataTypeTransformer.toPostgreSQL(dataType));
         stmt.execute(String
-            .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s %s NULL)", table, column,
+            .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s NULL)", stringBuilder.toString(),
                 DataTypeTransformer.toPostgreSQL(dataType)));
       } else {
-        ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, column);
+        for (String tag : tags.keySet()) {
+          ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, tag);
+          if (!columnSet.next()) {
+            Statement stmt = connection.createStatement();
+            stmt.execute(String.format("ALTER TABLE %s ADD COLUMN %s TEXT NULL", table, tag));
+          }
+        }
+        ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, field);
         if (!columnSet.next()) {
           Statement stmt = connection.createStatement();
-          stmt.execute(String.format("ALTER TABLE %s ADD COLUMN %s %s NULL", table, column,
+          stmt.execute(String.format("ALTER TABLE %s ADD COLUMN %s %s NULL", table, field,
               DataTypeTransformer.toPostgreSQL(dataType)));
         }
       }
@@ -361,16 +376,26 @@ public class PostgreSQLStorage implements IStorage {
             DataType dataType = data.getDataType(j);
             String table = path.substring(0, path.lastIndexOf('.'));
             table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
-            String sensor = path.substring(path.lastIndexOf('.') + 1);
-            sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
-            createTimeSeriesIfNotExists(table, sensor, dataType);
+            String field = path.substring(path.lastIndexOf('.') + 1);
+            field = field.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
+            Map<String, String> tags = data.getTags(i);
+            createTimeSeriesIfNotExists(table, field, tags, dataType);
 
             long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
             String value = data.getValue(i, index).toString();
+
+            StringBuilder columnsKeys = new StringBuilder();
+            StringBuilder columnValues = new StringBuilder();
+            for (Entry<String, String> tagEntry : tags.entrySet()) {
+              columnsKeys.append(tagEntry.getValue()).append(" ");
+              columnValues.append(tagEntry.getValue()).append(" ");
+            }
+            columnsKeys.append(field);
+            columnValues.append(value);
+
             stmt.addBatch(String
-                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
-                    time,
-                    value));
+                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table,
+                    columnsKeys, time, columnValues));
             if (index > 0 && (index + 1) % batchSize == 0) {
               stmt.executeBatch();
             }
@@ -396,19 +421,31 @@ public class PostgreSQLStorage implements IStorage {
         DataType dataType = data.getDataType(i);
         String table = path.substring(0, path.lastIndexOf('.'));
         table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
-        String sensor = path.substring(path.lastIndexOf('.') + 1);
-        sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
-        createTimeSeriesIfNotExists(table, sensor, dataType);
+        String field = path.substring(path.lastIndexOf('.') + 1);
+        field = field.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
+        Map<String, String> tags = data.getTags(i);
+        createTimeSeriesIfNotExists(table, field, tags, dataType);
         BitmapView bitmapView = data.getBitmapView(i);
         int index = 0;
         for (int j = 0; j < data.getTimeSize(); j++) {
           if (bitmapView.get(j)) {
             long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
             String value = data.getValue(i, index).toString();
+
+            StringBuilder columnsKeys = new StringBuilder();
+            StringBuilder columnValues = new StringBuilder();
+            for (Entry<String, String> tagEntry : tags.entrySet()) {
+              columnsKeys.append(tagEntry.getValue()).append(" ");
+              columnValues.append(tagEntry.getValue()).append(" ");
+            }
+            columnsKeys.append(field);
+            columnValues.append(value);
+
             stmt.addBatch(String
-                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
+                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table,
+                    columnsKeys,
                     time,
-                    value));
+                    columnValues));
             if (index > 0 && (index + 1) % batchSize == 0) {
               stmt.executeBatch();
             }
@@ -433,11 +470,11 @@ public class PostgreSQLStorage implements IStorage {
         TimeRange timeRange = delete.getTimeRanges().get(i);
         String table = path.substring(0, path.lastIndexOf('.'));
         table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
-        String sensor = path.substring(path.lastIndexOf('.') + 1);
-        sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
+        String field = path.substring(path.lastIndexOf('.') + 1);
+        field = field.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         // 查询序列类型
         DatabaseMetaData databaseMetaData = connection.getMetaData();
-        ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, sensor);
+        ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, field);
         if (columnSet.next()) {
           String statement = String
               .format(DELETE_DATA, table,
