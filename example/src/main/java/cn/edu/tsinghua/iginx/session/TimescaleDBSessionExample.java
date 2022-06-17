@@ -45,28 +45,19 @@ public class TimescaleDBSessionExample {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
-        showTimeseries();
         // 行式插入对齐数据
-//        insertRowRecords();
-//        queryData();
-//        deleteDataInColumns();
+        insertRowRecords();
+        insertColumnRecords();
+        queryData();
+        deleteDataInColumns();
         // 关闭 Session
         session.closeSession();
-    }
-
-    private static void showTimeseries() throws SessionException, ExecutionException {
-        List<Column> columns = session.showColumns();
-        for(Column column: columns){
-            System.out.println(column.getPath());
-        }
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add(S1);
         paths.add(S2);
-//        paths.add(S3);
-//        paths.add(S4);
 
         int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP + 1);
         long[] timestamps = new long[size];
@@ -88,6 +79,33 @@ public class TimescaleDBSessionExample {
         }
 
         session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+    }
+
+    private static void insertColumnRecords() throws SessionException, ExecutionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+
+        int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP + 1);
+        long[] timestamps = new long[size];
+        Object[] valuesList = new Object[size];
+        for (long i = 0; i < size; i++) {
+            timestamps[(int) i] = ROW_START_TIMESTAMP + i;
+            Object[] values = new Object[2];
+            for (long j = 0; j < 4; j++) {
+                if (j < 2) {
+                    values[(int) j] = i + j;
+                }
+            }
+            valuesList[(int) i] = values;
+        }
+
+        List<DataType> dataTypeList = new ArrayList<>();
+        for (int i = 0; i < 2; i++) {
+            dataTypeList.add(DataType.LONG);
+        }
+
+        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void queryData() throws SessionException, ExecutionException {

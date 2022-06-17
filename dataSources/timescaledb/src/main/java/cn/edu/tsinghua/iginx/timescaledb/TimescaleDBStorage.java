@@ -305,7 +305,7 @@ public class TimescaleDBStorage implements IStorage {
     return new TaskExecuteResult(null, null);
   }
 
-  private void createTimeSeriesIfNotExists(String table, String column, DataType dataType) {
+  private void createTimeSeriesIfNotExists(String table, String column, Map<String,String> tags, DataType dataType) {
     try {
       DatabaseMetaData databaseMetaData = connection.getMetaData();
       ResultSet tableSet = databaseMetaData.getTables(null, "%", table, new String[]{"TABLE"});
@@ -359,7 +359,8 @@ public class TimescaleDBStorage implements IStorage {
         table = table.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
         String sensor = path.substring(path.lastIndexOf('.') + 1);
         sensor = sensor.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
-        createTimeSeriesIfNotExists(table, sensor, dataType);
+        Map<String,String> tags = data.getTags(i);
+        createTimeSeriesIfNotExists(table, sensor, tags, dataType);
         for (int j = 0; j < data.getTimeSize(); j++) {
           long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
           String value = data.getValue(j, i).toString();

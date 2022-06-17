@@ -1,6 +1,22 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package cn.edu.tsinghua.iginx.postgresql;
-
-import static cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer.MAX_TIMESTAMP;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
@@ -13,6 +29,8 @@ import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.BitmapView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
@@ -33,6 +51,7 @@ import cn.edu.tsinghua.iginx.postgresql.entity.PostgreSQLQueryRowStream;
 import cn.edu.tsinghua.iginx.postgresql.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -43,8 +62,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-
-import cn.edu.tsinghua.iginx.utils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +71,7 @@ public class PostgreSQLStorage implements IStorage {
 
   private static final int BATCH_SIZE = 10000;
 
-  private static final String STORAGE_ENGINE = "postgresql";
+  private static final String STORAGE_ENGINE = "timescaledb";
 
   private static final String USERNAME = "username";
 
@@ -66,6 +83,14 @@ public class PostgreSQLStorage implements IStorage {
 
   private static final String DEFAULT_PASSWORD = "123456";
 
+  private static final String DEFAULT_DBNAME = "timeseries";
+
+  private static final String QUERY_DATABASES = "SELECT datname FROM pg_database";
+
+  private static final String FIRST_QUERY = "select first(%s, time) from %s";
+
+  private static final String LAST_QUERY = "select last(%s, time) from %s";
+
   private static final String QUERY_DATA = "SELECT time, %s FROM %s WHERE %s";
 
   private static final String DELETE_DATA = "DELETE FROM %s WHERE time >= to_timestamp(%d) and time < to_timestamp(%d)";
@@ -73,6 +98,10 @@ public class PostgreSQLStorage implements IStorage {
   private static final String IGINX_SEPARATOR = ".";
 
   private static final String POSTGRESQL_SEPARATOR = "$";
+
+  private static final String DATABASE_PREFIX = "unit";
+
+  private static final long MAX_TIMESTAMP = Integer.MAX_VALUE;
 
   private final StorageEngineMeta meta;
 
@@ -86,6 +115,7 @@ public class PostgreSQLStorage implements IStorage {
     Map<String, String> extraParams = meta.getExtraParams();
     String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
     String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
+    String dbName = extraParams.getOrDefault(DBNAME, DEFAULT_DBNAME);
     String connUrl = String
         .format("jdbc:postgresql://%s:%s/?user=%s&password=%s", meta.getIp(), meta.getPort(),
             username, password);
@@ -100,8 +130,9 @@ public class PostgreSQLStorage implements IStorage {
     Map<String, String> extraParams = meta.getExtraParams();
     String username = extraParams.getOrDefault(USERNAME, DEFAULT_USERNAME);
     String password = extraParams.getOrDefault(PASSWORD, DEFAULT_PASSWORD);
+    String dbName = extraParams.getOrDefault(DBNAME, DEFAULT_DBNAME);
     String connUrl = String
-        .format("jdbc:postgresql://%s:%s?user=%s&password=%s", meta.getIp(), meta.getPort(),
+        .format("jdbc:postgresql://%s:%s/?user=%s&password=%s", meta.getIp(), meta.getPort(),
             username, password);
     try {
       Class.forName("org.postgresql.Driver");
@@ -110,11 +141,6 @@ public class PostgreSQLStorage implements IStorage {
     } catch (SQLException | ClassNotFoundException e) {
       return false;
     }
-  }
-
-  @Override
-  public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
-    return new Pair<>(new TimeSeriesInterval(null, null), new TimeInterval(0, Long.MAX_VALUE));
   }
 
   @Override
@@ -176,7 +202,57 @@ public class PostgreSQLStorage implements IStorage {
     return timeseries;
   }
 
-  private TaskExecuteResult executeProjectTask(Project project, Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
+  @Override
+  public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+    long minTime = Long.MAX_VALUE, maxTime = 0;
+    List<String> paths = new ArrayList<>();
+    try {
+      Statement stmt = connection.createStatement();
+      ResultSet databaseSet = stmt.executeQuery(QUERY_DATABASES);
+      while (databaseSet.next()) {
+        String databaseName = databaseSet.getString(1);//获取表名称
+        if (databaseName.startsWith(DATABASE_PREFIX)) {
+          useDatabase(databaseName);
+          DatabaseMetaData databaseMetaData = connection.getMetaData();
+          ResultSet tableSet = databaseMetaData.getTables(null, "%", "%", new String[]{"TABLE"});
+          while (tableSet.next()) {
+            String tableName = tableSet.getString(3);//获取表名称
+            ResultSet columnSet = databaseMetaData.getColumns(null, "%", tableName, "%");
+            while (columnSet.next()) {
+              String columnName = columnSet.getString("COLUMN_NAME");//获取列名称
+              paths.add(tableName.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR) + IGINX_SEPARATOR
+                  + columnName.replace(POSTGRESQL_SEPARATOR, IGINX_SEPARATOR));
+              // 获取first
+              String firstQueryStatement = String.format(FIRST_QUERY, columnName, tableName);
+              Statement firstQueryStmt = connection.createStatement();
+              ResultSet firstQuerySet = firstQueryStmt.executeQuery(firstQueryStatement);
+              if (firstQuerySet.next()) {
+                long currMinTime = firstQuerySet.getLong(1);
+                minTime = Math.min(currMinTime, minTime);
+              }
+              // 获取last
+              String lastQueryStatement = String.format(LAST_QUERY, columnName, tableName);
+              Statement lastQueryStmt = connection.createStatement();
+              ResultSet lastQuerySet = lastQueryStmt.executeQuery(lastQueryStatement);
+              if (lastQuerySet.next()) {
+                long currMaxTime = lastQuerySet.getLong(1);
+                maxTime = Math.max(currMaxTime, maxTime);
+              }
+            }
+          }
+        }
+      }
+    } catch (SQLException e) {
+      throw new PhysicalException(e);
+    }
+    paths.sort(String::compareTo);
+
+    return new Pair<>(new TimeSeriesInterval(paths.get(0), paths.get(paths.size() - 1)),
+        new TimeInterval(minTime, maxTime + 1));
+  }
+
+  private TaskExecuteResult executeProjectTask(Project project,
+      Filter filter) { // 未来可能要用 tsInterval 对查询出来的数据进行过滤
     try {
       List<ResultSet> resultSets = new ArrayList<>();
       List<Field> fields = new ArrayList<>();
@@ -205,7 +281,7 @@ public class PostgreSQLStorage implements IStorage {
       return new TaskExecuteResult(rowStream);
     } catch (SQLException e) {
       return new TaskExecuteResult(
-          new PhysicalTaskExecuteFailureException("execute project task in postgresql failure",
+          new PhysicalTaskExecuteFailureException("execute project task in timescaledb failure",
               e));
     }
   }
@@ -216,9 +292,11 @@ public class PostgreSQLStorage implements IStorage {
     switch (dataView.getRawDataType()) {
       case Row:
       case NonAlignedRow:
+        e = insertRowRecords((RowDataView) dataView);
+        break;
       case Column:
       case NonAlignedColumn:
-        e = insertRowRecords((RowDataView) dataView);
+        e = insertColumnRecords((ColumnDataView) dataView);
         break;
     }
     if (e != null) {
@@ -271,7 +349,45 @@ public class PostgreSQLStorage implements IStorage {
   }
 
   private Exception insertRowRecords(RowDataView data) {
-    // TODO 按timestamp进行行排序再插入
+    int batchSize = Math.min(data.getTimeSize(), BATCH_SIZE);
+    try {
+      Statement stmt = connection.createStatement();
+      for (int i = 0; i < data.getTimeSize(); i++) {
+        BitmapView bitmapView = data.getBitmapView(i);
+        int index = 0;
+        for (int j = 0; j < data.getPathNum(); j++) {
+          if (bitmapView.get(j)) {
+            String path = data.getPath(j);
+            DataType dataType = data.getDataType(j);
+            String table = path.substring(0, path.lastIndexOf('.'));
+            table = table.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
+            String sensor = path.substring(path.lastIndexOf('.') + 1);
+            sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
+            createTimeSeriesIfNotExists(table, sensor, dataType);
+
+            long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            String value = data.getValue(i, index).toString();
+            stmt.addBatch(String
+                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
+                    time,
+                    value));
+            if (index > 0 && (index + 1) % batchSize == 0) {
+              stmt.executeBatch();
+            }
+
+            index++;
+          }
+        }
+      }
+      stmt.executeBatch();
+    } catch (SQLException e) {
+      return e;
+    }
+
+    return null;
+  }
+
+  private Exception insertColumnRecords(ColumnDataView data) {
     int batchSize = Math.min(data.getTimeSize(), BATCH_SIZE);
     try {
       Statement stmt = connection.createStatement();
@@ -283,15 +399,20 @@ public class PostgreSQLStorage implements IStorage {
         String sensor = path.substring(path.lastIndexOf('.') + 1);
         sensor = sensor.replace(IGINX_SEPARATOR, POSTGRESQL_SEPARATOR);
         createTimeSeriesIfNotExists(table, sensor, dataType);
+        BitmapView bitmapView = data.getBitmapView(i);
+        int index = 0;
         for (int j = 0; j < data.getTimeSize(); j++) {
-          long time = data.getTimestamp(j) / 1000; // postgresql存10位时间戳，java为13位时间戳
-          String value = data.getValue(j, i).toString();
-          stmt.addBatch(String
-              .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
-                  time,
-                  value));
-          if (j > 0 && (j + 1) % batchSize == 0) {
-            stmt.executeBatch();
+          if (bitmapView.get(j)) {
+            long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
+            String value = data.getValue(i, index).toString();
+            stmt.addBatch(String
+                .format("INSERT INTO %s (time, %s) values (to_timestamp(%d), %s)", table, sensor,
+                    time,
+                    value));
+            if (index > 0 && (index + 1) % batchSize == 0) {
+              stmt.executeBatch();
+            }
+            index++;
           }
         }
       }
@@ -328,14 +449,17 @@ public class PostgreSQLStorage implements IStorage {
       return new TaskExecuteResult(null, null);
     } catch (SQLException e) {
       return new TaskExecuteResult(
-          new PhysicalTaskExecuteFailureException("execute delete task in postgresql failure",
+          new PhysicalTaskExecuteFailureException("execute delete task in timescaledb failure",
               e));
     }
   }
 
   @Override
   public void release() throws PhysicalException {
-
+    try {
+      connection.close();
+    } catch (SQLException e) {
+      throw new PhysicalException(e);
+    }
   }
-
 }
