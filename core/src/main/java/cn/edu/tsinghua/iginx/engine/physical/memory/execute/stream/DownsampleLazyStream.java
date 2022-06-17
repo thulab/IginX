@@ -32,6 +32,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class DownsampleLazyStream extends UnaryLazyStream {
 
@@ -41,7 +42,7 @@ public class DownsampleLazyStream extends UnaryLazyStream {
 
     private final SetMappingFunction function;
 
-    private final List<Value> params;
+    private final Map<String, Value> params;
 
     private Row nextTarget;
 

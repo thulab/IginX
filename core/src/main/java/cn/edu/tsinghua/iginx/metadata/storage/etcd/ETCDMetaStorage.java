@@ -357,11 +357,11 @@ public class ETCDMetaStorage implements IMetaStorage {
                         switch (event.getEventType()) {
                             case PUT:
                                 taskMeta = JsonUtils.fromJson(event.getKeyValue().getValue().getBytes(), TransformTaskMeta.class);
-                                transformChangeHook.onChange(taskMeta.getClassName(), taskMeta);
+                                transformChangeHook.onChange(taskMeta.getName(), taskMeta);
                                 break;
                             case DELETE:
                                 taskMeta = JsonUtils.fromJson(event.getPrevKV().getValue().getBytes(), TransformTaskMeta.class);
-                                transformChangeHook.onChange(taskMeta.getClassName(), null);
+                                transformChangeHook.onChange(taskMeta.getName(), null);
                                 break;
                             default:
                                 logger.error("unexpected watchEvent: " + event.getEventType());
@@ -955,7 +955,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             if (response.getCount() != 0L) {
                 response.getKvs().forEach(e -> {
                     TransformTaskMeta taskMeta = JsonUtils.fromJson(e.getValue().getBytes(), TransformTaskMeta.class);
-                    taskMetaMap.put(taskMeta.getClassName(), taskMeta);
+                    taskMetaMap.put(taskMeta.getName(), taskMeta);
                 });
             }
             return new ArrayList<>(taskMetaMap.values());
@@ -974,7 +974,7 @@ public class ETCDMetaStorage implements IMetaStorage {
         try {
             lockTransform();
             this.client.getKVClient()
-                .put(ByteSequence.from((TRANSFORM_PREFIX + transformTask.getClassName()).getBytes()), ByteSequence.from(JsonUtils.toJson(transformTask))).get();
+                .put(ByteSequence.from((TRANSFORM_PREFIX + transformTask.getName()).getBytes()), ByteSequence.from(JsonUtils.toJson(transformTask))).get();
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when add/update transform: ", e);
             throw new MetaStorageException(e);
@@ -984,16 +984,16 @@ public class ETCDMetaStorage implements IMetaStorage {
             }
         }
         if (transformChangeHook != null) {
-            transformChangeHook.onChange(transformTask.getClassName(), transformTask);
+            transformChangeHook.onChange(transformTask.getName(), transformTask);
         }
     }
 
     @Override
-    public void dropTransformTask(String className) throws MetaStorageException {
+    public void dropTransformTask(String name) throws MetaStorageException {
         try {
             lockTransform();
             this.client.getKVClient()
-                .delete(ByteSequence.from((TRANSFORM_PREFIX + className).getBytes())).get();
+                .delete(ByteSequence.from((TRANSFORM_PREFIX + name).getBytes())).get();
         } catch (ExecutionException | InterruptedException e) {
             logger.error("got error when remove transform: ", e);
             throw new MetaStorageException(e);
@@ -1003,7 +1003,7 @@ public class ETCDMetaStorage implements IMetaStorage {
             }
         }
         if (transformChangeHook != null) {
-            transformChangeHook.onChange(className, null);
+            transformChangeHook.onChange(name, null);
         }
     }
 

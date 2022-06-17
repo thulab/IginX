@@ -1,10 +1,10 @@
-from transformer import BaseTransformer
+import pandas as pd
 
 
-class AddOneTransformer(BaseTransformer):
+class AddOneTransformer:
     def __init__(self):
         pass
 
-    def transform(self, df):
-        return df + 1
-        pass
+    def transform(self, rows):
+        df = pd.DataFrame(rows) + 1
+        return df.values.tolist()

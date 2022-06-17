@@ -5,7 +5,7 @@ public class TaskFromYAML {
     private String taskType;
     private String dataFlowType;
     private long timeout;
-    private String className;
+    private String pyTaskName;
     private String sql;
 
     public TaskFromYAML() {
@@ -36,12 +36,12 @@ public class TaskFromYAML {
         this.timeout = timeout;
     }
 
-    public String getClassName() {
-        return className;
+    public String getPyTaskName() {
+        return pyTaskName;
     }
 
-    public void setClassName(String className) {
-        this.className = className;
+    public void setPyTaskName(String pyTaskName) {
+        this.pyTaskName = pyTaskName;
     }
 
     public String getSql() {

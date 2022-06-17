@@ -26,4 +26,11 @@ public class Constants {
 
     public static final String ALL_PATH = "*";
 
+    public static final String PARAM_PATHS = "param_paths";
+    public static final String PARAM_LEVELS = "param_levels";
+    public static final String PARAM_MODULE = "param_module";
+    public static final String PARAM_CLASS = "param_class";
+
+    public static final String UDF_CLASS = "t";
+    public static final String UDF_FUNC = "transform";
 }

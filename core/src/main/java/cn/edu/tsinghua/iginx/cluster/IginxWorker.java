@@ -33,11 +33,11 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.query.QueryManager;
 import cn.edu.tsinghua.iginx.thrift.*;
-import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,8 +65,6 @@ public class IginxWorker implements IService.Iface {
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 
     private final StatementExecutor executor = StatementExecutor.getInstance();
-
-    private final PythonDriver driver = PythonDriver.getInstance();
 
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
 
@@ -480,17 +478,13 @@ public class IginxWorker implements IService.Iface {
 
     @Override
     public Status registerTask(RegisterTaskReq req) {
+        String name = req.getName().trim().toLowerCase();
         String filePath = req.getFilePath();
         String className = req.getClassName();
 
-        TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(className);
+        TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(name);
         if (transformTaskMeta != null) {
             logger.error(String.format("Register task %s already exist", transformTaskMeta.toString()));
-            return RpcUtils.FAILURE;
-        }
-
-        if (isIllegalPath(filePath)) {
-            logger.error(String.format("Register file path is illegal, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
 
@@ -501,8 +495,7 @@ public class IginxWorker implements IService.Iface {
         }
 
         String fileName = sourceFile.getName();
-        String destPath = System.getProperty("user.dir") + File.separator +
-            "python_scripts" + File.separator + fileName;
+        String destPath = String.join(File.separator, System.getProperty("user.dir"), "python_scripts", fileName);
         File destFile = new File(destPath);
 
         if (destFile.exists()) {
@@ -513,28 +506,18 @@ public class IginxWorker implements IService.Iface {
         try {
             Files.copy(sourceFile.toPath(), destFile.toPath());
         } catch (IOException e) {
-            logger.error(String.format("Fail to copy register file", filePath), e);
+            logger.error(String.format("Fail to copy register file, filePath=%s", filePath), e);
             return RpcUtils.FAILURE;
         }
 
-        // drive test
-        if (driver.testWorker(fileName, className)) {
-            metaManager.addTransformTask(new TransformTaskMeta(className, fileName, config.getIp()));
-            return RpcUtils.SUCCESS;
-        } else {
-            return RpcUtils.FAILURE;
-        }
-    }
-
-    private boolean isIllegalPath(String path) {
-        //todo
-        return false;
+        metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName, config.getIp(), req.getType()));
+        return RpcUtils.SUCCESS;
     }
 
     @Override
     public Status dropTask(DropTaskReq req) {
-        String className = req.getClassName();
-        TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(className);
+        String name = req.getName().trim().toLowerCase();
+        TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(name);
         if (transformTaskMeta == null) {
             logger.info("Register task not exist");
             return RpcUtils.FAILURE;
@@ -544,7 +527,6 @@ public class IginxWorker implements IService.Iface {
             logger.info(String.format("Register task exists in node: %s", transformTaskMeta.getIp()));
             return RpcUtils.FAILURE;
         }
-
 
         String filePath = System.getProperty("user.dir") + File.separator +
             "python_scripts" + File.separator + transformTaskMeta.getFileName();
@@ -556,7 +538,7 @@ public class IginxWorker implements IService.Iface {
         }
 
         if (file.delete()) {
-            metaManager.dropTransformTask(className);
+            metaManager.dropTransformTask(name);
             logger.info(String.format("Register file has been dropped, path=%s", filePath));
             return RpcUtils.SUCCESS;
         } else {
@@ -569,8 +551,8 @@ public class IginxWorker implements IService.Iface {
     public GetRegisterTaskInfoResp getRegisterTaskInfo(GetRegisterTaskInfoReq req) {
         List<TransformTaskMeta> taskMetaList = metaManager.getTransformTasks();
         List<RegisterTaskInfo> taskInfoList = new ArrayList<>();
-        for (TransformTaskMeta taskMeta: taskMetaList) {
-            RegisterTaskInfo taskInfo = new RegisterTaskInfo(taskMeta.getClassName(), taskMeta.getFileName(), taskMeta.getIp());
+        for (TransformTaskMeta taskMeta : taskMetaList) {
+            RegisterTaskInfo taskInfo = new RegisterTaskInfo(taskMeta.getName(), taskMeta.getClassName(), taskMeta.getFileName(), taskMeta.getIp(), taskMeta.getType());
             taskInfoList.add(taskInfo);
         }
         GetRegisterTaskInfoResp resp = new GetRegisterTaskInfoResp(RpcUtils.SUCCESS);

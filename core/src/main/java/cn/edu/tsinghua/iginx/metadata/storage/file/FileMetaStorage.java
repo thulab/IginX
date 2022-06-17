@@ -574,10 +574,10 @@ public class FileMetaStorage implements IMetaStorage {
                 params = line.split(" ");
                 if (params[0].equals(UPDATE)) {
                     TransformTaskMeta taskMeta = JsonUtils.fromJson(params[1].getBytes(StandardCharsets.UTF_8), TransformTaskMeta.class);
-                    taskMetaMap.put(taskMeta.getClassName(), taskMeta);
+                    taskMetaMap.put(taskMeta.getName(), taskMeta);
                 } else if (params[0].equals(REMOVE)) {
-                    String className = params[1];
-                    taskMetaMap.remove(className);
+                    String name = params[1];
+                    taskMetaMap.remove(name);
                 } else {
                     logger.error("unknown log content: " + line);
                 }
@@ -599,20 +599,20 @@ public class FileMetaStorage implements IMetaStorage {
             throw new MetaStorageException(e);
         }
         if (transformChangeHook != null) {
-            transformChangeHook.onChange(transformTask.getClassName(), transformTask);
+            transformChangeHook.onChange(transformTask.getName(), transformTask);
         }
     }
 
     @Override
-    public void dropTransformTask(String className) throws MetaStorageException {
+    public void dropTransformTask(String name) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, TRANSFORM_META_FILE).toFile(), true))) {
-            writer.write(String.format("%s %s\n", REMOVE, className));
+            writer.write(String.format("%s %s\n", REMOVE, name));
         } catch (IOException e) {
             logger.error("write transform file error: ", e);
             throw new MetaStorageException(e);
         }
         if (transformChangeHook != null) {
-            transformChangeHook.onChange(className, null);
+            transformChangeHook.onChange(name, null);
         }
     }
 }

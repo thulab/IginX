@@ -27,7 +27,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.function.MappingFunction;
 import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
 
-import java.util.List;
+import java.util.Map;
 
 public class MappingTransformLazyStream extends UnaryLazyStream {
 
@@ -35,7 +35,7 @@ public class MappingTransformLazyStream extends UnaryLazyStream {
 
     private final MappingFunction function;
 
-    private final List<Value> params;
+    private final Map<String, Value> params;
 
     private RowStream resultStream;
 

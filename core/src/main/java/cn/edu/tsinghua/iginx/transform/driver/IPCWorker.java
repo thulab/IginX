@@ -6,7 +6,6 @@ import cn.edu.tsinghua.iginx.transform.api.Reader;
 import cn.edu.tsinghua.iginx.transform.api.Writer;
 import cn.edu.tsinghua.iginx.transform.data.ArrowReader;
 import cn.edu.tsinghua.iginx.transform.data.BatchData;
-import cn.edu.tsinghua.iginx.transform.exception.TransformException;
 import cn.edu.tsinghua.iginx.transform.exception.WriteBatchException;
 import org.apache.arrow.memory.RootAllocator;
 import org.apache.arrow.vector.VectorSchemaRoot;
@@ -21,7 +20,7 @@ import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class Worker extends Thread {
+public class IPCWorker extends Thread {
 
     private final long pid;
 
@@ -37,13 +36,13 @@ public class Worker extends Thread {
 
     private final Writer writer;
 
-    private final static Logger logger = LoggerFactory.getLogger(Worker.class);
+    private final static Logger logger = LoggerFactory.getLogger(IPCWorker.class);
 
     private final static Config config = ConfigDescriptor.getInstance().getConfig();
 
     private final ExecutorService threadPool = Executors.newFixedThreadPool(5);
 
-    public Worker(long pid, int javaPort, int pyPort, Process process, ServerSocket serverSocket, Writer writer) {
+    public IPCWorker(long pid, int javaPort, int pyPort, Process process, ServerSocket serverSocket, Writer writer) {
         this.pid = pid;
         this.ip = config.getIp();
         this.javaPort = javaPort;

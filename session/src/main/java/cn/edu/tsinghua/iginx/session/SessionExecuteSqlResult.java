@@ -405,13 +405,15 @@ public class SessionExecuteSqlResult {
         if (registerTaskInfos != null && !registerTaskInfos.isEmpty()) {
             builder.append("Register task infos:").append("\n");
             List<List<String>> cache = new ArrayList<>();
-            cache.add(new ArrayList<>(Arrays.asList("CLASS_NAME", "FILE_NAME", "IP")));
+            cache.add(new ArrayList<>(Arrays.asList("NAME", "CLASS_NAME", "FILE_NAME", "IP", "UDF_TYPE")));
             for (int i = 0; i < registerTaskInfos.size(); i++) {
                 RegisterTaskInfo info = registerTaskInfos.get(i);
                 cache.add(new ArrayList<>(Arrays.asList(
+                    info.getName(),
                     info.getClassName(),
                     info.getFileName(),
-                    info.getIp()
+                    info.getIp(),
+                    info.getType().toString()
                 )));
             }
             buildFromStringList(builder, cache);

@@ -36,11 +36,9 @@ import cn.edu.tsinghua.iginx.engine.shared.source.SourceType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_PATHS;
 import static org.junit.Assert.*;
 
 public abstract class AbstractOperatorMemoryExecutorTest {
@@ -301,8 +299,12 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testDownsample() throws PhysicalException {
         Table table = generateTableForUnaryOperator(true);
+
+        Map<String, Value> params = new HashMap<>();
+        params.put(PARAM_PATHS, new Value("a.a.b"));
+
         Downsample downsample = new Downsample(EmptySource.EMPTY_SOURCE, 3,
-                new FunctionCall(FunctionManager.getInstance().getFunction("avg"), Collections.singletonList(new Value("a.a.b"))),
+                new FunctionCall(FunctionManager.getInstance().getFunction("avg"), params),
                 new TimeRange(0, 11));
         RowStream stream = getExecutor().executeUnaryOperator(downsample, table);
 
@@ -330,11 +332,12 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test(expected = InvalidOperatorParameterException.class)
     public void testDownsampleWithoutTimestamp() throws PhysicalException {
         Table table = generateTableForUnaryOperator(false);
+
+        Map<String, Value> params = new HashMap<>();
+        params.put(PARAM_PATHS, new Value("a.a.b"));
+
         Downsample downsample = new Downsample(EmptySource.EMPTY_SOURCE, 3,
-                new FunctionCall(
-                        FunctionManager.getInstance().getFunction("max"),
-                        Collections.singletonList(new Value("a.a.b"))
-                ),
+                new FunctionCall(FunctionManager.getInstance().getFunction("max"), params),
                 new TimeRange(0, 11));
         getExecutor().executeUnaryOperator(downsample, table);
         fail();
@@ -343,11 +346,13 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testMappingTransform() throws PhysicalException {
         Table table = generateTableForUnaryOperator(false);
-        MappingTransform mappingTransform = new MappingTransform(EmptySource.EMPTY_SOURCE,
-                new FunctionCall(
-                        FunctionManager.getInstance().getFunction("last"),
-                        Collections.singletonList(new Value("a.a.b"))
-                )
+
+        Map<String, Value> params = new HashMap<>();
+        params.put(PARAM_PATHS, new Value("a.a.b"));
+
+        MappingTransform mappingTransform = new MappingTransform(
+            EmptySource.EMPTY_SOURCE,
+            new FunctionCall(FunctionManager.getInstance().getFunction("last"), params)
         );
 
         RowStream stream = getExecutor().executeUnaryOperator(mappingTransform, table);
@@ -373,11 +378,13 @@ public abstract class AbstractOperatorMemoryExecutorTest {
     @Test
     public void testSetTransform() throws PhysicalException {
         Table table = generateTableForUnaryOperator(false);
-        SetTransform setTransform = new SetTransform(EmptySource.EMPTY_SOURCE,
-                new FunctionCall(
-                        FunctionManager.getInstance().getFunction("avg"),
-                        Collections.singletonList(new Value("a.a.b"))
-                )
+
+        Map<String, Value> params = new HashMap<>();
+        params.put(PARAM_PATHS, new Value("a.a.b"));
+
+        SetTransform setTransform = new SetTransform(
+            EmptySource.EMPTY_SOURCE,
+            new FunctionCall(FunctionManager.getInstance().getFunction("avg"), params)
         );
 
         RowStream stream = getExecutor().executeUnaryOperator(setTransform, table);
