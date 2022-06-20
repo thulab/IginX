@@ -76,51 +76,32 @@ public class Min implements SetMappingFunction {
             throw new IllegalArgumentException("unexpected param type for max.");
         }
         String target = param.getBinaryVAsString();
-        if (StringUtils.isPattern(target)) {
-            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
-            List<Field> targetFields = new ArrayList<>();
-            List<Integer> indices = new ArrayList<>();
-            for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
-                Field field = rows.getHeader().getField(i);
-                if (pattern.matcher(field.getFullName()).matches()) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType()));
-                    indices.add(i);
-                }
+        Pattern pattern = Pattern.compile(StringUtils.reformatPath(target) + ".*");
+        List<Field> targetFields = new ArrayList<>();
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
+            Field field = rows.getHeader().getField(i);
+            if (pattern.matcher(field.getFullName()).matches()) {
+                targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType()));
+                indices.add(i);
             }
-            Object[] targetValues = new Object[targetFields.size()];
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                Object[] values = row.getValues();
-                for (int i = 0; i < indices.size(); i++) {
-                    Object value = values[indices.get(i)];
-                    if (targetValues[i] == null) {
-                        targetValues[i] = value;
-                    } else {
-                        if (value != null && ValueUtils.compare(targetValues[i], value, targetFields.get(i).getType()) > 0) {
-                            targetValues[i] = value;
-                        }
-                    }
-                }
-            }
-            return new Row(new Header(targetFields), targetValues);
-        } else {
-            int index = rows.getHeader().indexOf(target);
-            if (index == -1) {
-                return Row.EMPTY_ROW;
-            }
-            Field targetField = new Field(getIdentifier() + "(" + target + ")", rows.getHeader().getField(index).getType());
-            Object targetValue = null;
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                Object value = row.getValue(index);
-                if (value != null) {
-                    if (targetValue == null || ValueUtils.compare(targetValue, value, targetField.getType()) > 0) {
-                        targetValue = value;
-                    }
-                }
-            }
-            return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
+        Object[] targetValues = new Object[targetFields.size()];
+        while (rows.hasNext()) {
+            Row row = rows.next();
+            Object[] values = row.getValues();
+            for (int i = 0; i < indices.size(); i++) {
+                Object value = values[indices.get(i)];
+                if (targetValues[i] == null) {
+                    targetValues[i] = value;
+                } else {
+                    if (value != null && ValueUtils.compare(targetValues[i], value, targetFields.get(i).getType()) > 0) {
+                        targetValues[i] = value;
+                    }
+                }
+            }
+        }
+        return new Row(new Header(targetFields), targetValues);
     }
 
 }

@@ -79,129 +79,81 @@ public class Sum implements SetMappingFunction {
             groupByLevels = GroupByUtils.parseLevelsFromValue(params.get(PARAM_LEVELS));
         }
         String target = param.getBinaryVAsString();
-        if (StringUtils.isPattern(target)) {
-            List<Field> fields = rows.getHeader().getFields();
-            for (Field field : fields) {
-                if (!DataTypeUtils.isNumber(field.getType())) {
-                    throw new IllegalArgumentException("only number can calculate sum");
-                }
-            }
-            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
-            List<Field> targetFields = new ArrayList<>();
-            List<Integer> indices = new ArrayList<>();
-            Map<String, Integer> groupNameIndexMap = new HashMap<>(); // 只有在存在 group by 的时候才奏效
-            Map<Integer, Integer> groupOrderIndexMap = new HashMap<>();
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (pattern.matcher(field.getFullName()).matches()) {
-                    if (groupByLevels == null) {
-                        if (DataTypeUtils.isWholeNumber(field.getType())) {
-                            targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.LONG));
-                        } else {
-                            targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.DOUBLE));
-                        }
-                    } else {
-                        String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
-                        int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
-                        if (index != -1) {
-                            groupOrderIndexMap.put(i, index);
-                        } else {
-                            groupNameIndexMap.put(targetFieldName, targetFields.size());
-                            groupOrderIndexMap.put(i, targetFields.size());
-                            if (DataTypeUtils.isWholeNumber(field.getType())) {
-                                targetFields.add(new Field(targetFieldName, DataType.LONG));
-                            } else {
-                                targetFields.add(new Field(targetFieldName, DataType.DOUBLE));
-                            }
-                        }
-                    }
-                    indices.add(i);
-                }
-            }
-            Object[] targetValues = new Object[targetFields.size()];
-            for (int i = 0; i < targetFields.size(); i++) {
-                Field targetField = targetFields.get(i);
-                if (targetField.getType() == DataType.LONG) {
-                    targetValues[i] = 0L;
-                } else {
-                    targetValues[i] = 0.0D;
-                }
-            }
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                for (int i = 0; i < indices.size(); i++) {
-                    int index = indices.get(i);
-                    Object value = row.getValue(index);
-                    if (value == null) {
-                        continue;
-                    }
-                    int targetIndex = i;
-                    if (groupByLevels != null) {
-                        targetIndex = groupOrderIndexMap.get(index);
-                    }
-                    switch (fields.get(index).getType()) {
-                        case INTEGER:
-                            targetValues[targetIndex] = ((long) targetValues[targetIndex]) + (int) value;
-                            break;
-                        case LONG:
-                            targetValues[targetIndex] = ((long) targetValues[targetIndex]) + (long) value;
-                            break;
-                        case FLOAT:
-                            targetValues[targetIndex] = ((double) targetValues[targetIndex]) + (float) value;
-                            break;
-                        case DOUBLE:
-                            targetValues[targetIndex] = ((double) targetValues[targetIndex]) + (double) value;
-                            break;
-                    }
-                }
-            }
-            return new Row(new Header(targetFields), targetValues);
-        } else {
-            int index = rows.getHeader().indexOf(target);
-            if (index == -1) { // 实际上没有该列
-                return Row.EMPTY_ROW;
-            }
-            Field field = rows.getHeader().getField(index);
+        List<Field> fields = rows.getHeader().getFields();
+        for (Field field : fields) {
             if (!DataTypeUtils.isNumber(field.getType())) {
                 throw new IllegalArgumentException("only number can calculate sum");
             }
-            Field targetField;
-            Object targetValue;
-            String targetFieldName;
-            if (groupByLevels == null) {
-                targetFieldName = getIdentifier() + "(" + field.getFullName() + ")";
-            } else {
-                targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
+        }
+        Pattern pattern = Pattern.compile(StringUtils.reformatPath(target) + ".*");
+        List<Field> targetFields = new ArrayList<>();
+        List<Integer> indices = new ArrayList<>();
+        Map<String, Integer> groupNameIndexMap = new HashMap<>(); // 只有在存在 group by 的时候才奏效
+        Map<Integer, Integer> groupOrderIndexMap = new HashMap<>();
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            if (pattern.matcher(field.getFullName()).matches()) {
+                if (groupByLevels == null) {
+                    if (DataTypeUtils.isWholeNumber(field.getType())) {
+                        targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.LONG));
+                    } else {
+                        targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", DataType.DOUBLE));
+                    }
+                } else {
+                    String targetFieldName = getIdentifier() + "(" + GroupByUtils.transformPath(field.getFullName(), groupByLevels) + ")";
+                    int index = groupNameIndexMap.getOrDefault(targetFieldName, -1);
+                    if (index != -1) {
+                        groupOrderIndexMap.put(i, index);
+                    } else {
+                        groupNameIndexMap.put(targetFieldName, targetFields.size());
+                        groupOrderIndexMap.put(i, targetFields.size());
+                        if (DataTypeUtils.isWholeNumber(field.getType())) {
+                            targetFields.add(new Field(targetFieldName, DataType.LONG));
+                        } else {
+                            targetFields.add(new Field(targetFieldName, DataType.DOUBLE));
+                        }
+                    }
+                }
+                indices.add(i);
             }
-            if (DataTypeUtils.isWholeNumber(field.getType())) {
-                targetField = new Field(targetFieldName, DataType.LONG);
-                targetValue = 0L;
+        }
+        Object[] targetValues = new Object[targetFields.size()];
+        for (int i = 0; i < targetFields.size(); i++) {
+            Field targetField = targetFields.get(i);
+            if (targetField.getType() == DataType.LONG) {
+                targetValues[i] = 0L;
             } else {
-                targetField = new Field(targetFieldName, DataType.DOUBLE);
-                targetValue = 0.0D;
+                targetValues[i] = 0.0D;
             }
-            while (rows.hasNext()) {
-                Row row = rows.next();
+        }
+        while (rows.hasNext()) {
+            Row row = rows.next();
+            for (int i = 0; i < indices.size(); i++) {
+                int index = indices.get(i);
                 Object value = row.getValue(index);
                 if (value == null) {
                     continue;
                 }
-                switch (field.getType()) {
+                int targetIndex = i;
+                if (groupByLevels != null) {
+                    targetIndex = groupOrderIndexMap.get(index);
+                }
+                switch (fields.get(index).getType()) {
                     case INTEGER:
-                        targetValue = ((long) targetValue) + (int) value;
+                        targetValues[targetIndex] = ((long) targetValues[targetIndex]) + (int) value;
                         break;
                     case LONG:
-                        targetValue = ((long) targetValue) + (long) value;
+                        targetValues[targetIndex] = ((long) targetValues[targetIndex]) + (long) value;
                         break;
                     case FLOAT:
-                        targetValue = ((double) targetValue) + (float) value;
+                        targetValues[targetIndex] = ((double) targetValues[targetIndex]) + (float) value;
                         break;
                     case DOUBLE:
-                        targetValue = ((double) targetValue) + (double) value;
+                        targetValues[targetIndex] = ((double) targetValues[targetIndex]) + (double) value;
                         break;
                 }
             }
-            return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
+        return new Row(new Header(targetFields), targetValues);
     }
 }
