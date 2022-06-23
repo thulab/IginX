@@ -224,7 +224,7 @@
             </activation>
             <properties>
                 <thrift.download-url>
-                    http://artfiles.org/apache.org/thrift/${thrift.version}/thrift-${thrift.version}.exe
+                    http://archive.apache.org/dist/thrift/${thrift.version}/thrift-${thrift.version}.exe
                 </thrift.download-url>
                 <thrift.executable>thrift-${thrift.version}-win-x86_64.exe</thrift.executable>
                 <thrift.skip-making-executable>true</thrift.skip-making-executable>
