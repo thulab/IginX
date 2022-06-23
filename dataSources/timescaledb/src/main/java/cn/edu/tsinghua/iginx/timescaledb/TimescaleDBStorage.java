@@ -54,6 +54,7 @@ import cn.edu.tsinghua.iginx.timescaledb.entity.TimescaleDBQueryRowStream;
 import cn.edu.tsinghua.iginx.timescaledb.tools.DataTypeTransformer;
 import cn.edu.tsinghua.iginx.timescaledb.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.timescaledb.tools.TagFilterUtils;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -62,6 +63,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -318,8 +320,8 @@ public class TimescaleDBStorage implements IStorage {
         }
         stringBuilder.append(field).append(" ").append(DataTypeTransformer.toTimescaleDB(dataType));
         stmt.execute(String
-            .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s NULL)", stringBuilder.toString(),
-                DataTypeTransformer.toTimescaleDB(dataType)));
+            .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s NULL)", table,
+                stringBuilder.toString()));
         stmt.execute(String.format("SELECT create_hypertable('%s', 'time')", table));
       } else {
         for (String tag : tags.keySet()) {
@@ -356,6 +358,8 @@ public class TimescaleDBStorage implements IStorage {
           .format("jdbc:postgresql://%s:%s/%s?user=%s&password=%s", meta.getIp(), meta.getPort(),
               dbname, username, password);
       connection = DriverManager.getConnection(connUrl);
+      Statement stmt = connection.createStatement();
+      stmt.execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE");
     } catch (SQLException e) {
       logger.info("change database error", e);
     }
@@ -377,16 +381,25 @@ public class TimescaleDBStorage implements IStorage {
             String field = path.substring(path.lastIndexOf('.') + 1);
             field = field.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
             Map<String, String> tags = data.getTags(i);
+            if (tags == null) {
+              tags = new HashMap<>();
+            }
             createTimeSeriesIfNotExists(table, field, tags, dataType);
 
             long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
-            String value = data.getValue(i, index).toString();
+            String value;
+            if (data.getDataType(j) == DataType.BINARY) {
+              value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)
+                  + "'";
+            } else {
+              value = data.getValue(i, index).toString();
+            }
 
             StringBuilder columnsKeys = new StringBuilder();
             StringBuilder columnValues = new StringBuilder();
             for (Entry<String, String> tagEntry : tags.entrySet()) {
-              columnsKeys.append(tagEntry.getValue()).append(" ");
-              columnValues.append(tagEntry.getValue()).append(" ");
+              columnsKeys.append(tagEntry.getValue()).append(", ");
+              columnValues.append("'").append(tagEntry.getValue()).append("'").append(", ");
             }
             columnsKeys.append(field);
             columnValues.append(value);
@@ -422,19 +435,28 @@ public class TimescaleDBStorage implements IStorage {
         String field = path.substring(path.lastIndexOf('.') + 1);
         field = field.replace(IGINX_SEPARATOR, TIMESCALEDB_SEPARATOR);
         Map<String, String> tags = data.getTags(i);
+        if (tags == null) {
+          tags = new HashMap<>();
+        }
         createTimeSeriesIfNotExists(table, field, tags, dataType);
         BitmapView bitmapView = data.getBitmapView(i);
         int index = 0;
         for (int j = 0; j < data.getTimeSize(); j++) {
           if (bitmapView.get(j)) {
             long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
-            String value = data.getValue(i, index).toString();
+            String value;
+            if (data.getDataType(i) == DataType.BINARY) {
+              value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)
+                  + "'";
+            } else {
+              value = data.getValue(i, index).toString();
+            }
 
             StringBuilder columnsKeys = new StringBuilder();
             StringBuilder columnValues = new StringBuilder();
             for (Entry<String, String> tagEntry : tags.entrySet()) {
-              columnsKeys.append(tagEntry.getValue()).append(" ");
-              columnValues.append(tagEntry.getValue()).append(" ");
+              columnsKeys.append(tagEntry.getKey()).append(", ");
+              columnValues.append("'").append(tagEntry.getValue()).append("'").append(", ");
             }
             columnsKeys.append(field);
             columnValues.append(value);
@@ -453,6 +475,7 @@ public class TimescaleDBStorage implements IStorage {
       }
       stmt.executeBatch();
     } catch (SQLException e) {
+      logger.error(e.getMessage());
       return e;
     }
 
