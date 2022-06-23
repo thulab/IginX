@@ -163,10 +163,7 @@ public class MonitorManager implements Runnable {
           minHeat = Math.min(minHeat, heat);
         }
         double averageHeats = totalHeats * 1.0 / fragmentOfEachNode.size();
-        // 判断负载均衡
-        if (minHeat <= 0) {
-          continue;
-        }
+
         if (((1 - unbalanceThreshold) * averageHeats >= minHeat
             || (1 + unbalanceThreshold) * averageHeats <= maxHeat)) {
           DefaultMetaManager.getInstance().executeReshard();

@@ -180,7 +180,7 @@ public abstract class MigrationPolicy {
       // 给每个节点负载做排序以方便后续迁移
       // 去掉本身节点
       storageHeat.remove(fragmentMeta.getMasterStorageUnit().getStorageEngineId());
-      List<Entry<Long,Long>> storageHeatEntryList = new ArrayList<>(storageHeat.entrySet());
+      List<Entry<Long, Long>> storageHeatEntryList = new ArrayList<>(storageHeat.entrySet());
       storageHeatEntryList.sort(Entry.comparingByValue());
 
       // 开始实际切分片
@@ -216,7 +216,8 @@ public abstract class MigrationPolicy {
             + maxTimeseriesLoadBalanceThreshold)) {
           int replicas = (int) (fakedFragmentMetaLoads.get(i) / currAverageLoad);
           for (int num = 1; num < replicas; num++) {
-            long targetStorageId = storageHeatEntryList.get(num % storageHeatEntryList.size()).getKey();
+            long targetStorageId = storageHeatEntryList.get(num % storageHeatEntryList.size())
+                .getKey();
             StorageUnitMeta newStorageUnitMeta = DefaultMetaManager.getInstance()
                 .generateNewStorageUnitMetaByFragment(fragmentMeta, targetStorageId);
             FragmentMeta newFragment = new FragmentMeta(
@@ -234,11 +235,55 @@ public abstract class MigrationPolicy {
     }
   }
 
+  /**
+   * 在时间序列层面将分片在同一个du下分为两块（未知时间序列, 写入场景）
+   */
+  public void reshardWriteByTimeseries(FragmentMeta fragmentMeta, long points)
+      throws PhysicalException {
+    try {
+      migrationLogger.logMigrationExecuteTaskStart(
+          new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
+              MigrationExecuteType.RESHARD_TIME_SERIES));
+
+      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
+          fragmentMeta.getMasterStorageUnitId());
+      RowStream rowStream = physicalEngine.execute(showTimeSeries);
+      SortedSet<String> pathSet = new TreeSet<>();
+      while (rowStream.hasNext()) {
+        Row row = rowStream.next();
+        String timeSeries = new String((byte[]) row.getValue(0));
+        if (fragmentMeta.getTsInterval().isContain(timeSeries)) {
+          pathSet.add(timeSeries);
+        }
+      }
+      String middleTimeseries = new ArrayList<>(pathSet).get(pathSet.size() / 2);
+      if (middleTimeseries.contains("counter")) {
+        System.out.println(1);
+      }
+      TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+          fragmentMeta.getTsInterval().getStartTimeSeries(),
+          fragmentMeta.getTsInterval().getEndTimeSeries());
+      FragmentMeta newFragment = new FragmentMeta(middleTimeseries,
+          sourceTsInterval.getEndTimeSeries(),
+          fragmentMeta.getTimeInterval().getStartTime(),
+          fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
+      DefaultMetaManager.getInstance().addFragment(newFragment);
+      DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
+      fragmentMeta.endFragmentMetaByTimeSeries(middleTimeseries);
+      DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+      DefaultMetaManager.getInstance()
+          .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
+      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
+    } finally {
+      migrationLogger.logMigrationExecuteTaskEnd();
+    }
+  }
 
   /**
-   * 在时间序列层面将分片在同一个du下分为两块
+   * 在时间序列层面将分片在同一个du下分为两块（已知时间序列）
    */
-  public void reshardByTimeseries(FragmentMeta fragmentMeta, Map<String, Long> timeseriesLoadMap) {
+  public void reshardQueryByTimeseries(FragmentMeta fragmentMeta,
+      Map<String, Long> timeseriesLoadMap) {
     try {
       migrationLogger.logMigrationExecuteTaskStart(
           new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
@@ -253,6 +298,10 @@ public abstract class MigrationPolicy {
         currLoad += timeseriesLoadEntry.getValue();
         if (currLoad >= totalLoad / 2) {
           middleTimeseries = timeseriesLoadEntry.getKey();
+          if (middleTimeseries.contains("counter")) {
+            System.out.println(1);
+          }
+          break;
         }
       }
 

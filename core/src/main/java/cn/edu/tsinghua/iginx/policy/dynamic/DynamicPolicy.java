@@ -345,10 +345,10 @@ public class DynamicPolicy implements IPolicy {
     if (maxLoad < Math.max(maxWriteLoad, maxReadLoad)) {
       if (maxWriteLoad >= maxReadLoad) {
         executeTimeseriesReshard(maxWriteLoadFragment,
-            fragmentMetaPointsMap.get(maxWriteLoadFragment), nodeLoadMap);
+            fragmentMetaPointsMap.get(maxWriteLoadFragment), nodeLoadMap, true);
       } else {
         executeTimeseriesReshard(maxReadLoadFragment,
-            fragmentMetaPointsMap.get(maxReadLoadFragment), nodeLoadMap);
+            fragmentMetaPointsMap.get(maxReadLoadFragment), nodeLoadMap, false);
       }
       return;
     }
@@ -423,38 +423,45 @@ public class DynamicPolicy implements IPolicy {
   }
 
   private void executeTimeseriesReshard(FragmentMeta fragmentMeta, long points,
-      Map<Long, Long> storageHeat) {
+      Map<Long, Long> storageHeat, boolean isWrite) {
     try {
-      TimeseriesMonitor.getInstance().start();
-      Thread.sleep(timeseriesloadBalanceCheckInterval * 1000L);
-      TimeseriesMonitor.getInstance().stop();
-      metaManager.updateTimeseriesHeat(TimeseriesMonitor.getInstance().getTimeseriesLoadMap());
-      //等待收集完成
-      while (!metaManager.isAllTimeseriesMonitorsCompleteCollection()) {
-        Thread.sleep(1000);
-      }
-      long totalHeat = 0L;
-      Map<String, Long> timeseriesHeat = metaManager.loadTimeseriesHeat();
-      for (Entry<String, Long> timeseriesHeatEntry : timeseriesHeat.entrySet()) {
-        totalHeat += timeseriesHeatEntry.getValue();
-      }
-      double averageHeat = totalHeat * 1.0 / timeseriesHeat.size();
-      Map<String, Long> overLoadTimeseriesMap = new HashMap<>();
-      for (Entry<String, Long> timeseriesHeatEntry : timeseriesHeat.entrySet()) {
-        if (timeseriesHeatEntry.getValue() > averageHeat * (1
-            + maxTimeseriesLoadBalanceThreshold)) {
-          overLoadTimeseriesMap.put(timeseriesHeatEntry.getKey(), timeseriesHeatEntry.getValue());
-        }
-      }
-
-      if (overLoadTimeseriesMap.size() > 0
-          && fragmentMeta.getTimeInterval().getEndTime() != Long.MAX_VALUE) {
+      // 如果是写入则不需要考虑可定制化副本的情况
+      if (isWrite) {
         MigrationManager.getInstance().getMigration()
-            .reshardByCustomizableReplica(fragmentMeta, timeseriesHeat,
-                overLoadTimeseriesMap.keySet(), totalHeat, points, storageHeat);
+            .reshardWriteByTimeseries(fragmentMeta, points);
       } else {
-        MigrationManager.getInstance().getMigration()
-            .reshardByTimeseries(fragmentMeta, timeseriesHeat);
+        TimeseriesMonitor.getInstance().start();
+        Thread.sleep(timeseriesloadBalanceCheckInterval * 1000L);
+        TimeseriesMonitor.getInstance().stop();
+        metaManager.updateTimeseriesHeat(TimeseriesMonitor.getInstance().getTimeseriesLoadMap());
+        //等待收集完成
+        while (!metaManager.isAllTimeseriesMonitorsCompleteCollection()) {
+          Thread.sleep(1000);
+        }
+        long totalHeat = 0L;
+        Map<String, Long> timeseriesHeat = metaManager.loadTimeseriesHeat();
+        for (Entry<String, Long> timeseriesHeatEntry : timeseriesHeat.entrySet()) {
+          totalHeat += timeseriesHeatEntry.getValue();
+        }
+
+        double averageHeat = totalHeat * 1.0 / timeseriesHeat.size();
+        Map<String, Long> overLoadTimeseriesMap = new HashMap<>();
+        for (Entry<String, Long> timeseriesHeatEntry : timeseriesHeat.entrySet()) {
+          if (timeseriesHeatEntry.getValue() > averageHeat * (1
+              + maxTimeseriesLoadBalanceThreshold)) {
+            overLoadTimeseriesMap.put(timeseriesHeatEntry.getKey(), timeseriesHeatEntry.getValue());
+          }
+        }
+
+        if (overLoadTimeseriesMap.size() > 0
+            && fragmentMeta.getTimeInterval().getEndTime() != Long.MAX_VALUE) {
+          MigrationManager.getInstance().getMigration()
+              .reshardByCustomizableReplica(fragmentMeta, timeseriesHeat,
+                  overLoadTimeseriesMap.keySet(), totalHeat, points, storageHeat);
+        } else {
+          MigrationManager.getInstance().getMigration()
+              .reshardQueryByTimeseries(fragmentMeta, timeseriesHeat);
+        }
       }
     } catch (Exception e) {
       logger.error("execute timeseries reshard failed :", e);

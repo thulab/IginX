@@ -821,9 +821,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
   public void addFragment(FragmentMeta fragmentMeta)
       throws MetaStorageException { // 只在有锁的情况下调用，内部不需要加锁
     try {
-      this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-          .forPath(FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/"
-              + fragmentMeta.getTimeInterval().toString(), JsonUtils.toJson(fragmentMeta));
+      String path = FRAGMENT_NODE_PREFIX + "/" + fragmentMeta.getTsInterval().toString() + "/"
+          + fragmentMeta.getTimeInterval().toString();
+      if (this.client.checkExists().forPath(path) == null) {
+        this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
+            .forPath(path, JsonUtils.toJson(fragmentMeta));
+      }
     } catch (Exception e) {
       throw new MetaStorageException("get error when add fragment", e);
     }

@@ -225,6 +225,9 @@ public class DefaultMetaCache implements IMetaCache {
         fragmentLock.writeLock().lock();
         // 更新 fragmentMetaListMap
         List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
+        if (fragmentMetaList==null){
+            System.out.println(1);
+        }
         fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
         fragmentMetaListMap.put(fragmentMeta.getTsInterval(), fragmentMetaList);
         fragmentMetaListMap.remove(tsInterval);
