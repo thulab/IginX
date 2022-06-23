@@ -53,6 +53,7 @@ import cn.edu.tsinghua.iginx.postgresql.tools.FilterTransformer;
 import cn.edu.tsinghua.iginx.postgresql.tools.TagFilterUtils;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Pair;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -321,8 +322,8 @@ public class PostgreSQLStorage implements IStorage {
         }
         stringBuilder.append(field).append(" ").append(DataTypeTransformer.toPostgreSQL(dataType));
         stmt.execute(String
-            .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s NULL)", stringBuilder.toString(),
-                DataTypeTransformer.toPostgreSQL(dataType)));
+            .format("CREATE TABLE %s (time TIMESTAMPTZ NOT NULL,%s NULL)", table,
+                stringBuilder.toString()));
       } else {
         for (String tag : tags.keySet()) {
           ResultSet columnSet = databaseMetaData.getColumns(null, "%", table, tag);
@@ -382,7 +383,13 @@ public class PostgreSQLStorage implements IStorage {
             createTimeSeriesIfNotExists(table, field, tags, dataType);
 
             long time = data.getTimestamp(i) / 1000; // timescaledb存10位时间戳，java为13位时间戳
-            String value = data.getValue(i, index).toString();
+            String value;
+            if (data.getDataType(j) == DataType.BINARY) {
+              value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)
+                  + "'";
+            } else {
+              value = data.getValue(i, index).toString();
+            }
 
             StringBuilder columnsKeys = new StringBuilder();
             StringBuilder columnValues = new StringBuilder();
@@ -430,7 +437,13 @@ public class PostgreSQLStorage implements IStorage {
         for (int j = 0; j < data.getTimeSize(); j++) {
           if (bitmapView.get(j)) {
             long time = data.getTimestamp(j) / 1000; // timescaledb存10位时间戳，java为13位时间戳
-            String value = data.getValue(i, index).toString();
+            String value;
+            if (data.getDataType(i) == DataType.BINARY) {
+              value = "'" + new String((byte[]) data.getValue(i, index), StandardCharsets.UTF_8)
+                  + "'";
+            } else {
+              value = data.getValue(i, index).toString();
+            }
 
             StringBuilder columnsKeys = new StringBuilder();
             StringBuilder columnValues = new StringBuilder();
