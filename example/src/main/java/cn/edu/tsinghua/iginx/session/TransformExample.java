@@ -23,7 +23,8 @@ public class TransformExample {
     private static final String S4 = "transform.value4";
 
     private static final String QUERY_SQL = "select value1, value2, value3, value4 from transform;";
-    private static final String REGISTER_SQL_FORMATTER = "REGISTER PYTHON TASK %s IN %s";
+    private static final String SHOW_REGISTER_TASK_SQL = "SHOW REGISTER PYTHON TASK;";
+    private static final String REGISTER_SQL_FORMATTER = "REGISTER TRANSFORM PYTHON TASK %s IN %s AS %s";
     private static final String DROP_SQL_FORMATTER = "DROP PYTHON TASK %s";
 
     private static final String OUTPUT_DIR_PREFIX = System.getProperty("user.dir") + File.separator +
@@ -69,11 +70,19 @@ public class TransformExample {
 
         // 注册任务
         registerTask();
+
+        // 查询已注册的任务
+        result = session.executeSql(SHOW_REGISTER_TASK_SQL);
+        result.print(false, "ms");
     }
 
     private static void after() throws ExecutionException, SessionException {
         // 注销任务
         dropTask();
+
+        // 查询已注册的任务
+        SessionExecuteSqlResult result = session.executeSql(SHOW_REGISTER_TASK_SQL);
+        result.print(false, "ms");
 
         // 清除数据
         session.deleteColumns(Collections.singletonList("*"));
@@ -103,7 +112,7 @@ public class TransformExample {
 
     private static void registerTask() {
         TASK_MAP.forEach((k, v) -> {
-            String registerSQL = String.format(REGISTER_SQL_FORMATTER, k, v);
+            String registerSQL = String.format(REGISTER_SQL_FORMATTER, k, v, k);
             try {
                 session.executeSql(registerSQL);
             } catch (Exception e) {
@@ -132,7 +141,7 @@ public class TransformExample {
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("RowSumTransformer");
+        pyTask.setPyTaskName("RowSumTransformer");
         taskInfoList.add(pyTask);
 
         // 提交任务
@@ -157,7 +166,7 @@ public class TransformExample {
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("RowSumTransformer");
+        pyTask.setPyTaskName("RowSumTransformer");
         taskInfoList.add(pyTask);
 
         // 提交任务
@@ -182,11 +191,11 @@ public class TransformExample {
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("AddOneTransformer");
+        pyTask.setPyTaskName("AddOneTransformer");
         taskInfoList.add(pyTask);
 
         pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("RowSumTransformer");
+        pyTask.setPyTaskName("RowSumTransformer");
         taskInfoList.add(pyTask);
 
         // 提交任务
@@ -211,15 +220,15 @@ public class TransformExample {
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("AddOneTransformer");
+        pyTask.setPyTaskName("AddOneTransformer");
         taskInfoList.add(pyTask);
 
         pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
-        pyTask.setClassName("SumTransformer");
+        pyTask.setPyTaskName("SumTransformer");
         taskInfoList.add(pyTask);
 
         pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("RowSumTransformer");
+        pyTask.setPyTaskName("RowSumTransformer");
         taskInfoList.add(pyTask);
 
         // 提交任务
@@ -244,7 +253,7 @@ public class TransformExample {
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
-        pyTask.setClassName("RowSumTransformer");
+        pyTask.setPyTaskName("RowSumTransformer");
         taskInfoList.add(pyTask);
 
         // 提交任务
@@ -322,7 +331,7 @@ public class TransformExample {
                     Task.builder()
                         .dataFlowType(DataFlowType.Stream)
                         .timeout(TIMEOUT)
-                        .className("RowSumTransformer")
+                        .pyTaskName("RowSumTransformer")
                         .build())
                 .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt")
                 .build()

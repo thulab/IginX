@@ -32,7 +32,11 @@ import cn.edu.tsinghua.iginx.utils.StringUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_LEVELS;
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_PATHS;
 
 public class LastValue implements SetMappingFunction {
 
@@ -63,56 +67,38 @@ public class LastValue implements SetMappingFunction {
     }
 
     @Override
-    public Row transform(RowStream rows, List<Value> params) throws Exception {
+    public Row transform(RowStream rows, Map<String, Value> params) throws Exception {
         if (params.size() != 1) {
             throw new IllegalArgumentException("unexpected params for last value.");
         }
-        Value param = params.get(0);
-        if (param.getDataType() != DataType.BINARY) {
+        Value param = params.get(PARAM_PATHS);
+        if (param == null || param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for last value.");
         }
         String target = param.getBinaryVAsString();
-        if (StringUtils.isPattern(target)) {
-            List<Field> fields = rows.getHeader().getFields();
-            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
-            List<Field> targetFields = new ArrayList<>();
-            List<Integer> indices = new ArrayList<>();
-            for (int i = 0; i < fields.size(); i++) {
-                Field field = fields.get(i);
-                if (pattern.matcher(field.getFullName()).matches()) {
-                    targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType()));
-                    indices.add(i);
-                }
+        List<Field> fields = rows.getHeader().getFields();
+        Pattern pattern = Pattern.compile(StringUtils.reformatPath(target) + ".*");
+        List<Field> targetFields = new ArrayList<>();
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            if (pattern.matcher(field.getFullName()).matches()) {
+                targetFields.add(new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType()));
+                indices.add(i);
             }
-            Object[] targetValues = new Object[targetFields.size()];
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                for (int i = 0; i < indices.size(); i++) {
-                    Object value = row.getValue(indices.get(i));
-                    if (value == null) {
-                        continue;
-                    }
-                    targetValues[i] = value;
-                }
-            }
-            return new Row(new Header(targetFields), targetValues);
-        } else {
-            int index = rows.getHeader().indexOf(target);
-            if (index == -1) {
-                return Row.EMPTY_ROW;
-            }
-            Field field = rows.getHeader().getField(index);
-            Field targetField = new Field(getIdentifier() + "(" + field.getFullName() + ")", field.getType());
-            Object targetValue = null;
-            while (rows.hasNext()) {
-                Row row = rows.next();
-                Object value = row.getValue(index);
-                if (value != null) {
-                    targetValue = value;
-                }
-            }
-            return new Row(new Header(Collections.singletonList(targetField)), new Object[]{targetValue});
         }
+        Object[] targetValues = new Object[targetFields.size()];
+        while (rows.hasNext()) {
+            Row row = rows.next();
+            for (int i = 0; i < indices.size(); i++) {
+                Object value = row.getValue(indices.get(i));
+                if (value == null) {
+                    continue;
+                }
+                targetValues[i] = value;
+            }
+        }
+        return new Row(new Header(targetFields), targetValues);
     }
 
 }

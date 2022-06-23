@@ -39,5 +39,9 @@
             <directory>../conf/</directory>
             <outputDirectory>conf</outputDirectory>
         </fileSet>
+        <fileSet>
+            <directory>../python_scripts</directory>
+            <outputDirectory>python_scripts</outputDirectory>
+        </fileSet>
     </fileSets>
 </assembly>

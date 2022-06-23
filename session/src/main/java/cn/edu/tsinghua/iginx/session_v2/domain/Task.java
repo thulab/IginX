@@ -14,18 +14,18 @@ public class Task {
 
     private final String sql;
 
-    private final String className;
+    private final String pyTaskName;
 
-    public Task(TaskType taskType, DataFlowType dataFlowType, long timeout, String sql, String className) {
+    public Task(TaskType taskType, DataFlowType dataFlowType, long timeout, String sql, String pyTaskName) {
         this.taskType = taskType;
         this.dataFlowType = dataFlowType;
         this.timeout = timeout;
         this.sql = sql;
-        this.className = className;
+        this.pyTaskName = pyTaskName;
     }
 
     public Task(Task.Builder builder) {
-        this(builder.taskType, builder.dataFlowType, builder.timeout, builder.sql, builder.className);
+        this(builder.taskType, builder.dataFlowType, builder.timeout, builder.sql, builder.pyTaskName);
     }
 
     public static Task.Builder builder() {
@@ -48,8 +48,8 @@ public class Task {
         return sql;
     }
 
-    public String getClassName() {
-        return className;
+    public String getPyTaskName() {
+        return pyTaskName;
     }
 
     public static class Builder {
@@ -62,7 +62,7 @@ public class Task {
 
         private String sql;
 
-        private String className;
+        private String pyTaskName;
 
         public Task.Builder dataFlowType(DataFlowType dataFlowType) {
             this.dataFlowType = dataFlowType;
@@ -81,10 +81,10 @@ public class Task {
             return this;
         }
 
-        public Task.Builder className(String className) {
+        public Task.Builder pyTaskName(String pyTaskName) {
             Arguments.checkTaskType(TaskType.Python, taskType);
             this.taskType = TaskType.Python;
-            this.className = className;
+            this.pyTaskName = pyTaskName;
             return this;
         }
 

@@ -5,7 +5,7 @@ import cn.edu.tsinghua.iginx.thrift.TaskType;
 import cn.edu.tsinghua.iginx.transform.data.ArrowWriter;
 import cn.edu.tsinghua.iginx.transform.data.LogWriter;
 import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
-import cn.edu.tsinghua.iginx.transform.driver.Worker;
+import cn.edu.tsinghua.iginx.transform.driver.IPCWorker;
 import cn.edu.tsinghua.iginx.transform.exception.TransformException;
 import cn.edu.tsinghua.iginx.transform.pojo.PythonTask;
 import org.apache.arrow.memory.RootAllocator;
@@ -27,8 +27,8 @@ public class PythonDriverTest {
         PythonTask task = new PythonTask(TaskType.Python, DataFlowType.Stream, Long.MAX_VALUE,
             "RowSumTransformer");
 
-        Worker worker = driver.createWorker(task, new LogWriter());
-        worker.start();
+        IPCWorker IPCWorker = driver.createWorker(task, new LogWriter());
+        IPCWorker.start();
 
 //        ArrowReader reader = new ArrowReader();
 
@@ -36,7 +36,7 @@ public class PythonDriverTest {
             VectorSchemaRoot root = prepareData();
 //        Schema schema = root.getSchema();
 //        schema.getFields().forEach(field -> System.out.println(field.getType().toString()));
-            ArrowWriter writer = new ArrowWriter(worker.getPyPort());
+            ArrowWriter writer = new ArrowWriter(IPCWorker.getPyPort());
             writer.writeVector(root);
 //        worker.writeMsg(root);
             Thread.sleep(50);
@@ -45,7 +45,7 @@ public class PythonDriverTest {
 
         Thread.sleep(5000);
 
-        worker.close();
+        IPCWorker.close();
     }
 
     private VectorSchemaRoot prepareData() {

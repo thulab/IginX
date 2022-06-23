@@ -14,11 +14,12 @@ def load_class(file_name, class_name):
         import_class = getattr(import_module, class_name)
 
         clazz = import_class()
-        if issubclass(import_class, BaseTransformer):
-            return clazz, True
-        else:
-            print("The loaded class is not a sub class of BaseTransformer.")
-            return None, False
+        return clazz, True
+        # if issubclass(import_class, BaseTransformer):
+        #     return clazz, True
+        # else:
+        #     print("The loaded class is not a sub class of BaseTransformer.")
+        #     return None, False
     except Exception as e:
         msg = str(e)
         print("Fail to load %s in file %s.py, because %s" % (class_name, file_name, msg))

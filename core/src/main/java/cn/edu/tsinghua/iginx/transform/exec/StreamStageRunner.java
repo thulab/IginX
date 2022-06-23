@@ -10,9 +10,9 @@ import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
 import cn.edu.tsinghua.iginx.transform.api.Reader;
 import cn.edu.tsinghua.iginx.transform.api.Runner;
 import cn.edu.tsinghua.iginx.transform.api.Writer;
-import cn.edu.tsinghua.iginx.transform.driver.PythonDriver;
-import cn.edu.tsinghua.iginx.transform.driver.Worker;
 import cn.edu.tsinghua.iginx.transform.data.*;
+import cn.edu.tsinghua.iginx.transform.driver.PemjaDriver;
+import cn.edu.tsinghua.iginx.transform.driver.PemjaWorker;
 import cn.edu.tsinghua.iginx.transform.exception.TransformException;
 import cn.edu.tsinghua.iginx.transform.exception.WriteBatchException;
 import cn.edu.tsinghua.iginx.transform.pojo.IginXTask;
@@ -38,9 +38,9 @@ public class StreamStageRunner implements Runner {
 
     private Reader reader;
 
-    private final List<Worker> workerList;
+    private final List<PemjaWorker> pemjaWorkerList;
 
-    private final PythonDriver driver = PythonDriver.getInstance();
+    private final PemjaDriver driver = PemjaDriver.getInstance();
 
     private final StatementExecutor executor = StatementExecutor.getInstance();
 
@@ -53,7 +53,7 @@ public class StreamStageRunner implements Runner {
     public StreamStageRunner(StreamStage stage) {
         this.streamStage = stage;
         this.batchSize = config.getBatchSize();
-        this.workerList = new ArrayList<>();
+        this.pemjaWorkerList = new ArrayList<>();
         this.writer = streamStage.getExportWriter();
         this.mutex = ((ExportWriter) writer).getMutex();
     }
@@ -64,15 +64,9 @@ public class StreamStageRunner implements Runner {
         for (int i = taskList.size() - 1; i >= 0; i--) {
             Task task = taskList.get(i);
             if (task.isPythonTask()) {
-                try {
-                    Worker worker = driver.createWorker((PythonTask) task, writer);
-                    worker.start();
-                    workerList.add(0, worker);
-                    writer = new ArrowWriter(worker.getPyPort());
-                } catch (TransformException e) {
-                    logger.error("Steam stage runner fail to create worker");
-                    throw e;
-                }
+                PemjaWorker pemjaWorker = driver.createWorker((PythonTask) task, writer);
+                pemjaWorkerList.add(0, pemjaWorker);
+                writer = new PemjaWriter(pemjaWorker);
             }
         }
 
@@ -108,6 +102,5 @@ public class StreamStageRunner implements Runner {
     @Override
     public void close() {
         reader.close();
-        workerList.forEach(Worker::close);
     }
 }

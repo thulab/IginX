@@ -92,6 +92,7 @@ public class TransformJobManager {
             runner.close();
             job.setEndTime(System.currentTimeMillis());
         }
+        logger.info(String.format("Job id=%s cost %s ms.", job.getJobId(), job.getEndTime() - job.getStartTime()));
     }
 
     public void cancel(long jobId) {
@@ -104,6 +105,7 @@ public class TransformJobManager {
 
         job.setEndTime(System.currentTimeMillis());
         job.setState(JobState.JOB_CLOSED);
+        logger.info(String.format("Job id=%s cost %s ms.", job.getJobId(), job.getEndTime() - job.getStartTime()));
     }
 
     public JobState queryJobState(long jobId) {

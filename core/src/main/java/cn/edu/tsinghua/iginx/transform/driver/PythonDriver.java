@@ -65,14 +65,19 @@ public class PythonDriver implements Driver {
     }
 
     @Override
-    public Worker createWorker(PythonTask task, Writer writer) throws TransformException {
-        String className = task.getClassName();
+    public IPCWorker createWorker(PythonTask task, Writer writer) throws TransformException {
+        String name = task.getPyTaskName();
 
-        TransformTaskMeta taskMeta = metaManager.getTransformTask(className);
+        TransformTaskMeta taskMeta = metaManager.getTransformTask(name);
         if (taskMeta == null) {
-            throw new CreateWorkerException(String.format("Fail to load task info by className: %s", className));
+            throw new CreateWorkerException(String.format("Fail to load task info by task name: %s", name));
         }
+        if (!taskMeta.getIp().equals(config.getIp())) {
+            throw new CreateWorkerException(String.format("Fail to load task file, because current ip is: %s, and register ip is: %s", config.getIp(), taskMeta.getIp()));
+        }
+
         String fileName = taskMeta.getFileName();
+        String className = taskMeta.getClassName();
         String moduleName = fileName.substring(0, fileName.indexOf(PY_SUFFIX));
 
         ServerSocket serverSocket = null;
@@ -117,9 +122,9 @@ public class PythonDriver implements Driver {
                 } else if (status < 0) {
                     throw new CreateWorkerException(String.format("Failed to launch python worker with status=%s", Constants.getWorkerStatusInfo(status)));
                 } else {
-                    Worker worker = new Worker(pid, javaPort, pyPort, process, serverSocket, writer);
-                    logger.info(worker.toString() + " has started.");
-                    return worker;
+                    IPCWorker IPCWorker = new IPCWorker(pid, javaPort, pyPort, process, serverSocket, writer);
+                    logger.info(IPCWorker.toString() + " has started.");
+                    return IPCWorker;
                 }
             }
         } catch (IOException e) {

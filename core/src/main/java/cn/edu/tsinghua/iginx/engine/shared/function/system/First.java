@@ -36,6 +36,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static cn.edu.tsinghua.iginx.engine.shared.Constants.PARAM_PATHS;
+
 public class First implements MappingFunction {
 
     public static final String FIRST = "first";
@@ -69,64 +71,44 @@ public class First implements MappingFunction {
     }
 
     @Override
-    public RowStream transform(RowStream rows, List<Value> params) throws Exception {
+    public RowStream transform(RowStream rows, Map<String, Value> params) throws Exception {
         if (params.size() != 1) {
             throw new IllegalArgumentException("unexpected params for first.");
         }
-        Value param = params.get(0);
-        if (param.getDataType() != DataType.BINARY) {
+        Value param = params.get(PARAM_PATHS);
+        if (param == null || param.getDataType() != DataType.BINARY) {
             throw new IllegalArgumentException("unexpected param type for first.");
         }
         String target = param.getBinaryVAsString();
         Header header = new Header(Field.TIME, Arrays.asList(new Field(PATH, DataType.BINARY), new Field(VALUE, DataType.BINARY)));
         List<Row> resultRows = new ArrayList<>();
-        if (StringUtils.isPattern(target)) {
-            Map<Integer, Pair<Long, Object>> valueMap = new HashMap<>();
-            Pattern pattern = Pattern.compile(StringUtils.reformatPath(target));
-            Set<Integer> indices = new HashSet<>();
-            for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
-                Field field = rows.getHeader().getField(i);
-                if (pattern.matcher(field.getFullName()).matches()) {
-                    indices.add(i);
-                }
+        Map<Integer, Pair<Long, Object>> valueMap = new HashMap<>();
+        Pattern pattern = Pattern.compile(StringUtils.reformatPath(target) + ".*");
+        Set<Integer> indices = new HashSet<>();
+        for (int i = 0; i < rows.getHeader().getFieldSize(); i++) {
+            Field field = rows.getHeader().getField(i);
+            if (pattern.matcher(field.getFullName()).matches()) {
+                indices.add(i);
             }
-            while (rows.hasNext() && valueMap.size() < indices.size()) {
-                Row row = rows.next();
-                Object[] values = row.getValues();
+        }
+        while (rows.hasNext() && valueMap.size() < indices.size()) {
+            Row row = rows.next();
+            Object[] values = row.getValues();
 
-                for (int i = 0; i < values.length; i++) {
-                    if (values[i] == null || !indices.contains(i)) {
-                        continue;
-                    }
-                    if (!valueMap.containsKey(i)) {
-                        valueMap.put(i, new Pair<>(row.getTimestamp(), values[i]));
-                    }
+            for (int i = 0; i < values.length; i++) {
+                if (values[i] == null || !indices.contains(i)) {
+                    continue;
                 }
-            }
-            for (Map.Entry<Integer, Pair<Long, Object>> entry : valueMap.entrySet()) {
-                resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getFullName().getBytes(StandardCharsets.UTF_8),
-                    ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
-            }
-            resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
-        } else {
-            int index = rows.getHeader().indexOf(target);
-            if (index != -1) {
-                // 处理某一列的第一个值
-                long timestamp = 0L;
-                String value = null;
-                while (rows.hasNext()) {
-                    Row row = rows.next();
-                    if (row.getValue(index) != null) {
-                        timestamp = row.getTimestamp();
-                        value = ValueUtils.toString(row.getValue(index), row.getType(index));
-                        break;
-                    }
-                }
-                if (value != null) {
-                    resultRows.add(new Row(header, timestamp, new Object[]{rows.getHeader().getField(index).getFullName().getBytes(StandardCharsets.UTF_8), value.getBytes(StandardCharsets.UTF_8)}));
+                if (!valueMap.containsKey(i)) {
+                    valueMap.put(i, new Pair<>(row.getTimestamp(), values[i]));
                 }
             }
         }
+        for (Map.Entry<Integer, Pair<Long, Object>> entry : valueMap.entrySet()) {
+            resultRows.add(new Row(header, entry.getValue().k, new Object[]{rows.getHeader().getField(entry.getKey()).getFullName().getBytes(StandardCharsets.UTF_8),
+                    ValueUtils.toString(entry.getValue().v, rows.getHeader().getField(entry.getKey()).getType()).getBytes(StandardCharsets.UTF_8)}));
+        }
+        resultRows.sort(Comparator.comparingLong(Row::getTimestamp));
         return new Table(header, resultRows);
     }
 

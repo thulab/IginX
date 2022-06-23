@@ -11,20 +11,20 @@ import org.slf4j.LoggerFactory;
 
 public class DropTaskStatement extends SystemStatement {
 
-    private final String className;
+    private final String name;
 
     private final IginxWorker worker = IginxWorker.getInstance();
 
     private final static Logger logger = LoggerFactory.getLogger(DropTaskStatement.class);
 
-    public DropTaskStatement(String className) {
+    public DropTaskStatement(String name) {
         this.statementType = StatementType.DROP_TASK;
-        this.className = className;
+        this.name = name;
     }
 
     @Override
     public void execute(RequestContext ctx) throws ExecutionException {
-        DropTaskReq req = new DropTaskReq(ctx.getSessionId(), className);
+        DropTaskReq req = new DropTaskReq(ctx.getSessionId(), name);
         Status status = worker.dropTask(req);
         ctx.setResult(new Result(status));
     }

@@ -1188,7 +1188,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
                     }
                     taskMeta = JsonUtils.fromJson(event.getData().getData(), TransformTaskMeta.class);
                     if (taskMeta != null) {
-                        transformChangeHook.onChange(taskMeta.getClassName(), taskMeta);
+                        transformChangeHook.onChange(taskMeta.getName(), taskMeta);
                     } else {
                         logger.error("resolve transform task from zookeeper error");
                     }
@@ -1213,7 +1213,7 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
         try {
             mutex.acquire();
             this.client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT)
-                .forPath(TRANSFORM_NODE_PREFIX + "/" + transformTask.getClassName(), JsonUtils.toJson(transformTask));
+                .forPath(TRANSFORM_NODE_PREFIX + "/" + transformTask.getName(), JsonUtils.toJson(transformTask));
         } catch (Exception e) {
             throw new MetaStorageException("get error when add transform task", e);
         } finally {
@@ -1226,12 +1226,12 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void dropTransformTask(String className) throws MetaStorageException {
+    public void dropTransformTask(String name) throws MetaStorageException {
         InterProcessMutex mutex = new InterProcessMutex(this.client, TRANSFORM_LOCK_NODE);
         try {
             mutex.acquire();
             this.client.delete()
-                .forPath(TRANSFORM_NODE_PREFIX + "/" + className);
+                .forPath(TRANSFORM_NODE_PREFIX + "/" + name);
         } catch (Exception e) {
             throw new MetaStorageException("get error when drop transform task", e);
         } finally {

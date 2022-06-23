@@ -121,9 +121,9 @@ public interface IMetaCache {
 
     void addOrUpdateTransformTask(TransformTaskMeta transformTask);
 
-    void dropTransformTask(String className);
+    void dropTransformTask(String name);
 
-    TransformTaskMeta getTransformTask(String className);
+    TransformTaskMeta getTransformTask(String name);
 
     List<TransformTaskMeta> getTransformTasks();
 }
