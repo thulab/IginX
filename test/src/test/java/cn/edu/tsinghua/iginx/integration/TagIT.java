@@ -43,7 +43,7 @@ public class TagIT {
                 "insert into ln.wf02[t1=v1] (time, s, v) values (400, false, \"v4\");\n" +
                 "insert into ln.wf02[t1=v1,t2=v2] (time, v) values (800, \"v8\");\n" +
                 "insert into ln.wf03 (time, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
-                "insert into ln.wf03 (time, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, \"v32\", 32);").split("\n");
+                "insert into ln.wf03 (time, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);").split("\n");
 
         for (String insertStatement: insertStatements) {
             SessionExecuteSqlResult res = session.executeSql(insertStatement);
@@ -121,7 +121,7 @@ public class TagIT {
                 "| 400|     null|           false|     null|                  null|              v4|                   null|                   null|            null|              null|\n" +
                 "| 800|     null|            null|     null|                    v8|            null|                   null|                   null|            null|              null|\n" +
                 "|1600|     null|            null|     null|                  null|            null|                   null|                   true|            null|                16|\n" +
-                "|3200|     null|            null|     null|                  null|            null|                   true|                   null|             v32|                32|\n" +
+                "|3200|     null|            null|     null|                  null|            null|                   true|                   null|              16|                32|\n" +
                 "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
                 "Total line number = 5\n";
         executeAndCompare(statement, excepted);
