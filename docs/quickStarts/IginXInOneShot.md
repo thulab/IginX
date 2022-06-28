@@ -229,11 +229,11 @@ RPC 接口最常见的用法。
 
 ```shell
 # 下载 iginx 0.2 rc 版本源码包
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.4.0.tar.gz 
+$ wget https://github.com/thulab/IginX/archive/refs/tags/release/v0.4.0.tar.gz
 # 解压源码包
 $ tar -zxvf v0.4.0.tar.gz
 # 进入项目主目录
-$ cd IginX-rc-v0.4.0
+$ cd IginX-release-v0.4.0
 # 安装到本地 maven 仓库
 $ mvn clean install -DskipTests
 ```
