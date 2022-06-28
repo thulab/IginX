@@ -342,10 +342,10 @@ RPC 接口最常见的用法。
 
 下面是一个简短的使用教程。
 
-由于目前 IginX 0.2 版本还未发布到 maven 中央仓库，因此如需使用的话，需要手动安装到本地的 maven 仓库。具体安装方式如下：
+由于目前 IginX 0.4 版本还未发布到 maven 中央仓库，因此如需使用的话，需要手动安装到本地的 maven 仓库。具体安装方式如下：
 
 ```shell
-# 下载 iginx 0.2 rc 版本源码包
+# 下载 iginx 0.4 release 版本源码包
 $ wget https://github.com/thulab/IginX/archive/refs/tags/release/v0.4.0.tar.gz
 # 解压源码包
 $ tar -zxvf v0.4.0.tar.gz
