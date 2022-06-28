@@ -92,13 +92,13 @@ $ unzip apache-iotdb-0.12.0-server-bin.zip
 
 ### IginX 安装
 
-直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/rc%2Fv0.2.0/IginX-release-v0.2.0-bin.tar.gz)
+直接访问 [IginX 项目](https://github.com/thulab/IginX/)下载 [IginX 项目发布包](https://github.com/thulab/IginX/releases/download/release%2Fv0.4.0/)
 即可。
 
 ```shell
 $ cd ~
-$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.2.0/IginX-release-v0.2.0-bin.zip
-$ unzip IginX-release-v0.2.0-bin.zip
+$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.4.0/IginX-release-v0.4.0-bin.zip
+$ unzip IginX-release-v0.4.0-bin.zip
 ```
 
 ## 启动
@@ -346,11 +346,11 @@ RPC 接口最常见的用法。
 
 ```shell
 # 下载 iginx 0.2 rc 版本源码包
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz 
+$ wget https://github.com/thulab/IginX/archive/refs/tags/release/v0.4.0.tar.gz
 # 解压源码包
-$ tar -zxvf v0.2.0.tar.gz
+$ tar -zxvf v0.4.0.tar.gz
 # 进入项目主目录
-$ cd IginX-rc-v0.2.0
+$ cd IginX-release-v0.4.0
 # 安装到本地 maven 仓库
 $ mvn clean install -DskipTests
 ```
