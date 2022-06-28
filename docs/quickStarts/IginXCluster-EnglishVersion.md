@@ -95,7 +95,7 @@ $ unzip apache-iotdb-0.12.0-server-bin.zip
 
 ### IginX Installation
 
-Go directly to the [IginX project](https://github.com/thulab/IginX/) and download the [IginX project release package](https://github.com/thulab/IginX/releases/download/rc/v0.4.0/IginX-release-v0.4.0-bin.tar.gz). That's it.
+Go directly to the [IginX project](https://github.com/thulab/IginX/) and download the [IginX project release package](https://github.com/thulab/IginX/releases/download/release%2Fv0.4.0/IginX-release-v0.4.0-bin.zip). That's it.
 
 
 ## Launch
@@ -340,11 +340,11 @@ Since the IginX 0.4 version has not been released to the maven central repositor
 
 ```shell
 # Download IginX 0.4 rc version source package
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.4.0.tar.gz
+$ wget https://github.com/thulab/IginX/archive/refs/tags/release/v0.4.0.tar.gz
 # Unzip the source package
 $ tar -zxvf v0.4.0.tar.gz
 # Enter the project's main directory
-$ cd IginX-rc-v0.4.0
+$ cd IginX-release-v0.4.0
 # Install to local maven repository
 $ mvn clean install -DskipTests
 ````
