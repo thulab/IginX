@@ -54,6 +54,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -106,6 +107,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -162,6 +164,7 @@ jobs:
           sleep 10
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -225,6 +228,7 @@ jobs:
           mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -275,6 +279,7 @@ jobs:
           sleep 10
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
 
@@ -321,6 +326,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -373,6 +379,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -425,6 +432,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -477,6 +485,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
+          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
