@@ -1,11 +1,10 @@
 import pandas as pd
 
-
-class AvgTransformer:
+class RoundTransformer:
     def __init__(self):
         pass
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = pd.DataFrame(data=df.mean(axis=0)).transpose()
+        ret = pd.DataFrame(data=df.round())
         return ret.values.tolist()

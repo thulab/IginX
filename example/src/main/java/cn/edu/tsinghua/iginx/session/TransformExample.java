@@ -54,7 +54,7 @@ public class TransformExample {
     }
 
     private static void before() throws SessionException, ExecutionException {
-        session = new Session("127.0.0.1", 6888, "root", "root");
+        session = new Session("120.48.93.68", 6888, "root", "root");
         // 打开 Session
         session.openSession();
 
