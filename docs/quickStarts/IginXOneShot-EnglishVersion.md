@@ -53,15 +53,15 @@ IginX is the main part of the system, and the installation package can be downlo
 
 ```shell
 $ cd ~
-$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.2.0/IginX-release-v0.2.0-bin-3in1.zip
-$ unzip IginX-release-v0.2.0-bin-3in1.zip
+$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.4.0/IginX-release-v0.4.0-bin-3in1.zip
+$ unzip IginX-release-v0.4.0-bin-3in1.zip
 ````
 
 ## Launch
 
 ```shell
 $ cd ~
-$ cd IginX-release-v0.2.0-bin-3in1
+$ cd IginX-release-v0.4.0-bin-3in1
 $ chmod +x ./startAllOnSingleMachine.sh
 $ ./startAllOnSingleMachine.sh
 ````
@@ -229,17 +229,17 @@ Below is a short tutorial on how to use it.
 
 ### RPC Interface
 
-Since the IginX 0.2 version has not been released to the Maven central repository, if you want to use it, you need to manually install it to the local Maven repository. 
+Since the IginX 0.4 version has not been released to the Maven central repository, if you want to use it, you need to manually install it to the local Maven repository. 
 
 The specific installation method is as follows:
 
 ```shell
-# download iginx 0.2 rc version source code package
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz 
+# download iginx 0.4 release version source code package
+$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.4.0.tar.gz 
 # Unzip the source package
-$ tar -zxvf v0.2.0.tar.gz
+$ tar -zxvf v0.4.0.tar.gz
 # go to the main project's directory
-$ cd IginX-rc-v0.2.0
+$ cd IginX-rc-v0.4.0
 # Install to local Maven repository
 $ mvn clean install -DskipTests
 ```

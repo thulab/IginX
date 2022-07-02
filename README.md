@@ -56,7 +56,7 @@ Quick starts in Chinese (A complete version--[完整版部署说明文档](./doc
 - [Use IginX by docker](./docs/quickStarts/IginXByDocker-EnglishVersion.md)([Chinese version](./docs/quickStarts/IginXByDocker.md))
 - [Deploy an IginX Cluster](./docs/quickStarts/IginXCluster-EnglishVersion.md)([Chinese version](./docs/quickStarts/IginXCluster.md))
 
-Or, please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). User manual in English is
+Or, please refer to our [User manual in Chinese](./docs/pdf/userManualC.pdf). IginX supports SQL interactions (please refer to [SQL manuals](./docs/pdf/SQLManual.pdf) for details). User manuals in English are
 still being written, but you might contact [Yuqing Zhu](zhuyuqing@tsinghua.edu.cn) for IginX in case of any question or problem.
 
 ### To understand technological designs in IginX

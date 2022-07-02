@@ -52,15 +52,15 @@ IginX 为系统的主体部分，通过一键启动安装包
 
 ```shell
 $ cd ~
-$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.2.0/IginX-release-v0.2.0-bin-3in1.zip
-$ unzip IginX-release-v0.2.0-bin-3in1.zip
+$ wget https://github.com/thulab/IginX/releases/download/release%2Fv0.4.0/IginX-release-v0.4.0-bin-3in1.zip
+$ unzip IginX-release-v0.4.0-bin-3in1.zip
 ```
 
 ## 启动
 
 ```shell
 $ cd ~
-$ cd IginX-release-v0.2.0-bin-3in1
+$ cd IginX-release-v0.4.0-bin-3in1
 $ chmod +x ./startAllOnSingleMachine.sh
 $ ./startAllOnSingleMachine.sh
 ```
@@ -225,15 +225,15 @@ RPC 接口最常见的用法。
 
 下面是一个简短的使用教程。
 
-由于目前 IginX 0.2 版本还未发布到 maven 中央仓库，因此如需使用的话，需要手动安装到本地的 maven 仓库。具体安装方式如下：
+由于目前 IginX 0.4 版本还未发布到 maven 中央仓库，因此如需使用的话，需要手动安装到本地的 maven 仓库。具体安装方式如下：
 
 ```shell
-# 下载 iginx 0.2 rc 版本源码包
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz 
+# 下载 iginx 0.4 release 版本源码包
+$ wget https://github.com/thulab/IginX/archive/refs/tags/release/v0.4.0.tar.gz
 # 解压源码包
-$ tar -zxvf v0.2.0.tar.gz
+$ tar -zxvf v0.4.0.tar.gz
 # 进入项目主目录
-$ cd IginX-rc-v0.2.0
+$ cd IginX-release-v0.4.0
 # 安装到本地 maven 仓库
 $ mvn clean install -DskipTests
 ```

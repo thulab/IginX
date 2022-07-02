@@ -338,17 +338,17 @@ Below is a short tutorial on how to use it.
 
 ### RPC Interface
 
-Since the IginX 0.2 version has not been released to the Maven central repository, if you want to use it, you need to manually install it to the local Maven repository. 
+Since the IginX 0.4 version has not been released to the Maven central repository, if you want to use it, you need to manually install it to the local Maven repository. 
 
 The specific installation method is as follows:
 
 ```shell
-# download iginx 0.2 rc version source code package
-$ wget https://github.com/thulab/IginX/archive/refs/tags/rc/v0.2.0.tar.gz 
+# download iginx 0.4 release version source code package
+$ wget https://github.com/thulab/IginX/archive/refs/tags/release/v0.4.0.tar.gz 
 # Unzip the source package
-$ tar -zxvf v0.2.0.tar.gz
+$ tar -zxvf v0.4.0.tar.gz
 # go to the main project's directory
-$ cd IginX-rc-v0.2.0
+$ cd IginX-rc-v0.4.0
 # Install to local Maven repository
 $ mvn clean install -DskipTests
 ```
