@@ -1,19 +1,12 @@
 import pandas as pd
-import numpy as np
 
-
-class RowSumTransformer:
+class IntegralTransformer:
     def __init__(self):
         pass
 
     def transform(self, rows):
-        # Assume that all data are not null 
         df = pd.DataFrame(rows)
-        ret = np.zeros((df.shape[0], 2), dtype=np.integer)
-        for index, row in df.iterrows():
-            row_sum = 0
-            for num in row[1:]:
-                row_sum += num
-            ret[index][0] = row[0]
-            ret[index][1] = row_sum
-        return pd.DataFrame(ret, columns=['time', 'sum']).values.tolist()
+        df2 = df.diff()[1:]
+        interval_area = df2.mul(df2[0]/2 , axis=0).abs()
+        sum_area = interval_area.sum()[1:]
+        return sum_area.tolist()

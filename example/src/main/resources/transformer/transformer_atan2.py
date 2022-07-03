@@ -8,5 +8,5 @@ class Atan2Transformer:
     def transform(self, rowy, rowx):
         dfy = pd.DataFrame(rowy)
         dfx = pd.DataFrame(rowx)
-        ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: math.arctan(x))).transpose()
-        return ret.values.tolist()
+        ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: math.atan(x))).transpose()
+        return ret.values.tolist()[0]

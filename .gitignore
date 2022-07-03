@@ -45,3 +45,5 @@ hs_err_pid*
 **/maven-snapshot-repo/
 *.DS_Store
 
+# python files
+**/__pycache__
