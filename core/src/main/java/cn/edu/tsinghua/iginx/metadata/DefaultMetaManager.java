@@ -389,6 +389,10 @@ public class DefaultMetaManager implements IMetaManager {
     return id;
   }
 
+  public boolean checkFragmentExistenceByTimeInterval(TimeSeriesInterval tsInterval) {
+    return !cache.getFragmentMapByExactTimeSeriesInterval(tsInterval).isEmpty();
+  }
+
   @Override
   public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(
       TimeSeriesInterval tsInterval) {
@@ -522,6 +526,7 @@ public class DefaultMetaManager implements IMetaManager {
       storage.lockStorageUnit();
 
       // 更新du
+      logger.info("update du");
       toAddStorageUnit.setCreatedBy(id);
       String actualName = storage.addStorageUnit();
       StorageUnitMeta actualMasterStorageUnit = toAddStorageUnit
@@ -544,13 +549,19 @@ public class DefaultMetaManager implements IMetaManager {
         storage.updateStorageUnit(actualSlaveStorageUnit);
       }
 
+      logger.info("end old fragment");
       // 结束旧分片
       fragment = fragment
           .endFragmentMeta(toAddFragment.getTimeInterval().getStartTime());
+      logger.info("end old fragment:endFragmentMeta");
       fragment.setUpdatedBy(id);
+      logger.info("end old fragment:setUpdatedBy");
       cache.updateFragment(fragment);
+      logger.info("end old fragment:cache.updateFragment");
       storage.updateFragment(fragment);
+      logger.info("end old fragment:storage.updateFragment");
 
+      logger.info("update new fragment");
       // 更新新分片
       toAddFragment.setCreatedBy(id);
       toAddFragment.setInitialFragment(false);
@@ -583,6 +594,25 @@ public class DefaultMetaManager implements IMetaManager {
       storage.addFragment(fragmentMeta);
     } catch (MetaStorageException e) {
       logger.error("add fragment error: ", e);
+    } finally {
+      try {
+        storage.releaseFragment();
+      } catch (MetaStorageException e) {
+        logger.error("release fragment lock error: ", e);
+      }
+    }
+  }
+
+  @Override
+  public void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries) {
+    try {
+      storage.lockFragment();
+      cache.deleteFragmentByTsInterval(fragmentMeta.getTsInterval(), fragmentMeta);
+      fragmentMeta.getTsInterval().setEndTimeSeries(endTimeSeries);
+      cache.addFragment(fragmentMeta);
+      storage.addFragment(fragmentMeta);
+    } catch (MetaStorageException e) {
+      logger.error("end fragment by time series interval error: ", e);
     } finally {
       try {
         storage.releaseFragment();

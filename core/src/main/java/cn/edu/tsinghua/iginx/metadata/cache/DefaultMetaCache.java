@@ -36,6 +36,7 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.Pair;
 
 import java.util.*;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -45,580 +46,642 @@ import org.slf4j.LoggerFactory;
 
 public class DefaultMetaCache implements IMetaCache {
 
-    private static final Logger logger = LoggerFactory.getLogger(DefaultMetaCache.class);
-    private static DefaultMetaCache INSTANCE = null;
+  private static final Logger logger = LoggerFactory.getLogger(DefaultMetaCache.class);
+  private static DefaultMetaCache INSTANCE = null;
 
-    // 分片列表的缓存
-    private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
+  // 分片列表的缓存
+  private final List<Pair<TimeSeriesInterval, List<FragmentMeta>>> sortedFragmentMetaLists;
 
-    private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
+  private final Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListMap;
 
-    private final ReadWriteLock fragmentLock;
+  private final ReadWriteLock fragmentLock;
 
-    // 数据单元的缓存
-    private final Map<String, StorageUnitMeta> storageUnitMetaMap;
+  // 数据单元的缓存
+  private final Map<String, StorageUnitMeta> storageUnitMetaMap;
 
-    private final ReadWriteLock storageUnitLock;
+  private final ReadWriteLock storageUnitLock;
 
-    // iginx 的缓存
-    private final Map<Long, IginxMeta> iginxMetaMap;
+  // iginx 的缓存
+  private final Map<Long, IginxMeta> iginxMetaMap;
 
-    // 数据后端的缓存
-    private final Map<Long, StorageEngineMeta> storageEngineMetaMap;
+  // 数据后端的缓存
+  private final Map<Long, StorageEngineMeta> storageEngineMetaMap;
 
-    // schemaMapping 的缓存
-    private final Map<String, Map<String, Integer>> schemaMappings;
+  // schemaMapping 的缓存
+  private final Map<String, Map<String, Integer>> schemaMappings;
 
-    // user 的缓存
-    private final Map<String, UserMeta> userMetaMap;
+  // user 的缓存
+  private final Map<String, UserMeta> userMetaMap;
 
-    // 时序列信息版本号的缓存
-    private final Map<Integer, Integer> timeSeriesVersionMap;
+  // 时序列信息版本号的缓存
+  private final Map<Integer, Integer> timeSeriesVersionMap;
 
-    private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
+  private final ReadWriteLock insertRecordLock = new ReentrantReadWriteLock();
 
-    private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
+  private final Map<String, TimeSeriesCalDO> timeSeriesCalDOConcurrentHashMap = new ConcurrentHashMap<>();
 
-    private Random random = new Random();
+  private Random random = new Random();
 
-    private Config config = ConfigDescriptor.getInstance().getConfig();
+  private Config config = ConfigDescriptor.getInstance().getConfig();
 
-    private DefaultMetaCache() {
-        // 分片相关
-        sortedFragmentMetaLists = new ArrayList<>();
-        fragmentMetaListMap = new HashMap<>();
-        fragmentLock = new ReentrantReadWriteLock();
-        // 数据单元相关
-        storageUnitMetaMap = new HashMap<>();
-        storageUnitLock = new ReentrantReadWriteLock();
-        // iginx 相关
-        iginxMetaMap = new ConcurrentHashMap<>();
-        // 数据后端相关
-        storageEngineMetaMap = new ConcurrentHashMap<>();
-        // schemaMapping 相关
-        schemaMappings = new ConcurrentHashMap<>();
-        // user 相关
-        userMetaMap = new ConcurrentHashMap<>();
-        // 时序列信息版本号相关
-        timeSeriesVersionMap = new ConcurrentHashMap<>();
-    }
+  private DefaultMetaCache() {
+    // 分片相关
+    sortedFragmentMetaLists = new ArrayList<>();
+    fragmentMetaListMap = new HashMap<>();
+    fragmentLock = new ReentrantReadWriteLock();
+    // 数据单元相关
+    storageUnitMetaMap = new HashMap<>();
+    storageUnitLock = new ReentrantReadWriteLock();
+    // iginx 相关
+    iginxMetaMap = new ConcurrentHashMap<>();
+    // 数据后端相关
+    storageEngineMetaMap = new ConcurrentHashMap<>();
+    // schemaMapping 相关
+    schemaMappings = new ConcurrentHashMap<>();
+    // user 相关
+    userMetaMap = new ConcurrentHashMap<>();
+    // 时序列信息版本号相关
+    timeSeriesVersionMap = new ConcurrentHashMap<>();
+  }
 
-    public static DefaultMetaCache getInstance() {
+  public static DefaultMetaCache getInstance() {
+    if (INSTANCE == null) {
+      synchronized (DefaultMetaCache.class) {
         if (INSTANCE == null) {
-            synchronized (DefaultMetaCache.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new DefaultMetaCache();
-                }
-            }
+          INSTANCE = new DefaultMetaCache();
         }
-        return INSTANCE;
+      }
+    }
+    return INSTANCE;
+  }
+
+  private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(
+      List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList,
+      TimeSeriesInterval tsInterval) {
+    List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+    if (fragmentSeriesList.isEmpty()) {
+      return resultList;
+    }
+    int index = 0;
+    while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k
+        .isCompletelyAfter(tsInterval)) {
+      if (fragmentSeriesList.get(index).k.isIntersect(tsInterval)) {
+        resultList.add(fragmentSeriesList.get(index));
+      }
+      index++;
+    }
+    return resultList;
+  }
+
+  private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(
+      List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
+    List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
+    if (fragmentSeriesList.isEmpty()) {
+      return resultList;
+    }
+    int index = 0;
+    while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
+      if (fragmentSeriesList.get(index).k.isContain(tsName)) {
+        resultList.add(fragmentSeriesList.get(index));
+      }
+      index++;
+    }
+    return resultList;
+  }
+
+  private static List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList,
+      TimeInterval timeInterval) {
+    List<FragmentMeta> resultList = new ArrayList<>();
+    if (fragmentMetaList.isEmpty()) {
+      return resultList;
+    }
+    int index = 0;
+    while (index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval()
+        .isAfter(timeInterval)) {
+      if (fragmentMetaList.get(index).getTimeInterval().isIntersect(timeInterval)) {
+        resultList.add(fragmentMetaList.get(index));
+      }
+      index++;
+    }
+    return resultList;
+  }
+
+  @Override
+  public void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
+    storageUnitLock.readLock().lock();
+    fragmentListMap.values().forEach(e -> e
+        .forEach(f -> f.setMasterStorageUnit(storageUnitMetaMap.get(f.getMasterStorageUnitId()))));
+    storageUnitLock.readLock().unlock();
+    fragmentLock.writeLock().lock();
+    sortedFragmentMetaLists
+        .addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
+            .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
+    fragmentListMap.forEach(fragmentMetaListMap::put);
+    fragmentLock.writeLock().unlock();
+  }
+
+  @Override
+  public void addFragment(FragmentMeta fragmentMeta) {
+    fragmentLock.writeLock().lock();
+    // 更新 fragmentMetaListMap
+    List<FragmentMeta> fragmentMetaList = fragmentMetaListMap
+        .computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
+    if (fragmentMetaList.size() == 0) {
+      // 更新 sortedFragmentMetaLists
+      updateSortedFragmentsList(fragmentMeta.getTsInterval(), fragmentMetaList);
+    }
+    fragmentMetaList.add(fragmentMeta);
+    fragmentLock.writeLock().unlock();
+  }
+
+  private void updateSortedFragmentsList(TimeSeriesInterval tsInterval,
+      List<FragmentMeta> fragmentMetas) {
+    Pair<TimeSeriesInterval, List<FragmentMeta>> pair = new Pair<>(tsInterval, fragmentMetas);
+    if (sortedFragmentMetaLists.size() == 0) {
+      sortedFragmentMetaLists.add(pair);
+      return;
+    }
+    int left = 0, right = sortedFragmentMetaLists.size() - 1;
+    while (left <= right) {
+      int mid = (left + right) / 2;
+      TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
+      if (tsInterval.compareTo(midTsInterval) < 0) {
+        right = mid - 1;
+      } else if (tsInterval.compareTo(midTsInterval) > 0) {
+        left = mid + 1;
+      } else {
+        throw new RuntimeException("unexpected fragment");
+      }
+    }
+    if (left == sortedFragmentMetaLists.size()) {
+      sortedFragmentMetaLists.add(pair);
+    } else {
+      sortedFragmentMetaLists.add(left, pair);
     }
 
-    private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, TimeSeriesInterval tsInterval) {
-        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
-        if (fragmentSeriesList.isEmpty()) {
-            return resultList;
+  }
+
+  @Override
+  public void updateFragment(FragmentMeta fragmentMeta) {
+    fragmentLock.writeLock().lock();
+    // 更新 fragmentMetaListMap
+    List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
+    fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
+    fragmentLock.writeLock().unlock();
+  }
+
+  @Override
+  public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval,
+      FragmentMeta fragmentMeta) {
+    fragmentLock.writeLock().lock();
+    // 更新 fragmentMetaListMap
+    List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
+    fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
+    fragmentMetaListMap.put(fragmentMeta.getTsInterval(), fragmentMetaList);
+    fragmentMetaListMap.remove(tsInterval);
+
+    for (Pair<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListPair : sortedFragmentMetaLists) {
+      if (timeSeriesIntervalListPair.getK().equals(tsInterval)) {
+        timeSeriesIntervalListPair.k = fragmentMeta.getTsInterval();
+      }
+    }
+    fragmentLock.writeLock().unlock();
+  }
+
+  @Override
+  public void deleteFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) {
+    fragmentLock.writeLock().lock();
+    // 更新 fragmentMetaListMap
+    List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
+    fragmentMetaList.remove(fragmentMeta);
+    if (fragmentMetaList.size() == 0) {
+      fragmentMetaListMap.remove(tsInterval);
+      int index;
+      for (index = 0; index < sortedFragmentMetaLists.size(); index++) {
+        if (sortedFragmentMetaLists.get(index).getK().equals(tsInterval)) {
+          break;
         }
-        int index = 0;
-        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isCompletelyAfter(tsInterval)) {
-            if (fragmentSeriesList.get(index).k.isIntersect(tsInterval)) {
-                resultList.add(fragmentSeriesList.get(index));
-            }
-            index++;
+      }
+      if(index < sortedFragmentMetaLists.size()){
+        sortedFragmentMetaLists.remove(index);
+      }
+    }
+    fragmentLock.writeLock().unlock();
+  }
+
+  @Override
+  public List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval) {
+    List<FragmentMeta> res = fragmentMetaListMap.getOrDefault(tsInterval, new ArrayList<>());
+    // 对象不匹配的情况需要手动匹配（?）
+    if (res.size() == 0) {
+      for (Entry<TimeSeriesInterval, List<FragmentMeta>> fragmentMetaListEntry : fragmentMetaListMap
+          .entrySet()) {
+        if (fragmentMetaListEntry.getKey().toString().equals(tsInterval.toString())) {
+          return fragmentMetaListEntry.getValue();
         }
-        return resultList;
+      }
     }
+    return res;
+  }
 
-    private static List<Pair<TimeSeriesInterval, List<FragmentMeta>>> searchFragmentSeriesList(List<Pair<TimeSeriesInterval, List<FragmentMeta>>> fragmentSeriesList, String tsName) {
-        List<Pair<TimeSeriesInterval, List<FragmentMeta>>> resultList = new ArrayList<>();
-        if (fragmentSeriesList.isEmpty()) {
-            return resultList;
-        }
-        int index = 0;
-        while (index < fragmentSeriesList.size() && !fragmentSeriesList.get(index).k.isAfter(tsName)) {
-            if (fragmentSeriesList.get(index).k.isContain(tsName)) {
-                resultList.add(fragmentSeriesList.get(index));
-            }
-            index++;
-        }
-        return resultList;
+  @Override
+  public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(
+      TimeSeriesInterval tsInterval) {
+    Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
+    fragmentLock.readLock().lock();
+    searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval)
+        .forEach(e -> resultMap.put(e.k, e.v));
+    fragmentLock.readLock().unlock();
+    return resultMap;
+  }
+
+  @Override
+  public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap() {
+    Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
+    fragmentLock.readLock().lock();
+    sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1))
+        .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
+        .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+    fragmentLock.readLock().unlock();
+    return latestFragmentMap;
+  }
+
+  @Override
+  public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(
+      TimeSeriesInterval tsInterval) {
+    Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
+    fragmentLock.readLock().lock();
+    searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream()
+        .map(e -> e.v.get(e.v.size() - 1))
+        .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
+        .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
+    fragmentLock.readLock().unlock();
+    return latestFragmentMap;
+  }
+
+  @Override
+  public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(
+      TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+    Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
+    fragmentLock.readLock().lock();
+    searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> {
+      List<FragmentMeta> fragmentMetaList = searchFragmentList(e.v, timeInterval);
+      if (!fragmentMetaList.isEmpty()) {
+        resultMap.put(e.k, fragmentMetaList);
+      }
+    });
+    fragmentLock.readLock().unlock();
+    return resultMap;
+  }
+
+  @Override
+  public List<FragmentMeta> getAllFragments() {
+    List<FragmentMeta> resultList = new ArrayList<>();
+    for (List<FragmentMeta> fragmentMetas : fragmentMetaListMap.values()) {
+      resultList.addAll(fragmentMetas);
     }
+    return resultList;
+  }
 
-    private static List<FragmentMeta> searchFragmentList(List<FragmentMeta> fragmentMetaList, TimeInterval timeInterval) {
-        List<FragmentMeta> resultList = new ArrayList<>();
-        if (fragmentMetaList.isEmpty()) {
-            return resultList;
-        }
-        int index = 0;
-        while (index < fragmentMetaList.size() && !fragmentMetaList.get(index).getTimeInterval().isAfter(timeInterval)) {
-            if (fragmentMetaList.get(index).getTimeInterval().isIntersect(timeInterval)) {
-                resultList.add(fragmentMetaList.get(index));
-            }
-            index++;
-        }
-        return resultList;
-    }
-
-    @Override
-    public void initFragment(Map<TimeSeriesInterval, List<FragmentMeta>> fragmentListMap) {
-        storageUnitLock.readLock().lock();
-        fragmentListMap.values().forEach(e -> e.forEach(f -> f.setMasterStorageUnit(storageUnitMetaMap.get(f.getMasterStorageUnitId()))));
-        storageUnitLock.readLock().unlock();
-        fragmentLock.writeLock().lock();
-        sortedFragmentMetaLists.addAll(fragmentListMap.entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .map(e -> new Pair<>(e.getKey(), e.getValue())).collect(Collectors.toList()));
-        fragmentListMap.forEach(fragmentMetaListMap::put);
-        fragmentLock.writeLock().unlock();
-    }
-
-    @Override
-    public void addFragment(FragmentMeta fragmentMeta) {
-        fragmentLock.writeLock().lock();
-        // 更新 fragmentMetaListMap
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.computeIfAbsent(fragmentMeta.getTsInterval(), v -> new ArrayList<>());
-        if (fragmentMetaList.size() == 0) {
-            // 更新 sortedFragmentMetaLists
-            updateSortedFragmentsList(fragmentMeta.getTsInterval(), fragmentMetaList);
-        }
-        fragmentMetaList.add(fragmentMeta);
-        fragmentLock.writeLock().unlock();
-    }
-
-    private void updateSortedFragmentsList(TimeSeriesInterval tsInterval, List<FragmentMeta> fragmentMetas) {
-        Pair<TimeSeriesInterval, List<FragmentMeta>> pair = new Pair<>(tsInterval, fragmentMetas);
-        if (sortedFragmentMetaLists.size() == 0) {
-            sortedFragmentMetaLists.add(pair);
-            return;
-        }
-        int left = 0, right = sortedFragmentMetaLists.size() - 1;
-        while (left <= right) {
-            int mid = (left + right) / 2;
-            TimeSeriesInterval midTsInterval = sortedFragmentMetaLists.get(mid).k;
-            if (tsInterval.compareTo(midTsInterval) < 0) {
-                right = mid - 1;
-            } else if (tsInterval.compareTo(midTsInterval) > 0) {
-                left = mid + 1;
-            } else {
-                throw new RuntimeException("unexpected fragment");
-            }
-        }
-        if (left == sortedFragmentMetaLists.size()) {
-            sortedFragmentMetaLists.add(pair);
-        } else {
-            sortedFragmentMetaLists.add(left, pair);
-        }
-
-    }
-
-    @Override
-    public void updateFragment(FragmentMeta fragmentMeta) {
-        fragmentLock.writeLock().lock();
-        // 更新 fragmentMetaListMap
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(fragmentMeta.getTsInterval());
-        fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
-        fragmentLock.writeLock().unlock();
-    }
-
-    @Override
-    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval,
-        FragmentMeta fragmentMeta) {
-        fragmentLock.writeLock().lock();
-        // 更新 fragmentMetaListMap
-        List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
-        if (fragmentMetaList==null){
-            System.out.println(1);
-        }
-        fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
-        fragmentMetaListMap.put(fragmentMeta.getTsInterval(), fragmentMetaList);
-        fragmentMetaListMap.remove(tsInterval);
-
-        for(Pair<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListPair: sortedFragmentMetaLists) {
-            if(timeSeriesIntervalListPair.getK().equals(tsInterval)){
-                timeSeriesIntervalListPair.k = fragmentMeta.getTsInterval();
-            }
-        }
-        fragmentLock.writeLock().unlock();
-    }
-
-    @Override
-    public List<FragmentMeta> getFragmentMapByExactTimeSeriesInterval(TimeSeriesInterval tsInterval){
-        return fragmentMetaListMap.getOrDefault(tsInterval, new ArrayList<>());
-    }
-
-    @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
-        Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
-        fragmentLock.readLock().lock();
-        searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> resultMap.put(e.k, e.v));
-        fragmentLock.readLock().unlock();
-        return resultMap;
-    }
-
-    @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMap() {
-        Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
-        fragmentLock.readLock().lock();
-        sortedFragmentMetaLists.stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
-                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
-        fragmentLock.readLock().unlock();
-        return latestFragmentMap;
-    }
-
-    @Override
-    public Map<TimeSeriesInterval, FragmentMeta> getLatestFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
-        Map<TimeSeriesInterval, FragmentMeta> latestFragmentMap = new HashMap<>();
-        fragmentLock.readLock().lock();
-        searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).stream().map(e -> e.v.get(e.v.size() - 1)).filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE)
-                .forEach(e -> latestFragmentMap.put(e.getTsInterval(), e));
-        fragmentLock.readLock().unlock();
-        return latestFragmentMap;
-    }
-
-    @Override
-    public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesIntervalAndTimeInterval(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
-        Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
-        fragmentLock.readLock().lock();
-        searchFragmentSeriesList(sortedFragmentMetaLists, tsInterval).forEach(e -> {
-            List<FragmentMeta> fragmentMetaList = searchFragmentList(e.v, timeInterval);
-            if (!fragmentMetaList.isEmpty()) {
-                resultMap.put(e.k, fragmentMetaList);
-            }
-        });
-        fragmentLock.readLock().unlock();
-        return resultMap;
-    }
-
-    @Override
-    public List<FragmentMeta> getAllFragments() {
-        List<FragmentMeta> resultList = new ArrayList<>();
-        for(List<FragmentMeta> fragmentMetas: fragmentMetaListMap.values()){
-            resultList.addAll(fragmentMetas);
-        }
-        return resultList;
-    }
-
-    @Override
-    public List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName) {
-        List<FragmentMeta> resultList;
-        fragmentLock.readLock().lock();
-        resultList = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream).sorted((o1, o2) -> {
-            if (o1.getTsInterval().getStartTimeSeries() == null && o2.getTsInterval().getStartTimeSeries() == null)
-                return 0;
-            else if (o1.getTsInterval().getStartTimeSeries() == null)
-                return -1;
-            else if (o2.getTsInterval().getStartTimeSeries() == null)
-                return 1;
-            return o1.getTsInterval().getStartTimeSeries().compareTo(o2.getTsInterval().getStartTimeSeries());
-        }).collect(Collectors.toList());
-        fragmentLock.readLock().unlock();
-        return resultList;
-    }
-
-    @Override
-    public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) {
-        FragmentMeta result;
-        fragmentLock.readLock().lock();
-        result = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
-                .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
-        fragmentLock.readLock().unlock();
-        return result;
-    }
-
-    @Override
-    public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval) {
-        List<FragmentMeta> resultList;
-        fragmentLock.readLock().lock();
-        List<FragmentMeta> fragmentMetas = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v).flatMap(List::stream)
-                .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime())).collect(Collectors.toList());
-        resultList = searchFragmentList(fragmentMetas, timeInterval);
-        fragmentLock.readLock().unlock();
-        return resultList;
-    }
-
-    @Override
-    public boolean hasFragment() {
-        return !sortedFragmentMetaLists.isEmpty();
-    }
-
-    @Override
-    public boolean hasStorageUnit() {
-        return !storageUnitMetaMap.isEmpty();
-    }
-
-    @Override
-    public void initStorageUnit(Map<String, StorageUnitMeta> storageUnits) {
-        storageUnitLock.writeLock().lock();
-        for (StorageUnitMeta storageUnit : storageUnits.values()) {
-            storageUnitMetaMap.put(storageUnit.getId(), storageUnit);
-            getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
-        }
-        storageUnitLock.writeLock().unlock();
-    }
-
-    @Override
-    public StorageUnitMeta getStorageUnit(String id) {
-        StorageUnitMeta storageUnit;
-        storageUnitLock.readLock().lock();
-        storageUnit = storageUnitMetaMap.get(id);
-        storageUnitLock.readLock().unlock();
-        return storageUnit;
-    }
-
-    @Override
-    public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
-        Map<String, StorageUnitMeta> resultMap = new HashMap<>();
-        storageUnitLock.readLock().lock();
-        for (String id : ids) {
-            StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
-            if (storageUnit != null) {
-                resultMap.put(id, storageUnit);
-            }
-        }
-        storageUnitLock.readLock().unlock();
-        return resultMap;
-    }
-
-    @Override
-    public List<StorageUnitMeta> getStorageUnits() {
-        List<StorageUnitMeta> storageUnitMetaList;
-        storageUnitLock.readLock().lock();
-        storageUnitMetaList = new ArrayList<>(storageUnitMetaMap.values());
-        storageUnitLock.readLock().unlock();
-        return storageUnitMetaList;
-    }
-
-    @Override
-    public void addStorageUnit(StorageUnitMeta storageUnitMeta) {
-        storageUnitLock.writeLock().lock();
-        storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
-        storageUnitLock.writeLock().unlock();
-    }
-
-    @Override
-    public void updateStorageUnit(StorageUnitMeta storageUnitMeta) {
-        storageUnitLock.writeLock().lock();
-        storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
-        storageUnitLock.writeLock().unlock();
-    }
-
-    @Override
-    public List<IginxMeta> getIginxList() {
-        return new ArrayList<>(iginxMetaMap.values());
-    }
-
-    @Override
-    public void addIginx(IginxMeta iginxMeta) {
-        iginxMetaMap.put(iginxMeta.getId(), iginxMeta);
-    }
-
-    @Override
-    public void removeIginx(long id) {
-        iginxMetaMap.remove(id);
-    }
-
-    @Override
-    public void removeStorageEngine(StorageEngineMeta storageEngineMeta) {
-        storageEngineMetaMap.remove(storageEngineMeta.getId());
-    }
-
-    @Override
-    public void addStorageEngine(StorageEngineMeta storageEngineMeta) {
-        storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
-    }
-
-    @Override
-    public List<StorageEngineMeta> getStorageEngineList() {
-        return new ArrayList<>(this.storageEngineMetaMap.values());
-    }
-
-    @Override
-    public StorageEngineMeta getStorageEngine(long id) {
-        return this.storageEngineMetaMap.get(id);
-    }
-
-    @Override
-    public Map<String, Integer> getSchemaMapping(String schema) {
-        if (this.schemaMappings.get(schema) == null)
-            return null;
-        return new HashMap<>(this.schemaMappings.get(schema));
-    }
-
-    @Override
-    public int getSchemaMappingItem(String schema, String key) {
-        Map<String, Integer> schemaMapping = schemaMappings.get(schema);
-        if (schemaMapping == null) {
+  @Override
+  public List<FragmentMeta> getFragmentListByTimeSeriesName(String tsName) {
+    List<FragmentMeta> resultList;
+    fragmentLock.readLock().lock();
+    resultList = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v)
+        .flatMap(List::stream).sorted((o1, o2) -> {
+          if (o1.getTsInterval().getStartTimeSeries() == null
+              && o2.getTsInterval().getStartTimeSeries() == null) {
+            return 0;
+          } else if (o1.getTsInterval().getStartTimeSeries() == null) {
             return -1;
-        }
-        return schemaMapping.getOrDefault(key, -1);
-    }
+          } else if (o2.getTsInterval().getStartTimeSeries() == null) {
+            return 1;
+          }
+          return o1.getTsInterval().getStartTimeSeries()
+              .compareTo(o2.getTsInterval().getStartTimeSeries());
+        }).collect(Collectors.toList());
+    fragmentLock.readLock().unlock();
+    return resultList;
+  }
 
-    @Override
-    public void removeSchemaMapping(String schema) {
-        schemaMappings.remove(schema);
-    }
+  @Override
+  public FragmentMeta getLatestFragmentByTimeSeriesName(String tsName) {
+    FragmentMeta result;
+    fragmentLock.readLock().lock();
+    result = searchFragmentSeriesList(sortedFragmentMetaLists, tsName).stream().map(e -> e.v)
+        .flatMap(List::stream)
+        .filter(e -> e.getTimeInterval().getEndTime() == Long.MAX_VALUE).findFirst().orElse(null);
+    fragmentLock.readLock().unlock();
+    return result;
+  }
 
-    @Override
-    public void removeSchemaMappingItem(String schema, String key) {
-        Map<String, Integer> schemaMapping = schemaMappings.get(schema);
-        if (schemaMapping != null) {
-            schemaMapping.remove(key);
-        }
-    }
+  @Override
+  public List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName,
+      TimeInterval timeInterval) {
+    List<FragmentMeta> resultList;
+    fragmentLock.readLock().lock();
+    List<FragmentMeta> fragmentMetas = searchFragmentSeriesList(sortedFragmentMetaLists, tsName)
+        .stream().map(e -> e.v).flatMap(List::stream)
+        .sorted(Comparator.comparingLong(o -> o.getTimeInterval().getStartTime()))
+        .collect(Collectors.toList());
+    resultList = searchFragmentList(fragmentMetas, timeInterval);
+    fragmentLock.readLock().unlock();
+    return resultList;
+  }
 
-    @Override
-    public void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping) {
-        Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
-        mapping.putAll(schemaMapping);
-    }
+  @Override
+  public boolean hasFragment() {
+    return !sortedFragmentMetaLists.isEmpty();
+  }
 
-    @Override
-    public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
-        Map<String, Integer> mapping = schemaMappings.computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
-        mapping.put(key, value);
-    }
+  @Override
+  public boolean hasStorageUnit() {
+    return !storageUnitMetaMap.isEmpty();
+  }
 
-    @Override
-    public void addOrUpdateUser(UserMeta userMeta) {
-        userMetaMap.put(userMeta.getUsername(), userMeta);
+  @Override
+  public void initStorageUnit(Map<String, StorageUnitMeta> storageUnits) {
+    storageUnitLock.writeLock().lock();
+    for (StorageUnitMeta storageUnit : storageUnits.values()) {
+      storageUnitMetaMap.put(storageUnit.getId(), storageUnit);
+      getStorageEngine(storageUnit.getStorageEngineId()).addStorageUnit(storageUnit);
     }
+    storageUnitLock.writeLock().unlock();
+  }
 
-    @Override
-    public void removeUser(String username) {
-        userMetaMap.remove(username);
+  @Override
+  public StorageUnitMeta getStorageUnit(String id) {
+    StorageUnitMeta storageUnit;
+    storageUnitLock.readLock().lock();
+    storageUnit = storageUnitMetaMap.get(id);
+    storageUnitLock.readLock().unlock();
+    return storageUnit;
+  }
+
+  @Override
+  public Map<String, StorageUnitMeta> getStorageUnits(Set<String> ids) {
+    Map<String, StorageUnitMeta> resultMap = new HashMap<>();
+    storageUnitLock.readLock().lock();
+    for (String id : ids) {
+      StorageUnitMeta storageUnit = storageUnitMetaMap.get(id);
+      if (storageUnit != null) {
+        resultMap.put(id, storageUnit);
+      }
     }
+    storageUnitLock.readLock().unlock();
+    return resultMap;
+  }
 
-    @Override
-    public List<UserMeta> getUser() {
-        return userMetaMap.values().stream().map(UserMeta::copy).collect(Collectors.toList());
+  @Override
+  public List<StorageUnitMeta> getStorageUnits() {
+    List<StorageUnitMeta> storageUnitMetaList;
+    storageUnitLock.readLock().lock();
+    storageUnitMetaList = new ArrayList<>(storageUnitMetaMap.values());
+    storageUnitLock.readLock().unlock();
+    return storageUnitMetaList;
+  }
+
+  @Override
+  public void addStorageUnit(StorageUnitMeta storageUnitMeta) {
+    storageUnitLock.writeLock().lock();
+    storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+    storageUnitLock.writeLock().unlock();
+  }
+
+  @Override
+  public void updateStorageUnit(StorageUnitMeta storageUnitMeta) {
+    storageUnitLock.writeLock().lock();
+    storageUnitMetaMap.put(storageUnitMeta.getId(), storageUnitMeta);
+    storageUnitLock.writeLock().unlock();
+  }
+
+  @Override
+  public List<IginxMeta> getIginxList() {
+    return new ArrayList<>(iginxMetaMap.values());
+  }
+
+  @Override
+  public void addIginx(IginxMeta iginxMeta) {
+    iginxMetaMap.put(iginxMeta.getId(), iginxMeta);
+  }
+
+  @Override
+  public void removeIginx(long id) {
+    iginxMetaMap.remove(id);
+  }
+
+  @Override
+  public void removeStorageEngine(StorageEngineMeta storageEngineMeta) {
+    storageEngineMetaMap.remove(storageEngineMeta.getId());
+  }
+
+  @Override
+  public void addStorageEngine(StorageEngineMeta storageEngineMeta) {
+    storageEngineMetaMap.put(storageEngineMeta.getId(), storageEngineMeta);
+  }
+
+  @Override
+  public List<StorageEngineMeta> getStorageEngineList() {
+    return new ArrayList<>(this.storageEngineMetaMap.values());
+  }
+
+  @Override
+  public StorageEngineMeta getStorageEngine(long id) {
+    return this.storageEngineMetaMap.get(id);
+  }
+
+  @Override
+  public Map<String, Integer> getSchemaMapping(String schema) {
+    if (this.schemaMappings.get(schema) == null) {
+      return null;
     }
+    return new HashMap<>(this.schemaMappings.get(schema));
+  }
 
-    @Override
-    public List<UserMeta> getUser(List<String> usernames) {
-        List<UserMeta> users = new ArrayList<>();
-        for (String username : usernames) {
-            UserMeta user = userMetaMap.get(username);
-            if (user != null) {
-                users.add(user.copy());
+  @Override
+  public int getSchemaMappingItem(String schema, String key) {
+    Map<String, Integer> schemaMapping = schemaMappings.get(schema);
+    if (schemaMapping == null) {
+      return -1;
+    }
+    return schemaMapping.getOrDefault(key, -1);
+  }
+
+  @Override
+  public void removeSchemaMapping(String schema) {
+    schemaMappings.remove(schema);
+  }
+
+  @Override
+  public void removeSchemaMappingItem(String schema, String key) {
+    Map<String, Integer> schemaMapping = schemaMappings.get(schema);
+    if (schemaMapping != null) {
+      schemaMapping.remove(key);
+    }
+  }
+
+  @Override
+  public void addOrUpdateSchemaMapping(String schema, Map<String, Integer> schemaMapping) {
+    Map<String, Integer> mapping = schemaMappings
+        .computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
+    mapping.putAll(schemaMapping);
+  }
+
+  @Override
+  public void addOrUpdateSchemaMappingItem(String schema, String key, int value) {
+    Map<String, Integer> mapping = schemaMappings
+        .computeIfAbsent(schema, e -> new ConcurrentHashMap<>());
+    mapping.put(key, value);
+  }
+
+  @Override
+  public void addOrUpdateUser(UserMeta userMeta) {
+    userMetaMap.put(userMeta.getUsername(), userMeta);
+  }
+
+  @Override
+  public void removeUser(String username) {
+    userMetaMap.remove(username);
+  }
+
+  @Override
+  public List<UserMeta> getUser() {
+    return userMetaMap.values().stream().map(UserMeta::copy).collect(Collectors.toList());
+  }
+
+  @Override
+  public List<UserMeta> getUser(List<String> usernames) {
+    List<UserMeta> users = new ArrayList<>();
+    for (String username : usernames) {
+      UserMeta user = userMetaMap.get(username);
+      if (user != null) {
+        users.add(user.copy());
+      }
+    }
+    return users;
+  }
+
+  @Override
+  public void timeSeriesIsUpdated(int node, int version) {
+    timeSeriesVersionMap.put(node, version);
+  }
+
+  @Override
+  public void saveTimeSeriesData(InsertStatement statement) {
+    insertRecordLock.writeLock().lock();
+    long now = System.currentTimeMillis();
+
+    RawData data = statement.getRawData();
+    List<String> paths = data.getPaths();
+    if (data.isColumnData()) {
+      DataView view = new ColumnDataView(data, 0, data.getPaths().size(), 0,
+          data.getTimestamps().size());
+      for (int i = 0; i < view.getPathNum(); i++) {
+        long minn = Long.MAX_VALUE;
+        long maxx = Long.MIN_VALUE;
+        long totalByte = 0L;
+        int count = 0;
+        BitmapView bitmapView = view.getBitmapView(i);
+        for (int j = 0; j < view.getTimeSize(); j++) {
+          if (bitmapView.get(j)) {
+            minn = Math.min(minn, view.getTimestamp(j));
+            maxx = Math.max(maxx, view.getTimestamp(j));
+            if (view.getDataType(i) == DataType.BINARY) {
+              totalByte += ((byte[]) view.getValue(i, j)).length;
+            } else {
+              totalByte += transDatatypeToByte(view.getDataType(i));
             }
+            count++;
+          }
         }
-        return users;
-    }
+        if (count > 0) {
+          updateTimeSeriesCalDOConcurrentHashMap(paths.get(i), now, minn, maxx, totalByte, count);
+        }
+      }
+    } else {
+      DataView view = new RowDataView(data, 0, data.getPaths().size(), 0,
+          data.getTimestamps().size());
+      long[] totalByte = new long[view.getPathNum()];
+      int[] count = new int[view.getPathNum()];
+      long[] minn = new long[view.getPathNum()];
+      long[] maxx = new long[view.getPathNum()];
+      Arrays.fill(minn, Long.MAX_VALUE);
+      Arrays.fill(maxx, Long.MIN_VALUE);
 
-    @Override
-    public void timeSeriesIsUpdated(int node, int version) {
-        timeSeriesVersionMap.put(node, version);
-    }
-
-    @Override
-    public void saveTimeSeriesData(InsertStatement statement) {
-        insertRecordLock.writeLock().lock();
-        long now = System.currentTimeMillis();
-
-        RawData data = statement.getRawData();
-        List<String> paths = data.getPaths();
-        if (data.isColumnData()) {
-            DataView view = new ColumnDataView(data, 0, data.getPaths().size(), 0, data.getTimestamps().size());
-            for (int i = 0; i < view.getPathNum(); i++) {
-                long minn = Long.MAX_VALUE;
-                long maxx = Long.MIN_VALUE;
-                long totalByte = 0L;
-                int count = 0;
-                BitmapView bitmapView = view.getBitmapView(i);
-                for (int j = 0; j < view.getTimeSize(); j++) {
-                    if (bitmapView.get(j)) {
-                        minn = Math.min(minn, view.getTimestamp(j));
-                        maxx = Math.max(maxx, view.getTimestamp(j));
-                        if (view.getDataType(i) == DataType.BINARY) {
-                            totalByte += ((byte[]) view.getValue(i, j)).length;
-                        } else {
-                            totalByte += transDatatypeToByte(view.getDataType(i));
-                        }
-                        count++;
-                    }
-                }
-                if (count > 0) {
-                    updateTimeSeriesCalDOConcurrentHashMap(paths.get(i), now, minn, maxx, totalByte, count);
-                }
+      for (int i = 0; i < view.getTimeSize(); i++) {
+        BitmapView bitmapView = view.getBitmapView(i);
+        int index = 0;
+        for (int j = 0; j < view.getPathNum(); j++) {
+          if (bitmapView.get(j)) {
+            minn[j] = Math.min(minn[j], view.getTimestamp(i));
+            maxx[j] = Math.max(maxx[j], view.getTimestamp(i));
+            if (view.getDataType(j) == DataType.BINARY) {
+              totalByte[j] += ((byte[]) view.getValue(i, index)).length;
+            } else {
+              totalByte[j] += transDatatypeToByte(view.getDataType(j));
             }
-        } else {
-            DataView view = new RowDataView(data, 0, data.getPaths().size(), 0, data.getTimestamps().size());
-            long[] totalByte = new long[view.getPathNum()];
-            int[] count = new int[view.getPathNum()];
-            long[] minn = new long[view.getPathNum()];
-            long[] maxx = new long[view.getPathNum()];
-            Arrays.fill(minn, Long.MAX_VALUE);
-            Arrays.fill(maxx, Long.MIN_VALUE);
-
-            for (int i = 0; i < view.getTimeSize(); i++) {
-                BitmapView bitmapView = view.getBitmapView(i);
-                int index = 0;
-                for (int j = 0; j < view.getPathNum(); j++) {
-                    if (bitmapView.get(j)) {
-                        minn[j] = Math.min(minn[j], view.getTimestamp(i));
-                        maxx[j] = Math.max(maxx[j], view.getTimestamp(i));
-                        if (view.getDataType(j) == DataType.BINARY) {
-                            totalByte[j] += ((byte[]) view.getValue(i, index)).length;
-                        } else {
-                            totalByte[j] += transDatatypeToByte(view.getDataType(j));
-                        }
-                        count[j]++;
-                        index++;
-                    }
-                }
-            }
-            for (int i = 0; i < count.length; i++) {
-                if (count[i] > 0) {
-                    updateTimeSeriesCalDOConcurrentHashMap(paths.get(i), now, minn[i], maxx[i], totalByte[i], count[i]);
-                }
-            }
+            count[j]++;
+            index++;
+          }
         }
-        insertRecordLock.writeLock().unlock();
-    }
-
-    private void updateTimeSeriesCalDOConcurrentHashMap(String path, long now, long minn, long maxx, long totalByte, int count) {
-        TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
-        timeSeriesCalDO.setTimeSeries(path);
-        if (timeSeriesCalDOConcurrentHashMap.containsKey(path)) {
-            timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(path);
+      }
+      for (int i = 0; i < count.length; i++) {
+        if (count[i] > 0) {
+          updateTimeSeriesCalDOConcurrentHashMap(paths.get(i), now, minn[i], maxx[i], totalByte[i],
+              count[i]);
         }
-        timeSeriesCalDO.merge(now, minn, maxx, count, totalByte);
-        timeSeriesCalDOConcurrentHashMap.put(path, timeSeriesCalDO);
+      }
     }
+    insertRecordLock.writeLock().unlock();
+  }
 
-    private long transDatatypeToByte(DataType dataType) {
-        switch (dataType) {
-            case BOOLEAN:
-                return 1;
-            case INTEGER:
-            case FLOAT:
-                return 4;
-            case LONG:
-            case DOUBLE:
-                return 8;
-            default:
-                return 0;
-        }
+  private void updateTimeSeriesCalDOConcurrentHashMap(String path, long now, long minn, long maxx,
+      long totalByte, int count) {
+    TimeSeriesCalDO timeSeriesCalDO = new TimeSeriesCalDO();
+    timeSeriesCalDO.setTimeSeries(path);
+    if (timeSeriesCalDOConcurrentHashMap.containsKey(path)) {
+      timeSeriesCalDO = timeSeriesCalDOConcurrentHashMap.get(path);
     }
+    timeSeriesCalDO.merge(now, minn, maxx, count, totalByte);
+    timeSeriesCalDOConcurrentHashMap.put(path, timeSeriesCalDO);
+  }
 
-    @Override
-    public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
-        insertRecordLock.readLock().lock();
-        List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
-                .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb()).collect(Collectors.toList());
-        insertRecordLock.readLock().unlock();
-        return ret;
+  private long transDatatypeToByte(DataType dataType) {
+    switch (dataType) {
+      case BOOLEAN:
+        return 1;
+      case INTEGER:
+      case FLOAT:
+        return 4;
+      case LONG:
+      case DOUBLE:
+        return 8;
+      default:
+        return 0;
     }
+  }
 
-    @Override
-    public double getSumFromTimeSeries() {
-        insertRecordLock.readLock().lock();
-        double ret = timeSeriesCalDOConcurrentHashMap.values().stream().mapToDouble(TimeSeriesCalDO::getValue).sum();
-        insertRecordLock.readLock().unlock();
-        return ret;
-    }
+  @Override
+  public List<TimeSeriesCalDO> getMaxValueFromTimeSeries() {
+    insertRecordLock.readLock().lock();
+    List<TimeSeriesCalDO> ret = timeSeriesCalDOConcurrentHashMap.values().stream()
+        .filter(e -> random.nextDouble() < config.getCachedTimeseriesProb())
+        .collect(Collectors.toList());
+    insertRecordLock.readLock().unlock();
+    return ret;
+  }
 
-    @Override
-    public Map<Integer, Integer> getTimeseriesVersionMap() {
-        return timeSeriesVersionMap;
-    }
+  @Override
+  public double getSumFromTimeSeries() {
+    insertRecordLock.readLock().lock();
+    double ret = timeSeriesCalDOConcurrentHashMap.values().stream()
+        .mapToDouble(TimeSeriesCalDO::getValue).sum();
+    insertRecordLock.readLock().unlock();
+    return ret;
+  }
+
+  @Override
+  public Map<Integer, Integer> getTimeseriesVersionMap() {
+    return timeSeriesVersionMap;
+  }
 }

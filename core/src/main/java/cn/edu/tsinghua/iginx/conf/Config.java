@@ -53,7 +53,7 @@ public class Config {
 
     private double unbalanceThreshold = 0.1;
 
-    private double unbalanceFinalStatusThreshold = 0.1;
+    private double unbalanceFinalStatusThreshold = 0.5;
 
     private double maxLoadThreshold = Runtime.getRuntime().availableProcessors() * loadBalanceCheckInterval * 1000 * 0.8;
 

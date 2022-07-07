@@ -81,6 +81,11 @@ public interface IMetaManager {
     long getIginxId();
 
     /**
+     * 查询分区是否存在
+     */
+    boolean checkFragmentExistenceByTimeInterval(TimeSeriesInterval tsInterval);
+
+    /**
      * 获取某个时间序列区间的所有分片
      */
     Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval);
@@ -254,6 +259,8 @@ public interface IMetaManager {
     void doneReshard();
 
     void addFragment(FragmentMeta fragmentMeta);
+
+    void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries);
 
     void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta);
 

@@ -94,10 +94,6 @@ public final class FragmentMeta {
     return fragment;
   }
 
-  public void endFragmentMetaByTimeSeries(String endTimeSeries) {
-    tsInterval.setEndTimeSeries(endTimeSeries);
-  }
-
   public long getCreatedBy() {
     return createdBy;
   }

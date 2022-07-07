@@ -106,12 +106,12 @@ public class MonitorManager implements Runnable {
       try {
         //清空节点信息
         metaManager.clearMonitors();
-        logger.info("start to print all fragments in the system");
+        logger.error("start to print all fragments in the system");
         List<FragmentMeta> fragmentMeta1s = DefaultMetaManager.getInstance().getAllFragments();
         for (FragmentMeta fragmentMeta : fragmentMeta1s) {
-          logger.info(fragmentMeta.toString());
+          logger.error(fragmentMeta.toString());
         }
-        logger.info("end print all fragments in the system");
+        logger.error("end print all fragments in the system");
         Thread.sleep(interval * 1000L);
         //发起负载均衡判断
         DefaultMetaManager.getInstance().executeReshardJudging();
@@ -144,24 +144,27 @@ public class MonitorManager implements Runnable {
         long totalHeats = 0;
         long maxHeat = 0;
         long minHeat = Long.MAX_VALUE;
+        logger.error("start to print all fragments of each node");
         for (Entry<Long, List<FragmentMeta>> fragmentOfEachNodeEntry : fragmentOfEachNode
             .entrySet()) {
           long heat = 0;
           List<FragmentMeta> fragmentMetas = fragmentOfEachNodeEntry.getValue();
           for (FragmentMeta fragmentMeta : fragmentMetas) {
-            logger.info("fragment heat write: {} = {}", fragmentMeta,
+            logger.error("fragment: {}", fragmentMeta.toString());
+            logger.error("fragment heat write: {} = {}", fragmentMeta,
                 fragmentHeatWriteMap.getOrDefault(fragmentMeta, 0L));
             heat += fragmentHeatWriteMap.getOrDefault(fragmentMeta, 0L);
-            logger.info("fragment heat read: {} = {}", fragmentMeta,
+            logger.error("fragment heat read: {} = {}", fragmentMeta,
                 fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L));
             heat += fragmentHeatReadMap.getOrDefault(fragmentMeta, 0L);
           }
-          logger.info("heat of node {} : {}", fragmentOfEachNodeEntry.getKey(), heat);
+          logger.error("heat of node {} : {}", fragmentOfEachNodeEntry.getKey(), heat);
 
           totalHeats += heat;
           maxHeat = Math.max(maxHeat, heat);
           minHeat = Math.min(minHeat, heat);
         }
+        logger.error("end print all fragments of each node");
         double averageHeats = totalHeats * 1.0 / fragmentOfEachNode.size();
 
         if (((1 - unbalanceThreshold) * averageHeats >= minHeat

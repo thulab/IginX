@@ -191,8 +191,7 @@ public abstract class MigrationPolicy {
       for (int i = 0; i < fakedFragmentMetas.size(); i++) {
         FragmentMeta targetFragmentMeta = fakedFragmentMetas.get(i);
         if (i == 0) {
-          fragmentMeta
-              .endFragmentMetaByTimeSeries(targetFragmentMeta.getTsInterval().getEndTimeSeries());
+          DefaultMetaManager.getInstance().endFragmentByTimeSeriesInterval(fragmentMeta, targetFragmentMeta.getTsInterval().getEndTimeSeries());
           DefaultMetaManager.getInstance()
               .updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
           DefaultMetaManager.getInstance()
@@ -240,11 +239,18 @@ public abstract class MigrationPolicy {
    */
   public void reshardWriteByTimeseries(FragmentMeta fragmentMeta, long points)
       throws PhysicalException {
+    // 分区不存在直接返回
+//    if (!DefaultMetaManager.getInstance()
+//        .checkFragmentExistenceByTimeInterval(fragmentMeta.getTsInterval())) {
+//      return;
+//    }
     try {
+      logger.info("start to reshard timeseries by write");
       migrationLogger.logMigrationExecuteTaskStart(
           new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
               MigrationExecuteType.RESHARD_TIME_SERIES));
 
+      logger.info("start to show timeseries");
       ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
           fragmentMeta.getMasterStorageUnitId());
       RowStream rowStream = physicalEngine.execute(showTimeSeries);
@@ -256,10 +262,8 @@ public abstract class MigrationPolicy {
           pathSet.add(timeSeries);
         }
       }
+      logger.info("start to add new fragment");
       String middleTimeseries = new ArrayList<>(pathSet).get(pathSet.size() / 2);
-      if (middleTimeseries.contains("counter")) {
-        System.out.println(1);
-      }
       TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
           fragmentMeta.getTsInterval().getStartTimeSeries(),
           fragmentMeta.getTsInterval().getEndTimeSeries());
@@ -268,9 +272,9 @@ public abstract class MigrationPolicy {
           fragmentMeta.getTimeInterval().getStartTime(),
           fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
       DefaultMetaManager.getInstance().addFragment(newFragment);
+      logger.info("start to add old fragment");
       DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
-      fragmentMeta.endFragmentMetaByTimeSeries(middleTimeseries);
-      DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+      DefaultMetaManager.getInstance().endFragmentByTimeSeriesInterval(fragmentMeta, middleTimeseries);
       DefaultMetaManager.getInstance()
           .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
       DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
@@ -298,9 +302,6 @@ public abstract class MigrationPolicy {
         currLoad += timeseriesLoadEntry.getValue();
         if (currLoad >= totalLoad / 2) {
           middleTimeseries = timeseriesLoadEntry.getKey();
-          if (middleTimeseries.contains("counter")) {
-            System.out.println(1);
-          }
           break;
         }
       }
@@ -314,7 +315,7 @@ public abstract class MigrationPolicy {
           fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
       DefaultMetaManager.getInstance().addFragment(newFragment);
       DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, totalLoad - currLoad);
-      fragmentMeta.endFragmentMetaByTimeSeries(middleTimeseries);
+      DefaultMetaManager.getInstance().endFragmentByTimeSeriesInterval(fragmentMeta, middleTimeseries);
       DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
       DefaultMetaManager.getInstance()
           .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
@@ -378,21 +379,24 @@ public abstract class MigrationPolicy {
       //根据负载判断是否能进行该任务
       if (migrationTask != null && canExecuteTargetMigrationTask(migrationTask, nodeLoadMap)) {
         migrationTaskQueue.poll();
-        sortQueueListByFirstItem(migrationTaskQueueList);
         this.executor.submit(() -> {
+          this.logger.info("start migration: {}", migrationTask);
           //异步执行耗时的操作
           if (migrationTask.getMigrationType() == MigrationType.QUERY) {
             // 如果之前没切过分区，需要优先切一下分区
             if (migrationTask.getFragmentMeta().getTimeInterval().getEndTime() == Long.MAX_VALUE) {
+              this.logger.info("start to reshard query data: {}", migrationTask);
               FragmentMeta fragmentMeta = reshardFragment(migrationTask.getSourceStorageId(),
                   migrationTask.getTargetStorageId(),
                   migrationTask.getFragmentMeta());
               migrationTask.setFragmentMeta(fragmentMeta);
             }
+            this.logger.info("start to migrate data: {}", migrationTask);
             migrateData(migrationTask.getSourceStorageId(),
                 migrationTask.getTargetStorageId(),
                 migrationTask.getFragmentMeta());
           } else {
+            this.logger.info("start to migrate write data: {}", migrationTask);
             reshardFragment(migrationTask.getSourceStorageId(),
                 migrationTask.getTargetStorageId(),
                 migrationTask.getFragmentMeta());
@@ -407,9 +411,9 @@ public abstract class MigrationPolicy {
             executeOneRoundMigration(migrationTaskQueueList, nodeLoadMap);
           }
         });
-        migrationTaskQueue.poll();
       }
     }
+    sortQueueListByFirstItem(migrationTaskQueueList);
   }
 
   private void migrateData(long sourceStorageId, long targetStorageId,
@@ -481,6 +485,7 @@ public abstract class MigrationPolicy {
                 tsInterval.getStartTimeSeries(), tsInterval.getEndTimeSeries(),
                 DefaultMetaManager.getInstance().getMaxActiveEndTime(), Long.MAX_VALUE,
                 storageEngineList);
+        logger.info("start to splitFragmentAndStorageUnit");
         return DefaultMetaManager.getInstance()
             .splitFragmentAndStorageUnit(fragmentMetaStorageUnitMetaPair.getV(),
                 fragmentMetaStorageUnitMetaPair.getK(), fragmentMeta);

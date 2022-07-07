@@ -91,12 +91,13 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         TimeSeriesInterval that = (TimeSeriesInterval) o;
-        return Objects.equals(startTimeSeries, that.startTimeSeries) && Objects.equals(endTimeSeries, that.endTimeSeries);
+        return toString().equals(that.toString());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(startTimeSeries, endTimeSeries);
+        int code = Objects.hashCode(this.toString());
+        return code;
     }
 
     public boolean isContain(String tsName) {
