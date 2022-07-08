@@ -908,6 +908,18 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public boolean updateTransformTask(TransformTaskMeta transformTask) {
+        try {
+            storage.updateTransformTask(transformTask);
+            cache.addOrUpdateTransformTask(transformTask);
+            return true;
+        } catch (MetaStorageException e) {
+            logger.error("add transform task error: ", e);
+            return false;
+        }
+    }
+
+    @Override
     public boolean dropTransformTask(String name) {
         try {
             cache.dropTransformTask(name);

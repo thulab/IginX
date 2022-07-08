@@ -46,6 +46,7 @@ public class InsertGenerator extends AbstractGenerator {
         return instance;
     }
 
+    @Override
     protected Operator generateRoot(Statement statement) {
         InsertStatement insertStatement = (InsertStatement) statement;
 

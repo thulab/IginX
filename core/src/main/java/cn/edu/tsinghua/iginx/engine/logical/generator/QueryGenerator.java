@@ -8,6 +8,7 @@ import cn.edu.tsinghua.iginx.engine.logical.utils.PathUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.function.FunctionCall;
+import cn.edu.tsinghua.iginx.engine.shared.function.FunctionUtils;
 import cn.edu.tsinghua.iginx.engine.shared.function.manager.FunctionManager;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
@@ -58,9 +59,136 @@ public class QueryGenerator extends AbstractGenerator {
         return instance;
     }
 
+    @Override
     protected Operator generateRoot(Statement statement) {
         SelectStatement selectStatement = (SelectStatement) statement;
 
+        Operator root;
+        if (selectStatement.getSubStatement() != null) {
+            root = generateRoot(selectStatement.getSubStatement());
+        } else {
+            root = filterAndMergeFragments(selectStatement);
+        }
+
+        TagFilter tagFilter = selectStatement.getTagFilter();
+
+        if (selectStatement.hasValueFilter()) {
+            root = new Select(new OperatorSource(root), selectStatement.getFilter(), tagFilter);
+        }
+
+        List<Operator> queryList = new ArrayList<>();
+        if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
+            // DownSample Query
+            Operator finalRoot = root;
+            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_PATHS, new Value(expression.getPathName()));
+                if (!selectStatement.getLayers().isEmpty()) {
+                    params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                }
+                Operator copySelect = finalRoot.copy();
+
+                queryList.add(
+                    new Downsample(
+                        new OperatorSource(copySelect),
+                        selectStatement.getPrecision(),
+                        new FunctionCall(functionManager.getFunction(k), params),
+                        new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
+                    )
+                );
+            }));
+        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
+            // Aggregate Query
+            Operator finalRoot = root;
+            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_PATHS, new Value(expression.getPathName()));
+                if (!selectStatement.getLayers().isEmpty()) {
+                    params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
+                }
+                Operator copySelect = finalRoot.copy();
+                logger.info("function: " + k + ", wrapped path: " + v);
+                if (FunctionUtils.isRowToRowFunction(k)) {
+                    queryList.add(
+                        new RowTransform(
+                            new OperatorSource(copySelect),
+                            new FunctionCall(functionManager.getFunction(k), params)
+                        )
+                    );
+                } else if (FunctionUtils.isSetToSetFunction(k)) {
+                    queryList.add(
+                        new MappingTransform(
+                            new OperatorSource(copySelect),
+                            new FunctionCall(functionManager.getFunction(k), params)
+                        )
+                    );
+                } else {
+                    queryList.add(
+                        new SetTransform(
+                            new OperatorSource(copySelect),
+                            new FunctionCall(functionManager.getFunction(k), params)
+                        )
+                    );
+                }
+            }));
+        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
+            Operator finalRoot = root;
+            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+                Map<String, Value> params = new HashMap<>();
+                params.put(PARAM_PATHS, new Value(expression.getPathName()));
+                Operator copySelect = finalRoot.copy();
+                logger.info("function: " + k + ", wrapped path: " + v);
+                queryList.add(
+                    new MappingTransform(
+                        new OperatorSource(copySelect),
+                        new FunctionCall(functionManager.getFunction(k), params)
+                    )
+                );
+            }));
+        } else {
+            List<String> selectedPath = new ArrayList<>();
+            selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) ->
+                v.forEach(expression -> selectedPath.add(expression.getPathName())));
+            queryList.add(new Project(new OperatorSource(root), selectedPath, tagFilter));
+        }
+
+        if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
+            root = OperatorUtils.unionOperators(queryList);
+        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
+            root = OperatorUtils.joinOperatorsByTime(queryList);
+        } else {
+            if (selectStatement.getFuncTypeSet().contains(SelectStatement.FuncType.Udtf)) {
+                root = OperatorUtils.joinOperatorsByTime(queryList);
+            } else {
+                root = OperatorUtils.joinOperators(queryList, ORDINAL);
+            }
+        }
+
+        if (!selectStatement.getOrderByPath().equals("")) {
+            root = new Sort(
+                new OperatorSource(root),
+                selectStatement.getOrderByPath(),
+                selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
+            );
+        }
+
+        if (selectStatement.getLimit() != Integer.MAX_VALUE || selectStatement.getOffset() != 0) {
+            root = new Limit(
+                new OperatorSource(root),
+                (int) selectStatement.getLimit(),
+                (int) selectStatement.getOffset()
+            );
+        }
+
+        Map<String, String> aliasMap = selectStatement.getAliasMap();
+        if (!aliasMap.isEmpty()) {
+            root = new Rename(new OperatorSource(root), aliasMap);
+        }
+
+        return root;
+    }
+
+    private Operator filterAndMergeFragments(SelectStatement selectStatement) {
         policy.notify(selectStatement);
 
         List<String> pathList = SortUtils.mergeAndSortPaths(new ArrayList<>(selectStatement.getPathSet()));
@@ -83,110 +211,6 @@ public class QueryGenerator extends AbstractGenerator {
             joinList.add(OperatorUtils.unionOperators(unionList));
         });
 
-        Operator root = OperatorUtils.joinOperatorsByTime(joinList);
-
-        if (selectStatement.hasValueFilter()) {
-            root = new Select(new OperatorSource(root), selectStatement.getFilter(), tagFilter);
-        }
-
-        List<Operator> queryList = new ArrayList<>();
-        if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
-            // DownSample Query
-            Operator finalRoot = root;
-            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                Map<String, Value> params = new HashMap<>();
-                params.put(PARAM_PATHS, new Value(str));
-                if (!selectStatement.getLayers().isEmpty()) {
-                    params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
-                }
-                Operator copySelect = finalRoot.copy();
-
-                queryList.add(
-                    new Downsample(
-                        new OperatorSource(copySelect),
-                        selectStatement.getPrecision(),
-                        new FunctionCall(functionManager.getFunction(k), params),
-                        new TimeRange(selectStatement.getStartTime(), selectStatement.getEndTime())
-                    )
-                );
-            }));
-        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.AggregateQuery) {
-            // Aggregate Query
-            Operator finalRoot = root;
-            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                Map<String, Value> params = new HashMap<>();
-                params.put(PARAM_PATHS, new Value(str));
-                if (!selectStatement.getLayers().isEmpty()) {
-                    params.put(PARAM_LEVELS, new Value(selectStatement.getLayers().stream().map(String::valueOf).collect(Collectors.joining(","))));
-                }
-                Operator copySelect = finalRoot.copy();
-                logger.info("function: " + k + ", wrapped path: " + v);
-                if (functionManager.isUDTF(k)) {
-                    queryList.add(
-                        new RowTransform(
-                            new OperatorSource(copySelect),
-                            new FunctionCall(functionManager.getFunction(k), params)
-                        )
-                    );
-                } else if (functionManager.isUDSF(k)) {
-                    queryList.add(
-                        new MappingTransform(
-                            new OperatorSource(copySelect),
-                            new FunctionCall(functionManager.getFunction(k), params)
-                        )
-                    );
-                } else {
-                    queryList.add(
-                        new SetTransform(
-                            new OperatorSource(copySelect),
-                            new FunctionCall(functionManager.getFunction(k), params)
-                        )
-                    );
-                }
-            }));
-        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
-            Operator finalRoot = root;
-            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> v.forEach(str -> {
-                Map<String, Value> params = new HashMap<>();
-                params.put(PARAM_PATHS, new Value(str));
-                Operator copySelect = finalRoot.copy();
-                logger.info("function: " + k + ", wrapped path: " + v);
-                queryList.add(
-                    new MappingTransform(
-                        new OperatorSource(copySelect),
-                        new FunctionCall(functionManager.getFunction(k), params)
-                    )
-                );
-            }));
-        } else {
-            List<String> selectedPath = new ArrayList<>();
-            selectStatement.getSelectedFuncsAndPaths().forEach((k, v) -> selectedPath.addAll(v));
-            queryList.add(new Project(new OperatorSource(root), selectedPath, tagFilter));
-        }
-
-        if (selectStatement.getQueryType() == SelectStatement.QueryType.LastFirstQuery) {
-            root = OperatorUtils.unionOperators(queryList);
-        } else if (selectStatement.getQueryType() == SelectStatement.QueryType.DownSampleQuery) {
-            root = OperatorUtils.joinOperatorsByTime(queryList);
-        } else {
-            root = OperatorUtils.joinOperators(queryList, ORDINAL);
-        }
-
-        if (!selectStatement.getOrderByPath().equals("")) {
-            root = new Sort(
-                new OperatorSource(root),
-                selectStatement.getOrderByPath(),
-                selectStatement.isAscending() ? Sort.SortType.ASC : Sort.SortType.DESC
-            );
-        }
-
-        if (selectStatement.getLimit() != Integer.MAX_VALUE || selectStatement.getOffset() != 0) {
-            root = new Limit(
-                new OperatorSource(root),
-                (int) selectStatement.getLimit(),
-                (int) selectStatement.getOffset()
-            );
-        }
-        return root;
+        return OperatorUtils.joinOperatorsByTime(joinList);
     }
 }

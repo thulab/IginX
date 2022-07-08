@@ -21,9 +21,9 @@ public class InsertStatement extends DataStatement {
     private List<DataType> types;
     private List<Bitmap> bitmaps;
 
-    public InsertStatement() {
+    public InsertStatement(RawDataType rawDataType) {
         this.statementType = StatementType.INSERT;
-        this.rawDataType = RawDataType.NonAlignedColumn;
+        this.rawDataType = rawDataType;
         this.paths = new ArrayList<>();
         this.types = new ArrayList<>();
         this.bitmaps = new ArrayList<>();

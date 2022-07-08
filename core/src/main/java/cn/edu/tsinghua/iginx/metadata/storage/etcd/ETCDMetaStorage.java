@@ -971,6 +971,11 @@ public class ETCDMetaStorage implements IMetaStorage {
 
     @Override
     public void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
+        updateTransformTask(transformTask);
+    }
+
+    @Override
+    public void updateTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
         try {
             lockTransform();
             this.client.getKVClient()

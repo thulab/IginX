@@ -76,8 +76,11 @@ public class PyUDTF implements UDTF {
             for (int i = 0; i < name.size(); i++) {
                 targetFields.add(new Field(name.get(i), TypeUtils.getDataTypeFromObject(res[i])));
             }
-            Header header = new Header(targetFields);
-            return new Row(header, res);
+            Header header = row.getHeader().hasTimestamp() ?
+                new Header(Field.TIME, targetFields) :
+                new Header(targetFields);
+
+            return new Row(header, row.getTimestamp(), res);
         } else {
             int index = row.getHeader().indexOf(target);
             if (index == -1) {
@@ -90,7 +93,11 @@ public class PyUDTF implements UDTF {
             }
 
             Field targetField = new Field(getFunctionName() + "(" + target + ")", TypeUtils.getDataTypeFromObject(res[0]));
-            return new Row(new Header(Collections.singletonList(targetField)), res);
+            Header header = row.getHeader().hasTimestamp() ?
+                new Header(Field.TIME, Collections.singletonList(targetField)) :
+                new Header(Collections.singletonList(targetField));
+
+            return new Row(header, row.getTimestamp(), res);
         }
     }
 

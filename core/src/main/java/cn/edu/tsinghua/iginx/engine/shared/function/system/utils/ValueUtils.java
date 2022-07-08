@@ -21,8 +21,47 @@ package cn.edu.tsinghua.iginx.engine.shared.function.system.utils;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 
 public class ValueUtils {
+
+    private static final Set<DataType> numericTypeSet = new HashSet<>(Arrays.asList(
+        DataType.INTEGER, DataType.LONG, DataType.FLOAT, DataType.DOUBLE));
+
+    public static boolean isNumericType(Value value) {
+        return numericTypeSet.contains(value.getDataType());
+    }
+
+    public static Value transformToDouble(Value value) {
+        DataType dataType = value.getDataType();
+        double dVal;
+        switch (dataType) {
+            case INTEGER:
+                dVal = value.getIntV().doubleValue();
+                break;
+            case LONG:
+                dVal = value.getLongV().doubleValue();
+                break;
+            case FLOAT:
+                dVal = value.getFloatV().doubleValue();
+                break;
+            case DOUBLE:
+                dVal = value.getDoubleV();
+                break;
+            case BOOLEAN:
+                dVal = value.getBoolV() ? 1.0D : 0.0D;
+                break;
+            case BINARY:
+                dVal = Double.parseDouble(value.getBinaryVAsString());
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected dataType: " + dataType);
+        }
+        return new Value(DataType.DOUBLE, dVal);
+    }
 
     public static int compare(Value o1, Value o2) {
         DataType dataType = o1.getDataType();

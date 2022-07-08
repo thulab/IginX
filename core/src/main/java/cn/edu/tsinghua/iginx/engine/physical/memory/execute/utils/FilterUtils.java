@@ -20,8 +20,10 @@ package cn.edu.tsinghua.iginx.engine.physical.memory.execute.utils;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
 public class FilterUtils {
 
@@ -86,9 +88,16 @@ public class FilterUtils {
         if (value == null || value.isNull() || targetValue.isNull()) { // 如果任何一个是空值，则认为不可比较
             return false;
         }
-        if (value.getDataType() != targetValue.getDataType()) { // 类型不同，直接否了
-            return false;
+
+        if (value.getDataType() != targetValue.getDataType()) {
+            if (ValueUtils.isNumericType(value) && ValueUtils.isNumericType(targetValue)) {
+                value = ValueUtils.transformToDouble(value);
+                targetValue = ValueUtils.transformToDouble(targetValue);
+            } else {  // 数值类型和非数值类型无法比较
+                return false;
+            }
         }
+
         switch (valueFilter.getOp()) {
             case E:
                 return ValueUtils.compare(value, targetValue) == 0;

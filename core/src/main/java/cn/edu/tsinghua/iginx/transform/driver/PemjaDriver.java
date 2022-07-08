@@ -43,8 +43,8 @@ public class PemjaDriver {
         if (taskMeta == null) {
             throw new IllegalArgumentException(String.format("UDF %s not registered", identifier));
         }
-        if (!taskMeta.getIp().equals(config.getIp())) {
-            throw new IllegalArgumentException(String.format("UDF %s registered in node ip=%s", identifier, taskMeta.getIp()));
+        if (!taskMeta.getIpSet().contains(config.getIp())) {
+            throw new IllegalArgumentException(String.format("UDF %s not registered in node ip=%s", identifier, config.getIp()));
         }
 
         String pythonCMD = config.getPythonCMD();
