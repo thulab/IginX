@@ -1,10 +1,10 @@
-from transformer import BaseTransformer
-
 import pandas as pd
 
-class MyTransformer(BaseTransformer):
+
+class MyTransformer:
     def __init__(self):
         pass
 
-    def transform(self, df):
-        return df.idxmax()-df.idxmin()
+    def transform(self, rows):
+        df = pd.DataFrame(rows)
+        return (df.idxmax()-df.idxmin()).values.tolist()
