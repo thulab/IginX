@@ -2,6 +2,8 @@ package cn.edu.tsinghua.iginx.metadata.entity;
 
 import cn.edu.tsinghua.iginx.thrift.UDFType;
 
+import java.util.Set;
+
 public class TransformTaskMeta {
 
     private String name;
@@ -10,15 +12,15 @@ public class TransformTaskMeta {
 
     private String fileName;
 
-    private String ip;
+    private Set<String> ipSet;
 
     private UDFType type;
 
-    public TransformTaskMeta(String name, String className, String fileName, String ip, UDFType type) {
+    public TransformTaskMeta(String name, String className, String fileName, Set<String> ipSet, UDFType type) {
         this.name = name;
         this.className = className;
         this.fileName = fileName;
-        this.ip = ip;
+        this.ipSet = ipSet;
         this.type = type;
     }
 
@@ -46,12 +48,16 @@ public class TransformTaskMeta {
         this.fileName = fileName;
     }
 
-    public String getIp() {
-        return ip;
+    public Set<String> getIpSet() {
+        return ipSet;
     }
 
-    public void setIp(String ip) {
-        this.ip = ip;
+    public void setIpSet(Set<String> ipSet) {
+        this.ipSet = ipSet;
+    }
+
+    public void addIp(String ip) {
+        this.ipSet.add(ip);
     }
 
     public UDFType getType() {
@@ -63,7 +69,7 @@ public class TransformTaskMeta {
     }
 
     public TransformTaskMeta copy() {
-        return new TransformTaskMeta(name, className, fileName, ip, type);
+        return new TransformTaskMeta(name, className, fileName, ipSet, type);
     }
 
     @Override
@@ -72,7 +78,7 @@ public class TransformTaskMeta {
             "name='" + name + '\'' +
             ", className='" + className + '\'' +
             ", fileName='" + fileName + '\'' +
-            ", ip='" + ip + '\'' +
+            ", ip='" + ipSet + '\'' +
             ", type=" + type +
             '}';
     }

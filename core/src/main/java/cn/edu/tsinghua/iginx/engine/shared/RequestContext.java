@@ -48,10 +48,15 @@ public class RequestContext {
     }
 
     public RequestContext(long sessionId, Statement statement) {
+        this(sessionId, statement, false);
+    }
+
+    public RequestContext(long sessionId, Statement statement, boolean useStream) {
         init();
         this.sessionId = sessionId;
         this.statement = statement;
         this.fromSQL = false;
+        this.useStream = useStream;
     }
 
     public RequestContext(long sessionId, String sql) {
@@ -84,5 +89,6 @@ public class RequestContext {
         if (this.result != null) {
             this.result.setQueryId(id);
         }
+        this.endTime = System.currentTimeMillis();
     }
 }

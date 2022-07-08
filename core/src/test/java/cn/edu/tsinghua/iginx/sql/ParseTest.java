@@ -25,6 +25,25 @@ public class ParseTest {
     }
 
     @Test
+    public void testParseInsertWithSubQuery() {
+        String insertStr = "INSERT INTO test.copy (timestamp, status, hardware, num) values (SELECT status, hardware, num FROM test) TIME_OFFSET = 5;";
+        InsertFromSelectStatement statement = (InsertFromSelectStatement) TestUtils.buildStatement(insertStr);
+
+        InsertStatement insertStatement = statement.getSubInsertStatement();
+        assertEquals("test.copy", insertStatement.getPrefixPath());
+
+        List<String> paths = Arrays.asList("test.copy.status", "test.copy.hardware", "test.copy.num");
+        assertEquals(paths, insertStatement.getPaths());
+
+        SelectStatement selectStatement = statement.getSubSelectStatement();
+
+        paths = Arrays.asList("test.status", "test.hardware", "test.num");
+        assertEquals(paths, selectStatement.getSelectedPaths());
+
+        assertEquals(5, statement.getTimeOffset());
+    }
+
+    @Test
     public void testParseFloatAndInteger() {
         String floatAndIntegerStr = "INSERT INTO us.d1 (timestamp, s1, s2) values (1627464728862, 10i, 1.1f), (1627464728863, 11i, 1.2f)";
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(floatAndIntegerStr);
@@ -54,15 +73,15 @@ public class ParseTest {
         assertTrue(statement.hasGroupByTime());
         assertEquals(SelectStatement.QueryType.DownSampleQuery, statement.getQueryType());
 
-        assertEquals(2, statement.getSelectedFuncsAndPaths().size());
-        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("sum"));
-        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("count"));
+        assertEquals(2, statement.getSelectedFuncsAndExpressions().size());
+        assertTrue(statement.getSelectedFuncsAndExpressions().containsKey("sum"));
+        assertTrue(statement.getSelectedFuncsAndExpressions().containsKey("count"));
 
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("sum").get(0));
-        assertEquals("a.b.d", statement.getSelectedFuncsAndPaths().get("sum").get(1));
-        assertEquals("a.b.e", statement.getSelectedFuncsAndPaths().get("sum").get(2));
-        assertEquals("a.b.f", statement.getSelectedFuncsAndPaths().get("count").get(0));
-        assertEquals("a.b.g", statement.getSelectedFuncsAndPaths().get("count").get(1));
+        assertEquals("a.b.c", statement.getSelectedFuncsAndExpressions().get("sum").get(0).getPathName());
+        assertEquals("a.b.d", statement.getSelectedFuncsAndExpressions().get("sum").get(1).getPathName());
+        assertEquals("a.b.e", statement.getSelectedFuncsAndExpressions().get("sum").get(2).getPathName());
+        assertEquals("a.b.f", statement.getSelectedFuncsAndExpressions().get("count").get(0).getPathName());
+        assertEquals("a.b.g", statement.getSelectedFuncsAndExpressions().get("count").get(1).getPathName());
 
         assertEquals(Collections.singletonList("a.b"), statement.getFromPaths());
 
@@ -85,7 +104,7 @@ public class ParseTest {
 
         selectStr = "SELECT SUM(c) FROM a.b GROUP BY LEVEL = 1, 2;";
         statement = (SelectStatement) TestUtils.buildStatement(selectStr);
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("sum").get(0));
+        assertEquals("a.b.c", statement.getSelectedFuncsAndExpressions().get("sum").get(0).getPathName());
         assertEquals(Arrays.asList(1, 2), statement.getLayers());
     }
 
@@ -168,6 +187,20 @@ public class ParseTest {
         statement = (SelectStatement) TestUtils.buildStatement(selectWithLimitAndOffset03);
         assertEquals(10, statement.getLimit());
         assertEquals(2, statement.getOffset());
+    }
+
+    @Test
+    public void testSubQueryClause() {
+        String selectWithSubQuery = "SELECT res.sin_a FROM (SELECT sin(a) AS sin_a FROM root AS res);";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectWithSubQuery);
+        assertEquals(Collections.singletonList("res.sin_a"), statement.getSelectedPaths());
+
+        SelectStatement subStatement = statement.getSubStatement();
+
+        Expression expression = subStatement.getSelectedFuncsAndExpressions().get("sin").get(0);
+        assertEquals("root.a", expression.getPathName());
+        assertEquals("sin", expression.getFuncName());
+        assertEquals("res.sin_a", expression.getAlias());
     }
 
     @Test

@@ -592,6 +592,11 @@ public class FileMetaStorage implements IMetaStorage {
 
     @Override
     public void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
+        updateTransformTask(transformTask);
+    }
+
+    @Override
+    public void updateTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
         try (PrintWriter writer = new PrintWriter(new FileWriter(Paths.get(PATH, TRANSFORM_META_FILE).toFile(), true))) {
             writer.write(String.format("%s %s\n", UPDATE, JsonUtils.getGson().toJson(transformTask)));
         } catch (IOException e) {
