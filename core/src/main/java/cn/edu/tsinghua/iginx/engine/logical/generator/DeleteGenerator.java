@@ -43,6 +43,7 @@ public class DeleteGenerator extends AbstractGenerator {
         return instance;
     }
 
+    @Override
     protected Operator generateRoot(Statement statement) {
         DeleteStatement deleteStatement = (DeleteStatement) statement;
 

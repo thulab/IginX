@@ -103,5 +103,7 @@ public interface IMetaStorage {
 
     void addTransformTask(TransformTaskMeta transformTask) throws MetaStorageException;
 
+    void updateTransformTask(TransformTaskMeta transformTask) throws MetaStorageException;
+
     void dropTransformTask(String name) throws MetaStorageException;
 }

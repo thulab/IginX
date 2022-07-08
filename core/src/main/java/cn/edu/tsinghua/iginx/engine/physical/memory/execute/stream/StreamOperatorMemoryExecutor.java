@@ -24,18 +24,7 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.UnexpectedOperatorExcepti
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.OperatorMemoryExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.Constants;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
-import cn.edu.tsinghua.iginx.engine.shared.operator.BinaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Downsample;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Limit;
-import cn.edu.tsinghua.iginx.engine.shared.operator.MappingTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
-import cn.edu.tsinghua.iginx.engine.shared.operator.RowTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
-import cn.edu.tsinghua.iginx.engine.shared.operator.SetTransform;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Sort;
-import cn.edu.tsinghua.iginx.engine.shared.operator.UnaryOperator;
-import cn.edu.tsinghua.iginx.engine.shared.operator.Union;
+import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 
 public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
@@ -66,6 +55,8 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeSetTransform((SetTransform) operator, stream);
             case MappingTransform:
                 return executeMappingTransform((MappingTransform) operator, stream);
+            case Rename:
+                return executeRename((Rename) operator, stream);
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -119,6 +110,10 @@ public class StreamOperatorMemoryExecutor implements OperatorMemoryExecutor {
 
     private RowStream executeMappingTransform(MappingTransform mappingTransform, RowStream stream) {
         return new MappingTransformLazyStream(mappingTransform, stream);
+    }
+
+    private RowStream executeRename(Rename rename, RowStream stream) {
+        return new RenameLazyStream(rename, stream);
     }
 
     private RowStream executeJoin(Join join, RowStream streamA, RowStream streamB) throws PhysicalException {

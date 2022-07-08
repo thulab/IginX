@@ -1226,6 +1226,24 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateTransformTask(TransformTaskMeta transformTask) throws MetaStorageException {
+        InterProcessMutex mutex = new InterProcessMutex(this.client, TRANSFORM_LOCK_NODE);
+        try {
+            mutex.acquire();
+            this.client.setData()
+                .forPath(TRANSFORM_NODE_PREFIX + "/" + transformTask.getName(), JsonUtils.toJson(transformTask));
+        } catch (Exception e) {
+            throw new MetaStorageException("get error when update transform task", e);
+        } finally {
+            try {
+                mutex.release();
+            } catch (Exception e) {
+                throw new MetaStorageException("get error when release interprocess lock for " + TRANSFORM_LOCK_NODE, e);
+            }
+        }
+    }
+
+    @Override
     public void dropTransformTask(String name) throws MetaStorageException {
         InterProcessMutex mutex = new InterProcessMutex(this.client, TRANSFORM_LOCK_NODE);
         try {

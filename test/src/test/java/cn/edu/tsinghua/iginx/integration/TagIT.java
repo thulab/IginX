@@ -4,7 +4,6 @@ import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
-import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +13,7 @@ import static org.junit.Assert.fail;
 
 public class TagIT {
 
-    private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
+    private static final Logger logger = LoggerFactory.getLogger(TagIT.class);
 
     private static Session session;
 
@@ -40,12 +39,12 @@ public class TagIT {
     @Before
     public void insertData() throws ExecutionException, SessionException {
         String[] insertStatements = ("insert into ln.wf02 (time, s, v) values (100, true, \"v1\");\n" +
-                "insert into ln.wf02[t1=v1] (time, s, v) values (400, false, \"v4\");\n" +
-                "insert into ln.wf02[t1=v1,t2=v2] (time, v) values (800, \"v8\");\n" +
-                "insert into ln.wf03 (time, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
-                "insert into ln.wf03 (time, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);").split("\n");
+            "insert into ln.wf02[t1=v1] (time, s, v) values (400, false, \"v4\");\n" +
+            "insert into ln.wf02[t1=v1,t2=v2] (time, v) values (800, \"v8\");\n" +
+            "insert into ln.wf03 (time, s[t1=vv1,t2=v2], v[t1=vv11]) values (1600, true, 16);\n" +
+            "insert into ln.wf03 (time, s[t1=v1,t2=vv2], v[t1=v1], v[t1=vv11]) values (3200, true, 16, 32);").split("\n");
 
-        for (String insertStatement: insertStatements) {
+        for (String insertStatement : insertStatements) {
             SessionExecuteSqlResult res = session.executeSql(insertStatement);
             if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
                 logger.error("Insert date execute fail. Caused by: {}.", res.getParseErrorMsg());
@@ -65,9 +64,9 @@ public class TagIT {
         }
     }
 
-    private void executeAndCompare(String statement, String exceptOutput) {
+    private void executeAndCompare(String statement, String expectedOutput) {
         String actualOutput = execute(statement);
-        assertEquals(exceptOutput, actualOutput);
+        assertEquals(expectedOutput, actualOutput);
     }
 
     private String execute(String statement) {
@@ -93,160 +92,278 @@ public class TagIT {
     @Test
     public void testCountPoints() {
         String statement = "COUNT POINTS;";
-        String excepted = "Points num: 10\n";
-        executeAndCompare(statement, excepted);
+        String expected = "Points num: 10\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testCountPath() {
         String statement = "SELECT COUNT(*) FROM ln;";
-        String excepted = "ResultSets:\n" +
-                "+----------------+-----------------------+----------------+-----------------------------+-----------------------+------------------------------+------------------------------+-----------------------+-------------------------+\n" +
-                "|count(ln.wf02.s)|count(ln.wf02.s{t1=v1})|count(ln.wf02.v)|count(ln.wf02.v{t1=v1,t2=v2})|count(ln.wf02.v{t1=v1})|count(ln.wf03.s{t1=v1,t2=vv2})|count(ln.wf03.s{t1=vv1,t2=v2})|count(ln.wf03.v{t1=v1})|count(ln.wf03.v{t1=vv11})|\n" +
-                "+----------------+-----------------------+----------------+-----------------------------+-----------------------+------------------------------+------------------------------+-----------------------+-------------------------+\n" +
-                "|               1|                      1|               1|                            1|                      1|                             1|                             1|                      1|                        2|\n" +
-                "+----------------+-----------------------+----------------+-----------------------------+-----------------------+------------------------------+------------------------------+-----------------------+-------------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+----------------+-----------------------+----------------+-----------------------------+-----------------------+------------------------------+------------------------------+-----------------------+-------------------------+\n" +
+            "|count(ln.wf02.s)|count(ln.wf02.s{t1=v1})|count(ln.wf02.v)|count(ln.wf02.v{t1=v1,t2=v2})|count(ln.wf02.v{t1=v1})|count(ln.wf03.s{t1=v1,t2=vv2})|count(ln.wf03.s{t1=vv1,t2=v2})|count(ln.wf03.v{t1=v1})|count(ln.wf03.v{t1=vv11})|\n" +
+            "+----------------+-----------------------+----------------+-----------------------------+-----------------------+------------------------------+------------------------------+-----------------------+-------------------------+\n" +
+            "|               1|                      1|               1|                            1|                      1|                             1|                             1|                      1|                        2|\n" +
+            "+----------------+-----------------------+----------------+-----------------------------+-----------------------+------------------------------+------------------------------+-----------------------+-------------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testBasicQuery() {
         String statement = "SELECT * FROM ln;";
-        String excepted = "ResultSets:\n" +
-                "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
-                "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf02.v|ln.wf02.v{t1=v1,t2=v2}|ln.wf02.v{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|ln.wf03.v{t1=v1}|ln.wf03.v{t1=vv11}|\n" +
-                "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
-                "| 100|     true|            null|       v1|                  null|            null|                   null|                   null|            null|              null|\n" +
-                "| 400|     null|           false|     null|                  null|              v4|                   null|                   null|            null|              null|\n" +
-                "| 800|     null|            null|     null|                    v8|            null|                   null|                   null|            null|              null|\n" +
-                "|1600|     null|            null|     null|                  null|            null|                   null|                   true|            null|                16|\n" +
-                "|3200|     null|            null|     null|                  null|            null|                   true|                   null|              16|                32|\n" +
-                "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
-                "Total line number = 5\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
+            "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf02.v|ln.wf02.v{t1=v1,t2=v2}|ln.wf02.v{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|ln.wf03.v{t1=v1}|ln.wf03.v{t1=vv11}|\n" +
+            "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
+            "| 100|     true|            null|       v1|                  null|            null|                   null|                   null|            null|              null|\n" +
+            "| 400|     null|           false|     null|                  null|              v4|                   null|                   null|            null|              null|\n" +
+            "| 800|     null|            null|     null|                    v8|            null|                   null|                   null|            null|              null|\n" +
+            "|1600|     null|            null|     null|                  null|            null|                   null|                   true|            null|                16|\n" +
+            "|3200|     null|            null|     null|                  null|            null|                   true|                   null|              16|                32|\n" +
+            "+----+---------+----------------+---------+----------------------+----------------+-----------------------+-----------------------+----------------+------------------+\n" +
+            "Total line number = 5\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testQueryWithoutTags() {
         String statement = "SELECT s FROM ln.*;";
-        String excepted = "ResultSets:\n" +
-                "+----+---------+----------------+-----------------------+-----------------------+\n" +
-                "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
-                "+----+---------+----------------+-----------------------+-----------------------+\n" +
-                "| 100|     true|            null|                   null|                   null|\n" +
-                "| 400|     null|           false|                   null|                   null|\n" +
-                "|1600|     null|            null|                   null|                   true|\n" +
-                "|3200|     null|            null|                   true|                   null|\n" +
-                "+----+---------+----------------+-----------------------+-----------------------+\n" +
-                "Total line number = 4\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "| 100|     true|            null|                   null|                   null|\n" +
+            "| 400|     null|           false|                   null|                   null|\n" +
+            "|1600|     null|            null|                   null|                   true|\n" +
+            "|3200|     null|            null|                   true|                   null|\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testQueryWithTag() {
         String statement = "SELECT s FROM ln.* with t1=v1;";
-        String excepted = "ResultSets:\n" +
-                "+----+----------------+-----------------------+\n" +
-                "|Time|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|\n" +
-                "+----+----------------+-----------------------+\n" +
-                "| 400|           false|                   null|\n" +
-                "|3200|            null|                   true|\n" +
-                "+----+----------------+-----------------------+\n" +
-                "Total line number = 2\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+----+----------------+-----------------------+\n" +
+            "|Time|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|\n" +
+            "+----+----------------+-----------------------+\n" +
+            "| 400|           false|                   null|\n" +
+            "|3200|            null|                   true|\n" +
+            "+----+----------------+-----------------------+\n" +
+            "Total line number = 2\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testQueryWithMultiTags() {
         String statement = "SELECT s FROM ln.* with t1=v1 OR t2=v2;";
-        String excepted = "ResultSets:\n" +
-                "+----+----------------+-----------------------+-----------------------+\n" +
-                "|Time|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
-                "+----+----------------+-----------------------+-----------------------+\n" +
-                "| 400|           false|                   null|                   null|\n" +
-                "|1600|            null|                   null|                   true|\n" +
-                "|3200|            null|                   true|                   null|\n" +
-                "+----+----------------+-----------------------+-----------------------+\n" +
-                "Total line number = 3\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+----+----------------+-----------------------+-----------------------+\n" +
+            "|Time|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
+            "+----+----------------+-----------------------+-----------------------+\n" +
+            "| 400|           false|                   null|                   null|\n" +
+            "|1600|            null|                   null|                   true|\n" +
+            "|3200|            null|                   true|                   null|\n" +
+            "+----+----------------+-----------------------+-----------------------+\n" +
+            "Total line number = 3\n";
+        executeAndCompare(statement, expected);
 
         statement = "SELECT s FROM ln.* with t1=v1 AND t2=vv2;";
-        excepted = "ResultSets:\n" +
-                "+----+-----------------------+\n" +
-                "|Time|ln.wf03.s{t1=v1,t2=vv2}|\n" +
-                "+----+-----------------------+\n" +
-                "|3200|                   true|\n" +
-                "+----+-----------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        expected = "ResultSets:\n" +
+            "+----+-----------------------+\n" +
+            "|Time|ln.wf03.s{t1=v1,t2=vv2}|\n" +
+            "+----+-----------------------+\n" +
+            "|3200|                   true|\n" +
+            "+----+-----------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testQueryWithWildcardTag() {
         String statement = "SELECT s FROM ln.* with t2=*;";
-        String excepted = "ResultSets:\n" +
-                "+----+-----------------------+-----------------------+\n" +
-                "|Time|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
-                "+----+-----------------------+-----------------------+\n" +
-                "|1600|                   null|                   true|\n" +
-                "|3200|                   true|                   null|\n" +
-                "+----+-----------------------+-----------------------+\n" +
-                "Total line number = 2\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+----+-----------------------+-----------------------+\n" +
+            "|Time|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
+            "+----+-----------------------+-----------------------+\n" +
+            "|1600|                   null|                   true|\n" +
+            "|3200|                   true|                   null|\n" +
+            "+----+-----------------------+-----------------------+\n" +
+            "Total line number = 2\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testQueryWithAggregate() {
         String statement = "SELECT sum(v) FROM ln.wf03 with t1=vv11;";
-        String excepted = "ResultSets:\n" +
-                "+-----------------------+\n" +
-                "|sum(ln.wf03.v{t1=vv11})|\n" +
-                "+-----------------------+\n" +
-                "|                     48|\n" +
-                "+-----------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        String expected = "ResultSets:\n" +
+            "+-----------------------+\n" +
+            "|sum(ln.wf03.v{t1=vv11})|\n" +
+            "+-----------------------+\n" +
+            "|                     48|\n" +
+            "+-----------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
 
         statement = "SELECT max(v) FROM ln.wf03 with t1=vv11;";
-        excepted = "ResultSets:\n" +
-                "+-----------------------+\n" +
-                "|max(ln.wf03.v{t1=vv11})|\n" +
-                "+-----------------------+\n" +
-                "|                     32|\n" +
-                "+-----------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        expected = "ResultSets:\n" +
+            "+-----------------------+\n" +
+            "|max(ln.wf03.v{t1=vv11})|\n" +
+            "+-----------------------+\n" +
+            "|                     32|\n" +
+            "+-----------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
 
         statement = "SELECT min(v) FROM ln.wf03 with t1=vv11;";
-        excepted = "ResultSets:\n" +
-                "+-----------------------+\n" +
-                "|min(ln.wf03.v{t1=vv11})|\n" +
-                "+-----------------------+\n" +
-                "|                     16|\n" +
-                "+-----------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        expected = "ResultSets:\n" +
+            "+-----------------------+\n" +
+            "|min(ln.wf03.v{t1=vv11})|\n" +
+            "+-----------------------+\n" +
+            "|                     16|\n" +
+            "+-----------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
 
         statement = "SELECT avg(v) FROM ln.wf03 with t1=vv11;";
-        excepted = "ResultSets:\n" +
-                "+-----------------------+\n" +
-                "|avg(ln.wf03.v{t1=vv11})|\n" +
-                "+-----------------------+\n" +
-                "|                   24.0|\n" +
-                "+-----------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        expected = "ResultSets:\n" +
+            "+-----------------------+\n" +
+            "|avg(ln.wf03.v{t1=vv11})|\n" +
+            "+-----------------------+\n" +
+            "|                   24.0|\n" +
+            "+-----------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
 
         statement = "SELECT count(v) FROM ln.wf03 with t1=vv11;";
-        excepted = "ResultSets:\n" +
-                "+-------------------------+\n" +
-                "|count(ln.wf03.v{t1=vv11})|\n" +
-                "+-------------------------+\n" +
-                "|                        2|\n" +
-                "+-------------------------+\n" +
-                "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        expected = "ResultSets:\n" +
+            "+-------------------------+\n" +
+            "|count(ln.wf03.v{t1=vv11})|\n" +
+            "+-------------------------+\n" +
+            "|                        2|\n" +
+            "+-------------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testAlias() {
+        String statement = "SELECT s AS ts FROM ln.wf02;";
+        String expected = "ResultSets:\n" +
+            "+----+----+---------+\n" +
+            "|Time|  ts|ts{t1=v1}|\n" +
+            "+----+----+---------+\n" +
+            "| 100|true|     null|\n" +
+            "| 400|null|    false|\n" +
+            "+----+----+---------+\n" +
+            "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT s FROM ln.wf02 AS result_set;";
+        expected = "ResultSets:\n" +
+            "+----+--------------------+---------------------------+\n" +
+            "|Time|result_set.ln.wf02.s|result_set.ln.wf02.s{t1=v1}|\n" +
+            "+----+--------------------+---------------------------+\n" +
+            "| 100|                true|                       null|\n" +
+            "| 400|                null|                      false|\n" +
+            "+----+--------------------+---------------------------+\n" +
+            "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT s AS ts FROM ln.wf02 AS result_set;";
+        expected = "ResultSets:\n" +
+            "+----+-------------+--------------------+\n" +
+            "|Time|result_set.ts|result_set.ts{t1=v1}|\n" +
+            "+----+-------------+--------------------+\n" +
+            "| 100|         true|                null|\n" +
+            "| 400|         null|               false|\n" +
+            "+----+-------------+--------------------+\n" +
+            "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testSubQuery() {
+        String statement = "SELECT SUM(ts2) FROM (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
+        String expected = "ResultSets:\n" +
+            "+---------------+\n" +
+            "|sum(ts2{t1=v1})|\n" +
+            "+---------------+\n" +
+            "|             16|\n" +
+            "+---------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT AVG(ts2) FROM (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
+        expected = "ResultSets:\n" +
+            "+---------------+\n" +
+            "|avg(ts2{t1=v1})|\n" +
+            "+---------------+\n" +
+            "|           16.0|\n" +
+            "+---------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT MAX(ts2) FROM (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
+        expected = "ResultSets:\n" +
+            "+---------------+\n" +
+            "|max(ts2{t1=v1})|\n" +
+            "+---------------+\n" +
+            "|             16|\n" +
+            "+---------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT COUNT(ts2) FROM (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
+        expected = "ResultSets:\n" +
+            "+-----------------+\n" +
+            "|count(ts2{t1=v1})|\n" +
+            "+-----------------+\n" +
+            "|                1|\n" +
+            "+-----------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testTagInsertWithSubQuery() {
+        String query = "SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1;";
+        String expected = "ResultSets:\n" +
+            "+----+-----------------+----------+\n" +
+            "|Time|ts1{t1=v1,t2=vv2}|ts2{t1=v1}|\n" +
+            "+----+-----------------+----------+\n" +
+            "|3200|             true|        16|\n" +
+            "+----+-----------------+----------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(query, expected);
+
+        String insert = "INSERT INTO copy.ln.wf01(TIME, s, v) VALUES (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
+        execute(insert);
+
+        query = "SELECT s, v FROM copy.ln.wf01;";
+        expected = "ResultSets:\n" +
+            "+----+----------------------------+---------------------+\n" +
+            "|Time|copy.ln.wf01.s{t1=v1,t2=vv2}|copy.ln.wf01.v{t1=v1}|\n" +
+            "+----+----------------------------+---------------------+\n" +
+            "|3200|                        true|                   16|\n" +
+            "+----+----------------------------+---------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(query, expected);
+
+        insert = "INSERT INTO copy.ln.wf02(TIME, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
+        execute(insert);
+
+        query = "SELECT s, v FROM copy.ln.wf02;";
+        expected = "ResultSets:\n" +
+            "+----+----------------------------+---------------------------+\n" +
+            "|Time|copy.ln.wf02.s{t1=v1,t2=vv2}|copy.ln.wf02.v{t1=v1,t2=v2}|\n" +
+            "+----+----------------------------+---------------------------+\n" +
+            "|3200|                        true|                         16|\n" +
+            "+----+----------------------------+---------------------------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(query, expected);
     }
 
     @Test
@@ -255,17 +372,17 @@ public class TagIT {
         execute(clearData);
 
         String countPoints = "COUNT POINTS;";
-        String excepted = "Points num: 0\n";
-        executeAndCompare(countPoints, excepted);
+        String expected = "Points num: 0\n";
+        executeAndCompare(countPoints, expected);
 
         String showTimeSeries = "SELECT * FROM *;";
-        excepted = "ResultSets:\n" +
-                "+----+\n" +
-                "|Time|\n" +
-                "+----+\n" +
-                "+----+\n" +
-                "Empty set.\n";
-        executeAndCompare(showTimeSeries, excepted);
+        expected = "ResultSets:\n" +
+            "+----+\n" +
+            "|Time|\n" +
+            "+----+\n" +
+            "+----+\n" +
+            "Empty set.\n";
+        executeAndCompare(showTimeSeries, expected);
     }
 
 }

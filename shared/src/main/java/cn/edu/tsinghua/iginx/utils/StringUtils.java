@@ -70,4 +70,14 @@ public class StringUtils {
         path = path.replaceAll("[*]", ".*");
         return path;
     }
+
+    public static String reformatColumnName(String name) {
+        if (!name.contains("*") && !name.contains("(") && !name.contains(")"))
+            return name;
+        name = name.replaceAll("[.]", "[.]");
+        name = name.replaceAll("[*]", ".*");
+        name = name.replaceAll("[(]", "[(]");
+        name = name.replaceAll("[)]", "[)]");
+        return name;
+    }
 }
