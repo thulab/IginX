@@ -9,10 +9,15 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class UDFIT {
+
+    private static final double delta = 0.01d;
 
     private static final Logger logger = LoggerFactory.getLogger(UDFIT.class);
 
@@ -80,11 +85,12 @@ public class UDFIT {
     }
 
     private void executeAndCompare(String statement, String expectedOutput) {
-        String actualOutput = execute(statement);
+        SessionExecuteSqlResult ret = execute(statement);
+        String actualOutput = ret.getResultInString(false, "");
         assertEquals(expectedOutput, actualOutput);
     }
 
-    private String execute(String statement) {
+    private SessionExecuteSqlResult execute(String statement) {
         logger.info("Execute Statement: \"{}\"", statement);
 
         SessionExecuteSqlResult res = null;
@@ -98,50 +104,26 @@ public class UDFIT {
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
             logger.error("Statement: \"{}\" execute fail. Caused by: {}.", statement, res.getParseErrorMsg());
             fail();
-            return "";
         }
 
-        return res.getResultInString(false, "");
+        return res;
     }
 
     @Test
     public void testCOS() {
         String statement = "SELECT COS(s1) FROM us.d1 WHERE s1 < 10;";
-        String expected = "ResultSets:\n" +
-            "+----+--------------------+\n" +
-            "|Time|       cos(us.d1.s1)|\n" +
-            "+----+--------------------+\n" +
-            "|   0|                 1.0|\n" +
-            "|   1|  0.5403023058681398|\n" +
-            "|   2| -0.4161468365471424|\n" +
-            "|   3| -0.9899924966004454|\n" +
-            "|   4| -0.6536436208636119|\n" +
-            "|   5|  0.2836621854632263|\n" +
-            "|   6|  0.9601702866503661|\n" +
-            "|   7|  0.7539022543433046|\n" +
-            "|   8|-0.14550003380861354|\n" +
-            "|   9| -0.9111302618846769|\n" +
-            "+----+--------------------+\n" +
-            "Total line number = 10\n";
-        executeAndCompare(statement, expected);
 
-        statement = "SELECT COS(s1), COS(s2) FROM us.d1 WHERE s1 < 10;";
-        expected = "ResultSets:\n" +
-            "+----+--------------------+--------------------+\n" +
-            "|Time|       cos(us.d1.s1)|       cos(us.d1.s2)|\n" +
-            "+----+--------------------+--------------------+\n" +
-            "|   0|                 1.0|  0.5403023058681398|\n" +
-            "|   1|  0.5403023058681398| -0.4161468365471424|\n" +
-            "|   2| -0.4161468365471424| -0.9899924966004454|\n" +
-            "|   3| -0.9899924966004454| -0.6536436208636119|\n" +
-            "|   4| -0.6536436208636119|  0.2836621854632263|\n" +
-            "|   5|  0.2836621854632263|  0.9601702866503661|\n" +
-            "|   6|  0.9601702866503661|  0.7539022543433046|\n" +
-            "|   7|  0.7539022543433046|-0.14550003380861354|\n" +
-            "|   8|-0.14550003380861354| -0.9111302618846769|\n" +
-            "|   9| -0.9111302618846769| -0.8390715290764524|\n" +
-            "+----+--------------------+--------------------+\n" +
-            "Total line number = 10\n";
-        executeAndCompare(statement, expected);
+        SessionExecuteSqlResult ret = execute(statement);
+        assertEquals(Collections.singletonList("cos(us.d1.s1)"), ret.getPaths());
+        assertArrayEquals(new long[]{0L, 1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L}, ret.getTimestamps());
+
+        List<Double> expectedValues = Arrays.asList(1.0, 0.5403023058681398, -0.4161468365471424, -0.9899924966004454,
+            -0.6536436208636119, 0.2836621854632263, 0.9601702866503661, 0.7539022543433046, -0.14550003380861354, -0.9111302618846769);
+        for (int i = 0; i < ret.getValues().size(); i++) {
+            assertEquals(1, ret.getValues().get(i).size());
+            double expected = expectedValues.get(i);
+            double actual = (double) ret.getValues().get(i).get(0);
+            assertEquals(expected, actual, delta);
+        }
     }
 }
