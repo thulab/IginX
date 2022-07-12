@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import numpy as np
 
 class CeilTransformer:
     def __init__(self):
@@ -7,5 +8,5 @@ class CeilTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = pd.DataFrame(data=df.applymap(lambda x: math.ceil(x)))
+        ret = pd.DataFrame(data=df.applymap(lambda x: None if np.isnan(x) else math.ceil(x)))
         return ret.values.tolist()

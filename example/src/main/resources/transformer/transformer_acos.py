@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import numpy as np
 
 class AcosTransformer:
     def __init__(self):
@@ -7,5 +8,5 @@ class AcosTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = pd.DataFrame(data=df.applymap(lambda x: math.acos(x)))
+        ret = pd.DataFrame(data=df.applymap(lambda x: np.NaN if np.isnan(x) or x > 1 or x < -1 else math.acos(x)))
         return ret.values.tolist()

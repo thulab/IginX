@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import numpy as np
 
 class Atan2Transformer:
     def __init__(self):
@@ -8,5 +9,5 @@ class Atan2Transformer:
     def transform(self, rowy, rowx):
         dfy = pd.DataFrame(rowy)
         dfx = pd.DataFrame(rowx)
-        ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: math.atan(x))).transpose()
+        ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: None if np.isnan(x) else math.atan(x))).transpose()
         return ret.values.tolist()[0]

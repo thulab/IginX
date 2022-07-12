@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import numpy as np
 
 class SqrtTransformer:
     def __init__(self):
@@ -7,5 +8,5 @@ class SqrtTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = pd.DataFrame(data=df.applymap(lambda x: math.pow(x, 0.5)))
+        ret = pd.DataFrame(data=df.applymap(lambda x: np.NaN if np.isnan(x) or x < 0 else math.pow(x, 0.5)))
         return ret.values.tolist()

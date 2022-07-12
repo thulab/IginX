@@ -1,5 +1,6 @@
 import pandas as pd
 import math
+import numpy as np
 
 class SinTransformer:
     def __init__(self):
@@ -7,5 +8,5 @@ class SinTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = pd.DataFrame(data=df.applymap(lambda x: math.sin(x)))
+        ret = pd.DataFrame(data=df.applymap(lambda x: np.NaN if np.isnan(x) else math.sin(x)))
         return ret.values.tolist()

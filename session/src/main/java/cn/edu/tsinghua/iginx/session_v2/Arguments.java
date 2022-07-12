@@ -32,6 +32,23 @@ public final class Arguments {
     public static void checkUrl(final String url, final String name) throws IllegalArgumentException {
         checkNonEmpty(url, name);
         // TODO: 检查 url 合法性
+        checkUrlValid(url, name);
+    }
+
+    public static void checkUrlValid(final String url, final String name) throws IllegalArgumentException {
+        String[] divided = url.split(":");
+        if(divided.length != 2){
+            throw new IllegalArgumentException("Expecting a host:port format for" + name);
+        }
+        int port = 0;
+        try{
+            port = Integer.parseInt(divided[1]);
+        } catch (NumberFormatException e){
+            throw new IllegalArgumentException("Expecting a number format for host in " + name);
+        }
+        if (port < 0 || port > 65535) {
+            throw new IllegalArgumentException("Expecting a 0-65535 port number for " + name);
+        }
     }
 
     public static void checkNonEmpty(final String string, final String name) throws IllegalArgumentException {

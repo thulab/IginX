@@ -76,6 +76,9 @@ public final class IginXClientOptions {
         public IginXClientOptions.Builder url(String url) {
             Arguments.checkUrl(url, "url");
             // TODO: 将 url 拆分成 host + port
+            String[] dividedStr = url.split(":");
+            this.host = dividedStr[0];
+            this.port = Integer.parseInt(dividedStr[1]);
             return this;
         }
 
