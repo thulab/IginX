@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 import static org.junit.Assert.*;
 
@@ -201,7 +203,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -230,7 +232,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -263,7 +265,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -296,7 +298,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -329,7 +331,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -357,7 +359,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -410,7 +412,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -443,7 +445,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -481,7 +483,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -518,7 +520,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -550,7 +552,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -641,14 +643,14 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
                     assertTrue(Double.isNaN((double)row[j]));
                 } else {
                     double aim = (double)getInsertData(i, j);
-                    double res = Math.round(aim);
+                    double res = new BigDecimal(aim).setScale(0, RoundingMode.HALF_EVEN).doubleValue();
                     assertEquals((double) row[j], res, delta);
                 }
             }
@@ -675,7 +677,7 @@ public class TransformIT {
         Object[] data = getDataFromFile(aimFileName);
 
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -705,7 +707,7 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -743,7 +745,7 @@ public class TransformIT {
        Object[] data = getDataFromFile(aimFileName);
 
         assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -852,15 +854,12 @@ public class TransformIT {
             dataTypeList.add(DataType.DOUBLE);
         }
 
-        logger.info("path={}", paths.size());
-        logger.info("dataTypeList={}", dataTypeList.size());
-
         session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static Object getInsertData(int row, int column){
         Object[] rowArr = (Object[])valuesList[row];
-        return rowArr[column];
+        return ((Number)rowArr[column]).doubleValue();
     }
 
     private static Object[] getDataFromFile(String fileName){
@@ -879,10 +878,8 @@ public class TransformIT {
                         String value = tmp[i].trim();
                         if(value.equals("NaN")){
                             tmpObj[i] = Double.NaN;
-                        } else if (value.contains(".")) {
-                            tmpObj[i] = Double.parseDouble(value);
                         } else {
-                            tmpObj[i] = Long.parseLong(value);
+                            tmpObj[i] = Double.parseDouble(value);
                         }
                     }
                     res.add(tmpObj);
@@ -903,7 +900,7 @@ public class TransformIT {
     }
 
     private static boolean isNull(int row, int col){
-        if((col == 2 && row % 2 == 0) || (col == 4 && row % 2 != 0)){
+        if((col == 1 && row % 2 == 0) || (col == 4 && row % 2 != 0)){
             return true;
         } else {
             return false;
