@@ -110,11 +110,14 @@ public class FunctionManager {
             TransformTaskMeta taskMeta = metaManager.getTransformTask(meta.getName());
             if (taskMeta == null) {
                 metaManager.addTransformTask(meta);
-            } else {
+            } else if (!taskMeta.getIpSet().contains(config.getIp())) {
                 meta.addIp(config.getIp());
                 metaManager.updateTransformTask(meta);
             }
-            loadUDF(meta.getName());
+
+            if (!meta.getType().equals(UDFType.TRANSFORM)) {
+                loadUDF(meta.getName());
+            }
         }
     }
 
