@@ -26,29 +26,20 @@ public class TransformExample {
     private static final String SHOW_REGISTER_TASK_SQL = "SHOW REGISTER PYTHON TASK;";
     private static final String REGISTER_SQL_FORMATTER = "REGISTER TRANSFORM PYTHON TASK %s IN %s AS %s";
     private static final String DROP_SQL_FORMATTER = "DROP PYTHON TASK %s";
-
-    /*
+    
     private static final String OUTPUT_DIR_PREFIX = System.getProperty("user.dir") + File.separator +
-        "example" + File.separator + "src" + File.separator + "main" + File.separator + "resources";*/
-    private static final String OUTPUT_DIR_PREFIX = "/root/IginX/example/src/main/resources";
+        "example" + File.separator + "src" + File.separator + "main" + File.separator + "resources";
 
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 1000L;
 
     private static final long TIMEOUT = 10000L;
-
-    /*
+ 
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
         TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py\"");
         TASK_MAP.put("\"AddOneTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_add_one.py\"");
         TASK_MAP.put("\"SumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_sum.py\"");
-    }*/
-    private static final Map<String, String> TASK_MAP = new HashMap<>();
-    static {
-        TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_row_sum.py\"");
-        TASK_MAP.put("\"AddOneTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_add_one.py\"");
-        TASK_MAP.put("\"SumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_sum.py\"");
     }
 
     public static void main(String[] args) throws SessionException, ExecutionException, InterruptedException {
@@ -63,11 +54,11 @@ public class TransformExample {
     }
 
     private static void before() throws SessionException, ExecutionException {
-        session = new Session("120.48.93.68", 6888, "root", "root");
+        session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
 
-        client = IginXClientFactory.create("120.48.93.68:6888");
+        client = IginXClientFactory.create();
 
         // 准备数据
         session.deleteColumns(Collections.singletonList("*"));
@@ -179,7 +170,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + /*File.separator*/ '/' + "export_file.txt");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file.txt");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -208,11 +199,10 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + /*File.separator*/ '/' + "export_file_combine.txt");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_combine.txt");
         System.out.println("job id is " + jobId);
 
-        // 轮询查看任务情况jps
-
+        // 轮询查看任务情况
         JobState jobState = JobState.JOB_CREATED;
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             Thread.sleep(500);
@@ -242,7 +232,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + /*File.separator*/ '/' + "export_file_sum.txt");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_sum.txt");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -284,7 +274,7 @@ public class TransformExample {
     }
 
     private static void commitBySQL() throws ExecutionException, SessionException, InterruptedException {
-        String yamlPath = "\"" + OUTPUT_DIR_PREFIX + /*File.separator*/ '/' + "TransformJobExample.yaml\"";
+        String yamlPath = "\"" + OUTPUT_DIR_PREFIX + File.separator + "TransformJobExample.yaml\"";
         SessionExecuteSqlResult result = session.executeSql("commit transform job " + yamlPath);
 
         long jobId = result.getJobId();
@@ -343,7 +333,7 @@ public class TransformExample {
                         .timeout(TIMEOUT)
                         .pyTaskName("RowSumTransformer")
                         .build())
-                .exportToFile(OUTPUT_DIR_PREFIX + /*File.separator*/ '/' + "export_file_v2.txt")
+                .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt")
                 .build()
         );
 
