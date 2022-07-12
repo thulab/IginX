@@ -2,13 +2,18 @@ package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
+import cn.edu.tsinghua.iginx.metadata.IMetaManager;
+import cn.edu.tsinghua.iginx.metadata.entity.TransformTaskMeta;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
+import cn.edu.tsinghua.iginx.thrift.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +25,8 @@ public class UDFIT {
     private static final double delta = 0.01d;
 
     private static final Logger logger = LoggerFactory.getLogger(UDFIT.class);
+
+    private final static IMetaManager metaManager = DefaultMetaManager.getInstance();
 
     private static Session session;
 
@@ -107,6 +114,56 @@ public class UDFIT {
         }
 
         return res;
+    }
+
+    private static void executeStdJob(String sql, String pyTaskName) throws ExecutionException, SessionException, InterruptedException {
+        logger.info("Execute Transfrom Job sql: \"{}\", pyTaskName:\"{}\"", sql, pyTaskName);
+
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+
+        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+        iginxTask.setSql(sql);
+        taskInfoList.add(iginxTask);
+
+        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
+        pyTask.setPyTaskName(pyTaskName);
+        taskInfoList.add(pyTask);
+
+        // 提交任务
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.Log, "");
+        // 轮询查看任务情况
+        JobState jobState = JobState.JOB_CREATED;
+        while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
+            Thread.sleep(50);
+            jobState = session.queryTransformJobStatus(jobId);
+        }
+        logger.info("job {} state is {}", jobId, jobState.toString());
+
+        assertEquals(JobState.JOB_FINISHED, jobState);
+    }
+
+    @Test
+    public void baseTests() {
+        String transformSQL = "SELECT s1 FROM us.d1 WHERE time < 200;";
+        String udtfSQLFormat = "SELECT %s(s1) FROM us.d1 WHERE time < 200;";
+        String udafSQLFormat = "SELECT %s(s1) FROM us.d1 GROUP [0, 200) BY 50ms;";
+
+        List<TransformTaskMeta> taskMetas = metaManager.getTransformTasks();
+        for (TransformTaskMeta taskMeta : taskMetas) {
+            // execute udf
+            if (taskMeta.getType().equals(UDFType.TRANSFORM)) {
+                try {
+                    executeStdJob(transformSQL, taskMeta.getName());
+                } catch (Exception e) {
+                    logger.error("Transform: \"{}\" execute fail. Caused by:", taskMeta.getName(), e);
+                    fail();
+                }
+            } else if (taskMeta.getType().equals(UDFType.UDTF)) {
+                execute(String.format(udtfSQLFormat, taskMeta.getName()));
+            } else {
+                execute(String.format(udafSQLFormat, taskMeta.getName()));
+            }
+        }
     }
 
     @Test
