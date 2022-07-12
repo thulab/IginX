@@ -26,7 +26,7 @@ public class TransformExample {
     private static final String SHOW_REGISTER_TASK_SQL = "SHOW REGISTER PYTHON TASK;";
     private static final String REGISTER_SQL_FORMATTER = "REGISTER TRANSFORM PYTHON TASK %s IN %s AS %s";
     private static final String DROP_SQL_FORMATTER = "DROP PYTHON TASK %s";
-    
+
     private static final String OUTPUT_DIR_PREFIX = System.getProperty("user.dir") + File.separator +
         "example" + File.separator + "src" + File.separator + "main" + File.separator + "resources";
 
@@ -34,7 +34,7 @@ public class TransformExample {
     private static final long END_TIMESTAMP = 1000L;
 
     private static final long TIMEOUT = 10000L;
- 
+
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
         TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py\"");
