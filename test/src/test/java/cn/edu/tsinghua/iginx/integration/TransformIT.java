@@ -35,8 +35,9 @@ public class TransformIT {
     private static final String REGISTER_SQL_FORMATTER = "REGISTER TRANSFORM PYTHON TASK %s IN %s AS %s";
     private static final String DROP_SQL_FORMATTER = "DROP PYTHON TASK %s";
 
-    private static final String OUTPUT_DIR_PREFIX = "/root/IginX/example/src/main/resources";
-    private static final String NEW_OUTPUT_DIR_PREFIX = "/root/IginX/example/src/main/resources/transformer";
+   private static final String OUTPUT_DIR_PREFIX = System.getProperty("user.dir") + File.separator+ ".." + File.separator +
+        "example" + File.separator + "src" + File.separator + "main" + File.separator + "resources";
+    private static final String NEW_OUTPUT_DIR_PREFIX = OUTPUT_DIR_PREFIX + File.separator + "transformer";
 
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 10L;
@@ -46,58 +47,55 @@ public class TransformIT {
 
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
-        TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_row_sum.py\"");
-        TASK_MAP.put("\"AddOneTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_add_one.py\"");
-        TASK_MAP.put("\"SumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_sum.py\"");
-        TASK_MAP.put("\"AvgTransformer\"", "\"" + OUTPUT_DIR_PREFIX + '/' + "transformer_avg.py\"");
-        TASK_MAP.put("\"AbsTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_abs.py\"");
-        TASK_MAP.put("\"AcosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_acos.py\"");
-        TASK_MAP.put("\"AsinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_asin.py\"");
-        TASK_MAP.put("\"AtanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_atan.py\"");
-        TASK_MAP.put("\"Atan2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_atan2.py\"");
-        TASK_MAP.put("\"BottomTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_bottom.py\"");
-        TASK_MAP.put("\"CeilTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_ceil.py\"");
-        TASK_MAP.put("\"CosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_cos.py\"");
-        TASK_MAP.put("\"CumulativeSumTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_cumulative_sum.py\"");
-        TASK_MAP.put("\"DerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_derivative.py\"");
-        TASK_MAP.put("\"DifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_difference.py\"");
-        TASK_MAP.put("\"DistinctTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_distinct.py\"");
-        TASK_MAP.put("\"ElapsedTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_elapsed.py\"");
-        TASK_MAP.put("\"ExpTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_exp.py\"");
-        TASK_MAP.put("\"FirstTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_first.py\"");
-        TASK_MAP.put("\"FloorTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_floor.py\"");
-        TASK_MAP.put("\"IntegralTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_integral.py\"");
-        TASK_MAP.put("\"LastTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_last.py\"");
-        TASK_MAP.put("\"LnTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_ln.py\"");
-        TASK_MAP.put("\"LogTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_log.py\"");
-        TASK_MAP.put("\"Log2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_log2.py\"");
-        TASK_MAP.put("\"Log10Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_log10.py\"");
-        TASK_MAP.put("\"MedianTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_median.py\"");
-        TASK_MAP.put("\"ModeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_mode.py\"");
-        TASK_MAP.put("\"MovingAverageTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_moving_average.py\"");
-        TASK_MAP.put("\"NonNegativeDifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_nonnegative_difference.py\"");
-        TASK_MAP.put("\"NonNegativeDerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_nonnegative_derivative.py\"");
-        TASK_MAP.put("\"PercentileTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_percentile.py\"");
-        TASK_MAP.put("\"PowTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_pow.py\"");
-        TASK_MAP.put("\"RoundTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_round.py\"");
-        TASK_MAP.put("\"SampleTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_sample.py\"");
-        TASK_MAP.put("\"SinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_sin.py\"");
-        TASK_MAP.put("\"SpreadTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_spread.py\"");
-        TASK_MAP.put("\"SqrtTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_sqrt.py\"");
-        TASK_MAP.put("\"StddevTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_stddev.py\"");
-        TASK_MAP.put("\"TanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_tan.py\"");
-        TASK_MAP.put("\"TopTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + '/' + "transformer_top.py\"");
+        TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py\"");
+        TASK_MAP.put("\"AddOneTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_add_one.py\"");
+        TASK_MAP.put("\"SumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_sum.py\"");
+        TASK_MAP.put("\"AvgTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_avg.py\"");
+        TASK_MAP.put("\"AbsTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_abs.py\"");
+        TASK_MAP.put("\"AcosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_acos.py\"");
+        TASK_MAP.put("\"AsinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_asin.py\"");
+        TASK_MAP.put("\"AtanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan.py\"");
+        TASK_MAP.put("\"Atan2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan2.py\"");
+        TASK_MAP.put("\"BottomTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_bottom.py\"");
+        TASK_MAP.put("\"CeilTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_ceil.py\"");
+        TASK_MAP.put("\"CosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cos.py\"");
+        TASK_MAP.put("\"CumulativeSumTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cumulative_sum.py\"");
+        TASK_MAP.put("\"DerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_derivative.py\"");
+        TASK_MAP.put("\"DifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_difference.py\"");
+        TASK_MAP.put("\"DistinctTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_distinct.py\"");
+        TASK_MAP.put("\"ElapsedTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_elapsed.py\"");
+        TASK_MAP.put("\"ExpTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_exp.py\"");
+        TASK_MAP.put("\"FirstTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_first.py\"");
+        TASK_MAP.put("\"FloorTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_floor.py\"");
+        TASK_MAP.put("\"IntegralTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_integral.py\"");
+        TASK_MAP.put("\"LastTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_last.py\"");
+        TASK_MAP.put("\"LnTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_ln.py\"");
+        TASK_MAP.put("\"LogTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log.py\"");
+        TASK_MAP.put("\"Log2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log2.py\"");
+        TASK_MAP.put("\"Log10Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log10.py\"");
+        TASK_MAP.put("\"MedianTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_median.py\"");
+        TASK_MAP.put("\"ModeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_mode.py\"");
+        TASK_MAP.put("\"MovingAverageTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_moving_average.py\"");
+        TASK_MAP.put("\"NonNegativeDifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_difference.py\"");
+        TASK_MAP.put("\"NonNegativeDerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_derivative.py\"");
+        TASK_MAP.put("\"PercentileTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_percentile.py\"");
+        TASK_MAP.put("\"PowTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_pow.py\"");
+        TASK_MAP.put("\"RoundTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_round.py\"");
+        TASK_MAP.put("\"SampleTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sample.py\"");
+        TASK_MAP.put("\"SinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sin.py\"");
+        TASK_MAP.put("\"SpreadTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_spread.py\"");
+        TASK_MAP.put("\"SqrtTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sqrt.py\"");
+        TASK_MAP.put("\"StddevTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_stddev.py\"");
+        TASK_MAP.put("\"TanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_tan.py\"");
+        TASK_MAP.put("\"TopTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_top.py\"");
     }
 
 
     @BeforeClass
     public static void before() throws SessionException, ExecutionException {
-        //session = new Session("120.48.93.68", 6888, "root", "root");
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
-
-        //client = IginXClientFactory.create("120.48.93.68:6888");
 
         // 删除可能存在的相关结果输出文件
         for(String key: TASK_MAP.keySet()){
@@ -125,12 +123,8 @@ public class TransformIT {
         // 注销任务
         dropTask();
 
-        // 查询已注册的任务
-        SessionExecuteSqlResult result = session.executeSql(SHOW_REGISTER_TASK_SQL);
-        result.print(false, "ms");
-
         // 清除数据
-        //session.deleteColumns(Collections.singletonList("*"));
+        session.deleteColumns(Collections.singletonList("*"));
         // 关闭 Session
         session.closeSession();
     }
@@ -892,8 +886,15 @@ public class TransformIT {
     }
 
     private static void waitUntilJobFinish(long jobId) throws ExecutionException, SessionException, InterruptedException {
+        int count = 0;
         JobState jobState = JobState.JOB_CREATED;
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
+            count++;
+            if(count >= 50){
+		logger.error("Timeout in job {}", jobId);
+                fail();
+                break;
+            }            
             Thread.sleep(200);
             jobState = session.queryTransformJobStatus(jobId);
         }
