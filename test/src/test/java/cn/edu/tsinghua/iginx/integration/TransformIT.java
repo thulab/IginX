@@ -96,7 +96,8 @@ public class TransformIT {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
-
+        logger.info("curr_output_dir={}", OUTPUT_DIR_PREFIX);
+        logger.info("user_dir={}", System.getProperty("user.dir"));
         // 删除可能存在的相关结果输出文件
         for(String key: TASK_MAP.keySet()){
             File file = new File(getAimFileName(key));
