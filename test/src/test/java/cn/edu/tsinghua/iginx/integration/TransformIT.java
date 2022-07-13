@@ -92,31 +92,19 @@ public class TransformIT {
 
 
     @BeforeClass
-    public static void before() throws SessionException, ExecutionException {
+    public static void before() throws SessionException {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
         logger.info("curr_output_dir={}", OUTPUT_DIR_PREFIX);
         logger.info("user_dir={}", System.getProperty("user.dir"));
         // 删除可能存在的相关结果输出文件
-        for(String key: TASK_MAP.keySet()){
-            File file = new File(getAimFileName(key));
-            try {
-                if (file.exists() && file.isFile()) {
-                    file.delete();
-                }
-            } catch(Exception e) {
-                logger.error(e.toString());
-            }
+        try {
+            prepareData();
+            registerTask();
+        } catch (Exception e){
+            logger.error(e.getMessage());
         }
-
-        // 准备数据
-        session.deleteColumns(Collections.singletonList("*"));
-        prepareData();
-
-        // 注册任务
-        registerTask();
-
     }
 
     @AfterClass
@@ -891,13 +879,16 @@ public class TransformIT {
         JobState jobState = JobState.JOB_CREATED;
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             count++;
-            if(count >= 50){
-		logger.error("Timeout in job {}", jobId);
+            if(count >= 100){
+                logger.error("Timeout in job {}", jobId);
                 fail();
                 break;
             }            
             Thread.sleep(200);
             jobState = session.queryTransformJobStatus(jobId);
+            if(count % 20 == 0) {
+                logger.info("jobid {}'s current state is {}", jobId, jobState);
+            }
         }
     }
 
