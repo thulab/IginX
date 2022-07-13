@@ -183,6 +183,7 @@ public class TransformIT {
         // 构造任务
         String key = "AbsTransformer";
         String aimFileName = getAimFileName(key);
+        logger.info("AIMFILENAMEABS={}",aimFileName);
         List<TaskInfo> taskInfoList = generateSimpleTransformList(key);
         try {
             long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
@@ -786,7 +787,7 @@ public class TransformIT {
     }
 
     private static String getAimFileName(String key){
-        return OUTPUT_DIR_PREFIX +  '/' + "export_file_" +
+        return OUTPUT_DIR_PREFIX + File.separator + "export_file_" +
                 key.substring(0, key.length() - 11) + ".txt";
     }
 
@@ -794,6 +795,7 @@ public class TransformIT {
         List<TaskInfo> taskInfoList = new ArrayList<>();
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
         iginxTask.setSql(generateQuerySql(false, true, null, false,null));
+        logger.info("key={}, sql={}", key, generateQuerySql(false, true, null, false,null));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -886,7 +888,7 @@ public class TransformIT {
         JobState jobState = JobState.JOB_CREATED;
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             count++;
-            if(count >= 100){
+            if(count >= 150){
                 logger.error("Timeout in job {}", jobId);
                 fail();
                 break;
