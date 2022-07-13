@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @Data
 public class RequestContext {
@@ -27,6 +28,10 @@ public class RequestContext {
     private String sql;
 
     private boolean fromSQL;
+
+    private boolean fromREST;
+    //rest传入的tagkv数据
+    private Map<String, List<String>> selectTagList;
 
     private SqlType sqlType;
 
@@ -52,6 +57,19 @@ public class RequestContext {
         this.sessionId = sessionId;
         this.statement = statement;
         this.fromSQL = false;
+        this.fromREST = false;
+    }
+
+    public RequestContext(long sessionId, Statement statement, Map<String, List<String>> tagList) {
+        init();
+        this.sessionId = sessionId;
+        this.statement = statement;
+        this.fromSQL = false;
+        this.fromREST = false;
+        if(tagList!=null){
+            this.fromREST = true;
+            this.selectTagList = tagList;
+        }
     }
 
     public RequestContext(long sessionId, String sql) {
@@ -84,5 +102,13 @@ public class RequestContext {
         if (this.result != null) {
             this.result.setQueryId(id);
         }
+    }
+
+    public boolean isFromREST(){
+        return fromREST;
+    }
+
+    public Map<String, List<String>> getSelectTagList(){
+        return this.selectTagList;
     }
 }

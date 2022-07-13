@@ -167,10 +167,10 @@ public class RestSession {
             logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
             return;
         }
-        if (tagsList != null && paths.size() != tagsList.size()) {
-            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
-            return;
-        }
+        // if (tagsList != null && paths.size() != tagsList.size()) {
+        //     logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
+        //     return;
+        // }
 
         Integer[] index = new Integer[timestamps.length];
         for (int i = 0; i < timestamps.length; i++) {
@@ -338,12 +338,13 @@ public class RestSession {
         } while (checkRedirect(status));
     }
 
-    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime) {
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList) {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
             return null;
         }
         QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
+        req.setTagsList(tagList);
 
         QueryDataResp resp;
 

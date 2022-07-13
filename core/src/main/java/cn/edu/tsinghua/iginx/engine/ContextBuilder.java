@@ -90,12 +90,13 @@ public class ContextBuilder {
         return new RequestContext(req.getSessionId(), statement);
     }
 
+    //在这里加入对json请求的tag过滤
     public RequestContext build(QueryDataReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),
             req.getStartTime(),
             req.getEndTime());
-        return new RequestContext(req.getSessionId(), statement);
+        return new RequestContext(req.getSessionId(), statement, req.getTagsList());//LHZ还没有实现getTagsList()
     }
 
     public RequestContext build(AggregateQueryReq req) {
