@@ -96,8 +96,6 @@ public class TransformIT {
         session = new Session("127.0.0.1", 6888, "root", "root");
         // 打开 Session
         session.openSession();
-        logger.info("curr_output_dir={}", OUTPUT_DIR_PREFIX);
-        logger.info("user_dir={}", System.getProperty("user.dir"));
         // 删除可能存在的相关结果输出文件
         try {
             session.deleteColumns(Collections.singletonList("*"));
@@ -183,7 +181,6 @@ public class TransformIT {
         // 构造任务
         String key = "AbsTransformer";
         String aimFileName = getAimFileName(key);
-        logger.info("AIMFILENAMEABS={}",aimFileName);
         List<TaskInfo> taskInfoList = generateSimpleTransformList(key);
         try {
             long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
@@ -795,7 +792,6 @@ public class TransformIT {
         List<TaskInfo> taskInfoList = new ArrayList<>();
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
         iginxTask.setSql(generateQuerySql(false, true, null, false,null));
-        logger.info("key={}, sql={}", key, generateQuerySql(false, true, null, false,null));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -888,16 +884,13 @@ public class TransformIT {
         JobState jobState = JobState.JOB_CREATED;
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             count++;
-            if(count >= 150){
+            if(count >= 100){
                 logger.error("Timeout in job {}", jobId);
                 fail();
                 break;
             }            
             Thread.sleep(200);
             jobState = session.queryTransformJobStatus(jobId);
-            if(count % 20 == 0) {
-                logger.info("jobid {}'s current state is {}", jobId, jobState);
-            }
         }
     }
 
