@@ -27,7 +27,8 @@ public enum Op {
     LE,
     L,
     E,
-    NE;
+    NE,
+    LIKE;
 
 
     public static Op getOpposite(Op op) {
@@ -80,6 +81,8 @@ public enum Op {
                 return L;
             case "<=":
                 return LE;
+            case "like":
+                return LIKE;
             default:
                 throw new SQLParserException(String.format("Not support comparison operator %s", op));
         }
@@ -99,6 +102,8 @@ public enum Op {
                 return "==";
             case NE:
                 return "!=";
+            case LIKE:
+                return "like";
             default:
                 return "";
         }

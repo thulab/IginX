@@ -22,18 +22,19 @@ public enum FilterType {
 
     Time,
     Value,
-    Bool,
+    Path,
+    Bool,  // holder
 
     And,
     Or,
     Not;
 
     public static boolean isLeafFilter(FilterType filterType) {
-        return filterType == Time || filterType == Value;
+        return filterType == Time || filterType == Value || filterType == Path;
     }
 
     public static boolean isCompoundFilter(FilterType filterType) {
-        return filterType != Time && filterType != Value;
+        return filterType != Time && filterType != Value && filterType != Path;
     }
 
     public static boolean isTimeFilter(Filter filter) {

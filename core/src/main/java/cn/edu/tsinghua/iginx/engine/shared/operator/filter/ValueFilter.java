@@ -19,13 +19,15 @@
 package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 
 public class ValueFilter implements Filter {
+
+    private final FilterType type = FilterType.Value;
 
     private final String path;
     private final Value value;
     private Op op;
-    private FilterType type = FilterType.Value;
 
     public ValueFilter(String path, Op op, Value value) {
         this.path = path;
@@ -66,6 +68,9 @@ public class ValueFilter implements Filter {
 
     @Override
     public String toString() {
-        return path + " " + Op.op2Str(op) + " " + value.getValue();
+        Object valueObj = value.getDataType() == DataType.BINARY ?
+            "\"" + value.getBinaryVAsString() + "\"" :
+            value.getValue();
+        return path + " " + Op.op2Str(op) + " " + valueObj;
     }
 }
