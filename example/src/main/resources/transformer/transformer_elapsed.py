@@ -5,8 +5,11 @@ class ElapsedTransformer:
     def __init__(self):
         pass
 
-    def transform(self, timestamp, row):
+    def transform(self, rows):
         res = []
+        arr = np.array(rows)
+        timestamp = arr[:,0]
+        row = arr[:,1]
         l = len(timestamp)
         pos = 0
         currts = -1

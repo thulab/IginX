@@ -7,11 +7,14 @@ import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.transform.pojo.Task;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
@@ -28,7 +31,7 @@ public class TransformIT {
 
     private static Session session;
 
-    private static final int columnNum = 5;
+    private static final int columnNum = 6;
     private static final String[] columnList = new String[columnNum];
 
     private static final String SHOW_REGISTER_TASK_SQL = "SHOW REGISTER PYTHON TASK;";
@@ -41,43 +44,47 @@ public class TransformIT {
 
     private static final long START_TIMESTAMP = 0L;
     private static final long END_TIMESTAMP = 10L;
+    private static final int LEN = (int)(END_TIMESTAMP - START_TIMESTAMP + 1);
 
-    private static final Object[] valuesList = new Object[(int)(END_TIMESTAMP - START_TIMESTAMP + 1)];
+    private static final Object[] valuesList = new Object[LEN];
     private static final List<DataType> dataTypeList = new ArrayList<>();
 
     private static final Map<String, String> TASK_MAP = new HashMap<>();
     static {
-        //TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py\"");
-        //TASK_MAP.put("\"AddOneTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_add_one.py\"");
-        //TASK_MAP.put("\"SumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_sum.py\"");
-        //TASK_MAP.put("\"AvgTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_avg.py\"");
+        TASK_MAP.put("\"RowSumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_row_sum.py\"");
+        TASK_MAP.put("\"AddOneTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_add_one.py\"");
+        TASK_MAP.put("\"SumTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_sum.py\"");
+        TASK_MAP.put("\"AvgTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_avg.py\"");
+        TASK_MAP.put("\"CountTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_count.py\"");
+        TASK_MAP.put("\"MaxTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_max.py\"");
+        TASK_MAP.put("\"MinTransformer\"", "\"" + OUTPUT_DIR_PREFIX + File.separator + "transformer_min.py\"");
         TASK_MAP.put("\"AbsTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_abs.py\"");
         TASK_MAP.put("\"AcosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_acos.py\"");
         TASK_MAP.put("\"AsinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_asin.py\"");
         TASK_MAP.put("\"AtanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan.py\"");
-        //TASK_MAP.put("\"Atan2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan2.py\"");
+        TASK_MAP.put("\"Atan2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan2.py\"");
         //TASK_MAP.put("\"BottomTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_bottom.py\"");
         TASK_MAP.put("\"CeilTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_ceil.py\"");
         TASK_MAP.put("\"CosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cos.py\"");
-        //TASK_MAP.put("\"CumulativeSumTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cumulative_sum.py\"");
-        //TASK_MAP.put("\"DerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_derivative.py\"");
-        //TASK_MAP.put("\"DifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_difference.py\"");
+        TASK_MAP.put("\"CumulativeSumTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cumulative_sum.py\"");
+        TASK_MAP.put("\"DerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_derivative.py\"");
+        TASK_MAP.put("\"DifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_difference.py\"");
         //TASK_MAP.put("\"DistinctTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_distinct.py\"");
-        //TASK_MAP.put("\"ElapsedTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_elapsed.py\"");
+        TASK_MAP.put("\"ElapsedTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_elapsed.py\"");
         TASK_MAP.put("\"ExpTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_exp.py\"");
-        //TASK_MAP.put("\"FirstTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_first.py\"");
+        TASK_MAP.put("\"FirstTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_first.py\"");
         TASK_MAP.put("\"FloorTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_floor.py\"");
-        //TASK_MAP.put("\"IntegralTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_integral.py\"");
-        //TASK_MAP.put("\"LastTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_last.py\"");
+        TASK_MAP.put("\"IntegralTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_integral.py\"");
+        TASK_MAP.put("\"LastTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_last.py\"");
         TASK_MAP.put("\"LnTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_ln.py\"");
         //TASK_MAP.put("\"LogTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log.py\"");
         TASK_MAP.put("\"Log2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log2.py\"");
         TASK_MAP.put("\"Log10Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log10.py\"");
-        //TASK_MAP.put("\"MedianTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_median.py\"");
+        TASK_MAP.put("\"MedianTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_median.py\"");
         //TASK_MAP.put("\"ModeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_mode.py\"");
         //TASK_MAP.put("\"MovingAverageTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_moving_average.py\"");
-        //TASK_MAP.put("\"NonNegativeDifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_difference.py\"");
-        //TASK_MAP.put("\"NonNegativeDerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_derivative.py\"");
+        TASK_MAP.put("\"NonNegativeDifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_difference.py\"");
+        TASK_MAP.put("\"NonNegativeDerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_derivative.py\"");
         //TASK_MAP.put("\"PercentileTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_percentile.py\"");
         //TASK_MAP.put("\"PowTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_pow.py\"");
         TASK_MAP.put("\"RoundTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_round.py\"");
@@ -85,7 +92,7 @@ public class TransformIT {
         TASK_MAP.put("\"SinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sin.py\"");
         //TASK_MAP.put("\"SpreadTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_spread.py\"");
         TASK_MAP.put("\"SqrtTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sqrt.py\"");
-        //TASK_MAP.put("\"StddevTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_stddev.py\"");
+        TASK_MAP.put("\"StddevTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_stddev.py\"");
         TASK_MAP.put("\"TanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_tan.py\"");
         //TASK_MAP.put("\"TopTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_top.py\"");
     }
@@ -190,8 +197,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -219,8 +226,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -252,8 +259,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -285,8 +292,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -301,8 +308,57 @@ public class TransformIT {
     }
 
     @Test
-    public void bottomTest() {
-        //now only can run n = 1
+    public void atan2Test() {
+        String key = "Atan2Transformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+        for(int i = 0; i < columnNum; i++){
+            for(int j = 0; j < columnNum; j++){
+                //special sql to get 2 diffferent lines
+                if(i != j) {
+                    List<Integer> cols = new ArrayList<>();
+                    cols.add(i);
+                    cols.add(j);
+                    TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+                    iginxTask.setSql(generateQuerySql(false, false, null, false, null));
+                    taskInfoList.add(iginxTask);
+
+                    TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
+                    pyTask.setPyTaskName(key);
+                    taskInfoList.add(pyTask);
+                    try {
+                        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                        waitUntilJobFinish(jobId);
+                    } catch (Exception e) {
+                        logger.error("Error in transform test {} : {}", key, e);
+                        fail();
+                    }
+                }
+            }
+        }
+
+        Object[] data = getDataFromFile(aimFileName);
+
+        assertEquals(data.length, columnNum * (columnNum - 1));
+        int count = 0;
+        for(int y = 0; y < columnNum; y++) {
+            for(int x = 0; x < columnNum; x++) {
+                if(y != x) {
+                    Object[] row = (Object[]) data[count];
+                    assertEquals(row.length, LEN);
+                    for (int i = 0; i < LEN; i++) {
+                        if (isNull(i, x) || isNull(i, y) || Math.abs((double)getInsertData(i, x)) < delta) {
+                            assertTrue(Double.isNaN((double) row[i]));
+                        } else {
+                            double aim = (double) getInsertData(i, y) / (double) getInsertData(i, x);
+                            double res = Math.atan(aim);
+                            assertEquals((double) row[i], res, delta);
+                        }
+                    }
+                    count++;
+                }
+            }
+        }
     }
 
     @Test
@@ -318,8 +374,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -346,8 +402,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -362,28 +418,178 @@ public class TransformIT {
     }
 
     @Test
-    public void cumulativeSumTest() {
+    public void countTest() {
+        String key = "CountTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        Object[] row = (Object[])data[0];
+        assertEquals(row.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            int count = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    count++;
+                }
+            }
+            assertEquals((double)row[i], count, delta);
+        }
+    }
 
+    @Test
+    public void cumulativeSumTest() {
+        String key = "CumulativeSumTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        for(int i = 0; i < columnNum; i++){
+            double totalSum = 0;
+            for (int j = 0; j < LEN; j++) {
+                Object[] row = (Object[])data[j];
+                if (!isNull(i, j)) {
+                    totalSum += (double) getInsertData(i, j);
+                }
+                assertEquals((double) row[i], totalSum, delta);
+            }
+        }
     }
 
     @Test
     public void derivativeTest() {
-
+        String key = "DerivativeTransformer";
+        String aimFileName = getAimFileName(key);
+        for(int i = 0; i < columnNum; i++) {
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            try {
+                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                waitUntilJobFinish(jobId);
+            } catch (Exception e) {
+                logger.error("Error in transform test {} : {}", key, e);
+                fail();
+            }
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[i];
+            int count = 0;
+            int currTimeStamp = -1;
+            double currNum = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    if(currTimeStamp != -1){
+                        assertEquals((double)row[count],
+                                ((double)getInsertData(i, j) -currNum) / (j - currTimeStamp), delta);
+                    }
+                    currTimeStamp = j;
+                    currNum = (double)getInsertData(i, j);
+                }
+            }
+            if(count <= 1){
+                assertEquals(row.length, 1);
+                assertTrue(Double.isNaN((double)row[0]));
+            } else {
+                assertEquals(row.length, count - 1);
+            }
+        }
     }
 
     @Test
     public void differenceTest() {
-
-    }
-
-    @Test
-    public void distinctTest() {
-
+        String key = "DifferenceTransformer";
+        String aimFileName = getAimFileName(key);
+        for(int i = 0; i < columnNum; i++) {
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            try {
+                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                waitUntilJobFinish(jobId);
+            } catch (Exception e) {
+                logger.error("Error in transform test {} : {}", key, e);
+                fail();
+            }
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[i];
+            int count = 0;
+            boolean hasFirst = false;
+            double currNum = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    if(hasFirst){
+                        assertEquals((double)row[count],
+                                (double)getInsertData(i, j) -currNum, delta);
+                    }
+                    count++;
+                    hasFirst = true;
+                    currNum = (double)getInsertData(i, j);
+                }
+            }
+            if(count <= 1){
+                assertEquals(row.length, 1);
+                assertTrue(Double.isNaN((double)row[0]));
+            } else {
+                assertEquals(row.length, count - 1);
+            }
+        }
     }
 
     @Test
     public void elapsedTest() {
-
+        String key = "ElapsedTransformer";
+        String aimFileName = getAimFileName(key);
+        for(int i = 0; i < columnNum; i++) {
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            try {
+                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                waitUntilJobFinish(jobId);
+            } catch (Exception e) {
+                logger.error("Error in transform test {} : {}", key, e);
+                fail();
+            }
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[i];
+            int count = 0;
+            boolean hasFirst = false;
+            int currTimeStamp = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    if(hasFirst){
+                        assertEquals((double)row[count],
+                                j - currTimeStamp, delta);
+                    }
+                    count++;
+                    hasFirst = true;
+                    currTimeStamp = j;
+                }
+            }
+            if(count <= 1){
+                assertEquals(row.length, 1);
+                assertTrue(Double.isNaN((double)row[0]));
+            } else {
+                assertEquals(row.length, count - 1);
+            }
+        }
     }
 
     @Test
@@ -399,8 +605,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -416,7 +622,32 @@ public class TransformIT {
 
     @Test
     public void firstTest() {
-
+        String key = "FirstTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[0];
+            boolean isOk = false;
+            for (int j = 0; j < LEN; j++) {
+                if (!isOk && !isNull(i, j)) {
+                    assertEquals((double) row[i], (double)getInsertData(i, j), delta);
+                    isOk = true;
+                    break;
+                }
+            }
+            if(!isOk){
+                assertTrue(Double.isNaN((double)row[i]));
+            }
+        }
     }
 
     @Test
@@ -432,8 +663,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -449,12 +680,76 @@ public class TransformIT {
 
     @Test
     public void integralTest() {
+        String key = "IntegralTransformer";
+        String aimFileName = getAimFileName(key);
+        for(int i = 0; i < columnNum; i++) {
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            try {
+                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                waitUntilJobFinish(jobId);
+            } catch (Exception e) {
+                logger.error("Error in transform test {} : {}", key, e);
+                fail();
+            }
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        Object[] row = (Object[])data[0];
+        assertEquals(row.length, columnNum);
+        assertEquals((double)row[0], (LEN - 1) * (LEN - 1) / 2.0, delta);
+        for(int i = 0; i < columnNum; i++){
+            int count = 0;
+            int currTimeStamp = -1;
+            double currNum = 0;
+            double sum = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    if(currTimeStamp != -1){
+                        sum += (Math.abs((double)getInsertData(i, j)) +
+                                Math.abs(currNum)) / 2 * (j - currTimeStamp);
+                    }
+                    currTimeStamp = j;
+                    currNum = (double)getInsertData(i, j);
+                    count++;
+                }
+            }
+            if(count <= 1){
+                assertTrue(Double.isNaN((double)row[i]));
+            } else {
+                assertEquals((double)row[i], sum, delta);
+            }
 
+        }
     }
 
     @Test
     public void lastTest() {
-
+        String key = "LastTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[0];
+            boolean isOk = false;
+            for (int j = (int)(END_TIMESTAMP - START_TIMESTAMP); j >= 0; j--) {
+                if (!isOk && !isNull(i, j)) {
+                    assertEquals((double) row[i], (double)getInsertData(i, j), delta);
+                    isOk = true;
+                    break;
+                }
+            }
+            if(!isOk){
+                assertTrue(Double.isNaN((double)row[i]));
+            }
+        }
     }
 
     @Test
@@ -470,8 +765,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -490,11 +785,6 @@ public class TransformIT {
     }
 
     @Test
-    public void logTest() {
-
-    }
-
-    @Test
     public void log2Test() {
         String key = "Log2Transformer";
         String aimFileName = getAimFileName(key);
@@ -507,8 +797,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -539,8 +829,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -559,40 +849,10 @@ public class TransformIT {
     }
 
     @Test
-    public void medianTest() {
-
-    }
-
-    @Test
-    public void modeTest() {
-
-    }
-
-    @Test
-    public void movingAverageTest() {
-
-    }
-
-    @Test
-    public void nonnegativeDerivativeTest() {
-
-    }
-
-    @Test
-    public void nonnegativeDifferenceTest() {
-
-    }
-
-    @Test
-    public void percentileTest() {
-
-    }
-
-    @Test
-    public void powTest() {/*
-        String key = "TanTransformer";
+    public void maxTest(){
+        String key = "MaxTransformer";
         String aimFileName = getAimFileName(key);
-        List<TaskInfo> taskInfoList = generateSimpleTransformList(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
         try {
             long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
             waitUntilJobFinish(jobId);
@@ -601,21 +861,184 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i <= END_TIMESTAMP - START_TIMESTAMP + 1; i++){
-            Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if((j == 2 && i % 2 == 0) || (j == 4 && i % 2 != 0)){
-                    assertNull(row[j]);
-                } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.pow(aim, n);
-                    assertEquals((double)row[j], res, delta);
+        assertEquals(data.length, 1);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[0];
+            boolean isOk = false;
+            double max = Double.NEGATIVE_INFINITY;
+            for (int j = 0; j < LEN; j++) {
+                if (!isNull(i, j)) {
+                    if ((double)getInsertData(i, j) > max){
+                        max = (double)getInsertData(i, j);
+                    }
+                    isOk = true;
                 }
             }
-        }*/
+            if(!isOk){
+                assertTrue(Double.isNaN((double)row[i]));
+            } else {
+                assertEquals((double)row[i], max, delta);
+            }
+        }
     }
+
+    @Test
+    public void medianTest() {
+        //TODO
+        String key = "MedianTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        Object[] row = (Object[])data[0];
+        assertEquals(row.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            int count = 0;
+            List<Double> d = new ArrayList<>();
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    count++;
+                    d.add((double)getInsertData(i, j));
+                }
+            }
+            double[] dlist = new double[d.size()];
+            for(int j = 0; j < d.size(); j++){
+                dlist[j] = d.get(j);
+            }
+            Arrays.sort(dlist);
+            if(count == 0) {
+                assertTrue(Double.isNaN((double)row[i]));
+            } else if(count % 2 != 0) {
+                assertEquals((double) row[i], dlist[count / 2], delta);
+            } else {
+                assertEquals((double)row[i], (dlist[count / 2] + dlist[count / 2 - 1]) / 2, delta);
+            }
+        }
+
+    }
+
+    @Test
+    public void minTest(){
+        String key = "inTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[0];
+            boolean isOk = false;
+            double min = Double.POSITIVE_INFINITY;
+            for (int j = 0; j < LEN; j++) {
+                if (!isNull(i, j)) {
+                    if ((double)getInsertData(i, j) < min){
+                        min = (double)getInsertData(i, j);
+                    }
+                    isOk = true;
+                }
+            }
+            if(!isOk){
+                assertTrue(Double.isNaN((double)row[i]));
+            } else {
+                assertEquals((double)row[i], min, delta);
+            }
+        }
+    }
+
+    @Test
+    public void nonnegativeDerivativeTest() {
+        String key = "NonNegativeDerivativeTransformer";
+        String aimFileName = getAimFileName(key);
+        for(int i = 0; i < columnNum; i++) {
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            try {
+                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                waitUntilJobFinish(jobId);
+            } catch (Exception e) {
+                logger.error("Error in transform test {} : {}", key, e);
+                fail();
+            }
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[i];
+            int count = 0;
+            int currTimeStamp = -1;
+            double currNum = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    if(currTimeStamp != -1){
+                        assertEquals((double)row[count],
+                                Math.abs((double)getInsertData(i, j) -currNum) / (j - currTimeStamp), delta);
+                    }
+                    currTimeStamp = j;
+                    currNum = (double)getInsertData(i, j);
+                }
+            }
+            if(count <= 1){
+                assertEquals(row.length, 1);
+                assertTrue(Double.isNaN((double)row[0]));
+            } else {
+                assertEquals(row.length, count - 1);
+            }
+        }
+    }
+
+    @Test
+    public void nonnegativeDifferenceTest() {
+        String key = "NonNegativeDifferenceTransformer";
+        String aimFileName = getAimFileName(key);
+        for(int i = 0; i < columnNum; i++) {
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            try {
+                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+                waitUntilJobFinish(jobId);
+            } catch (Exception e) {
+                logger.error("Error in transform test {} : {}", key, e);
+                fail();
+            }
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, columnNum);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[i];
+            int count = 0;
+            boolean hasFirst = false;
+            double currNum = 0;
+            for (int j = 0; j < LEN; j++) {
+                if(!isNull(i, j)) {
+                    if(hasFirst){
+                        assertEquals((double)row[count],
+                                Math.abs((double)getInsertData(i, j) - currNum), delta);
+                    }
+                    count++;
+                    hasFirst = true;
+                    currNum = (double)getInsertData(i, j);
+                }
+            }
+            if(count <= 1){
+                assertEquals(row.length, 1);
+                assertTrue(Double.isNaN((double)row[0]));
+            } else {
+                assertEquals(row.length, count - 1);
+            }
+        }
+    }
+
 
     @Test
     public void roundTest() {
@@ -630,8 +1053,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -645,10 +1068,6 @@ public class TransformIT {
         }
     }
 
-    @Test
-    public void sampleTest() {
-
-    }
 
     @Test
     public void sinTest() {
@@ -664,8 +1083,8 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
 
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -694,8 +1113,8 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -715,7 +1134,67 @@ public class TransformIT {
 
     @Test
     public void stddevTest() {
+        String key = "StddevTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        for(int i = 0; i < columnNum; i++){
+            Object[] row = (Object[])data[0];
+            if(i == columnNum - 1){
+                assertEquals((double)row[i], 0, delta);
+            } else {
+                int count = 0;
+                double totalSum = 0;
+                double totalSquare = 0;
+                for (int j = 0; j < LEN; j++) {
+                    if (!isNull(i, j)) {
+                        count++;
+                        totalSum += (double) getInsertData(i, j);
+                    }
+                }
+                double avg = totalSum / (double)count;
+                for (int j = 0; j < LEN; j++) {
+                    if (!isNull(i, j)) {
+                        totalSquare += Math.pow((double) getInsertData(i, j) - avg, 2);
+                    }
+                }
+                assertEquals((double) row[i], totalSquare / (count - 1), delta);
+            }
+        }
+    }
 
+    @Test
+    public void sumTest() {
+        String key = "SumTransformer";
+        String aimFileName = getAimFileName(key);
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e){
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
+        }
+        Object[] data = getDataFromFile(aimFileName);
+        assertEquals(data.length, 1);
+        Object[] row = (Object[])data[0];
+        for(int i = 0; i < columnNum; i++){
+            double totalSum = 0;
+            for (int j = 0; j < LEN; j++) {
+                if (!isNull(i, j)) {
+                    totalSum += (double) getInsertData(i, j);
+                }
+            }
+            assertEquals((double) row[i], totalSum, delta);
+        }
     }
 
     @Test
@@ -732,8 +1211,8 @@ public class TransformIT {
         }
        Object[] data = getDataFromFile(aimFileName);
 
-        assertEquals(data.length, END_TIMESTAMP - START_TIMESTAMP + 1);
-        for(int i = 0; i < END_TIMESTAMP - START_TIMESTAMP + 1; i++){
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             for(int j = 0; j < columnNum; j++){
                 if(isNull(i, j)){
@@ -745,11 +1224,6 @@ public class TransformIT {
                 }
             }
         }
-    }
-
-    @Test
-    public void topTest() {
-
     }
 
     private static Object insertValue(long timestamp, int num){
@@ -800,16 +1274,41 @@ public class TransformIT {
         return taskInfoList;
     }
 
-    private static List<TaskInfo> generateTransformListWithTime(String key, int startTime, int endTime){
+    private static List<TaskInfo> generateBatchTransformList(String key){
         List<TaskInfo> taskInfoList = new ArrayList<>();
-        List<Integer> timeList = new ArrayList<>();
-        timeList.add(startTime);
-        timeList.add(endTime);
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(generateQuerySql(false, true, null, true,timeList));
+        iginxTask.setSql(generateQuerySql(false, true, null, false,null));
         taskInfoList.add(iginxTask);
 
-        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
+        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
+        pyTask.setPyTaskName(key);
+        taskInfoList.add(pyTask);
+        return taskInfoList;
+    }
+
+    private static List<TaskInfo> generateBatchSingleTransformList(String key, int col){
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+        List<Integer> cols = new ArrayList<>();
+        cols.add(col);
+        iginxTask.setSql(generateQuerySql(false, false, cols, false,null));
+        taskInfoList.add(iginxTask);
+
+        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
+        pyTask.setPyTaskName(key);
+        taskInfoList.add(pyTask);
+        return taskInfoList;
+    }
+
+    private static List<TaskInfo> generateBatchSingleTransformListWithTime(String key, int col){
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+        List<Integer> cols = new ArrayList<>();
+        cols.add(col);
+        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+        iginxTask.setSql(generateQuerySql(true, true, cols, false, null));
+        taskInfoList.add(iginxTask);
+
+        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
         pyTask.setPyTaskName(key);
         taskInfoList.add(pyTask);
         return taskInfoList;
@@ -824,7 +1323,7 @@ public class TransformIT {
             paths.add(columnList[i]);
         }
 
-        int size = (int) (END_TIMESTAMP - START_TIMESTAMP + 1);
+        int size = (int) (LEN);
         long[] timestamps = new long[size];
         for (long i = 0; i < size; i++) {
             timestamps[(int) i] = START_TIMESTAMP + i;
@@ -895,7 +1394,7 @@ public class TransformIT {
     }
 
     private static boolean isNull(int row, int col){
-        if((col == 1 && row % 2 == 0) || (col == 4 && row % 2 != 0)){
+        if((col == 1 && row % 2 == 0) || (col == 4 && row % 2 != 0) || col == 6){
             return true;
         } else {
             return false;

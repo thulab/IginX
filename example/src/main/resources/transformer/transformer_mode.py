@@ -7,5 +7,5 @@ class ModeTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = df.mode()[0]
+        ret = df.mode().values[0]
         return ret.tolist()
