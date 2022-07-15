@@ -37,6 +37,8 @@ public class FilterUtils {
                     }
                 }
                 return false;
+            case Bool:
+                break;
             case And:
                 AndFilter andFilter = (AndFilter) filter;
                 for (Filter childFilter : andFilter.getChildren()) {
@@ -57,6 +59,9 @@ public class FilterUtils {
             case Value:
                 ValueFilter valueFilter = (ValueFilter) filter;
                 return validateValueFilter(valueFilter, row);
+            case Path:
+                PathFilter pathFilter = (PathFilter) filter;
+                return validatePathFilter(pathFilter, row);
             default:
                 break;
         }
@@ -111,9 +116,42 @@ public class FilterUtils {
                 return ValueUtils.compare(value, targetValue) <= 0;
             case NE:
                 return ValueUtils.compare(value, targetValue) != 0;
+            case LIKE:
+                return ValueUtils.regexCompare(value, targetValue);
         }
         return false;
     }
 
+    private static boolean validatePathFilter(PathFilter pathFilter, Row row) {
+        Value valueA = row.getAsValue(pathFilter.getPathA());
+        Value valueB = row.getAsValue(pathFilter.getPathB());
+        if (valueA == null || valueA.isNull() || valueB == null || valueB.isNull()) { // 如果任何一个是空值，则认为不可比较
+            return false;
+        }
 
+        if (valueA.getDataType() != valueB.getDataType()) {
+            if (ValueUtils.isNumericType(valueA) && ValueUtils.isNumericType(valueB)) {
+                valueA = ValueUtils.transformToDouble(valueA);
+                valueB = ValueUtils.transformToDouble(valueB);
+            } else {  // 数值类型和非数值类型无法比较
+                return false;
+            }
+        }
+
+        switch (pathFilter.getOp()) {
+            case E:
+                return ValueUtils.compare(valueA, valueB) == 0;
+            case G:
+                return ValueUtils.compare(valueA, valueB) > 0;
+            case L:
+                return ValueUtils.compare(valueA, valueB) < 0;
+            case GE:
+                return ValueUtils.compare(valueA, valueB) >= 0;
+            case LE:
+                return ValueUtils.compare(valueA, valueB) <= 0;
+            case NE:
+                return ValueUtils.compare(valueA, valueB) != 0;
+        }
+        return false;
+    }
 }

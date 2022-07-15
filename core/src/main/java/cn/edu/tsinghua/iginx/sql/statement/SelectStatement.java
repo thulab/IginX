@@ -247,13 +247,6 @@ public class SelectStatement extends DataStatement {
     }
 
     public void setPathSet(String path) {
-        for (String fromPath : fromPaths) {
-            String fullPath = fromPath + SQLConstant.DOT + path;
-            this.pathSet.add(fullPath);
-        }
-    }
-
-    public void setIntactPathSet(String path) {
         this.pathSet.add(path);
     }
 

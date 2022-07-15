@@ -19,6 +19,7 @@ public class ExprUtils {
         switch (type) {
             case Time:
             case Value:
+            case Path:
                 return filter;
             case Not:
                 throw new SQLParserException("Get DNF failed, filter has not-subFilter.");
@@ -119,6 +120,7 @@ public class ExprUtils {
         switch (type) {
             case Time:
             case Value:
+            case Path:
                 return filter;
             case Not:
                 throw new SQLParserException("Get CNF failed, filter has not-subFilter.");
@@ -240,6 +242,7 @@ public class ExprUtils {
         switch (type) {
             case Time:
             case Value:
+            case Path:
                 return filter;
             case And:
                 return removeNot((AndFilter) filter);
@@ -286,6 +289,9 @@ public class ExprUtils {
             case Value:
                 ((ValueFilter) filter).reverseFunc();
                 return filter;
+            case Path:
+                ((PathFilter) filter).reverseFunc();
+                return filter;
             case And:
                 List<Filter> andChildren = ((AndFilter) filter).getChildren();
                 for (int i = 0; i < andChildren.size(); i++) {
@@ -318,6 +324,7 @@ public class ExprUtils {
         FilterType type = f.getType();
         switch (type) {
             case Value:
+            case Path:
                 break;
             case Time:
                 timeRanges.add(getTimeRangesFromTimeFilter((TimeFilter) f));

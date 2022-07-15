@@ -196,7 +196,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testValueFilter() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
+        String query = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
         String expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
@@ -212,7 +212,135 @@ public abstract class SQLSessionIT {
             "| 209|     209|\n" +
             "+----+--------+\n" +
             "Total line number = 9\n";
-        executeAndCompare(statement, expected);
+        executeAndCompare(query, expected);
+
+        String insert = "INSERT INTO us.d2(time, c) VALUES (1, \"asdas\"), (2, \"sadaa\"), (3, \"sadada\"), (4, \"asdad\"), (5, \"deadsa\"), (6, \"dasda\"), (7, \"asdsad\"), (8, \"frgsa\"), (9, \"asdad\");";
+        execute(insert);
+
+        query = "SELECT c FROM us.d2 WHERE c like \"^a.*\";";
+        expected = "ResultSets:\n" +
+            "+----+-------+\n" +
+            "|Time|us.d2.c|\n" +
+            "+----+-------+\n" +
+            "|   1|  asdas|\n" +
+            "|   4|  asdad|\n" +
+            "|   7| asdsad|\n" +
+            "|   9|  asdad|\n" +
+            "+----+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT c FROM us.d2 WHERE c like \"^[s|f].*\"";
+        expected = "ResultSets:\n" +
+            "+----+-------+\n" +
+            "|Time|us.d2.c|\n" +
+            "+----+-------+\n" +
+            "|   2|  sadaa|\n" +
+            "|   3| sadada|\n" +
+            "|   8|  frgsa|\n" +
+            "+----+-------+\n" +
+            "Total line number = 3\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT c FROM us.d2 WHERE c like \"^.*[s|d]\";";
+        expected = "ResultSets:\n" +
+            "+----+-------+\n" +
+            "|Time|us.d2.c|\n" +
+            "+----+-------+\n" +
+            "|   1|  asdas|\n" +
+            "|   4|  asdad|\n" +
+            "|   7| asdsad|\n" +
+            "|   9|  asdad|\n" +
+            "+----+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+    }
+
+    @Test
+    public void testPathFilter() {
+        String insert = "INSERT INTO us.d2(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        execute(insert);
+
+        String query = "SELECT a, b FROM us.d2 WHERE a > b;";
+        String expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   6|      6|      4|\n" +
+            "|   7|      7|      3|\n" +
+            "|   8|      8|      2|\n" +
+            "|   9|      9|      1|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a >= b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   5|      5|      5|\n" +
+            "|   6|      6|      4|\n" +
+            "|   7|      7|      3|\n" +
+            "|   8|      8|      2|\n" +
+            "|   9|      9|      1|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a < b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   1|      1|      9|\n" +
+            "|   2|      2|      8|\n" +
+            "|   3|      3|      7|\n" +
+            "|   4|      4|      6|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a <= b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   1|      1|      9|\n" +
+            "|   2|      2|      8|\n" +
+            "|   3|      3|      7|\n" +
+            "|   4|      4|      6|\n" +
+            "|   5|      5|      5|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a = b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   5|      5|      5|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a != b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   1|      1|      9|\n" +
+            "|   2|      2|      8|\n" +
+            "|   3|      3|      7|\n" +
+            "|   4|      4|      6|\n" +
+            "|   6|      6|      4|\n" +
+            "|   7|      7|      3|\n" +
+            "|   8|      8|      2|\n" +
+            "|   9|      9|      1|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 8\n";
+        executeAndCompare(query, expected);
     }
 
     @Test

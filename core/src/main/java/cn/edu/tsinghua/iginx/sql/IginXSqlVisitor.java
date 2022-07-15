@@ -273,7 +273,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             if (hasPrefixPath) {
                 // need to contact from path
                 List<String> fromPaths = selectStatement.getFromPaths();
-                for (String fromPath: fromPaths) {
+                for (String fromPath : fromPaths) {
                     String fullPath = fromPath + SQLConstant.DOT + selectPath;
                     Expression expression = new Expression(fullPath, funcName, alias);
                     selectStatement.setSelectedFuncsAndPaths(funcName, expression);
@@ -471,16 +471,20 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             Filter filter = parseOrExpression(ctx.orExpression(), statement);
             return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
-            if (ctx.predicatePath() == null) {
+            if (ctx.predicatePath().size() == 0) {
                 return parseTimeFilter(ctx);
             } else {
                 StatementType type = statement.getType();
-                if (type == StatementType.SELECT) {
+                if (type != StatementType.SELECT) {
+                    throw new SQLParserException(
+                        String.format("%s clause can not use value or path filter.", type.toString().toLowerCase())
+                    );
+                }
+
+                if (ctx.predicatePath().size() == 1) {
                     return parseValueFilter(ctx, (SelectStatement) statement);
                 } else {
-                    throw new SQLParserException(
-                        String.format("%s clause can not use value filter.", type.toString().toLowerCase())
-                    );
+                    return parsePathFilter(ctx, (SelectStatement) statement);
                 }
             }
         }
@@ -497,32 +501,73 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private Filter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
-        if (ctx.predicatePath().INTACT() == null && statement.getSubStatement() == null) {
-            // need to contact from path
-            statement.setPathSet(ctx.predicatePath().path().getText());
-            List<Filter> valueFilters = new ArrayList<>();
-            for (String fromPath : statement.getFromPaths()) {
-                String path = fromPath + SQLConstant.DOT + ctx.predicatePath().path().getText();
-                Op op = Op.str2Op(ctx.comparisonOperator().getText());
-                // deal with sub clause like 100 < path
-                if (ctx.children.get(0) instanceof ConstantContext) {
-                    op = Op.getDirectionOpposite(op);
-                }
-                Value value = new Value(parseValue(ctx.constant()));
-                valueFilters.add(new ValueFilter(path, op, value));
-            }
-            return new AndFilter(valueFilters);
+        PredicatePathContext pathContext = ctx.predicatePath().get(0);
+        List<String> pathList = contactFromPathsIfNeeded(statement, pathContext);
+
+        Op op;
+        if (ctx.OPERATOR_LIKE() != null) {
+            op = Op.LIKE;
         } else {
-            String intactPath = ctx.predicatePath().path().getText();
-            statement.setIntactPathSet(intactPath);
-            Op op = Op.str2Op(ctx.comparisonOperator().getText());
+            op = Op.str2Op(ctx.comparisonOperator().getText().trim().toLowerCase());
             // deal with sub clause like 100 < path
             if (ctx.children.get(0) instanceof ConstantContext) {
                 op = Op.getDirectionOpposite(op);
             }
-            Value value = new Value(parseValue(ctx.constant()));
-            return new ValueFilter(intactPath, op, value);
         }
+
+        Value value;
+        if (ctx.regex != null) {
+            String regex = ctx.regex.getText();
+            value = new Value(regex.substring(1, regex.length()-1));
+        } else {
+            value = new Value(parseValue(ctx.constant()));
+        }
+
+
+        List<Filter> valueFilterList = new ArrayList<>();
+        for (String path: pathList) {
+            valueFilterList.add(new ValueFilter(path, op, value));
+        }
+
+        return valueFilterList.size() == 1 ?
+            valueFilterList.get(0) :
+            new AndFilter(valueFilterList);
+    }
+
+    private Filter parsePathFilter(PredicateContext ctx, SelectStatement statement) {
+        PredicatePathContext pathContextA = ctx.predicatePath().get(0);
+        PredicatePathContext pathContextB = ctx.predicatePath().get(1);
+
+        List<String> pathAList = contactFromPathsIfNeeded(statement, pathContextA);
+        List<String> pathBList = contactFromPathsIfNeeded(statement, pathContextB);
+
+        Op op = Op.str2Op(ctx.comparisonOperator().getText().trim().toLowerCase());
+
+        List<Filter> pathFilterList = new ArrayList<>();
+        for (String pathA : pathAList) {
+            for (String pathB : pathBList) {
+                pathFilterList.add(new PathFilter(pathA, op, pathB));
+            }
+        }
+
+        return pathFilterList.size() == 1 ?
+            pathFilterList.get(0) :
+            new AndFilter(pathFilterList);
+    }
+
+    private List<String> contactFromPathsIfNeeded(SelectStatement statement, PredicatePathContext pathContext) {
+        List<String> pathList = new ArrayList<>();
+        if (pathContext.INTACT() == null && statement.getSubStatement() == null) {
+            for (String fromPath : statement.getFromPaths()) {
+                String path = fromPath + SQLConstant.DOT + pathContext.path().getText();
+                statement.setPathSet(path);
+                pathList.add(path);
+            }
+        } else {
+            statement.setPathSet(pathContext.path().getText());
+            pathList.add(pathContext.path().getText());
+        }
+        return pathList;
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {

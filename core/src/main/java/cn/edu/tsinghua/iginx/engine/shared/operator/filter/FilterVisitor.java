@@ -12,5 +12,7 @@ public interface FilterVisitor {
 
     void visit(ValueFilter filter);
 
+    void visit(PathFilter filter);
+
     void visit(BoolFilter filter);
 }
