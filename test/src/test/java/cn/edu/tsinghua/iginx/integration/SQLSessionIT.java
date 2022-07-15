@@ -1360,7 +1360,7 @@ public abstract class SQLSessionIT {
         executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter again.");
 
         errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND s1 < 10;";
-        executeAndCompareErrMsg(errClause, "delete clause can not use value filter.");
+        executeAndCompareErrMsg(errClause, "delete clause can not use value or path filter.");
 
         errClause = "DELETE FROM us.d1.s1 WHERE time != 105;";
         executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
