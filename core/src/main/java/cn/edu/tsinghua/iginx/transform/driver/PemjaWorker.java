@@ -35,7 +35,16 @@ public class PemjaWorker {
 
     public void process(BatchData batchData) {
         List<List<Object>> data = new ArrayList<>();
-        batchData.getRowList().forEach(row -> data.add(Arrays.asList(row.getValues())));
+        batchData.getRowList().forEach(row -> {
+            if (row.getHeader().hasTimestamp()) {
+                List<Object> rowData = new ArrayList<>();
+                rowData.add(row.getTimestamp());
+                rowData.addAll(Arrays.asList(row.getValues()));
+                data.add(rowData);
+            } else {
+                data.add(Arrays.asList(row.getValues()));
+            }
+        });
 
         Object[] res = (Object[]) interpreter.invokeMethod(UDF_CLASS, UDF_FUNC, data);
         PemjaReader reader = new PemjaReader(res, config.getBatchSize());

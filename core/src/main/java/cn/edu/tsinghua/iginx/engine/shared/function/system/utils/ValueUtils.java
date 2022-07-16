@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 
 public class ValueUtils {
@@ -80,6 +81,18 @@ public class ValueUtils {
                 return o1.getBinaryVAsString().compareTo(o2.getBinaryVAsString());
         }
         return 0;
+    }
+
+    public static boolean regexCompare(Value value, Value regex) {
+        if (!value.getDataType().equals(DataType.BINARY) || !regex.getDataType().equals(DataType.BINARY)) {
+            // regex can only be compared between strings.
+            return false;
+        }
+
+        String valueStr = value.getBinaryVAsString();
+        String regexStr = regex.getBinaryVAsString();
+
+        return Pattern.matches(regexStr, valueStr);
     }
 
     public static int compare(Object o1, Object o2, DataType dataType) {

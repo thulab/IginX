@@ -51,6 +51,11 @@ public class FilterVisitorTest {
         }
 
         @Override
+        public void visit(PathFilter filter) {
+            System.out.printf("this is path filter: [%s]\n", filter.toString());
+        }
+
+        @Override
         public void visit(BoolFilter filter) {
             System.out.printf("this is bool filter: [%s]\n", filter.isTrue());
         }

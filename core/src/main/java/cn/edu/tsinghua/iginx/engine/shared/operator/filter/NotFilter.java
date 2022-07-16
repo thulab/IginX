@@ -20,9 +20,9 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 
 public class NotFilter implements Filter {
 
-    private Filter child;
-
     private final FilterType type = FilterType.Not;
+
+    private Filter child;
 
     public NotFilter(Filter child) {
         this.child = child;

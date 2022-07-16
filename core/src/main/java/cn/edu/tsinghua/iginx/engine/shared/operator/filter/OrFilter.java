@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 
 public class OrFilter implements Filter {
 
-    private final List<Filter> children;
+    private final FilterType type = FilterType.Or;
 
-    private FilterType type = FilterType.Or;
+    private final List<Filter> children;
 
     public OrFilter(List<Filter> children) {
         this.children = children;

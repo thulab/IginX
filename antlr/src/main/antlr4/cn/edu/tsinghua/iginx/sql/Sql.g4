@@ -62,6 +62,8 @@ andExpression
 predicate
     : (TIME | TIMESTAMP | predicatePath) comparisonOperator constant
     | constant comparisonOperator (TIME | TIMESTAMP | predicatePath)
+    | predicatePath comparisonOperator predicatePath
+    | predicatePath OPERATOR_LIKE regex=stringLiteral
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
@@ -566,6 +568,8 @@ OPERATOR_LTE : '<=';
 OPERATOR_NEQ : '!=' | '<>';
 
 OPERATOR_IN : I N;
+
+OPERATOR_LIKE: L I K E;
 
 OPERATOR_AND
     : A N D

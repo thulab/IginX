@@ -3,9 +3,9 @@ package cn.edu.tsinghua.iginx.engine.shared.operator.filter;
 // only use for calculate sub filter for now.
 public class BoolFilter implements Filter {
 
-    private final boolean isTrue;
-
     private final FilterType type = FilterType.Bool;
+
+    private final boolean isTrue;
 
     public BoolFilter(boolean isTrue) {
         this.isTrue = isTrue;

@@ -65,7 +65,7 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 10ms, LEVEL = 2, 3;";
+        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [200, 300) BY 10ms, LEVEL = 2, 3;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
         assertTrue(statement.hasFunc());
@@ -85,13 +85,46 @@ public class ParseTest {
 
         assertEquals(Collections.singletonList("a.b"), statement.getFromPaths());
 
-//        assertEquals("((time > 100 && time < 1000) || (a.b.d == abc) || (a.b.c >= 666) || (((a.b.e < 10 && !((a.b.f < 10))))))", statement.getFilter().toString());
+        assertEquals("(((time > 100 && time < 1000) || a.b.d == \"abc\" || a.b.c >= \"666\" || (a.b.e < 10 && !a.b.f < 10)) && time >= 200 && time < 300)", statement.getFilter().toString());
 
-        assertEquals(10, statement.getStartTime());
-        assertEquals(100, statement.getEndTime());
+        assertEquals(200, statement.getStartTime());
+        assertEquals(300, statement.getEndTime());
         assertEquals(10L, statement.getPrecision());
 
         assertEquals(Arrays.asList(2, 3), statement.getLayers());
+    }
+
+    @Test
+    public void testFilter() {
+        String selectStr = "SELECT a FROM root WHERE a > 100;";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Collections.singletonList("root.a")), statement.getPathSet());
+        assertEquals("root.a > 100", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE a > 10;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("(c.a > 10 && d.a > 10)", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE a > 10 AND b < 20;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("((c.a > 10 && d.a > 10) && (c.b < 20 && d.b < 20))", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE INTACT(c.a) > 10 AND INTACT(d.b) < 20;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("(c.a > 10 && d.b < 20)", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM root WHERE a > b;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("root.a", "root.b")), statement.getPathSet());
+        assertEquals("root.a > root.b", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE a > b;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("(c.a > c.b && c.a > d.b && d.a > c.b && d.a > d.b)", statement.getFilter().toString());
     }
 
     @Test
@@ -191,16 +224,16 @@ public class ParseTest {
 
     @Test
     public void testSubQueryClause() {
-        String selectWithSubQuery = "SELECT res.sin_a FROM (SELECT sin(a) AS sin_a FROM root AS res);";
+        String selectWithSubQuery = "SELECT res.max_a FROM (SELECT max(a) AS max_a FROM root AS res);";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectWithSubQuery);
-        assertEquals(Collections.singletonList("res.sin_a"), statement.getSelectedPaths());
+        assertEquals(Collections.singletonList("res.max_a"), statement.getSelectedPaths());
 
         SelectStatement subStatement = statement.getSubStatement();
 
-        Expression expression = subStatement.getSelectedFuncsAndExpressions().get("sin").get(0);
+        Expression expression = subStatement.getSelectedFuncsAndExpressions().get("max").get(0);
         assertEquals("root.a", expression.getPathName());
-        assertEquals("sin", expression.getFuncName());
-        assertEquals("res.sin_a", expression.getAlias());
+        assertEquals("max", expression.getFuncName());
+        assertEquals("res.max_a", expression.getAlias());
     }
 
     @Test
