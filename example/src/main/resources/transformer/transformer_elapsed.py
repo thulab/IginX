@@ -1,5 +1,4 @@
-import pandas as pd
-
+import numpy as np
 
 class ElapsedTransformer:
     def __init__(self):
@@ -14,7 +13,7 @@ class ElapsedTransformer:
         pos = 0
         currts = -1
         while pos < l:
-            while pos < l and row[pos] == None:
+            while pos < l and (row[pos] == None or np.isnan(row[pos])):
                 pos += 1
             if pos < l:
                 newts = timestamp[pos]

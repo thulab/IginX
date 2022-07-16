@@ -8,5 +8,6 @@ class TanTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
+        df = df.fillna(value=np.nan)
         ret = pd.DataFrame(data=df.applymap(lambda x: np.NaN if np.isnan(x) else math.tan(x)))
         return ret.values.tolist()

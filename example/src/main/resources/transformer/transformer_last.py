@@ -14,4 +14,4 @@ class LastTransformer:
                 ret.append(np.NaN)
             else:
                 ret.append(df[col][i])
-        return ret.values.tolist()
+        return ret

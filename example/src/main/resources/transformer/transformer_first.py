@@ -7,6 +7,7 @@ class FirstTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
+        df = df.fillna(value=np.nan)
         ret = []
         for col in df.columns:
             i = df[col].first_valid_index()
@@ -14,4 +15,4 @@ class FirstTransformer:
                 ret.append(np.NaN)
             else:
                 ret.append(df[col][i])
-        return ret.values.tolist()
+        return ret

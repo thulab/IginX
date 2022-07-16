@@ -1,4 +1,4 @@
-import pandas as pd
+import numpy as np
 import math
 
 class NonNegativeDerivativeTransformer:
@@ -14,9 +14,9 @@ class NonNegativeDerivativeTransformer:
         currTime = None
         currData = None
         for i in range(length):
-            if data[i] != None:
+            if data[i] != None and not np.isnan(data[i]):
                 if currTime != None:
-                    res.append(math.abs((data[i] - currData)/(time[i] - currTime)))
+                    res.append(abs((data[i] - currData)/(time[i] - currTime)))
                 currTime = time[i]
                 currData = data[i]
         if currTime == None:

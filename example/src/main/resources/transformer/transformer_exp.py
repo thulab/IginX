@@ -8,5 +8,6 @@ class ExpTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        ret = pd.DataFrame(data=df.applymap(lambda x: None if np.isnan(x) else math.exp(x)))
+        df = df.fillna(value=np.nan)
+        ret = pd.DataFrame(data=df.applymap(lambda x: np.nan if np.isnan(x) else math.exp(x)))
         return ret.values.tolist()

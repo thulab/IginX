@@ -31,7 +31,7 @@ public class TransformIT {
 
     private static Session session;
 
-    private static final int columnNum = 6;
+    private static final int columnNum = 5;
     private static final String[] columnList = new String[columnNum];
 
     private static final String SHOW_REGISTER_TASK_SQL = "SHOW REGISTER PYTHON TASK;";
@@ -119,7 +119,7 @@ public class TransformIT {
         dropTask();
 
         // 清除数据
-        session.deleteColumns(Collections.singletonList("*"));
+        //session.deleteColumns(Collections.singletonList("*"));
         // 关闭 Session
         session.closeSession();
     }
@@ -436,7 +436,7 @@ public class TransformIT {
         for(int i = 0; i < columnNum; i++){
             int count = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     count++;
                 }
             }
@@ -462,8 +462,8 @@ public class TransformIT {
             double totalSum = 0;
             for (int j = 0; j < LEN; j++) {
                 Object[] row = (Object[])data[j];
-                if (!isNull(i, j)) {
-                    totalSum += (double) getInsertData(i, j);
+                if (!isNull(j, i)) {
+                    totalSum += (double) getInsertData(j, i);
                 }
                 assertEquals((double) row[i], totalSum, delta);
             }
@@ -492,13 +492,13 @@ public class TransformIT {
             int currTimeStamp = -1;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     if(currTimeStamp != -1){
                         assertEquals((double)row[count],
-                                ((double)getInsertData(i, j) -currNum) / (j - currTimeStamp), delta);
+                                ((double)getInsertData(j, i) -currNum) / (j - currTimeStamp), delta);
                     }
                     currTimeStamp = j;
-                    currNum = (double)getInsertData(i, j);
+                    currNum = (double)getInsertData(j, i);
                 }
             }
             if(count <= 1){
@@ -532,14 +532,14 @@ public class TransformIT {
             boolean hasFirst = false;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     if(hasFirst){
                         assertEquals((double)row[count],
-                                (double)getInsertData(i, j) -currNum, delta);
+                                (double)getInsertData(j, i) -currNum, delta);
                     }
                     count++;
                     hasFirst = true;
-                    currNum = (double)getInsertData(i, j);
+                    currNum = (double)getInsertData(j, i);
                 }
             }
             if(count <= 1){
@@ -573,7 +573,7 @@ public class TransformIT {
             boolean hasFirst = false;
             int currTimeStamp = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     if(hasFirst){
                         assertEquals((double)row[count],
                                 j - currTimeStamp, delta);
@@ -638,8 +638,8 @@ public class TransformIT {
             Object[] row = (Object[])data[0];
             boolean isOk = false;
             for (int j = 0; j < LEN; j++) {
-                if (!isOk && !isNull(i, j)) {
-                    assertEquals((double) row[i], (double)getInsertData(i, j), delta);
+                if (!isOk && !isNull(j, i)) {
+                    assertEquals((double) row[i], (double)getInsertData(j, i), delta);
                     isOk = true;
                     break;
                 }
@@ -683,7 +683,7 @@ public class TransformIT {
         String key = "IntegralTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            List<TaskInfo> taskInfoList = generateBatchTransformListWithTime(key);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -696,20 +696,19 @@ public class TransformIT {
         assertEquals(data.length, 1);
         Object[] row = (Object[])data[0];
         assertEquals(row.length, columnNum);
-        assertEquals((double)row[0], (LEN - 1) * (LEN - 1) / 2.0, delta);
         for(int i = 0; i < columnNum; i++){
             int count = 0;
             int currTimeStamp = -1;
             double currNum = 0;
             double sum = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     if(currTimeStamp != -1){
-                        sum += (Math.abs((double)getInsertData(i, j)) +
+                        sum += (Math.abs((double)getInsertData(j, i)) +
                                 Math.abs(currNum)) / 2 * (j - currTimeStamp);
                     }
                     currTimeStamp = j;
-                    currNum = (double)getInsertData(i, j);
+                    currNum = (double)getInsertData(j, i);
                     count++;
                 }
             }
@@ -740,8 +739,8 @@ public class TransformIT {
             Object[] row = (Object[])data[0];
             boolean isOk = false;
             for (int j = (int)(END_TIMESTAMP - START_TIMESTAMP); j >= 0; j--) {
-                if (!isOk && !isNull(i, j)) {
-                    assertEquals((double) row[i], (double)getInsertData(i, j), delta);
+                if (!isOk && !isNull(j, i)) {
+                    assertEquals((double) row[i], (double)getInsertData(j, i), delta);
                     isOk = true;
                     break;
                 }
@@ -867,9 +866,9 @@ public class TransformIT {
             boolean isOk = false;
             double max = Double.NEGATIVE_INFINITY;
             for (int j = 0; j < LEN; j++) {
-                if (!isNull(i, j)) {
-                    if ((double)getInsertData(i, j) > max){
-                        max = (double)getInsertData(i, j);
+                if (!isNull(j, i)) {
+                    if ((double)getInsertData(j, i) > max){
+                        max = (double)getInsertData(j, i);
                     }
                     isOk = true;
                 }
@@ -903,9 +902,9 @@ public class TransformIT {
             int count = 0;
             List<Double> d = new ArrayList<>();
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     count++;
-                    d.add((double)getInsertData(i, j));
+                    d.add((double)getInsertData(j, i));
                 }
             }
             double[] dlist = new double[d.size()];
@@ -926,7 +925,7 @@ public class TransformIT {
 
     @Test
     public void minTest(){
-        String key = "inTransformer";
+        String key = "MinTransformer";
         String aimFileName = getAimFileName(key);
         List<TaskInfo> taskInfoList = generateBatchTransformList(key);
         try {
@@ -943,9 +942,9 @@ public class TransformIT {
             boolean isOk = false;
             double min = Double.POSITIVE_INFINITY;
             for (int j = 0; j < LEN; j++) {
-                if (!isNull(i, j)) {
-                    if ((double)getInsertData(i, j) < min){
-                        min = (double)getInsertData(i, j);
+                if (!isNull(j, i)) {
+                    if ((double)getInsertData(j, i) < min){
+                        min = (double)getInsertData(j, i);
                     }
                     isOk = true;
                 }
@@ -980,13 +979,13 @@ public class TransformIT {
             int currTimeStamp = -1;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     if(currTimeStamp != -1){
                         assertEquals((double)row[count],
-                                Math.abs((double)getInsertData(i, j) -currNum) / (j - currTimeStamp), delta);
+                                Math.abs((double)getInsertData(j, i) -currNum) / (j - currTimeStamp), delta);
                     }
                     currTimeStamp = j;
-                    currNum = (double)getInsertData(i, j);
+                    currNum = (double)getInsertData(j, i);
                 }
             }
             if(count <= 1){
@@ -1020,14 +1019,14 @@ public class TransformIT {
             boolean hasFirst = false;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
-                if(!isNull(i, j)) {
+                if(!isNull(j, i)) {
                     if(hasFirst){
                         assertEquals((double)row[count],
-                                Math.abs((double)getInsertData(i, j) - currNum), delta);
+                                Math.abs((double)getInsertData(j, i) - currNum), delta);
                     }
                     count++;
                     hasFirst = true;
-                    currNum = (double)getInsertData(i, j);
+                    currNum = (double)getInsertData(j, i);
                 }
             }
             if(count <= 1){
@@ -1146,28 +1145,24 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, 1);
+        Object[] row = (Object[])data[0];
         for(int i = 0; i < columnNum; i++){
-            Object[] row = (Object[])data[0];
-            if(i == columnNum - 1){
-                assertEquals((double)row[i], 0, delta);
-            } else {
-                int count = 0;
-                double totalSum = 0;
-                double totalSquare = 0;
-                for (int j = 0; j < LEN; j++) {
-                    if (!isNull(i, j)) {
-                        count++;
-                        totalSum += (double) getInsertData(i, j);
-                    }
+            int count = 0;
+            double totalSum = 0;
+            double totalSquare = 0;
+            for (int j = 0; j < LEN; j++) {
+                if (!isNull(j, i)) {
+                    count++;
+                    totalSum += (double) getInsertData(j, i);
                 }
-                double avg = totalSum / (double)count;
-                for (int j = 0; j < LEN; j++) {
-                    if (!isNull(i, j)) {
-                        totalSquare += Math.pow((double) getInsertData(i, j) - avg, 2);
-                    }
-                }
-                assertEquals((double) row[i], totalSquare / (count - 1), delta);
             }
+            double avg = totalSum / (double)count;
+            for (int j = 0; j < LEN; j++) {
+                if (!isNull(j, i)) {
+                    totalSquare += Math.pow((double) getInsertData(j, i) - avg, 2);
+                }
+            }
+            assertEquals((double) row[i] * (double)(row[i]), totalSquare / (count - 1), delta);
         }
     }
 
@@ -1189,8 +1184,8 @@ public class TransformIT {
         for(int i = 0; i < columnNum; i++){
             double totalSum = 0;
             for (int j = 0; j < LEN; j++) {
-                if (!isNull(i, j)) {
-                    totalSum += (double) getInsertData(i, j);
+                if (!isNull(j, i)) {
+                    totalSum += (double) getInsertData(j, i);
                 }
             }
             assertEquals((double) row[i], totalSum, delta);
@@ -1286,6 +1281,18 @@ public class TransformIT {
         return taskInfoList;
     }
 
+    private static List<TaskInfo> generateBatchTransformListWithTime(String key){
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+        iginxTask.setSql(generateQuerySql(true, true, null, false, null));
+        taskInfoList.add(iginxTask);
+
+        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
+        pyTask.setPyTaskName(key);
+        taskInfoList.add(pyTask);
+        return taskInfoList;
+    }
+
     private static List<TaskInfo> generateBatchSingleTransformList(String key, int col){
         List<TaskInfo> taskInfoList = new ArrayList<>();
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
@@ -1305,7 +1312,7 @@ public class TransformIT {
         List<Integer> cols = new ArrayList<>();
         cols.add(col);
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(generateQuerySql(true, true, cols, false, null));
+        iginxTask.setSql(generateQuerySql(true, false, cols, false, null));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
@@ -1383,7 +1390,7 @@ public class TransformIT {
         JobState jobState = JobState.JOB_CREATED;
         while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
             count++;
-            if(count >= 100){
+            if(count >= 20){
                 logger.error("Timeout in job {}", jobId);
                 fail();
                 break;
@@ -1394,7 +1401,7 @@ public class TransformIT {
     }
 
     private static boolean isNull(int row, int col){
-        if((col == 1 && row % 2 == 0) || (col == 4 && row % 2 != 0) || col == 6){
+        if((col == 1 && row % 2 == 0) || (col == 4 && row % 2 != 0) || col == 5){
             return true;
         } else {
             return false;

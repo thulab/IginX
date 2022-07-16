@@ -13,7 +13,7 @@ class DerivativeTransformer:
         currTime = None
         currData = None
         for i in range(length):
-            if data[i] != None:
+            if data[i] != None and not np.isnan(data[i]):
                 if currTime != None:
                     res.append((data[i] - currData)/(time[i] - currTime))
                 currTime = time[i]

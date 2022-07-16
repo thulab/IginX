@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 class NonNegativeDifferenceTransformer:
     def __init__(self):
@@ -6,15 +7,19 @@ class NonNegativeDifferenceTransformer:
 
     def transform(self, rows):
         arr = np.array(rows)
-        data = arr[:,0]
+        timestamp = arr[:,0]
+        data = arr[:,1]   
         length = len(data)
         res = []
         currData = None
+        currTs = None
         for i in range(length):
-            if data[i] != None:
+            if data[i] != None and not np.isnan(data[i]):
                 if currData != None:
-                    res.append(math.abs(data[i] - currData))
+                    res.append(abs((data[i] - currData) / (timestamp[i] - currTs)))
                 currData = data[i]
-        if currData == None:
+                currTs = timestamp[i]
+        if len(res) == 0:
             res.append(np.NaN)
         return res
+

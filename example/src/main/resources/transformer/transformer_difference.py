@@ -6,15 +6,16 @@ class DifferenceTransformer:
 
     def transform(self, rows):
         arr = np.array(rows)
-        data = arr[:,0]
+        timestamp = arr[:,0]
+        data = arr[:,1]   
         length = len(data)
         res = []
         currData = None
         for i in range(length):
-            if data[i] != None:
+            if data[i] != None and not np.isnan(data[i]):
                 if currData != None:
-                    res.append(data[i] - currData)
+                    res.append(data[i] - currData))
                 currData = data[i]
-        if currData == None:
+        if len(res) == 0:
             res.append(np.NaN)
         return res

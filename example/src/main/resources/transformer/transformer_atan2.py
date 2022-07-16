@@ -11,6 +11,8 @@ class Atan2Transformer:
         rowy = arr[:,0]
         rowx = arr[:,1]
         dfy = pd.DataFrame(rowy)
+        dfy = dfy.fillna(value=np.nan)
         dfx = pd.DataFrame(rowx)
-        ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: None if np.isnan(x) else math.atan(x))).transpose()
+        dfx = dfx.fillna(value=np.nan)
+        ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: np.nan if np.isnan(x) else math.atan(x))).transpose()
         return ret.values.tolist()[0]
