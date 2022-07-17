@@ -1,5 +1,4 @@
 import numpy as np
-import math
 
 class NonNegativeDerivativeTransformer:
     def __init__(self):
@@ -16,7 +15,7 @@ class NonNegativeDerivativeTransformer:
         for i in range(length):
             if data[i] != None and not np.isnan(data[i]):
                 if currTime != None:
-                    res.append(abs((data[i] - currData)/(time[i] - currTime)))
+                    res.append([time[i],abs((data[i] - currData)/(time[i] - currTime))])
                 currTime = time[i]
                 currData = data[i]
         if currTime == None:

@@ -63,13 +63,11 @@ public class TransformIT {
         TASK_MAP.put("\"AsinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_asin.py\"");
         TASK_MAP.put("\"AtanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan.py\"");
         TASK_MAP.put("\"Atan2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_atan2.py\"");
-        //TASK_MAP.put("\"BottomTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_bottom.py\"");
         TASK_MAP.put("\"CeilTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_ceil.py\"");
         TASK_MAP.put("\"CosTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cos.py\"");
         TASK_MAP.put("\"CumulativeSumTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_cumulative_sum.py\"");
         TASK_MAP.put("\"DerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_derivative.py\"");
         TASK_MAP.put("\"DifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_difference.py\"");
-        //TASK_MAP.put("\"DistinctTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_distinct.py\"");
         TASK_MAP.put("\"ElapsedTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_elapsed.py\"");
         TASK_MAP.put("\"ExpTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_exp.py\"");
         TASK_MAP.put("\"FirstTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_first.py\"");
@@ -77,24 +75,16 @@ public class TransformIT {
         TASK_MAP.put("\"IntegralTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_integral.py\"");
         TASK_MAP.put("\"LastTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_last.py\"");
         TASK_MAP.put("\"LnTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_ln.py\"");
-        //TASK_MAP.put("\"LogTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log.py\"");
         TASK_MAP.put("\"Log2Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log2.py\"");
         TASK_MAP.put("\"Log10Transformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_log10.py\"");
         TASK_MAP.put("\"MedianTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_median.py\"");
-        //TASK_MAP.put("\"ModeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_mode.py\"");
-        //TASK_MAP.put("\"MovingAverageTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_moving_average.py\"");
         TASK_MAP.put("\"NonNegativeDifferenceTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_difference.py\"");
         TASK_MAP.put("\"NonNegativeDerivativeTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_nonnegative_derivative.py\"");
-        //TASK_MAP.put("\"PercentileTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_percentile.py\"");
-        //TASK_MAP.put("\"PowTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_pow.py\"");
         TASK_MAP.put("\"RoundTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_round.py\"");
-        //TASK_MAP.put("\"SampleTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sample.py\"");
         TASK_MAP.put("\"SinTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sin.py\"");
-        //TASK_MAP.put("\"SpreadTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_spread.py\"");
         TASK_MAP.put("\"SqrtTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_sqrt.py\"");
         TASK_MAP.put("\"StddevTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_stddev.py\"");
         TASK_MAP.put("\"TanTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_tan.py\"");
-        //TASK_MAP.put("\"TopTransformer\"", "\"" + NEW_OUTPUT_DIR_PREFIX + File.separator + "transformer_top.py\"");
     }
 
 
@@ -200,13 +190,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = aim > 0 ? aim : -aim;
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = aim > 0 ? aim : -aim;
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -229,16 +224,21 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.acos(aim);
-                    if(Double.isNaN(res)){
-                        assertTrue(Double.isNaN((double)row[j]));
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
                     } else {
-                        assertEquals((double) row[j], res, delta);
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.acos(aim);
+                        if (Double.isNaN(res)) {
+                            assertTrue(Double.isNaN((double) row[j]));
+                        } else {
+                            assertEquals((double) row[j], res, delta);
+                        }
                     }
                 }
             }
@@ -262,16 +262,21 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
+            assertEquals(row.length, columnNum + 1);
             for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.asin(aim);
-                    if(Double.isNaN(res)){
-                        assertTrue(Double.isNaN((double)row[j]));
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
                     } else {
-                        assertEquals((double) row[j], res, delta);
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.asin(aim);
+                        if (Double.isNaN(res)) {
+                            assertTrue(Double.isNaN((double) row[j]));
+                        } else {
+                            assertEquals((double) row[j], res, delta);
+                        }
                     }
                 }
             }
@@ -295,13 +300,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
+            assertEquals(row.length, columnNum + 1);
             for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.atan(aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.atan(aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -339,20 +349,21 @@ public class TransformIT {
 
         Object[] data = getDataFromFile(aimFileName);
 
-        assertEquals(data.length, columnNum * (columnNum - 1));
+        assertEquals(data.length, columnNum * (columnNum - 1) * LEN);
         int count = 0;
         for(int y = 0; y < columnNum; y++) {
             for(int x = 0; x < columnNum; x++) {
                 if(y != x) {
-                    Object[] row = (Object[]) data[count];
-                    assertEquals(row.length, LEN);
                     for (int i = 0; i < LEN; i++) {
+                        Object[] row = (Object[]) data[count * LEN + i];
+                        assertEquals(row.length, 2);
+                        assertEquals((double)row[0], i, 0);
                         if (isNull(i, x) || isNull(i, y) || Math.abs((double)getInsertData(i, x)) < delta) {
-                            assertTrue(Double.isNaN((double) row[i]));
+                            assertTrue(Double.isNaN((double) row[1]));
                         } else {
                             double aim = (double) getInsertData(i, y) / (double) getInsertData(i, x);
                             double res = Math.atan(aim);
-                            assertEquals((double) row[i], res, delta);
+                            assertEquals((double) row[1], res, delta);
                         }
                     }
                     count++;
@@ -377,13 +388,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.ceil(aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.ceil(aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -405,13 +421,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.cos(aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.cos(aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -457,15 +478,20 @@ public class TransformIT {
             fail();
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, 1);
-        for(int i = 0; i < columnNum; i++){
-            double totalSum = 0;
-            for (int j = 0; j < LEN; j++) {
-                Object[] row = (Object[])data[j];
-                if (!isNull(j, i)) {
-                    totalSum += (double) getInsertData(j, i);
+        assertEquals(data.length, LEN);
+        for(int i = 0; i < LEN; i++){
+            Object[] row = (Object[])data[i];
+            assertEquals(row.length, columnNum + 1);
+            double[] totalSum = new double[columnNum];
+            for (int j = 0; j < columnNum + 1; j++) {
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
+                } else {
+                    if (!isNull(i, j - 1)) {
+                        totalSum[j - 1] += (double) getInsertData(i, j - 1);
+                    }
+                    assertEquals((double) row[j], totalSum[j - 1], delta);
                 }
-                assertEquals((double) row[i], totalSum, delta);
             }
         }
     }
@@ -475,7 +501,7 @@ public class TransformIT {
         String key = "DerivativeTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformList(key, i);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -485,27 +511,29 @@ public class TransformIT {
             }
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, columnNum);
+        int count = 0;
         for(int i = 0; i < columnNum; i++){
-            Object[] row = (Object[])data[i];
-            int count = 0;
             int currTimeStamp = -1;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
                 if(!isNull(j, i)) {
                     if(currTimeStamp != -1){
-                        assertEquals((double)row[count],
+                        Object[] row = (Object[])data[count];
+                        assertEquals(row.length, 2);
+                        assertEquals((double)row[1],
                                 ((double)getInsertData(j, i) -currNum) / (j - currTimeStamp), delta);
+                        assertEquals((double) row[0], j, delta);
                     }
+                    count++;
                     currTimeStamp = j;
                     currNum = (double)getInsertData(j, i);
                 }
             }
             if(count <= 1){
-                assertEquals(row.length, 1);
-                assertTrue(Double.isNaN((double)row[0]));
+                assertEquals(data.length, 1);
+                assertTrue(Double.isNaN(((double[]) data[0])[0]));
             } else {
-                assertEquals(row.length, count - 1);
+                assertEquals(data.length, count - 1);
             }
         }
     }
@@ -515,7 +543,7 @@ public class TransformIT {
         String key = "DifferenceTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformList(key, i);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -525,17 +553,18 @@ public class TransformIT {
             }
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, columnNum);
+        int count = 0;
         for(int i = 0; i < columnNum; i++){
-            Object[] row = (Object[])data[i];
-            int count = 0;
             boolean hasFirst = false;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
                 if(!isNull(j, i)) {
                     if(hasFirst){
-                        assertEquals((double)row[count],
+                        Object[] row = (Object[])data[count];
+                        assertEquals(row.length, 2);
+                        assertEquals((double)row[1],
                                 (double)getInsertData(j, i) -currNum, delta);
+                        assertEquals((double)row[0], j, delta);
                     }
                     count++;
                     hasFirst = true;
@@ -543,10 +572,10 @@ public class TransformIT {
                 }
             }
             if(count <= 1){
-                assertEquals(row.length, 1);
-                assertTrue(Double.isNaN((double)row[0]));
+                assertEquals(data.length, 1);
+                assertTrue(Double.isNaN(((double[])data[0])[0]));
             } else {
-                assertEquals(row.length, count - 1);
+                assertEquals(data.length, count - 1);
             }
         }
     }
@@ -556,7 +585,7 @@ public class TransformIT {
         String key = "ElapsedTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformList(key, i);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -567,15 +596,17 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, columnNum);
+        int count = 0;
         for(int i = 0; i < columnNum; i++){
-            Object[] row = (Object[])data[i];
-            int count = 0;
             boolean hasFirst = false;
             int currTimeStamp = 0;
             for (int j = 0; j < LEN; j++) {
                 if(!isNull(j, i)) {
                     if(hasFirst){
-                        assertEquals((double)row[count],
+                        Object[] row = (Object[])data[count];
+                        assertEquals(row.length, 2);
+                        assertEquals((double) row[0], j, delta);
+                        assertEquals((double)row[1],
                                 j - currTimeStamp, delta);
                     }
                     count++;
@@ -584,10 +615,10 @@ public class TransformIT {
                 }
             }
             if(count <= 1){
-                assertEquals(row.length, 1);
-                assertTrue(Double.isNaN((double)row[0]));
+                assertEquals(data.length, 1);
+                assertTrue(Double.isNaN(((double[]) data[0])[0]));
             } else {
-                assertEquals(row.length, count - 1);
+                assertEquals(data.length, count - 1);
             }
         }
     }
@@ -608,13 +639,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.pow(Math.E, aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.pow(Math.E, aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -666,13 +702,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.floor(aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.floor(aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -683,7 +724,7 @@ public class TransformIT {
         String key = "IntegralTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchTransformListWithTime(key);
+            List<TaskInfo> taskInfoList = generateBatchTransformList(key);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -767,16 +808,21 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = aim <= 0 ? Double.NaN : Math.log(aim);
-                    if(Double.isNaN(res)){
-                        assertTrue(Double.isNaN((double)row[j]));
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
                     } else {
-                        assertEquals((double) row[j], res, delta);
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = aim <= 0 ? Double.NaN : Math.log(aim);
+                        if (Double.isNaN(res)) {
+                            assertTrue(Double.isNaN((double) row[j]));
+                        } else {
+                            assertEquals((double) row[j], res, delta);
+                        }
                     }
                 }
             }
@@ -799,16 +845,21 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = aim <= 0 ? Double.NaN : Math.log(aim) / Math.log(2);
-                    if(Double.isNaN(res)){
-                        assertTrue(Double.isNaN((double)row[j]));
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
                     } else {
-                        assertEquals((double) row[j], res, delta);
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = aim <= 0 ? Double.NaN : Math.log(aim) / Math.log(2);
+                        if (Double.isNaN(res)) {
+                            assertTrue(Double.isNaN((double) row[j]));
+                        } else {
+                            assertEquals((double) row[j], res, delta);
+                        }
                     }
                 }
             }
@@ -831,16 +882,21 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = aim <= 0 ? Double.NaN : Math.log10(aim);
-                    if(Double.isNaN(res)){
-                        assertTrue(Double.isNaN((double)row[j]));
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
                     } else {
-                        assertEquals((double) row[j], res, delta);
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = aim <= 0 ? Double.NaN : Math.log10(aim);
+                        if (Double.isNaN(res)) {
+                            assertTrue(Double.isNaN((double) row[j]));
+                        } else {
+                            assertEquals((double) row[j], res, delta);
+                        }
                     }
                 }
             }
@@ -962,7 +1018,7 @@ public class TransformIT {
         String key = "NonNegativeDerivativeTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformList(key, i);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -972,27 +1028,30 @@ public class TransformIT {
             }
         }
         Object[] data = getDataFromFile(aimFileName);
-        assertEquals(data.length, columnNum);
+        int count = 0;
         for(int i = 0; i < columnNum; i++){
-            Object[] row = (Object[])data[i];
-            int count = 0;
             int currTimeStamp = -1;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
                 if(!isNull(j, i)) {
                     if(currTimeStamp != -1){
-                        assertEquals((double)row[count],
-                                Math.abs((double)getInsertData(j, i) -currNum) / (j - currTimeStamp), delta);
+                        Object[] row = (Object[])data[count];
+                        assertEquals(row.length, 2);
+                        assertEquals((double)row[1],
+                                Math.abs(((double)getInsertData(j, i) -currNum) / (j - currTimeStamp)),
+                                delta);
+                        assertEquals((double) row[0], j, delta);
                     }
+                    count++;
                     currTimeStamp = j;
                     currNum = (double)getInsertData(j, i);
                 }
             }
             if(count <= 1){
-                assertEquals(row.length, 1);
-                assertTrue(Double.isNaN((double)row[0]));
+                assertEquals(data.length, 1);
+                assertTrue(Double.isNaN(((double[]) data[0])[0]));
             } else {
-                assertEquals(row.length, count - 1);
+                assertEquals(data.length, count - 1);
             }
         }
     }
@@ -1002,7 +1061,7 @@ public class TransformIT {
         String key = "NonNegativeDifferenceTransformer";
         String aimFileName = getAimFileName(key);
         for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchSingleTransformListWithTime(key, i);
+            List<TaskInfo> taskInfoList = generateBatchSingleTransformList(key, i);
             try {
                 long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
                 waitUntilJobFinish(jobId);
@@ -1013,27 +1072,30 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, columnNum);
-        for(int i = 0; i < columnNum; i++){
-            Object[] row = (Object[])data[i];
-            int count = 0;
+        int count = 0;
+        for(int i = 0; i < columnNum; i++) {
             boolean hasFirst = false;
             double currNum = 0;
             for (int j = 0; j < LEN; j++) {
                 if(!isNull(j, i)) {
                     if(hasFirst){
-                        assertEquals((double)row[count],
-                                Math.abs((double)getInsertData(j, i) - currNum), delta);
+                        Object[] row = (Object[]) data[count];
+                        assertEquals(row.length, 2);
+                        assertEquals((double) row[1],
+                                Math.abs((double)getInsertData(j, i) - currNum),
+                                delta);
+                        assertEquals((double) row[0], j, delta);
                     }
                     count++;
                     hasFirst = true;
-                    currNum = (double)getInsertData(j, i);
+                    currNum = (double) getInsertData(j, i);
                 }
             }
-            if(count <= 1){
-                assertEquals(row.length, 1);
-                assertTrue(Double.isNaN((double)row[0]));
+            if (count <= 1) {
+                assertEquals(data.length, 1);
+                assertTrue(Double.isNaN(((double[]) data[0])[0]));
             } else {
-                assertEquals(row.length, count - 1);
+                assertEquals(data.length, count - 1);
             }
         }
     }
@@ -1055,13 +1117,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = new BigDecimal(aim).setScale(0, RoundingMode.HALF_EVEN).doubleValue();
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = new BigDecimal(aim).setScale(0, RoundingMode.HALF_EVEN).doubleValue();
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -1085,13 +1152,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.sin(aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.sin(aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -1115,16 +1187,21 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.sqrt(aim);
-                    if(Double.isNaN(res)){
-                        assertTrue(Double.isNaN((double)row[j]));
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
                     } else {
-                        assertEquals((double) row[j], res, delta);
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.sqrt(aim);
+                        if (Double.isNaN(res)) {
+                            assertTrue(Double.isNaN((double) row[j]));
+                        } else {
+                            assertEquals((double) row[j], res, delta);
+                        }
                     }
                 }
             }
@@ -1209,13 +1286,18 @@ public class TransformIT {
         assertEquals(data.length, LEN);
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
-            for(int j = 0; j < columnNum; j++){
-                if(isNull(i, j)){
-                    assertTrue(Double.isNaN((double)row[j]));
+            assertEquals(row.length, columnNum + 1);
+            for(int j = 0; j < columnNum + 1; j++){
+                if(j == 0){
+                    assertEquals((double)row[j], i, delta);
                 } else {
-                    double aim = (double)getInsertData(i, j);
-                    double res = Math.tan(aim);
-                    assertEquals((double) row[j], res, delta);
+                    if (isNull(i, j - 1)) {
+                        assertTrue(Double.isNaN((double) row[j]));
+                    } else {
+                        double aim = (double) getInsertData(i, j - 1);
+                        double res = Math.tan(aim);
+                        assertEquals((double) row[j], res, delta);
+                    }
                 }
             }
         }
@@ -1281,17 +1363,6 @@ public class TransformIT {
         return taskInfoList;
     }
 
-    private static List<TaskInfo> generateBatchTransformListWithTime(String key){
-        List<TaskInfo> taskInfoList = new ArrayList<>();
-        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(generateQuerySql(true, true, null, false, null));
-        taskInfoList.add(iginxTask);
-
-        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
-        pyTask.setPyTaskName(key);
-        taskInfoList.add(pyTask);
-        return taskInfoList;
-    }
 
     private static List<TaskInfo> generateBatchSingleTransformList(String key, int col){
         List<TaskInfo> taskInfoList = new ArrayList<>();
@@ -1299,20 +1370,6 @@ public class TransformIT {
         List<Integer> cols = new ArrayList<>();
         cols.add(col);
         iginxTask.setSql(generateQuerySql(false, false, cols, false,null));
-        taskInfoList.add(iginxTask);
-
-        TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);
-        pyTask.setPyTaskName(key);
-        taskInfoList.add(pyTask);
-        return taskInfoList;
-    }
-
-    private static List<TaskInfo> generateBatchSingleTransformListWithTime(String key, int col){
-        List<TaskInfo> taskInfoList = new ArrayList<>();
-        List<Integer> cols = new ArrayList<>();
-        cols.add(col);
-        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(generateQuerySql(true, false, cols, false, null));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Batch);

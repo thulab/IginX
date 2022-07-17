@@ -18,7 +18,7 @@ class ElapsedTransformer:
             if pos < l:
                 newts = timestamp[pos]
                 if currts != -1:
-                    res.append(newts - currts)
+                    res.append([newts, newts - currts])
                 currts = newts
                 pos += 1
         return res

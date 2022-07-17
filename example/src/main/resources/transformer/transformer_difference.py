@@ -14,7 +14,7 @@ class DifferenceTransformer:
         for i in range(length):
             if data[i] != None and not np.isnan(data[i]):
                 if currData != None:
-                    res.append(data[i] - currData))
+                    res.append([timestamp[i], data[i] - currData])
                 currData = data[i]
         if len(res) == 0:
             res.append(np.NaN)

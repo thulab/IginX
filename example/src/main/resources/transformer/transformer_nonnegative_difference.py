@@ -16,7 +16,7 @@ class NonNegativeDifferenceTransformer:
         for i in range(length):
             if data[i] != None and not np.isnan(data[i]):
                 if currData != None:
-                    res.append(abs((data[i] - currData) / (timestamp[i] - currTs)))
+                    res.append([time[i],abs((data[i] - currData) / (timestamp[i] - currTs))])
                 currData = data[i]
                 currTs = timestamp[i]
         if len(res) == 0:

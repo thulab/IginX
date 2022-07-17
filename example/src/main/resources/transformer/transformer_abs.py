@@ -7,5 +7,9 @@ class AbsTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
+        timestamp = df[df.keys()[0]]
+        del df[df.keys()[0]]
         df = df.fillna(value=np.nan)
-        return df.abs().values.tolist()
+        ret = df.abs()
+        ret.insert(0, 'time', timestamp)
+        return ret.values.tolist()
