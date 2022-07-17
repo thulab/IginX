@@ -7,5 +7,6 @@ class SumTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
+        del df[df.keys()[0]]
         ret = pd.DataFrame(data=df.sum(axis=0)).transpose()
         return ret.values.tolist()

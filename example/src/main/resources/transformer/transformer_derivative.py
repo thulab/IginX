@@ -1,13 +1,14 @@
 import numpy as np
+import pandas as pd
 
 class DerivativeTransformer:
     def __init__(self):
         pass
 
     def transform(self, rows):
-        arr = np.array(rows)
-        time = arr[:,0]
-        data = arr[:,1]
+        df = pd.DataFrame(rows)
+        time = df[0]
+        data = df[1]
         length = len(time)
         res = []
         currTime = None

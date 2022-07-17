@@ -11,6 +11,7 @@ class DifferenceTransformer:
         length = len(data)
         res = []
         currData = None
+
         for i in range(length):
             if data[i] != None and not np.isnan(data[i]):
                 if currData != None:

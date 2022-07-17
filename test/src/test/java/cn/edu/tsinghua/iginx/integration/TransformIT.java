@@ -479,10 +479,10 @@ public class TransformIT {
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, LEN);
+        double[] totalSum = new double[columnNum];
         for(int i = 0; i < LEN; i++){
             Object[] row = (Object[])data[i];
             assertEquals(row.length, columnNum + 1);
-            double[] totalSum = new double[columnNum];
             for (int j = 0; j < columnNum + 1; j++) {
                 if(j == 0){
                     assertEquals((double)row[j], i, delta);
@@ -723,15 +723,13 @@ public class TransformIT {
     public void integralTest() {
         String key = "IntegralTransformer";
         String aimFileName = getAimFileName(key);
-        for(int i = 0; i < columnNum; i++) {
-            List<TaskInfo> taskInfoList = generateBatchTransformList(key);
-            try {
-                long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
-                waitUntilJobFinish(jobId);
-            } catch (Exception e) {
-                logger.error("Error in transform test {} : {}", key, e);
-                fail();
-            }
+        List<TaskInfo> taskInfoList = generateBatchTransformList(key);
+        try {
+            long jobId = session.commitTransformJob(taskInfoList, ExportType.File, aimFileName);
+            waitUntilJobFinish(jobId);
+        } catch (Exception e) {
+            logger.error("Error in transform test {} : {}", key, e);
+            fail();
         }
         Object[] data = getDataFromFile(aimFileName);
         assertEquals(data.length, 1);
