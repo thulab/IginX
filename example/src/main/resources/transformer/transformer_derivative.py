@@ -6,9 +6,9 @@ class DerivativeTransformer:
         pass
 
     def transform(self, rows):
-        df = pd.DataFrame(rows)
-        time = df[0]
-        data = df[1]
+        arr = pd.DataFrame(rows)
+        time = arr[0].tolist()
+        data = arr[1].tolist()
         length = len(time)
         res = []
         currTime = None

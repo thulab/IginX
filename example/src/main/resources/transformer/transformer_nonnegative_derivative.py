@@ -1,23 +1,26 @@
 import numpy as np
+import pandas as pd
 
 class NonNegativeDerivativeTransformer:
     def __init__(self):
         pass
 
     def transform(self, rows):
-        arr = np.array(rows)
-        time = arr[:,0]
-        data = arr[:,1]
+        arr = pd.DataFrame(rows)
+        data = arr[1].tolist()
+        time = arr[0].tolist()
         length = len(time)
         res = []
         currTime = None
         currData = None
-        for i in range(length):
-            if data[i] != None and not np.isnan(data[i]):
+        i = 0
+        while i < length:
+            if data[i] != None:
                 if currTime != None:
                     res.append([time[i],abs((data[i] - currData)/(time[i] - currTime))])
                 currTime = time[i]
                 currData = data[i]
-        if currTime == None:
-            res.append(np.NaN)
+            i += 1
+        if len(res) == 0:
+            res.append(0)
         return res

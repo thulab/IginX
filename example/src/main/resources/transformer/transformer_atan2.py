@@ -8,9 +8,9 @@ class Atan2Transformer:
 
     def transform(self, rows):
         arr = np.array(rows)
-        ts = arr[:,0]
-        rowy = arr[:,1]
-        rowx = arr[:,2]
+        ts = arr[:,0].tolist()
+        rowy = arr[:,1].tolist()
+        rowx = arr[:,2].tolist()
         timestamp = pd.DataFrame(ts)
         dfy = pd.DataFrame(rowy)
         dfy = dfy.fillna(value=np.nan)
@@ -18,4 +18,4 @@ class Atan2Transformer:
         dfx = dfx.fillna(value=np.nan)
         ret = pd.DataFrame(data=(dfy / dfx).applymap(lambda x: np.nan if np.isnan(x) else math.atan(x)))
         ret.insert(0, 'time', timestamp)
-        return ret.values.tolist()[0]
+        return ret.values.tolist()

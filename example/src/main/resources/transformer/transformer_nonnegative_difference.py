@@ -7,8 +7,8 @@ class NonNegativeDifferenceTransformer:
 
     def transform(self, rows):
         arr = np.array(rows)
-        timestamp = arr[:,0]
-        data = arr[:,1]   
+        timestamp = arr[:,0].tolist()
+        data = arr[:,1].tolist()
         length = len(data)
         res = []
         currData = None
@@ -16,7 +16,7 @@ class NonNegativeDifferenceTransformer:
         for i in range(length):
             if data[i] != None and not np.isnan(data[i]):
                 if currData != None:
-                    res.append([timestamp[i],abs((data[i] - currData) / (timestamp[i] - currTs))])
+                    res.append([timestamp[i],abs(data[i] - currData)])
                 currData = data[i]
                 currTs = timestamp[i]
         if len(res) == 0:

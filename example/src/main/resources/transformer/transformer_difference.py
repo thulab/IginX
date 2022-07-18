@@ -6,8 +6,8 @@ class DifferenceTransformer:
 
     def transform(self, rows):
         arr = np.array(rows)
-        timestamp = arr[:,0]
-        data = arr[:,1]   
+        timestamp = arr[:,0].tolist()
+        data = arr[:,1].tolist()
         length = len(data)
         res = []
         currData = None

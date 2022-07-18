@@ -7,8 +7,8 @@ class ElapsedTransformer:
     def transform(self, rows):
         res = []
         arr = np.array(rows)
-        timestamp = arr[:,0]
-        row = arr[:,1]
+        timestamp = arr[:,0].tolist()
+        row = arr[:,1].tolist()
         l = len(timestamp)
         pos = 0
         currts = -1
