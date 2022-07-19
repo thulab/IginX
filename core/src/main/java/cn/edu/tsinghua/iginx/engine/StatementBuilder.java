@@ -6,11 +6,13 @@ import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
+import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
+import cn.edu.tsinghua.iginx.rest.RestParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,7 +50,7 @@ public class StatementBuilder {
     }
 
     public void buildFromSQL(RequestContext ctx) {
-        String sql = ctx.getSql();
+        String sql = ctx.getSql();//获取sql语句
         SqlLexer lexer = new SqlLexer(CharStreams.fromString(sql));
         lexer.removeErrorListeners();
         lexer.addErrorListener(SQLParseError.INSTANCE);
@@ -60,7 +62,7 @@ public class StatementBuilder {
 
         IginXSqlVisitor visitor = new IginXSqlVisitor();
         ParseTree tree = parser.sqlStatement();
-        Statement statement = visitor.visit(tree);
+        Statement statement = visitor.visit(tree);//获取statement结构体
         ctx.setStatement(statement);
         ctx.setSqlType(typeMap.get(statement.getType()));
     }

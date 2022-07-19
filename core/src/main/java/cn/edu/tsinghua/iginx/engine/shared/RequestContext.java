@@ -8,6 +8,7 @@ import lombok.Data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 @Data
 public class RequestContext {
@@ -90,5 +91,13 @@ public class RequestContext {
             this.result.setQueryId(id);
         }
         this.endTime = System.currentTimeMillis();
+    }
+
+    public boolean isFromREST(){
+        return fromREST;
+    }
+
+    public Map<String, List<String>> getSelectTagList(){
+        return this.selectTagList;
     }
 }

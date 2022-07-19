@@ -48,17 +48,25 @@ public class QueryExecutor {
         try {
             session.openSession();
             for (QueryMetric queryMetric : query.getQueryMetrics()) {
-                List<String> paths = getPaths(queryMetric);
+                List<String> paths = new ArrayList<>();
+                StringBuilder path = new StringBuilder();
+                if (queryMetric.getAnnotation()) {
+                    path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
+                } else {
+                    path.append(queryMetric.getName());
+                }
+                paths.add(path.toString());
+                // List<String> paths = getPaths(queryMetric);
                 if (isDelete) {
                     RestSession session = new RestSession();
                     session.openSession();
                     session.deleteDataInColumns(paths, query.getStartAbsolute(), query.getEndAbsolute());
                     session.closeSession();
                 } else if (queryMetric.getAggregators().size() == 0) {
-                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());
+                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());
                 } else {
                     for (QueryAggregator queryAggregator : queryMetric.getAggregators()) {
-                        ret.addResultSet(queryAggregator.doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, queryAggregator);
+                        ret.addResultSet(queryAggregator.doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, queryAggregator);
                     }
                 }
             }
@@ -95,20 +103,20 @@ public class QueryExecutor {
             StringBuilder path = new StringBuilder();
             Iterator iter = pos2path.entrySet().iterator();
             int now = 0;
-            while (iter.hasNext()) {
-                String ins = null;
-                Map.Entry entry = (Map.Entry) iter.next();
-                List<String> tmp = queryMetric.getTags().get(entry.getValue());
-                if (tmp != null) {
-                    ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
-                }
-                if (ins != null) {
-                    path.append(ins).append(".");
-                } else {
-                    path.append("*.");
-                }
-                now++;
-            }
+            // while (iter.hasNext()) {
+            //     String ins = null;
+            //     Map.Entry entry = (Map.Entry) iter.next();
+            //     List<String> tmp = queryMetric.getTags().get(entry.getValue());
+            //     if (tmp != null) {
+            //         ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
+            //     }
+            //     if (ins != null) {
+            //         path.append(ins).append(".");
+            //     } else {
+            //         path.append("*.");
+            //     }
+            //     now++;
+            // }
             if (queryMetric.getAnnotation()) {
                 path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
             } else {

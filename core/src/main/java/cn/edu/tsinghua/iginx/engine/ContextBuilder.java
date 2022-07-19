@@ -10,6 +10,7 @@ import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.rest.RestParser;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -95,12 +96,12 @@ public class ContextBuilder {
         return new RequestContext(req.getSessionId(), statement);
     }
 
+    //在这里加入对json请求的tag过滤
     public RequestContext build(QueryDataReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),
             req.getStartTime(),
             req.getEndTime());
-
         if (req.isSetTagsList()) {
             statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
         }

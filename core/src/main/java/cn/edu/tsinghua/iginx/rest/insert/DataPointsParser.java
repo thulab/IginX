@@ -91,6 +91,7 @@ public class DataPointsParser {
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
+        //insert语句的tag只能有一个val，是否有问题？
         while (elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
@@ -140,12 +141,14 @@ public class DataPointsParser {
 
     private void sendMetricsData() throws Exception {
         for (Metric metric : metricList) {
+            List<Map<String, String>> tagsList = new ArrayList<>();
             boolean needUpdate = false;
             Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
             if (metricschema == null) {
                 needUpdate = true;
                 metricschema = new ConcurrentHashMap<>();
             }
+            tagsList.add(metric.getTags());
             for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
                 if (metricschema.get(entry.getKey()) == null) {
                     needUpdate = true;
@@ -161,14 +164,15 @@ public class DataPointsParser {
                 pos2path.put(entry.getValue(), entry.getKey());
             }
             StringBuilder path = new StringBuilder();
-            for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
-                String ins = metric.getTags().get(entry.getValue());
-                if (ins != null) {
-                    path.append(ins).append(".");
-                } else {
-                    path.append("null.");
-                }
-            }
+            //因为insert修改成tagkv后不再需要将tagval放入了路径中
+            // for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
+            //     String ins = metric.getTags().get(entry.getValue());
+            //     if (ins != null) {
+            //         path.append(ins).append(".");
+            //     } else {
+            //         path.append("null.");
+            //     }
+            // }
             path.append(metric.getName());
             List<String> paths = new ArrayList<>();
             paths.add(path.toString());
@@ -182,7 +186,7 @@ public class DataPointsParser {
             }
             valuesList[0] = values;
             try {
-                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
+                session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
                 if (metric.getAnnotation() != null) {
                     for (int i = 0; i < size; i++) {
                         values[i] = metric.getAnnotation().getBytes();
@@ -191,7 +195,7 @@ public class DataPointsParser {
                     path.append(ANNOTATION_SPLIT_STRING);
                     paths.set(0, path.toString());
                     type.set(0, DataType.BINARY);
-                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
+                    session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
                 }
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);

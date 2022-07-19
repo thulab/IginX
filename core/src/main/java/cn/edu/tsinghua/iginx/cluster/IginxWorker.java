@@ -160,7 +160,10 @@ public class IginxWorker implements IService.Iface {
         }
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
-        return ctx.getResult().getQueryDataResp();
+        if(req.isFromRest())
+            return ctx.getResult().getRestQueryDataResp(req.getAggregatorType()!=null);
+        else
+            return ctx.getResult().getQueryDataResp();
     }
 
     @Override

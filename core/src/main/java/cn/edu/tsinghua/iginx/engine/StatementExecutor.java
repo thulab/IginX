@@ -372,7 +372,6 @@ public class StatementExecutor {
                 timestampList.add(row.getTimestamp());
             }
         }
-
         if (valuesList.isEmpty()) { // empty result
             setEmptyQueryResp(ctx);
             return;
