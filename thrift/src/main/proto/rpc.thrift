@@ -188,13 +188,15 @@ struct QueryDataReq {
     2: required list<string> paths
     3: required i64 startTime
     4: required i64 endTime
+    5: optional map<string, list<string>> tagsList
 }
 
 struct QueryDataResp {
     1: required Status status
     2: optional list<string> paths
-    3: optional list<DataType> dataTypeList
-    4: optional QueryDataSet queryDataSet
+    3: optional list<map<string, string>> tagsList
+    4: optional list<DataType> dataTypeList
+    5: optional QueryDataSet queryDataSet
 }
 
 struct AddStorageEnginesReq {
@@ -215,27 +217,31 @@ struct AggregateQueryReq {
     3: required i64 startTime
     4: required i64 endTime
     5: required AggregateType aggregateType
+    6: optional map<string, list<string>> tagsList
 }
 
 struct AggregateQueryResp {
     1: required Status status
     2: optional list<string> paths
-    3: optional list<DataType> dataTypeList
-    4: optional binary timestamps
-    5: optional binary valuesList
+    3: optional list<map<string, string>> tagsList
+    4: optional list<DataType> dataTypeList
+    5: optional binary timestamps
+    6: optional binary valuesList
 }
 
 struct LastQueryReq {
     1: required i64 sessionId
     2: required list<string> paths
     3: required i64 startTime
+    4: optional map<string, list<string>> tagsList
 }
 
 struct LastQueryResp {
     1: required Status status
     2: optional list<string> paths
-    3: optional list<DataType> dataTypeList
-    4: optional QueryDataSet queryDataSet
+    3: optional list<map<string, string>> tagsList
+    4: optional list<DataType> dataTypeList
+    5: optional QueryDataSet queryDataSet
 }
 
 struct DownsampleQueryReq {
@@ -245,13 +251,15 @@ struct DownsampleQueryReq {
     4: required i64 endTime
     5: required AggregateType aggregateType
     6: required i64 precision
+    7: optional map<string, list<string>> tagsList
 }
 
 struct DownsampleQueryResp {
     1: required Status status
     2: optional list<string> paths
-    3: optional list<DataType> dataTypeList
-    4: optional QueryDataSet queryDataSet
+    3: optional list<map<string, string>> tagsList
+    4: optional list<DataType> dataTypeList
+    5: optional QueryDataSet queryDataSet
 }
 
 struct ShowColumnsReq {
@@ -261,7 +269,8 @@ struct ShowColumnsReq {
 struct ShowColumnsResp {
     1: required Status status
     2: optional list<string> paths
-    3: optional list<DataType> dataTypeList
+    3: optional list<map<string, string>> tagsList
+    4: optional list<DataType> dataTypeList
 }
 
 struct GetReplicaNumReq {
@@ -283,25 +292,26 @@ struct ExecuteSqlResp {
     1: required Status status
     2: required SqlType type
     3: optional list<string> paths
-    4: optional list<DataType> dataTypeList
-    5: optional QueryDataSet queryDataSet
-    6: optional binary timestamps
-    7: optional binary valuesList
-    8: optional i32 replicaNum
-    9: optional i64 pointsNum;
-    10: optional AggregateType aggregateType
-    11: optional string parseErrorMsg
-    12: optional i32 limit
-    13: optional i32 offset
-    14: optional string orderByPath
-    15: optional bool ascending
-    16: optional list<IginxInfo> iginxInfos
-    17: optional list<StorageEngineInfo> storageEngineInfos
-    18: optional list<MetaStorageInfo>  metaStorageInfos
-    19: optional LocalMetaStorageInfo localMetaStorageInfo
-    20: optional list<RegisterTaskInfo> registerTaskInfos
-    21: optional i64 jobId
-    22: optional JobState jobState
+    4: optional list<map<string, string>> tagsList
+    5: optional list<DataType> dataTypeList
+    6: optional QueryDataSet queryDataSet
+    7: optional binary timestamps
+    8: optional binary valuesList
+    9: optional i32 replicaNum
+    10: optional i64 pointsNum;
+    11: optional AggregateType aggregateType
+    12: optional string parseErrorMsg
+    13: optional i32 limit
+    14: optional i32 offset
+    15: optional string orderByPath
+    16: optional bool ascending
+    17: optional list<IginxInfo> iginxInfos
+    18: optional list<StorageEngineInfo> storageEngineInfos
+    19: optional list<MetaStorageInfo>  metaStorageInfos
+    20: optional LocalMetaStorageInfo localMetaStorageInfo
+    21: optional list<RegisterTaskInfo> registerTaskInfos
+    22: optional i64 jobId
+    23: optional JobState jobState
 }
 
 struct UpdateUserReq {
@@ -382,8 +392,9 @@ struct ExecuteStatementResp {
     2: required SqlType type
     3: optional i64 queryId
     4: optional list<string> columns
-    5: optional list<DataType> dataTypeList
-    6: optional QueryDataSetV2 queryDataSet
+    5: optional list<map<string, string>> tagsList
+    6: optional list<DataType> dataTypeList
+    7: optional QueryDataSetV2 queryDataSet
 }
 
 struct QueryDataSetV2 {

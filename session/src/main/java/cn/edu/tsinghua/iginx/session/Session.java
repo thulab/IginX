@@ -714,12 +714,21 @@ public class Session {
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
+        throws SessionException, ExecutionException {
+        return queryData(paths, startTime, endTime, null);
+    }
+
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagsList)
             throws SessionException, ExecutionException {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
             return null;
         }
         QueryDataReq req = new QueryDataReq(sessionId, mergeAndSortPaths(paths), startTime, endTime);
+
+        if (tagsList != null && !tagsList.isEmpty()) {
+            req.setTagsList(tagsList);
+        }
 
         QueryDataResp resp;
 
@@ -741,8 +750,17 @@ public class Session {
     }
 
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
+        throws SessionException, ExecutionException {
+        return aggregateQuery(paths, startTime, endTime, aggregateType, null);
+    }
+
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, Map<String, List<String>> tagsList)
             throws SessionException, ExecutionException {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, aggregateType);
+
+        if (tagsList != null && !tagsList.isEmpty()) {
+            req.setTagsList(tagsList);
+        }
 
         AggregateQueryResp resp;
         try {
@@ -762,9 +780,19 @@ public class Session {
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
 
-    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) throws SessionException, ExecutionException {
+    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision)
+        throws SessionException, ExecutionException {
+        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, null);
+    }
+
+    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, Map<String, List<String>> tagsList)
+        throws SessionException, ExecutionException {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime,
                 aggregateType, precision);
+
+        if (tagsList != null && !tagsList.isEmpty()) {
+            req.setTagsList(tagsList);
+        }
 
         DownsampleQueryResp resp;
 
@@ -829,12 +857,21 @@ public class Session {
     }
 
     public SessionQueryDataSet queryLast(List<String> paths, long startTime)
+        throws SessionException, ExecutionException {
+        return queryLast(paths, startTime, null);
+    }
+
+    public SessionQueryDataSet queryLast(List<String> paths, long startTime, Map<String, List<String>> tagsList)
             throws SessionException, ExecutionException {
         if (paths.isEmpty()) {
             logger.error("Invalid query request!");
             return null;
         }
+
         LastQueryReq req = new LastQueryReq(sessionId, mergeAndSortPaths(paths), startTime);
+        if (tagsList != null && !tagsList.isEmpty()) {
+            req.setTagsList(tagsList);
+        }
 
         LastQueryResp resp;
 
