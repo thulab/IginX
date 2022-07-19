@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public abstract class QueryAggregator {
     private Double divisor;
@@ -96,9 +95,9 @@ public abstract class QueryAggregator {
         this.type = type;
     }
 
-    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp) {
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
-        SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
+        SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
         queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
@@ -107,7 +106,10 @@ public abstract class QueryAggregator {
             boolean flag = false;
             for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                    queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+                    if (!flag) {
+                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+                        flag = true;
+                    }
                     datapoints += 1;
                 }
             }

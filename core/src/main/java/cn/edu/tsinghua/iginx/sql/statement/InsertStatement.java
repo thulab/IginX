@@ -62,7 +62,6 @@ public class InsertStatement extends DataStatement {
         setPath(path, null);
     }
 
-    //prefixPath是insert语句最前面的共有路径，path是括号内的多条序列的名称
     public void setPath(String path, Map<String, String> tags) {
         this.paths.add(prefixPath + SQLConstant.DOT + path);
         this.tagsList.add(tags);

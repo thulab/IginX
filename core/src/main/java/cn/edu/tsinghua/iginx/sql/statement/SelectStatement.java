@@ -122,7 +122,6 @@ public class SelectStatement extends DataStatement {
         this.orderByPath = "";
 
         this.pathSet = new HashSet<>();
-        this.fromPaths = new ArrayList<>();
         this.pathSet.addAll(paths);
 
         this.filter = new AndFilter(new ArrayList<>(Arrays.asList(

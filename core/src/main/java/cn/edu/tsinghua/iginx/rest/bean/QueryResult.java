@@ -165,7 +165,7 @@ public class QueryResult {
 
     private String tagsToString(int num) {
         StringBuilder ret = new StringBuilder(" \"tags\": {");
-        Map<String, Set<String>> tags = null;
+        Map<String, List<String>> tags = null;
         try {
             tags = getTagsFromPaths(queryMetrics.get(num).getName(),
                 queryResultDatasets.get(num).getPaths());
@@ -173,7 +173,7 @@ public class QueryResult {
             LOGGER.error("Error occurred during parsing tags ", e);
 
         }
-        for (Map.Entry<String, Set<String>> entry : tags.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : tags.entrySet()) {
             ret.append(String.format("\"%s\": [", entry.getKey()));
             for (String v : entry.getValue()) {
                 ret.append(String.format("\"%s\",", v));
@@ -192,10 +192,7 @@ public class QueryResult {
         StringBuilder ret = new StringBuilder(" \"values\": [");
         int n = queryResultDatasets.get(num).getSize();
         for (int i = 0; i < n; i++) {
-            //聚合查询无时间显示
-            if(queryResultDatasets.get(num).getTimestamps().get(i)!=-1L)
-                ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
-            else ret.append(String.format("["));
+            ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[]) {
                 ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
             } else {
@@ -214,23 +211,29 @@ public class QueryResult {
         return "\"sample_size\": " + queryResultDatasets.get(num).getSampleSize();
     }
 
-    private Map<String, Set<String>> getTagsFromPaths(String name, List<String> paths) throws Exception {
+    private Map<String, List<String>> getTagsFromPaths(String name, List<String> paths) throws Exception {
         List<Map<String, Integer>> dup = new ArrayList<>();
-        Map<String, Set<String>> ret = new TreeMap<>();
+        Map<String, List<String>> ret = new TreeMap<>();
         Map<Integer, String> pos2path = new TreeMap<>();
-        for (String path : paths) {
-            int firstBrace = path.indexOf("{");
-            int lastBrace = path.indexOf("}");
-            if(firstBrace==-1 || lastBrace==-1) break;
-            String tagLists = path.substring(firstBrace+1, lastBrace);
-            String[] splitpaths = tagLists.split(",");
-            for(String tag : splitpaths){
-                int equalPos = tag.indexOf("=");
-                String tagKey = tag.substring(0, equalPos);
-                String tagVal = tag.substring(equalPos+1);
-                ret.computeIfAbsent(tagKey, k -> new HashSet<String>());
-                ret.get(tagKey).add(tagVal);
+        Map<String, Integer> metricschema = META_MANAGER.getSchemaMapping(name);
+        if (metricschema == null) {
+            throw new Exception("No metadata found");
+        } else {
+            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
+                pos2path.put(entry.getValue(), entry.getKey());
+                dup.add(new HashMap<>());
             }
+        }
+        for (String path : paths) {
+            String[] splitpaths = path.split("\\.");
+            for (int i = 0; i < pos2path.size(); i++) {
+                if (dup.get(i).get(splitpaths[i]) == null) {
+                    dup.get(i).put(splitpaths[i], 1);
+                    ret.computeIfAbsent(pos2path.get(i + 1), k -> new ArrayList<>());
+                    ret.get(pos2path.get(i + 1)).add(splitpaths[i]);
+                }
+            }
+
         }
         return ret;
     }
