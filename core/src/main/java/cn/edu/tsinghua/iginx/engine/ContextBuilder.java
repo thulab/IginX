@@ -2,6 +2,10 @@ package cn.edu.tsinghua.iginx.engine;
 
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.OrTagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
@@ -80,7 +84,8 @@ public class ContextBuilder {
             times,
             values,
             types,
-            bitmaps, tagsList
+            bitmaps,
+            tagsList
         );
         return new RequestContext(sessionId, statement);
     }
@@ -95,6 +100,10 @@ public class ContextBuilder {
             req.getPaths(),
             req.getStartTime(),
             req.getEndTime());
+
+        if (req.isSetTagsList()) {
+            statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
+        }
         return new RequestContext(req.getSessionId(), statement);
     }
 
@@ -104,6 +113,10 @@ public class ContextBuilder {
             req.getStartTime(),
             req.getEndTime(),
             req.getAggregateType());
+
+        if (req.isSetTagsList()) {
+            statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
+        }
         return new RequestContext(req.getSessionId(), statement);
     }
 
@@ -114,6 +127,10 @@ public class ContextBuilder {
             req.getEndTime(),
             req.getAggregateType(),
             req.getPrecision());
+
+        if (req.isSetTagsList()) {
+            statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
+        }
         return new RequestContext(req.getSessionId(), statement);
     }
 
@@ -136,6 +153,20 @@ public class ContextBuilder {
             req.getStartTime(),
             Long.MAX_VALUE,
             AggregateType.LAST);
+
+        if (req.isSetTagsList()) {
+            statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
+        }
         return new RequestContext(req.getSessionId(), statement);
+    }
+
+    private TagFilter constructTagFilterFromTagList(Map<String, List<String>> tagList) {
+        List<TagFilter> andTagFilterList = new ArrayList<>();
+        tagList.forEach((key, valueList) -> {
+            List<TagFilter> orTagFilterList = new ArrayList<>();
+            valueList.forEach(value -> orTagFilterList.add(new BaseTagFilter(key, value)));
+            andTagFilterList.add(new OrTagFilter(orTagFilterList));
+        });
+        return new AndTagFilter(andTagFilterList);
     }
 }

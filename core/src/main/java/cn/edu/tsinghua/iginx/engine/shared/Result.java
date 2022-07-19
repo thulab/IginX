@@ -15,7 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class Result {
@@ -24,6 +26,7 @@ public class Result {
 
     private Status status;
     private List<String> paths;
+    private List<Map<String, String>> tagsList;
     private List<DataType> dataTypes;
     private Long[] timestamps;
     private List<ByteBuffer> valuesList;
@@ -55,6 +58,7 @@ public class Result {
     public QueryDataResp getQueryDataResp() {
         QueryDataResp resp = new QueryDataResp(status);
         resp.setPaths(paths);
+        resp.setTagsList(tagsList);
         resp.setDataTypeList(dataTypes);
         if (timestamps == null || timestamps.length == 0) {
             resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
@@ -68,6 +72,7 @@ public class Result {
     public AggregateQueryResp getAggregateQueryResp() {
         AggregateQueryResp resp = new AggregateQueryResp(status);
         resp.setPaths(paths);
+        resp.setTagsList(tagsList);
         resp.setDataTypeList(dataTypes);
         if (valuesList == null || valuesList.size() == 0) {
             resp.setValuesList(ByteBuffer.allocate(0));
@@ -80,6 +85,7 @@ public class Result {
     public DownsampleQueryResp getDownSampleQueryResp() {
         DownsampleQueryResp resp = new DownsampleQueryResp(status);
         resp.setPaths(paths);
+        resp.setTagsList(tagsList);
         resp.setDataTypeList(dataTypes);
         if (timestamps == null || timestamps.length == 0) {
             resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
@@ -93,6 +99,7 @@ public class Result {
     public LastQueryResp getLastQueryResp() {
         LastQueryResp resp = new LastQueryResp(status);
         resp.setPaths(paths);
+        resp.setTagsList(tagsList);
         resp.setDataTypeList(dataTypes);
         if (timestamps == null || timestamps.length == 0) {
             resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
@@ -106,6 +113,7 @@ public class Result {
     public ShowColumnsResp getShowColumnsResp() {
         ShowColumnsResp resp = new ShowColumnsResp(status);
         resp.setPaths(paths);
+        resp.setTagsList(tagsList);
         resp.setDataTypeList(dataTypes);
         return resp;
     }
@@ -120,6 +128,7 @@ public class Result {
         resp.setReplicaNum(replicaNum);
         resp.setPointsNum(pointsNum);
         resp.setPaths(paths);
+        resp.setTagsList(tagsList);
         resp.setDataTypeList(dataTypes);
 
         if (valuesList != null) {
@@ -150,6 +159,7 @@ public class Result {
         resp.setQueryId(queryId);
         try {
             List<String> paths = new ArrayList<>();
+            List<Map<String, String>> tagsList = new ArrayList<>();
             List<DataType> types = new ArrayList<>();
 
             Header header = resultStream.getHeader();
@@ -157,11 +167,17 @@ public class Result {
             if (header.hasTimestamp()) {
                 paths.add(Field.TIME.getFullName());
                 types.add(Field.TIME.getType());
+                tagsList.add(new HashMap<>());
             }
 
             resultStream.getHeader().getFields().forEach(field -> {
                 paths.add(field.getFullName());
                 types.add(field.getType());
+                if (field.getTags() == null) {
+                    tagsList.add(new HashMap<>());
+                } else {
+                    tagsList.add(field.getTags());
+                }
             });
 
             List<ByteBuffer> valuesList = new ArrayList<>();
@@ -191,6 +207,7 @@ public class Result {
                 cnt++;
             }
             resp.setColumns(paths);
+            resp.setTagsList(tagsList);
             resp.setDataTypeList(types);
             resp.setQueryDataSet(new QueryDataSetV2(valuesList, bitmapList));
         } catch (PhysicalException e) {

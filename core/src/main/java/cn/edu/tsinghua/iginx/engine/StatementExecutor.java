@@ -337,10 +337,16 @@ public class StatementExecutor {
             return;
         }
         List<String> paths = new ArrayList<>();
+        List<Map<String, String>> tagsList = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         stream.getHeader().getFields().forEach(field -> {
             paths.add(field.getFullName());
             types.add(field.getType());
+            if (field.getTags() == null) {
+                tagsList.add(new HashMap<>());
+            } else {
+                tagsList.add(field.getTags());
+            }
         });
 
         List<Long> timestampList = new ArrayList<>();
@@ -380,6 +386,7 @@ public class StatementExecutor {
         result.setValuesList(valuesList);
         result.setBitmapList(bitmapList);
         result.setPaths(paths);
+        result.setTagsList(tagsList);
         result.setDataTypes(types);
         ctx.setResult(result);
 
@@ -394,6 +401,8 @@ public class StatementExecutor {
             return;
         }
         List<String> paths = new ArrayList<>();
+        // todo:need physical layer to support.
+        List<Map<String, String>> tagsList = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
 
         while (stream.hasNext()) {
@@ -414,6 +423,7 @@ public class StatementExecutor {
 
         Result result = new Result(RpcUtils.SUCCESS);
         result.setPaths(paths);
+        result.setTagsList(tagsList);
         result.setDataTypes(types);
         ctx.setResult(result);
     }

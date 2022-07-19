@@ -58,13 +58,13 @@ public class InfluxDBSessionExample {
         // 行式插入非对齐数据
         insertNonAlignedRowRecords();
         // 查询数据
-		queryData();
+        queryData();
         // 聚合查询
-		aggregateQuery();
+        aggregateQuery();
         // Last 查询
         lastQuery();
         // 降采样聚合查询
-		downsampleQuery();
+        downsampleQuery();
         // 删除数据
         // TODO 不能做，InfluxDB 删除语句中不能指定 _field
 //		deleteDataInColumns();
