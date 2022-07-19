@@ -69,25 +69,6 @@ public class Result {
         return resp;
     }
 
-    public QueryDataResp getRestQueryDataResp(boolean ifAggregate) {
-        QueryDataResp resp = new QueryDataResp(status);
-        resp.setPaths(paths);
-        resp.setDataTypeList(dataTypes);
-        if (timestamps == null || timestamps.length == 0) {
-            if(ifAggregate){
-                //这里仅仅是为了添加一个无意义值
-                timestamps = new Long[1];
-                timestamps[0] = -1L;
-            }else{
-                resp.setQueryDataSet(new QueryDataSet(ByteBuffer.allocate(0), new ArrayList<>(), new ArrayList<>()));
-                return resp;
-            }
-        }
-        ByteBuffer timeBuffer = ByteUtils.getByteBufferFromLongArray(timestamps);
-        resp.setQueryDataSet(new QueryDataSet(timeBuffer, valuesList, bitmapList));
-        return resp;
-    }
-
     public AggregateQueryResp getAggregateQueryResp() {
         AggregateQueryResp resp = new AggregateQueryResp(status);
         resp.setPaths(paths);
