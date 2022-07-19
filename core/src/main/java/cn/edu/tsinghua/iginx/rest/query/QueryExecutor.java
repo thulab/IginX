@@ -48,7 +48,15 @@ public class QueryExecutor {
         try {
             session.openSession();
             for (QueryMetric queryMetric : query.getQueryMetrics()) {
-                List<String> paths = getPaths(queryMetric);
+                List<String> paths = new ArrayList<>();
+                StringBuilder path = new StringBuilder();
+                if (queryMetric.getAnnotation()) {
+                    path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
+                } else {
+                    path.append(queryMetric.getName());
+                }
+                paths.add(path.toString());
+                // List<String> paths = getPaths(queryMetric);
                 if (isDelete) {
                     RestSession session = new RestSession();
                     session.openSession();
@@ -114,8 +122,6 @@ public class QueryExecutor {
             } else {
                 path.append(queryMetric.getName());
             }
-            //改为tagkv类型搜索，则不需要获取确定的路径信息
-            path.append(".*");
             paths.add(path.toString());
             return;
         }

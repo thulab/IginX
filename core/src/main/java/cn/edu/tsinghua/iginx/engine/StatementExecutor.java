@@ -171,8 +171,6 @@ public class StatementExecutor {
         before(ctx, preExecuteProcessors);
         if (ctx.isFromSQL()) {
             executeSQL(ctx);
-        } else if (ctx.isFromREST()) {
-            executeREST(ctx);
         } else {
             executeStatement(ctx);
         }
@@ -197,11 +195,6 @@ public class StatementExecutor {
         } finally {
             ctx.getResult().setSqlType(ctx.getSqlType());
         }
-    }
-
-    public void executeREST(RequestContext ctx) {
-        builder.buildFromREST(ctx);
-        executeStatement(ctx);
     }
 
     public void executeStatement(RequestContext ctx) {
@@ -349,7 +342,6 @@ public class StatementExecutor {
                 timestampList.add(row.getTimestamp());
             }
         }
-
         if (valuesList.isEmpty()) { // empty result
             setEmptyQueryResp(ctx);
             return;

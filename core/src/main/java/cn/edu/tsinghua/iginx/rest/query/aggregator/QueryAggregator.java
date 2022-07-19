@@ -107,10 +107,7 @@ public abstract class QueryAggregator {
             boolean flag = false;
             for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                    if (!flag) {
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
-                        flag = true;
-                    }
+                    queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
                     datapoints += 1;
                 }
             }

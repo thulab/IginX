@@ -22,6 +22,9 @@ import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
@@ -336,6 +339,35 @@ public class RestSession {
                 lock.readLock().unlock();
             }
         } while (checkRedirect(status));
+    }
+
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, Map<String, String> funcParaKV) {
+        if (paths.isEmpty() || startTime > endTime) {
+            logger.error("Invalid query request!");
+            return null;
+        }
+        String type = funcParaKV.get("TYPE");
+        QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
+        req.setTagsList(tagList);
+        req.setAggregatorType(type);
+        req.setFromRest(true);
+        if(funcParaKV.containsKey("DUR")){
+            long dur = Long.valueOf(funcParaKV.get("DUR"));
+            req.setDur(dur);
+        }
+
+        QueryDataResp resp;
+
+        do {
+            lock.readLock().lock();
+            try {
+                resp = client.queryData(req);
+            } finally {
+                lock.readLock().unlock();
+            }
+        } while (checkRedirect(resp.status));
+
+        return new SessionQueryDataSet(resp);
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList) {

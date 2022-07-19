@@ -109,6 +109,7 @@ public class SelectStatement extends DataStatement {
         this.orderByPath = "";
 
         this.pathSet = new HashSet<>();
+        this.fromPaths = new ArrayList<>();
         this.pathSet.addAll(paths);
 
         this.filter = new AndFilter(new ArrayList<>(Arrays.asList(
@@ -216,11 +217,17 @@ public class SelectStatement extends DataStatement {
         return selectedFuncsAndPaths;
     }
 
+    public void setSelectedFuncsAndPaths(Map<String, List<String>> selectedFuncsAndPaths) {
+        this.selectedFuncsAndPaths = selectedFuncsAndPaths;
+    }
+
     public void setSelectedFuncsAndPaths(String func, String path) {
         func = func.trim().toLowerCase();
 
         for (String fromPath: fromPaths) {
-            String fullPath = fromPath + SQLConstant.DOT + path;
+            String fullPath = fromPath;
+            if(path.length()!=0)
+                fullPath = fromPath + SQLConstant.DOT + path;
             List<String> pathList = this.selectedFuncsAndPaths.get(func);
             if (pathList == null) {
                 pathList = new ArrayList<>();
@@ -232,7 +239,6 @@ public class SelectStatement extends DataStatement {
 
             this.pathSet.add(fullPath);
         }
-
         FuncType type = str2FuncType(func);
         if (type != null) {
             this.funcTypeSet.add(type);

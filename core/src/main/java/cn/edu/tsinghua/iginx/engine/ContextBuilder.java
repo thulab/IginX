@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.rest.RestParser;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -96,7 +97,13 @@ public class ContextBuilder {
             req.getPaths(),
             req.getStartTime(),
             req.getEndTime());
-        return new RequestContext(req.getSessionId(), statement, req.getTagsList());//LHZ还没有实现getTagsList()
+        if(req.isFromRest()){
+            RestParser parser = new RestParser();
+            parser.parseRest(statement, req);
+            return new RequestContext(req.getSessionId(), statement, req.getTagsList());//LHZ还没有实现getTagsList()
+        }else{
+            return new RequestContext(req.getSessionId(), statement);
+        }
     }
 
     public RequestContext build(AggregateQueryReq req) {

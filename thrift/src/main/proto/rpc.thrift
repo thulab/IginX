@@ -189,6 +189,9 @@ struct QueryDataReq {
     3: required i64 startTime
     4: required i64 endTime
     5: optional map<string, list<string>> tagsList
+    6: optional string aggregatorType
+    7: optional i64 dur
+    8: optional bool fromRest
 }
 
 struct QueryDataResp {

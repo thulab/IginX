@@ -6,6 +6,7 @@ import cn.edu.tsinghua.iginx.sql.SQLParseError;
 import cn.edu.tsinghua.iginx.sql.SqlLexer;
 import cn.edu.tsinghua.iginx.sql.SqlParser;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
+import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
 import cn.edu.tsinghua.iginx.thrift.SqlType;
 import org.antlr.v4.runtime.CharStreams;
@@ -63,11 +64,5 @@ public class StatementBuilder {
         Statement statement = visitor.visit(tree);//获取statement结构体
         ctx.setStatement(statement);
         ctx.setSqlType(typeMap.get(statement.getType()));
-    }
-
-    public void buildFromREST(RequestContext ctx) {
-        RestParser parser = new RestParser();
-        Statement statement = parser.parseRest(ctx);
-        ctx.setStatement(statement);
     }
 }
