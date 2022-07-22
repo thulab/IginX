@@ -35,6 +35,7 @@ public enum OperatorType {
     RowTransform,
     SetTransform,
     MappingTransform,
+    Rename,
 
     Delete,
     Insert,
@@ -47,7 +48,7 @@ public enum OperatorType {
     }
 
     public static boolean isUnaryOperator(OperatorType op) {
-        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete || op == Insert;
+        return op == Project || op == Select || op == Sort || op == Limit || op == Downsample || op == RowTransform || op == SetTransform || op == MappingTransform || op == Delete || op == Insert || op == Rename;
     }
 
     public static boolean isMultipleOperator(OperatorType op) {

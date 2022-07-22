@@ -60,7 +60,7 @@ public class QueryExecutor {
                 if (isDelete) {
                     RestSession session = new RestSession();
                     session.openSession();
-                    session.deleteDataInColumns(paths, query.getStartAbsolute(), query.getEndAbsolute());
+                    session.deleteDataInColumns(paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute());
                     session.closeSession();
                 } else if (queryMetric.getAggregators().size() == 0) {
                     ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());

@@ -21,9 +21,9 @@ public class InsertStatement extends DataStatement {
     private List<DataType> types;
     private List<Bitmap> bitmaps;
 
-    public InsertStatement() {
+    public InsertStatement(RawDataType rawDataType) {
         this.statementType = StatementType.INSERT;
-        this.rawDataType = RawDataType.NonAlignedColumn;
+        this.rawDataType = rawDataType;
         this.paths = new ArrayList<>();
         this.types = new ArrayList<>();
         this.bitmaps = new ArrayList<>();
@@ -62,7 +62,6 @@ public class InsertStatement extends DataStatement {
         setPath(path, null);
     }
 
-    //prefixPath是insert语句最前面的共有路径，path是括号内的多条序列的名称
     public void setPath(String path, Map<String, String> tags) {
         this.paths.add(prefixPath + SQLConstant.DOT + path);
         this.tagsList.add(tags);

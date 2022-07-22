@@ -21,8 +21,48 @@ package cn.edu.tsinghua.iginx.engine.shared.function.system.utils;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 
 public class ValueUtils {
+
+    private static final Set<DataType> numericTypeSet = new HashSet<>(Arrays.asList(
+        DataType.INTEGER, DataType.LONG, DataType.FLOAT, DataType.DOUBLE));
+
+    public static boolean isNumericType(Value value) {
+        return numericTypeSet.contains(value.getDataType());
+    }
+
+    public static Value transformToDouble(Value value) {
+        DataType dataType = value.getDataType();
+        double dVal;
+        switch (dataType) {
+            case INTEGER:
+                dVal = value.getIntV().doubleValue();
+                break;
+            case LONG:
+                dVal = value.getLongV().doubleValue();
+                break;
+            case FLOAT:
+                dVal = value.getFloatV().doubleValue();
+                break;
+            case DOUBLE:
+                dVal = value.getDoubleV();
+                break;
+            case BOOLEAN:
+                dVal = value.getBoolV() ? 1.0D : 0.0D;
+                break;
+            case BINARY:
+                dVal = Double.parseDouble(value.getBinaryVAsString());
+                break;
+            default:
+                throw new IllegalArgumentException("Unexpected dataType: " + dataType);
+        }
+        return new Value(DataType.DOUBLE, dVal);
+    }
 
     public static int compare(Value o1, Value o2) {
         DataType dataType = o1.getDataType();
@@ -41,6 +81,18 @@ public class ValueUtils {
                 return o1.getBinaryVAsString().compareTo(o2.getBinaryVAsString());
         }
         return 0;
+    }
+
+    public static boolean regexCompare(Value value, Value regex) {
+        if (!value.getDataType().equals(DataType.BINARY) || !regex.getDataType().equals(DataType.BINARY)) {
+            // regex can only be compared between strings.
+            return false;
+        }
+
+        String valueStr = value.getBinaryVAsString();
+        String regexStr = regex.getBinaryVAsString();
+
+        return Pattern.matches(regexStr, valueStr);
     }
 
     public static int compare(Object o1, Object o2, DataType dataType) {

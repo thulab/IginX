@@ -71,6 +71,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 return executeSetTransform((SetTransform) operator, transformToTable(stream));
             case MappingTransform:
                 return executeMappingTransform((MappingTransform) operator, transformToTable(stream));
+            case Rename:
+                return executeRename((Rename) operator, transformToTable(stream));
             default:
                 throw new UnexpectedOperatorException("unknown unary operator: " + operator.getType());
         }
@@ -261,6 +263,41 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         } catch (Exception e) {
             throw new PhysicalTaskExecuteFailureException("encounter error when execute mapping function " + function.getIdentifier() + ".", e);
         }
+    }
+
+    private RowStream executeRename(Rename rename, Table table) throws PhysicalException {
+        Header header = table.getHeader();
+        Map<String, String> aliasMap = rename.getAliasMap();
+
+        List<Field> fields = new ArrayList<>();
+        header.getFields().forEach(field -> {
+            String alias = "";
+            for (String oldName : aliasMap.keySet()) {
+                Pattern pattern = Pattern.compile(StringUtils.reformatColumnName(oldName) + ".*");
+                if (pattern.matcher(field.getFullName()).matches()) {
+                    alias = aliasMap.get(oldName);
+                    break;
+                }
+            }
+            if (alias.equals("")) {
+                fields.add(field);
+            } else {
+                fields.add(new Field(alias, field.getType(), field.getTags()));
+            }
+        });
+
+        Header newHeader = new Header(header.getTime(), fields);
+
+        List<Row> rows = new ArrayList<>();
+        table.getRows().forEach(row -> {
+            if (newHeader.hasTimestamp()) {
+                rows.add(new Row(newHeader, row.getTimestamp(), row.getValues()));
+            } else {
+                rows.add(new Row(newHeader, row.getValues()));
+            }
+        });
+
+        return new Table(newHeader, rows);
     }
 
     private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {

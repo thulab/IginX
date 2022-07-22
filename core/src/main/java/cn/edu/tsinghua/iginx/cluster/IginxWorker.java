@@ -160,10 +160,7 @@ public class IginxWorker implements IService.Iface {
         }
         RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
-        if(req.isFromRest())
-            return ctx.getResult().getRestQueryDataResp(req.getAggregatorType()!=null);
-        else
-            return ctx.getResult().getQueryDataResp();
+        return ctx.getResult().getQueryDataResp();
     }
 
     @Override
@@ -487,8 +484,14 @@ public class IginxWorker implements IService.Iface {
 
         TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(name);
         if (transformTaskMeta != null) {
-            logger.error(String.format("Register task %s already exist", transformTaskMeta.toString()));
-            return RpcUtils.FAILURE;
+            if (transformTaskMeta.getIpSet().contains(config.getIp())) {
+                logger.error(String.format("Register task %s already exist", transformTaskMeta.toString()));
+                return RpcUtils.FAILURE;
+            } else {
+                transformTaskMeta.addIp(config.getIp());
+                metaManager.updateTransformTask(transformTaskMeta);
+                return RpcUtils.SUCCESS;
+            }
         }
 
         File sourceFile = new File(filePath);
@@ -513,7 +516,8 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.FAILURE;
         }
 
-        metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName, config.getIp(), req.getType()));
+        metaManager.addTransformTask(new TransformTaskMeta(name, className, fileName,
+            new HashSet<>(Collections.singletonList(config.getIp())), req.getType()));
         return RpcUtils.SUCCESS;
     }
 
@@ -526,8 +530,8 @@ public class IginxWorker implements IService.Iface {
             return RpcUtils.FAILURE;
         }
 
-        if (!transformTaskMeta.getIp().equals(config.getIp())) {
-            logger.info(String.format("Register task exists in node: %s", transformTaskMeta.getIp()));
+        if (!transformTaskMeta.getIpSet().contains(config.getIp())) {
+            logger.info(String.format("Register task exists in node: %s", config.getIp()));
             return RpcUtils.FAILURE;
         }
 
@@ -555,7 +559,10 @@ public class IginxWorker implements IService.Iface {
         List<TransformTaskMeta> taskMetaList = metaManager.getTransformTasks();
         List<RegisterTaskInfo> taskInfoList = new ArrayList<>();
         for (TransformTaskMeta taskMeta : taskMetaList) {
-            RegisterTaskInfo taskInfo = new RegisterTaskInfo(taskMeta.getName(), taskMeta.getClassName(), taskMeta.getFileName(), taskMeta.getIp(), taskMeta.getType());
+            StringJoiner joiner = new StringJoiner(",");
+            taskMeta.getIpSet().forEach(joiner::add);
+            RegisterTaskInfo taskInfo = new RegisterTaskInfo(taskMeta.getName(), taskMeta.getClassName(),
+                taskMeta.getFileName(), joiner.toString(), taskMeta.getType());
             taskInfoList.add(taskInfo);
         }
         GetRegisterTaskInfoResp resp = new GetRegisterTaskInfoResp(RpcUtils.SUCCESS);

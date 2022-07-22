@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.utils.Bitmap;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
@@ -35,22 +36,26 @@ public class SessionQueryDataSet {
 
     private final long[] timestamps;
     private List<String> paths;
+    private List<Map<String, String>> tagsList;
     private List<List<Object>> values;
 
     public SessionQueryDataSet(LastQueryResp resp) {
         this.paths = resp.getPaths();
+        this.tagsList = resp.getTagsList();
         this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
         parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
     }
 
     public SessionQueryDataSet(QueryDataResp resp) {
         this.paths = resp.getPaths();
+        this.tagsList = resp.getTagsList();
         this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
         parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
     }
 
     public SessionQueryDataSet(DownsampleQueryResp resp) {
         this.paths = resp.getPaths();
+        this.tagsList = resp.getTagsList();
         if (resp.queryDataSet != null) {
             this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
             parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
@@ -96,8 +101,8 @@ public class SessionQueryDataSet {
     public void print() {
         System.out.println("Start to Print ResultSets:");
         System.out.print("Time\t");
-        for (String path : paths) {
-            System.out.print(path + "\t");
+        for (int i = 0; i < paths.size(); i++) {
+            System.out.print(paths.get(i) + "\t");
         }
         System.out.println();
 

@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.sql;
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
@@ -37,7 +38,15 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     @Override
     public Statement visitInsertStatement(InsertStatementContext ctx) {
-        InsertStatement insertStatement = new InsertStatement();
+        boolean hasSubQuery = ctx.insertValuesSpec().queryClause() != null;
+
+        InsertStatement insertStatement;
+        if (hasSubQuery) {
+            insertStatement = new InsertStatement(RawDataType.NonAlignedRow);
+        } else {
+            insertStatement = new InsertStatement(RawDataType.NonAlignedColumn);
+        }
+
         insertStatement.setPrefixPath(ctx.path().getText());
 
         if (ctx.tagList() != null) {
@@ -58,15 +67,22 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             }
             insertStatement.setPath(path, tags);
         });
-        // parse times, values and types
-        parseInsertValuesSpec(ctx.insertValuesSpec(), insertStatement);
 
-        if (insertStatement.getPaths().size() != insertStatement.getValues().length) {
-            throw new SQLParserException("Insert path size and value size must be equal.");
+        InsertValuesSpecContext valuesSpecContext = ctx.insertValuesSpec();
+        if (hasSubQuery) {
+            SelectStatement selectStatement = new SelectStatement();
+            parseQueryClause(ctx.insertValuesSpec().queryClause(), selectStatement);
+            long timeOffset = valuesSpecContext.TIME_OFFSET() == null ? 0 : Long.parseLong(valuesSpecContext.INT().getText());
+            return new InsertFromSelectStatement(timeOffset, selectStatement, insertStatement);
+        } else {
+            // parse times, values and types
+            parseInsertValuesSpec(valuesSpecContext, insertStatement);
+            if (insertStatement.getPaths().size() != insertStatement.getValues().length) {
+                throw new SQLParserException("Insert path size and value size must be equal.");
+            }
+            insertStatement.sortData();
+            return insertStatement;
         }
-        insertStatement.sortData();
-
-        return insertStatement;
     }
 
     @Override
@@ -88,6 +104,13 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     @Override
     public Statement visitSelectStatement(SelectStatementContext ctx) {
         SelectStatement selectStatement = new SelectStatement();
+        if (ctx.queryClause() != null) {
+            parseQueryClause(ctx.queryClause(), selectStatement);
+        }
+        return selectStatement;
+    }
+
+    private void parseQueryClause(QueryClauseContext ctx, SelectStatement selectStatement) {
         // Step 1. parse as much information as possible.
         // parse from paths
         if (ctx.fromClause() != null) {
@@ -113,11 +136,13 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.specialClause() != null) {
             parseSpecialClause(ctx.specialClause(), selectStatement);
         }
+        // parse as clause
+        if (ctx.asClause() != null) {
+            parseAsClause(ctx.asClause(), selectStatement);
+        }
 
         // Step 2. decide the query type according to the information.
         selectStatement.setQueryType();
-
-        return selectStatement;
     }
 
     @Override
@@ -169,10 +194,16 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private void parseFromPaths(FromClauseContext ctx, SelectStatement selectStatement) {
-        List<PathContext> fromPaths = ctx.path();
-
-        for (PathContext fromPath : fromPaths) {
-            selectStatement.setFromPath(fromPath.getText());
+        if (ctx.queryClause() != null) {
+            // parse sub query
+            SelectStatement subStatement = new SelectStatement();
+            parseQueryClause(ctx.queryClause(), subStatement);
+            selectStatement.setSubStatement(subStatement);
+        } else {
+            List<PathContext> fromPaths = ctx.path();
+            for (PathContext fromPath : fromPaths) {
+                selectStatement.setFromPath(fromPath.getText());
+            }
         }
     }
 
@@ -226,17 +257,36 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {
         List<ExpressionContext> expressions = ctx.expression();
 
+        boolean hasPrefixPath = !selectStatement.getFromPaths().isEmpty();
         for (ExpressionContext expr : expressions) {
+            String funcName = "";
             if (expr.functionName() != null) {
-                selectStatement.setSelectedFuncsAndPaths(expr.functionName().getText(), expr.path().getText());
+                funcName = expr.functionName().getText();
+            }
+
+            String alias = "";
+            if (expr.asClause() != null) {
+                alias = expr.asClause().ID().getText();
+            }
+
+            String selectPath = expr.path().getText();
+            if (hasPrefixPath) {
+                // need to contact from path
+                List<String> fromPaths = selectStatement.getFromPaths();
+                for (String fromPath : fromPaths) {
+                    String fullPath = fromPath + SQLConstant.DOT + selectPath;
+                    Expression expression = new Expression(fullPath, funcName, alias);
+                    selectStatement.setSelectedFuncsAndPaths(funcName, expression);
+                }
             } else {
-                selectStatement.setSelectedFuncsAndPaths("", expr.path().getText());
+                Expression expression = new Expression(selectPath, funcName, alias);
+                selectStatement.setSelectedFuncsAndPaths(funcName, expression);
             }
         }
 
         if (!selectStatement.getFuncTypeSet().isEmpty()) {
             selectStatement.setHasFunc(true);
-            Set<String> funcSet = selectStatement.getSelectedFuncsAndPaths().keySet();
+            Set<String> funcSet = selectStatement.getSelectedFuncsAndExpressions().keySet();
             if (funcSet.contains("") && funcSet.size() > 1)
                 throw new SQLParserException("Function modified paths and non-function modified paths can not be mixed");
         }
@@ -333,6 +383,19 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
     }
 
+    private void parseAsClause(AsClauseContext ctx, SelectStatement selectStatement) {
+        String aliasPrefix = ctx.ID().getText();
+        selectStatement.getSelectedFuncsAndExpressions().forEach((k, v) -> v.forEach(expression -> {
+            String alias = expression.getAlias();
+            if (alias.equals("")) {
+                alias = aliasPrefix + SQLConstant.DOT + expression.getColumnName();
+            } else {
+                alias = aliasPrefix + SQLConstant.DOT + alias;
+            }
+            expression.setAlias(alias);
+        }));
+    }
+
     private Pair<Long, Long> parseTimeInterval(TimeIntervalContext interval) {
         long startTime, endTime;
 
@@ -372,7 +435,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private TagFilter parseOrTagExpression(OrTagExpressionContext ctx) {
         List<TagFilter> children = new ArrayList<>();
-        for (AndTagExpressionContext andCtx: ctx.andTagExpression()) {
+        for (AndTagExpressionContext andCtx : ctx.andTagExpression()) {
             children.add(parseAndTagExpression(andCtx));
         }
         return new OrTagFilter(children);
@@ -380,7 +443,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private TagFilter parseAndTagExpression(AndTagExpressionContext ctx) {
         List<TagFilter> children = new ArrayList<>();
-        for (TagExpressionContext tagCtx: ctx.tagExpression()) {
+        for (TagExpressionContext tagCtx : ctx.tagExpression()) {
             children.add(parseTagExpression(tagCtx));
         }
         return new AndTagFilter(children);
@@ -408,16 +471,20 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             Filter filter = parseOrExpression(ctx.orExpression(), statement);
             return ctx.OPERATOR_NOT() == null ? filter : new NotFilter(filter);
         } else {
-            if (ctx.predicatePath() == null) {
+            if (ctx.predicatePath().size() == 0) {
                 return parseTimeFilter(ctx);
             } else {
                 StatementType type = statement.getType();
-                if (type == StatementType.SELECT) {
+                if (type != StatementType.SELECT) {
+                    throw new SQLParserException(
+                        String.format("%s clause can not use value or path filter.", type.toString().toLowerCase())
+                    );
+                }
+
+                if (ctx.predicatePath().size() == 1) {
                     return parseValueFilter(ctx, (SelectStatement) statement);
                 } else {
-                    throw new SQLParserException(
-                        String.format("%s clause can not use value filter.", type.toString().toLowerCase())
-                    );
+                    return parsePathFilter(ctx, (SelectStatement) statement);
                 }
             }
         }
@@ -434,32 +501,73 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private Filter parseValueFilter(PredicateContext ctx, SelectStatement statement) {
-        if (ctx.predicatePath().INTACT() == null) {
-            // need to contact from path
-            statement.setPathSet(ctx.predicatePath().path().getText());
-            List<Filter> valueFilters = new ArrayList<>();
-            for (String fromPath : statement.getFromPaths()) {
-                String path = fromPath + SQLConstant.DOT + ctx.predicatePath().path().getText();
-                Op op = Op.str2Op(ctx.comparisonOperator().getText());
-                // deal with sub clause like 100 < path
-                if (ctx.children.get(0) instanceof ConstantContext) {
-                    op = Op.getDirectionOpposite(op);
-                }
-                Value value = new Value(parseValue(ctx.constant()));
-                valueFilters.add(new ValueFilter(path, op, value));
-            }
-            return new AndFilter(valueFilters);
+        PredicatePathContext pathContext = ctx.predicatePath().get(0);
+        List<String> pathList = contactFromPathsIfNeeded(statement, pathContext);
+
+        Op op;
+        if (ctx.OPERATOR_LIKE() != null) {
+            op = Op.LIKE;
         } else {
-            String intactPath = ctx.predicatePath().path().getText();
-            statement.setIntactPathSet(intactPath);
-            Op op = Op.str2Op(ctx.comparisonOperator().getText());
+            op = Op.str2Op(ctx.comparisonOperator().getText().trim().toLowerCase());
             // deal with sub clause like 100 < path
             if (ctx.children.get(0) instanceof ConstantContext) {
                 op = Op.getDirectionOpposite(op);
             }
-            Value value = new Value(parseValue(ctx.constant()));
-            return new ValueFilter(intactPath, op, value);
         }
+
+        Value value;
+        if (ctx.regex != null) {
+            String regex = ctx.regex.getText();
+            value = new Value(regex.substring(1, regex.length()-1));
+        } else {
+            value = new Value(parseValue(ctx.constant()));
+        }
+
+
+        List<Filter> valueFilterList = new ArrayList<>();
+        for (String path: pathList) {
+            valueFilterList.add(new ValueFilter(path, op, value));
+        }
+
+        return valueFilterList.size() == 1 ?
+            valueFilterList.get(0) :
+            new AndFilter(valueFilterList);
+    }
+
+    private Filter parsePathFilter(PredicateContext ctx, SelectStatement statement) {
+        PredicatePathContext pathContextA = ctx.predicatePath().get(0);
+        PredicatePathContext pathContextB = ctx.predicatePath().get(1);
+
+        List<String> pathAList = contactFromPathsIfNeeded(statement, pathContextA);
+        List<String> pathBList = contactFromPathsIfNeeded(statement, pathContextB);
+
+        Op op = Op.str2Op(ctx.comparisonOperator().getText().trim().toLowerCase());
+
+        List<Filter> pathFilterList = new ArrayList<>();
+        for (String pathA : pathAList) {
+            for (String pathB : pathBList) {
+                pathFilterList.add(new PathFilter(pathA, op, pathB));
+            }
+        }
+
+        return pathFilterList.size() == 1 ?
+            pathFilterList.get(0) :
+            new AndFilter(pathFilterList);
+    }
+
+    private List<String> contactFromPathsIfNeeded(SelectStatement statement, PredicatePathContext pathContext) {
+        List<String> pathList = new ArrayList<>();
+        if (pathContext.INTACT() == null && statement.getSubStatement() == null) {
+            for (String fromPath : statement.getFromPaths()) {
+                String path = fromPath + SQLConstant.DOT + pathContext.path().getText();
+                statement.setPathSet(path);
+                pathList.add(path);
+            }
+        } else {
+            statement.setPathSet(pathContext.path().getText());
+            pathList.add(pathContext.path().getText());
+        }
+        return pathList;
     }
 
     private Map<String, String> parseExtra(StringLiteralContext ctx) {
@@ -618,7 +726,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private Map<String, String> parseTagList(TagListContext ctx) {
         Map<String, String> tags = new HashMap<>();
-        for (TagEquationContext tagCtx: ctx.tagEquation()) {
+        for (TagEquationContext tagCtx : ctx.tagEquation()) {
             String tagKey = tagCtx.tagKey().getText();
             String tagValue = tagCtx.tagValue().getText();
             tags.put(tagKey, tagValue);

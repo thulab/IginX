@@ -84,9 +84,9 @@ public abstract class SQLSessionIT {
         }
     }
 
-    private void executeAndCompare(String statement, String exceptOutput) {
+    private void executeAndCompare(String statement, String expectedOutput) {
         String actualOutput = execute(statement);
-        assertEquals(exceptOutput, actualOutput);
+        assertEquals(expectedOutput, actualOutput);
     }
 
     private String execute(String statement) {
@@ -109,41 +109,41 @@ public abstract class SQLSessionIT {
         return res.getResultInString(false, "");
     }
 
-    private void executeAndCompareErrMsg(String statement, String exceptErrMsg) {
+    private void executeAndCompareErrMsg(String statement, String expectedErrMsg) {
         logger.info("Execute Statement: \"{}\"", statement);
 
         try {
             session.executeSql(statement);
         } catch (SessionException | ExecutionException e) {
             logger.info("Statement: \"{}\" execute fail. Because: {}", statement, e.getMessage());
-            assertEquals(exceptErrMsg, e.getMessage());
+            assertEquals(expectedErrMsg, e.getMessage());
         }
     }
 
     @Test
     public void testCountPath() {
         String statement = "SELECT COUNT(*) FROM us.d1;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+---------------+---------------+---------------+---------------+\n" +
             "|count(us.d1.s1)|count(us.d1.s2)|count(us.d1.s3)|count(us.d1.s4)|\n" +
             "+---------------+---------------+---------------+---------------+\n" +
             "|          15000|          15000|          15000|          15000|\n" +
             "+---------------+---------------+---------------+---------------+\n" +
             "Total line number = 1\n";
-        executeAndCompare(statement, excepted);
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testCountPoints() {
         String statement = "COUNT POINTS;";
-        String excepted = "Points num: 60000\n";
-        executeAndCompare(statement, excepted);
+        String expected = "Points num: 60000\n";
+        executeAndCompare(statement, expected);
     }
 
 //    @Test
 //    public void testShowTimeSeries() {
 //        String statement = "SHOW TIME SERIES;";
-//        String excepted = "Time series:\n" +
+//        String expected = "Time series:\n" +
 //                "+--------+--------+\n" +
 //                "|    Path|DataType|\n" +
 //                "+--------+--------+\n" +
@@ -153,20 +153,20 @@ public abstract class SQLSessionIT {
 //                "|us.d1.s4|  DOUBLE|\n" +
 //                "+--------+--------+\n" +
 //                "Total line number = 4\n";
-//        executeAndCompare(statement, excepted);
+//        executeAndCompare(statement, expected);
 //    }
 
     @Test
     public void testShowReplicaNum() {
         String statement = "SHOW REPLICA NUMBER;";
-        String excepted = "Replica num: 2\n";
-        executeAndCompare(statement, excepted);
+        String expected = "Replica num: 2\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testTimeRangeQuery() {
         String statement = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
             "+----+--------+\n" +
@@ -191,13 +191,13 @@ public abstract class SQLSessionIT {
             "| 119|     119|\n" +
             "+----+--------+\n" +
             "Total line number = 19\n";
-        executeAndCompare(statement, excepted);
+        executeAndCompare(statement, expected);
     }
 
     @Test
     public void testValueFilter() {
-        String statement = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
-        String excepted = "ResultSets:\n" +
+        String query = "SELECT s1 FROM us.d1 WHERE time > 0 AND time < 10000 and s1 > 200 and s1 < 210;";
+        String expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
             "+----+--------+\n" +
@@ -212,7 +212,135 @@ public abstract class SQLSessionIT {
             "| 209|     209|\n" +
             "+----+--------+\n" +
             "Total line number = 9\n";
-        executeAndCompare(statement, excepted);
+        executeAndCompare(query, expected);
+
+        String insert = "INSERT INTO us.d2(time, c) VALUES (1, \"asdas\"), (2, \"sadaa\"), (3, \"sadada\"), (4, \"asdad\"), (5, \"deadsa\"), (6, \"dasda\"), (7, \"asdsad\"), (8, \"frgsa\"), (9, \"asdad\");";
+        execute(insert);
+
+        query = "SELECT c FROM us.d2 WHERE c like \"^a.*\";";
+        expected = "ResultSets:\n" +
+            "+----+-------+\n" +
+            "|Time|us.d2.c|\n" +
+            "+----+-------+\n" +
+            "|   1|  asdas|\n" +
+            "|   4|  asdad|\n" +
+            "|   7| asdsad|\n" +
+            "|   9|  asdad|\n" +
+            "+----+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT c FROM us.d2 WHERE c like \"^[s|f].*\"";
+        expected = "ResultSets:\n" +
+            "+----+-------+\n" +
+            "|Time|us.d2.c|\n" +
+            "+----+-------+\n" +
+            "|   2|  sadaa|\n" +
+            "|   3| sadada|\n" +
+            "|   8|  frgsa|\n" +
+            "+----+-------+\n" +
+            "Total line number = 3\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT c FROM us.d2 WHERE c like \"^.*[s|d]\";";
+        expected = "ResultSets:\n" +
+            "+----+-------+\n" +
+            "|Time|us.d2.c|\n" +
+            "+----+-------+\n" +
+            "|   1|  asdas|\n" +
+            "|   4|  asdad|\n" +
+            "|   7| asdsad|\n" +
+            "|   9|  asdad|\n" +
+            "+----+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+    }
+
+    @Test
+    public void testPathFilter() {
+        String insert = "INSERT INTO us.d2(time, a, b) VALUES (1, 1, 9), (2, 2, 8), (3, 3, 7), (4, 4, 6), (5, 5, 5), (6, 6, 4), (7, 7, 3), (8, 8, 2), (9, 9, 1);";
+        execute(insert);
+
+        String query = "SELECT a, b FROM us.d2 WHERE a > b;";
+        String expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   6|      6|      4|\n" +
+            "|   7|      7|      3|\n" +
+            "|   8|      8|      2|\n" +
+            "|   9|      9|      1|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a >= b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   5|      5|      5|\n" +
+            "|   6|      6|      4|\n" +
+            "|   7|      7|      3|\n" +
+            "|   8|      8|      2|\n" +
+            "|   9|      9|      1|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a < b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   1|      1|      9|\n" +
+            "|   2|      2|      8|\n" +
+            "|   3|      3|      7|\n" +
+            "|   4|      4|      6|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a <= b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   1|      1|      9|\n" +
+            "|   2|      2|      8|\n" +
+            "|   3|      3|      7|\n" +
+            "|   4|      4|      6|\n" +
+            "|   5|      5|      5|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a = b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   5|      5|      5|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT a, b FROM us.d2 WHERE a != b;";
+        expected = "ResultSets:\n" +
+            "+----+-------+-------+\n" +
+            "|Time|us.d2.a|us.d2.b|\n" +
+            "+----+-------+-------+\n" +
+            "|   1|      1|      9|\n" +
+            "|   2|      2|      8|\n" +
+            "|   3|      3|      7|\n" +
+            "|   4|      4|      6|\n" +
+            "|   6|      6|      4|\n" +
+            "|   7|      7|      3|\n" +
+            "|   8|      8|      2|\n" +
+            "|   9|      9|      1|\n" +
+            "+----+-------+-------+\n" +
+            "Total line number = 8\n";
+        executeAndCompare(query, expected);
     }
 
     @Test
@@ -328,7 +456,7 @@ public abstract class SQLSessionIT {
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
-        List<String> exceptedList = Arrays.asList(
+        List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
                 "+-------------+-------------+\n" +
                 "|max(us.d1.s1)|max(us.d1.s2)|\n" +
@@ -381,8 +509,8 @@ public abstract class SQLSessionIT {
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
             String type = funcTypeList.get(i);
-            String excepted = exceptedList.get(i);
-            executeAndCompare(String.format(statement, type, type), excepted);
+            String expected = expectedList.get(i);
+            executeAndCompare(String.format(statement, type, type), expected);
         }
     }
 
@@ -392,7 +520,7 @@ public abstract class SQLSessionIT {
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
-        List<String> exceptedList = Arrays.asList(
+        List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
                 "+----+-------------+-------------+\n" +
                 "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
@@ -508,8 +636,8 @@ public abstract class SQLSessionIT {
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
             String type = funcTypeList.get(i);
-            String excepted = exceptedList.get(i);
-            executeAndCompare(String.format(statement, type, type), excepted);
+            String expected = expectedList.get(i);
+            executeAndCompare(String.format(statement, type, type), expected);
         }
     }
 
@@ -519,7 +647,7 @@ public abstract class SQLSessionIT {
         List<String> funcTypeList = Arrays.asList(
             "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
-        List<String> exceptedList = Arrays.asList(
+        List<String> expectedList = Arrays.asList(
             "ResultSets:\n" +
                 "+----+-------------+-------------+\n" +
                 "|Time|max(us.d1.s1)|max(us.d1.s4)|\n" +
@@ -586,8 +714,8 @@ public abstract class SQLSessionIT {
         );
         for (int i = 0; i < funcTypeList.size(); i++) {
             String type = funcTypeList.get(i);
-            String excepted = exceptedList.get(i);
-            executeAndCompare(String.format(statement, type, type), excepted);
+            String expected = expectedList.get(i);
+            executeAndCompare(String.format(statement, type, type), expected);
         }
     }
 
@@ -600,7 +728,7 @@ public abstract class SQLSessionIT {
         execute(delete);
 
         String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 120;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
             "+----+--------+\n" +
@@ -616,13 +744,13 @@ public abstract class SQLSessionIT {
             "| 119|     119|\n" +
             "+----+--------+\n" +
             "Total line number = 10\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
 
         delete = "DELETE FROM us.d1.s1 WHERE time >= 1126 AND time <= 1155;";
         execute(delete);
 
         queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 1120 AND time < 1160;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
             "+----+--------+\n" +
@@ -637,13 +765,13 @@ public abstract class SQLSessionIT {
             "|1159|    1159|\n" +
             "+----+--------+\n" +
             "Total line number = 9\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
 
         delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 2236 AND time <= 2265;";
         execute(delete);
 
         queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 2230 AND time < 2270;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "|Time|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
@@ -659,13 +787,13 @@ public abstract class SQLSessionIT {
             "|2269|    2270|  2269.1|\n" +
             "+----+--------+--------+\n" +
             "Total line number = 10\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
 
         delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time >= 3346 AND time < 3375;";
         execute(delete);
 
         queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 3340 AND time < 3380;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "|Time|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
@@ -681,7 +809,7 @@ public abstract class SQLSessionIT {
             "|3379|    3380|  3379.1|\n" +
             "+----+--------+--------+\n" +
             "Total line number = 10\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
     }
 
     @Test
@@ -693,7 +821,7 @@ public abstract class SQLSessionIT {
         execute(delete);
 
         String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 235;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
             "+----+--------+\n" +
@@ -713,13 +841,13 @@ public abstract class SQLSessionIT {
             "| 234|     234|\n" +
             "+----+--------+\n" +
             "Total line number = 14\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
 
         delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1130 AND time < 1230;";
         execute(delete);
 
         queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 1110 AND time < 1235;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "|Time|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
@@ -739,7 +867,7 @@ public abstract class SQLSessionIT {
             "|1234|    1235|  1234.1|\n" +
             "+----+--------+--------+\n" +
             "Total line number = 14\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
     }
 
     @Test
@@ -751,7 +879,7 @@ public abstract class SQLSessionIT {
         execute(delete);
 
         String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+----+--------+\n" +
             "|Time|us.d1.s1|\n" +
             "+----+--------+\n" +
@@ -766,13 +894,13 @@ public abstract class SQLSessionIT {
             "| 234|     234|\n" +
             "+----+--------+\n" +
             "Total line number = 9\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
 
         delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1120 AND time < 1230;";
         execute(delete);
 
         queryOverDeleteRange = "SELECT s2, s4 FROM us.d1 WHERE time > 1110 AND time < 1235;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+--------+\n" +
             "|Time|us.d1.s2|us.d1.s4|\n" +
             "+----+--------+--------+\n" +
@@ -788,7 +916,7 @@ public abstract class SQLSessionIT {
             "|1234|    1235|  1234.1|\n" +
             "+----+--------+--------+\n" +
             "Total line number = 10\n";
-        executeAndCompare(queryOverDeleteRange, excepted);
+        executeAndCompare(queryOverDeleteRange, expected);
     }
 
     @Test
@@ -802,7 +930,7 @@ public abstract class SQLSessionIT {
         execute(insert);
 
         String queryFromMultiPath = "SELECT s1, s2 FROM us.d2, us.d3;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+----+--------+--------+--------+--------+\n" +
             "|Time|us.d2.s1|us.d2.s2|us.d3.s1|us.d3.s2|\n" +
             "+----+--------+--------+--------+--------+\n" +
@@ -814,10 +942,10 @@ public abstract class SQLSessionIT {
             "|   6|       6|       6|       7|       7|\n" +
             "+----+--------+--------+--------+--------+\n" +
             "Total line number = 6\n";
-        executeAndCompare(queryFromMultiPath, excepted);
+        executeAndCompare(queryFromMultiPath, expected);
 
         String queryFromMultiPathWithCondition = "SELECT s1, s2 FROM us.d2, us.d3 WHERE s1 > 2;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+--------+--------+--------+\n" +
             "|Time|us.d2.s1|us.d2.s2|us.d3.s1|us.d3.s2|\n" +
             "+----+--------+--------+--------+--------+\n" +
@@ -827,10 +955,10 @@ public abstract class SQLSessionIT {
             "|   6|       6|       6|       7|       7|\n" +
             "+----+--------+--------+--------+--------+\n" +
             "Total line number = 4\n";
-        executeAndCompare(queryFromMultiPathWithCondition, excepted);
+        executeAndCompare(queryFromMultiPathWithCondition, expected);
 
         String queryFromMultiPathWithIntactCondition = "SELECT s1, s2 FROM us.d2, us.d3 WHERE INTACT(us.d2.s1) > 2 AND INTACT(us.d3.s2) < 6;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+--------+--------+--------+--------+\n" +
             "|Time|us.d2.s1|us.d2.s2|us.d3.s1|us.d3.s2|\n" +
             "+----+--------+--------+--------+--------+\n" +
@@ -838,7 +966,392 @@ public abstract class SQLSessionIT {
             "|   4|       4|       4|       5|       5|\n" +
             "+----+--------+--------+--------+--------+\n" +
             "Total line number = 2\n";
-        executeAndCompare(queryFromMultiPathWithIntactCondition, excepted);
+        executeAndCompare(queryFromMultiPathWithIntactCondition, expected);
+    }
+
+    @Test
+    public void testAlias() {
+        // time series alias
+        String statement = "SELECT s1 AS rename_series, s2 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010;";
+        String expected = "ResultSets:\n" +
+            "+----+-------------+--------+\n" +
+            "|Time|rename_series|us.d1.s2|\n" +
+            "+----+-------------+--------+\n" +
+            "|1000|         1000|    1001|\n" +
+            "|1001|         1001|    1002|\n" +
+            "|1002|         1002|    1003|\n" +
+            "|1003|         1003|    1004|\n" +
+            "|1004|         1004|    1005|\n" +
+            "|1005|         1005|    1006|\n" +
+            "|1006|         1006|    1007|\n" +
+            "|1007|         1007|    1008|\n" +
+            "|1008|         1008|    1009|\n" +
+            "|1009|         1009|    1010|\n" +
+            "+----+-------------+--------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+
+        // result set alias
+        statement = "SELECT s1, s2 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010 AS rename_result_set;";
+        expected = "ResultSets:\n" +
+            "+----+--------------------------+--------------------------+\n" +
+            "|Time|rename_result_set.us.d1.s1|rename_result_set.us.d1.s2|\n" +
+            "+----+--------------------------+--------------------------+\n" +
+            "|1000|                      1000|                      1001|\n" +
+            "|1001|                      1001|                      1002|\n" +
+            "|1002|                      1002|                      1003|\n" +
+            "|1003|                      1003|                      1004|\n" +
+            "|1004|                      1004|                      1005|\n" +
+            "|1005|                      1005|                      1006|\n" +
+            "|1006|                      1006|                      1007|\n" +
+            "|1007|                      1007|                      1008|\n" +
+            "|1008|                      1008|                      1009|\n" +
+            "|1009|                      1009|                      1010|\n" +
+            "+----+--------------------------+--------------------------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+
+        // time series and result set alias
+        statement = "SELECT s1 AS rename_series, s2 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010 AS rename_result_set;";
+        expected = "ResultSets:\n" +
+            "+----+-------------------------------+--------------------------+\n" +
+            "|Time|rename_result_set.rename_series|rename_result_set.us.d1.s2|\n" +
+            "+----+-------------------------------+--------------------------+\n" +
+            "|1000|                           1000|                      1001|\n" +
+            "|1001|                           1001|                      1002|\n" +
+            "|1002|                           1002|                      1003|\n" +
+            "|1003|                           1003|                      1004|\n" +
+            "|1004|                           1004|                      1005|\n" +
+            "|1005|                           1005|                      1006|\n" +
+            "|1006|                           1006|                      1007|\n" +
+            "|1007|                           1007|                      1008|\n" +
+            "|1008|                           1008|                      1009|\n" +
+            "|1009|                           1009|                      1010|\n" +
+            "+----+-------------------------------+--------------------------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testAggregateSubQuery() {
+        String statement = "SELECT %s_s1 FROM (SELECT %s(s1) AS %s_s1 FROM us.d1 GROUP [1000, 1600) BY 60ms);";
+        List<String> funcTypeList = Arrays.asList(
+            "max", "min", "sum", "avg", "count", "first_value", "last_value"
+        );
+
+        List<String> expectedList = Arrays.asList(
+            "ResultSets:\n" +
+                "+----+------+\n" +
+                "|Time|max_s1|\n" +
+                "+----+------+\n" +
+                "|1000|  1059|\n" +
+                "|1060|  1119|\n" +
+                "|1120|  1179|\n" +
+                "|1180|  1239|\n" +
+                "|1240|  1299|\n" +
+                "|1300|  1359|\n" +
+                "|1360|  1419|\n" +
+                "|1420|  1479|\n" +
+                "|1480|  1539|\n" +
+                "|1540|  1599|\n" +
+                "+----+------+\n" +
+                "Total line number = 10\n",
+            "ResultSets:\n" +
+                "+----+------+\n" +
+                "|Time|min_s1|\n" +
+                "+----+------+\n" +
+                "|1000|  1000|\n" +
+                "|1060|  1060|\n" +
+                "|1120|  1120|\n" +
+                "|1180|  1180|\n" +
+                "|1240|  1240|\n" +
+                "|1300|  1300|\n" +
+                "|1360|  1360|\n" +
+                "|1420|  1420|\n" +
+                "|1480|  1480|\n" +
+                "|1540|  1540|\n" +
+                "+----+------+\n" +
+                "Total line number = 10\n",
+            "ResultSets:\n" +
+                "+----+------+\n" +
+                "|Time|sum_s1|\n" +
+                "+----+------+\n" +
+                "|1000| 61770|\n" +
+                "|1060| 65370|\n" +
+                "|1120| 68970|\n" +
+                "|1180| 72570|\n" +
+                "|1240| 76170|\n" +
+                "|1300| 79770|\n" +
+                "|1360| 83370|\n" +
+                "|1420| 86970|\n" +
+                "|1480| 90570|\n" +
+                "|1540| 94170|\n" +
+                "+----+------+\n" +
+                "Total line number = 10\n",
+            "ResultSets:\n" +
+                "+----+------+\n" +
+                "|Time|avg_s1|\n" +
+                "+----+------+\n" +
+                "|1000|1029.5|\n" +
+                "|1060|1089.5|\n" +
+                "|1120|1149.5|\n" +
+                "|1180|1209.5|\n" +
+                "|1240|1269.5|\n" +
+                "|1300|1329.5|\n" +
+                "|1360|1389.5|\n" +
+                "|1420|1449.5|\n" +
+                "|1480|1509.5|\n" +
+                "|1540|1569.5|\n" +
+                "+----+------+\n" +
+                "Total line number = 10\n",
+            "ResultSets:\n" +
+                "+----+--------+\n" +
+                "|Time|count_s1|\n" +
+                "+----+--------+\n" +
+                "|1000|      60|\n" +
+                "|1060|      60|\n" +
+                "|1120|      60|\n" +
+                "|1180|      60|\n" +
+                "|1240|      60|\n" +
+                "|1300|      60|\n" +
+                "|1360|      60|\n" +
+                "|1420|      60|\n" +
+                "|1480|      60|\n" +
+                "|1540|      60|\n" +
+                "+----+--------+\n" +
+                "Total line number = 10\n",
+            "ResultSets:\n" +
+                "+----+--------------+\n" +
+                "|Time|first_value_s1|\n" +
+                "+----+--------------+\n" +
+                "|1000|          1000|\n" +
+                "|1060|          1060|\n" +
+                "|1120|          1120|\n" +
+                "|1180|          1180|\n" +
+                "|1240|          1240|\n" +
+                "|1300|          1300|\n" +
+                "|1360|          1360|\n" +
+                "|1420|          1420|\n" +
+                "|1480|          1480|\n" +
+                "|1540|          1540|\n" +
+                "+----+--------------+\n" +
+                "Total line number = 10\n",
+            "ResultSets:\n" +
+                "+----+-------------+\n" +
+                "|Time|last_value_s1|\n" +
+                "+----+-------------+\n" +
+                "|1000|         1059|\n" +
+                "|1060|         1119|\n" +
+                "|1120|         1179|\n" +
+                "|1180|         1239|\n" +
+                "|1240|         1299|\n" +
+                "|1300|         1359|\n" +
+                "|1360|         1419|\n" +
+                "|1420|         1479|\n" +
+                "|1480|         1539|\n" +
+                "|1540|         1599|\n" +
+                "+----+-------------+\n" +
+                "Total line number = 10\n"
+        );
+        for (int i = 0; i < funcTypeList.size(); i++) {
+            String type = funcTypeList.get(i);
+            String expected = expectedList.get(i);
+            executeAndCompare(String.format(statement, type, type, type), expected);
+        }
+    }
+
+    @Test
+    public void testValueFilterSubQuery() {
+        String statement = "SELECT ts FROM (SELECT s1 AS ts FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
+        String expected = "ResultSets:\n" +
+            "+----+----+\n" +
+            "|Time|  ts|\n" +
+            "+----+----+\n" +
+            "|1000|1000|\n" +
+            "|1001|1001|\n" +
+            "|1002|1002|\n" +
+            "|1003|1003|\n" +
+            "|1004|1004|\n" +
+            "|1005|1005|\n" +
+            "|1006|1006|\n" +
+            "|1007|1007|\n" +
+            "|1008|1008|\n" +
+            "|1009|1009|\n" +
+            "+----+----+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 GROUP [1000, 1600) BY 100ms) WHERE avg_s1 > 1200;";
+        expected = "ResultSets:\n" +
+            "+----+------+\n" +
+            "|Time|avg_s1|\n" +
+            "+----+------+\n" +
+            "|1200|1249.5|\n" +
+            "|1300|1349.5|\n" +
+            "|1400|1449.5|\n" +
+            "|1500|1549.5|\n" +
+            "+----+------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 WHERE s1 < 1500 GROUP [1000, 1600) BY 100ms) WHERE avg_s1 > 1200;";
+        expected = "ResultSets:\n" +
+            "+----+------+\n" +
+            "|Time|avg_s1|\n" +
+            "+----+------+\n" +
+            "|1200|1249.5|\n" +
+            "|1300|1349.5|\n" +
+            "|1400|1449.5|\n" +
+            "+----+------+\n" +
+            "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testMultiSubQuery() {
+        String statement = "SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms;";
+        String expected = "ResultSets:\n" +
+            "+----+------+------+\n" +
+            "|Time|avg_s1|sum_s2|\n" +
+            "+----+------+------+\n" +
+            "|1000|1004.5| 10055|\n" +
+            "|1010|1014.5| 10155|\n" +
+            "|1020|1024.5| 10255|\n" +
+            "|1030|1034.5| 10355|\n" +
+            "|1040|1044.5| 10455|\n" +
+            "|1050|1054.5| 10555|\n" +
+            "|1060|1064.5| 10655|\n" +
+            "|1070|1074.5| 10755|\n" +
+            "|1080|1084.5| 10855|\n" +
+            "|1090|1094.5| 10955|\n" +
+            "+----+------+------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800;";
+        expected = "ResultSets:\n" +
+            "+----+------+------+\n" +
+            "|Time|avg_s1|sum_s2|\n" +
+            "+----+------+------+\n" +
+            "|1020|1024.5| 10255|\n" +
+            "|1030|1034.5| 10355|\n" +
+            "|1040|1044.5| 10455|\n" +
+            "|1050|1054.5| 10555|\n" +
+            "|1060|1064.5| 10655|\n" +
+            "|1070|1074.5| 10755|\n" +
+            "+----+------+------+\n" +
+            "Total line number = 6\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
+        expected = "ResultSets:\n" +
+            "+-----------+-----------+\n" +
+            "|max(avg_s1)|min(sum_s2)|\n" +
+            "+-----------+-----------+\n" +
+            "|     1074.5|      10255|\n" +
+            "+-----------+-----------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testInsertWithSubQuery() {
+        String insert = "INSERT INTO us.d2(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
+        execute(insert);
+
+        String query = "SELECT s1 FROM us.d2;";
+        String expected = "ResultSets:\n" +
+            "+----+--------+\n" +
+            "|Time|us.d2.s1|\n" +
+            "+----+--------+\n" +
+            "|1000|    1000|\n" +
+            "|1001|    1001|\n" +
+            "|1002|    1002|\n" +
+            "|1003|    1003|\n" +
+            "|1004|    1004|\n" +
+            "|1005|    1005|\n" +
+            "|1006|    1006|\n" +
+            "|1007|    1007|\n" +
+            "|1008|    1008|\n" +
+            "|1009|    1009|\n" +
+            "+----+--------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(query, expected);
+
+        insert = "INSERT INTO us.d3(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010) TIME_OFFSET = 100;";
+        execute(insert);
+
+        query = "SELECT s1 FROM us.d3;";
+        expected = "ResultSets:\n" +
+            "+----+--------+\n" +
+            "|Time|us.d3.s1|\n" +
+            "+----+--------+\n" +
+            "|1100|    1000|\n" +
+            "|1101|    1001|\n" +
+            "|1102|    1002|\n" +
+            "|1103|    1003|\n" +
+            "|1104|    1004|\n" +
+            "|1105|    1005|\n" +
+            "|1106|    1006|\n" +
+            "|1107|    1007|\n" +
+            "|1108|    1008|\n" +
+            "|1109|    1009|\n" +
+            "+----+--------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(query, expected);
+
+        insert = "INSERT INTO us.d4(TIME, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms);";
+        execute(insert);
+
+        query = "SELECT s1, s2 FROM us.d4";
+        expected = "ResultSets:\n" +
+            "+----+--------+--------+\n" +
+            "|Time|us.d4.s1|us.d4.s2|\n" +
+            "+----+--------+--------+\n" +
+            "|1000|  1004.5|   10055|\n" +
+            "|1010|  1014.5|   10155|\n" +
+            "|1020|  1024.5|   10255|\n" +
+            "|1030|  1034.5|   10355|\n" +
+            "|1040|  1044.5|   10455|\n" +
+            "|1050|  1054.5|   10555|\n" +
+            "|1060|  1064.5|   10655|\n" +
+            "|1070|  1074.5|   10755|\n" +
+            "|1080|  1084.5|   10855|\n" +
+            "|1090|  1094.5|   10955|\n" +
+            "+----+--------+--------+\n" +
+            "Total line number = 10\n";
+        executeAndCompare(query, expected);
+
+        insert = "INSERT INTO us.d5(TIME, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
+        execute(insert);
+
+        query = "SELECT s1, s2 FROM us.d5";
+        expected = "ResultSets:\n" +
+            "+----+--------+--------+\n" +
+            "|Time|us.d5.s1|us.d5.s2|\n" +
+            "+----+--------+--------+\n" +
+            "|1020|  1024.5|   10255|\n" +
+            "|1030|  1034.5|   10355|\n" +
+            "|1040|  1044.5|   10455|\n" +
+            "|1050|  1054.5|   10555|\n" +
+            "|1060|  1064.5|   10655|\n" +
+            "|1070|  1074.5|   10755|\n" +
+            "+----+--------+--------+\n" +
+            "Total line number = 6\n";
+        executeAndCompare(query, expected);
+
+        insert = "INSERT INTO us.d6(TIME, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
+        execute(insert);
+
+        query = "SELECT s1, s2 FROM us.d6";
+        expected = "ResultSets:\n" +
+            "+----+--------+--------+\n" +
+            "|Time|us.d6.s1|us.d6.s2|\n" +
+            "+----+--------+--------+\n" +
+            "|   0|   10255|  1074.5|\n" +
+            "+----+--------+--------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(query, expected);
     }
 
     @Test
@@ -847,7 +1360,7 @@ public abstract class SQLSessionIT {
         executeAndCompareErrMsg(errClause, "This clause delete nothing, check your filter again.");
 
         errClause = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 AND s1 < 10;";
-        executeAndCompareErrMsg(errClause, "delete clause can not use value filter.");
+        executeAndCompareErrMsg(errClause, "delete clause can not use value or path filter.");
 
         errClause = "DELETE FROM us.d1.s1 WHERE time != 105;";
         executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
@@ -874,17 +1387,17 @@ public abstract class SQLSessionIT {
         execute(deleteTimeSeries);
 
         String showTimeSeries = "SELECT * FROM *;";
-        String excepted = "ResultSets:\n" +
+        String expected = "ResultSets:\n" +
             "+----+\n" +
             "|Time|\n" +
             "+----+\n" +
             "+----+\n" +
             "Empty set.\n";
-        executeAndCompare(showTimeSeries, excepted);
+        executeAndCompare(showTimeSeries, expected);
 
         String countPoints = "COUNT POINTS";
-        excepted = "Points num: 0\n";
-        executeAndCompare(countPoints, excepted);
+        expected = "Points num: 0\n";
+        executeAndCompare(countPoints, expected);
     }
 
     @Test
@@ -893,16 +1406,16 @@ public abstract class SQLSessionIT {
         execute(clearData);
 
         String countPoints = "COUNT POINTS;";
-        String excepted = "Points num: 0\n";
-        executeAndCompare(countPoints, excepted);
+        String expected = "Points num: 0\n";
+        executeAndCompare(countPoints, expected);
 
         String showTimeSeries = "SELECT * FROM *;";
-        excepted = "ResultSets:\n" +
+        expected = "ResultSets:\n" +
             "+----+\n" +
             "|Time|\n" +
             "+----+\n" +
             "+----+\n" +
             "Empty set.\n";
-        executeAndCompare(showTimeSeries, excepted);
+        executeAndCompare(showTimeSeries, expected);
     }
 }

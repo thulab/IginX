@@ -63,6 +63,9 @@ public class FilterTransformer {
     }
 
     private static String toString(ValueFilter filter) {
+        if (filter.getOp().equals(Op.LIKE)) {
+            return filter.getPath() + " regexp '" + filter.getValue().getBinaryVAsString() + "'";
+        }
         return filter.getPath() + " " + Op.op2Str(filter.getOp()) + " " + filter.getValue().getValue();
     }
 
