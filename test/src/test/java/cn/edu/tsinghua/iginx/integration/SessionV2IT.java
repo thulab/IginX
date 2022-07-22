@@ -50,6 +50,7 @@ public class SessionV2IT {
 //
         insertDataByTable();
         asyncInsertDataByTable();
+        insertTagKVDataByTable();
 //
 //        insertDataByMeasurements();
 //        asyncInsertDataByMeasurements();
@@ -189,6 +190,36 @@ public class SessionV2IT {
         }
     }
 
+    private static Table buildInsertTagKVDataTable() {
+        Table.Builder builder = Table.builder().measurement("test.session.v3")
+            .addField("bool", DataType.BOOLEAN, Collections.singletonMap("k1", "v1"))
+            .addField("int", DataType.INTEGER, Collections.singletonMap("k1", "v2"))
+            .addField("long", DataType.LONG, Collections.singletonMap("k1", "v3"))
+            .addField("float", DataType.FLOAT, Collections.singletonMap("k1", "v4"))
+            .addField("double", DataType.DOUBLE, Collections.singletonMap("k1", "v5"))
+            .addField("string", DataType.BINARY, Collections.singletonMap("k1", "v6"));
+
+        for (long i = startTimestamp; i < endTimestamp; i++) {
+            if (i % 2 == 0) {
+                builder = builder.binaryValue("string", String.valueOf(i).getBytes());
+            }
+            builder = builder.timestamp(i)
+                .boolValue("bool", i % 2 == 0)
+                .intValue("int", (int) i)
+                .longValue("long", i)
+                .floatValue("float", (float) (i + 0.1))
+                .doubleValue("double", i + 0.2)
+                .next();
+        }
+
+        return builder.build();
+    }
+
+    private static void insertTagKVDataByTable() {
+        Table table = buildInsertTagKVDataTable();
+        writeClient.writeTable(table);
+    }
+
     private static List<POJO> buildInsertMeasurements() {
         List<POJO> measurements = new ArrayList<>();
         for (long i = startTimestamp; i < endTimestamp; i++) {
@@ -290,6 +321,110 @@ public class SessionV2IT {
             assertEquals(timestamp + 0.2, doubleValue, 0.05);
             // 核验 string 值
             Object object = record.getValue("test.session.v2.string");
+            if (timestamp % 2 == 0) {
+                byte[] binaryValue = (byte[]) object;
+                assertEquals(String.valueOf(timestamp), new String(binaryValue));
+            } else {
+                assertNull(object);
+            }
+        }
+    }
+
+    @Test
+    public void testTagKV() {
+        IginXTable table = queryClient.query(
+            SimpleQuery.builder()
+                .addMeasurement("test.session.v3.*")
+                .startTime(endTimestamp - 1000L)
+                .endTime(endTimestamp)
+                .addTags("k1", Arrays.asList("v1", "v3", "v5"))
+                .build()
+        );
+        assertNotNull(table);
+
+        IginXHeader header = table.getHeader();
+        assertTrue(header.hasTimestamp());
+
+        List<IginXColumn> columns = header.getColumns();
+        assertEquals(3, columns.size());
+        for (IginXColumn column : columns) {
+            switch (column.getName()) {
+                case "test.session.v3.bool{k1=v1}":
+                    assertEquals(DataType.BOOLEAN, column.getDataType());
+                    break;
+                case "test.session.v3.long{k1=v3}":
+                    assertEquals(DataType.LONG, column.getDataType());
+                    break;
+                case "test.session.v3.double{k1=v5}":
+                    assertEquals(DataType.DOUBLE, column.getDataType());
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        List<IginXRecord> records = table.getRecords();
+        assertEquals(1000, records.size());
+        for (int i = 0; i < records.size(); i++) {
+            IginXRecord record = records.get(i);
+            long timestamp = endTimestamp - 1000 + i;
+            assertEquals(timestamp, record.getTimestamp());
+            // 核验 bool 值
+            boolean boolValue = (boolean) record.getValue("test.session.v3.bool{k1=v1}");
+            assertEquals(timestamp % 2 == 0, boolValue);
+            // 核验 long 值
+            long longValue = (long) record.getValue("test.session.v3.long{k1=v3}");
+            assertEquals(timestamp, longValue);
+            // 核验 double 值
+            double doubleValue = (double) record.getValue("test.session.v3.double{k1=v5}");
+            assertEquals(timestamp + 0.2, doubleValue, 0.05);
+        }
+
+        table = queryClient.query(
+            SimpleQuery.builder()
+                .addMeasurement("test.session.v3.*")
+                .startTime(endTimestamp - 1000L)
+                .endTime(endTimestamp)
+                .addTags("k1", Arrays.asList("v2", "v4", "v6"))
+                .build()
+        );
+        assertNotNull(table);
+
+        header = table.getHeader();
+        assertTrue(header.hasTimestamp());
+
+        columns = header.getColumns();
+        assertEquals(3, columns.size());
+        for (IginXColumn column : columns) {
+            switch (column.getName()) {
+                case "test.session.v3.int{k1=v2}":
+                    assertEquals(DataType.INTEGER, column.getDataType());
+                    break;
+                case "test.session.v3.float{k1=v4}":
+                    assertEquals(DataType.FLOAT, column.getDataType());
+                    break;
+                case "test.session.v3.string{k1=v6}":
+                    assertEquals(DataType.BINARY, column.getDataType());
+                    break;
+                default:
+                    fail();
+            }
+        }
+
+        records = table.getRecords();
+        assertEquals(1000, records.size());
+        for (int i = 0; i < records.size(); i++) {
+            IginXRecord record = records.get(i);
+            long timestamp = endTimestamp - 1000 + i;
+            assertEquals(timestamp, record.getTimestamp());
+            // 核验 int 值
+            int intValue = (int) record.getValue("test.session.v3.int{k1=v2}");
+            assertEquals((int) timestamp, intValue);
+            // 核验 float 值
+            float floatValue = (float) record.getValue("test.session.v3.float{k1=v4}");
+            assertEquals((float) (timestamp + 0.1), floatValue, 0.05);
+            // 核验 string 值
+            Object object = record.getValue("test.session.v3.string{k1=v6}");
             if (timestamp % 2 == 0) {
                 byte[] binaryValue = (byte[]) object;
                 assertEquals(String.valueOf(timestamp), new String(binaryValue));

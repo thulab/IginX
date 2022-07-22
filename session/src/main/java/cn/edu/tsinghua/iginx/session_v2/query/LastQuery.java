@@ -20,15 +20,14 @@ package cn.edu.tsinghua.iginx.session_v2.query;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class LastQuery extends Query {
 
     private final long startTime;
 
-    public LastQuery(Set<String> measurements, long startTime) {
-        super(measurements);
+    public LastQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime) {
+        super(measurements, tagsList);
         this.startTime = startTime;
     }
 
@@ -44,10 +43,13 @@ public class LastQuery extends Query {
 
         private final Set<String> measurements;
 
+        private final Map<String, List<String>> tagsList;
+
         private long startTime;
 
         private Builder() {
             this.measurements = new HashSet<>();
+            this.tagsList = new HashMap<>();
             this.startTime = 0L;
         }
 
@@ -63,6 +65,18 @@ public class LastQuery extends Query {
             return this;
         }
 
+        public LastQuery.Builder addTags(String tagK, List<String> valueList) {
+            Arguments.checkListNonEmpty(valueList, "valueList");
+            this.tagsList.put(tagK, valueList);
+            return this;
+        }
+
+        public LastQuery.Builder addTagsList(Map<String, List<String>> tagsList) {
+            tagsList.forEach((key, valueList) -> Arguments.checkListNonEmpty(valueList, "valueList"));
+            this.tagsList.putAll(tagsList);
+            return this;
+        }
+
         public LastQuery.Builder startTime(long startTime) {
             if (startTime < 0) {
                 throw new IllegalArgumentException("startTime must greater than zero.");
@@ -75,7 +89,7 @@ public class LastQuery extends Query {
             if (this.measurements.isEmpty()) {
                 throw new IllegalStateException("last query at least has one measurement.");
             }
-            return new LastQuery(measurements, startTime);
+            return new LastQuery(measurements, tagsList, startTime);
         }
 
     }

@@ -21,8 +21,7 @@ package cn.edu.tsinghua.iginx.session_v2.query;
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class DownsampleQuery extends Query {
 
@@ -34,8 +33,8 @@ public class DownsampleQuery extends Query {
 
     private final long precision;
 
-    public DownsampleQuery(Set<String> measurements, long startTime, long endTime, AggregateType aggregateType, long precision) {
-        super(measurements);
+    public DownsampleQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime, AggregateType aggregateType, long precision) {
+        super(measurements, tagsList);
         this.startTime = startTime;
         this.endTime = endTime;
         this.aggregateType = aggregateType;
@@ -66,6 +65,8 @@ public class DownsampleQuery extends Query {
 
         private final Set<String> measurements;
 
+        private final Map<String, List<String>> tagsList;
+
         private long startTime;
 
         private long endTime;
@@ -76,6 +77,7 @@ public class DownsampleQuery extends Query {
 
         private Builder() {
             this.measurements = new HashSet<>();
+            this.tagsList = new HashMap<>();
             this.startTime = 0L;
             this.endTime = Long.MAX_VALUE;
             this.precision = 0L;
@@ -90,6 +92,18 @@ public class DownsampleQuery extends Query {
         public DownsampleQuery.Builder addMeasurements(Set<String> measurements) {
             measurements.forEach(measurement -> Arguments.checkNonEmpty(measurement, "measurement"));
             this.measurements.addAll(measurements);
+            return this;
+        }
+
+        public DownsampleQuery.Builder addTags(String tagK, List<String> valueList) {
+            Arguments.checkListNonEmpty(valueList, "valueList");
+            this.tagsList.put(tagK, valueList);
+            return this;
+        }
+
+        public DownsampleQuery.Builder addTagsList(Map<String, List<String>> tagsList) {
+            tagsList.forEach((key, valueList) -> Arguments.checkListNonEmpty(valueList, "valueList"));
+            this.tagsList.putAll(tagsList);
             return this;
         }
 
@@ -139,7 +153,7 @@ public class DownsampleQuery extends Query {
             if (this.precision <= 0L) {
                 throw new IllegalStateException("precision should greater than zero.");
             }
-            return new DownsampleQuery(measurements, startTime, endTime, aggregateType, precision);
+            return new DownsampleQuery(measurements, tagsList, startTime, endTime, aggregateType, precision);
         }
 
     }

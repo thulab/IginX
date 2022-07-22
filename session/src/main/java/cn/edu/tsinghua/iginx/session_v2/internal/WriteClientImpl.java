@@ -194,13 +194,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             valuesList[i] = table.getValues(i);
         }
         List<String> measurements = table.getMeasurements();
-        List<Map<String, String>> tagsList = new ArrayList<>();
-        for (int i = 0; i < measurements.size(); i++) {
-            String measurement = measurements.get(i);
-            Pair<String, Map<String, String>> pair = TagKVUtils.fromFullName(measurement);
-            measurements.set(i, pair.k);
-            tagsList.add(pair.v);
-        }
+        List<Map<String, String>> tagsList = table.getTagsList();
         writeRowData(measurements, timestamps, valuesList, table.getDataTypes(), tagsList);
     }
 
