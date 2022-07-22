@@ -344,6 +344,7 @@ public class RestSession {
             logger.error("Invalid query request!");
             return null;
         }
+        // System.out.println("================queryData endTime "+endTime);//lhz调试信息，可删除
         QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
         if(tagList.size()!=0)
             req.setTagsList(tagList);

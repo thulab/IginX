@@ -161,6 +161,22 @@ public class DataPointsParser {
             // for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
             //     pos2path.put(entry.getValue(), entry.getKey());
             // }
+            //因为insert修改成tagkv后不再需要将tagval放入了路径中
+            // for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
+            //     String ins = metric.getTags().get(entry.getValue());
+            //     if (ins != null) {
+            //         path.append(ins).append(".");
+            //     } else {
+            //         path.append("null.");
+            //     }
+            // }
+            // if (needUpdate) {
+            //     metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
+            // }
+            // Map<Integer, String> pos2path = new TreeMap<>();
+            // for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
+            //     pos2path.put(entry.getValue(), entry.getKey());
+            // }
             StringBuilder path = new StringBuilder();
             for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
                 String ins = metric.getTags().get(entry.getValue());
