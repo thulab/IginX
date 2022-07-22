@@ -356,7 +356,6 @@ public class StatementExecutor {
 
         boolean hasTimestamp = stream.getHeader().hasTimestamp();
         while (stream.hasNext()) {
-            // System.out.println("================setResultFromRowStream0");//lhz调试信息，可删除
             Row row = stream.next();
 
             Object[] rowValues = row.getValues();
