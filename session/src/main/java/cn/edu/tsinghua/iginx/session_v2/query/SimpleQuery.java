@@ -20,9 +20,7 @@ package cn.edu.tsinghua.iginx.session_v2.query;
 
 import cn.edu.tsinghua.iginx.session_v2.Arguments;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class SimpleQuery extends Query {
 
@@ -30,8 +28,8 @@ public class SimpleQuery extends Query {
 
     private final long endTime;
 
-    private SimpleQuery(Set<String> measurements, long startTime, long endTime) {
-        super(Collections.unmodifiableSet(measurements));
+    private SimpleQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime) {
+        super(Collections.unmodifiableSet(measurements), tagsList);
         this.startTime = startTime;
         this.endTime = endTime;
     }
@@ -52,12 +50,15 @@ public class SimpleQuery extends Query {
 
         private final Set<String> measurements;
 
+        private final Map<String, List<String>> tagsList;
+
         private long startTime;
 
         private long endTime;
 
         private Builder() {
             this.measurements = new HashSet<>();
+            this.tagsList = new HashMap<>();
             this.startTime = 0L;
             this.endTime = Long.MAX_VALUE;
         }
@@ -71,6 +72,18 @@ public class SimpleQuery extends Query {
         public SimpleQuery.Builder addMeasurements(Set<String> measurements) {
             measurements.forEach(measurement -> Arguments.checkNonEmpty(measurement, "measurement"));
             this.measurements.addAll(measurements);
+            return this;
+        }
+
+        public SimpleQuery.Builder addTags(String tagK, List<String> valueList) {
+            Arguments.checkListNonEmpty(valueList, "valueList");
+            this.tagsList.put(tagK, valueList);
+            return this;
+        }
+
+        public SimpleQuery.Builder addTagsList(Map<String, List<String>> tagsList) {
+            tagsList.forEach((key, valueList) -> Arguments.checkListNonEmpty(valueList, "valueList"));
+            this.tagsList.putAll(tagsList);
             return this;
         }
 
@@ -100,7 +113,7 @@ public class SimpleQuery extends Query {
             if (this.measurements.isEmpty()) {
                 throw new IllegalStateException("simple query at least has one measurement.");
             }
-            return new SimpleQuery(measurements, startTime, endTime);
+            return new SimpleQuery(measurements, tagsList, startTime, endTime);
         }
 
     }

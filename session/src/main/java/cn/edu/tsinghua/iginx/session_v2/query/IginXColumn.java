@@ -20,21 +20,31 @@ package cn.edu.tsinghua.iginx.session_v2.query;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.Collections;
+import java.util.Map;
+
 public class IginXColumn {
 
-    public static final IginXColumn TIME = new IginXColumn("timestamp", DataType.LONG);
+    public static final IginXColumn TIME = new IginXColumn("timestamp", Collections.emptyMap(), DataType.LONG);
 
     private final String name;
 
+    private final Map<String, String> tags;
+
     private final DataType dataType;
 
-    public IginXColumn(String name, DataType dataType) {
+    public IginXColumn(String name, Map<String, String> tags, DataType dataType) {
         this.name = name;
+        this.tags = tags;
         this.dataType = dataType;
     }
 
     public String getName() {
         return name;
+    }
+
+    public Map<String, String> getTags() {
+        return tags;
     }
 
     public DataType getDataType() {

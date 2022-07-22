@@ -22,12 +22,7 @@ import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.TagKVUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Table {
@@ -36,13 +31,16 @@ public class Table {
 
     private final List<String> measurements;
 
+    private final List<Map<String, String>> tagsList;
+
     private final List<DataType> dataTypes;
 
     private final List<Object[]> valuesList;
 
-    private Table(List<Long> timestamps, List<String> measurements, List<DataType> dataTypes, List<Object[]> valuesList) {
+    private Table(List<Long> timestamps, List<String> measurements, List<Map<String, String>> tagsList, List<DataType> dataTypes, List<Object[]> valuesList) {
         this.timestamps = timestamps;
         this.measurements = measurements;
+        this.tagsList = tagsList;
         this.dataTypes = dataTypes;
         this.valuesList = valuesList;
     }
@@ -57,6 +55,10 @@ public class Table {
 
     public List<String> getMeasurements() {
         return measurements;
+    }
+
+    public List<Map<String, String>> getTagsList() {
+        return tagsList;
     }
 
     public List<DataType> getDataTypes() {
@@ -91,6 +93,7 @@ public class Table {
 
         private final SortedMap<String, Integer> fieldIndexMap;
         private final List<DataType> dataTypes;
+        private final List<Map<String, String>> tagsList;
         private final List<Long> timestamps;
         private final List<Map<Integer, Object>> valuesList;
         private String measurement;
@@ -101,6 +104,7 @@ public class Table {
         private Builder() {
             this.measurement = null;
             this.fieldIndexMap = new TreeMap<>();
+            this.tagsList = new ArrayList<>();
             this.dataTypes = new ArrayList<>();
             this.timestamps = new ArrayList<>();
             this.valuesList = new ArrayList<>();
@@ -116,11 +120,16 @@ public class Table {
         }
 
         public Table.Builder addField(String field, DataType dataType) {
+            return addField(field, dataType, Collections.emptyMap());
+        }
+
+        public Table.Builder addField(String field, DataType dataType, Map<String, String> tags) {
             Arguments.checkNotNull(field, "field");
             int index = fieldIndexMap.getOrDefault(field, -1);
             if (index == -1) {
                 index = fieldIndexMap.size();
                 this.fieldIndexMap.put(field, index);
+                this.tagsList.add(tags);
                 this.dataTypes.add(dataType);
             } else {
                 if (dataType != this.dataTypes.get(index)) {
@@ -128,12 +137,6 @@ public class Table {
                 }
             }
             return this;
-        }
-
-        public Table.Builder addField(String field, DataType dataType, Map<String, String> tags) {
-            Arguments.checkNotNull(field, "field");
-            field = TagKVUtils.toFullName(field, tags);
-            return addField(field, dataType);
         }
 
         public Table.Builder timestamp(long timestamp) {
@@ -274,11 +277,13 @@ public class Table {
                 this.valuesList.add(currentValues);
             }
             List<String> measurements = new ArrayList<>(fieldIndexMap.keySet());
+            List<Map<String, String>> tagsList = new ArrayList<>();
             List<DataType> dataTypes = new ArrayList<>();
             Map<Integer, Integer> indexMap = new HashMap<>();
             for (int i = 0; i < measurements.size(); i++) {
                 String measurement = measurements.get(i);
                 int index = fieldIndexMap.get(measurement);
+                tagsList.add(this.tagsList.get(index));
                 dataTypes.add(this.dataTypes.get(index));
                 indexMap.put(index, i);
             }
@@ -293,7 +298,7 @@ public class Table {
                 }
                 valuesList.add(values);
             }
-            return new Table(this.timestamps, measurements, dataTypes, valuesList);
+            return new Table(this.timestamps, measurements, tagsList, dataTypes, valuesList);
         }
 
     }

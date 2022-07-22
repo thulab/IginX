@@ -167,6 +167,6 @@ public class ContextBuilder {
             valueList.forEach(value -> orTagFilterList.add(new BaseTagFilter(key, value)));
             andTagFilterList.add(new OrTagFilter(orTagFilterList));
         });
-        return new AndTagFilter(andTagFilterList);
+        return andTagFilterList.isEmpty() ? null : new AndTagFilter(andTagFilterList);
     }
 }
