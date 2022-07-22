@@ -141,25 +141,26 @@ public class DataPointsParser {
     private void sendMetricsData() throws Exception {
         for (Metric metric : metricList) {
             boolean needUpdate = false;
-            Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
-            if (metricschema == null) {
-                needUpdate = true;
-                metricschema = new ConcurrentHashMap<>();
-            }
-            for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
-                if (metricschema.get(entry.getKey()) == null) {
-                    needUpdate = true;
-                    int pos = metricschema.size() + 1;
-                    metricschema.put(entry.getKey(), pos);
-                }
-            }
-            if (needUpdate) {
-                metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-            }
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-            }
+            // Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
+            // if (metricschema == null) {
+            //     needUpdate = true;
+            //     metricschema = new ConcurrentHashMap<>();
+            // }
+            tagsList.add(metric.getTags());
+            // for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
+            //     if (metricschema.get(entry.getKey()) == null) {
+            //         needUpdate = true;
+            //         int pos = metricschema.size() + 1;
+            //         metricschema.put(entry.getKey(), pos);
+            //     }
+            // }
+            // if (needUpdate) {
+            //     metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
+            // }
+            // Map<Integer, String> pos2path = new TreeMap<>();
+            // for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
+            //     pos2path.put(entry.getValue(), entry.getKey());
+            // }
             StringBuilder path = new StringBuilder();
             for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
                 String ins = metric.getTags().get(entry.getValue());

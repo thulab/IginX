@@ -103,7 +103,6 @@ public abstract class QueryAggregator {
         int m = sessionQueryDataSet.getPaths().size();
         int datapoints = 0;
         for (int i = 0; i < n; i++) {
-            boolean flag = false;
             for (int j = 0; j < m; j++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     if (!flag) {

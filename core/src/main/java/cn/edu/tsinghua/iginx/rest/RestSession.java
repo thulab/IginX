@@ -318,14 +318,15 @@ public class RestSession {
         RpcUtils.verifySuccess(status);
     }
 
-    public void deleteDataInColumn(String path, long startTime, long endTime) {
+    public void deleteDataInColumn(String path, Map<String, List<String>> tagList, long startTime, long endTime) {
         List<String> paths = new ArrayList<>();
         paths.add(path);
-        deleteDataInColumns(paths, startTime, endTime);
+        deleteDataInColumns(paths, tagList, startTime, endTime);
     }
 
-    public void deleteDataInColumns(List<String> paths, long startTime, long endTime) {
+    public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime) {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
+        req.setTagsList(tagList);
 
         Status status;
         do {
@@ -338,12 +339,14 @@ public class RestSession {
         } while (checkRedirect(status));
     }
 
-    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime) {
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList) {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
             return null;
         }
         QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
+        if(tagList.size()!=0)
+            req.setTagsList(tagList);
 
         QueryDataResp resp;
 
@@ -359,9 +362,10 @@ public class RestSession {
         return new SessionQueryDataSet(resp);
     }
 
-    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType) {
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, AggregateType aggregateType) {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
-
+        req.setTagsList(tagList);
+        
         AggregateQueryResp resp;
         do {
             lock.readLock().lock();
@@ -375,9 +379,9 @@ public class RestSession {
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
 
-    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) {
-        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
-            aggregateType, precision);
+    public SessionQueryDataSet downsampleQuery(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, AggregateType aggregateType, long precision) {
+        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime, aggregateType, precision);
+        req.setTagsList(tagList);
 
         DownsampleQueryResp resp;
 

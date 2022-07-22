@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.rest.bean.Metric;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
 import java.util.ArrayList;
 import java.util.List;
