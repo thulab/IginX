@@ -56,7 +56,6 @@ public class QueryExecutor {
                     path.append(queryMetric.getName());
                 }
                 paths.add(path.toString());
-                // List<String> paths = getPaths(queryMetric);
                 if (isDelete) {
                     RestSession session = new RestSession();
                     session.openSession();
@@ -103,20 +102,6 @@ public class QueryExecutor {
             StringBuilder path = new StringBuilder();
             Iterator iter = pos2path.entrySet().iterator();
             int now = 0;
-            // while (iter.hasNext()) {
-            //     String ins = null;
-            //     Map.Entry entry = (Map.Entry) iter.next();
-            //     List<String> tmp = queryMetric.getTags().get(entry.getValue());
-            //     if (tmp != null) {
-            //         ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
-            //     }
-            //     if (ins != null) {
-            //         path.append(ins).append(".");
-            //     } else {
-            //         path.append("*.");
-            //     }
-            //     now++;
-            // }
             if (queryMetric.getAnnotation()) {
                 path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
             } else {

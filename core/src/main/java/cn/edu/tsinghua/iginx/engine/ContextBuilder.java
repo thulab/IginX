@@ -92,9 +92,6 @@ public class ContextBuilder {
 
     public RequestContext build(DeleteDataInColumnsReq req) {
         DeleteStatement statement = new DeleteStatement(req.getPaths(), req.getStartTime(), req.getEndTime());
-        // if (req.isSetTagsList()) {
-        //     statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
-        // }
         return new RequestContext(req.getSessionId(), statement);
     }
 

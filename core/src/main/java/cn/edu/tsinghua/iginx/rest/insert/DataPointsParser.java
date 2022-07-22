@@ -143,36 +143,8 @@ public class DataPointsParser {
         for (Metric metric : metricList) {
             List<Map<String, String>> tagsList = new ArrayList<>();
             boolean needUpdate = false;
-            // Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
-            // if (metricschema == null) {
-            //     needUpdate = true;
-            //     metricschema = new ConcurrentHashMap<>();
-            // }
             tagsList.add(metric.getTags());
-            // for (Map.Entry<String, String> entry : metric.getTags().entrySet()) {
-            //     if (metricschema.get(entry.getKey()) == null) {
-            //         needUpdate = true;
-            //         int pos = metricschema.size() + 1;
-            //         metricschema.put(entry.getKey(), pos);
-            //     }
-            // }
-            // if (needUpdate) {
-            //     metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-            // }
-            // Map<Integer, String> pos2path = new TreeMap<>();
-            // for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-            //     pos2path.put(entry.getValue(), entry.getKey());
-            // }
             StringBuilder path = new StringBuilder();
-            //因为insert修改成tagkv后不再需要将tagval放入了路径中
-            // for (Map.Entry<Integer, String> entry : pos2path.entrySet()) {
-            //     String ins = metric.getTags().get(entry.getValue());
-            //     if (ins != null) {
-            //         path.append(ins).append(".");
-            //     } else {
-            //         path.append("null.");
-            //     }
-            // }
             path.append(metric.getName());
             List<String> paths = new ArrayList<>();
             paths.add(path.toString());
