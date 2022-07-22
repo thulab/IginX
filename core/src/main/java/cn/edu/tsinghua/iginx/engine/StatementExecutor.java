@@ -202,7 +202,6 @@ public class StatementExecutor {
     public void executeStatement(RequestContext ctx) {
         try {
             Statement statement = ctx.getStatement();
-            
             if (statement instanceof DataStatement) {
                 StatementType type = statement.getType();
                 switch (type) {
