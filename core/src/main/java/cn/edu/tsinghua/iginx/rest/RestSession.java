@@ -326,8 +326,6 @@ public class RestSession {
 
     public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime) {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
-        req.setTagsList(tagList);
-
         Status status;
         do {
             lock.readLock().lock();
