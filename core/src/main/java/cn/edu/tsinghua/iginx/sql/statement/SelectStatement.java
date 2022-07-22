@@ -38,47 +38,6 @@ public class SelectStatement extends DataStatement {
 
     private SelectStatement subStatement;
 
-    public void showall(){
-        if(queryType==QueryType.SimpleQuery)
-            System.out.println("================showall SimpleQuery");//lhz调试信息，可删除
-        if(hasFunc) 
-            System.out.println("================showall hasFunc");//lhz调试信息，可删除
-        if(hasValueFilter) 
-            System.out.println("================showall hasValueFilter");//lhz调试信息，可删除
-        if(hasGroupByTime) 
-            System.out.println("================showall hasGroupByTime");//lhz调试信息，可删除
-        if(ascending) 
-            System.out.println("================showall ascending");//lhz调试信息，可删除
-
-        if(selectedFuncsAndExpressions.size()!=0){
-            System.out.println("================showall selectedFuncsAndExpressions "+selectedFuncsAndExpressions.size());//lhz调试信息，可删除
-            for (String key : selectedFuncsAndExpressions.keySet()) {
-                System.out.println("key = " + key);
-            }
-            for (List<Expression> L : selectedFuncsAndExpressions.values()) {
-                for(Expression val : L)
-                    System.out.println("val = " + val.getColumnName() + val.getAlias());
-            }
-        }  
-
-        if(funcTypeSet.size()!=0)
-            System.out.println("================showall funcTypeSet "+funcTypeSet.size());//lhz调试信息，可删除
-
-        if(pathSet.size()!=0)
-            System.out.println(pathSet);//lhz调试信息，可删除
-        if(fromPaths!=null)
-            System.out.println(fromPaths);//lhz调试信息，可删除
-        if(orderByPath!=null)
-            System.out.println(orderByPath);//lhz调试信息，可删除
-        System.out.println("================showall precision "+precision);//lhz调试信息，可删除
-        System.out.println("================showall startTime "+startTime);//lhz调试信息，可删除
-        System.out.println("================showall endTime "+endTime);//lhz调试信息，可删除
-        System.out.println("================showall limit "+limit);//lhz调试信息，可删除
-        System.out.println("================showall offset "+offset);//lhz调试信息，可删除
-
-
-    }
-
     public SelectStatement() {
         this.statementType = StatementType.SELECT;
         this.queryType = QueryType.Unknown;
@@ -104,8 +63,6 @@ public class SelectStatement extends DataStatement {
         this.selectedFuncsAndExpressions = new HashMap<>();
         this.selectedFuncsAndExpressions.put("", expressions);
         this.funcTypeSet = new HashSet<>();
-        // System.out.println("================SelectStatement startTime "+startTime);//lhz调试信息，可删除
-        // System.out.println("================SelectStatement endTime "+endTime);//lhz调试信息，可删除
         this.setFromSession(paths, startTime, endTime);
     }
 

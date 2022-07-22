@@ -103,7 +103,6 @@ public class ContextBuilder {
             req.getPaths(),
             req.getStartTime(),
             req.getEndTime());
-        // System.out.println("================build endTime "+req.getEndTime());//lhz调试信息，可删除
         if (req.isSetTagsList()) {
             statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
         }

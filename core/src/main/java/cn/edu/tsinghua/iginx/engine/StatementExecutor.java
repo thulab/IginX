@@ -356,7 +356,6 @@ public class StatementExecutor {
 
         boolean hasTimestamp = stream.getHeader().hasTimestamp();
         while (stream.hasNext()) {
-            // System.out.println("================setResultFromRowStream0");//lhz调试信息，可删除
             Row row = stream.next();
 
             Object[] rowValues = row.getValues();
@@ -374,16 +373,13 @@ public class StatementExecutor {
                 timestampList.add(row.getTimestamp());
             }
         }
-        // System.out.println("================setResultFromRowStream1");//lhz调试信息，可删除
         if (valuesList.isEmpty()) { // empty result
-            // System.out.println("================setResultFromRowStream2");//lhz调试信息，可删除
             setEmptyQueryResp(ctx);
             return;
         }
 
         Result result = new Result(RpcUtils.SUCCESS);
         if (timestampList.size() != 0) {
-            // System.out.println("================setResultFromRowStream3");//lhz调试信息，可删除
             Long[] timestamps = timestampList.toArray(new Long[timestampList.size()]);
             result.setTimestamps(timestamps);
         }
