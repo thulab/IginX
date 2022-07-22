@@ -56,15 +56,13 @@ public class SelectStatement extends DataStatement {
     // simple query
     public SelectStatement(List<String> paths, long startTime, long endTime) {
         this.queryType = QueryType.SimpleQuery;
+        this.fromPaths = new ArrayList<>();
 
         List<Expression> expressions = new ArrayList<>();
         paths.forEach(path -> expressions.add(new Expression(path)));
-
         this.selectedFuncsAndExpressions = new HashMap<>();
         this.selectedFuncsAndExpressions.put("", expressions);
-
         this.funcTypeSet = new HashSet<>();
-
         this.setFromSession(paths, startTime, endTime);
     }
 

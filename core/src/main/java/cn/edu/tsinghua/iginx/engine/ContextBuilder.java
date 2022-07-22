@@ -100,7 +100,7 @@ public class ContextBuilder {
             req.getPaths(),
             req.getStartTime(),
             req.getEndTime());
-
+            
         if (req.isSetTagsList()) {
             statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
         }

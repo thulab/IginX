@@ -23,8 +23,10 @@ import cn.edu.tsinghua.iginx.rest.RestUtils;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
 import java.util.List;
+import java.util.Map;
 
 public class QueryAggregatorDev extends QueryAggregator {
     public QueryAggregatorDev() {
@@ -32,10 +34,10 @@ public class QueryAggregatorDev extends QueryAggregator {
     }
 
     @Override
-    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try {
-            SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
+            SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
