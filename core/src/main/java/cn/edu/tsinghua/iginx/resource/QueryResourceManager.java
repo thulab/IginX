@@ -16,22 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.query;
+package cn.edu.tsinghua.iginx.resource;
 
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class QueryManager {
+public class QueryResourceManager {
 
     private final ConcurrentMap<Long, RequestContext> queries;
 
-    private QueryManager() {
+    private QueryResourceManager() {
         this.queries = new ConcurrentHashMap<>();
     }
 
-    public static QueryManager getInstance() {
+    public static QueryResourceManager getInstance() {
         return QueryManagerHolder.INSTANCE;
     }
 
@@ -49,7 +49,7 @@ public class QueryManager {
 
     private static class QueryManagerHolder {
 
-        private static final QueryManager INSTANCE = new QueryManager();
+        private static final QueryResourceManager INSTANCE = new QueryResourceManager();
 
     }
 

@@ -1,6 +1,6 @@
 package cn.edu.tsinghua.iginx.sql.statement;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.IginxWorker;
 import cn.edu.tsinghua.iginx.engine.physical.memory.execute.Table;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.Result;

@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.rest;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
