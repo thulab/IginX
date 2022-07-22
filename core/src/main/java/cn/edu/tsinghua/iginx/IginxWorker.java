@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package cn.edu.tsinghua.iginx.cluster;
+package cn.edu.tsinghua.iginx;
 
 import cn.edu.tsinghua.iginx.auth.SessionManager;
 import cn.edu.tsinghua.iginx.auth.UserManager;
@@ -31,7 +31,7 @@ import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
-import cn.edu.tsinghua.iginx.query.QueryManager;
+import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -60,7 +60,7 @@ public class IginxWorker implements IService.Iface {
 
     private final SessionManager sessionManager = SessionManager.getInstance();
 
-    private final QueryManager queryManager = QueryManager.getInstance();
+    private final QueryResourceManager queryManager = QueryResourceManager.getInstance();
 
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 

@@ -18,7 +18,6 @@
  */
 package cn.edu.tsinghua.iginx;
 
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.mqtt.MQTTService;

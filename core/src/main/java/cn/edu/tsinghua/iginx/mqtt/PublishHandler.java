@@ -19,7 +19,7 @@
 package cn.edu.tsinghua.iginx.mqtt;
 
 import cn.edu.tsinghua.iginx.auth.SessionManager;
-import cn.edu.tsinghua.iginx.cluster.IginxWorker;
+import cn.edu.tsinghua.iginx.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.InsertNonAlignedRowRecordsReq;
