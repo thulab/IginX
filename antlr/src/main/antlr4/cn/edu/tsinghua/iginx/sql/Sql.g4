@@ -7,7 +7,7 @@ sqlStatement
 statement
     : INSERT INTO path tagList? insertColumnsSpec VALUES insertValuesSpec #insertStatement
     | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
-    | selectClause fromClause whereClause? withClause? specialClause? #selectStatement
+    | queryClause #selectStatement
     | COUNT POINTS #countPointsStatement
     | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
     | CLEAR DATA #clearDataStatement
@@ -22,13 +22,17 @@ statement
     | SHOW TRANSFORM JOB STATUS jobId=INT #showJobStatusStatement
     ;
 
+queryClause
+    : selectClause fromClause whereClause? withClause? specialClause? asClause?
+    ;
+
 selectClause
    : SELECT expression (COMMA expression)*
    ;
 
 expression
-    : functionName LR_BRACKET path RR_BRACKET
-    | path
+    : functionName LR_BRACKET path RR_BRACKET asClause?
+    | path asClause?
     ;
 
 functionName
@@ -58,6 +62,8 @@ andExpression
 predicate
     : (TIME | TIMESTAMP | predicatePath) comparisonOperator constant
     | constant comparisonOperator (TIME | TIMESTAMP | predicatePath)
+    | predicatePath comparisonOperator predicatePath
+    | predicatePath OPERATOR_LIKE regex=stringLiteral
     | OPERATOR_NOT? LR_BRACKET orExpression RR_BRACKET
     ;
 
@@ -102,6 +108,7 @@ tagValue
 
 fromClause
     : FROM path (COMMA path)*
+    | FROM LR_BRACKET queryClause RR_BRACKET
     ;
 
 specialClause
@@ -126,6 +133,10 @@ groupByTimeClause
 
 groupByLevelClause
     : GROUP BY LEVEL OPERATOR_EQ INT (COMMA INT)*
+    ;
+
+asClause
+    : AS ID
     ;
 
 timeInterval
@@ -164,6 +175,7 @@ insertPath
 
 insertValuesSpec
     : (COMMA? insertMultiValue)*
+    | LR_BRACKET queryClause RR_BRACKET (TIME_OFFSET OPERATOR_EQ INT)?
     ;
 
 insertMultiValue
@@ -239,6 +251,8 @@ nodeName
     | POINTS
     | DATA
     | NULL
+    | LAST_VALUE
+    | FIRST_VALUE
     | REPLICA
     | IOTDB
     | INFLUXDB
@@ -255,6 +269,8 @@ nodeName
     | UDAF
     | UDTF
     | UDSF
+    | WITH
+    | TIME_OFFSET
     ;
 
 ip
@@ -528,6 +544,10 @@ WITH
     : W I T H
     ;
 
+TIME_OFFSET
+    : T I M E '_' O F F S E T
+    ;
+
 //============================
 // End of the keywords list
 //============================
@@ -548,6 +568,8 @@ OPERATOR_LTE : '<=';
 OPERATOR_NEQ : '!=' | '<>';
 
 OPERATOR_IN : I N;
+
+OPERATOR_LIKE: L I K E;
 
 OPERATOR_AND
     : A N D

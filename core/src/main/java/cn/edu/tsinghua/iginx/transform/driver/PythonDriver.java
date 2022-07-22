@@ -72,8 +72,8 @@ public class PythonDriver implements Driver {
         if (taskMeta == null) {
             throw new CreateWorkerException(String.format("Fail to load task info by task name: %s", name));
         }
-        if (!taskMeta.getIp().equals(config.getIp())) {
-            throw new CreateWorkerException(String.format("Fail to load task file, because current ip is: %s, and register ip is: %s", config.getIp(), taskMeta.getIp()));
+        if (!taskMeta.getIpSet().contains(config.getIp())) {
+            throw new CreateWorkerException(String.format("Fail to load task file, because current ip is: %s, and register ip is: %s", config.getIp(), config.getIp()));
         }
 
         String fileName = taskMeta.getFileName();

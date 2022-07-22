@@ -192,10 +192,7 @@ public class QueryResult {
         StringBuilder ret = new StringBuilder(" \"values\": [");
         int n = queryResultDatasets.get(num).getSize();
         for (int i = 0; i < n; i++) {
-            //聚合查询无时间显示
-            if(queryResultDatasets.get(num).getTimestamps().get(i)!=-1L)
-                ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
-            else ret.append(String.format("["));
+            ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[]) {
                 ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
             } else {

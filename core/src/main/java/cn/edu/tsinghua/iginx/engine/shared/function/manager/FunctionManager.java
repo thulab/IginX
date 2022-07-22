@@ -102,22 +102,22 @@ public class FunctionManager {
                     logger.error("unknown udf type: " + udfInfo[3]);
                     continue;
             }
-            metaList.add(new TransformTaskMeta(udfInfo[0], udfInfo[1], udfInfo[2], config.getIp(), udfType));
+            metaList.add(new TransformTaskMeta(udfInfo[0], udfInfo[1], udfInfo[2],
+                new HashSet<>(Collections.singletonList(config.getIp())), udfType));
         }
-//        List<TransformTaskMeta> metaList = Arrays.asList(
-//            new TransformTaskMeta("udf_min", "UDFMin", "udf_min.py", config.getIp(), UDFType.UDAF),
-//            new TransformTaskMeta("udf_max", "UDFMax", "udf_max.py", config.getIp(), UDFType.UDAF),
-//            new TransformTaskMeta("udf_sum", "UDFSum", "udf_sum.py", config.getIp(), UDFType.UDAF),
-//            new TransformTaskMeta("udf_avg", "UDFAvg", "udf_avg.py", config.getIp(), UDFType.UDAF),
-//            new TransformTaskMeta("udf_count", "UDFCount", "udf_count.py", config.getIp(), UDFType.UDAF)
-//        );
 
         for (TransformTaskMeta meta : metaList) {
             TransformTaskMeta taskMeta = metaManager.getTransformTask(meta.getName());
             if (taskMeta == null) {
                 metaManager.addTransformTask(meta);
+            } else if (!taskMeta.getIpSet().contains(config.getIp())) {
+                meta.addIp(config.getIp());
+                metaManager.updateTransformTask(meta);
             }
-            loadUDF(meta.getName());
+
+            if (!meta.getType().equals(UDFType.TRANSFORM)) {
+                loadUDF(meta.getName());
+            }
         }
     }
 
@@ -145,8 +145,8 @@ public class FunctionManager {
         if (taskMeta == null) {
             throw new IllegalArgumentException(String.format("UDF %s not registered", identifier));
         }
-        if (!taskMeta.getIp().equals(config.getIp())) {
-            throw new IllegalArgumentException(String.format("UDF %s registered in node ip=%s", identifier, taskMeta.getIp()));
+        if (!taskMeta.getIpSet().contains(config.getIp())) {
+            throw new IllegalArgumentException(String.format("UDF %s not registered in node ip=%s", identifier, config.getIp()));
         }
 
         String pythonCMD = config.getPythonCMD();
@@ -180,22 +180,6 @@ public class FunctionManager {
         } else {
             throw new IllegalArgumentException(String.format("UDF %s registered in type %s", identifier, taskMeta.getType()));
         }
-    }
-
-    public boolean isUDTF(String identifier) {
-        Function function = getFunction(identifier);
-        return function.getIdentifier().equals("py_udtf");
-    }
-
-    public boolean isUDAF(String identifier) {
-        Function function = getFunction(identifier);
-
-        return function.getIdentifier().equals("py_udaf");
-    }
-
-    public boolean isUDSF(String identifier) {
-        Function function = getFunction(identifier);
-        return function.getIdentifier().equals("py_udsf");
     }
 
     public boolean hasFunction(String identifier) {

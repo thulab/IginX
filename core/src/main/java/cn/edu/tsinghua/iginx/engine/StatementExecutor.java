@@ -11,6 +11,8 @@ import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.Result;
 import cn.edu.tsinghua.iginx.engine.shared.constraint.ConstraintManager;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
@@ -200,6 +202,7 @@ public class StatementExecutor {
     public void executeStatement(RequestContext ctx) {
         try {
             Statement statement = ctx.getStatement();
+            
             if (statement instanceof DataStatement) {
                 StatementType type = statement.getType();
                 switch (type) {
@@ -209,6 +212,8 @@ public class StatementExecutor {
                     case SHOW_TIME_SERIES:
                         process(ctx);
                         return;
+                    case INSERT_FROM_SELECT:
+                        processInsertFromSelect(ctx);
                     case COUNT_POINTS:
                         processCountPoints(ctx);
                         return;
@@ -245,6 +250,26 @@ public class StatementExecutor {
             }
         }
         throw new ExecutionException("Execute Error: can not construct a legal logical tree.");
+    }
+
+    private void processInsertFromSelect(RequestContext ctx) throws ExecutionException, PhysicalException {
+        InsertFromSelectStatement statement = (InsertFromSelectStatement) ctx.getStatement();
+
+        // step 1: select stage
+        SelectStatement selectStatement = statement.getSubSelectStatement();
+        RequestContext subSelectContext = new RequestContext(ctx.getSessionId(), selectStatement, true);
+        process(subSelectContext);
+
+        RowStream rowStream = subSelectContext.getResult().getResultStream();
+
+        // step 2: insert stage
+        InsertStatement insertStatement = statement.getSubInsertStatement();
+        parseOldTagsFromHeader(rowStream.getHeader(), insertStatement);
+        parseInsertValuesSpecFromRowStream(statement.getTimeOffset(), rowStream, insertStatement);
+        RequestContext subInsertContext = new RequestContext(ctx.getSessionId(), insertStatement, ctx.isUseStream());
+        process(subInsertContext);
+
+        ctx.setResult(subInsertContext.getResult());
     }
 
     private void processCountPoints(RequestContext ctx) throws ExecutionException, PhysicalException {
@@ -313,10 +338,16 @@ public class StatementExecutor {
             return;
         }
         List<String> paths = new ArrayList<>();
+        List<Map<String, String>> tagsList = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
         stream.getHeader().getFields().forEach(field -> {
             paths.add(field.getFullName());
             types.add(field.getType());
+            if (field.getTags() == null) {
+                tagsList.add(new HashMap<>());
+            } else {
+                tagsList.add(field.getTags());
+            }
         });
 
         List<Long> timestampList = new ArrayList<>();
@@ -325,6 +356,7 @@ public class StatementExecutor {
 
         boolean hasTimestamp = stream.getHeader().hasTimestamp();
         while (stream.hasNext()) {
+            // System.out.println("================setResultFromRowStream0");//lhz调试信息，可删除
             Row row = stream.next();
 
             Object[] rowValues = row.getValues();
@@ -342,19 +374,23 @@ public class StatementExecutor {
                 timestampList.add(row.getTimestamp());
             }
         }
+        // System.out.println("================setResultFromRowStream1");//lhz调试信息，可删除
         if (valuesList.isEmpty()) { // empty result
+            // System.out.println("================setResultFromRowStream2");//lhz调试信息，可删除
             setEmptyQueryResp(ctx);
             return;
         }
 
         Result result = new Result(RpcUtils.SUCCESS);
         if (timestampList.size() != 0) {
+            // System.out.println("================setResultFromRowStream3");//lhz调试信息，可删除
             Long[] timestamps = timestampList.toArray(new Long[timestampList.size()]);
             result.setTimestamps(timestamps);
         }
         result.setValuesList(valuesList);
         result.setBitmapList(bitmapList);
         result.setPaths(paths);
+        result.setTagsList(tagsList);
         result.setDataTypes(types);
         ctx.setResult(result);
 
@@ -369,6 +405,8 @@ public class StatementExecutor {
             return;
         }
         List<String> paths = new ArrayList<>();
+        // todo:need physical layer to support.
+        List<Map<String, String>> tagsList = new ArrayList<>();
         List<DataType> types = new ArrayList<>();
 
         while (stream.hasNext()) {
@@ -389,8 +427,69 @@ public class StatementExecutor {
 
         Result result = new Result(RpcUtils.SUCCESS);
         result.setPaths(paths);
+        result.setTagsList(tagsList);
         result.setDataTypes(types);
         ctx.setResult(result);
+    }
+
+    private void parseOldTagsFromHeader(Header header, InsertStatement insertStatement) throws PhysicalException, ExecutionException {
+        if (insertStatement.getPaths().size() != header.getFieldSize()) {
+            throw new ExecutionException("Execute Error: Insert path size and value size must be equal.");
+        }
+        List<Field> fields = header.getFields();
+        List<Map<String, String>> tagsList = insertStatement.getTagsList();
+        for (int i = 0; i < fields.size(); i++) {
+            Field field = fields.get(i);
+            Map<String, String> tags = tagsList.get(i);
+            Map<String, String> oldTags = field.getTags();
+            if (oldTags != null && !oldTags.isEmpty()) {
+                if (tags == null) {
+                    tagsList.set(i, oldTags);
+                } else {
+                    tags.putAll(oldTags);
+                }
+            }
+        }
+    }
+
+    private void parseInsertValuesSpecFromRowStream(long offset, RowStream rowStream, InsertStatement insertStatement) throws PhysicalException, ExecutionException {
+        Header header = rowStream.getHeader();
+        if (insertStatement.getPaths().size() != header.getFieldSize()) {
+            throw new ExecutionException("Execute Error: Insert path size and value size must be equal.");
+        }
+
+        List<DataType> types = new ArrayList<>();
+        header.getFields().forEach(field -> types.add(field.getType()));
+
+        List<Long> times = new ArrayList<>();
+        List<Object[]> rows = new ArrayList<>();
+        List<Bitmap> bitmaps = new ArrayList<>();
+
+        for (long i = 0; rowStream.hasNext(); i++) {
+            Row row = rowStream.next();
+            rows.add(row.getValues());
+
+            int rowLen = row.getValues().length;
+            Bitmap bitmap = new Bitmap(rowLen);
+            for (int j = 0; j < rowLen; j++) {
+                if (row.getValue(j) != null) {
+                    bitmap.mark(j);
+                }
+            }
+            bitmaps.add(bitmap);
+
+            if (header.hasTimestamp()) {
+                times.add(row.getTimestamp() + offset);
+            } else {
+                times.add(i + offset);
+            }
+        }
+        Object[][] values = rows.toArray(new Object[0][0]);
+
+        insertStatement.setTimes(times);
+        insertStatement.setValues(values);
+        insertStatement.setTypes(types);
+        insertStatement.setBitmaps(bitmaps);
     }
 
     private void before(RequestContext ctx, List<? extends Processor> list) {

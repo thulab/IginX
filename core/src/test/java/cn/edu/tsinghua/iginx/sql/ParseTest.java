@@ -25,6 +25,25 @@ public class ParseTest {
     }
 
     @Test
+    public void testParseInsertWithSubQuery() {
+        String insertStr = "INSERT INTO test.copy (timestamp, status, hardware, num) values (SELECT status, hardware, num FROM test) TIME_OFFSET = 5;";
+        InsertFromSelectStatement statement = (InsertFromSelectStatement) TestUtils.buildStatement(insertStr);
+
+        InsertStatement insertStatement = statement.getSubInsertStatement();
+        assertEquals("test.copy", insertStatement.getPrefixPath());
+
+        List<String> paths = Arrays.asList("test.copy.status", "test.copy.hardware", "test.copy.num");
+        assertEquals(paths, insertStatement.getPaths());
+
+        SelectStatement selectStatement = statement.getSubSelectStatement();
+
+        paths = Arrays.asList("test.status", "test.hardware", "test.num");
+        assertEquals(paths, selectStatement.getSelectedPaths());
+
+        assertEquals(5, statement.getTimeOffset());
+    }
+
+    @Test
     public void testParseFloatAndInteger() {
         String floatAndIntegerStr = "INSERT INTO us.d1 (timestamp, s1, s2) values (1627464728862, 10i, 1.1f), (1627464728863, 11i, 1.2f)";
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(floatAndIntegerStr);
@@ -46,7 +65,7 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [10, 100) BY 10ms, LEVEL = 2, 3;";
+        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [200, 300) BY 10ms, LEVEL = 2, 3;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
         assertTrue(statement.hasFunc());
@@ -54,25 +73,58 @@ public class ParseTest {
         assertTrue(statement.hasGroupByTime());
         assertEquals(SelectStatement.QueryType.DownSampleQuery, statement.getQueryType());
 
-        assertEquals(2, statement.getSelectedFuncsAndPaths().size());
-        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("sum"));
-        assertTrue(statement.getSelectedFuncsAndPaths().containsKey("count"));
+        assertEquals(2, statement.getSelectedFuncsAndExpressions().size());
+        assertTrue(statement.getSelectedFuncsAndExpressions().containsKey("sum"));
+        assertTrue(statement.getSelectedFuncsAndExpressions().containsKey("count"));
 
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("sum").get(0));
-        assertEquals("a.b.d", statement.getSelectedFuncsAndPaths().get("sum").get(1));
-        assertEquals("a.b.e", statement.getSelectedFuncsAndPaths().get("sum").get(2));
-        assertEquals("a.b.f", statement.getSelectedFuncsAndPaths().get("count").get(0));
-        assertEquals("a.b.g", statement.getSelectedFuncsAndPaths().get("count").get(1));
+        assertEquals("a.b.c", statement.getSelectedFuncsAndExpressions().get("sum").get(0).getPathName());
+        assertEquals("a.b.d", statement.getSelectedFuncsAndExpressions().get("sum").get(1).getPathName());
+        assertEquals("a.b.e", statement.getSelectedFuncsAndExpressions().get("sum").get(2).getPathName());
+        assertEquals("a.b.f", statement.getSelectedFuncsAndExpressions().get("count").get(0).getPathName());
+        assertEquals("a.b.g", statement.getSelectedFuncsAndExpressions().get("count").get(1).getPathName());
 
         assertEquals(Collections.singletonList("a.b"), statement.getFromPaths());
 
-//        assertEquals("((time > 100 && time < 1000) || (a.b.d == abc) || (a.b.c >= 666) || (((a.b.e < 10 && !((a.b.f < 10))))))", statement.getFilter().toString());
+        assertEquals("(((time > 100 && time < 1000) || a.b.d == \"abc\" || a.b.c >= \"666\" || (a.b.e < 10 && !a.b.f < 10)) && time >= 200 && time < 300)", statement.getFilter().toString());
 
-        assertEquals(10, statement.getStartTime());
-        assertEquals(100, statement.getEndTime());
+        assertEquals(200, statement.getStartTime());
+        assertEquals(300, statement.getEndTime());
         assertEquals(10L, statement.getPrecision());
 
         assertEquals(Arrays.asList(2, 3), statement.getLayers());
+    }
+
+    @Test
+    public void testFilter() {
+        String selectStr = "SELECT a FROM root WHERE a > 100;";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Collections.singletonList("root.a")), statement.getPathSet());
+        assertEquals("root.a > 100", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE a > 10;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("(c.a > 10 && d.a > 10)", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE a > 10 AND b < 20;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("((c.a > 10 && d.a > 10) && (c.b < 20 && d.b < 20))", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE INTACT(c.a) > 10 AND INTACT(d.b) < 20;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("(c.a > 10 && d.b < 20)", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM root WHERE a > b;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("root.a", "root.b")), statement.getPathSet());
+        assertEquals("root.a > root.b", statement.getFilter().toString());
+
+        selectStr = "SELECT a, b FROM c, d WHERE a > b;";
+        statement = (SelectStatement) TestUtils.buildStatement(selectStr);
+        assertEquals(new HashSet<>(Arrays.asList("c.a", "c.b", "d.a", "d.b")), statement.getPathSet());
+        assertEquals("(c.a > c.b && c.a > d.b && d.a > c.b && d.a > d.b)", statement.getFilter().toString());
     }
 
     @Test
@@ -85,7 +137,7 @@ public class ParseTest {
 
         selectStr = "SELECT SUM(c) FROM a.b GROUP BY LEVEL = 1, 2;";
         statement = (SelectStatement) TestUtils.buildStatement(selectStr);
-        assertEquals("a.b.c", statement.getSelectedFuncsAndPaths().get("sum").get(0));
+        assertEquals("a.b.c", statement.getSelectedFuncsAndExpressions().get("sum").get(0).getPathName());
         assertEquals(Arrays.asList(1, 2), statement.getLayers());
     }
 
@@ -168,6 +220,20 @@ public class ParseTest {
         statement = (SelectStatement) TestUtils.buildStatement(selectWithLimitAndOffset03);
         assertEquals(10, statement.getLimit());
         assertEquals(2, statement.getOffset());
+    }
+
+    @Test
+    public void testSubQueryClause() {
+        String selectWithSubQuery = "SELECT res.max_a FROM (SELECT max(a) AS max_a FROM root AS res);";
+        SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectWithSubQuery);
+        assertEquals(Collections.singletonList("res.max_a"), statement.getSelectedPaths());
+
+        SelectStatement subStatement = statement.getSubStatement();
+
+        Expression expression = subStatement.getSelectedFuncsAndExpressions().get("max").get(0);
+        assertEquals("root.a", expression.getPathName());
+        assertEquals("max", expression.getFuncName());
+        assertEquals("res.max_a", expression.getAlias());
     }
 
     @Test

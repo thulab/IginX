@@ -1479,7 +1479,6 @@ class QueryDataReq(object):
      - paths
      - startTime
      - endTime
-     - tagsList
 
     """
 
@@ -1552,19 +1551,6 @@ class QueryDataReq(object):
         if self.endTime is not None:
             oprot.writeFieldBegin('endTime', TType.I64, 4)
             oprot.writeI64(self.endTime)
-            oprot.writeFieldEnd()
-        if self.tagsList is not None:
-            oprot.writeFieldBegin('tagsList', TType.MAP, 5)
-            oprot.writeMapBegin(TType.MAP, len(self.tagsList))
-            for iter55 in self.tagsList:
-                oprot.writeMapBegin(TType.STRING, TType.LIST, len(iter55))
-                for kiter56, viter57 in iter55.items():
-                    oprot.writeString(kiter56.encode('utf-8') if sys.version_info[0] == 2 else kiter56)
-                    oprot.writeListBegin(TType.STRING, len(viter57))
-                    for iter58 in viter57.items():
-                        oprot.writeString(iter58.encode('utf-8') if sys.version_info[0] == 2 else iter58)
-                    oprot.writeListEnd()
-            oprot.writeMapEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -4901,7 +4887,6 @@ QueryDataReq.thrift_spec = (
     (2, TType.LIST, 'paths', (TType.STRING, 'UTF8', False), None, ),  # 2
     (3, TType.I64, 'startTime', None, None, ),  # 3
     (4, TType.I64, 'endTime', None, None, ),  # 4
-    (5, TType.MAP, 'tagList', (TType.STRING, 'UTF8', (TType.LIST, 'UTF8', False), False), None, ),  # 5
 )
 all_structs.append(QueryDataResp)
 QueryDataResp.thrift_spec = (

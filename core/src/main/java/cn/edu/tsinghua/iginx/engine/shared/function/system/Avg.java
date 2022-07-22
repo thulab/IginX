@@ -80,11 +80,7 @@ public class Avg implements SetMappingFunction {
         }
         String target = param.getBinaryVAsString();
         List<Field> fields = rows.getHeader().getFields();
-        for (Field field : fields) {
-            if (!DataTypeUtils.isNumber(field.getType())) {
-                throw new IllegalArgumentException("only number can calculate average");
-            }
-        }
+
         Pattern pattern = Pattern.compile(StringUtils.reformatPath(target) + ".*");
         List<Field> targetFields = new ArrayList<>();
         List<Integer> indices = new ArrayList<>();
@@ -107,6 +103,12 @@ public class Avg implements SetMappingFunction {
                     }
                 }
                 indices.add(i);
+            }
+        }
+
+        for (Field field : targetFields) {
+            if (!DataTypeUtils.isNumber(field.getType())) {
+                throw new IllegalArgumentException("only number can calculate average");
             }
         }
 

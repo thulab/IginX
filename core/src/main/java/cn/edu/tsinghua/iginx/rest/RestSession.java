@@ -22,9 +22,6 @@ import cn.edu.tsinghua.iginx.cluster.IginxWorker;
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.conf.Constants;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
-import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.session.SessionAggregateQueryDataSet;
@@ -170,10 +167,10 @@ public class RestSession {
             logger.error("The sizes of paths, valuesList and dataTypeList should be equal.");
             return;
         }
-        // if (tagsList != null && paths.size() != tagsList.size()) {
-        //     logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
-        //     return;
-        // }
+        if (tagsList != null && paths.size() != tagsList.size()) {
+            logger.error("The sizes of paths, valuesList, dataTypeList and tagsList should be equal.");
+            return;
+        }
 
         Integer[] index = new Integer[timestamps.length];
         for (int i = 0; i < timestamps.length; i++) {
@@ -321,14 +318,15 @@ public class RestSession {
         RpcUtils.verifySuccess(status);
     }
 
-    public void deleteDataInColumn(String path, long startTime, long endTime) {
+    public void deleteDataInColumn(String path, Map<String, List<String>> tagList, long startTime, long endTime) {
         List<String> paths = new ArrayList<>();
         paths.add(path);
-        deleteDataInColumns(paths, startTime, endTime);
+        deleteDataInColumns(paths, tagList, startTime, endTime);
     }
 
-    public void deleteDataInColumns(List<String> paths, long startTime, long endTime) {
+    public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime) {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
+        req.setTagsList(tagList);
 
         Status status;
         do {
@@ -341,42 +339,15 @@ public class RestSession {
         } while (checkRedirect(status));
     }
 
-    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, Map<String, String> funcParaKV) {
-        if (paths.isEmpty() || startTime > endTime) {
-            logger.error("Invalid query request!");
-            return null;
-        }
-        String type = funcParaKV.get("TYPE");
-        QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
-        req.setTagsList(tagList);
-        req.setAggregatorType(type);
-        req.setFromRest(true);
-        if(funcParaKV.containsKey("DUR")){
-            long dur = Long.valueOf(funcParaKV.get("DUR"));
-            req.setDur(dur);
-        }
-
-        QueryDataResp resp;
-
-        do {
-            lock.readLock().lock();
-            try {
-                resp = client.queryData(req);
-            } finally {
-                lock.readLock().unlock();
-            }
-        } while (checkRedirect(resp.status));
-
-        return new SessionQueryDataSet(resp);
-    }
-
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList) {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
             return null;
         }
+        // System.out.println("================queryData endTime "+endTime);//lhz调试信息，可删除
         QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
-        req.setTagsList(tagList);
+        if(tagList.size()!=0)
+            req.setTagsList(tagList);
 
         QueryDataResp resp;
 
@@ -392,9 +363,10 @@ public class RestSession {
         return new SessionQueryDataSet(resp);
     }
 
-    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType) {
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, AggregateType aggregateType) {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
-
+        req.setTagsList(tagList);
+        
         AggregateQueryResp resp;
         do {
             lock.readLock().lock();
@@ -408,9 +380,9 @@ public class RestSession {
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
 
-    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision) {
-        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime,
-            aggregateType, precision);
+    public SessionQueryDataSet downsampleQuery(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, AggregateType aggregateType, long precision) {
+        DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime, aggregateType, precision);
+        req.setTagsList(tagList);
 
         DownsampleQueryResp resp;
 
