@@ -18,6 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.conf;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Config {
 
     private String ip = "0.0.0.0";
@@ -141,7 +144,7 @@ public class Config {
 
     private boolean needInitBasicUDFFunctions = true;
 
-    private String udfList = "";
+    private List<String> udfList = new ArrayList<>();
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -623,11 +626,11 @@ public class Config {
         this.needInitBasicUDFFunctions = needInitBasicUDFFunctions;
     }
 
-    public String getUdfList() {
+    public List<String> getUdfList() {
         return udfList;
     }
 
-    public void setUdfList(String udfList) {
+    public void setUdfList(List<String> udfList) {
         this.udfList = udfList;
     }
 }

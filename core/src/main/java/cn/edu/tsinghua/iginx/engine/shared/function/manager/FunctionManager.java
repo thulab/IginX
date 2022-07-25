@@ -77,15 +77,15 @@ public class FunctionManager {
 
     private void initBasicUDFFunctions() {
         List<TransformTaskMeta> metaList = new ArrayList<>();
-        String[] udfList = config.getUdfList().split(",");
+        List<String> udfList = config.getUdfList();
         for (String udf: udfList) {
-            String[] udfInfo = udf.split("#");
+            String[] udfInfo = udf.split(",");
             if (udfInfo.length != 4) {
                 logger.error("udf info len must be 4.");
                 continue;
             }
             UDFType udfType;
-            switch (udfInfo[3].toLowerCase().trim()) {
+            switch (udfInfo[0].toLowerCase().trim()) {
                 case "udaf":
                     udfType = UDFType.UDAF;
                     break;
@@ -99,10 +99,10 @@ public class FunctionManager {
                     udfType = UDFType.TRANSFORM;
                     break;
                 default:
-                    logger.error("unknown udf type: " + udfInfo[3]);
+                    logger.error("unknown udf type: " + udfInfo[0]);
                     continue;
             }
-            metaList.add(new TransformTaskMeta(udfInfo[0], udfInfo[1], udfInfo[2],
+            metaList.add(new TransformTaskMeta(udfInfo[1], udfInfo[2], udfInfo[3],
                 new HashSet<>(Collections.singletonList(config.getIp())), udfType));
         }
 
