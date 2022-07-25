@@ -26,7 +26,11 @@ public class Constants {
 
     public static final String DRIVER = "IGINX_DRIVER";
 
+    public static final String UDF_LIST = "IGINX_UDF_LIST";
+
     public static final String CONFIG_FILE = "conf/config.properties";
+
+    public static final String UDF_LIST_FILE = "conf/udf_list";
 
     public static final String DRIVER_DIR = "driver";
 
@@ -48,5 +52,12 @@ public class Constants {
 
     public static final String DUMMY = "dummy";
 
+    public static final String UDAF = "udaf";
+
+    public static final String UDTF = "udtf";
+
+    public static final String UDSF = "udsf";
+
+    public static final String TRANSFORM = "transform";
 }
 

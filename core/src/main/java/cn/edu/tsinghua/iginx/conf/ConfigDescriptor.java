@@ -22,9 +22,7 @@ import cn.edu.tsinghua.iginx.utils.EnvUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Properties;
 
 public class ConfigDescriptor {
@@ -40,6 +38,10 @@ public class ConfigDescriptor {
         if (config.isEnableEnvParameter()) {
             logger.info("load parameters from env.");
             loadPropsFromEnv(); // 如果在环境变量中设置了相关参数，则会覆盖配置文件中设置的参数
+        }
+        if (config.isNeedInitBasicUDFFunctions()) {
+            logger.info("load UDF list from file.");
+            loadUDFListFromFile();
         }
     }
 
@@ -132,8 +134,7 @@ public class ConfigDescriptor {
             config.setTransformTaskThreadPoolSize(Integer.parseInt(properties.getProperty("transformTaskThreadPoolSize", "10")));
             config.setTransformMaxRetryTimes(Integer.parseInt(properties.getProperty("transformMaxRetryTimes", "3")));
 
-            config.setNeedInitBasicUDFFunctions(Boolean.parseBoolean(properties.getProperty("needInitBasicUDFFunctions", "true")));
-            config.setUdfList(properties.getProperty("udfList", ""));
+            config.setNeedInitBasicUDFFunctions(Boolean.parseBoolean(properties.getProperty("needInitBasicUDFFunctions", "false")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -197,9 +198,26 @@ public class ConfigDescriptor {
         config.setTransformTaskThreadPoolSize(EnvUtils.loadEnv("transformTaskThreadPoolSize", config.getTransformTaskThreadPoolSize()));
         config.setTransformMaxRetryTimes(EnvUtils.loadEnv("transformMaxRetryTimes", config.getTransformMaxRetryTimes()));
         config.setNeedInitBasicUDFFunctions(EnvUtils.loadEnv("needInitBasicUDFFunctions", config.isNeedInitBasicUDFFunctions()));
-        config.setUdfList(EnvUtils.loadEnv("udfList", config.getUdfList()));
     }
 
+    private void loadUDFListFromFile() {
+        try (InputStream in = new FileInputStream(EnvUtils.loadEnv(Constants.UDF_LIST, Constants.UDF_LIST_FILE))) {
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(in));
+
+            String line = null;
+            while ((line = bufferedReader.readLine()) != null) {
+                line = line.trim();
+                if (line.toLowerCase().startsWith(Constants.UDAF) ||
+                    line.toLowerCase().startsWith(Constants.UDTF) ||
+                    line.toLowerCase().startsWith(Constants.UDSF) ||
+                    line.toLowerCase().startsWith(Constants.TRANSFORM)) {
+                    config.getUdfList().add(line);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Fail to load udf list: ", e);
+        }
+    }
 
     public Config getConfig() {
         return config;
