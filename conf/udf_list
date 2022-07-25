@@ -1,0 +1,22 @@
+# 每一行代表一个 UDF/Transfrom 实例
+# 函数类型,函数别名(用于SQL),类名,文件名
+UDAF,udf_min,UDFMin,udf_min.py
+UDAF,udf_max,UDFMax,udf_max.py
+UDAF,udf_sum,UDFSum,udf_sum.py
+UDAF,udf_avg,UDFAvg,udf_avg.py
+UDAF,udf_count,UDFCount,udf_count.py
+
+UDTF,cos,UDFCos,udtf_cos.py
+
+TRANSFORM,head,MyTransformer,transformer_head.py
+TRANSFORM,bool,MyTransformer,transformer_bool.py
+TRANSFORM,apply,MyTransformer,transformer_apply.py
+TRANSFORM,between_time,MyTransformer,transformer_between_time.py
+TRANSFORM,bottom,MyTransformer,transformer_bottom.py
+TRANSFORM,distinct,MyTransformer,transformer_distinct.py
+TRANSFORM,filter,MyTransformer,transformer_filter.py
+TRANSFORM,loc,MyTransformer,transformer_loc.py
+TRANSFORM,mean,MyTransformer,transformer_mean.py
+TRANSFORM,skew,MyTransformer,transformer_skew.py
+TRANSFORM,sortindex,MyTransformer,transformer_sortindex.py
+TRANSFORM,spread,MyTransformer,transformer_spread.py
