@@ -48,6 +48,12 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
     print('  ExecuteStatementResp executeStatement(ExecuteStatementReq req)')
     print('  FetchResultsResp fetchResults(FetchResultsReq req)')
     print('  Status closeStatement(CloseStatementReq req)')
+    print('  CommitTransformJobResp commitTransformJob(CommitTransformJobReq req)')
+    print('  QueryTransformJobStatusResp queryTransformJobStatus(QueryTransformJobStatusReq req)')
+    print('  Status cancelTransformJob(CancelTransformJobReq req)')
+    print('  Status registerTask(RegisterTaskReq req)')
+    print('  Status dropTask(DropTaskReq req)')
+    print('  GetRegisterTaskInfoResp getRegisterTaskInfo(GetRegisterTaskInfoReq req)')
     print('')
     sys.exit(0)
 
@@ -270,6 +276,42 @@ elif cmd == 'closeStatement':
         print('closeStatement requires 1 args')
         sys.exit(1)
     pp.pprint(client.closeStatement(eval(args[0]),))
+
+elif cmd == 'commitTransformJob':
+    if len(args) != 1:
+        print('commitTransformJob requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.commitTransformJob(eval(args[0]),))
+
+elif cmd == 'queryTransformJobStatus':
+    if len(args) != 1:
+        print('queryTransformJobStatus requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.queryTransformJobStatus(eval(args[0]),))
+
+elif cmd == 'cancelTransformJob':
+    if len(args) != 1:
+        print('cancelTransformJob requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.cancelTransformJob(eval(args[0]),))
+
+elif cmd == 'registerTask':
+    if len(args) != 1:
+        print('registerTask requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.registerTask(eval(args[0]),))
+
+elif cmd == 'dropTask':
+    if len(args) != 1:
+        print('dropTask requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.dropTask(eval(args[0]),))
+
+elif cmd == 'getRegisterTaskInfo':
+    if len(args) != 1:
+        print('getRegisterTaskInfo requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.getRegisterTaskInfo(eval(args[0]),))
 
 else:
     print('Unrecognized method %s' % cmd)

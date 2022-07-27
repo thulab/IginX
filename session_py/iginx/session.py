@@ -156,13 +156,15 @@ class Session(object):
         return resp.replicaNum
 
 
-    def insert_row_records(self, paths, timestamps, values_list, data_type_list):
+    def insert_row_records(self, paths, timestamps, values_list, data_type_list, tags_list=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
             raise RuntimeError("the sizes of paths and data_type_list should be equal")
         if len(timestamps) != len(values_list):
             raise RuntimeError("the sizes of timestamps and values_list should be equal")
+        if tags_list is not None and len(tags_list) != len(paths):
+            raise RuntimeError("the sizes of paths, values_list, tags_list and data_type_list should be equal")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -178,8 +180,14 @@ class Session(object):
         paths = sorted(paths)
         # 重排数据类型
         sorted_data_type_list = []
+        sorted_tags_list = []
         for i in index:
-            sorted_data_type_list.append(data_type_list[index[i]])
+            sorted_data_type_list.append(data_type_list[i])
+
+        if tags_list is not None:
+            for i in index:
+                sorted_tags_list.append(tags_list[i])
+
         # 重排数据
         for i in range(len(sorted_values_list)):
             values = []
@@ -201,18 +209,20 @@ class Session(object):
 
 
         req = InsertRowRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps), valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
         status = self.__client.insertRowRecords(req)
         Session.verify_status(status)
 
 
-    def insert_non_aligned_row_records(self , paths, timestamps, values_list, data_type_list):
+    def insert_non_aligned_row_records(self , paths, timestamps, values_list, data_type_list, tags_list=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
             raise RuntimeError("the sizes of paths and data_type_list should be equal")
         if len(timestamps) != len(values_list):
             raise RuntimeError("the sizes of timestamps and values_list should be equal")
+        if tags_list is not None and len(tags_list) != len(paths):
+            raise RuntimeError("the sizes of paths, values_list, tags_list and data_type_list should be equal")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -228,8 +238,14 @@ class Session(object):
         paths = sorted(paths)
         # 重排数据类型
         sorted_data_type_list = []
+        sorted_tags_list = []
         for i in index:
             sorted_data_type_list.append(data_type_list[i])
+
+        if tags_list is not None:
+            for i in index:
+                sorted_tags_list.append(tags_list[i])
+
         # 重排数据
         for i in range(len(sorted_values_list)):
             values = []
@@ -250,18 +266,20 @@ class Session(object):
             bitmap_buffer_list.append(bitmap_to_bytes(bitmap.get_bytes()))
 
         req = InsertNonAlignedRowRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps), valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
         status = self.__client.insertNonAlignedRowRecords(req)
         Session.verify_status(status)
 
 
-    def insert_column_records(self, paths, timestamps, values_list, data_type_list):
+    def insert_column_records(self, paths, timestamps, values_list, data_type_list, tags_list=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
             raise RuntimeError("the sizes of paths and data_type_list should be equal")
         if len(paths) != len(values_list):
             raise RuntimeError("the sizes of paths and values_list should be equal")
+        if tags_list is not None and len(paths) != len(tags_list):
+            raise RuntimeError("the sizes of paths, valuesList, dataTypeList and tagsList should be equal")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -280,9 +298,13 @@ class Session(object):
         # 重排数据类型
         sorted_values_list = []
         sorted_data_type_list = []
+        sorted_tags_list = []
         for i in index:
             sorted_values_list.append(values_list[index[i]])
             sorted_data_type_list.append(data_type_list[index[i]])
+        if tags_list is not None:
+            for i in index:
+                sorted_tags_list.append(tags_list[i])
 
         values_buffer_list = []
         bitmap_buffer_list = []
@@ -297,18 +319,20 @@ class Session(object):
 
         req = InsertColumnRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps),
                                   valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
         status = self.__client.insertColumnRecords(req)
         Session.verify_status(status)
 
 
-    def insert_non_aligned_column_records(self, paths, timestamps, values_list, data_type_list):
+    def insert_non_aligned_column_records(self, paths, timestamps, values_list, data_type_list, tags_list=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
             raise RuntimeError("the sizes of paths and data_type_list should be equal")
         if len(paths) != len(values_list):
             raise RuntimeError("the sizes of paths and values_list should be equal")
+        if tags_list is not None and len(paths) != len(tags_list):
+            raise RuntimeError("the sizes of paths, valuesList, dataTypeList and tagsList should be equal")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -327,9 +351,13 @@ class Session(object):
         # 重排数据类型
         sorted_values_list = []
         sorted_data_type_list = []
+        sorted_tags_list = []
         for i in index:
             sorted_values_list.append(values_list[index[i]])
             sorted_data_type_list.append(data_type_list[index[i]])
+        if tags_list is not None:
+            for i in index:
+                sorted_tags_list.append(tags_list[i])
 
         values_buffer_list = []
         bitmap_buffer_list = []
@@ -344,7 +372,7 @@ class Session(object):
 
         req = InsertNonAlignedColumnRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps),
                                   valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
         status = self.__client.insertNonAlignedColumnRecords(req)
         Session.verify_status(status)
 
