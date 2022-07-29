@@ -55,7 +55,7 @@ public class DataViewWrapper {
             TreeMap<String, String> sortedTags = new TreeMap<>(tags);
             StringBuilder pathBuilder = new StringBuilder();
             sortedTags.forEach((tagKey, tagValue) -> {
-                pathBuilder.append('.').append(tagKey).append('.').append(tagValue);
+                pathBuilder.append('.').append(TagKVUtils.tagNameAnnotation).append(tagKey).append('.').append(tagValue);
             });
             path += pathBuilder.toString();
         }

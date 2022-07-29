@@ -42,6 +42,7 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.iotdb.query.entity.IoTDBQueryRowStream;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.ClearEmptyRowStreamWrapper;
 import cn.edu.tsinghua.iginx.iotdb.tools.DataViewWrapper;
@@ -72,6 +73,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.iotdb.tools.DataTypeTransformer.toIoTDB;
@@ -108,6 +110,8 @@ public class IoTDBStorage implements IStorage {
     private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
 
     private static final String DOES_NOT_EXISTED = "does not exist";
+
+    private static final String HAS_NOT_EXECUTED_QUERY = "Has not executed query";
 
     private final SessionPool sessionPool;
 
@@ -659,13 +663,20 @@ public class IoTDBStorage implements IStorage {
             }
         } else {
             try {
-                List<String> paths = delete.getPatterns().stream().map(x -> PREFIX + storageUnit + "." + x).collect(Collectors.toList());
-                for (TimeRange timeRange: delete.getTimeRanges()) {
-                    sessionPool.deleteData(paths, timeRange.getActualBeginTime(), timeRange.getActualEndTime());
+                List<String> paths = determineDeletePathList(storageUnit, delete);
+                if (paths.size() != 0) {
+                    for (TimeRange timeRange: delete.getTimeRanges()) {
+                        sessionPool.deleteData(paths, timeRange.getActualBeginTime(), timeRange.getActualEndTime());
+                    }
                 }
             } catch (IoTDBConnectionException | StatementExecutionException e) {
                 logger.warn("encounter error when delete data: " + e.getMessage());
                 if (!e.getMessage().contains(DOES_NOT_EXISTED)) {
+                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete data task in iotdb11 failure", e));
+                }
+            } catch (PhysicalException e) {
+                logger.warn("encounter error when delete data: " + e.getMessage());
+                if (!e.getCause().getMessage().contains(HAS_NOT_EXECUTED_QUERY)) {
                     return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete data task in iotdb11 failure", e));
                 }
             }
@@ -673,4 +684,25 @@ public class IoTDBStorage implements IStorage {
         return new TaskExecuteResult(null, null);
     }
 
+    private List<String> determineDeletePathList(String storageUnit, Delete delete) throws PhysicalException {
+        if (delete.getTagFilter() == null) {
+            return delete.getPatterns().stream().map(x -> PREFIX + storageUnit + "." + x).collect(Collectors.toList());
+        } else {
+            List<String> patterns = delete.getPatterns();
+            TagFilter tagFilter = delete.getTagFilter();
+            List<Timeseries> timeSeries = getTimeSeries();
+
+            List<String> pathList = new ArrayList<>();
+            for (Timeseries ts: timeSeries) {
+                for (String pattern : patterns) {
+                    if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath()) &&
+                        TagKVUtils.match(ts.getTags(), tagFilter)) {
+                        pathList.add(PREFIX + storageUnit + "." + ts.getPhysicalPath());
+                        break;
+                    }
+                }
+            }
+            return pathList;
+        }
+    }
 }

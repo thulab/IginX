@@ -25,6 +25,23 @@ import java.util.TreeMap;
 
 public class TagKVUtils {
 
+    public static final String tagNameAnnotation = "@";
+
+    public static String toPhysicalPath(String name, Map<String, String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            return name;
+        } else {
+            StringBuilder builder = new StringBuilder();
+            builder.append(name);
+
+            TreeMap<String, String> sortedTags = new TreeMap<>(tags);
+            sortedTags.forEach((tagKey, tagValue) ->
+                builder.append('.').append(tagNameAnnotation).append(tagKey).append('.').append(tagValue)
+            );
+            return builder.toString();
+        }
+    }
+
     public static String toFullName(String name, Map<String, String> tags) {
         if (tags == null || tags.isEmpty()) {
             return name;

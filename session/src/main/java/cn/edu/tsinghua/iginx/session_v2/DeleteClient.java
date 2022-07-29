@@ -21,6 +21,8 @@ package cn.edu.tsinghua.iginx.session_v2;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public interface DeleteClient {
 
@@ -35,5 +37,11 @@ public interface DeleteClient {
     void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime) throws IginXException;
 
     void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime) throws IginXException;
+
+    void deleteMeasurementData(final String measurement, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException;
+
+    void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException;
+
+    void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException;
 
 }

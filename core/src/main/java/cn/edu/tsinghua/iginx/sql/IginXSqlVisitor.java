@@ -98,6 +98,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             List<TimeRange> timeRanges = new ArrayList<>(Collections.singletonList(new TimeRange(0, Long.MAX_VALUE)));
             deleteStatement.setTimeRanges(timeRanges);
         }
+        // parse tag filter
+        if (ctx.withClause() != null) {
+            TagFilter tagFilter = parseOrTagExpression(ctx.withClause().orTagExpression());
+            deleteStatement.setTagFilter(tagFilter);
+        }
         return deleteStatement;
     }
 

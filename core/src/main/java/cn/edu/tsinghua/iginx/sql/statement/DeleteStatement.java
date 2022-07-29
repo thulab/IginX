@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.sql.statement;
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 
 import java.util.ArrayList;
@@ -10,15 +11,18 @@ import java.util.List;
 
 public class DeleteStatement extends DataStatement {
 
+    private boolean deleteAll;  // delete data & path
+
     private List<String> paths;
     private List<TimeRange> timeRanges;
-    private boolean deleteAll;  // delete data & path
+    private TagFilter tagFilter;
 
     public DeleteStatement() {
         this.statementType = StatementType.DELETE;
         this.paths = new ArrayList<>();
         this.timeRanges = new ArrayList<>();
         this.deleteAll = false;
+        this.tagFilter = null;
     }
 
     public DeleteStatement(List<String> paths, long startTime, long endTime) {
@@ -27,6 +31,7 @@ public class DeleteStatement extends DataStatement {
         this.timeRanges = new ArrayList<>();
         this.timeRanges.add(new TimeRange(startTime, endTime));
         this.deleteAll = false;
+        this.tagFilter = null;
     }
 
     public DeleteStatement(List<String> paths) {
@@ -34,6 +39,7 @@ public class DeleteStatement extends DataStatement {
         this.paths = paths;
         this.timeRanges = new ArrayList<>();
         this.deleteAll = true;
+        this.tagFilter = null;
     }
 
     public List<String> getPaths() {
@@ -50,6 +56,14 @@ public class DeleteStatement extends DataStatement {
 
     public void setTimeRanges(List<TimeRange> timeRanges) {
         this.timeRanges = timeRanges;
+    }
+
+    public TagFilter getTagFilter() {
+        return tagFilter;
+    }
+
+    public void setTagFilter(TagFilter tagFilter) {
+        this.tagFilter = tagFilter;
     }
 
     public void setTimeRangesByFilter(Filter filter) {
