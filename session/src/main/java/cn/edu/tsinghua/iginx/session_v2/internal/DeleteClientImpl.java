@@ -28,9 +28,7 @@ import cn.edu.tsinghua.iginx.thrift.Status;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
 import org.apache.thrift.TException;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public class DeleteClientImpl extends AbstractFunctionClient implements DeleteClient {
 
@@ -74,16 +72,35 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
 
     @Override
     public void deleteMeasurementData(String measurement, long startTime, long endTime) throws IginXException {
-        Arguments.checkNotNull(measurement, "measurement");
-        deleteMeasurementsData(Collections.singletonList(measurement), startTime, endTime);
+        deleteMeasurementData(measurement, startTime, endTime, null);
     }
 
     @Override
     public void deleteMeasurementsData(Collection<String> measurements, long startTime, long endTime) throws IginXException {
+        deleteMeasurementsData(measurements, startTime, endTime, null);
+    }
+
+    @Override
+    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime) throws IginXException {
+        deleteMeasurementData(measurementType, startTime, endTime, null);
+    }
+
+    @Override
+    public void deleteMeasurementData(String measurement, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException {
+        Arguments.checkNotNull(measurement, "measurement");
+        deleteMeasurementsData(Collections.singletonList(measurement), startTime, endTime, tagsList);
+    }
+
+    @Override
+    public void deleteMeasurementsData(Collection<String> measurements, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException {
         Arguments.checkNotNull(measurements, "measurements");
         measurements.forEach(measurement -> Arguments.checkNotNull(measurement, "measurement"));
 
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, MeasurementUtils.mergeAndSortMeasurements(new ArrayList<>(measurements)), startTime, endTime);
+
+        if (tagsList != null && !tagsList.isEmpty()) {
+            req.setTagsList(tagsList);
+        }
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();
@@ -97,9 +114,9 @@ public class DeleteClientImpl extends AbstractFunctionClient implements DeleteCl
     }
 
     @Override
-    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime) throws IginXException {
+    public void deleteMeasurementData(Class<?> measurementType, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException {
         Arguments.checkNotNull(measurementType, "measurementType");
         Collection<String> measurements = measurementMapper.toMeasurements(measurementType);
-        deleteMeasurementsData(measurements, startTime, endTime);
+        deleteMeasurementsData(measurements, startTime, endTime, tagsList);
     }
 }

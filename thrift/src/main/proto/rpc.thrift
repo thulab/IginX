@@ -175,6 +175,7 @@ struct DeleteDataInColumnsReq {
     2: required list<string> paths
     3: required i64 startTime
     4: required i64 endTime
+    5: optional map<string, list<string>> tagsList
 }
 
 struct QueryDataSet {

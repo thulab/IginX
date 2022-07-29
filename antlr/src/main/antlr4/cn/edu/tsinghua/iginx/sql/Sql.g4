@@ -6,7 +6,7 @@ sqlStatement
 
 statement
     : INSERT INTO path tagList? insertColumnsSpec VALUES insertValuesSpec #insertStatement
-    | DELETE FROM path (COMMA path)* whereClause? #deleteStatement
+    | DELETE FROM path (COMMA path)* whereClause? withClause? #deleteStatement
     | queryClause #selectStatement
     | COUNT POINTS #countPointsStatement
     | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement

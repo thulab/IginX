@@ -114,7 +114,7 @@ public class OpenTSDBStorageTest {
         List<TimeRange> timeRanges = new ArrayList<>(Collections.singletonList(new TimeRange(START_TIME + 20, END_TIME - 20)));
         FragmentMeta fragment = new FragmentMeta(null, null, START_TIME, END_TIME);
         FragmentSource source = new FragmentSource(fragment);
-        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Delete(source, timeRanges, patterns)));
+        StoragePhysicalTask task = new StoragePhysicalTask(Collections.singletonList(new Delete(source, timeRanges, patterns, null)));
         task.setStorageUnit(DU);
         this.storage.execute(task);
 

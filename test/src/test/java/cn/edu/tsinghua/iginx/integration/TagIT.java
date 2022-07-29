@@ -182,6 +182,83 @@ public class TagIT {
     }
 
     @Test
+    public void testDeleteWithTag() {
+        String statement = "SELECT s FROM ln.*;";
+        String expected = "ResultSets:\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "| 100|     true|            null|                   null|                   null|\n" +
+            "| 400|     null|           false|                   null|                   null|\n" +
+            "|1600|     null|            null|                   null|                   true|\n" +
+            "|3200|     null|            null|                   true|                   null|\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(statement, expected);
+
+        statement = "DELETE FROM ln.*.s WHERE time > 10 WITH t1=v1;";
+        execute(statement);
+
+        statement = "SELECT s FROM ln.*;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "| 100|     true|            null|                   null|                   null|\n"
+                + "|1600|     null|            null|                   null|                   true|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testDeleteWithMultiTags() {
+        String statement = "SELECT s FROM ln.*;";
+        String expected = "ResultSets:\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "| 100|     true|            null|                   null|                   null|\n" +
+            "| 400|     null|           false|                   null|                   null|\n" +
+            "|1600|     null|            null|                   null|                   true|\n" +
+            "|3200|     null|            null|                   true|                   null|\n" +
+            "+----+---------+----------------+-----------------------+-----------------------+\n" +
+            "Total line number = 4\n";
+        executeAndCompare(statement, expected);
+
+        statement = "DELETE FROM ln.*.s WHERE time > 10 WITH t1=v1 AND t2=vv2;";
+        execute(statement);
+
+        statement = "SELECT s FROM ln.*;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "| 100|     true|            null|                   null|                   null|\n"
+                + "| 400|     null|           false|                   null|                   null|\n"
+                + "|1600|     null|            null|                   null|                   true|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+
+        statement = "DELETE FROM ln.*.s WHERE time > 10 WITH t1=v1 OR t2=v2;";
+        execute(statement);
+
+        statement = "SELECT s FROM ln.*;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "| 100|     true|            null|                   null|                   null|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
     public void testQueryWithWildcardTag() {
         String statement = "SELECT s FROM ln.* with t2=*;";
         String expected = "ResultSets:\n" +

@@ -689,13 +689,20 @@ public class Session {
     }
 
     public void deleteDataInColumn(String path, long startTime, long endTime) throws SessionException, ExecutionException {
-        List<String> paths = new ArrayList<>();
-        paths.add(path);
+        List<String> paths = Collections.singletonList(path);
         deleteDataInColumns(paths, startTime, endTime);
     }
 
     public void deleteDataInColumns(List<String> paths, long startTime, long endTime) throws SessionException, ExecutionException {
+        deleteDataInColumns(paths, startTime, endTime, null);
+    }
+
+    public void deleteDataInColumns(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagsList) throws SessionException, ExecutionException {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, mergeAndSortPaths(paths), startTime, endTime);
+
+        if (tagsList != null && !tagsList.isEmpty()) {
+            req.setTagsList(tagsList);
+        }
 
         try {
             Status status;

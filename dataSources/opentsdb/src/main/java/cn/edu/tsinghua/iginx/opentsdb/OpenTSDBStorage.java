@@ -16,6 +16,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
 import cn.edu.tsinghua.iginx.engine.shared.operator.*;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.DATA_TYPE;
 import static cn.edu.tsinghua.iginx.opentsdb.tools.DataTypeTransformer.fromOpenTSDB;
@@ -127,8 +129,15 @@ public class OpenTSDBStorage implements IStorage {
     }
 
     private TaskExecuteResult executeDeleteTask(String storageUnit, Delete delete) {
-        List<OpenTSDBSchema> schemas = new ArrayList<>();
-        delete.getPatterns().forEach(pattern -> schemas.add(new OpenTSDBSchema(pattern, storageUnit)));
+        List<OpenTSDBSchema> schemas = null;
+        try {
+            schemas = determineDeletePathList(storageUnit, delete);
+        } catch (PhysicalException e) {
+            logger.error("encounter error when delete data in opentsdb: ", e);
+        }
+        if (schemas == null || schemas.size() == 0) {
+            return new TaskExecuteResult(null, null);
+        }
 
         if (delete.getTimeRanges() == null || delete.getTimeRanges().size() == 0) { // 没有传任何 time range
             for (OpenTSDBSchema schema : schemas) {
@@ -163,6 +172,29 @@ public class OpenTSDBStorage implements IStorage {
             }
         }
         return new TaskExecuteResult(null, null);
+    }
+
+    private List<OpenTSDBSchema> determineDeletePathList(String storageUnit, Delete delete) throws PhysicalException {
+        List<OpenTSDBSchema> schemas = new ArrayList<>();
+
+        if (delete.getTagFilter() == null) {
+            delete.getPatterns().forEach(pattern -> schemas.add(new OpenTSDBSchema(pattern, storageUnit)));
+        } else {
+            List<String> patterns = delete.getPatterns();
+            TagFilter tagFilter = delete.getTagFilter();
+            List<Timeseries> timeSeries = getTimeSeries();
+
+            for (Timeseries ts: timeSeries) {
+                for (String pattern : patterns) {
+                    if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath()) &&
+                        TagKVUtils.match(ts.getTags(), tagFilter)) {
+                        schemas.add(new OpenTSDBSchema(ts.getPhysicalPath(), storageUnit));
+                        break;
+                    }
+                }
+            }
+        }
+        return schemas;
     }
 
     private TaskExecuteResult executeInsertTask(String storageUnit, Insert insert) {

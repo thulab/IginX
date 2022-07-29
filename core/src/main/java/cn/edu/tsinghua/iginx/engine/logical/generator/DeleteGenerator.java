@@ -5,6 +5,7 @@ import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.operator.CombineNonQuery;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.Source;
@@ -61,15 +62,17 @@ public class DeleteGenerator extends AbstractGenerator {
             fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval);
         }
 
+        TagFilter tagFilter = deleteStatement.getTagFilter();
+
         List<Delete> deleteList = new ArrayList<>();
         fragments.forEach((k, v) -> v.forEach(fragmentMeta -> {
             TimeInterval timeInterval = fragmentMeta.getTimeInterval();
             if (deleteStatement.isDeleteAll()) {
-                deleteList.add(new Delete(new FragmentSource(fragmentMeta), null, pathList));
+                deleteList.add(new Delete(new FragmentSource(fragmentMeta), null, pathList, tagFilter));
             } else {
                 List<TimeRange> overlapTimeRange = getOverlapTimeRange(timeInterval, deleteStatement.getTimeRanges());
                 if (!overlapTimeRange.isEmpty()) {
-                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, pathList));
+                    deleteList.add(new Delete(new FragmentSource(fragmentMeta), overlapTimeRange, pathList, tagFilter));
                 }
             }
         }));

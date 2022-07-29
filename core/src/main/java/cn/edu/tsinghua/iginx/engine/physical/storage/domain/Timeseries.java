@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.TagKVUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,6 +36,8 @@ public final class Timeseries {
     private final Map<String, String> tags;
 
     private final DataType dataType;
+
+    private String physicalPath = null;
 
     public Timeseries(String path, DataType dataType) {
         this(path, dataType, null);
@@ -56,8 +59,19 @@ public final class Timeseries {
         return path;
     }
 
+    public String getPhysicalPath() {
+        if (physicalPath == null) {
+            physicalPath = TagKVUtils.toPhysicalPath(path, tags);
+        }
+        return physicalPath;
+    }
+
     public DataType getDataType() {
         return dataType;
+    }
+
+    public Map<String, String> getTags() {
+        return tags;
     }
 
     @Override
