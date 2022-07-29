@@ -530,7 +530,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run IoTDB12
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
@@ -541,7 +541,7 @@ jobs:
           sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
-      - name: A Lame Integration Test with Maven for SQL
+      - name: A Lame Integration Test with Maven for IoTDB
         run: mvn test -q -Dtest=TagIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
