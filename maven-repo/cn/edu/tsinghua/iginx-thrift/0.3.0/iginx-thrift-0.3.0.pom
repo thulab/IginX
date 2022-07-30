@@ -213,7 +213,7 @@
             </activation>
             <properties>
                 <thrift.download-url>
-                    https://github.com/jt2594838/mvn-thrift-compiler/raw/master/thrift_0.12.0_0.13.0_linux.exe
+                    https://github.com/thulab/IginX-benchmarks/blob/main/resources/thrift_0.12.0_0.13.0_linux.exe
                 </thrift.download-url>
                 <thrift.executable>thrift_0.12.0_0.13.0_linux.exe</thrift.executable>
                 <thrift.skip-making-executable>false</thrift.skip-making-executable>
@@ -231,7 +231,7 @@
             </activation>
             <properties>
                 <thrift.download-url>
-                    https://github.com/jt2594838/mvn-thrift-compiler/raw/master/thrift_0.12.0_0.13.0_mac.exe
+                    https://github.com/thulab/IginX-benchmarks/blob/main/resources/thrift_0.12.0_0.13.0_mac.exe
                 </thrift.download-url>
                 <thrift.executable>thrift_0.12.0_0.13.0_mac.exe</thrift.executable>
                 <thrift.skip-making-executable>false</thrift.skip-making-executable>
