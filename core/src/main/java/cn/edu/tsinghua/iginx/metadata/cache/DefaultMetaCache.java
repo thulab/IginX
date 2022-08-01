@@ -552,10 +552,15 @@ public class DefaultMetaCache implements IMetaCache {
             if (tempSum + currDensity >= density) {
                 if (tempSum + currDensity - density > density - tempSum && tempTimeSeries != null) {
                     separators.add(tempTimeSeries);
+                    tempSum = currDensity;
+                    if (tempSum >= density) {
+                        separators.add(entry.getKey());
+                        tempSum = 0.0;
+                    }
                 } else {
                     separators.add(entry.getKey());
+                    tempSum = 0.0;
                 }
-                tempSum = 0.0;
             } else {
                 tempSum += currDensity;
             }
