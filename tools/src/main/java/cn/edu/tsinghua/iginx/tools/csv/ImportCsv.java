@@ -135,7 +135,7 @@ public class ImportCsv extends AbstractCsvTool {
 
         for (File subFile : files) {
             if (subFile.isFile()) {
-                processSingleFile(subFile.getName());
+                processSingleFile(subFile.getAbsolutePath());
             }
         }
     }

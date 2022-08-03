@@ -28,7 +28,7 @@ if [[ -z "${IGINX_HOME}" ]]; then
   )"
 fi
 
-MAIN_CLASS=cn.edu.tsinghua.iginx.tools.csv.ExportCsv
+MAIN_CLASS=cn.edu.tsinghua.iginx.tools.csv.ImportCsv
 
 CLASSPATH=""
 for f in ${IGINX_HOME}/lib/*.jar; do
