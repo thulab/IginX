@@ -3,10 +3,11 @@
   <groupId>cn.edu.tsinghua</groupId>
   <artifactId>iginx</artifactId>
   <versioning>
-    <release>0.3.0</release>
+    <release>0.5.0</release>
     <versions>
       <version>0.3.0</version>
+      <version>0.5.0</version>
     </versions>
-    <lastUpdated>20210915025722</lastUpdated>
+    <lastUpdated>20220804031326</lastUpdated>
   </versioning>
 </metadata>
