@@ -40,6 +40,9 @@ public abstract class AbstractCsvTool {
     private static final String PASSWORD_ARGS = "pw";
     private static final String PASSWORD_NAME = "password";
 
+    private static final String TIME_FORMAT_ARGS = "tf";
+    private static final String TIME_FORMAT_NAME = "format";
+
     protected static final String HELP_ARGS = "help";
 
     protected static final String HINT_STRING = "For more information, please check the following hint.";
@@ -52,10 +55,10 @@ public abstract class AbstractCsvTool {
     protected static Session session;
 
     protected static String host = "127.0.0.1";
-    protected static String port = "6667";
+    protected static String port = "6888";
     protected static String username = "root";
     protected static String password = "root";
-    protected static String timestampPrecision = "ms";
+    protected static String timeFormat = "";
 
     protected static String SCRIPT_HINT;
     protected static String HELP_HINT;
@@ -65,9 +68,10 @@ public abstract class AbstractCsvTool {
 
         options.addOption(HELP_ARGS, false, "Display help information (optional)");
         options.addOption(HOST_ARGS, HOST_NAME, true, "Host Name (optional, default 127.0.0.1)");
-        options.addOption(PORT_ARGS, PORT_NAME, true, "Port (optional, default 6667)");
+        options.addOption(PORT_ARGS, PORT_NAME, true, "Port (optional, default 6888)");
         options.addOption(USERNAME_ARGS, USERNAME_NAME, true, "User name (optional, default \"root\")");
         options.addOption(PASSWORD_ARGS, PASSWORD_NAME, true, "Password (optional, default \"root\")");
+        options.addOption(TIME_FORMAT_ARGS, TIME_FORMAT_NAME, true, "Time format (optional, default \"timestamp\")");
 
         return options;
     }
@@ -77,6 +81,7 @@ public abstract class AbstractCsvTool {
         port = parseArg(PORT_ARGS, PORT_NAME, false, "6888");
         username = parseArg(USERNAME_ARGS, USERNAME_NAME, false, "root");
         password = parseArg(PASSWORD_ARGS, PASSWORD_NAME, false, "root");
+        timeFormat = parseArg(TIME_FORMAT_ARGS, TIME_FORMAT_NAME, false, "");
     }
 
     protected static String parseArg(String arg, String name, boolean isRequired, String defaultValue) {

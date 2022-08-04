@@ -32,6 +32,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -45,9 +47,13 @@ public class ImportCsv extends AbstractCsvTool {
     private static final String DIRECTORY_ARGS = "d";
     private static final String DIRECTORY_NAME = "directory";
 
+    private static final ThreadLocal<SimpleDateFormat> format = new ThreadLocal<>();
+
     private static String filePaths = "";
 
     private static String directory = "";
+
+    private static boolean needToParseTime = false;
 
     public static void main(String[] args) {
         Options options = createOptions();
@@ -118,6 +124,11 @@ public class ImportCsv extends AbstractCsvTool {
 
         if (!directory.equals("") && !directory.endsWith("/") && !directory.endsWith("\\")) {
             directory += File.separator;
+        }
+
+        needToParseTime = !timeFormat.equals("");
+        if (needToParseTime) {
+            format.set(new SimpleDateFormat(timeFormat));
         }
     }
 
@@ -215,7 +226,11 @@ public class ImportCsv extends AbstractCsvTool {
             // 填充 timestamps 和 valuesList
             for (int i = 0; i < records.size(); i++) {
                 CSVRecord record = records.get(i);
-                timestamps[i] = Long.parseLong(record.get(0));
+                if (needToParseTime) {
+                    timestamps[i] = format.get().parse(record.get(0)).getTime();
+                } else {
+                    timestamps[i] = Long.parseLong(record.get(0));
+                }
                 Object[] values = new Object[record.size() - 1];
                 for (int j = 1; j < record.size(); j++) {
                     if (record.get(j).equalsIgnoreCase("null")) {
@@ -249,7 +264,7 @@ public class ImportCsv extends AbstractCsvTool {
 
             session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
             System.out.printf("Finish to import file [%s].%n", fileName);
-        } catch (IOException | SessionException | ExecutionException e) {
+        } catch (IOException | SessionException | ExecutionException | ParseException e) {
             System.out.printf(
                 "[ERROR] Encounter an error when processing file [%s], because %s%n", fileName, e.getMessage());
         }

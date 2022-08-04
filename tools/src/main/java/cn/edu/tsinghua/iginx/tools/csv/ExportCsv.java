@@ -44,6 +44,9 @@ public class ExportCsv extends AbstractCsvTool {
     private static final String SQL_FILE_ARGS = "s";
     private static final String SQL_FILE_NAME = "sql";
 
+    private static final String TIME_PRECISION_ARGS = "tp";
+    private static final String TIME_PRECISION_NAME = "precision";
+
     private static final String EXPORT_FILE_NAME_PREFIX = "export";
 
     private static String directory = "";
@@ -51,6 +54,7 @@ public class ExportCsv extends AbstractCsvTool {
     private static String queryStatements = "";
 
     private static String sqlFile = "";
+    private static String timePrecision = "";
 
     public static void main(String[] args) {
         Options options = createOptions();
@@ -81,6 +85,7 @@ public class ExportCsv extends AbstractCsvTool {
         options.addOption(DIRECTORY_ARGS, DIRECTORY_NAME, true, "Export directory (optional, default current directory)");
         options.addOption(QUERY_STATEMENT_ARGS, QUERY_STATEMENT_NAME, true, "Query statement to export (optional)");
         options.addOption(SQL_FILE_ARGS, SQL_FILE_NAME, true, "SQL file to export (optional)");
+        options.addOption(TIME_PRECISION_ARGS, TIME_PRECISION_NAME, true, "Time precision (optional, default \"ms\")");
 
         return options;
     }
@@ -124,6 +129,7 @@ public class ExportCsv extends AbstractCsvTool {
         directory = parseArg(DIRECTORY_ARGS, DIRECTORY_NAME, false, "");
         queryStatements = parseArg(QUERY_STATEMENT_ARGS, QUERY_STATEMENT_NAME, false, "");
         sqlFile = parseArg(SQL_FILE_ARGS, SQL_FILE_NAME, false, "");
+        timePrecision = parseArg(TIME_PRECISION_ARGS, TIME_PRECISION_NAME, false, "ms");
 
         if (!directory.equals("") && !directory.endsWith("/") && !directory.endsWith("\\")) {
             directory += File.separator;
@@ -177,7 +183,11 @@ public class ExportCsv extends AbstractCsvTool {
                 .build()
                 .print(new PrintWriter(filePath));
 
-            printer.printRecords(res.getResultInList(false, timestampPrecision));
+            if (timeFormat.equals("")) {
+                printer.printRecords(res.getResultInList(false, null, null));
+            } else {
+                printer.printRecords(res.getResultInList(true, timeFormat, timePrecision));
+            }
 
             printer.flush();
             printer.close();
