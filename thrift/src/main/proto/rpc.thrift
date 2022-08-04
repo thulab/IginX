@@ -486,6 +486,21 @@ struct GetRegisterTaskInfoResp {
     2: optional list<RegisterTaskInfo> registerTaskInfoList
 }
 
+struct CurveMatchReq {
+    1: required i64 sessionId
+    2: required list<string> paths
+    3: required i64 startTime
+    4: required i64 endTime
+    5: required list<double> curveQuery
+    6: required i64 curveUnit
+}
+
+struct CurveMatchResp {
+    1: required Status status
+    2: optional string matchedPath
+    3: optional i64 matchedTimestamp
+}
+
 service IService {
 
     OpenSessionResp openSession(1:OpenSessionReq req);
@@ -547,4 +562,6 @@ service IService {
     Status dropTask(1: DropTaskReq req);
 
     GetRegisterTaskInfoResp getRegisterTaskInfo(1: GetRegisterTaskInfoReq req);
+
+    CurveMatchResp curveMatch(1: CurveMatchReq req);
 }
