@@ -7,11 +7,12 @@
   <groupId>cn.edu.tsinghua</groupId>
   <artifactId>iginx</artifactId>
   <name>IginX</name>
-  <version>0.5.0</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <build-plugin.jacoco.version>0.8.6</build-plugin.jacoco.version>
+    <revision>0.5.0</revision>
   </properties>
 
   <modules>
@@ -95,6 +96,33 @@
                 <id>generate-report</id>
                 <goals>
                   <goal>report</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <!-- 统一管理父子模块的版本号 -->
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>flatten-maven-plugin</artifactId>
+            <version>1.2.1</version>
+            <configuration>
+              <flattenedPomFilename>pom-xml-flattened</flattenedPomFilename>
+              <updatePomFile>true</updatePomFile>
+              <flattenMode>resolveCiFriendliesOnly</flattenMode>
+            </configuration>
+            <executions>
+              <execution>
+                <id>flatten</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>flatten</goal>
+                </goals>
+              </execution>
+              <execution>
+                <id>flatten.clean</id>
+                <phase>clean</phase>
+                <goals>
+                  <goal>clean</goal>
                 </goals>
               </execution>
             </executions>
