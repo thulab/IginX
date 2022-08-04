@@ -19,15 +19,12 @@
 package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.thrift.*;
-import cn.edu.tsinghua.iginx.utils.Bitmap;
 import org.apache.commons.lang3.StringUtils;
 
-import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
-import static cn.edu.tsinghua.iginx.utils.ByteUtils.getValueFromByteBufferByDataType;
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.*;
 
 public class SessionExecuteSqlResult {
 
@@ -99,31 +96,12 @@ public class SessionExecuteSqlResult {
 
         // parse values
         if (resp.getQueryDataSet() != null) {
-            this.values = parseValues(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+            this.values = getValuesFromBufferAndBitmaps(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
         } else {
             this.values = new ArrayList<>();
         }
 
         sortColumns();
-    }
-
-    private List<List<Object>> parseValues(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
-        List<List<Object>> res = new ArrayList<>();
-        for (int i = 0; i < valuesList.size(); i++) {
-            List<Object> tempValues = new ArrayList<>();
-            ByteBuffer valuesBuffer = valuesList.get(i);
-            ByteBuffer bitmapBuffer = bitmapList.get(i);
-            Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapBuffer.array());
-            for (int j = 0; j < dataTypeList.size(); j++) {
-                if (bitmap.get(j)) {
-                    tempValues.add(getValueFromByteBufferByDataType(valuesBuffer, dataTypeList.get(j)));
-                } else {
-                    tempValues.add(null);
-                }
-            }
-            res.add(tempValues);
-        }
-        return res;
     }
 
     private void sortColumns() {

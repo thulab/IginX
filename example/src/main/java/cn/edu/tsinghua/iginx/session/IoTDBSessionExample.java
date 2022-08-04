@@ -25,6 +25,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class IoTDBSessionExample {
@@ -67,6 +68,8 @@ public class IoTDBSessionExample {
         lastQuery();
         // 降采样聚合查询
         downsampleQuery();
+        // 曲线匹配
+        curveMatch();
         // 删除数据
         deleteDataInColumns();
         // 再次查询数据
@@ -251,20 +254,6 @@ public class IoTDBSessionExample {
         dataSet.print();
     }
 
-//    private static void valueFilterQuery() throws SessionException, ExecutionException {
-//        List<String> paths = new ArrayList<>();
-//        paths.add(S1);
-//        paths.add(S2);
-//        paths.add(S3);
-//        paths.add(S4);
-//
-//        long startTime = NON_ALIGNED_COLUMN_END_TIMESTAMP - 100L;
-//        long endTime = ROW_START_TIMESTAMP + 100L;
-//        String booleanExpression = S2 + " < " + 9930 + " && " + S1 + " > " + 9910;
-//        SessionQueryDataSet dataSet = session.valueFilterQuery(paths, startTime, endTime, booleanExpression);
-//        dataSet.print();
-//    }
-
     private static void aggregateQuery() throws SessionException, ExecutionException {
         List<String> paths = new ArrayList<>();
         paths.add(S1);
@@ -360,6 +349,26 @@ public class IoTDBSessionExample {
 
         // 降采样查询结束
         System.out.println("Downsample Query Finished.");
+    }
+
+    private static void curveMatch() throws ExecutionException, SessionException {
+        List<String> paths = new ArrayList<>();
+        paths.add(S1);
+        paths.add(S2);
+
+        long startTime = COLUMN_END_TIMESTAMP - 100L;
+        long endTime = NON_ALIGNED_ROW_START_TIMESTAMP + 100L;
+
+        double bias = 6.0;
+        int queryNum = 30;
+        List<Double> queryList = new ArrayList<>();
+        for (int i = 0; i < queryNum; i++) {
+            queryList.add(startTime + bias + i);
+        }
+        long curveUnit = 1L;
+
+        CurveMatchResult result = session.curveMatch(paths, startTime, endTime, queryList, curveUnit);
+        System.out.println(result.toString());
     }
 
     private static void deleteDataInColumns() throws SessionException, ExecutionException {

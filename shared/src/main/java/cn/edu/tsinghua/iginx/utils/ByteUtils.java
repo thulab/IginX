@@ -35,6 +35,25 @@ public class ByteUtils {
         }
     }
 
+    public static List<List<Object>> getValuesFromBufferAndBitmaps(List<DataType> dataTypeList, List<ByteBuffer> valuesList, List<ByteBuffer> bitmapList) {
+        List<List<Object>> values = new ArrayList<>();
+        for (int i = 0; i < valuesList.size(); i++) {
+            List<Object> tempValues = new ArrayList<>();
+            ByteBuffer valuesBuffer = valuesList.get(i);
+            ByteBuffer bitmapBuffer = bitmapList.get(i);
+            Bitmap bitmap = new Bitmap(dataTypeList.size(), bitmapBuffer.array());
+            for (int j = 0; j < dataTypeList.size(); j++) {
+                if (bitmap.get(j)) {
+                    tempValues.add(getValueFromByteBufferByDataType(valuesBuffer, dataTypeList.get(j)));
+                } else {
+                    tempValues.add(null);
+                }
+            }
+            values.add(tempValues);
+        }
+        return values;
+    }
+
     public static Object[] getValuesByDataType(ByteBuffer valuesList, List<DataType> dataTypeList) {
         Object[] values = new Object[dataTypeList.size()];
         for (int i = 0; i < values.length; i++) {
