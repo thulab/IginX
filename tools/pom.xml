@@ -26,11 +26,6 @@
             <version>1.5.0</version>
         </dependency>
         <dependency>
-            <groupId>jline</groupId>
-            <artifactId>jline</artifactId>
-            <version>3.0.0.M1</version>
-        </dependency>
-        <dependency>
             <groupId>cn.edu.tsinghua</groupId>
             <artifactId>iginx-session</artifactId>
             <version>${project.version}</version>

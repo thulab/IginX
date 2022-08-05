@@ -28,10 +28,10 @@ import org.jline.reader.Completer;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.reader.UserInterruptException;
-import org.jline.reader.impl.completer.completer.AggregateCompleter;
-import org.jline.reader.impl.completer.completer.ArgumentCompleter;
-import org.jline.reader.impl.completer.completer.NullCompleter;
-import org.jline.reader.impl.completer.completer.StringsCompleter;
+import org.jline.reader.impl.completer.AggregateCompleter;
+import org.jline.reader.impl.completer.ArgumentCompleter;
+import org.jline.reader.impl.completer.NullCompleter;
+import org.jline.reader.impl.completer.StringsCompleter;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
@@ -40,7 +40,7 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * args[]: -h 127.0.0.1 -p 6667 -u root -pw root
+ * args[]: -h 127.0.0.1 -p 6888 -u root -pw root
  */
 public class IginxClient {
 
@@ -70,7 +70,7 @@ public class IginxClient {
     private static final String EXIT_COMMAND = "exit";
     private static final String SET_TIME_UNIT = "set timeunit in";
     static String host = "127.0.0.1";
-    static String port = "6667";
+    static String port = "6888";
     static String username = "root";
     static String password = "root";
     static String execute = "";
@@ -84,7 +84,7 @@ public class IginxClient {
 
         options.addOption(HELP_ARGS, false, "Display help information(optional)");
         options.addOption(HOST_ARGS, HOST_NAME, true, "Host Name (optional, default 127.0.0.1)");
-        options.addOption(PORT_ARGS, PORT_NAME, true, "Port (optional, default 6667)");
+        options.addOption(PORT_ARGS, PORT_NAME, true, "Port (optional, default 6888)");
         options.addOption(USERNAME_ARGS, USERNAME_NAME, true, "User name (optional, default \"root\")");
         options.addOption(PASSWORD_ARGS, PASSWORD_NAME, true, "Password (optional, default \"root\")");
         options.addOption(EXECUTE_ARGS, EXECUTE_NAME, true, "Execute (optional)");
