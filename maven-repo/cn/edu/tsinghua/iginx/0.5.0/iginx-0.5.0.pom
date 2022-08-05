@@ -7,11 +7,12 @@
   <groupId>cn.edu.tsinghua</groupId>
   <artifactId>iginx</artifactId>
   <name>IginX</name>
-  <version>0.5.0</version>
+  <version>${revision}</version>
   <packaging>pom</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <build-plugin.jacoco.version>0.8.6</build-plugin.jacoco.version>
+    <revision>0.5.0</revision>
   </properties>
 
   <modules>
