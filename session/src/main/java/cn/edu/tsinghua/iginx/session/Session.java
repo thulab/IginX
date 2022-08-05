@@ -1148,4 +1148,23 @@ public class Session {
             throw new SessionException(e);
         }
     }
+
+    public CurveMatchResult curveMatch(List<String> paths, long startTime, long endTime, List<Double> curveQuery, long curveUnit) throws SessionException, ExecutionException {
+        CurveMatchReq req = new CurveMatchReq(sessionId, paths, startTime, endTime, curveQuery, curveUnit);
+        CurveMatchResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.curveMatch(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+        return new CurveMatchResult(resp.getMatchedTimestamp(), resp.getMatchedPath());
+    }
 }

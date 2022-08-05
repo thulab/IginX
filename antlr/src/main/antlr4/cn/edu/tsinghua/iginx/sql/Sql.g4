@@ -11,7 +11,7 @@ statement
     | COUNT POINTS #countPointsStatement
     | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
     | CLEAR DATA #clearDataStatement
-    | SHOW TIME SERIES #showTimeSeriesStatement
+    | SHOW TIME SERIES (path (COMMA path)*)? withClause? #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement

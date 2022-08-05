@@ -109,7 +109,7 @@ $ mvn package -pl core -Dmaven.test.skip=true
 显示出如下字样，表示 IginX 构建成功：
 
 ```shell
-[INFO] Reactor Summary for IginX 0.1.0-SNAPSHOT:
+[INFO] Reactor Summary for IginX 0.5.0-SNAPSHOT:
 [INFO]
 [INFO] IginX .............................................. SUCCESS [  0.252 s]
 [INFO] IginX Thrift ....................................... SUCCESS [  5.961 s]
@@ -346,7 +346,7 @@ $ mvn clean install -DskipTests
 <dependency>
   	<groupId>cn.edu.tsinghua</groupId>
   	<artifactId>iginx-core</artifactId>
-  	<version>0.1.0-SNAPSHOT</version>
+  	<version>0.5.0-SNAPSHOT</version>
 </dependency>
 ```
 

@@ -250,7 +250,7 @@ Specifically, when using it, you only need to introduce the following dependenci
 <dependency>
     <groupId>cn.edu.tsinghua</groupId>
     <artifactId>iginx-core</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.5.0-SNAPSHOT</version>
 </dependency>
 ```
 

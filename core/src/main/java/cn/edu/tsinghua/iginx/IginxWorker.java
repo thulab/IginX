@@ -34,10 +34,9 @@ import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.resource.QueryResourceManager;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.exec.TransformJobManager;
-import cn.edu.tsinghua.iginx.utils.Pair;
-import cn.edu.tsinghua.iginx.utils.RpcUtils;
-import cn.edu.tsinghua.iginx.utils.StringUtils;
+import cn.edu.tsinghua.iginx.utils.*;
 
+import org.apache.thrift.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +46,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
 
 public class IginxWorker implements IService.Iface {
 
@@ -567,6 +568,82 @@ public class IginxWorker implements IService.Iface {
         }
         GetRegisterTaskInfoResp resp = new GetRegisterTaskInfoResp(RpcUtils.SUCCESS);
         resp.setRegisterTaskInfoList(taskInfoList);
+        return resp;
+    }
+
+    @Override
+    public CurveMatchResp curveMatch(CurveMatchReq req) throws TException {
+        QueryDataReq queryDataReq = new QueryDataReq(
+            req.getSessionId(),
+            req.getPaths(),
+            req.getStartTime(),
+            req.getEndTime());
+        RequestContext ctx = contextBuilder.build(queryDataReq);
+        executor.execute(ctx);
+        QueryDataResp queryDataResp = ctx.getResult().getQueryDataResp();
+
+        for (DataType type : queryDataResp.getDataTypeList()) {
+            if (type.equals(DataType.BINARY) || type.equals(DataType.BOOLEAN)) {
+                logger.error(String.format("Unsupported data type: %s", type));
+                return new CurveMatchResp(RpcUtils.FAILURE);
+            }
+        }
+
+        List<Double> queryList = CurveMatchUtils.norm(
+            CurveMatchUtils.calcShapePattern(
+                req.getCurveQuery(),
+                true,
+                true,
+                true,
+                0.1,
+                0.05)
+        );
+        int maxWarpingWindow = queryList.size() / 4;
+        List<Double> upper = CurveMatchUtils.getWindow(queryList, maxWarpingWindow, true);
+        List<Double> lower = CurveMatchUtils.getWindow(queryList, maxWarpingWindow, false);
+
+        List<String> paths = queryDataResp.getPaths();
+        long[] queryTimestamps = getLongArrayFromByteBuffer(queryDataResp.getQueryDataSet().timestamps);
+        List<List<Object>> values = ByteUtils.getValuesFromBufferAndBitmaps(
+            queryDataResp.getDataTypeList(),
+            queryDataResp.getQueryDataSet().getValuesList(),
+            queryDataResp.getQueryDataSet().getBitmapList());
+
+        double bestResult = Double.MAX_VALUE;
+        long matchedTimestamp = 0L;
+        String matchedPath = "";
+
+        int n = queryTimestamps.length;
+        int m = paths.size();
+        for (int j = 0; j < m; j++) {
+            List<Long> timestamps = new ArrayList<>();
+            List<Double> value = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
+                if (values.get(i).get(j) != null) {
+                    timestamps.add(queryTimestamps[i]);
+                    value.add(ValueUtils.transformToDouble(values.get(i).get(j)));
+                }
+            }
+            List<Double> valueList = CurveMatchUtils.calcShapePattern(
+                CurveMatchUtils.transToNorm(timestamps, value, req.getCurveUnit()),
+                true,
+                true,
+                true,
+                0.1,
+                0.05);
+            for (int i = 0; i < valueList.size() - queryList.size(); i++) {
+                double result = CurveMatchUtils.calcDTW(queryList, valueList.subList(i, i + queryList.size()), maxWarpingWindow, bestResult, upper, lower);
+                if (result < bestResult) {
+                    bestResult = result;
+                    matchedTimestamp = timestamps.get(i);
+                    matchedPath = paths.get(j);
+                }
+            }
+        }
+
+        CurveMatchResp resp = new CurveMatchResp(RpcUtils.SUCCESS);
+        resp.setMatchedTimestamp(matchedTimestamp);
+        resp.setMatchedPath(matchedPath);
         return resp;
     }
 }
