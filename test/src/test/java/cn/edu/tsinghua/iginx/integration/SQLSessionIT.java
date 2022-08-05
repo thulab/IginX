@@ -23,6 +23,8 @@ public abstract class SQLSessionIT {
 
     protected boolean isAbleToDelete;
 
+    protected boolean isAbleToShowTimeSeries;
+
     @BeforeClass
     public static void setUp() {
         session = new Session("127.0.0.1", 6888, "root", "root");
@@ -142,6 +144,9 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testShowTimeSeries() {
+        if (!isAbleToShowTimeSeries) {
+            return;
+        }
         String statement = "SHOW TIME SERIES;";
         String expected =
             "Time series:\n"
