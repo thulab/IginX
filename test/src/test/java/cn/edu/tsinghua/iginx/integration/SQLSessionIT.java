@@ -140,21 +140,59 @@ public abstract class SQLSessionIT {
         executeAndCompare(statement, expected);
     }
 
-//    @Test
-//    public void testShowTimeSeries() {
-//        String statement = "SHOW TIME SERIES;";
-//        String expected = "Time series:\n" +
-//                "+--------+--------+\n" +
-//                "|    Path|DataType|\n" +
-//                "+--------+--------+\n" +
-//                "|us.d1.s1|    LONG|\n" +
-//                "|us.d1.s3|  BINARY|\n" +
-//                "|us.d1.s2|    LONG|\n" +
-//                "|us.d1.s4|  DOUBLE|\n" +
-//                "+--------+--------+\n" +
-//                "Total line number = 4\n";
-//        executeAndCompare(statement, expected);
-//    }
+    @Test
+    public void testShowTimeSeries() {
+        String statement = "SHOW TIME SERIES;";
+        String expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "|us.d1.s4|  DOUBLE|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 4\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES us.d1.*;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "|us.d1.s4|  DOUBLE|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 4\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES us.d1.s1;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES us.d1.s1, us.d1.s3;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+    }
 
     @Test
     public void testShowReplicaNum() {

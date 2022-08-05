@@ -190,7 +190,15 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     @Override
     public Statement visitShowTimeSeriesStatement(ShowTimeSeriesStatementContext ctx) {
-        return new ShowTimeSeriesStatement();
+        ShowTimeSeriesStatement showTimeSeriesStatement = new ShowTimeSeriesStatement();
+        for (PathContext pathRegex : ctx.path()) {
+            showTimeSeriesStatement.setPathRegex(pathRegex.getText());
+        }
+        if (ctx.withClause() != null) {
+            TagFilter tagFilter = parseOrTagExpression(ctx.withClause().orTagExpression());
+            showTimeSeriesStatement.setTagFilter(tagFilter);
+        }
+        return showTimeSeriesStatement;
     }
 
     @Override
@@ -430,14 +438,6 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new Pair<>(startTime, endTime);
     }
 
-    private Filter parseOrExpression(OrExpressionContext ctx, Statement statement) {
-        List<Filter> children = new ArrayList<>();
-        for (AndExpressionContext andCtx : ctx.andExpression()) {
-            children.add(parseAndExpression(andCtx, statement));
-        }
-        return new OrFilter(children);
-    }
-
     private TagFilter parseOrTagExpression(OrTagExpressionContext ctx) {
         List<TagFilter> children = new ArrayList<>();
         for (AndTagExpressionContext andCtx : ctx.andTagExpression()) {
@@ -461,6 +461,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         String tagKey = ctx.tagKey().getText();
         String tagValue = ctx.tagValue().getText();
         return new BaseTagFilter(tagKey, tagValue);
+    }
+
+    private Filter parseOrExpression(OrExpressionContext ctx, Statement statement) {
+        List<Filter> children = new ArrayList<>();
+        for (AndExpressionContext andCtx : ctx.andExpression()) {
+            children.add(parseAndExpression(andCtx, statement));
+        }
+        return new OrFilter(children);
     }
 
     private Filter parseAndExpression(AndExpressionContext ctx, Statement statement) {

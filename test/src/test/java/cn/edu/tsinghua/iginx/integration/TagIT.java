@@ -90,6 +90,86 @@ public class TagIT {
     }
 
     @Test
+    public void testShowTimeSeriesWithTags() {
+        String statement = "SHOW TIME SERIES;";
+        String expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|       ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|       ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 9\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES ln.wf02.*;";
+        expected =
+            "Time series:\n"
+                + "+----------------------+--------+\n"
+                + "|                  Path|DataType|\n"
+                + "+----------------------+--------+\n"
+                + "|             ln.wf02.s| BOOLEAN|\n"
+                + "|      ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|             ln.wf02.v|  BINARY|\n"
+                + "|      ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "+----------------------+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES ln.wf02.*, ln.wf03.*;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|       ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|       ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 9\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES ln.wf02.* with t1=v1;";
+        expected =
+            "Time series:\n"
+                + "+----------------------+--------+\n"
+                + "|                  Path|DataType|\n"
+                + "+----------------------+--------+\n"
+                + "|      ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|      ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "+----------------------+--------+\n"
+                + "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES ln.wf02.* with t1=v1 AND t2=v2;";
+        expected =
+            "Time series:\n"
+                + "+----------------------+--------+\n"
+                + "|                  Path|DataType|\n"
+                + "+----------------------+--------+\n"
+                + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "+----------------------+--------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+    }
+
+    @Test
     public void testCountPoints() {
         String statement = "COUNT POINTS;";
         String expected = "Points num: 10\n";
