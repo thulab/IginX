@@ -18,9 +18,6 @@
 @REM
 
 @echo off
-echo ````````````````````````
-echo Starting IginX
-echo ````````````````````````
 
 if "%OS%" == "Windows_NT" setlocal
 
@@ -73,7 +70,7 @@ for %%i in (%*) do (
 	)
 )
 
-if NOT DEFINED MAIN_CLASS set MAIN_CLASS=cn.edu.tsinghua.iginx.Iginx
+if NOT DEFINED MAIN_CLASS set MAIN_CLASS=cn.edu.tsinghua.iginx.tools.csv.ImportCsv
 if NOT DEFINED JAVA_HOME goto :err
 
 

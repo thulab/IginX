@@ -79,12 +79,12 @@ public final class Timeseries {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Timeseries that = (Timeseries) o;
-        return Objects.equals(path, that.path) && dataType == that.dataType;
+        return Objects.equals(path, that.path) && dataType == that.dataType && tags.equals(that.tags);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(path, dataType);
+        return Objects.hash(path, dataType, tags);
     }
 
 }

@@ -28,6 +28,8 @@ import static cn.edu.tsinghua.iginx.utils.ByteUtils.*;
 
 public class SessionExecuteSqlResult {
 
+    public static final String DEFAULT_TIME_FORMAT = "default_time_format";
+
     private SqlType sqlType;
     private AggregateType aggregateType;
     private long[] timestamps;
@@ -133,11 +135,12 @@ public class SessionExecuteSqlResult {
         this.values = newValues;
     }
 
-    public List<List<String>> getResultInList(boolean needFormatTime, String timePrecision) {
+    public List<List<String>> getResultInList(boolean needFormatTime, String timeFormat,
+                                              String timePrecision) {
         List<List<String>> result = new ArrayList<>();
         if (isQuery()) {
             List<Integer> maxSizeList = new ArrayList<>();
-            result = cacheResult(needFormatTime, timePrecision, maxSizeList);
+            result = cacheResult(needFormatTime, timeFormat, timePrecision, maxSizeList);
         } else if (sqlType == SqlType.ShowTimeSeries) {
             result.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
             if (paths != null) {
@@ -187,7 +190,7 @@ public class SessionExecuteSqlResult {
         builder.append("ResultSets:").append("\n");
 
         List<Integer> maxSizeList = new ArrayList<>();
-        List<List<String>> cache = cacheResult(needFormatTime, timePrecision, maxSizeList);
+        List<List<String>> cache = cacheResult(needFormatTime, DEFAULT_TIME_FORMAT, timePrecision, maxSizeList);
 
         builder.append(buildBlockLine(maxSizeList));
         builder.append(buildRow(cache, 0, maxSizeList));
@@ -202,8 +205,8 @@ public class SessionExecuteSqlResult {
         return builder.toString();
     }
 
-    private List<List<String>> cacheResult(boolean needFormatTime, String timePrecision,
-                                           List<Integer> maxSizeList) {
+    private List<List<String>> cacheResult(boolean needFormatTime, String timeFormat,
+                                           String timePrecision, List<Integer> maxSizeList) {
         List<List<String>> cache = new ArrayList<>();
         List<String> label = new ArrayList<>();
         if (timestamps != null) {
@@ -220,7 +223,7 @@ public class SessionExecuteSqlResult {
             if (timestamps != null) {
                 String timeValue;
                 if (needFormatTime) {
-                    timeValue = formatTime(timestamps[i], timePrecision);
+                    timeValue = formatTime(timestamps[i], timeFormat, timePrecision);
                 } else {
                     timeValue = String.valueOf(timestamps[i]);
                 }
@@ -288,7 +291,7 @@ public class SessionExecuteSqlResult {
             cache.add(new ArrayList<>(Arrays.asList("Time", "Path", "value")));
             for (int i = 0; i < paths.size(); i++) {
                 cache.add(new ArrayList<>(Arrays.asList(
-                    needFormatTime ? formatTime(timestamps[i], timePrecision) : String.valueOf(timestamps[i]),
+                    needFormatTime ? formatTime(timestamps[i], DEFAULT_TIME_FORMAT, timePrecision) : String.valueOf(timestamps[i]),
                     paths.get(i),
                     valueToString(values.get(0).get(i))
                 )));
@@ -432,7 +435,7 @@ public class SessionExecuteSqlResult {
         return ret;
     }
 
-    private String formatTime(long timestamp, String timePrecision) {
+    private String formatTime(long timestamp, String timeFormat, String timePrecision) {
         long timeInMs;
         switch (timePrecision) {
             case "s":
@@ -447,7 +450,11 @@ public class SessionExecuteSqlResult {
             default:
                 timeInMs = timestamp;
         }
-        return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(timeInMs);
+        if (timeFormat.equals(DEFAULT_TIME_FORMAT)) {
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(timeInMs);
+        } else {
+            return new SimpleDateFormat(timeFormat).format(timeInMs);
+        }
     }
 
     public boolean isQuery() {
