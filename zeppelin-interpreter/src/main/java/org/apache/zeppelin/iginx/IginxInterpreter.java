@@ -143,7 +143,8 @@ public class IginxInterpreter extends AbstractInterpreter {
                 return new InterpreterResult(InterpreterResult.Code.ERROR, sqlResult.getParseErrorMsg());
             }
 
-            String msg = buildResult(sqlResult.getResultInList(true, null, timePrecision));
+            String msg = buildResult(sqlResult.getResultInList(
+                    true, SessionExecuteSqlResult.DEFAULT_TIME_FORMAT, timePrecision));
             InterpreterResult interpreterResult = new InterpreterResult(InterpreterResult.Code.SUCCESS);
             interpreterResult.add(InterpreterResult.Type.TABLE, msg);
             return interpreterResult;

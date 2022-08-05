@@ -183,11 +183,7 @@ public class ExportCsv extends AbstractCsvTool {
                 .build()
                 .print(new PrintWriter(filePath));
 
-            if (timeFormat.equals("")) {
-                printer.printRecords(res.getResultInList(false, null, null));
-            } else {
-                printer.printRecords(res.getResultInList(true, timeFormat, timePrecision));
-            }
+            printer.printRecords(res.getResultInList(needToParseTime, timeFormat, timePrecision));
 
             printer.flush();
             printer.close();

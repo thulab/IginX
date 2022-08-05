@@ -53,8 +53,6 @@ public class ImportCsv extends AbstractCsvTool {
 
     private static String directory = "";
 
-    private static boolean needToParseTime = false;
-
     public static void main(String[] args) {
         Options options = createOptions();
 
@@ -126,7 +124,6 @@ public class ImportCsv extends AbstractCsvTool {
             directory += File.separator;
         }
 
-        needToParseTime = !timeFormat.equals("");
         if (needToParseTime) {
             format.set(new SimpleDateFormat(timeFormat));
         }

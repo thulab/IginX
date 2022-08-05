@@ -58,6 +58,7 @@ public abstract class AbstractCsvTool {
     protected static String port = "6888";
     protected static String username = "root";
     protected static String password = "root";
+    protected static boolean needToParseTime = false;
     protected static String timeFormat = "";
 
     protected static String SCRIPT_HINT;
@@ -82,6 +83,8 @@ public abstract class AbstractCsvTool {
         username = parseArg(USERNAME_ARGS, USERNAME_NAME, false, "root");
         password = parseArg(PASSWORD_ARGS, PASSWORD_NAME, false, "root");
         timeFormat = parseArg(TIME_FORMAT_ARGS, TIME_FORMAT_NAME, false, "");
+
+        needToParseTime = !timeFormat.equals("");
     }
 
     protected static String parseArg(String arg, String name, boolean isRequired, String defaultValue) {
