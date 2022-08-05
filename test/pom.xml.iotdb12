@@ -28,7 +28,7 @@
         <dependency>
             <groupId>org.apache.iotdb</groupId>
             <artifactId>iotdb-session</artifactId>
-            <version>0.12.5</version>
+            <version>0.12.6</version>
         </dependency>
         <dependency>
             <groupId>com.influxdb</groupId>
@@ -48,16 +48,7 @@
                     <groupId>org.apache.httpcomponents</groupId>
                     <artifactId>httpcore</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
             </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>1.7.36</version>
         </dependency>
     </dependencies>
 
