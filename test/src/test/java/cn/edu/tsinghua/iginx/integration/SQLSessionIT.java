@@ -202,7 +202,7 @@ public abstract class SQLSessionIT {
     @Test
     public void testShowReplicaNum() {
         String statement = "SHOW REPLICA NUMBER;";
-        String expected = "Replica num: 2\n";
+        String expected = "Replica num: 1\n";
         executeAndCompare(statement, expected);
     }
 
