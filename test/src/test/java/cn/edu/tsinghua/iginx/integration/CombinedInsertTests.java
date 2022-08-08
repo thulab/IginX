@@ -42,11 +42,12 @@ public class CombinedInsertTests {
     }
 
     private static void insertColumnRecords() throws SessionException, ExecutionException {
+        String PREFIX = "insertCR.";
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add(PREFIX+S1);
+        paths.add(PREFIX+S2);
+        paths.add(PREFIX+S3);
+        paths.add(PREFIX+S4);
 
         int size = (int) (COLUMN_END_TIMESTAMP - COLUMN_START_TIMESTAMP + 1);
         long[] timestamps = new long[size];
@@ -80,11 +81,12 @@ public class CombinedInsertTests {
     }
 
     private static void insertNonAlignedColumnRecords() throws SessionException, ExecutionException {
+        String PREFIX = "insertCNAR.";
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add(PREFIX+S1);
+        paths.add(PREFIX+S2);
+        paths.add(PREFIX+S3);
+        paths.add(PREFIX+S4);
 
         int size = (int) (NON_ALIGNED_COLUMN_END_TIMESTAMP - NON_ALIGNED_COLUMN_START_TIMESTAMP + 1);
         long[] timestamps = new long[size];
@@ -122,12 +124,13 @@ public class CombinedInsertTests {
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
+        String PREFIX = "insertRR.";
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
-        paths.add(S3+S4);
+        paths.add(PREFIX+S1);
+        paths.add(PREFIX+S2);
+        paths.add(PREFIX+S3);
+        paths.add(PREFIX+S4);
+        paths.add(PREFIX+S3+S4);
 
         int size = (int) (ROW_END_TIMESTAMP - ROW_START_TIMESTAMP + 1);
         int colNum = 5;
@@ -159,11 +162,12 @@ public class CombinedInsertTests {
     }
 
     private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
+        String PREFIX = "insertNARR.";
         List<String> paths = new ArrayList<>();
-        paths.add(S1);
-        paths.add(S2);
-        paths.add(S3);
-        paths.add(S4);
+        paths.add(PREFIX+S1);
+        paths.add(PREFIX+S2);
+        paths.add(PREFIX+S3);
+        paths.add(PREFIX+S4);
 
         int size = (int) (NON_ALIGNED_ROW_END_TIMESTAMP - NON_ALIGNED_ROW_START_TIMESTAMP + 1);
         int colNum = 4;
