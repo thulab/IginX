@@ -72,7 +72,7 @@ public class NaivePolicy implements IPolicy {
     /**
      * This storage unit initialization method is used when no information about workloads is provided
      */
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> paths, TimeInterval timeInterval) {
+    private Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsDefault(List<String> paths, TimeInterval timeInterval) {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
@@ -119,7 +119,7 @@ public class NaivePolicy implements IPolicy {
     /**
      * This storage unit initialization method is used when clients are provided, such as in TPCx-IoT tests
      */
-    public Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
+    private Pair<Map<TimeSeriesInterval, List<FragmentMeta>>, List<StorageUnitMeta>> generateInitialFragmentsAndStorageUnitsByClients(List<String> paths, TimeInterval timeInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> fragmentMap = new HashMap<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
@@ -177,7 +177,7 @@ public class NaivePolicy implements IPolicy {
         return new Pair<>(fragmentMap, storageUnitList);
     }
 
-    public Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
+    private Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(List<String> prefixList, long startTime) {
         List<FragmentMeta> fragmentList = new ArrayList<>();
         List<StorageUnitMeta> storageUnitList = new ArrayList<>();
 
