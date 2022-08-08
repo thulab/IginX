@@ -317,12 +317,13 @@ public class Session {
             return;
         }
 
-        Integer[] index = new Integer[timestamps.length];
-        for (int i = 0; i < timestamps.length; i++) {
+        long[] sortedTimestamps = Arrays.copyOf(timestamps, timestamps.length);
+        Integer[] index = new Integer[sortedTimestamps.length];
+        for (int i = 0; i < sortedTimestamps.length; i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
-        Arrays.sort(timestamps);
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(sortedTimestamps))::get));
+        Arrays.sort(sortedTimestamps);
         for (int i = 0; i < valuesList.length; i++) {
             Object[] values = new Object[index.length];
             for (int j = 0; j < index.length; j++) {
@@ -331,12 +332,13 @@ public class Session {
             valuesList[i] = values;
         }
 
-        index = new Integer[paths.size()];
-        for (int i = 0; i < paths.size(); i++) {
+        List<String> sortedPaths = new ArrayList<>(paths);
+        index = new Integer[sortedPaths.size()];
+        for (int i = 0; i < sortedPaths.size(); i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparing(paths::get));
-        Collections.sort(paths);
+        Arrays.sort(index, Comparator.comparing(sortedPaths::get));
+        Collections.sort(sortedPaths);
         Object[] sortedValuesList = new Object[valuesList.length];
         List<DataType> sortedDataTypeList = new ArrayList<>();
         List<Map<String, String>> sortedTagsList = new ArrayList<>();
@@ -354,13 +356,13 @@ public class Session {
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < sortedValuesList.length; i++) {
             Object[] values = (Object[]) sortedValuesList[i];
-            if (values.length != timestamps.length) {
+            if (values.length != sortedTimestamps.length) {
                 logger.error("The sizes of timestamps and the element of valuesList should be equal.");
                 return;
             }
             valueBufferList.add(ByteUtils.getColumnByteBuffer(values, sortedDataTypeList.get(i)));
-            Bitmap bitmap = new Bitmap(timestamps.length);
-            for (int j = 0; j < timestamps.length; j++) {
+            Bitmap bitmap = new Bitmap(sortedTimestamps.length);
+            for (int j = 0; j < sortedTimestamps.length; j++) {
                 if (values[j] != null) {
                     bitmap.mark(j);
                 }
@@ -370,8 +372,8 @@ public class Session {
 
         InsertColumnRecordsReq req = new InsertColumnRecordsReq();
         req.setSessionId(sessionId);
-        req.setPaths(paths);
-        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setPaths(sortedPaths);
+        req.setTimestamps(getByteArrayFromLongArray(sortedTimestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
@@ -413,12 +415,13 @@ public class Session {
             return;
         }
 
-        Integer[] index = new Integer[timestamps.length];
-        for (int i = 0; i < timestamps.length; i++) {
+        long[] sortedTimestamps = Arrays.copyOf(timestamps, timestamps.length);
+        Integer[] index = new Integer[sortedTimestamps.length];
+        for (int i = 0; i < sortedTimestamps.length; i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
-        Arrays.sort(timestamps);
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(sortedTimestamps))::get));
+        Arrays.sort(sortedTimestamps);
         for (int i = 0; i < valuesList.length; i++) {
             Object[] values = new Object[index.length];
             for (int j = 0; j < index.length; j++) {
@@ -427,12 +430,13 @@ public class Session {
             valuesList[i] = values;
         }
 
-        index = new Integer[paths.size()];
-        for (int i = 0; i < paths.size(); i++) {
+        List<String> sortedPaths = new ArrayList<>(paths);
+        index = new Integer[sortedPaths.size()];
+        for (int i = 0; i < sortedPaths.size(); i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparing(paths::get));
-        Collections.sort(paths);
+        Arrays.sort(index, Comparator.comparing(sortedPaths::get));
+        Collections.sort(sortedPaths);
         Object[] sortedValuesList = new Object[valuesList.length];
         List<DataType> sortedDataTypeList = new ArrayList<>();
         List<Map<String, String>> sortedTagsList = new ArrayList<>();
@@ -450,13 +454,13 @@ public class Session {
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < sortedValuesList.length; i++) {
             Object[] values = (Object[]) sortedValuesList[i];
-            if (values.length != timestamps.length) {
+            if (values.length != sortedTimestamps.length) {
                 logger.error("The sizes of timestamps and the element of valuesList should be equal.");
                 return;
             }
             valueBufferList.add(ByteUtils.getColumnByteBuffer(values, sortedDataTypeList.get(i)));
-            Bitmap bitmap = new Bitmap(timestamps.length);
-            for (int j = 0; j < timestamps.length; j++) {
+            Bitmap bitmap = new Bitmap(sortedTimestamps.length);
+            for (int j = 0; j < sortedTimestamps.length; j++) {
                 if (values[j] != null) {
                     bitmap.mark(j);
                 }
@@ -466,8 +470,8 @@ public class Session {
 
         InsertNonAlignedColumnRecordsReq req = new InsertNonAlignedColumnRecordsReq();
         req.setSessionId(sessionId);
-        req.setPaths(paths);
-        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setPaths(sortedPaths);
+        req.setTimestamps(getByteArrayFromLongArray(sortedTimestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
@@ -508,23 +512,25 @@ public class Session {
             return;
         }
 
-        Integer[] index = new Integer[timestamps.length];
-        for (int i = 0; i < timestamps.length; i++) {
+        long[] sortedTimestamps = Arrays.copyOf(timestamps, timestamps.length);
+        Integer[] index = new Integer[sortedTimestamps.length];
+        for (int i = 0; i < sortedTimestamps.length; i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
-        Arrays.sort(timestamps);
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(sortedTimestamps))::get));
+        Arrays.sort(sortedTimestamps);
         Object[] sortedValuesList = new Object[valuesList.length];
         for (int i = 0; i < valuesList.length; i++) {
             sortedValuesList[i] = valuesList[index[i]];
         }
 
-        index = new Integer[paths.size()];
-        for (int i = 0; i < paths.size(); i++) {
+        List<String> sortedPaths = new ArrayList<>(paths);
+        index = new Integer[sortedPaths.size()];
+        for (int i = 0; i < sortedPaths.size(); i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparing(paths::get));
-        Collections.sort(paths);
+        Arrays.sort(index, Comparator.comparing(sortedPaths::get));
+        Collections.sort(sortedPaths);
         List<DataType> sortedDataTypeList = new ArrayList<>();
         List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < sortedValuesList.length; i++) {
@@ -545,9 +551,9 @@ public class Session {
 
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
-        for (int i = 0; i < timestamps.length; i++) {
+        for (int i = 0; i < sortedTimestamps.length; i++) {
             Object[] values = (Object[]) sortedValuesList[i];
-            if (values.length != paths.size()) {
+            if (values.length != sortedPaths.size()) {
                 logger.error("The sizes of paths and the element of valuesList should be equal.");
                 return;
             }
@@ -563,8 +569,8 @@ public class Session {
 
         InsertRowRecordsReq req = new InsertRowRecordsReq();
         req.setSessionId(sessionId);
-        req.setPaths(paths);
-        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setPaths(sortedPaths);
+        req.setTimestamps(getByteArrayFromLongArray(sortedTimestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
@@ -610,23 +616,25 @@ public class Session {
             return;
         }
 
-        Integer[] index = new Integer[timestamps.length];
-        for (int i = 0; i < timestamps.length; i++) {
+        long[] sortedTimestamps = Arrays.copyOf(timestamps, timestamps.length);
+        Integer[] index = new Integer[sortedTimestamps.length];
+        for (int i = 0; i < sortedTimestamps.length; i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(timestamps))::get));
-        Arrays.sort(timestamps);
+        Arrays.sort(index, Comparator.comparingLong(Arrays.asList(ArrayUtils.toObject(sortedTimestamps))::get));
+        Arrays.sort(sortedTimestamps);
         Object[] sortedValuesList = new Object[valuesList.length];
         for (int i = 0; i < valuesList.length; i++) {
             sortedValuesList[i] = valuesList[index[i]];
         }
 
-        index = new Integer[paths.size()];
-        for (int i = 0; i < paths.size(); i++) {
+        List<String> sortedPaths = new ArrayList<>(paths);
+        index = new Integer[sortedPaths.size()];
+        for (int i = 0; i < sortedPaths.size(); i++) {
             index[i] = i;
         }
-        Arrays.sort(index, Comparator.comparing(paths::get));
-        Collections.sort(paths);
+        Arrays.sort(index, Comparator.comparing(sortedPaths::get));
+        Collections.sort(sortedPaths);
         List<DataType> sortedDataTypeList = new ArrayList<>();
         List<Map<String, String>> sortedTagsList = new ArrayList<>();
         for (int i = 0; i < sortedValuesList.length; i++) {
@@ -647,9 +655,9 @@ public class Session {
 
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
-        for (int i = 0; i < timestamps.length; i++) {
+        for (int i = 0; i < sortedTimestamps.length; i++) {
             Object[] values = (Object[]) sortedValuesList[i];
-            if (values.length != paths.size()) {
+            if (values.length != sortedPaths.size()) {
                 logger.error("The sizes of paths and the element of valuesList should be equal.");
                 return;
             }
@@ -665,8 +673,8 @@ public class Session {
 
         InsertNonAlignedRowRecordsReq req = new InsertNonAlignedRowRecordsReq();
         req.setSessionId(sessionId);
-        req.setPaths(paths);
-        req.setTimestamps(getByteArrayFromLongArray(timestamps));
+        req.setPaths(sortedPaths);
+        req.setTimestamps(getByteArrayFromLongArray(sortedTimestamps));
         req.setValuesList(valueBufferList);
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
