@@ -271,6 +271,9 @@ public class IoTDBStorage implements IStorage {
             }
             dataSet.close();
         } catch (IoTDBConnectionException | StatementExecutionException e) {
+            if (e.getMessage().contains(HAS_NOT_EXECUTED_QUERY)) {
+                return timeseries;
+            }
             throw new PhysicalTaskExecuteFailureException("get time series failure: ", e);
         }
         return timeseries;
@@ -668,15 +671,10 @@ public class IoTDBStorage implements IStorage {
                         sessionPool.deleteData(paths, timeRange.getActualBeginTime(), timeRange.getActualEndTime());
                     }
                 }
-            } catch (IoTDBConnectionException | StatementExecutionException e) {
+            } catch (IoTDBConnectionException | StatementExecutionException | PhysicalException e) {
                 logger.warn("encounter error when delete data: " + e.getMessage());
                 if (!e.getMessage().contains(DOES_NOT_EXISTED)) {
                     return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete data task in iotdb12 failure", e));
-                }
-            } catch (PhysicalException e) {
-                logger.warn("encounter error when delete data: " + e.getMessage());
-                if (!e.getCause().getMessage().contains(HAS_NOT_EXECUTED_QUERY)) {
-                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete data task in iotdb11 failure", e));
                 }
             }
         }
