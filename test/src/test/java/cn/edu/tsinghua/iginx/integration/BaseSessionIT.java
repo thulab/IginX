@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -110,6 +111,11 @@ public abstract class BaseSessionIT {
             sb.append(ranStr.charAt(number));
         }
         return sb.toString();
+    }
+
+    private void insertTestsByFourInterfaces()throws SessionException, ExecutionException {
+       CombinedInsertTests test = new CombinedInsertTests(session);
+       test.testInserts();
     }
 
     private void insertNumRecords(List<String> insertPaths) throws SessionException, ExecutionException {
@@ -297,6 +303,7 @@ public abstract class BaseSessionIT {
         int simpleLen = 2;
         List<String> paths = getPaths(currPath, simpleLen);
         //Simple Test(Including query,valueFilter,aggr:max/min/first/last/count/sum/avg)
+        insertTestsByFourInterfaces();
         insertNumRecords(paths);
         //query
         SessionQueryDataSet simpleQueryDataSet = session.queryData(paths, START_TIME, END_TIME + 1);
