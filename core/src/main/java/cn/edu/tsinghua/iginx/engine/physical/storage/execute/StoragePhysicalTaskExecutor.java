@@ -105,7 +105,7 @@ public class StoragePhysicalTaskExecutor {
                         StoragePhysicalTask task = taskQueue.getTask();
                         task.setStorageUnit(id);
                         task.setDummyStorageUnit(isDummy);
-                        logger.info("take out new task: " + task);
+//                        logger.info("take out new task: " + task);
                         if (pair.v.getQueue().size() > maxCachedPhysicalTaskPerStorage) {
                             task.setResult(new TaskExecuteResult(new TooManyPhysicalTasksException(storageId)));
                             continue;
@@ -114,7 +114,7 @@ public class StoragePhysicalTaskExecutor {
                             TaskExecuteResult result = null;
                             try {
                                 result = pair.k.execute(task);
-                                logger.info("task " + task + " execute finished");
+//                                logger.info("task " + task + " execute finished");
                             } catch (Exception e) {
                                 logger.error("execute task error: " + e);
                                 result = new TaskExecuteResult(new PhysicalException(e));
