@@ -103,8 +103,16 @@ public class Row {
         if (header.hasTimestamp()) {
             builder.append(timestamp).append(",");
         }
-        String arrStr = Arrays.toString(values);
-        builder.append(arrStr, 1, arrStr.length()-1);
+        for (Object value : values) {
+            if (value instanceof byte[]) {
+                builder.append(new String((byte[]) value)).append(",");
+            } else if (value instanceof Byte) {
+                builder.append(new String(new byte[]{(byte) value})).append(",");
+            } else {
+                builder.append(value).append(",");
+            }
+        }
+        builder.deleteCharAt(builder.length() - 1);
         return builder.toString();
     }
 
