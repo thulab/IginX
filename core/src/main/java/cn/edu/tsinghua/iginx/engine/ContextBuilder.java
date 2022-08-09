@@ -10,6 +10,7 @@ import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -41,32 +42,34 @@ public class ContextBuilder {
         return new RequestContext(req.getSessionId(), statement);
     }
 
-    public RequestContext build(InsertColumnRecordsReq req) {
+    public RequestContext build(InsertColumnRecordsReq req, String timePrecision) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Column, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
     }
 
-    public RequestContext build(InsertNonAlignedColumnRecordsReq req) {
+    public RequestContext build(InsertNonAlignedColumnRecordsReq req, String timePrecision) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedColumn, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
     }
 
-    public RequestContext build(InsertRowRecordsReq req) {
+    public RequestContext build(InsertRowRecordsReq req, String timePrecision) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Row, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
     }
 
-    public RequestContext build(InsertNonAlignedRowRecordsReq req) {
+    public RequestContext build(InsertNonAlignedRowRecordsReq req, String timePrecision) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedRow, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
     }
 
     private RequestContext buildFromInsertReq(long sessionId, RawDataType rawDataType, List<String> paths, List<DataType> types,
                                               byte[] timestamps, List<ByteBuffer> valueList, List<ByteBuffer> bitmapList,
-                                              List<Map<String, String>> tagsList) {
+                                              List<Map<String, String>> tagsList, String timePrecision) {
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(timestamps);
         List<Long> times = new ArrayList<>();
-        Arrays.stream(timeArray).forEach(times::add);
+        for (long time : timeArray) {
+            times.add(TimeUtils.getTimeInMs(time, timePrecision));
+        }
 
         List<Bitmap> bitmaps;
         Object[] values;

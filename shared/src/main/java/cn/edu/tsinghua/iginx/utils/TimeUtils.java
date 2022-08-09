@@ -27,6 +27,24 @@ public class TimeUtils {
 
     public static final String DEFAULT_TIMESTAMP_PRECISION = "ms";
 
+    public static long getTimeInMs(long timestamp, String timePrecision) {
+        long timeInMs;
+        switch (timePrecision) {
+            case "s":
+                timeInMs = timestamp * 1000;
+                break;
+            case "us":
+                timeInMs = timestamp / 1000;
+                break;
+            case "ns":
+                timeInMs = timestamp / 1000000;
+                break;
+            default:
+                timeInMs = timestamp;
+        }
+        return timeInMs;
+    }
+
     public static long getMicrosecond() {
         long currentTime = System.currentTimeMillis() * 1000;
         long nanoTime = System.nanoTime();

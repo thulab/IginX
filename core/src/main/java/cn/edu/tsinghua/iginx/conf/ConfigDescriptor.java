@@ -66,6 +66,7 @@ public class ConfigDescriptor {
             config.setSyncExecuteThreadPool(Integer.parseInt(properties.getProperty("syncExecuteThreadPool", "60")));
             config.setAsyncExecuteThreadPool(Integer.parseInt(properties.getProperty("asyncExecuteThreadPool", "20")));
             config.setReplicaNum(Integer.parseInt(properties.getProperty("replicaNum", "1")));
+            config.setTimePrecision(properties.getProperty("timePrecision", "ms"));
 
             config.setDatabaseClassNames(properties.getProperty("databaseClassNames", "iotdb=cn.edu.tsinghua.iginx.iotdb.IoTDBPlanExecutor,influxdb=cn.edu.tsinghua.iginx.influxdb.InfluxDBPlanExecutor"));
             //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBStorage,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
@@ -152,6 +153,7 @@ public class ConfigDescriptor {
         config.setSyncExecuteThreadPool(EnvUtils.loadEnv("syncExecuteThreadPool", config.getSyncExecuteThreadPool()));
         config.setAsyncExecuteThreadPool(EnvUtils.loadEnv("asyncExecuteThreadPool", config.getAsyncExecuteThreadPool()));
         config.setReplicaNum(EnvUtils.loadEnv("replicaNum", config.getReplicaNum()));
+        config.setTimePrecision(EnvUtils.loadEnv("timePrecision", config.getTimePrecision()));
         config.setDatabaseClassNames(EnvUtils.loadEnv("databaseClassNames", config.getDatabaseClassNames()));
         config.setPolicyClassName(EnvUtils.loadEnv("policyClassName", config.getPolicyClassName()));
         config.setStatisticsCollectorClassName(EnvUtils.loadEnv("statisticsCollectorClassName", config.getStatisticsCollectorClassName()));
