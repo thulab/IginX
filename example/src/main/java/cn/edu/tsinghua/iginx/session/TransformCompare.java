@@ -75,7 +75,7 @@ public class TransformCompare {
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(sql);
+        iginxTask.setSqlList(Collections.singletonList(sql));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);

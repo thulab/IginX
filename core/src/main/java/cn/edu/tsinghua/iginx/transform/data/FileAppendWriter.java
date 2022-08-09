@@ -8,15 +8,19 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 public class FileAppendWriter extends ExportWriter {
 
     private final String fileName;
 
+    private final List<String> exportNameList;
+
     private final static Logger logger = LoggerFactory.getLogger(FileAppendWriter.class);
 
-    public FileAppendWriter(String fileName) {
+    public FileAppendWriter(String fileName, List<String> exportNameList) {
         this.fileName = fileName;
+        this.exportNameList = exportNameList;
         File file = new File(fileName);
         createFileIfNotExist(file);
     }
@@ -24,7 +28,7 @@ public class FileAppendWriter extends ExportWriter {
     @Override
     public void write(BatchData batchData) {
         for (Row row : batchData.getRowList()) {
-            writeFile(fileName, row.toCSVTypeString()+"\n");
+            writeFile(fileName, row.toCSVTypeString() + "\n");
         }
     }
 
@@ -42,6 +46,9 @@ public class FileAppendWriter extends ExportWriter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+        if (exportNameList != null && !exportNameList.isEmpty()) {
+            writeFile(fileName, String.join(",", exportNameList) + "\n");
         }
     }
 

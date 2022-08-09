@@ -8,9 +8,13 @@ import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class IginXWriter extends ExportWriter {
 
     private final long sessionId;
+
+    private final List<String> exportNameList;
 
     private final StatementExecutor executor = StatementExecutor.getInstance();
 
@@ -18,8 +22,9 @@ public class IginXWriter extends ExportWriter {
 
     private final static Logger logger = LoggerFactory.getLogger(IginXWriter.class);
 
-    public IginXWriter(long sessionId) {
+    public IginXWriter(long sessionId, List<String> exportNameList) {
         this.sessionId = sessionId;
+        this.exportNameList = exportNameList;
     }
 
     @Override
@@ -38,18 +43,23 @@ public class IginXWriter extends ExportWriter {
 
     private String buildSQL(BatchData batchData) {
         StringBuilder builder = new StringBuilder();
-//        if (!batchData.getHeader().hasTimestamp()) {
-//            logger.error("There are no time series in the data written back.");
-//            return "";
-//        }
+
+        // construct paths
         builder.append("INSERT INTO transform(Time, ");
-//        batchData.getHeader().getFields().forEach(field -> builder.append(field.getName()).append(",")); // name are not sure
-        for (int i = 0; i < batchData.getHeader().getFields().size(); i++) {
-            builder.append("result.column").append(i).append(",");
+        if (exportNameList == null || exportNameList.isEmpty()) {
+            for (int i = 0; i < batchData.getHeader().getFields().size(); i++) {
+                builder.append("result.default_column").append(i).append(",");
+            }
+        } else {
+            for (String pathName : exportNameList) {
+                builder.append(pathName).append(",");
+            }
         }
         builder.deleteCharAt(builder.length() - 1);
+
+        // construct values
         builder.append(") VALUES");
-        int index = 0;
+        long index = System.currentTimeMillis();
         for (Row row : batchData.getRowList()) {
             builder.append(" (");
             builder.append(index).append(",");

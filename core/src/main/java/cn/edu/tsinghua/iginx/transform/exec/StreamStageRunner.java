@@ -72,7 +72,7 @@ public class StreamStageRunner implements Runner {
 
         if (streamStage.isStartWithIginX()) {
             IginXTask firstTask = (IginXTask) streamStage.getTaskList().get(0);
-            RowStream rowStream = getRowStream(streamStage.getSessionId(), firstTask.getSql());
+            RowStream rowStream = getRowStream(streamStage.getSessionId(), firstTask.getSqlList());
             reader = new RowStreamReader(rowStream, batchSize);
         } else {
             CollectionWriter collectionWriter = (CollectionWriter) streamStage.getBeforeStage().getExportWriter();
@@ -80,8 +80,14 @@ public class StreamStageRunner implements Runner {
         }
     }
 
-    private RowStream getRowStream(long sessionId, String sql) {
-        ExecuteStatementReq req = new ExecuteStatementReq(sessionId, sql);
+    private RowStream getRowStream(long sessionId, List<String> sqlList) {
+        for (int i = 0; i < sqlList.size() - 1; i++) {
+            ExecuteStatementReq req = new ExecuteStatementReq(sessionId, sqlList.get(i));
+            RequestContext context = contextBuilder.build(req);
+            executor.execute(context);
+        }
+
+        ExecuteStatementReq req = new ExecuteStatementReq(sessionId, sqlList.get(sqlList.size() - 1));
         RequestContext context = contextBuilder.build(req);
         executor.execute(context);
         return context.getResult().getResultStream();

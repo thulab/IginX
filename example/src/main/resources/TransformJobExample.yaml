@@ -2,7 +2,8 @@ taskList:
   - taskType: iginx
     dataFlowType: stream
     timeout: 10000000
-    sql: select value1, value2, value3, value4 from transform;
+    sqlList:
+      - select value1, value2, value3, value4 from transform;
   - taskType: python
     dataFlowType: stream
     timeout: 10000000
@@ -21,3 +22,6 @@ taskList:
 exportType: file
 #exportFile: /path/to/your/output/dir
 exportFile: /Users/cauchy-ny/Downloads/export_file_sum_sql.txt
+exportNameList:
+  - col1
+  - col2
