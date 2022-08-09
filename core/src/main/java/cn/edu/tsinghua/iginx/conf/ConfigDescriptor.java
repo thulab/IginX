@@ -74,8 +74,6 @@ public class ConfigDescriptor {
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
 
-            config.setStorageUnitNum(Integer.parseInt(properties.getProperty("storageUnitNum", "30")));
-
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
             config.setStatisticsLogInterval(Integer.parseInt(properties.getProperty("statisticsLogInterval", "5000")));
 
@@ -136,6 +134,9 @@ public class ConfigDescriptor {
             config.setTransformMaxRetryTimes(Integer.parseInt(properties.getProperty("transformMaxRetryTimes", "3")));
 
             config.setNeedInitBasicUDFFunctions(Boolean.parseBoolean(properties.getProperty("needInitBasicUDFFunctions", "false")));
+
+            config.setHistoricalPrefixList(properties.getProperty("historicalPrefixList", ""));
+            config.setExpectedStorageUnitNum(Integer.parseInt(properties.getProperty("expectedStorageUnitNum", "0")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -155,7 +156,6 @@ public class ConfigDescriptor {
         config.setTimePrecision(EnvUtils.loadEnv("timePrecision", config.getTimePrecision()));
         config.setDatabaseClassNames(EnvUtils.loadEnv("databaseClassNames", config.getDatabaseClassNames()));
         config.setPolicyClassName(EnvUtils.loadEnv("policyClassName", config.getPolicyClassName()));
-        config.setStorageUnitNum(EnvUtils.loadEnv("storageUnitNum", config.getStorageUnitNum()));
         config.setStatisticsCollectorClassName(EnvUtils.loadEnv("statisticsCollectorClassName", config.getStatisticsCollectorClassName()));
         config.setStatisticsLogInterval(EnvUtils.loadEnv("statisticsLogInterval", config.getStatisticsLogInterval()));
         config.setRestIp(EnvUtils.loadEnv("restIp", config.getRestIp()));
@@ -200,6 +200,8 @@ public class ConfigDescriptor {
         config.setTransformTaskThreadPoolSize(EnvUtils.loadEnv("transformTaskThreadPoolSize", config.getTransformTaskThreadPoolSize()));
         config.setTransformMaxRetryTimes(EnvUtils.loadEnv("transformMaxRetryTimes", config.getTransformMaxRetryTimes()));
         config.setNeedInitBasicUDFFunctions(EnvUtils.loadEnv("needInitBasicUDFFunctions", config.isNeedInitBasicUDFFunctions()));
+        config.setHistoricalPrefixList(EnvUtils.loadEnv("historicalPrefixList", config.getHistoricalPrefixList()));
+        config.setExpectedStorageUnitNum(EnvUtils.loadEnv("expectedStorageUnitNum", config.getExpectedStorageUnitNum()));
     }
 
     private void loadUDFListFromFile() {
