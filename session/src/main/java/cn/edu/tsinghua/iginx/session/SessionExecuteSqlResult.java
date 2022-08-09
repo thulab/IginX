@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.session;
 
 import cn.edu.tsinghua.iginx.thrift.*;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.text.SimpleDateFormat;
@@ -436,20 +437,7 @@ public class SessionExecuteSqlResult {
     }
 
     private String formatTime(long timestamp, String timeFormat, String timePrecision) {
-        long timeInMs;
-        switch (timePrecision) {
-            case "s":
-                timeInMs = timestamp * 1000;
-                break;
-            case "us":
-                timeInMs = timestamp / 1000;
-                break;
-            case "ns":
-                timeInMs = timestamp / 1000000;
-                break;
-            default:
-                timeInMs = timestamp;
-        }
+        long timeInMs = TimeUtils.getTimeInMs(timestamp, timePrecision);
         if (timeFormat.equals(DEFAULT_TIME_FORMAT)) {
             return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS").format(timeInMs);
         } else {

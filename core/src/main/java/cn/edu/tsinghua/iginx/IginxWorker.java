@@ -109,7 +109,7 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req);
+        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
@@ -119,7 +119,7 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req);
+        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
@@ -129,7 +129,7 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req);
+        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
@@ -139,7 +139,7 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req);
+        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
