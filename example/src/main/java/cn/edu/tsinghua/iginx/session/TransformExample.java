@@ -23,6 +23,7 @@ public class TransformExample {
     private static final String S4 = "transform.value4";
 
     private static final String QUERY_SQL = "select value1, value2, value3, value4 from transform;";
+    private static final String SHOW_TIME_SERIES_SQL = "show time series;";
     private static final String SHOW_REGISTER_TASK_SQL = "SHOW REGISTER PYTHON TASK;";
     private static final String REGISTER_SQL_FORMATTER = "REGISTER TRANSFORM PYTHON TASK %s IN %s AS %s";
     private static final String DROP_SQL_FORMATTER = "DROP PYTHON TASK %s";
@@ -91,13 +92,16 @@ public class TransformExample {
     }
 
     private static void runWithSession() throws SessionException, ExecutionException, InterruptedException {
+        // 直接输出到文件
+        commitWithoutPyTask();
+
         // 导出到日志
         commitStdJob();
 
         // 导出到file
         commitFileJob();
 
-        // 导出到IginX
+        // 综合任务
         commitCombineJob();
 
         // 混合任务
@@ -132,12 +136,33 @@ public class TransformExample {
         });
     }
 
+    private static void commitWithoutPyTask() throws ExecutionException, SessionException, InterruptedException {
+        // 构造任务
+        List<TaskInfo> taskInfoList = new ArrayList<>();
+
+        TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
+        iginxTask.setSqlList(Collections.singletonList(SHOW_TIME_SERIES_SQL));
+        taskInfoList.add(iginxTask);
+
+        // 提交任务
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_show_ts.txt", Arrays.asList("path", "type"));
+        System.out.println("job id is " + jobId);
+
+        // 轮询查看任务情况
+        JobState jobState = JobState.JOB_CREATED;
+        while (!jobState.equals(JobState.JOB_CLOSED) && !jobState.equals(JobState.JOB_FAILED) && !jobState.equals(JobState.JOB_FINISHED)) {
+            Thread.sleep(500);
+            jobState = session.queryTransformJobStatus(jobId);
+        }
+        System.out.println("job state is " + jobState.toString());
+    }
+
     private static void commitStdJob() throws ExecutionException, SessionException, InterruptedException {
         // 构造任务
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(QUERY_SQL);
+        iginxTask.setSqlList(Collections.singletonList(QUERY_SQL));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -162,7 +187,7 @@ public class TransformExample {
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(QUERY_SQL);
+        iginxTask.setSqlList(Collections.singletonList(QUERY_SQL));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -170,7 +195,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file.txt");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file.txt", Arrays.asList("col1", "col2"));
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -187,7 +212,7 @@ public class TransformExample {
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(QUERY_SQL);
+        iginxTask.setSqlList(Collections.singletonList(QUERY_SQL));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -199,7 +224,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_combine.txt");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_combine.txt", Arrays.asList("col1", "col2"));
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -216,7 +241,7 @@ public class TransformExample {
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(QUERY_SQL);
+        iginxTask.setSqlList(Collections.singletonList(QUERY_SQL));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -232,7 +257,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_sum.txt");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_sum.txt", Arrays.asList("col1", "col2"));
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -249,7 +274,7 @@ public class TransformExample {
         List<TaskInfo> taskInfoList = new ArrayList<>();
 
         TaskInfo iginxTask = new TaskInfo(TaskType.IginX, DataFlowType.Stream);
-        iginxTask.setSql(QUERY_SQL);
+        iginxTask.setSqlList(Collections.singletonList(QUERY_SQL));
         taskInfoList.add(iginxTask);
 
         TaskInfo pyTask = new TaskInfo(TaskType.Python, DataFlowType.Stream);
@@ -257,7 +282,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.IginX, "");
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.IginX, "", Arrays.asList("col1", "col2"));
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -333,7 +358,7 @@ public class TransformExample {
                         .timeout(TIMEOUT)
                         .pyTaskName("RowSumTransformer")
                         .build())
-                .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt")
+                .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt", Arrays.asList("col1", "col2"))
                 .build()
         );
 
