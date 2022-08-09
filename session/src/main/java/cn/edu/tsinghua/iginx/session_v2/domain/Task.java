@@ -4,6 +4,9 @@ import cn.edu.tsinghua.iginx.session_v2.Arguments;
 import cn.edu.tsinghua.iginx.thrift.DataFlowType;
 import cn.edu.tsinghua.iginx.thrift.TaskType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Task {
 
     private final TaskType taskType;
@@ -12,20 +15,20 @@ public class Task {
 
     private final long timeout;
 
-    private final String sql;
+    private final List<String> sqlList;
 
     private final String pyTaskName;
 
-    public Task(TaskType taskType, DataFlowType dataFlowType, long timeout, String sql, String pyTaskName) {
+    public Task(TaskType taskType, DataFlowType dataFlowType, long timeout, List<String> sqlList, String pyTaskName) {
         this.taskType = taskType;
         this.dataFlowType = dataFlowType;
         this.timeout = timeout;
-        this.sql = sql;
+        this.sqlList = sqlList;
         this.pyTaskName = pyTaskName;
     }
 
     public Task(Task.Builder builder) {
-        this(builder.taskType, builder.dataFlowType, builder.timeout, builder.sql, builder.pyTaskName);
+        this(builder.taskType, builder.dataFlowType, builder.timeout, builder.sqlList, builder.pyTaskName);
     }
 
     public static Task.Builder builder() {
@@ -44,8 +47,8 @@ public class Task {
         return timeout;
     }
 
-    public String getSql() {
-        return sql;
+    public List<String> getSqlList() {
+        return sqlList;
     }
 
     public String getPyTaskName() {
@@ -60,7 +63,7 @@ public class Task {
 
         private long timeout = Long.MAX_VALUE;
 
-        private String sql;
+        private List<String> sqlList = new ArrayList<>();
 
         private String pyTaskName;
 
@@ -77,7 +80,7 @@ public class Task {
         public Task.Builder sql(String sql) {
             Arguments.checkTaskType(TaskType.IginX, taskType);
             this.taskType = TaskType.IginX;
-            this.sql = sql;
+            this.sqlList.add(sql);
             return this;
         }
 

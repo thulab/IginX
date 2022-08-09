@@ -14,14 +14,17 @@ public class Transform {
 
     private final String fileName;
 
-    public Transform(List<Task> taskList, ExportType exportType, String fileName) {
+    private final List<String> exportNameList;
+
+    public Transform(List<Task> taskList, ExportType exportType, String fileName, List<String> exportNameList) {
         this.taskList = taskList;
         this.exportType = exportType;
         this.fileName = fileName;
+        this.exportNameList = exportNameList;
     }
 
     public Transform(Transform.Builder builder) {
-        this(builder.taskList, builder.exportType, builder.fileName);
+        this(builder.taskList, builder.exportType, builder.fileName, builder.exportNameList);
     }
 
     public static Transform.Builder builder() {
@@ -40,6 +43,10 @@ public class Transform {
         return fileName;
     }
 
+    public List<String> getExportNameList() {
+        return exportNameList;
+    }
+
     public static class Builder {
 
         private List<Task> taskList = new ArrayList<>();
@@ -47,6 +54,8 @@ public class Transform {
         private ExportType exportType;
 
         private String fileName;
+
+        private List<String> exportNameList;
 
         public Transform.Builder addTask(Task task) {
             taskList.add(task);
@@ -59,13 +68,23 @@ public class Transform {
         }
 
         public Transform.Builder exportToIginX() {
+            return exportToIginX(exportNameList);
+        }
+
+        public Transform.Builder exportToIginX(List<String> exportNameList) {
             this.exportType = ExportType.IginX;
+            this.exportNameList = exportNameList;
             return this;
         }
 
         public Transform.Builder exportToFile(String fileName) {
+            return exportToFile(fileName, null);
+        }
+
+        public Transform.Builder exportToFile(String fileName, List<String> exportNameList) {
             this.exportType = ExportType.File;
             this.fileName = fileName;
+            this.exportNameList = exportNameList;
             return this;
         }
 

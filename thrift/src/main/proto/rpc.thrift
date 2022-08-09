@@ -425,7 +425,7 @@ struct TaskInfo {
     1: required TaskType taskType
     2: required DataFlowType dataFlowType
     3: optional i64 timeout
-    4: optional string sql
+    4: optional list<string> sqlList
     5: optional string pyTaskName
 }
 
@@ -434,6 +434,7 @@ struct CommitTransformJobReq {
     2: required list<TaskInfo> taskList
     3: required ExportType exportType
     4: optional string fileName
+    5: optional list<string> exportNameList
 }
 
 struct CommitTransformJobResp {

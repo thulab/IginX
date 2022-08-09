@@ -24,13 +24,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.HashMap;
 
 @Data
 public class Metric {
     private String name;
+    private Long startAbsolute;
+    private Long endAbsolute;
     private Map<String, String> tags = new TreeMap<>();
     private List<Long> timestamps = new ArrayList<>();
     private List<String> values = new ArrayList<>();
+    private Map<String, String> anno = new HashMap<>();
     private String annotation = null;
 
     public void addTag(String key, String value) {
@@ -43,5 +47,9 @@ public class Metric {
 
     public void addValue(String value) {
         values.add(value);
+    }
+
+    public void addAnno(String key, String value) {
+        anno.put(key, value);
     }
 }

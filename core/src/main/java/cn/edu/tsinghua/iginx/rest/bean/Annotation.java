@@ -71,11 +71,12 @@ public class Annotation {
         if (!Pattern.matches(annotationLimit.getTitle(), title)) {
             return false;
         }
-        for (String tag : tags) {
-            if (Pattern.matches(annotationLimit.getTag(), tag)) {
-                return true;
-            }
-        }
+        //LHZ之后再改，目前没什么用
+//        for (String tag : tags) {
+//            if (Pattern.matches(annotationLimit.getTag(), tag)) {
+//                return true;
+//            }
+//        }
         return false;
     }
 }
