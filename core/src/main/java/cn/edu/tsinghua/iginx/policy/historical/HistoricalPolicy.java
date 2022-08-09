@@ -44,6 +44,11 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+// 若要使用历史数据分片策略，须在config.properties中添加以下配置：
+// # 历史数据中常见的路径前缀列表，使用','分隔
+// historicalPrefixList=000,001,002,AAA
+// # 预期存储单元数量
+// expectedStorageUnitNum=50
 public class HistoricalPolicy implements IPolicy {
 
     private static final Logger logger = LoggerFactory.getLogger(HistoricalPolicy.class);
