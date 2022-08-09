@@ -67,6 +67,12 @@ public final class FragmentMeta {
         this.fakeStorageUnitId = fakeStorageUnitId;
     }
 
+    public FragmentMeta(TimeSeriesInterval tsInterval, TimeInterval timeInterval, String fakeStorageUnitId) {
+        this.timeInterval = timeInterval;
+        this.tsInterval = tsInterval;
+        this.fakeStorageUnitId = fakeStorageUnitId;
+    }
+
     public FragmentMeta(String startPrefix, String endPrefix, long startTime, long endTime, StorageUnitMeta masterStorageUnit) {
         this.timeInterval = new TimeInterval(startTime, endTime);
         this.tsInterval = new TimeSeriesInterval(startPrefix, endPrefix);

@@ -50,8 +50,6 @@ public class Config {
 
     private String policyClassName = "cn.edu.tsinghua.iginx.policy.naive.NativePolicy";
 
-    private int storageUnitNum = 30;
-
     private String statisticsCollectorClassName = "";
 
     private int statisticsLogInterval = 5000;
@@ -145,6 +143,10 @@ public class Config {
     private boolean needInitBasicUDFFunctions = true;
 
     private List<String> udfList = new ArrayList<>();
+
+    private String historicalPrefixList = "";
+
+    private int expectedStorageUnitNum = 0;
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;
@@ -248,14 +250,6 @@ public class Config {
 
     public void setPolicyClassName(String policyClassName) {
         this.policyClassName = policyClassName;
-    }
-
-    public int getStorageUnitNum() {
-        return storageUnitNum;
-    }
-
-    public void setStorageUnitNum(int storageUnitNum) {
-        this.storageUnitNum = storageUnitNum;
     }
 
     public String getStatisticsCollectorClassName() {
@@ -632,5 +626,21 @@ public class Config {
 
     public void setUdfList(List<String> udfList) {
         this.udfList = udfList;
+    }
+
+    public String getHistoricalPrefixList() {
+        return historicalPrefixList;
+    }
+
+    public void setHistoricalPrefixList(String historicalPrefixList) {
+        this.historicalPrefixList = historicalPrefixList;
+    }
+
+    public int getExpectedStorageUnitNum() {
+        return expectedStorageUnitNum;
+    }
+
+    public void setExpectedStorageUnitNum(int expectedStorageUnitNum) {
+        this.expectedStorageUnitNum = expectedStorageUnitNum;
     }
 }
