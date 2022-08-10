@@ -41,9 +41,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.*;
 
 public class DataPointsParser {
-    public static final String ANNOTATION_SPLIT_STRING = "#annotation";
     private static final Logger LOGGER = LoggerFactory.getLogger(DataPointsParser.class);
-    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
     private Reader inputStream = null;
     private final ObjectMapper mapper = new ObjectMapper();
     private List<Metric> metricList = new ArrayList<>();
@@ -323,19 +321,6 @@ public class DataPointsParser {
         }
     }
 
-    //将传入的path（格式为name{tagkey=tagval}）转换为正常的QueryMetric
-    private Metric parseResultAnnoDataPaths(String path){
-        StringBuilder name = new StringBuilder();
-        Metric metric = new Metric();
-        Map<String, String> tags = getTagsFromPaths(path, name);
-
-        for (Map.Entry<String, String> entry : tags.entrySet()) {
-            name.append(entry.getKey() + "." + entry.getValue());
-        }
-        metric.setName(name.toString());
-        return metric;
-    }
-
     private Map<String, String> getTagsFromPaths(String path, StringBuilder name) {//LHZ确认下是否传入了引用
         Map<String, String> ret = new TreeMap<>();//LHZ这里要再次确认下tag的顺序是否和底层存储一样
         int firstBrace = path.indexOf("{");
@@ -521,61 +506,6 @@ public class DataPointsParser {
             session.closeSession();
         }
     }
-
-    private void sendAnnotationMetricsData() throws Exception {
-        for (Metric metric : metricList) {
-            List<Map<String, String>> tagsList = new ArrayList<>();
-            tagsList.add(metric.getTags());
-            StringBuilder path = new StringBuilder();
-            // Map<String, Integer> metricschema = metaManager.getSchemaMapping(metric.getName());
-            // if (metricschema == null) {
-            //     needUpdate = true;
-            //     metricschema = new ConcurrentHashMap<>();
-            // }
-            // Iterator iter = metric.getTags().entrySet().iterator();
-            // while (iter.hasNext()) {
-            //     Map.Entry entry = (Map.Entry) iter.next();
-            //     if (metricschema.get(entry.getKey()) == null) {
-            //         needUpdate = true;
-            //         int pos = metricschema.size() + 1;
-            //         metricschema.put((String) entry.getKey(), pos);
-            //     }
-            // }
-            // if (needUpdate) {
-            //     metaManager.addOrUpdateSchemaMapping(metric.getName(), metricschema);
-            // }
-            // Map<Integer, String> pos2path = new TreeMap<>();
-            // for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-            //     pos2path.put(entry.getValue(), entry.getKey());
-            // }
-            // StringBuilder path = new StringBuilder();
-            // iter = pos2path.entrySet().iterator();
-            // while (iter.hasNext()) {
-            //     Map.Entry entry = (Map.Entry) iter.next();
-            //     String ins = metric.getTags().get(entry.getValue());
-            //     if (ins != null) {
-            //         path.append(ins).append(".");
-            //     } else {
-            //         path.append("null.");
-            //     }
-            // }
-            path.append(metric.getName());
-            path.append(ANNOTATION_SPLIT_STRING);
-            List<String> paths = new ArrayList<>();
-            paths.add(path.toString());
-            List<DataType> type = new ArrayList<>();
-            type.add(DataType.BINARY);
-            int size = metric.getTimestamps().size();
-            Object[] valuesList = new Object[1];
-            Object[] values = new Object[size];
-            for (int i = 0; i < size; i++) {
-                values[i] = metric.getAnnotation().getBytes();
-            }
-            valuesList[0] = values;
-            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
-        }
-    }
-
 
     Object getType(String str, DataType tp) {
         switch (tp) {

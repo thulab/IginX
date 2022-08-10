@@ -54,13 +54,13 @@ public class MetricsResource {
 
     private static final String INSERT_URL = "api/v1/datapoints";
     private static final String INSERT_ANNOTATION_URL = "api/v1/datapoints/annotations";
-    private static final String APPEND_ANNOTATION_URL = "api/v1/datapoints/annotations/append";
+    private static final String ADD_ANNOTATION_URL = "api/v1/datapoints/annotations/add";
     private static final String UPDATE_ANNOTATION_URL = "api/v1/datapoints/annotations/update";
     private static final String QUERY_URL = "api/v1/datapoints/query";
     private static final String QUERY_ANNOTATION_URL = "api/v1/datapoints/query/annotations";
     private static final String QUERY_ANNOTATION_DATA_URL = "api/v1/datapoints/query/annotations/data";
     private static final String DELETE_URL = "api/v1/datapoints/delete";
-    private static final String DELETE_ANNOTATION_URL = "api/v1/datapoints/delete/annotations";
+    private static final String DELETE_ANNOTATION_URL = "api/v1/datapoints/annotations/delete";
     private static final String DELETE_METRIC_URL = "api/v1/metric/{metricName}";
     private static final String GRAFANA_OK = "";
     private static final String GRAFANA_QUERY = "query";
@@ -104,13 +104,13 @@ public class MetricsResource {
 
     @POST
     @Path(INSERT_ANNOTATION_URL)
-    public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+    public void insertAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
         threadPool.execute(new InsertWorker(asyncResponse, httpheaders, stream, false));
     }
 
     @POST
-    @Path(APPEND_ANNOTATION_URL)//这里记着把insert中的apend之类的标记和操作删除了
-    public void appendAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+    @Path(ADD_ANNOTATION_URL)
+    public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
         try {
             String str = inputStreamToString(stream);
             appendAnno(str, httpheaders, asyncResponse);
@@ -415,7 +415,7 @@ public class MetricsResource {
             queryAll.setEndAbsolute(TOPTIEM);
             QueryExecutor executorData = new QueryExecutor(queryAll);
             //执行删除操作
-            executorData.execute(true);
+            executorData.deleteMetric();
 
             String entity = parser.parseResultToJson(null, true);
             return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
