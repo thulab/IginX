@@ -654,15 +654,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         } else if (ctx.realLiteral() != null) {
             // maybe contains minus, see Sql.g4 for more details.
             return Double.parseDouble(ctx.getText());
-        } else if (ctx.FLOAT() != null) {
-            String floatStr = ctx.getText();
-            return Float.parseFloat(floatStr.substring(0, floatStr.length() - 1));
         } else if (ctx.INT() != null) {
             // INT() may NOT IN [-2147483648, 2147483647], see Sql.g4 for more details.
             return Long.parseLong(ctx.getText());
-        } else if (ctx.INTEGER() != null) {
-            String intStr = ctx.getText();
-            return Integer.parseInt(intStr.substring(0, intStr.length() - 1)); // trim i, 123i —> 123
         } else {
             return null;
         }
@@ -678,13 +672,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             return DataType.BINARY;
         } else if (ctx.realLiteral() != null) {
             return DataType.DOUBLE;
-        } else if (ctx.FLOAT() != null) {
-            return DataType.FLOAT;
         } else if (ctx.INT() != null) {
             // INT() may NOT IN [-2147483648, 2147483647], see Sql.g4 for more details.
             return DataType.LONG;
-        } else if (ctx.INTEGER() != null) {
-            return DataType.INTEGER;
         } else {
             return null;
         }
