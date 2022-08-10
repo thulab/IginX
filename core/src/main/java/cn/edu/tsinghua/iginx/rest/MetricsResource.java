@@ -277,7 +277,7 @@ public class MetricsResource {
                 //查询anno的title以及dsp信息
                 QueryResult resultAnno = getAnno(queryAnnoData);
 
-                //这里的解析也要确认是否可以解析成功？？LHZ
+                //添加cat信息
                 parser.getAnnoCategory(resultAnno);
                 //筛选出符合title信息的序列
                 QueryResult result = getAnnoDataQueryFromTitle(query, resultAnno);

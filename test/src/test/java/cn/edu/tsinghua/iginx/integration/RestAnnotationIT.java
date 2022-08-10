@@ -229,12 +229,17 @@ public class RestAnnotationIT {
             String title = result.getQueryMetrics().get(i).getAnnotationLimit().getTitle();
             for(int j=0; j<data.getPaths().size(); j++) {
                 if(title.equals(".*") || title.isEmpty() || (data.getTitles().get(j)!=null && data.getTitles().get(j).equals(title)) ) {
-                    dataRet.addPlus(data.getPaths().get(j),data.getDescriptions().get(j),data.getCategorys().get(j),
-                            data.getValueLists().get(j),data.getTimeLists().get(j));
+                    if(!data.getPaths().isEmpty()) dataRet.addPath(data.getPaths().get(j));
+                    if(!data.getDescriptions().isEmpty()) dataRet.addDescription(data.getDescriptions().get(j));
+                    if(!data.getCategorys().isEmpty()) dataRet.addCategory(data.getCategorys().get(j));
+                    if(!data.getTitles().isEmpty()) dataRet.addTitle(data.getTitles().get(j));
+                    if(!data.getValueLists().isEmpty()) dataRet.addValueLists(data.getValueLists().get(j));
+                    if(!data.getTimeLists().isEmpty()) dataRet.addTimeLists(data.getTimeLists().get(j));
                 }
             }
             ret.addqueryResultDataset(dataRet);
             ret.addQueryMetric(result.getQueryMetrics().get(i));
+            ret.addQueryAggregator(result.getQueryAggregators().get(i));
         }
         return ret;
     }
@@ -261,6 +266,7 @@ public class RestAnnotationIT {
                 //查询anno的title以及dsp信息
                 QueryResult resultAnno = getAnno(queryAnnoData);
 
+                parser.getAnnoCategory(resultAnno);
                 //筛选出符合title信息的序列
                 QueryResult result = getAnnoDataQueryFromTitle(query, resultAnno);
 //                queryAnnoData.setStartAbsolute(1L);
@@ -268,8 +274,6 @@ public class RestAnnotationIT {
 //                executor = new QueryExecutor(queryAnnoData);
 //                QueryResult resultData = executor.execute(false);
 
-                //这里的解析也要确认是否可以解析成功？？LHZ
-                parser.getAnnoCategory(resultAnno);
                 String entity = parser.parseAnnoDataResultToJson(result);
                 return entity;
             } else {//只查询anno信息
@@ -472,7 +476,7 @@ public class RestAnnotationIT {
                     "            }\n" +
                     "    }]\n" +
                     "}";
-            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]}";
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]}";
             executeAndCompare(query, ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
