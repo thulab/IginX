@@ -284,13 +284,11 @@ dateFormat
 
 constant
     : dateExpression
-    | NaN
     | MINUS? realLiteral // double
     | MINUS? INT         // long
-    | MINUS? FLOAT       // float
-    | MINUS? INTEGER     // int
     | stringLiteral
     | booleanClause
+    | NaN
     | NULL
     ;
 
@@ -625,17 +623,6 @@ stringLiteral
     ;
 
 INT : [0-9]+;
-
-INTEGER : [0-9]+I;
-
-// tricky, in order to parse float like "2.56f" instead of "2.56 f"
-FLOAT
-    : [0-9]+ . [0-9]+ F
-    | . [0-9]+ F
-    | [0-9]+ . [0-9]+ ('e'|'E') ('+'|'-')? [0-9]+ F
-    | . [0-9]+ ('e'|'E') ('+'|'-')? [0-9]+ F
-    | [0-9]+ ('e'|'E') ('+'|'-')? [0-9]+ F
-    ;
 
 EXPONENT : INT ('e'|'E') ('+'|'-')? INT ;
 
