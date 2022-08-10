@@ -1,12 +1,14 @@
 package cn.edu.tsinghua.iginx.utils;
 
+import java.util.List;
+
 public class TaskFromYAML {
 
     private String taskType;
     private String dataFlowType;
     private long timeout;
     private String pyTaskName;
-    private String sql;
+    private List<String> sqlList;
 
     public TaskFromYAML() {
 
@@ -44,11 +46,11 @@ public class TaskFromYAML {
         this.pyTaskName = pyTaskName;
     }
 
-    public String getSql() {
-        return sql;
+    public List<String> getSqlList() {
+        return sqlList;
     }
 
-    public void setSql(String sql) {
-        this.sql = sql;
+    public void setSqlList(List<String> sqlList) {
+        this.sqlList = sqlList;
     }
 }

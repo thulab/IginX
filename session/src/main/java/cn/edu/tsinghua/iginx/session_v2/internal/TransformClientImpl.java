@@ -26,7 +26,7 @@ public class TransformClientImpl extends AbstractFunctionClient implements Trans
             TaskInfo taskInfo = new TaskInfo(taskType, task.getDataFlowType());
             taskInfo.setTimeout(task.getTimeout());
             if (taskType.equals(TaskType.IginX)) {
-                taskInfo.setSql(task.getSql());
+                taskInfo.setSqlList(task.getSqlList());
             } else if (taskType.equals(TaskType.Python)) {
                 taskInfo.setPyTaskName(task.getPyTaskName());
             }
@@ -36,6 +36,9 @@ public class TransformClientImpl extends AbstractFunctionClient implements Trans
         CommitTransformJobReq req = new CommitTransformJobReq(sessionId, taskInfoList, transform.getExportType());
         if (transform.getExportType().equals(ExportType.File)) {
             req.setFileName(transform.getFileName());
+        }
+        if (transform.getExportNameList() != null && !transform.getExportNameList().isEmpty()) {
+            req.setExportNameList(transform.getExportNameList());
         }
 
         CommitTransformJobResp resp;
