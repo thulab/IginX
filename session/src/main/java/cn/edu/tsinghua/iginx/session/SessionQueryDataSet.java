@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.session;
 import cn.edu.tsinghua.iginx.thrift.DownsampleQueryResp;
 import cn.edu.tsinghua.iginx.thrift.LastQueryResp;
 import cn.edu.tsinghua.iginx.thrift.QueryDataResp;
+import cn.edu.tsinghua.iginx.thrift.ShowColumnsResp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,11 @@ public class SessionQueryDataSet {
         this.tagsList = resp.getTagsList();
         this.timestamps = getLongArrayFromByteBuffer(resp.queryDataSet.timestamps);
         this.values = getValuesFromBufferAndBitmaps(resp.dataTypeList, resp.queryDataSet.valuesList, resp.queryDataSet.bitmapList);
+    }
+
+    public SessionQueryDataSet(ShowColumnsResp resp) {
+        this.paths = resp.getPaths();
+        this.timestamps = null;
     }
 
     public SessionQueryDataSet(QueryDataResp resp) {

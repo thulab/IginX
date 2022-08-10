@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.rest.bean;
 
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorLast;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -33,7 +34,9 @@ public class QueryMetric {
     private Map<String, List<String>> tags = new TreeMap<>();
     private List<QueryAggregator> aggregators = new ArrayList<>();
     private Boolean annotation = false;
+    private Boolean newAnnotation = false;
     private AnnotationLimit annotationLimit;
+    private AnnotationLimit newAnnotationLimit;
 
     public void addTag(String key, String value) {
         tags.computeIfAbsent(key, k -> new ArrayList<>());
@@ -42,5 +45,17 @@ public class QueryMetric {
 
     public void addAggregator(QueryAggregator qa) {
         aggregators.add(qa);
+    }
+
+    public void addLastAggregator() {
+        QueryAggregator qa;
+        qa = new QueryAggregatorLast();
+        qa.setDur(1L);
+        addAggregator(qa);
+    }
+
+    public void addCetagory(String key) {
+        if(annotationLimit == null) annotationLimit = new AnnotationLimit();
+        annotationLimit.addTag(key);
     }
 }
