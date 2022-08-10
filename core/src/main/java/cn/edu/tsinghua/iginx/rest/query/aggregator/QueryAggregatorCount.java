@@ -24,7 +24,6 @@ import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
-import javafx.beans.binding.ObjectExpression;
 
 import java.util.ArrayList;
 import java.util.List;
