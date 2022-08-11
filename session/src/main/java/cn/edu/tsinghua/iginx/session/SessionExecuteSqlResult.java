@@ -59,7 +59,7 @@ public class SessionExecuteSqlResult {
             case GetReplicaNum:
                 this.replicaNum = resp.getReplicaNum();
                 break;
-            case CountPoints:
+            case CountPoints: // TODO 需要在底层屏蔽系统级时间序列以及注释索引数据点
                 this.pointsNum = resp.getPointsNum();
                 break;
             case Query:
@@ -210,18 +210,27 @@ public class SessionExecuteSqlResult {
                                            String timePrecision, List<Integer> maxSizeList) {
         List<List<String>> cache = new ArrayList<>();
         List<String> label = new ArrayList<>();
+        int annotationPathIndex = -1;
         if (timestamps != null) {
             label.add("Time");
             maxSizeList.add(4);
         }
-        for (String path : paths) {
-            label.add(path);
-            maxSizeList.add(path.length());
+        for (int i = 0; i < paths.size(); i++) {
+            String path = paths.get(i);
+            if (!path.equals("TITLE.DESCRIPTION")) { // TODO 不展示系统级时间序列
+                label.add(path);
+                maxSizeList.add(path.length());
+            } else {
+                annotationPathIndex = i;
+            }
         }
 
         for (int i = 0; i < values.size(); i++) {
             List<String> rowCache = new ArrayList<>();
             if (timestamps != null) {
+                if (timestamps[i] == Long.MAX_VALUE - 1 || timestamps[i] == Long.MAX_VALUE - 2) {
+                    continue;
+                }
                 String timeValue;
                 if (needFormatTime) {
                     timeValue = formatTime(timestamps[i], timeFormat, timePrecision);
@@ -235,16 +244,27 @@ public class SessionExecuteSqlResult {
             }
 
             List<Object> rowData = values.get(i);
+            int num = 0;
+            boolean isNull = true; // TODO 该行除系统级时间序列之外全部为空
             for (int j = 0; j < rowData.size(); j++) {
+                if (j == annotationPathIndex) {
+                    continue;
+                }
                 String rowValue = valueToString(rowData.get(j));
                 rowCache.add(rowValue);
+                if (!rowValue.equalsIgnoreCase("null")) {
+                    isNull = false;
+                }
 
-                int index = timestamps == null ? j : j + 1;
+                int index = timestamps == null ? num : num + 1;
                 if (maxSizeList.get(index) < rowValue.length()) {
                     maxSizeList.set(index, rowValue.length());
                 }
+                num++;
             }
-            cache.add(rowCache);
+            if (!isNull) {
+                cache.add(rowCache);
+            }
         }
 
         cache.add(0, label);
@@ -307,12 +327,15 @@ public class SessionExecuteSqlResult {
     private String buildShowTimeSeriesResult() {
         StringBuilder builder = new StringBuilder();
         builder.append("Time series:").append("\n");
-        int num = paths == null ? 0 : paths.size();
+        int num = 0;
         if (paths != null) {
             List<List<String>> cache = new ArrayList<>();
             cache.add(new ArrayList<>(Arrays.asList("Path", "DataType")));
             for (int i = 0; i < paths.size(); i++) {
-                cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
+                if (!paths.get(i).equals("TITLE.DESCRIPTION")) { // TODO 不展示系统级时间序列
+                    cache.add(new ArrayList<>(Arrays.asList(paths.get(i), dataTypeList.get(i).toString())));
+                    num++;
+                }
             }
 
             buildFromStringList(builder, cache);
