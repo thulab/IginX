@@ -275,7 +275,7 @@ public class MetricsResource {
                 Query queryAnnoData = getAnnoDataQueryFromTimeSeries(query, timeSeries);
                 //先查询title信息
                 //查询anno的title以及dsp信息
-                QueryResult resultAnno = getAnno(queryAnnoData);
+                QueryResult resultAnno = getAnno(queryAnnoData,1L,MAXTIEM);
 
                 //添加cat信息
                 parser.getAnnoCategory(resultAnno);
@@ -292,10 +292,22 @@ public class MetricsResource {
                 //查找出所有符合tagkv的序列路径
                 Query queryBase = parser.parseAnnotationQueryMetric(jsonStr, false);
                 Query queryAnno = new Query();
-                queryAnno.setQueryMetrics(queryBase.getQueryMetrics());
+//                queryAnno.setQueryMetrics(queryBase.getQueryMetrics());
+
+                //通过first聚合查询，先查找出所以路径集合
+                queryBase.addFirstAggregator();
+                queryBase.setStartAbsolute(1L);
+                queryBase.setEndAbsolute(TOPTIEM);
+                QueryExecutor executorPath = new QueryExecutor(queryBase);
+                QueryResult resultPath = executorPath.execute(false);
+
+                //重新组织路径，将聚合查询符号删除
+                parser.removeAggPath(resultPath);
+                //分离cat路径信息
+                queryAnno = parser.splitAnnoPathToQuery(resultPath);
 
                 //查询anno的title以及dsp信息
-                QueryResult result = getAnno(queryAnno);
+                QueryResult result = getAnno(queryAnno,DESCRIPTIONTIEM,MAXTIEM);
 
                 //添加last聚合查询
 //                queryBase.addLastAggregator();//LHZNEW这里设置的聚合查询有问题！！！没有设置成功
@@ -317,10 +329,10 @@ public class MetricsResource {
     }
 
     //传入queryAnno信息，即要查找的序列信息，返回anno信息
-    private QueryResult getAnno(Query queryAnno) throws Exception  {
+    private QueryResult getAnno(Query queryAnno, Long startTime, Long endTime) throws Exception  {
         //查找title以及description信息
-        queryAnno.setStartAbsolute(1L);//LHZ这里可以不用查出所有数据，可以优化
-        queryAnno.setEndAbsolute(MAXTIEM);
+        queryAnno.setStartAbsolute(startTime);//LHZ这里可以不用查出所有数据，可以优化
+        queryAnno.setEndAbsolute(endTime);
         QueryExecutor executorAnno = new QueryExecutor(queryAnno);//要确认下是否annotation信息在查找时会影响结果
         QueryResult resultAnno = executorAnno.execute(false);
 

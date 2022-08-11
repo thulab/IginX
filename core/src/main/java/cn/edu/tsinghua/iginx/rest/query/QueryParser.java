@@ -286,38 +286,39 @@ public class QueryParser {
             }
             setAnnotationLimit(ret, ins, query);
         } else {
-             JsonNode start_absolute = node.get("start_absolute");
-             JsonNode end_absolute = node.get("end_absolute");
-             long now = System.currentTimeMillis();
-             if (start_absolute == null && end_absolute == null) {
-                 ret.setStartAbsolute(0L);
-                 ret.setEndAbsolute(now);
-             } else if (start_absolute != null && end_absolute != null) {
-                 ret.setStartAbsolute(start_absolute.asLong());
-                 ret.setEndAbsolute(end_absolute.asLong());
-             } else if (start_absolute != null) {
-                 if (setEndAbsolute(node, ret, start_absolute, now)) {
-//                     return null;
-                 }
-             } else {
-                 ret.setEndAbsolute(end_absolute.asLong());
-                 JsonNode start_relative = node.get("start_relative");
-                 if (start_relative == null) {
-                     ret.setStartAbsolute(0L);
-                 } else {
-                     JsonNode value = start_relative.get("value");
-                     if (value == null) {
-//                         return null;
-                     }
-                     long v = value.asLong();
-                     JsonNode unit = start_relative.get("unit");
-                     if (unit == null) {
-//                         return null;
-                     }
-                     Long time = transTimeFromString(unit.asText());
-                     ret.setEndAbsolute(now - v * time);
-                 }
-             }
+            JsonNode start_absolute = node.get("start_absolute");
+            JsonNode end_absolute = node.get("end_absolute");
+            long now = System.currentTimeMillis();
+            if (start_absolute == null && end_absolute == null) {
+                ret.setStartAbsolute(0L);
+                ret.setEndAbsolute(now);
+            } else if (start_absolute != null && end_absolute != null) {
+                ret.setStartAbsolute(start_absolute.asLong());
+                ret.setEndAbsolute(end_absolute.asLong());
+            } else if (start_absolute != null) {
+                if (setEndAbsolute(node, ret, start_absolute, now)) {
+//                   return null;
+                }
+            } else {
+                ret.setEndAbsolute(end_absolute.asLong());
+                JsonNode start_relative = node.get("start_relative");
+                if (start_relative == null) {
+                    ret.setStartAbsolute(0L);
+                } else {
+                    JsonNode value = start_relative.get("value");
+                    if (value == null) {
+//                       return null;
+                    }
+                    long v = value.asLong();
+                    JsonNode unit = start_relative.get("unit");
+                    if (unit == null) {
+//                       return null;
+                    }
+                    Long time = transTimeFromString(unit.asText());
+                    ret.setEndAbsolute(now - v * time);
+                }
+            }
+
             JsonNode metrics = node.get("metrics");
             if (metrics != null && metrics.isArray()) {
                 for (JsonNode dpnode : metrics) {
@@ -789,5 +790,37 @@ public class QueryParser {
             }
 
         }
+    }
+
+    public void removeAggPath(QueryResult result) {
+        for(QueryResultDataset data : result.getQueryResultDatasets()) {
+            List<String> paths = new ArrayList<>();
+            for(String path : data.getPaths()) {
+                if(path.contains("(") && path.contains(")")) {
+                    int first = path.indexOf("("), last = path.indexOf(")");
+                    path = path.substring(first+1,last);
+                }
+                paths.add(path);
+            }
+            data.setPaths(paths);
+        }
+    }
+
+    public Query splitAnnoPathToQuery(QueryResult result) {
+        Query ret = new Query();
+        for(QueryResultDataset data : result.getQueryResultDatasets()) {
+            for(String path : data.getPaths()) {
+                boolean ifhasAnno = false;
+                QueryMetric metric = parseQueryResultAnnoDataPaths(path);
+                for(Map.Entry<String,List<String>> entry : metric.getTags().entrySet()) {
+                    if(entry.getValue().equals("category")) {
+                        ifhasAnno = true;
+                        break;
+                    }
+                }
+                ret.addQueryMetrics(metric);
+            }
+        }
+        return ret;
     }
 }

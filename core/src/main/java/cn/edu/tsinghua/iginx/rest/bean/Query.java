@@ -35,9 +35,9 @@ public class Query {
         this.queryMetrics.add(queryMetric);
     }
 
-    public void addLastAggregator() {
+    public void addFirstAggregator() {
         for(QueryMetric metric : queryMetrics){
-            metric.addLastAggregator();
+            metric.addFirstAggregator();
         }
     }
 

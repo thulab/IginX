@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.rest.bean;
 
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorFirst;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorLast;
 import lombok.Data;
 
@@ -26,6 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.TOPTIEM;
 
 @Data
 public class QueryMetric {
@@ -47,10 +50,10 @@ public class QueryMetric {
         aggregators.add(qa);
     }
 
-    public void addLastAggregator() {
+    public void addFirstAggregator() {
         QueryAggregator qa;
-        qa = new QueryAggregatorLast();
-        qa.setDur(1L);
+        qa = new QueryAggregatorFirst();
+        qa.setDur(TOPTIEM);
         addAggregator(qa);
     }
 

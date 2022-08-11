@@ -117,6 +117,7 @@ public class QueryExecutor {
                 for(int j=0; j<subLen; j++) {
                     List<Long> timeList = data.getTimeLists().get(j);
                     for(int z=timeList.size()-1; z>=0;z--) {
+                        //将double转换为Long
                         Long annoTime = Math.round((Double)(data.getValueLists().get(j).get(z)));
                         if(timeList.get(z) < DESCRIPTIONTIEM) break;
                         if (timeList.get(z).equals(TITLETIEM)) {
