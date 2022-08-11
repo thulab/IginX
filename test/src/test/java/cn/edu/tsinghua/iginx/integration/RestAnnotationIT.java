@@ -1,33 +1,18 @@
-package cn.edu.tsinghua.iginx.integration.restAnnotation;
+package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.rest.MetricsResource;
-import cn.edu.tsinghua.iginx.rest.bean.Query;
-import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
-import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
-import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
-import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
-import cn.edu.tsinghua.iginx.rest.insert.InsertWorker;
-import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
-import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
 import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.container.AsyncResponse;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.Response;
-import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.zip.GZIPInputStream;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStreamReader;
 
-import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.MAXTIEM;
-import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.TOPTIEM;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
@@ -36,9 +21,9 @@ public class RestAnnotationIT {
     private static final String ERROR = "ERROR";
 
     private static Session session;
-    private enum TYPE
-    {
-        APPEND,UPDATE,INSERT,QUERYANNO,QUERYALL,DELETE
+
+    private enum TYPE {
+        APPEND, UPDATE, INSERT, QUERYANNO, QUERYALL, DELETE
     }
 
     private String API[] = {
@@ -60,7 +45,7 @@ public class RestAnnotationIT {
 
     public String execute(String fileName, TYPE type) throws Exception {
         String ret = new String();
-        String curlArray = orderGen(fileName,type);
+        String curlArray = orderGen(fileName, type);
         Process process = null;
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(curlArray.split(" "));
@@ -107,9 +92,9 @@ public class RestAnnotationIT {
     }
 
     @Before
-    public void insertData(){
-        try{
-            execute("insert.json",TYPE.INSERT);
+    public void insertData() {
+        try {
+            execute("insert.json", TYPE.INSERT);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
         }
@@ -127,9 +112,9 @@ public class RestAnnotationIT {
     }
 
     public void executeAndCompare(String json, String output, TYPE type) {
-        try{
-            String result = execute(json,type);
-            assertEquals(result, output);
+        try {
+            String result = execute(json, type);
+            assertEquals(output, result);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
         }
@@ -143,14 +128,14 @@ public class RestAnnotationIT {
 
     @Test
     public void testQueryAll() {
-        String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]}";
+        String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"title12\",\"description\": \"dsp12\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
         executeAndCompare("queryData.json", ans, TYPE.QUERYALL);
     }
 
     @Test
     public void testAppendViaQueryAnno() {
         try {
-            execute("add.json",TYPE.APPEND);
+            execute("add.json", TYPE.APPEND);
             String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"cat3\",\"cat4\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}}]}";
             executeAndCompare("queryAppendViaQueryAnno.json", ans, TYPE.QUERYANNO);
         } catch (Exception e) {
@@ -161,8 +146,8 @@ public class RestAnnotationIT {
     @Test
     public void testAppendViaQueryAll() {
         try {
-            execute("add.json",TYPE.APPEND);
-            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,123.3]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}, \"values\": [[1359788300000,13.2],[1359788410000,23.1]]}]}";
+            execute("add.json", TYPE.APPEND);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,11.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"title12\",\"description\": \"dsp12\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,77.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788410000,33.0]]}]}";
             executeAndCompare("queryAppendViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
@@ -172,8 +157,8 @@ public class RestAnnotationIT {
     @Test
     public void testUpdateViaQueryAll() {
         try {
-            execute("update.json",TYPE.UPDATE);
-            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]}";
+            execute("update.json", TYPE.UPDATE);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,88.0],[1359788400000,77.0],[1359788410000,99.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"title12\",\"description\": \"dsp12\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]}]}";
             executeAndCompare("queryUpdateViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
@@ -183,9 +168,31 @@ public class RestAnnotationIT {
     @Test
     public void testUpdateViaQueryAnno() {
         try {
-            execute("update.json",TYPE.UPDATE);
+            execute("update.json", TYPE.UPDATE);
             String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}}]}";
             executeAndCompare("queryUpdateViaQueryAnno.json", ans, TYPE.QUERYANNO);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+        }
+    }
+
+    @Test
+    public void testDeleteViaQueryAll() {
+        try {
+            execute("delete.json", TYPE.DELETE);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
+            executeAndCompare("deleteViaQueryAll.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+        }
+    }
+
+    @Test
+    public void testDeleteViaQueryAnno() {
+        try {
+            execute("delete.json", TYPE.DELETE);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}}]}";
+            executeAndCompare("deleteViaQueryAnno.json", ans, TYPE.QUERYANNO);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
         }

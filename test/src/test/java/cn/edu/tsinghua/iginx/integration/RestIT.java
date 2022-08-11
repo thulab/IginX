@@ -1,13 +1,16 @@
 package cn.edu.tsinghua.iginx.integration;
 
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.exceptions.SessionException;
 import cn.edu.tsinghua.iginx.rest.MetricsResource;
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.rest.query.QueryParser;
-import org.junit.Before;
-import org.junit.Test;
+import cn.edu.tsinghua.iginx.session.Session;
+import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
+import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +21,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 public class RestIT {
     private String insertJson = "[\n" +
@@ -45,6 +49,27 @@ public class RestIT {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
 
+    private static Session session;
+
+    @BeforeClass
+    public static void setUp() {
+        session = new Session("127.0.0.1", 6888, "root", "root");
+        try {
+            session.openSession();
+        } catch (SessionException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
+    @AfterClass
+    public static void tearDown() {
+        try {
+            session.closeSession();
+        } catch (SessionException e) {
+            LOGGER.error(e.getMessage());
+        }
+    }
+
     @Before
     public void insertData(){
         try{
@@ -54,6 +79,17 @@ public class RestIT {
             parser.parse(false);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+        }
+    }
+
+    @After
+    public void clearData() throws ExecutionException, SessionException {
+        String clearData = "CLEAR DATA;";
+
+        SessionExecuteSqlResult res = session.executeSql(clearData);
+        if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
+            LOGGER.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
+            fail();
         }
     }
 

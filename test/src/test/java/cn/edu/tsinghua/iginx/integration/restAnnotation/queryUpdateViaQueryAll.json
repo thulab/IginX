@@ -3,5 +3,9 @@
     "annotation": {
       "category": ["cat6"]
     }
+  },{
+    "annotation": {
+      "category": ["cat3"]
+    }
   }]
 }

@@ -281,10 +281,6 @@ public class MetricsResource {
                 parser.getAnnoCategory(resultAnno);
                 //筛选出符合title信息的序列
                 QueryResult result = getAnnoDataQueryFromTitle(query, resultAnno);
-//                queryAnnoData.setStartAbsolute(1L);
-//                queryAnnoData.setEndAbsolute(TOPTIEM);
-//                executor = new QueryExecutor(queryAnnoData);
-//                QueryResult resultData = executor.execute(false);
 
                 String entity = parser.parseAnnoDataResultToJson(result);
                 return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
@@ -308,13 +304,6 @@ public class MetricsResource {
 
                 //查询anno的title以及dsp信息
                 QueryResult result = getAnno(queryAnno,DESCRIPTIONTIEM,MAXTIEM);
-
-                //添加last聚合查询
-//                queryBase.addLastAggregator();//LHZNEW这里设置的聚合查询有问题！！！没有设置成功
-//                queryBase.setStartAbsolute(1L);
-//                queryBase.setEndAbsolute(TOPTIEM);
-//                QueryExecutor executorPath = new QueryExecutor(queryBase);//要确认下是否annotation信息在查找时会影响结果
-//                QueryResult resultPath = executorPath.execute(false);
 
                 //这里的解析也要确认是否可以解析成功？？LHZ
                 parser.getAnnoCategory(result);
@@ -344,21 +333,6 @@ public class MetricsResource {
         }
         return resultAnno;
     }
-
-//    public QueryResult getAnnoDataQueryFromTitle(Query query, QueryResult result) {
-//        Query ret = new Query();
-//        String title = new String();
-//        QueryParser parser = new QueryParser();
-//        for(int j=0;j<result.getQueryResultDatasets().size();j++){
-//            List<String> paths = new ArrayList<>();
-//            title = result.getQueryMetrics().get(j).getAnnotationLimit().getTitle();
-//            paths = parser.getPathsFromAnnoTitle(title, result.getQueryResultDatasets().get(j).getPaths(), result.getQueryResultDatasets().get(j).getValues());
-//            for(String pathStr : paths){
-//                ret.addQueryMetrics(parser.parseQueryResultAnnoDataPaths(pathStr));
-//            }
-//        }
-//        return ret;
-//    }
 
     public QueryResult getAnnoDataQueryFromTitle(Query query, QueryResult result) {
         QueryResult ret = new QueryResult();
@@ -426,6 +400,10 @@ public class MetricsResource {
             Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
             queryAll.setStartAbsolute(1L);
             queryAll.setEndAbsolute(TOPTIEM);
+            //空查询
+            if(queryAll.getQueryMetrics().isEmpty())
+                return setHeaders(Response.status(Status.OK).entity("\n")).build();
+
             QueryExecutor executorData = new QueryExecutor(queryAll);
             //执行删除操作
             executorData.deleteMetric();
@@ -505,8 +483,6 @@ public class MetricsResource {
         Query queryBase = parser.parseAnnotationQueryMetric(jsonStr, false);
         //加入category路径信息
         Query querySp = parser.addAnnoTags(queryBase);
-        //添加last聚合查询
-//        queryBase.addLastAggregator();
         querySp.setStartAbsolute(1L);
         querySp.setEndAbsolute(TOPTIEM);
         QueryExecutor executorPath = new QueryExecutor(querySp);//LHZ要确认下是否annotation信息在查找时会影响结果

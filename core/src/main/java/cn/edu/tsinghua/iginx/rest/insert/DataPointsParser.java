@@ -439,6 +439,17 @@ public class DataPointsParser {
         return metric;
     }
 
+    private boolean specificAnnoCategoryPath(Map<String, String> tags, AnnotationLimit annoLimit) {
+        int num = 0;
+
+        //数量相同就欧克克
+        for(Map.Entry<String,String> entry : tags.entrySet()) {
+            if(entry.getValue().equals("category")) num++;
+        }
+        if(num==annoLimit.getTag().size()) return true;
+        return false;
+    }
+
     public void handleAnnotationUpdate(Query preQuery, QueryResult preQueryResult) throws Exception {
         //创建session
         try {
@@ -456,8 +467,8 @@ public class DataPointsParser {
                     StringBuilder name = new StringBuilder();
                     //添加包含@的路径
                     Map<String, String> tags = getTagsFromPaths(queryResultDataset.getPaths().get(pl), name);
-                    //如果个数相同则完全匹配，这里queryBase的tags已经加入了category信息
-//                    if(queryBase.getTags().size()!=tags.size()) continue;
+                    //如果符合category完全符合，则执行后续操作
+                    if(!specificAnnoCategoryPath(tags, preQuery.getQueryMetrics().get(pos).getAnnotationLimit())) continue;
                     //更改为新的anno信息，即将路径中的cat信息更新
                     AnnotationLimit newAnnoLimit = preQuery.getQueryMetrics().get(pos).getNewAnnotationLimit();
                     metric = updateAnnoPath(queryResultDataset.getPaths().get(pl), newAnnoLimit);

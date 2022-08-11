@@ -1,7 +1,12 @@
 {
   "metrics": [{
     "annotation": {
-      "category": ["cat2"]
+      "category": ["cat4"]
     }
-  }]
+  },{
+    "annotation": {
+      "category": ["cat3"]
+    }
+  }
+  ]
 }

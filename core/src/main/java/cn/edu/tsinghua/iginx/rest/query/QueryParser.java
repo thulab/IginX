@@ -521,12 +521,18 @@ public class QueryParser {
 
     public String parseAnnoResultToJson(QueryResult anno) {
         StringBuilder ret = new StringBuilder("{\"queries\":[");
+        Set<String> paths = new HashSet<>();
         for (int i = 0; i < anno.getQueryResultDatasets().size(); i++) {
             QueryResultDataset dataSet = anno.getQueryResultDatasets().get(i);
             QueryMetric metric = anno.getQueryMetrics().get(i);
             for(int j=0; j<dataSet.getPaths().size(); j++) {
                 //只解析特定的路径信息
                 if(!dataSet.getPaths().get(j).equals(metric.getQueryOriPath())) continue;
+                String tmpPath = metric.getQueryOriPath()+dataSet.getTitles().get(j);
+                if(!paths.contains(tmpPath)) {
+                    paths.add(tmpPath);
+                } else continue;
+
                 ret.append(anno.toResultStringAnno(j,i));
                 ret.append(",");
             }
@@ -540,12 +546,18 @@ public class QueryParser {
 
     public String parseAnnoDataResultToJson(QueryResult data) {
         StringBuilder ret = new StringBuilder("{\"queries\":[");
+        Set<String> paths = new HashSet<>();
         for (int i = 0; i < data.getQueryResultDatasets().size(); i++) {
             QueryResultDataset dataSet = data.getQueryResultDatasets().get(i);
             QueryMetric metric = data.getQueryMetrics().get(i);
             for(int j=0; j<dataSet.getPaths().size(); j++) {
                 //只解析特定的路径信息
                 if(!dataSet.getPaths().get(j).equals(metric.getQueryOriPath())) continue;
+                String tmpPath = metric.getQueryOriPath()+dataSet.getTitles().get(j);
+                if(!paths.contains(tmpPath)) {
+                    paths.add(tmpPath);
+                } else continue;
+
                 ret.append(data.toResultString(j,i));
                 ret.append(",");
             }
@@ -690,6 +702,17 @@ public class QueryParser {
         return ret;
     }
 
+    private boolean specificAnnoCategoryPath(Map<String, String> tags, AnnotationLimit annoLimit) {
+        int num = 0;
+
+        //数量相同就欧克克
+        for(Map.Entry<String,String> entry : tags.entrySet()) {
+            if(entry.getValue().equals("category")) num++;
+        }
+        if(num==annoLimit.getTag().size()) return true;
+        return false;
+    }
+
     //获取完全匹配路径信息的query，包含@路径
     public Query getSpecificQuery(QueryResult result, Query queryBase) {
         Query ret = new Query();
@@ -699,13 +722,12 @@ public class QueryParser {
                 StringBuilder name = new StringBuilder();
                 Map<String, String> tags = getTagsFromPaths(path, name);
                 AnnotationLimit annoLimit = result.getQueryMetrics().get(pos).getAnnotationLimit();
-                //如果个数相同则完全匹配
-//                if(result.getQueryMetrics().get(pos).getTags().size()==tags.size()){
-                    //包含@路径
-                    QueryMetric metric = parseResultAnnoDataPaths(path);
-                    metric.setAnnotationLimit(result.getQueryMetrics().get(pos).getAnnotationLimit());
-                    ret.addQueryMetrics(metric);
-//                }
+                //如果符合category完全符合，则执行后续操作
+                if(!specificAnnoCategoryPath(tags, annoLimit)) continue;
+
+                QueryMetric metric = parseResultAnnoDataPaths(path);
+                metric.setAnnotationLimit(result.getQueryMetrics().get(pos).getAnnotationLimit());
+                ret.addQueryMetrics(metric);
             }
             pos++;
         }
