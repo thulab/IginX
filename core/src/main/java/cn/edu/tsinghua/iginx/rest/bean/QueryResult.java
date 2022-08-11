@@ -271,21 +271,18 @@ public class QueryResult {
 
     private String valueToStringAnno(int now, int num) {
         StringBuilder ret = new StringBuilder(" \"values\": [");
-        int n = queryResultDatasets.get(num).getTimeLists().size();
-        for (int i = 0; i < n; i++) {
-            List<Long> timeLists = queryResultDatasets.get(num).getTimeLists().get(now);
-            List<Object> valueLists = queryResultDatasets.get(num).getValueLists().get(now);
+        List<Long> timeLists = queryResultDatasets.get(num).getTimeLists().get(now);
+        List<Object> valueLists = queryResultDatasets.get(num).getValueLists().get(now);
 
-            for(int j=0; j<timeLists.size(); j++) {
-                if(timeLists.get(j)>TOPTIEM) continue;
-                ret.append(String.format("[%d,", timeLists.get(j)));
-                if (valueLists.get(j) instanceof byte[]) {
-                    ret.append(new String((byte[]) valueLists.get(j)));
-                } else {
-                    ret.append(valueLists.get(j).toString());
-                }
-                ret.append("],");
+        for(int j=0; j<timeLists.size(); j++) {
+            if(timeLists.get(j)>TOPTIEM) continue;
+            ret.append(String.format("[%d,", timeLists.get(j)));
+            if (valueLists.get(j) instanceof byte[]) {
+                ret.append(new String((byte[]) valueLists.get(j)));
+            } else {
+                ret.append(valueLists.get(j).toString());
             }
+            ret.append("],");
         }
         if (ret.charAt(ret.length() - 1) == ',') {
             ret.deleteCharAt(ret.length() - 1);
