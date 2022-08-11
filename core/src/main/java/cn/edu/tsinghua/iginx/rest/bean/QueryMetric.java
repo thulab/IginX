@@ -33,6 +33,7 @@ import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.TOPTIEM;
 @Data
 public class QueryMetric {
     private String name;
+    private String queryOriPath;
     private Long limit;
     private Map<String, List<String>> tags = new TreeMap<>();
     private List<QueryAggregator> aggregators = new ArrayList<>();
@@ -40,6 +41,10 @@ public class QueryMetric {
     private Boolean newAnnotation = false;
     private AnnotationLimit annotationLimit;
     private AnnotationLimit newAnnotationLimit;
+
+    public void setQueryOriPath(String path) {
+        queryOriPath = new String(path);
+    }
 
     public void addTag(String key, String value) {
         tags.computeIfAbsent(key, k -> new ArrayList<>());

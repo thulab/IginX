@@ -119,6 +119,7 @@ public class QueryExecutor {
                     for(int z=timeList.size()-1; z>=0;z--) {
                         //将double转换为Long
                         Long annoTime = Math.round((Double)(data.getValueLists().get(j).get(z)));
+                        //这里减小了对时间查询的范围
                         if(timeList.get(z) < DESCRIPTIONTIEM) break;
                         if (timeList.get(z).equals(TITLETIEM)) {
                             hasTitle = true;

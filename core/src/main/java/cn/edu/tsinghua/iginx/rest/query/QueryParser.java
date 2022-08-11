@@ -523,7 +523,10 @@ public class QueryParser {
         StringBuilder ret = new StringBuilder("{\"queries\":[");
         for (int i = 0; i < anno.getQueryResultDatasets().size(); i++) {
             QueryResultDataset dataSet = anno.getQueryResultDatasets().get(i);
+            QueryMetric metric = anno.getQueryMetrics().get(i);
             for(int j=0; j<dataSet.getPaths().size(); j++) {
+                //只解析特定的路径信息
+                if(!dataSet.getPaths().get(j).equals(metric.getQueryOriPath())) continue;
                 ret.append(anno.toResultStringAnno(j,i));
                 ret.append(",");
             }
@@ -539,7 +542,10 @@ public class QueryParser {
         StringBuilder ret = new StringBuilder("{\"queries\":[");
         for (int i = 0; i < data.getQueryResultDatasets().size(); i++) {
             QueryResultDataset dataSet = data.getQueryResultDatasets().get(i);
+            QueryMetric metric = data.getQueryMetrics().get(i);
             for(int j=0; j<dataSet.getPaths().size(); j++) {
+                //只解析特定的路径信息
+                if(!dataSet.getPaths().get(j).equals(metric.getQueryOriPath())) continue;
                 ret.append(data.toResultString(j,i));
                 ret.append(",");
             }
@@ -811,14 +817,16 @@ public class QueryParser {
         for(QueryResultDataset data : result.getQueryResultDatasets()) {
             for(String path : data.getPaths()) {
                 boolean ifhasAnno = false;
-                QueryMetric metric = parseQueryResultAnnoDataPaths(path);
+                QueryMetric metric;
+                metric = parseQueryResultAnnoDataPaths(path);
+                metric.setQueryOriPath(path);
                 for(Map.Entry<String,List<String>> entry : metric.getTags().entrySet()) {
-                    if(entry.getValue().equals("category")) {
+                    if(entry.getValue().get(0).equals("category")) {
                         ifhasAnno = true;
                         break;
                     }
                 }
-                ret.addQueryMetrics(metric);
+                if(ifhasAnno) ret.addQueryMetrics(metric);
             }
         }
         return ret;

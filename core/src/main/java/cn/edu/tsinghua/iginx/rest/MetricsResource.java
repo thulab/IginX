@@ -397,6 +397,7 @@ public class MetricsResource {
             for(String pathStr : paths){
                 QueryMetric metric = new QueryMetric();
                 metric = parser.parseQueryResultAnnoDataPaths(pathStr);
+                metric.setQueryOriPath(pathStr);
                 metric.setAnnotationLimit(query.getQueryMetrics().get(i).getAnnotationLimit());
                 ret.addQueryMetrics(metric);
             }
