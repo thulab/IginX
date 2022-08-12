@@ -56,7 +56,9 @@ enum SqlType {
     RegisterTask,
     DropTask,
     CommitTransformJob,
-    ShowJobStatus
+    ShowJobStatus,
+    CancelJob,
+    ShowEligibleJob
 }
 
 enum AuthType {
@@ -313,6 +315,7 @@ struct ExecuteSqlResp {
     21: optional list<RegisterTaskInfo> registerTaskInfos
     22: optional i64 jobId
     23: optional JobState jobState
+    24: optional list<i64> jobIdList
 }
 
 struct UpdateUserReq {
@@ -452,6 +455,16 @@ struct QueryTransformJobStatusResp {
     2: required JobState jobState
 }
 
+struct ShowEligibleJobReq {
+    1: required i64 sessionId
+    2: required JobState jobState
+}
+
+struct ShowEligibleJobResp {
+    1: required Status status
+    2: required list<i64> jobIdList
+}
+
 struct CancelTransformJobReq {
     1: required i64 sessionId
     2: required i64 jobId
@@ -555,6 +568,8 @@ service IService {
     CommitTransformJobResp commitTransformJob(1: CommitTransformJobReq req);
 
     QueryTransformJobStatusResp queryTransformJobStatus(1: QueryTransformJobStatusReq req);
+
+    ShowEligibleJobResp showEligibleJob(1: ShowEligibleJobReq req);
 
     Status cancelTransformJob (1: CancelTransformJobReq req);
 

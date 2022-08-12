@@ -20,6 +20,8 @@ statement
     | DROP PYTHON TASK name=stringLiteral #dropTaskStatement
     | COMMIT TRANSFORM JOB filePath=stringLiteral #commitTransformJobStatement
     | SHOW TRANSFORM JOB STATUS jobId=INT #showJobStatusStatement
+    | CANCEL TRANSFORM JOB jobId=INT #cancelJobStatement
+    | SHOW jobStatus TRANSFORM JOB #showEligibleJobStatement
     ;
 
 queryClause
@@ -208,6 +210,17 @@ udfType
     | TRANSFORM
     ;
 
+jobStatus
+    : UNKNOWN
+    | FINISHED
+    | CREATED
+    | RUNNING
+    | FAILING
+    | FAILED
+    | CLOSING
+    | CLOSED
+    ;
+
 nodeName
     : ID
     | STAR
@@ -262,15 +275,14 @@ nodeName
     | PYTHON
     | TASK
     | COMMIT
-    | TRANSFORM
     | JOB
     | STATUS
     | AS
-    | UDAF
-    | UDTF
-    | UDSF
+    | udfType
+    | jobStatus
     | WITH
     | TIME_OFFSET
+    | CANCEL
     ;
 
 ip
@@ -546,6 +558,41 @@ TIME_OFFSET
     : T I M E '_' O F F S E T
     ;
 
+CANCEL
+    : C A N C E L
+    ;
+
+UNKNOWN
+    : U N K N O W N
+    ;
+
+FINISHED
+    : F I N I S H E D
+    ;
+
+CREATED
+    : C R E A T E D
+    ;
+
+RUNNING
+    : R U N N I N G
+    ;
+
+FAILING
+    : F A I L I N G
+    ;
+
+FAILED
+    : F A I L E D
+    ;
+
+CLOSING
+    : C L O S I N G
+    ;
+
+CLOSED
+    : C L O S E D
+    ;
 //============================
 // End of the keywords list
 //============================

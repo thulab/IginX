@@ -1147,6 +1147,25 @@ public class Session {
         return resp.getJobState();
     }
 
+    public List<Long> showEligibleJob(JobState jobState) throws SessionException, ExecutionException {
+        ShowEligibleJobReq req = new ShowEligibleJobReq(sessionId, jobState);
+        ShowEligibleJobResp resp;
+        try {
+            do {
+                lock.readLock().lock();
+                try {
+                    resp = client.showEligibleJob(req);
+                } finally {
+                    lock.readLock().unlock();
+                }
+            } while(checkRedirect(resp.status));
+            RpcUtils.verifySuccess(resp.status);
+        } catch (TException e) {
+            throw new SessionException(e);
+        }
+        return resp.getJobIdList();
+    }
+
     public void cancelTransformJob(long jobId) throws SessionException, ExecutionException {
         CancelTransformJobReq req = new CancelTransformJobReq(sessionId, jobId);
         try {

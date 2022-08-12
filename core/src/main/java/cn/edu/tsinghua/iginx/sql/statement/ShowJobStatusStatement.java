@@ -16,8 +16,8 @@ public class ShowJobStatusStatement extends SystemStatement {
     private final IginxWorker worker = IginxWorker.getInstance();
 
     public ShowJobStatusStatement(long jobId) {
-        this.jobId = jobId;
         this.statementType = StatementType.SHOW_JOB_STATUS;
+        this.jobId = jobId;
     }
 
     @Override

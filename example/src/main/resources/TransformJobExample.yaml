@@ -1,6 +1,5 @@
 taskList:
   - taskType: iginx
-    dataFlowType: stream
     timeout: 10000000
     sqlList:
       - select value1, value2, value3, value4 from transform;

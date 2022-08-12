@@ -47,6 +47,7 @@ public class SessionExecuteSqlResult {
     private List<RegisterTaskInfo> registerTaskInfos;
     private long jobId;
     private JobState jobState;
+    private List<Long> jobIdList;
 
     // Only for mock test
     public SessionExecuteSqlResult() {
@@ -83,6 +84,9 @@ public class SessionExecuteSqlResult {
                 break;
             case ShowJobStatus:
                 this.jobState = resp.getJobState();
+                break;
+            case ShowEligibleJob:
+                this.jobIdList = resp.getJobIdList();
                 break;
             default:
                 break;
@@ -177,6 +181,8 @@ public class SessionExecuteSqlResult {
             return buildShowClusterInfoResult();
         } else if (sqlType == SqlType.ShowRegisterTask) {
             return buildShowRegisterTaskResult();
+        } else if (sqlType == SqlType.ShowEligibleJob) {
+            return buildShowEligibleJobResult();
         } else if (sqlType == SqlType.GetReplicaNum) {
             return "Replica num: " + replicaNum + "\n";
         } else if (sqlType == SqlType.CountPoints) {
@@ -397,6 +403,22 @@ public class SessionExecuteSqlResult {
                     info.getIp(),
                     info.getType().toString()
                 )));
+            }
+            buildFromStringList(builder, cache);
+        }
+
+        return builder.toString();
+    }
+
+    private String buildShowEligibleJobResult() {
+        StringBuilder builder = new StringBuilder();
+
+        if (jobIdList != null) {
+            builder.append("Transform Id List:").append("\n");
+            List<List<String>> cache = new ArrayList<>();
+            cache.add(new ArrayList<>(Collections.singletonList("JobIdList")));
+            for (long jobId : jobIdList) {
+                cache.add(new ArrayList<>(Collections.singletonList(String.valueOf(jobId))));
             }
             buildFromStringList(builder, cache);
         }

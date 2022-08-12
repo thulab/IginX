@@ -17,5 +17,7 @@ public enum StatementType {
     REGISTER_TASK,
     DROP_TASK,
     COMMIT_TRANSFORM_JOB,
-    SHOW_JOB_STATUS
+    SHOW_JOB_STATUS,
+    CANCEL_JOB,
+    SHOW_ELIGIBLE_JOB
 }
