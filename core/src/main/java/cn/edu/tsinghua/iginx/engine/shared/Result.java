@@ -48,6 +48,7 @@ public class Result {
     private RowStream resultStream;
 
     private long jobId;
+    private List<Long> jobIdList;
 
     public Result(Status status) {
         this.status = status;
@@ -148,6 +149,7 @@ public class Result {
         resp.setRegisterTaskInfos(registerTaskInfos);
         resp.setJobId(jobId);
         resp.setJobState(jobState);
+        resp.setJobIdList(jobIdList);
         return resp;
     }
 

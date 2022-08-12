@@ -4,12 +4,17 @@ import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.thrift.CommitTransformJobReq;
 import cn.edu.tsinghua.iginx.thrift.JobState;
+import cn.edu.tsinghua.iginx.thrift.TaskType;
 import cn.edu.tsinghua.iginx.transform.api.Checker;
 import cn.edu.tsinghua.iginx.transform.pojo.Job;
+import cn.edu.tsinghua.iginx.transform.pojo.PythonTask;
+import cn.edu.tsinghua.iginx.transform.pojo.Task;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -97,6 +102,14 @@ public class TransformJobManager {
 
     public void cancel(long jobId) {
         Job job = jobMap.get(jobId);
+        if (job == null) {
+            return;
+        }
+        if (!job.getState().equals(JobState.JOB_RUNNING) &&
+            !job.getState().equals(JobState.JOB_CREATED)) {
+            return;
+        }
+
         job.setState(JobState.JOB_CLOSING);
 
         JobRunner runner = jobRunnerMap.get(jobId);
@@ -114,5 +127,32 @@ public class TransformJobManager {
         } else {
             return null;
         }
+    }
+
+    public List<Long> showEligibleJob(JobState jobState) {
+        List<Long> jobIdList = new ArrayList<>();
+        for (Job job : jobMap.values()) {
+            if (job.getState().equals(jobState)) {
+                jobIdList.add(job.getJobId());
+            }
+        }
+        return jobIdList;
+    }
+
+    public boolean isRegisterTaskRunning(String taskName) {
+        for (Job job : jobMap.values()) {
+            JobState jobState = job.getState();
+            if (jobState.equals(JobState.JOB_RUNNING) || jobState.equals(JobState.JOB_CREATED)) {
+                for (Task task : job.getTaskList()) {
+                    if (task.getTaskType().equals(TaskType.Python)) {
+                        PythonTask pythonTask = (PythonTask) task;
+                        if (pythonTask.getPyTaskName().equals(taskName)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

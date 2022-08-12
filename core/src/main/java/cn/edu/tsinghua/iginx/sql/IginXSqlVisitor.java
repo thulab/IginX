@@ -13,6 +13,7 @@ import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.JobState;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.UDFType;
 import cn.edu.tsinghua.iginx.utils.Pair;
@@ -265,6 +266,33 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     public Statement visitShowJobStatusStatement(ShowJobStatusStatementContext ctx) {
         long jobId = Long.parseLong(ctx.jobId.getText());
         return new ShowJobStatusStatement(jobId);
+    }
+
+    @Override
+    public Statement visitCancelJobStatement(CancelJobStatementContext ctx) {
+        long jobId = Long.parseLong(ctx.jobId.getText());
+        return new CancelJobStatement(jobId);
+    }
+
+    @Override
+    public Statement visitShowEligibleJobStatement(ShowEligibleJobStatementContext ctx) {
+        JobState jobState = JobState.JOB_UNKNOWN;
+        if (ctx.jobStatus().FINISHED() != null) {
+            jobState = JobState.JOB_FINISHED;
+        } else if (ctx.jobStatus().CREATED() != null) {
+            jobState = JobState.JOB_CREATED;
+        } else if (ctx.jobStatus().RUNNING() != null) {
+            jobState = JobState.JOB_RUNNING;
+        } else if (ctx.jobStatus().FAILING() != null) {
+            jobState = JobState.JOB_FAILING;
+        } else if (ctx.jobStatus().FAILED() != null) {
+            jobState = JobState.JOB_FAILED;
+        } else if (ctx.jobStatus().CLOSING() != null) {
+            jobState = JobState.JOB_CLOSING;
+        } else if (ctx.jobStatus().CLOSED() != null) {
+            jobState = JobState.JOB_CLOSED;
+        }
+        return new ShowEligibleJobStatement(jobState);
     }
 
     private void parseSelectPaths(SelectClauseContext ctx, SelectStatement selectStatement) {

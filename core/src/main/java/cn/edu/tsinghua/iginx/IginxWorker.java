@@ -471,9 +471,16 @@ public class IginxWorker implements IService.Iface {
     }
 
     @Override
+    public ShowEligibleJobResp showEligibleJob(ShowEligibleJobReq req) {
+        TransformJobManager manager = TransformJobManager.getInstance();
+        List<Long> jobIdList = manager.showEligibleJob(req.getJobState());
+        return new ShowEligibleJobResp(RpcUtils.SUCCESS, jobIdList);
+    }
+
+    @Override
     public Status cancelTransformJob(CancelTransformJobReq req) {
         TransformJobManager manager = TransformJobManager.getInstance();
-        manager.cancel(req.getSessionId());
+        manager.cancel(req.getJobId());
         return RpcUtils.SUCCESS;
     }
 
@@ -498,6 +505,14 @@ public class IginxWorker implements IService.Iface {
         File sourceFile = new File(filePath);
         if (!sourceFile.exists()) {
             logger.error(String.format("Register file not exist in declared path, path=%s", filePath));
+            return RpcUtils.FAILURE;
+        }
+        if (!sourceFile.isFile()) {
+            logger.error("Register file must be a file.");
+            return RpcUtils.FAILURE;
+        }
+        if (!sourceFile.getName().endsWith(".py")) {
+            logger.error("Register file must be a python file.");
             return RpcUtils.FAILURE;
         }
 
@@ -527,12 +542,18 @@ public class IginxWorker implements IService.Iface {
         String name = req.getName().trim().toLowerCase();
         TransformTaskMeta transformTaskMeta = metaManager.getTransformTask(name);
         if (transformTaskMeta == null) {
-            logger.info("Register task not exist");
+            logger.error("Register task not exist");
+            return RpcUtils.FAILURE;
+        }
+
+        TransformJobManager manager = TransformJobManager.getInstance();
+        if (manager.isRegisterTaskRunning(name)) {
+            logger.error("Register task is running");
             return RpcUtils.FAILURE;
         }
 
         if (!transformTaskMeta.getIpSet().contains(config.getIp())) {
-            logger.info(String.format("Register task exists in node: %s", config.getIp()));
+            logger.error(String.format("Register task exists in node: %s", config.getIp()));
             return RpcUtils.FAILURE;
         }
 
@@ -541,7 +562,7 @@ public class IginxWorker implements IService.Iface {
         File file = new File(filePath);
 
         if (!file.exists()) {
-            logger.info(String.format("Register file not exist, path=%s", filePath));
+            logger.error(String.format("Register file not exist, path=%s", filePath));
             return RpcUtils.FAILURE;
         }
 

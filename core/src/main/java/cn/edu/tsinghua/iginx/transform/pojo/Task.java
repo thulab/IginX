@@ -9,7 +9,7 @@ public class Task {
 
     private final TaskType taskType;
 
-    private final DataFlowType dataFlowType;
+    private DataFlowType dataFlowType;
 
     private final long timeLimit;
 
@@ -35,16 +35,20 @@ public class Task {
             default:
                 throw new IllegalArgumentException("Unknown task type: " + type);
         }
-        type = info.getDataFlowType().toLowerCase().trim();
-        switch (type) {
-            case "batch":
-                dataFlowType = DataFlowType.Batch;
-                break;
-            case "stream":
-                dataFlowType = DataFlowType.Stream;
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown data flow type: " + type);
+
+        dataFlowType = DataFlowType.Stream;
+        if (info.getDataFlowType() != null) {
+            type = info.getDataFlowType().toLowerCase().trim();
+            switch (type) {
+                case "batch":
+                    dataFlowType = DataFlowType.Batch;
+                    break;
+                case "stream":
+                    dataFlowType = DataFlowType.Stream;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unknown data flow type: " + type);
+            }
         }
         timeLimit = info.getTimeout();
     }

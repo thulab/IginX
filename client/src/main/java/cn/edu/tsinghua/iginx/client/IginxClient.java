@@ -283,6 +283,8 @@ public class IginxClient {
                 res.print(false, "");
             } else if (res.getSqlType() == SqlType.ShowRegisterTask) {
                 res.print(false, "");
+            } else if (res.getSqlType() == SqlType.ShowEligibleJob) {
+                res.print(false, "");
             } else if (res.getSqlType() == SqlType.GetReplicaNum) {
                 System.out.println(res.getReplicaNum());
                 System.out.println("success");
@@ -296,10 +298,11 @@ public class IginxClient {
             } else {
                 System.out.println("success");
             }
-        } catch (SessionException | ExecutionException e) {
-            System.out.println(e.getMessage());
+//        } catch (SessionException | ExecutionException e) {
+//            System.out.println(e.getMessage());
         } catch (Exception e) {
-            System.out.println("encounter error when executing sql statement.");
+            System.out.println("Execute Error: encounter error(s) when executing sql statement, " +
+                "see server log for more details.");
         }
     }
 
@@ -335,7 +338,8 @@ public class IginxClient {
             Arrays.asList("register", "python", "task"),
             Arrays.asList("drop", "python", "task"),
             Arrays.asList("commit", "transform", "job"),
-            Arrays.asList("show", "transform", "job", "status")
+            Arrays.asList("show", "transform", "job", "status"),
+            Arrays.asList("cancel", "transform", "job")
         );
         addArgumentCompleters(iginxCompleters, withNullCompleters, true);
 
