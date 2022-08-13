@@ -70,7 +70,6 @@ public class MetricsResource {
     private static final Config config = ConfigDescriptor.getInstance().getConfig();
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
     private static final ExecutorService threadPool = Executors.newFixedThreadPool(config.getAsyncRestThreadPool());
-    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
 
     @Inject
     public MetricsResource() {
@@ -400,7 +399,8 @@ public class MetricsResource {
             Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
             queryAll.setStartAbsolute(1L);
             queryAll.setEndAbsolute(TOPTIEM);
-            //空查询
+
+            //空查询判断
             if(queryAll.getQueryMetrics().isEmpty())
                 return setHeaders(Response.status(Status.OK).entity("\n")).build();
 
@@ -488,21 +488,19 @@ public class MetricsResource {
         QueryExecutor executorPath = new QueryExecutor(querySp);//LHZ要确认下是否annotation信息在查找时会影响结果
         QueryResult resultALL = executorPath.execute(false);
 
-
 //        queryAll.setStartAbsolute(1L);
 //        queryAll.setEndAbsolute(TOPTIEM);
-//
 //        QueryResult resultData = executorData.execute(false);
 
-        //修改路径，并重新查询数据，并插入数据
-        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, resultALL, querySp, false));
-
-        //找到精确路径
+        //路径筛选，这里代码的意义是为了之后的拓展
         Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
         queryAll.setStartAbsolute(1L);
         queryAll.setEndAbsolute(TOPTIEM);
         QueryExecutor executorData = new QueryExecutor(queryAll);
         //执行删除操作
         executorData.deleteMetric();
+
+        //修改路径，并重新查询数据，并插入数据
+        threadPool.execute(new InsertWorker(asyncResponse, httpheaders, resultALL, querySp, false));
     }
 }

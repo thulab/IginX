@@ -18,7 +18,6 @@ import static org.junit.Assert.fail;
 
 public class RestAnnotationIT {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
-    private static final String ERROR = "ERROR";
 
     private static Session session;
 
@@ -158,7 +157,7 @@ public class RestAnnotationIT {
     public void testUpdateViaQueryAll() {
         try {
             execute("update.json", TYPE.UPDATE);
-            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,88.0],[1359788400000,77.0],[1359788410000,99.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"title12\",\"description\": \"dsp12\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]}]}";
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,88.0],[1359788400000,77.0],[1359788410000,99.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
             executeAndCompare("queryUpdateViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
@@ -169,7 +168,7 @@ public class RestAnnotationIT {
     public void testUpdateViaQueryAnno() {
         try {
             execute("update.json", TYPE.UPDATE);
-            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}}]}";
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}}]}";
             executeAndCompare("queryUpdateViaQueryAnno.json", ans, TYPE.QUERYANNO);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
@@ -193,6 +192,23 @@ public class RestAnnotationIT {
             execute("delete.json", TYPE.DELETE);
             String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}}]}";
             executeAndCompare("deleteViaQueryAnno.json", ans, TYPE.QUERYANNO);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+        }
+    }
+
+    @Test
+    public void testAppend2ViaQueryAll() {
+        try {
+            String clearData = "CLEAR DATA;";
+            SessionExecuteSqlResult res = session.executeSql(clearData);
+
+            execute("insert2.json", TYPE.INSERT);
+            execute("add2.json", TYPE.APPEND);
+
+            execute("delete.json", TYPE.DELETE);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"zat3\",\"zat4\"]}, \"values\": [[1359788300001,55.0],[1359788400000,11.0],[1359788400001,44.0],[1359788410001,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,77.0]]}]}";
+            executeAndCompare("testAppend2ViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
         }

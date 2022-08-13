@@ -95,6 +95,10 @@ public class DataPointsParser {
         while (elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
+
+        // //ANNOEND，扩展，主要是为了后续anntation可以查找到确切路径，加入路径终止符
+        // ret.addTag("zEND","END");
+
         JsonNode tim = node.get("timestamp"), val = node.get("value");
         if (tim != null && val != null) {
             ret.addTimestamp(tim.asLong());
@@ -338,6 +342,9 @@ public class DataPointsParser {
             String tagVal = tag.substring(equalPos+1);
             ret.put(tagKey,tagVal);
         }
+
+        // //ANNOEND终止符扩展
+        // ret.put("zEND","END");
         return ret;
     }
 
@@ -366,10 +373,11 @@ public class DataPointsParser {
         }
         try{
             for (int pos = 0; pos < preQueryResult.getSiz(); pos++) {//LHZ这里在测试时确认是否每个resultDataSet只有一个值
-                Metric metric = new Metric();
+
                 QueryResultDataset queryResultDataset = preQueryResult.getQueryResultDatasets().get(pos);
                 QueryMetric queryBase = preQueryResult.getQueryMetrics().get(pos);
                 for(int pl = 0; pl < queryResultDataset.getPaths().size(); pl++) {
+                    Metric metric = new Metric();
                     //添加包含@的路径
                     String name = pathAppendAnno(queryResultDataset.getPaths().get(pl), queryBase.getAnnotationLimit());
                     metric.setName(name);
@@ -460,15 +468,16 @@ public class DataPointsParser {
         }
         try{
             for (int pos = 0; pos < preQueryResult.getSiz(); pos++) {//LHZ这里在测试时确认是否每个resultDataSet只有一个值
-                Metric metric = null;
                 QueryResultDataset queryResultDataset = preQueryResult.getQueryResultDatasets().get(pos);
                 QueryMetric queryBase = preQueryResult.getQueryMetrics().get(pos);
                 for(int pl = 0; pl < queryResultDataset.getPaths().size(); pl++){
+                    Metric metric = new Metric();
                     StringBuilder name = new StringBuilder();
                     //添加包含@的路径
                     Map<String, String> tags = getTagsFromPaths(queryResultDataset.getPaths().get(pl), name);
+                    //这里更新为包含关系2022.8.12.23.24
                     //如果符合category完全符合，则执行后续操作
-                    if(!specificAnnoCategoryPath(tags, preQuery.getQueryMetrics().get(pos).getAnnotationLimit())) continue;
+//                    if(!specificAnnoCategoryPath(tags, preQuery.getQueryMetrics().get(pos).getAnnotationLimit())) continue;
                     //更改为新的anno信息，即将路径中的cat信息更新
                     AnnotationLimit newAnnoLimit = preQuery.getQueryMetrics().get(pos).getNewAnnotationLimit();
                     metric = updateAnnoPath(queryResultDataset.getPaths().get(pl), newAnnoLimit);

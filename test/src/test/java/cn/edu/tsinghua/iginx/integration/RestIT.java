@@ -15,9 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.Response;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.assertEquals;
@@ -71,12 +69,10 @@ public class RestIT {
     }
 
     @Before
-    public void insertData(){
+    public void insertData() {
         try{
             String json = insertJson;
-            InputStream inputStream = new ByteArrayInputStream(json.getBytes());
-            DataPointsParser parser = new DataPointsParser(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            parser.parse(false);
+            execute("insert.json",TYPE.INSERT);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
         }
@@ -93,154 +89,102 @@ public class RestIT {
         }
     }
 
-    public void executeAndCompare(String json,String output){
-        String result = execute(json);
-        assertEquals(result, output);
+    private enum TYPE {
+       QUERY, INSERT, DELETE, DELETEMETRIC
     }
 
-    public String postQuery(String jsonStr) {
+    public String orderGen(String json, TYPE type) {
+        String ret = new String();
+        if(type.equals(TYPE.DELETEMETRIC)) {
+            ret = "curl -XDELETE";
+            ret += " http://127.0.0.1:6666/api/v1/metric/{" + json + "}";
+        } else {
+            String prefix = "curl -XPOST -H\"Content-Type: application/json\" -d @";
+            ret = prefix + "\"" + json + "\"";
+            if(type.equals(TYPE.QUERY))
+                ret += " http://127.0.0.1:6666/api/v1/datapoints/query";
+            else if(type.equals(TYPE.INSERT)) ret += " http://127.0.0.1:6666/api/v1/datapoints";
+            else if(type.equals(TYPE.DELETE)) ret += " http://127.0.0.1:6666/api/v1/datapoints/delete";
+        }
+        return ret;
+    }
+
+    public String execute(String json, TYPE type) throws Exception {
+        String ret = new String();
+        String curlArray = orderGen(json, type);
+        Process process = null;
         try {
-            if (jsonStr == null) {
-                throw new Exception("query json must not be null or empty");
+            ProcessBuilder processBuilder = new ProcessBuilder(curlArray.split(" "));
+            processBuilder.directory(new File(".\\src\\test\\java\\cn\\edu\\tsinghua\\iginx\\integration\\restIT"));
+            // 执行 url 命令
+            process = processBuilder.start();
+
+            // 输出子进程信息
+            InputStreamReader inputStreamReaderINFO = new InputStreamReader(process.getInputStream());
+            BufferedReader bufferedReaderINFO = new BufferedReader(inputStreamReaderINFO);
+            String lineStr;
+            while ((lineStr = bufferedReaderINFO.readLine()) != null) {
+                ret += lineStr;
             }
-            QueryParser parser = new QueryParser();
-            Query query = parser.parseQueryMetric(jsonStr);
-            QueryExecutor executor = new QueryExecutor(query);
-            QueryResult result = executor.execute(false);
-            String entity = parser.parseResultToJson(result, false);
-            return entity;
+            // 等待子进程结束
+            process.waitFor();
 
-        } catch (Exception e) {
-            LOGGER.error("Error occurred during execution ", e);
+            return ret;
+        } catch (InterruptedException e) {
+            // 强制关闭子进程（如果打开程序，需要额外关闭）
+            process.destroyForcibly();
             return null;
         }
     }
 
-    public String execute(String json){
+    public void executeAndCompare(String json,String output){
+        String result = new String();
         try {
-            return postQuery(json);
+            result = execute(json,TYPE.QUERY);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
-            return null;
         }
+        assertEquals(output, result);
     }
 
     @Test
     public void testQueryWithoutTags(){
-        String json ="{\n" +
-                "\t\"start_absolute\" : 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t\t\"value\": \"5\",\n" +
-                "\t\t\"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"time_zone\": \"Asia/Kabul\",\n" +
-                "\t\"metrics\": [\n" +
-                "\t\t{\n" +
-                "\t\t\"name\": \"archive_file_tracked\"\n" +
-                "\t\t},\n" +
-                "\t\t{\n" +
-                "\t\t\"name\": \"archive_file_search\"\n" +
-                "\t\t}\n" +
-                "\t]\n" +
-                "}";
+        String json ="testQueryWithoutTags.json";
         String result = "{\"queries\":[{\"sample_size\": 3,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]},{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_search\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"host\": [\"server2\"]}, \"values\": [[1359786400000,321.0]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryWithTags(){
-        String json = "{\n" +
-                "\t\"start_absolute\" : 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t\t\"value\": \"5\",\n" +
-                "\t\t\"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"time_zone\": \"Asia/Kabul\",\n" +
-                "\t\"metrics\": [\n" +
-                "\t\t{\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"tags\": {\n" +
-                "            \"host\": \"server1\"\n" +
-                "        }\n" +
-                "\t\t}\n" +
-                "\t]\n" +
-                "}";
+        String json = "testQueryWithTags.json";
         String result = "{\"queries\":[{\"sample_size\": 3,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359788300000,13.2],[1359788400000,123.3],[1359788410000,23.1]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryWrongTags(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "        \"tags\": {\n" +
-                "            \"host\": [\"server2\"]\n" +
-                "        }\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryWrongTags.json";
         String result = "{\"queries\":[{\"sample_size\": 0,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {}, \"values\": []}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryOneTagWrong(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "        \"tags\": {\n" +
-                "            \"host\": [\"server1\"],\n" +
-                "            \"data_center\": [\"DC2\"]\n" +
-                "        }\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryOneTagWrong.json";
         String result = "{\"queries\":[{\"sample_size\": 0,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {}, \"values\": []}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryWrongName(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_\"\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryWrongName.json";
         String result = "{\"queries\":[{\"sample_size\": 0,\"results\": [{ \"name\": \"archive_\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {}, \"values\": []}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryWrongTime(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_absolute\": 10,\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\"\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryWrongTime.json";
         String result = "{\"queries\":[{\"sample_size\": 0,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {}, \"values\": []}]}]}";
         executeAndCompare(json,result);
     }
@@ -255,196 +199,70 @@ public class RestIT {
 
     @Test
     public void testQueryAvg(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"tags\": {\n" +
-                "\t\t  \"host\": [\n" +
-                "\t\t\t\"server1\"\n" +
-                "\t\t  ]\n" +
-                "\t\t},\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"avg\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 2,\n" +
-                "\t\t\t  \"unit\": \"seconds\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryAvg.json";
         String result = "{\"queries\":[{\"sample_size\": 3,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359788298001,13.2],[1359788398001,123.3],[1359788408001,23.1]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryCount(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"count\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 1,\n" +
-                "\t\t\t  \"unit\": \"days\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryCount.json";
         String result = "{\"queries\":[{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359763200001,3]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryFirst(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"first\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 2,\n" +
-                "\t\t\t  \"unit\": \"days\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryFirst.json";
         String result = "{\"queries\":[{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359763200001,13.2]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryLast(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"last\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 2,\n" +
-                "\t\t\t  \"unit\": \"days\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryLast.json";
         String result = "{\"queries\":[{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359763200001,23.1]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryMax(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"max\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 2,\n" +
-                "\t\t\t  \"unit\": \"days\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryMax.json";
         String result = "{\"queries\":[{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359763200001,123.3]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQueryMin(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"min\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 2,\n" +
-                "\t\t\t  \"unit\": \"days\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQueryMin.json";
         String result = "{\"queries\":[{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359763200001,13.2]]}]}]}";
         executeAndCompare(json,result);
     }
 
     @Test
     public void testQuerySum(){
-        String json = "{\n" +
-                "\t\"start_absolute\": 1,\n" +
-                "\t\"end_relative\": {\n" +
-                "\t  \"value\": \"5\",\n" +
-                "\t  \"unit\": \"days\"\n" +
-                "\t},\n" +
-                "\t\"metrics\": [\n" +
-                "\t  {\n" +
-                "\t\t\"name\": \"archive_file_tracked\",\n" +
-                "\t\t\"aggregators\": [\n" +
-                "\t\t  {\n" +
-                "\t\t\t\"name\": \"sum\",\n" +
-                "\t\t\t\"sampling\": {\n" +
-                "\t\t\t  \"value\": 2,\n" +
-                "\t\t\t  \"unit\": \"days\"\n" +
-                "\t\t\t}\n" +
-                "\t\t  }\n" +
-                "\t\t]\n" +
-                "\t  }\n" +
-                "\t]\n" +
-                "  }";
+        String json = "testQuerySum.json";
         String result = "{\"queries\":[{\"sample_size\": 1,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359763200001,159.6]]}]}]}";
         executeAndCompare(json,result);
     }
 
+    @Test
+    public void testDelete()  throws Exception {
+        String json = "testDelete.json";
+        execute(json,TYPE.DELETE);
+
+        String result = "{\"queries\":[{\"sample_size\": 2,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {\"data_center\": [\"DC1\"],\"host\": [\"server1\"]}, \"values\": [[1359788300000,13.2],[1359788410000,23.1]]}]}]}";
+        json = "testQueryWithTags.json";
+        executeAndCompare(json,result);
+    }
+
+    @Test
+    public void testDeleteMetric()  throws Exception {
+        String json = "archive_file_tracked";
+        execute(json,TYPE.DELETEMETRIC);
+
+        String result = "{\"queries\":[{\"sample_size\": 0,\"results\": [{ \"name\": \"archive_file_tracked\",\"group_by\": [{\"name\": \"type\",\"type\": \"number\"}], \"tags\": {}, \"values\": []}]}]}";
+        json = "testQueryWithTags.json";
+        executeAndCompare(json,result);
+    }
 }

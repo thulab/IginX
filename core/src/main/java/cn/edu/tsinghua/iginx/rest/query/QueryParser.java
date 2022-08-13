@@ -719,11 +719,11 @@ public class QueryParser {
         int pos = 0;
         for(QueryResultDataset queryResultDataset : result.getQueryResultDatasets()){
             for(String path : queryResultDataset.getPaths()) {
-                StringBuilder name = new StringBuilder();
-                Map<String, String> tags = getTagsFromPaths(path, name);
-                AnnotationLimit annoLimit = result.getQueryMetrics().get(pos).getAnnotationLimit();
+//                StringBuilder name = new StringBuilder();
+//                Map<String, String> tags = getTagsFromPaths(path, name);
+//                AnnotationLimit annoLimit = result.getQueryMetrics().get(pos).getAnnotationLimit();
                 //如果符合category完全符合，则执行后续操作
-                if(!specificAnnoCategoryPath(tags, annoLimit)) continue;
+//                if(!specificAnnoCategoryPath(tags, annoLimit)) continue;
 
                 QueryMetric metric = parseResultAnnoDataPaths(path);
                 metric.setAnnotationLimit(result.getQueryMetrics().get(pos).getAnnotationLimit());

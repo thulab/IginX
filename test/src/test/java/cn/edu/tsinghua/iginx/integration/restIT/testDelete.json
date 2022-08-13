@@ -1,0 +1,12 @@
+{
+  "start_absolute" : 1359788400000,
+  "end_absolute": 1359788400001,
+  "metrics": [
+    {
+      "name": "archive_file_tracked",
+      "tags": {
+        "host": [ "server1" ]
+      }
+    }
+  ]
+}

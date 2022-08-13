@@ -1,0 +1,16 @@
+{
+  "start_absolute" : 1,
+  "end_relative": {
+    "value": "5",
+    "unit": "days"
+  },
+  "time_zone": "Asia/Kabul",
+  "metrics": [
+    {
+      "name": "archive_file_tracked"
+    },
+    {
+      "name": "archive_file_search"
+    }
+  ]
+}
