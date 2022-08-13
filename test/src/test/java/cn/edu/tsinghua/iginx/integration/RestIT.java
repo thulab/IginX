@@ -100,7 +100,7 @@ public class RestIT {
             ret += " http://127.0.0.1:6666/api/v1/metric/{" + json + "}";
         } else {
             String prefix = "curl -XPOST -H\"Content-Type: application/json\" -d @";
-            ret = prefix + "\"" + json + "\"";
+            ret = prefix +  json;
             if(type.equals(TYPE.QUERY))
                 ret += " http://127.0.0.1:6666/api/v1/datapoints/query";
             else if(type.equals(TYPE.INSERT)) ret += " http://127.0.0.1:6666/api/v1/datapoints";
