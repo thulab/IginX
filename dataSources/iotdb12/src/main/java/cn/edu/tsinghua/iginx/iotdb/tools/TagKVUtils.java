@@ -52,6 +52,9 @@ public class TagKVUtils {
         String[] parts = fullName.split(tagPrefix, 2);
         assert parts.length == 2;
         String name = parts[0].substring(0, parts[0].length() - 1);
+        if (!fullName.contains(tagNameAnnotation)) {
+            return new Pair<>(name, null);
+        }
         parts[1] = parts[1].substring(1, parts[1].length() - 2);
         List<String> tagKVList = Arrays.stream(parts[1].split("\\.")).map(e -> {
             if (e.startsWith(tagNameAnnotation)) {
@@ -69,9 +72,6 @@ public class TagKVUtils {
             String tagKey = tagKVList.get(i - 1);
             String tagValue = tagKVList.get(i);
             tags.put(tagKey, tagValue);
-        }
-        if (tags.isEmpty()) {
-            return new Pair<>(name, null);
         }
         return new Pair<>(name, tags);
     }
