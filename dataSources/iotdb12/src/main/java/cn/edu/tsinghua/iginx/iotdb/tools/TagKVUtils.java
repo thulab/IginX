@@ -40,15 +40,19 @@ public class TagKVUtils {
 
     public static final String tagNameAnnotation = "@";
 
+    public static final String tagPrefix = "#";
+
+    public static final String tagSuffix = "$";
+
     public static Pair<String, Map<String, String>> splitFullName(String fullName) {
-        if (!fullName.contains(tagNameAnnotation)) {
+        if (!fullName.contains(tagPrefix) && !fullName.contains(tagSuffix)) {
             return new Pair<>(fullName, null);
         }
 
-        String[] parts = fullName.split(tagNameAnnotation, 2);
+        String[] parts = fullName.split(tagPrefix, 2);
         assert parts.length == 2;
         String name = parts[0].substring(0, parts[0].length() - 1);
-
+        parts[1] = parts[1].substring(1, parts[1].length() - 2);
         List<String> tagKVList = Arrays.stream(parts[1].split("\\.")).map(e -> {
             if (e.startsWith(tagNameAnnotation)) {
                 return e.substring(tagNameAnnotation.length());
@@ -66,7 +70,9 @@ public class TagKVUtils {
             String tagValue = tagKVList.get(i);
             tags.put(tagKey, tagValue);
         }
-
+        if (tags.isEmpty()) {
+            return new Pair<>(name, null);
+        }
         return new Pair<>(name, tags);
     }
 
