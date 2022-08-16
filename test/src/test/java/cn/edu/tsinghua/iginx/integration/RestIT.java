@@ -115,7 +115,7 @@ public class RestIT {
         Process process = null;
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(curlArray.split(" "));
-            processBuilder.directory(new File("./src/test/java/cn/edu/tsinghua/iginx/integration/restIT"));
+            processBuilder.directory(new File("./src/test/resources/restIT"));
             // 执行 url 命令
             process = processBuilder.start();
 

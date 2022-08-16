@@ -48,7 +48,7 @@ public class RestAnnotationIT {
         Process process = null;
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(curlArray.split(" "));
-            processBuilder.directory(new File("./src/test/java/cn/edu/tsinghua/iginx/integration/restAnnotation"));
+            processBuilder.directory(new File("./src/test/java/resources/restAnnotation"));
             // 执行 url 命令
             process = processBuilder.start();
 
