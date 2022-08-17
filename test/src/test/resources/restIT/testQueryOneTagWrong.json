@@ -1,0 +1,16 @@
+{
+  "start_absolute": 1,
+  "end_relative": {
+    "value": "5",
+    "unit": "days"
+  },
+  "metrics": [
+    {
+      "name": "archive_file_tracked",
+      "tags": {
+        "host": ["server1"],
+        "data_center": ["DC2"]
+      }
+    }
+  ]
+}

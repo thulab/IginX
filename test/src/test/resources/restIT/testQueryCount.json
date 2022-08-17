@@ -1,0 +1,22 @@
+{
+  "start_absolute": 1,
+  "end_relative": {
+    "value": "5",
+    "unit": "days"
+  },
+  "metrics": [
+    {
+      "name": "archive_file_tracked",
+      "aggregators": [
+        {
+          "name": "count",
+          "sampling": {
+            "value": 1,
+            "unit": "days"
+          }
+        }
+      ]
+    }
+  ]
+}
+

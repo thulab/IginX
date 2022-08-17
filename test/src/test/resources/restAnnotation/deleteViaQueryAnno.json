@@ -1,0 +1,21 @@
+{
+  "metrics": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "host": ["server1"],
+      "data_center": ["DC1"]
+    }
+  }, {
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "host": ["server2"],
+      "data_center": ["DC2"]
+    }
+  }, {
+    "name": "archive_file_tracked.bcc",
+    "tags": {
+      "host": ["server1"],
+      "data_center": ["DC1"]
+    }
+  }]
+}

@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public abstract class QueryAggregator {
     private Double divisor;
@@ -95,24 +96,28 @@ public abstract class QueryAggregator {
         this.type = type;
     }
 
-    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
-        SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
+        SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
         queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
         int datapoints = 0;
-        for (int i = 0; i < n; i++) {
-            boolean flag = false;
-            for (int j = 0; j < m; j++) {
+        for (int j = 0; j < m; j++) {
+            List<Object> value = new ArrayList<>();
+            List<Long> time = new ArrayList<>();
+            for (int i = 0; i < n; i++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                    if (!flag) {
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
-                        flag = true;
-                    }
+                    value.add(sessionQueryDataSet.getValues().get(i).get(j));
+                    time.add(sessionQueryDataSet.getTimestamps()[i]);
+                    queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
                     datapoints += 1;
                 }
             }
+            if(!value.isEmpty())
+                queryResultDataset.addValueLists(value);
+            if(!time.isEmpty())
+                queryResultDataset.addTimeLists(time);
         }
         queryResultDataset.setSampleSize(datapoints);
         return queryResultDataset;
@@ -137,6 +142,19 @@ public abstract class QueryAggregator {
             if (notNull.get(i)) {
                 ret.add(sessionQueryDataSet.getPaths().get(i));
             }
+        }
+        return ret;
+    }
+
+    public List<String> getPathsFromShowTimeSeries(SessionQueryDataSet sessionQueryDataSet) {
+        List<String> ret = new ArrayList<>();
+        List<Boolean> notNull = new ArrayList<>();
+        int m = sessionQueryDataSet.getPaths().size();
+        for (int i = 0; i < m; i++) {
+            notNull.add(false);
+        }
+        for (int i = 0; i < m; i++) {
+            ret.add(sessionQueryDataSet.getPaths().get(i));
         }
         return ret;
     }

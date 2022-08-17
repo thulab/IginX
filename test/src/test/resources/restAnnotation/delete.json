@@ -1,0 +1,13 @@
+{
+  "metrics": [
+    {
+      "name": "archive_file_tracked.ann",
+      "tags": {
+        "host": ["server2"],
+        "data_center": ["DC2"]
+      },
+      "annotation": {
+        "category": ["cat3","cat4"]
+      }
+    }]
+}

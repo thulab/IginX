@@ -24,18 +24,22 @@ import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.Query;
 import cn.edu.tsinghua.iginx.rest.bean.QueryMetric;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResult;
+import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.rest.insert.DataPointsParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
+import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryShowTimeSeries;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.*;
+
 public class QueryExecutor {
     public static final Logger LOGGER = LoggerFactory.getLogger(QueryExecutor.class);
-    private final IMetaManager metaManager = DefaultMetaManager.getInstance();
-    private final Query query;
+    private Query query;
 
     private final RestSession session = new RestSession();
 
@@ -43,22 +47,38 @@ public class QueryExecutor {
         this.query = query;
     }
 
+    public QueryResult executeShowTimeSeries() throws Exception {
+        QueryResult ret = new QueryResult();
+        try {
+            session.openSession();
+            ret.addResultSet(new QueryShowTimeSeries().doAggregate(session));
+            session.closeSession();
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during executing", e);
+            throw e;
+        }
+        return ret;
+    }
+
     public QueryResult execute(boolean isDelete) throws Exception {
         QueryResult ret = new QueryResult();
         try {
             session.openSession();
             for (QueryMetric queryMetric : query.getQueryMetrics()) {
-                List<String> paths = getPaths(queryMetric);
+                List<String> paths = new ArrayList<>();
+                StringBuilder path = new StringBuilder();
+                path.append(queryMetric.getName());
+                paths.add(path.toString());
                 if (isDelete) {
                     RestSession session = new RestSession();
                     session.openSession();
-                    session.deleteDataInColumns(paths, query.getStartAbsolute(), query.getEndAbsolute());
+                    session.deleteDataInColumns(paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute());
                     session.closeSession();
                 } else if (queryMetric.getAggregators().size() == 0) {
-                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());
+                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());
                 } else {
                     for (QueryAggregator queryAggregator : queryMetric.getAggregators()) {
-                        ret.addResultSet(queryAggregator.doAggregate(session, paths, query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, queryAggregator);
+                        ret.addResultSet(queryAggregator.doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, queryAggregator);
                     }
                 }
             }
@@ -71,60 +91,83 @@ public class QueryExecutor {
         return ret;
     }
 
-    public List<String> getPaths(QueryMetric queryMetric) throws Exception {
-        List<String> ret = new ArrayList<>();
-        Map<String, Integer> metricschema = metaManager.getSchemaMapping(queryMetric.getName());
-        if (metricschema == null) {
-            throw new Exception("No metadata found");
+    private String getStringFromObject(Object val) {
+        String valStr = new String();
+        if (val instanceof byte[]) {
+            valStr = new String((byte[]) val);
         } else {
-            Map<Integer, String> pos2path = new TreeMap<>();
-            for (Map.Entry<String, Integer> entry : metricschema.entrySet()) {
-                pos2path.put(entry.getValue(), entry.getKey());
-            }
-            List<Integer> pos = new ArrayList<>();
-            for (int i = 0; i < pos2path.size(); i++) {
-                pos.add(-1);
-            }
-            searchPath(0, ret, pos2path, queryMetric, pos);
+            valStr = String.valueOf(val.toString());
         }
-        return ret;
+        return valStr;
     }
 
-    void searchPath(int depth, List<String> paths, Map<Integer, String> pos2path, QueryMetric queryMetric, List<Integer> pos) {
-        if (depth == pos2path.size()) {
-            StringBuilder path = new StringBuilder();
-            Iterator iter = pos2path.entrySet().iterator();
-            int now = 0;
-            while (iter.hasNext()) {
-                String ins = null;
-                Map.Entry entry = (Map.Entry) iter.next();
-                List<String> tmp = queryMetric.getTags().get(entry.getValue());
-                if (tmp != null) {
-                    ins = queryMetric.getTags().get(entry.getValue()).get(pos.get(now));
+
+    //结果通过引用传出
+    public void queryAnno(QueryResult anno) throws Exception {
+        QueryResult titleResult = new QueryResult(), descriptionResult = new QueryResult();
+        QueryResult title = new QueryResult(), description = new QueryResult();
+        Query titleQuery = new Query();
+        Query descriptionQuery = new Query();
+        boolean hasTitle = false,hasDescription = false;
+        try {
+            for(int i=0; i<anno.getQueryResultDatasets().size(); i++) {
+                QueryResultDataset data = anno.getQueryResultDatasets().get(i);
+                if(data.getTimeLists().isEmpty()) continue;
+                int subLen = data.getTimeLists().size();
+                for(int j=0; j<subLen; j++) {
+                    List<Long> timeList = data.getTimeLists().get(j);
+                    for(int z=timeList.size()-1; z>=0;z--) {
+                        //将double转换为Long
+                        Long annoTime = Math.round((Double)(data.getValueLists().get(j).get(z)));
+                        //这里减小了对时间查询的范围
+                        if(timeList.get(z) < DESCRIPTIONTIEM) break;
+                        if (timeList.get(z).equals(TITLETIEM)) {
+                            hasTitle = true;
+                            titleQuery.setStartAbsolute(annoTime);
+                            titleQuery.setEndAbsolute(annoTime + 1L);
+                        } else if (timeList.get(z).equals(DESCRIPTIONTIEM)) {
+                            hasDescription = true;
+                            descriptionQuery.setStartAbsolute(annoTime);
+                            descriptionQuery.setEndAbsolute(annoTime + 1L);
+                        }
+                    }
+
+                    QueryMetric metric = new QueryMetric();
+                    metric.setName(ANNOTAIONSEQUENCE);
+                    List<QueryMetric> metrics = new ArrayList<>();
+                    metrics.add(metric);
+                    if(hasTitle) {
+                        titleQuery.setQueryMetrics(metrics);
+                        this.query = titleQuery;
+                        title = execute(false);
+                        anno.getQueryResultDatasets().get(i).addTitle(getStringFromObject(title.getQueryResultDatasets().get(0).getValues().get(0)));
+                    } else {
+                        anno.getQueryResultDatasets().get(i).addTitle(new String());
+                    }
+                    if(hasDescription) {
+                        descriptionQuery.setQueryMetrics(metrics);
+                        this.query = descriptionQuery;
+                        description = execute(false);
+                        anno.getQueryResultDatasets().get(i).addDescription(getStringFromObject(description.getQueryResultDatasets().get(0).getValues().get(0)));
+                    } else {
+                        anno.getQueryResultDatasets().get(i).addDescription(new String());
+                    }
                 }
-                if (ins != null) {
-                    path.append(ins).append(".");
-                } else {
-                    path.append("*.");
-                }
-                now++;
             }
-            if (queryMetric.getAnnotation()) {
-                path.append(queryMetric.getName()).append(DataPointsParser.ANNOTATION_SPLIT_STRING);
-            } else {
-                path.append(queryMetric.getName());
-            }
-            paths.add(path.toString());
-            return;
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during executing", e);
+            throw e;
         }
-        if (queryMetric.getTags().get(pos2path.get(depth + 1)) == null) {
-            pos.set(depth, -1);
-            searchPath(depth + 1, paths, pos2path, queryMetric, pos);
-        } else {
-            for (int i = 0; i < queryMetric.getTags().get(pos2path.get(depth + 1)).size(); i++) {
-                pos.set(depth, i);
-                searchPath(depth + 1, paths, pos2path, queryMetric, pos);
-            }
+    }
+
+    public void deleteMetric() throws Exception {
+        RestSession restSession = new RestSession();
+        restSession.openSession();
+        List<String> ins = new ArrayList<>();
+        for(QueryMetric metric : query.getQueryMetrics()) {
+            ins.add(metric.getName());
         }
+        restSession.deleteColumns(ins);
+        restSession.closeSession();
     }
 }

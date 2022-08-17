@@ -23,8 +23,12 @@ import cn.edu.tsinghua.iginx.rest.RestUtils;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.thrift.AggregateType;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class QueryAggregatorAvg extends QueryAggregator {
 
@@ -34,38 +38,28 @@ public class QueryAggregatorAvg extends QueryAggregator {
 
 
     @Override
-    public QueryResultDataset doAggregate(RestSession session, List<String> paths, long startTimestamp, long endTimestamp) {
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try {
-            SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp);
+            SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths, tagList, startTimestamp, endTimestamp, AggregateType.AVG, getDur());
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
             int m = sessionQueryDataSet.getPaths().size();
             int datapoints = 0;
-            switch (type) {
-                case LONG:
-                case DOUBLE:
-                    int cnt = 0;
-                    double sum = 0;
-                    for (int i = 0; i < n; i++) {
-                        for (int j = 0; j < m; j++) {
-                            if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
-                                sum += (double) sessionQueryDataSet.getValues().get(i).get(j);
-                                cnt += 1;
-                                datapoints += 1;
-                            }
-                        }
-                        if (i == n - 1 || RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()) !=
-                            RestUtils.getInterval(sessionQueryDataSet.getTimestamps()[i + 1], startTimestamp, getDur())) {
-                            queryResultDataset.add(RestUtils.getIntervalStart(sessionQueryDataSet.getTimestamps()[i], startTimestamp, getDur()), sum / cnt);
-                            cnt = 0;
-                            sum = 0;
-                        }
+            for (int j = 0; j < m; j++) {
+                List<Object> value = new ArrayList<>();
+                List<Long> time = new ArrayList<>();
+                for (int i = 0; i < n; i++) {
+                    if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
+                        value.add(sessionQueryDataSet.getValues().get(i).get(j));
+                        time.add(sessionQueryDataSet.getTimestamps()[i]);
+                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+                        datapoints += 1;
                     }
-                    break;
-                default:
-                    throw new Exception("Unsupported data type");
+                }
+                queryResultDataset.addValueLists(value);
+                queryResultDataset.addTimeLists(time);
             }
             queryResultDataset.setSampleSize(datapoints);
         } catch (Exception e) {
