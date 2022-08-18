@@ -626,7 +626,7 @@ public class QueryParser {
         int lastBrace = path.indexOf("}");
         if(firstBrace==-1 || lastBrace==-1) {
             name.append(path);
-            return null;
+            return ret;
         }
         name.append(path.substring(0, firstBrace));
         String tagLists = path.substring(firstBrace+1, lastBrace);
