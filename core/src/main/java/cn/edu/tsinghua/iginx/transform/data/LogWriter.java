@@ -14,11 +14,11 @@ public class LogWriter extends ExportWriter {
     @Override
     public void write(BatchData batchData) {
         Header header = batchData.getHeader();
-        logger.info(header.toString());
+//        logger.info(header.toString());
 
         List<Row> rowList = batchData.getRowList();
-        rowList.forEach(row -> {
-            logger.info(row.toCSVTypeString());
-        });
+//        rowList.forEach(row -> {
+//            logger.info(row.toCSVTypeString());
+//        });
     }
 }

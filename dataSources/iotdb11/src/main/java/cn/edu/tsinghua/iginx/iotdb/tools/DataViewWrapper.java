@@ -51,8 +51,6 @@ public class DataViewWrapper {
         }
         String path = dataView.getPath(index);
         Map<String, String> tags = dataView.getTags(index);
-        path += '.';
-        path += TagKVUtils.tagPrefix;
         if (tags != null && !tags.isEmpty()) {
             TreeMap<String, String> sortedTags = new TreeMap<>(tags);
             StringBuilder pathBuilder = new StringBuilder();
@@ -61,8 +59,6 @@ public class DataViewWrapper {
             });
             path += pathBuilder.toString();
         }
-        path += '.';
-        path += TagKVUtils.tagSuffix;
         pathCache.put(index, path);
         return path;
     }
