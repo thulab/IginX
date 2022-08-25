@@ -448,8 +448,48 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testFirstLastQuery() {
-        String statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time > 0;";
+        String statement = "SELECT FIRST(s2) FROM us.d1 WHERE time > 0;";
         String expected = "ResultSets:\n" +
+            "+----+--------+-----+\n" +
+            "|Time|    path|value|\n" +
+            "+----+--------+-----+\n" +
+            "|   1|us.d1.s2|    2|\n" +
+            "+----+--------+-----+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT LAST(s2) FROM us.d1 WHERE time > 0;";
+        expected = "ResultSets:\n" +
+            "+-----+--------+-----+\n" +
+            "| Time|    path|value|\n" +
+            "+-----+--------+-----+\n" +
+            "|14999|us.d1.s2|15000|\n" +
+            "+-----+--------+-----+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT FIRST(s4) FROM us.d1 WHERE time > 0;";
+        expected = "ResultSets:\n" +
+            "+----+--------+-----+\n" +
+            "|Time|    path|value|\n" +
+            "+----+--------+-----+\n" +
+            "|   1|us.d1.s4|  1.1|\n" +
+            "+----+--------+-----+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT LAST(s4) FROM us.d1 WHERE time > 0;";
+        expected = "ResultSets:\n" +
+            "+-----+--------+-------+\n" +
+            "| Time|    path|  value|\n" +
+            "+-----+--------+-------+\n" +
+            "|14999|us.d1.s4|14999.1|\n" +
+            "+-----+--------+-------+\n" +
+            "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT LAST(s2), LAST(s4) FROM us.d1 WHERE time > 0;";
+        expected = "ResultSets:\n" +
             "+-----+--------+-------+\n" +
             "| Time|    path|  value|\n" +
             "+-----+--------+-------+\n" +
@@ -481,14 +521,14 @@ public abstract class SQLSessionIT {
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT FIRST(s2), FIRST(s4) FROM us.d1 WHERE time > 1000;";
+        statement = "SELECT FIRST(s2), LAST(s4) FROM us.d1 WHERE time > 1000;";
         expected = "ResultSets:\n" +
-            "+----+--------+------+\n" +
-            "|Time|    path| value|\n" +
-            "+----+--------+------+\n" +
-            "|1001|us.d1.s2|  1002|\n" +
-            "|1001|us.d1.s4|1001.1|\n" +
-            "+----+--------+------+\n" +
+            "+-----+--------+-------+\n" +
+            "| Time|    path|  value|\n" +
+            "+-----+--------+-------+\n" +
+            "| 1001|us.d1.s2|   1002|\n" +
+            "|14999|us.d1.s4|14999.1|\n" +
+            "+-----+--------+-------+\n" +
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
     }
@@ -1412,7 +1452,7 @@ public abstract class SQLSessionIT {
         executeAndCompareErrMsg(errClause, "Group by clause cannot be used without aggregate function.");
 
         errClause = "SELECT last(s1), max(s2) FROM us.d1;";
-        executeAndCompareErrMsg(errClause, "First/Last query and other aggregate queries can not be mixed.");
+        executeAndCompareErrMsg(errClause, "SetToSet/SetToRow/RowToRow functions can not be mixed in aggregate query.");
 
         errClause = "SELECT s1 FROM us.d1 GROUP (100, 10) BY 100ms;";
         executeAndCompareErrMsg(errClause, "Start time should be smaller than endTime in time interval.");

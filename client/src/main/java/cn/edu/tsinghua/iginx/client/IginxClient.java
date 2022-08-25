@@ -298,8 +298,8 @@ public class IginxClient {
             } else {
                 System.out.println("success");
             }
-//        } catch (SessionException | ExecutionException e) {
-//            System.out.println(e.getMessage());
+        } catch (SessionException | ExecutionException e) {
+            System.out.println(e.getMessage());
         } catch (Exception e) {
             System.out.println("Execute Error: encounter error(s) when executing sql statement, " +
                 "see server log for more details.");
