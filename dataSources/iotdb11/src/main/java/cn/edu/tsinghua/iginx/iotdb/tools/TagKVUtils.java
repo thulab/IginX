@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.iotdb.tools;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.OrTagFilter;
@@ -38,17 +39,24 @@ public class TagKVUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(TagKVUtils.class);
 
-    public static final String tagNameAnnotation = "@";
+    public static final String tagNameAnnotation = Config.tagNameAnnotation;
+
+    public static final String tagPrefix = Config.tagPrefix;
+
+    public static final String tagSuffix = Config.tagSuffix;
 
     public static Pair<String, Map<String, String>> splitFullName(String fullName) {
-        if (!fullName.contains(tagNameAnnotation)) {
+        if (!fullName.contains(tagPrefix) && !fullName.contains(tagSuffix)) {
             return new Pair<>(fullName, null);
         }
 
-        String[] parts = fullName.split(tagNameAnnotation, 2);
+        String[] parts = fullName.split(tagPrefix, 2);
         assert parts.length == 2;
         String name = parts[0].substring(0, parts[0].length() - 1);
-
+        if (!fullName.contains(tagNameAnnotation)) {
+            return new Pair<>(name, null);
+        }
+        parts[1] = parts[1].substring(1, parts[1].length() - 2);
         List<String> tagKVList = Arrays.stream(parts[1].split("\\.")).map(e -> {
             if (e.startsWith(tagNameAnnotation)) {
                 return e.substring(tagNameAnnotation.length());
@@ -66,7 +74,6 @@ public class TagKVUtils {
             String tagValue = tagKVList.get(i);
             tags.put(tagKey, tagValue);
         }
-
         return new Pair<>(name, tags);
     }
 

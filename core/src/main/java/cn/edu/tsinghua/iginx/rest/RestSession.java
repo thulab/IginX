@@ -326,7 +326,7 @@ public class RestSession {
 
     public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime) {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
-        if(tagList.isEmpty())//LHZ这里要全部将size改为这个empty的判断
+        if(!tagList.isEmpty())//LHZ这里要全部将size改为这个empty的判断
             req.setTagsList(tagList);
 
         Status status;

@@ -485,7 +485,7 @@ public class MetricsResource {
         Query querySp = parser.addAnnoTags(queryBase);
         querySp.setStartAbsolute(1L);
         querySp.setEndAbsolute(TOPTIEM);
-        QueryExecutor executorPath = new QueryExecutor(querySp);//LHZ要确认下是否annotation信息在查找时会影响结果
+        QueryExecutor executorPath = new QueryExecutor(querySp);
         QueryResult resultALL = executorPath.execute(false);
 
 //        queryAll.setStartAbsolute(1L);

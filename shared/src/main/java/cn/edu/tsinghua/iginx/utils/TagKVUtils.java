@@ -25,21 +25,24 @@ import java.util.TreeMap;
 
 public class TagKVUtils {
 
-    public static final String tagNameAnnotation = "@";
+    public static final String tagNameAnnotation = ""+'\u2E83';//"tagName@";
+
+    public static final String tagPrefix = ""+'\u2E80';//"tagPrefix#";
+
+    public static final String tagSuffix = ""+'\u2E81';//"#tagSuffix";
 
     public static String toPhysicalPath(String name, Map<String, String> tags) {
-        if (tags == null || tags.isEmpty()) {
-            return name;
-        } else {
-            StringBuilder builder = new StringBuilder();
-            builder.append(name);
-
+        StringBuilder builder = new StringBuilder();
+        builder.append(name);
+        builder.append('.').append(tagPrefix);
+        if (tags != null && !tags.isEmpty()) {
             TreeMap<String, String> sortedTags = new TreeMap<>(tags);
             sortedTags.forEach((tagKey, tagValue) ->
                     builder.append('.').append(tagNameAnnotation).append(tagKey).append('.').append(tagValue)
             );
-            return builder.toString();
         }
+        builder.append('.').append(tagSuffix);
+        return builder.toString();
     }
 
     public static String toFullName(String name, Map<String, String> tags) {
@@ -70,7 +73,7 @@ public class TagKVUtils {
         int index = fullName.indexOf('{');
         if (index == -1) {
             return new Pair<>(fullName, Collections.emptyMap());
-        } else {
+         } else {
             String name = fullName.substring(0, index);
             String[] tagKVs = fullName.substring(index + 1, fullName.length() - 1).split(",");
             Map<String, String> tags = new HashMap<>();

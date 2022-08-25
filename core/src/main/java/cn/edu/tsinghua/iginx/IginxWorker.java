@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.utils.ByteUtils.getLongArrayFromByteBuffer;
@@ -619,7 +620,7 @@ public class IginxWorker implements IService.Iface {
                 0.1,
                 0.05)
         );
-        int maxWarpingWindow = queryList.size() / 4;
+        int maxWarpingWindow = (int) Math.ceil(queryList.size() / 4.0);
         List<Double> upper = CurveMatchUtils.getWindow(queryList, maxWarpingWindow, true);
         List<Double> lower = CurveMatchUtils.getWindow(queryList, maxWarpingWindow, false);
 
@@ -630,41 +631,52 @@ public class IginxWorker implements IService.Iface {
             queryDataResp.getQueryDataSet().getValuesList(),
             queryDataResp.getQueryDataSet().getBitmapList());
 
-        double bestResult = Double.MAX_VALUE;
-        long matchedTimestamp = 0L;
-        String matchedPath = "";
+        double globalBestResult = Double.MAX_VALUE;
+        long globalMatchedTimestamp = 0L;
+        String globalMatchedPath = "";
 
-        int n = queryTimestamps.length;
-        int m = paths.size();
-        for (int j = 0; j < m; j++) {
+        for (int i = 0; i < paths.size(); i++) {
             List<Long> timestamps = new ArrayList<>();
             List<Double> value = new ArrayList<>();
-            for (int i = 0; i < n; i++) {
-                if (values.get(i).get(j) != null) {
-                    timestamps.add(queryTimestamps[i]);
-                    value.add(ValueUtils.transformToDouble(values.get(i).get(j)));
+            List<Integer> timestampsIndex = new ArrayList<>();
+            int cnt = 0;
+            for (int j = 0; j < queryTimestamps.length; j++) {
+                if (values.get(j).get(i) != null) {
+                    timestamps.add(queryTimestamps[j]);
+                    value.add(ValueUtils.transformToDouble(values.get(j).get(i)));
+                    timestampsIndex.add(cnt);
+                    cnt++;
                 }
             }
-            List<Double> valueList = CurveMatchUtils.calcShapePattern(
-                CurveMatchUtils.transToNorm(timestamps, value, req.getCurveUnit()),
-                true,
-                true,
-                true,
-                0.1,
-                0.05);
-            for (int i = 0; i < valueList.size() - queryList.size(); i++) {
-                double result = CurveMatchUtils.calcDTW(queryList, valueList.subList(i, i + queryList.size()), maxWarpingWindow, bestResult, upper, lower);
-                if (result < bestResult) {
-                    bestResult = result;
-                    matchedTimestamp = timestamps.get(i);
-                    matchedPath = paths.get(j);
+            List<Double> bestResultList = new CopyOnWriteArrayList<>();
+            List<Long> matchedTimestampList = new CopyOnWriteArrayList<>();
+            Collections.synchronizedList(timestampsIndex).stream().parallel().forEach(item -> {
+                List<Double> fetchedValueList = CurveMatchUtils.fetch(timestamps, value, item, req.getCurveUnit(), req.getCurveQuerySize());
+                if (fetchedValueList.size() == req.getCurveQuerySize()) {
+                    List<Double> valueList = CurveMatchUtils.calcShapePattern(
+                            fetchedValueList,
+                            true,
+                            true,
+                            true,
+                            0.1,
+                            0.05);
+                    double result = CurveMatchUtils.calcDTW(queryList, valueList, maxWarpingWindow, Double.MAX_VALUE, upper, lower);
+                    bestResultList.add(result);
+                    matchedTimestampList.add(timestamps.get(item));
+                }
+            });
+            for (int j = 0; j < bestResultList.size(); j++) {
+                if (bestResultList.get(j) < globalBestResult) {
+                    globalBestResult = bestResultList.get(j);
+                    globalMatchedTimestamp = matchedTimestampList.get(j);
+                    globalMatchedPath = paths.get(i);
                 }
             }
         }
 
         CurveMatchResp resp = new CurveMatchResp(RpcUtils.SUCCESS);
-        resp.setMatchedTimestamp(matchedTimestamp);
-        resp.setMatchedPath(matchedPath);
+        resp.setMatchedTimestamp(globalMatchedTimestamp);
+        resp.setMatchedPath(globalMatchedPath);
         return resp;
     }
 }

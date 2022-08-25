@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.opentsdb.tools;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.OrTagFilter;
@@ -38,7 +39,7 @@ public class TagKVUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(TagKVUtils.class);
 
-    public static final String tagNameAnnotation = "@";
+    public static final String tagNameAnnotation = Config.tagNameAnnotation;
 
     public static Pair<String, Map<String, String>> splitFullName(String fullName) {
         if (!fullName.contains(tagNameAnnotation)) {
