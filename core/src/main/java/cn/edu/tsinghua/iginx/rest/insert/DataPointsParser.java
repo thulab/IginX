@@ -350,15 +350,13 @@ public class DataPointsParser {
 
     //LHZ注意了！！给路径中添加path，这个是允许的，但是一定要保证顺序！！
     //这个函数名修改一下
-    private String pathAppendAnno(String path, AnnotationLimit annotationLimit){
+    private String pathAppendAnno(Metric metric, String path, AnnotationLimit annotationLimit){
         StringBuilder name = new StringBuilder();
         Map<String, String> tags = getTagsFromPaths(path, name);
         for(String tag : annotationLimit.getTag()){
             tags.putIfAbsent(tag, "category");
         }
-        for (Map.Entry<String, String> entry : tags.entrySet()) {
-            name.append(".@" + entry.getKey() + "." + entry.getValue());
-        }
+        metric.setTags(tags);
         return name.toString();
     }
 
@@ -378,8 +376,8 @@ public class DataPointsParser {
                 QueryMetric queryBase = preQueryResult.getQueryMetrics().get(pos);
                 for(int pl = 0; pl < queryResultDataset.getPaths().size(); pl++) {
                     Metric metric = new Metric();
-                    //添加包含@的路径
-                    String name = pathAppendAnno(queryResultDataset.getPaths().get(pl), queryBase.getAnnotationLimit());
+                    //分析出tag加入到metric中
+                    String name = pathAppendAnno(metric, queryResultDataset.getPaths().get(pl), queryBase.getAnnotationLimit());
                     metric.setName(name);
                     //添加anno的title等信息
                     if(!queryBase.getAnnotationLimit().getTitle().equals(".*"))
@@ -398,6 +396,8 @@ public class DataPointsParser {
                     path.append(metric.getName());
                     List<String> paths = new ArrayList<>();
                     paths.add(path.toString());
+                    List<Map<String,String>> taglist = new ArrayList<>();
+                    taglist.add(metric.getTags());
                     int size = metric.getTimestamps().size();
                     List<DataType> type = new ArrayList<>();
                     type.add(findType(metric.getValues()));
@@ -409,9 +409,9 @@ public class DataPointsParser {
                     valuesList[0] = values;
                     try {
                         //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
-                        session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
+                        session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist);
                         if (!metric.getAnno().isEmpty()) {
-                            insertAnno(paths,null,metric.getAnno());
+                            insertAnno(paths,taglist,metric.getAnno());
                         }
                     } catch (ExecutionException e) {
                         LOGGER.error("Error occurred during insert ", e);
@@ -440,9 +440,8 @@ public class DataPointsParser {
             for(String tag : annoLimit.getTag()) {
                 newTags.putIfAbsent(tag, "category");
             }
-        for (Map.Entry<String, String> entry : newTags.entrySet()) {
-            name.append(".@" + entry.getKey() + "." + entry.getValue());
-        }
+
+        metric.setTags(newTags);
         metric.setName(name.toString());
         return metric;
     }
@@ -498,6 +497,8 @@ public class DataPointsParser {
                     path.append(metric.getName());
                     List<String> paths = new ArrayList<>();
                     paths.add(path.toString());
+                    List<Map<String,String>> taglist = new ArrayList<>();
+                    taglist.add(metric.getTags());
                     int size = metric.getTimestamps().size();
                     List<DataType> type = new ArrayList<>();
                     type.add(findType(metric.getValues()));
@@ -509,9 +510,9 @@ public class DataPointsParser {
                     valuesList[0] = values;
                     try {
                         //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
-                        session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
+                        session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist);
                         if (!metric.getAnno().isEmpty()) {
-                            insertAnno(paths,null,metric.getAnno());
+                            insertAnno(paths,taglist,metric.getAnno());
                         }
                     } catch (ExecutionException e) {
                         LOGGER.error("Error occurred during insert ", e);

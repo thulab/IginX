@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.conf;
 
+import cn.edu.tsinghua.iginx.utils.TagKVUtils;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -149,6 +151,16 @@ public class Config {
     private String historicalPrefixList = "";
 
     private int expectedStorageUnitNum = 0;
+
+    //////////////
+
+    public static final String tagNameAnnotation = TagKVUtils.tagNameAnnotation;
+
+    public static final String tagPrefix = TagKVUtils.tagPrefix;
+
+    public static final String tagSuffix = TagKVUtils.tagSuffix;
+
+    /////////////
 
     public int getMaxTimeseriesLength() {
         return maxTimeseriesLength;

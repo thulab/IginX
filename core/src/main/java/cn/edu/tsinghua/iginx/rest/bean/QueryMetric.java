@@ -33,6 +33,7 @@ import static cn.edu.tsinghua.iginx.rest.bean.SpecialTime.TOPTIEM;
 @Data
 public class QueryMetric {
     private String name;
+    private String pathName;
     private String queryOriPath;
     private Long limit;
     private Map<String, List<String>> tags = new TreeMap<>();

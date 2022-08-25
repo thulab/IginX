@@ -31,6 +31,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static cn.edu.tsinghua.iginx.utils.TagKVUtils.*;
+
 public class QueryParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(QueryParser.class);
     private final ObjectMapper mapper = new ObjectMapper();
@@ -739,10 +741,24 @@ public class QueryParser {
         StringBuilder name =  new StringBuilder();
         QueryMetric metric = new QueryMetric();
         Map<String, String> tags = getTagsFromPaths(path, name);
+        Map<String,List<String>> taglist = new TreeMap<>();
+
         for (Map.Entry<String, String> entry : tags.entrySet()) {
-            name.append(".@" + entry.getKey() + "." + entry.getValue());
+            List val = new ArrayList<>();
+            val.add(entry.getValue());
+            taglist.put(entry.getKey(),val);
         }
+
         metric.setName(name.toString());
+
+        name.append("."+tagPrefix);
+        for (Map.Entry<String, String> entry : tags.entrySet()) {
+            name.append("." + tagNameAnnotation + entry.getKey() + "." + entry.getValue());
+        }
+        name.append("."+tagSuffix);
+
+        metric.setTags(taglist);
+        metric.setPathName(name.toString());
         return metric;
     }
 
@@ -757,51 +773,6 @@ public class QueryParser {
             }
         }
         return ret;
-    }
-
-    //从result中构造一个将anno信息放入路径后的确切路径信息
-    public Query setAnnoPathFromResult(QueryResult result) {
-        Query ret = new Query();
-        for(int i=0; i<result.getQueryResultDatasets().size(); i++) {
-            List<String> paths = result.getQueryResultDatasets().get(i).getPaths();
-            for(String path : paths) {
-                QueryMetric metric = parseQueryResultAnnoDataPaths(path);
-                metric.setAnnotationLimit(result.getQueryMetrics().get(i).getAnnotationLimit());
-                ret.addQueryMetrics(setAnnoPath(metric));
-            }
-        }
-        return ret;
-    }
-
-//    //给路径中放入anno信息，获得确切路径信息
-//    public Query setAnnoPath(Query query) {
-//        Query ret = new Query();
-//        ret.setQueryMetrics(query.getQueryMetrics());
-//        for(int i=0;i<ret.getQueryMetrics().size();i++){
-//            List<String> tags = ret.getQueryMetrics().get(i).getAnnotationLimit().getTag();
-//            int annoCatLen = tags.size();
-//            for(int j=0;j<annoCatLen;j++){
-//                ret.getQueryMetrics().get(i).addTag(tags.get(j),"category");
-//            }
-//
-//        }
-//        return ret;
-//    }
-
-    //构造包含anno的确切路径
-    public QueryMetric setAnnoPath(QueryMetric metric) {
-        List<String> annoTags = metric.getAnnotationLimit().getTag();
-        int annoCatLen = annoTags.size();
-        for(int j=0;j<annoCatLen;j++){
-            metric.addTag(annoTags.get(j),"category");
-        }
-        StringBuilder name =  new StringBuilder();
-        name.append(metric.getName());
-        for (Map.Entry<String, List<String>> entry : metric.getTags().entrySet()) {
-            name.append(".@" + entry.getKey() + "." + entry.getValue().get(0));
-        }
-        metric.setName(name.toString());
-        return metric;
     }
 
     public void getAnnoCategory(QueryResult path) {
