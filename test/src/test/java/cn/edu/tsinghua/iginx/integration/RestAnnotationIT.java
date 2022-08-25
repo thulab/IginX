@@ -48,7 +48,7 @@ public class RestAnnotationIT {
         Process process = null;
         try {
             ProcessBuilder processBuilder = new ProcessBuilder(curlArray.split(" "));
-            processBuilder.directory(new File("./src/test/java/resources/restAnnotation"));
+            processBuilder.directory(new File("./src/test/resources/restAnnotation"));
             // 执行 url 命令
             process = processBuilder.start();
 
@@ -78,6 +78,7 @@ public class RestAnnotationIT {
             session.openSession();
         } catch (SessionException e) {
             LOGGER.error(e.getMessage());
+            fail();
         }
     }
 
@@ -87,6 +88,7 @@ public class RestAnnotationIT {
             session.closeSession();
         } catch (SessionException e) {
             LOGGER.error(e.getMessage());
+            fail();
         }
     }
 
@@ -96,6 +98,7 @@ public class RestAnnotationIT {
             execute("insert.json", TYPE.INSERT);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -116,6 +119,7 @@ public class RestAnnotationIT {
             assertEquals(output, result);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -135,10 +139,11 @@ public class RestAnnotationIT {
     public void testAppendViaQueryAnno() {
         try {
             execute("add.json", TYPE.APPEND);
-            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"cat3\",\"cat4\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}}]}";
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"cat3\",\"cat4\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titlebcc\",\"description\": \"dspbcc\",\"category\": [\"cat2\"]}}]}";
             executeAndCompare("queryAppendViaQueryAnno.json", ans, TYPE.QUERYANNO);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -150,6 +155,7 @@ public class RestAnnotationIT {
             executeAndCompare("queryAppendViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -161,6 +167,7 @@ public class RestAnnotationIT {
             executeAndCompare("queryUpdateViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -172,6 +179,7 @@ public class RestAnnotationIT {
             executeAndCompare("queryUpdateViaQueryAnno.json", ans, TYPE.QUERYANNO);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -183,6 +191,7 @@ public class RestAnnotationIT {
             executeAndCompare("deleteViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -194,6 +203,7 @@ public class RestAnnotationIT {
             executeAndCompare("deleteViaQueryAnno.json", ans, TYPE.QUERYANNO);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 
@@ -211,6 +221,7 @@ public class RestAnnotationIT {
             executeAndCompare("testAppend2ViaQueryAll.json", ans, TYPE.QUERYALL);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            fail();
         }
     }
 }

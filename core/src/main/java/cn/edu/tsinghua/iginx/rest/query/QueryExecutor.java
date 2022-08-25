@@ -165,7 +165,7 @@ public class QueryExecutor {
         restSession.openSession();
         List<String> ins = new ArrayList<>();
         for(QueryMetric metric : query.getQueryMetrics()) {
-            ins.add(metric.getName());
+            ins.add(metric.getPathName());
         }
         restSession.deleteColumns(ins);
         restSession.closeSession();
