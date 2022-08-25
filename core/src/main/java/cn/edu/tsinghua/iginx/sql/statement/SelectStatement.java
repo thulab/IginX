@@ -379,9 +379,6 @@ public class SelectStatement extends DataStatement {
         if (queryType == QueryType.AggregateQuery) {
             if (funcTypeSet.contains(FuncType.First) || funcTypeSet.contains(FuncType.Last)) {
                 this.queryType = QueryType.LastFirstQuery;
-                if (funcTypeSet.size() > 1) {
-                    throw new SQLParserException("First/Last query and other aggregate queries can not be mixed.");
-                }
             }
 
             // setToSet setToRow rowToRow functions can not be mixed.

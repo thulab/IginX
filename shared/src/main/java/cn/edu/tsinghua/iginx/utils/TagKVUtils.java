@@ -25,11 +25,11 @@ import java.util.TreeMap;
 
 public class TagKVUtils {
 
-    public static final String tagNameAnnotation = "@";
+    public static final String tagNameAnnotation = "tagName@";
 
-    public static final String tagPrefix = "#";
+    public static final String tagPrefix = "tagPrefix#";
 
-    public static final String tagSuffix = "$";
+    public static final String tagSuffix = "#tagSuffix";
 
     public static String toPhysicalPath(String name, Map<String, String> tags) {
         StringBuilder builder = new StringBuilder();
