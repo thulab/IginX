@@ -38,11 +38,11 @@ public class TagKVUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(TagKVUtils.class);
 
-    public static final String tagNameAnnotation = "@";
+    public static final String tagNameAnnotation = "☉";
 
-    public static final String tagPrefix = "#";
+    public static final String tagPrefix = "★";
 
-    public static final String tagSuffix = "$";
+    public static final String tagSuffix = "☆";
 
     public static Pair<String, Map<String, String>> splitFullName(String fullName) {
         if (!fullName.contains(tagPrefix) && !fullName.contains(tagSuffix)) {

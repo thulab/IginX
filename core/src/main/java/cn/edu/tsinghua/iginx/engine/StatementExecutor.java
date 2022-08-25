@@ -213,6 +213,7 @@ public class StatementExecutor {
                         return;
                     case INSERT_FROM_SELECT:
                         processInsertFromSelect(ctx);
+                        return;
                     case COUNT_POINTS:
                         processCountPoints(ctx);
                         return;
