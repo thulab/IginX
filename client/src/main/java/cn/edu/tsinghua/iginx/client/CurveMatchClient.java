@@ -57,6 +57,11 @@ public class CurveMatchClient {
 
         List<Double> queryList = Arrays.stream(args[3].split(",")).map(Double::parseDouble).collect(Collectors.toList());
 
+        if (queryList.size() >= 256) {
+            System.out.println("匹配长度不能超过256！");
+            return;
+        }
+
         long curveUnit = Long.parseLong(args[4]);
 
         CurveMatchResult result = session.curveMatch(paths, startTime, endTime, queryList, curveUnit);
