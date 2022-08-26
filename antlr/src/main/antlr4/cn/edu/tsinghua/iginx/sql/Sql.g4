@@ -705,7 +705,7 @@ DURATION
     ;
 
 DATETIME
-    : INT ('-'|'/'|'.') INT ('-'|'/'|'.') INT
+    : INT ('-'|'/') INT ('-'|'/') INT
       ((T | WS)
       INT ':' INT ':' INT (DOT INT)?
       (('+' | '-') INT ':' INT)?)?
