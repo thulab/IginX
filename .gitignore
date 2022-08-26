@@ -36,7 +36,7 @@ hs_err_pid*
 # build generated
 **/target/
 
-# */maven-repo/
+*/maven-repo/
 
 # dependency reduced pom
 **/dependency-reduced-pom.xml
