@@ -19,11 +19,367 @@
 package cn.edu.tsinghua.iginx.utils;
 
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.format.SignStyle;
+import java.time.temporal.ChronoField;
 import java.util.Calendar;
-import java.util.Date;
 
 public class TimeUtils {
+
+    /* such as '2011-12-03'. */
+    public static final DateTimeFormatter ISO_LOCAL_DATE_WIDTH_1_2;
+
+    static {
+        ISO_LOCAL_DATE_WIDTH_1_2 =
+            new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.YEAR, 4, 19, SignStyle.NEVER)
+                .appendLiteral('-')
+                .appendValue(ChronoField.MONTH_OF_YEAR, 1, 2, SignStyle.NEVER)
+                .appendLiteral('-')
+                .appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NEVER)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03'. */
+    public static final DateTimeFormatter ISO_LOCAL_DATE_WITH_SLASH;
+
+    static {
+        ISO_LOCAL_DATE_WITH_SLASH =
+            new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.YEAR, 4, 19, SignStyle.NEVER)
+                .appendLiteral('/')
+                .appendValue(ChronoField.MONTH_OF_YEAR, 1, 2, SignStyle.NEVER)
+                .appendLiteral('/')
+                .appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NEVER)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03'. */
+    public static final DateTimeFormatter ISO_LOCAL_DATE_WITH_DOT;
+
+    static {
+        ISO_LOCAL_DATE_WITH_DOT =
+            new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.YEAR, 4, 19, SignStyle.NEVER)
+                .appendLiteral('.')
+                .appendValue(ChronoField.MONTH_OF_YEAR, 1, 2, SignStyle.NEVER)
+                .appendLiteral('.')
+                .appendValue(ChronoField.DAY_OF_MONTH, 1, 2, SignStyle.NEVER)
+                .toFormatter();
+    }
+
+    /* such as '10:15:30' or '10:15:30.123'. */
+    public static final DateTimeFormatter ISO_LOCAL_TIME_WITH_MS;
+
+    static {
+        ISO_LOCAL_TIME_WITH_MS =
+            new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.HOUR_OF_DAY, 2)
+                .appendLiteral(':')
+                .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+                .appendLiteral(':')
+                .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+                .optionalStart()
+                .appendLiteral('.')
+                .appendValue(ChronoField.MILLI_OF_SECOND, 3)
+                .optionalEnd()
+                .toFormatter();
+    }
+
+    /* such as '10:15:30' or '10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_LOCAL_TIME_WITH_US;
+
+    static {
+        ISO_LOCAL_TIME_WITH_US =
+            new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.HOUR_OF_DAY, 2)
+                .appendLiteral(':')
+                .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+                .appendLiteral(':')
+                .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+                .optionalStart()
+                .appendLiteral('.')
+                .appendValue(ChronoField.MICRO_OF_SECOND, 6)
+                .optionalEnd()
+                .toFormatter();
+    }
+
+    /* such as '10:15:30' or '10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_LOCAL_TIME_WITH_NS;
+
+    static {
+        ISO_LOCAL_TIME_WITH_NS =
+            new DateTimeFormatterBuilder()
+                .appendValue(ChronoField.HOUR_OF_DAY, 2)
+                .appendLiteral(':')
+                .appendValue(ChronoField.MINUTE_OF_HOUR, 2)
+                .appendLiteral(':')
+                .appendValue(ChronoField.SECOND_OF_MINUTE, 2)
+                .optionalStart()
+                .appendLiteral('.')
+                .appendValue(ChronoField.NANO_OF_SECOND, 9)
+                .optionalEnd()
+                .toFormatter();
+    }
+
+    /* such as '2011-12-03T10:15:30' or '2011-12-03T10:15:30.123'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_MS;
+
+    static {
+        ISO_DATE_TIME_WITH_MS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WIDTH_1_2)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_MS)
+                .toFormatter();
+    }
+
+    /* such as '2011-12-03T10:15:30' or '2011-12-03T10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_US;
+
+    static {
+        ISO_DATE_TIME_WITH_US =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WIDTH_1_2)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_US)
+                .toFormatter();
+    }
+
+    /* such as '2011-12-03T10:15:30' or '2011-12-03T10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_NS;
+
+    static {
+        ISO_DATE_TIME_WITH_NS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WIDTH_1_2)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_NS)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03T10:15:30' or '2011/12/03T10:15:30.123'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SLASH;
+
+    static {
+        ISO_DATE_TIME_WITH_SLASH =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_SLASH)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_MS)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03T10:15:30' or '2011/12/03T10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SLASH_US;
+
+    static {
+        ISO_DATE_TIME_WITH_SLASH_US =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_SLASH)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_US)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03T10:15:30' or '2011/12/03T10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SLASH_NS;
+
+    static {
+        ISO_DATE_TIME_WITH_SLASH_NS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_SLASH)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_NS)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03T10:15:30' or '2011.12.03T10:15:30.123'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_DOT;
+
+    static {
+        ISO_DATE_TIME_WITH_DOT =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_DOT)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_MS)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03T10:15:30' or '2011.12.03T10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_DOT_US;
+
+    static {
+        ISO_DATE_TIME_WITH_DOT_US =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_DOT)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_US)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03T10:15:30' or '2011.12.03T10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_DOT_NS;
+
+    static {
+        ISO_DATE_TIME_WITH_DOT_NS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_DOT)
+                .appendLiteral('T')
+                .append(ISO_LOCAL_TIME_WITH_NS)
+                .toFormatter();
+    }
+
+    /* such as '2011-12-03 10:15:30' or '2011-12-03 10:15:30.123'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SPACE;
+
+    static {
+        ISO_DATE_TIME_WITH_SPACE =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_MS)
+                .toFormatter();
+    }
+
+    /* such as '2011-12-03 10:15:30' or '2011-12-03 10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SPACE_US;
+
+    static {
+        ISO_DATE_TIME_WITH_SPACE_US =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_US)
+                .toFormatter();
+    }
+
+    /* such as '2011-12-03 10:15:30' or '2011-12-03 10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SPACE_NS;
+
+    static {
+        ISO_DATE_TIME_WITH_SPACE_NS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_NS)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03 10:15:30' or '2011/12/03 10:15:30.123'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SLASH_WITH_SPACE;
+
+    static {
+        ISO_DATE_TIME_WITH_SLASH_WITH_SPACE =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_SLASH)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_MS)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03 10:15:30' or '2011/12/03 10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SLASH_WITH_SPACE_US;
+
+    static {
+        ISO_DATE_TIME_WITH_SLASH_WITH_SPACE_US =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_SLASH)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_US)
+                .toFormatter();
+    }
+
+    /* such as '2011/12/03 10:15:30' or '2011/12/03 10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_SLASH_WITH_SPACE_NS;
+
+    static {
+        ISO_DATE_TIME_WITH_SLASH_WITH_SPACE_NS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_SLASH)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_NS)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03 10:15:30' or '2011.12.03 10:15:30.123'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_DOT_WITH_SPACE;
+
+    static {
+        ISO_DATE_TIME_WITH_DOT_WITH_SPACE =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_DOT)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_MS)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03 10:15:30' or '2011.12.03 10:15:30.123456'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_DOT_WITH_SPACE_US;
+
+    static {
+        ISO_DATE_TIME_WITH_DOT_WITH_SPACE_US =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_DOT)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_US)
+                .toFormatter();
+    }
+
+    /* such as '2011.12.03 10:15:30' or '2011.12.03 10:15:30.123456789'. */
+    public static final DateTimeFormatter ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS;
+
+    static {
+        ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS =
+            new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(ISO_LOCAL_DATE_WITH_DOT)
+                .appendLiteral(' ')
+                .append(ISO_LOCAL_TIME_WITH_NS)
+                .toFormatter();
+    }
+
+    public static final DateTimeFormatter formatter =
+        new DateTimeFormatterBuilder()
+            .appendOptional(ISO_DATE_TIME_WITH_MS)
+            .appendOptional(ISO_DATE_TIME_WITH_US)
+            .appendOptional(ISO_DATE_TIME_WITH_NS)
+            .appendOptional(ISO_DATE_TIME_WITH_SLASH)
+            .appendOptional(ISO_DATE_TIME_WITH_SLASH_US)
+            .appendOptional(ISO_DATE_TIME_WITH_SLASH_NS)
+            .appendOptional(ISO_DATE_TIME_WITH_DOT)
+            .appendOptional(ISO_DATE_TIME_WITH_DOT_US)
+            .appendOptional(ISO_DATE_TIME_WITH_DOT_NS)
+            .appendOptional(ISO_DATE_TIME_WITH_SPACE)
+            .appendOptional(ISO_DATE_TIME_WITH_SPACE_US)
+            .appendOptional(ISO_DATE_TIME_WITH_SPACE_NS)
+            .appendOptional(ISO_DATE_TIME_WITH_SLASH_WITH_SPACE)
+            .appendOptional(ISO_DATE_TIME_WITH_SLASH_WITH_SPACE_US)
+            .appendOptional(ISO_DATE_TIME_WITH_SLASH_WITH_SPACE_NS)
+            .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE)
+            .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE_US)
+            .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS)
+            .toFormatter();
 
     public static final String DEFAULT_TIMESTAMP_PRECISION = "ms";
 
@@ -52,19 +408,11 @@ public class TimeUtils {
     }
 
     public static long convertDatetimeStrToLong(String timestampStr) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        Date date;
-        try {
-            date = format.parse(timestampStr);
-        } catch (ParseException e) {
-            format = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
-            date = format.parse(timestampStr);
-        }
-        return date.getTime();
+        LocalDateTime localDateTime = LocalDateTime.parse(timestampStr, formatter);
+        return LocalDateTime.from(localDateTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
     }
 
     public static long convertDurationStrToLong(long currentTime, String duration) {
-        String timestampPrecision = DEFAULT_TIMESTAMP_PRECISION;
         long total = 0;
         long temp = 0;
         for (int i = 0; i < duration.length(); i++) {
@@ -79,10 +427,10 @@ public class TimeUtils {
                     unit += duration.charAt(i);
                 }
                 total += TimeUtils.convertDurationStrToLong(
-                        currentTime == -1 ? -1 : currentTime + total,
-                        temp,
-                        unit.toLowerCase(),
-                        timestampPrecision
+                    currentTime == -1 ? -1 : currentTime + total,
+                    temp,
+                    unit.toLowerCase(),
+                    DEFAULT_TIMESTAMP_PRECISION
                 );
                 temp = 0;
             }
