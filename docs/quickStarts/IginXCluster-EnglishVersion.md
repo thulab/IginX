@@ -355,7 +355,7 @@ Only when you are using it, you need to introduce the following dependencies in 
 <dependency>
   <groupId>cn.edu.tsinghua</groupId>
   <artifactId>iginx-core</artifactId>
-  <version>0.5.0-SNAPSHOT</version>
+  <version>0.6.0-SNAPSHOT</version>
 </dependency>
 ```
 

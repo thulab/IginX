@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-      - 0.5.0
+      - 0.6.0
   pull_request:
     branches:
       - main
-      - 0.5.0
+      - 0.6.0
 
 jobs:
   IoTDB11-Test:
@@ -21,7 +21,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -74,7 +74,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -127,7 +127,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -184,7 +184,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -248,7 +248,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -293,7 +293,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -346,7 +346,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -399,7 +399,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -452,7 +452,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -505,7 +505,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -558,7 +558,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -611,7 +611,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
@@ -664,7 +664,7 @@ jobs:
         os: [ ubuntu-latest ]
     runs-on: ${{ matrix.os}}
     env:
-      VERSION: 0.5.0-SNAPSHOT
+      VERSION: 0.6.0-SNAPSHOT
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python ${{ matrix.python-version }}
