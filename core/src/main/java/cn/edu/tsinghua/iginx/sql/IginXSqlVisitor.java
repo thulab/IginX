@@ -5,10 +5,7 @@ import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.OrTagFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.*;
 import cn.edu.tsinghua.iginx.exceptions.SQLParserException;
 import cn.edu.tsinghua.iginx.sql.SqlParser.*;
 import cn.edu.tsinghua.iginx.sql.statement.*;
@@ -101,7 +98,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
         // parse tag filter
         if (ctx.withClause() != null) {
-            TagFilter tagFilter = parseOrTagExpression(ctx.withClause().orTagExpression());
+            TagFilter tagFilter = parseWithClause(ctx.withClause());
             deleteStatement.setTagFilter(tagFilter);
         }
         return deleteStatement;
@@ -135,7 +132,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         }
         // parse with clause
         if (ctx.withClause() != null) {
-            TagFilter tagFilter = parseOrTagExpression(ctx.withClause().orTagExpression());
+            TagFilter tagFilter = parseWithClause(ctx.withClause());
             selectStatement.setTagFilter(tagFilter);
         }
         // parse special clause
@@ -196,7 +193,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             showTimeSeriesStatement.setPathRegex(pathRegex.getText());
         }
         if (ctx.withClause() != null) {
-            TagFilter tagFilter = parseOrTagExpression(ctx.withClause().orTagExpression());
+            TagFilter tagFilter = parseWithClause(ctx.withClause());
             showTimeSeriesStatement.setTagFilter(tagFilter);
         }
         return showTimeSeriesStatement;
@@ -466,6 +463,14 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         return new Pair<>(startTime, endTime);
     }
 
+    private TagFilter parseWithClause(WithClauseContext ctx) {
+        if (ctx.orTagExpression() != null) {
+            return parseOrTagExpression(ctx.orTagExpression());
+        } else {
+            return parseOrPreciseExpression(ctx.orPreciseExpression());
+        }
+    }
+
     private TagFilter parseOrTagExpression(OrTagExpressionContext ctx) {
         List<TagFilter> children = new ArrayList<>();
         for (AndTagExpressionContext andCtx : ctx.andTagExpression()) {
@@ -489,6 +494,24 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         String tagKey = ctx.tagKey().getText();
         String tagValue = ctx.tagValue().getText();
         return new BaseTagFilter(tagKey, tagValue);
+    }
+
+    private TagFilter parseOrPreciseExpression(OrPreciseExpressionContext ctx) {
+        List<BasePreciseTagFilter> children = new ArrayList<>();
+        for (AndPreciseExpressionContext tagCtx : ctx.andPreciseExpression()) {
+            children.add(parseAndPreciseExpression(tagCtx));
+        }
+        return new PreciseTagFilter(children);
+    }
+
+    private BasePreciseTagFilter parseAndPreciseExpression(AndPreciseExpressionContext ctx) {
+        Map<String, String> tagKVMap = new HashMap<>();
+        for (PreciseTagExpressionContext tagCtx : ctx.preciseTagExpression()) {
+            String tagKey = tagCtx.tagKey().getText();
+            String tagValue = tagCtx.tagValue().getText();
+            tagKVMap.put(tagKey, tagValue);
+        }
+        return new BasePreciseTagFilter(tagKVMap);
     }
 
     private Filter parseOrExpression(OrExpressionContext ctx, Statement statement) {
@@ -747,11 +770,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         try {
             return TimeUtils.convertDatetimeStrToLong(timestampStr);
         } catch (Exception e) {
-            throw new SQLParserException(
-                String.format("Input time format %s error. " +
-                        "Input should like yyyy-MM-dd HH:mm:ss." +
-                        "or yyyy/MM/dd HH:mm:ss.",
-                    timestampStr));
+            throw new SQLParserException(String.format("Input time format %s error. ", timestampStr));
         }
     }
 

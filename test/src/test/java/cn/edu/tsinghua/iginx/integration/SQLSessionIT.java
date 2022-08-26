@@ -1338,6 +1338,78 @@ public abstract class SQLSessionIT {
     }
 
     @Test
+    public void testDateFormat() {
+        String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
+        List<String> dateFormats = Arrays.asList(
+            "2021-08-26 16:15:27",
+            "2021/08/26 16:15:28",
+            "2021-08-26T16:15:30",
+            "2021/08/26T16:15:31",
+
+            "2021-08-26 16:15:27.001",
+            "2021/08/26 16:15:28.001",
+            "2021-08-26T16:15:30.001",
+            "2021/08/26T16:15:31.001"
+        );
+
+        for (int i = 0; i < dateFormats.size(); i++) {
+            execute(String.format(insert, dateFormats.get(i), i));
+        }
+
+        String query = "SELECT date FROM us.d2;";
+        String expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965727000|         0|\n"
+                + "|1629965727001|         4|\n"
+                + "|1629965728000|         1|\n"
+                + "|1629965728001|         5|\n"
+                + "|1629965730000|         2|\n"
+                + "|1629965730001|         6|\n"
+                + "|1629965731000|         3|\n"
+                + "|1629965731001|         7|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 8\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT date FROM us.d2 WHERE time >= 2021-08-26 16:15:27 AND time <= 2021/08/26T16:15:31.001;";
+        expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965727000|         0|\n"
+                + "|1629965727001|         4|\n"
+                + "|1629965728000|         1|\n"
+                + "|1629965728001|         5|\n"
+                + "|1629965730000|         2|\n"
+                + "|1629965730001|         6|\n"
+                + "|1629965731000|         3|\n"
+                + "|1629965731001|         7|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 8\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT date FROM us.d2 WHERE time >= 2021/08/26 16:15:28 AND time <= 2021/08/26T16:15:31.001;";
+        expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965728000|         1|\n"
+                + "|1629965728001|         5|\n"
+                + "|1629965730000|         2|\n"
+                + "|1629965730001|         6|\n"
+                + "|1629965731000|         3|\n"
+                + "|1629965731001|         7|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 6\n";
+        executeAndCompare(query, expected);
+    }
+
+    @Test
     public void testInsertWithSubQuery() {
         String insert = "INSERT INTO us.d2(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
         execute(insert);

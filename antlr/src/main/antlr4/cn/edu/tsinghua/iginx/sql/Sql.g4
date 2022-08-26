@@ -76,6 +76,7 @@ predicatePath
 
 withClause
     : WITH orTagExpression
+    | WITH_PRECISE orPreciseExpression
     ;
 
 orTagExpression
@@ -89,6 +90,18 @@ andTagExpression
 tagExpression
     : tagKey OPERATOR_EQ tagValue
     | LR_BRACKET orTagExpression RR_BRACKET
+    ;
+
+orPreciseExpression
+    : andPreciseExpression (OPERATOR_OR andPreciseExpression)*
+    ;
+
+andPreciseExpression
+    : preciseTagExpression (OPERATOR_AND preciseTagExpression)*
+    ;
+
+preciseTagExpression
+    : tagKey OPERATOR_EQ tagValue
     ;
 
 tagList
@@ -224,13 +237,21 @@ jobStatus
 nodeName
     : ID
     | STAR
-    | DOUBLE_QUOTE_STRING_LITERAL
+    | valueNode
+    | keyWords
+    ;
+
+valueNode
+    : DOUBLE_QUOTE_STRING_LITERAL
     | DURATION
     | dateExpression
     | dateFormat
     | MINUS? (EXPONENT | INT)
     | booleanClause
-    | INSERT
+    ;
+
+keyWords
+    : INSERT
     | DELETE
     | SELECT
     | SHOW
@@ -281,6 +302,7 @@ nodeName
     | udfType
     | jobStatus
     | WITH
+    | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
     ;
@@ -554,6 +576,10 @@ WITH
     : W I T H
     ;
 
+WITH_PRECISE
+    : W I T H '_' P R E C I S E
+    ;
+
 TIME_OFFSET
     : T I M E '_' O F F S E T
     ;
@@ -709,7 +735,6 @@ NAME_CHAR
     |   'a'..'z'
     |   '0'..'9'
     |   '_'
-    |   '-'
     |   ':'
     |   '/'
     |   '@'

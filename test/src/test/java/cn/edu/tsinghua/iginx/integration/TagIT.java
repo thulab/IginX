@@ -157,6 +157,29 @@ public class TagIT {
                 + "Total line number = 3\n";
         executeAndCompare(statement, expected);
 
+        statement = "SHOW TIME SERIES ln.wf02.* with_precise t1=v1;";
+        expected =
+            "Time series:\n"
+                + "+----------------+--------+\n"
+                + "|            Path|DataType|\n"
+                + "+----------------+--------+\n"
+                + "|ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "+----------------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES ln.wf02.* with_precise t1=v1 AND t2=v2;";
+        expected =
+            "Time series:\n"
+                + "+----------------------+--------+\n"
+                + "|                  Path|DataType|\n"
+                + "+----------------------+--------+\n"
+                + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "+----------------------+--------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
         statement = "SHOW TIME SERIES ln.wf02.* with t1=v1 AND t2=v2;";
         expected =
             "Time series:\n"
@@ -234,6 +257,17 @@ public class TagIT {
             "+----+----------------+-----------------------+\n" +
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
+
+        statement = "SELECT s FROM ln.* with_precise t1=v1;";
+        expected =
+            "ResultSets:\n"
+                + "+----+----------------+\n"
+                + "|Time|ln.wf02.s{t1=v1}|\n"
+                + "+----+----------------+\n"
+                + "| 400|           false|\n"
+                + "+----+----------------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test
@@ -258,6 +292,29 @@ public class TagIT {
             "|3200|                   true|\n" +
             "+----+-----------------------+\n" +
             "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT s FROM ln.* with_precise t1=v1 AND t2=vv2 OR t1=vv1 AND t2=v2;";
+        expected =
+            "ResultSets:\n"
+                + "+----+-----------------------+-----------------------+\n"
+                + "|Time|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n"
+                + "+----+-----------------------+-----------------------+\n"
+                + "|1600|                   null|                   true|\n"
+                + "|3200|                   true|                   null|\n"
+                + "+----+-----------------------+-----------------------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT s FROM ln.* with_precise t1=v1;";
+        expected =
+            "ResultSets:\n"
+                + "+----+----------------+\n"
+                + "|Time|ln.wf02.s{t1=v1}|\n"
+                + "+----+----------------+\n"
+                + "| 400|           false|\n"
+                + "+----+----------------+\n"
+                + "Total line number = 1\n";
         executeAndCompare(statement, expected);
     }
 
@@ -321,6 +378,21 @@ public class TagIT {
                 + "|1600|     null|            null|                   null|                   true|\n"
                 + "+----+---------+----------------+-----------------------+-----------------------+\n"
                 + "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+
+        statement = "DELETE FROM ln.*.s WHERE time > 10 WITH_PRECISE t1=v1;";
+        execute(statement);
+
+        statement = "SELECT s FROM ln.*;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "|Time|ln.wf02.s|ln.wf02.s{t1=v1}|ln.wf03.s{t1=v1,t2=vv2}|ln.wf03.s{t1=vv1,t2=v2}|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "| 100|     true|            null|                   null|                   null|\n"
+                + "|1600|     null|            null|                   null|                   true|\n"
+                + "+----+---------+----------------+-----------------------+-----------------------+\n"
+                + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "DELETE FROM ln.*.s WHERE time > 10 WITH t1=v1 OR t2=v2;";
@@ -500,26 +572,28 @@ public class TagIT {
         execute(insert);
 
         query = "SELECT s, v FROM copy.ln.wf01;";
-        expected = "ResultSets:\n" +
-            "+----+----------------------------+---------------------+\n" +
-            "|Time|copy.ln.wf01.s{t1=v1,t2=vv2}|copy.ln.wf01.v{t1=v1}|\n" +
-            "+----+----------------------------+---------------------+\n" +
-            "|3200|                        true|                   16|\n" +
-            "+----+----------------------------+---------------------+\n" +
-            "Total line number = 1\n";
+        expected =
+            "ResultSets:\n"
+                + "+----+----------------------------+---------------------+\n"
+                + "|Time|copy.ln.wf01.s{t1=v1,t2=vv2}|copy.ln.wf01.v{t1=v1}|\n"
+                + "+----+----------------------------+---------------------+\n"
+                + "|3200|                        true|                   16|\n"
+                + "+----+----------------------------+---------------------+\n"
+                + "Total line number = 1\n";
         executeAndCompare(query, expected);
 
         insert = "INSERT INTO copy.ln.wf02(TIME, s, v[t2=v2]) VALUES (SELECT s AS ts1, v AS ts2 FROM ln.wf03 with t1=v1);";
         execute(insert);
 
         query = "SELECT s, v FROM copy.ln.wf02;";
-        expected = "ResultSets:\n" +
-            "+----+----------------------------+---------------------------+\n" +
-            "|Time|copy.ln.wf02.s{t1=v1,t2=vv2}|copy.ln.wf02.v{t1=v1,t2=v2}|\n" +
-            "+----+----------------------------+---------------------------+\n" +
-            "|3200|                        true|                         16|\n" +
-            "+----+----------------------------+---------------------------+\n" +
-            "Total line number = 1\n";
+        expected =
+            "ResultSets:\n"
+                + "+----+----------------------------+---------------------------+\n"
+                + "|Time|copy.ln.wf02.s{t1=v1,t2=vv2}|copy.ln.wf02.v{t1=v1,t2=v2}|\n"
+                + "+----+----------------------------+---------------------------+\n"
+                + "|3200|                        true|                         16|\n"
+                + "+----+----------------------------+---------------------------+\n"
+                + "Total line number = 1\n";
         executeAndCompare(query, expected);
     }
 
