@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.iotdb.tools;
 
+import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
@@ -35,11 +36,11 @@ public class TagKVUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(TagKVUtils.class);
 
-    public static final String tagNameAnnotation = "tagName@";
+    public static final String tagNameAnnotation = Config.tagNameAnnotation;
 
-    public static final String tagPrefix = "tagPrefix#";
+    public static final String tagPrefix = Config.tagPrefix;
 
-    public static final String tagSuffix = "#tagSuffix";
+    public static final String tagSuffix = Config.tagSuffix;
 
     public static Pair<String, Map<String, String>> splitFullName(String fullName) {
         if (!fullName.contains(tagPrefix) && !fullName.contains(tagSuffix)) {
