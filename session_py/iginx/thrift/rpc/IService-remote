@@ -50,10 +50,12 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
     print('  Status closeStatement(CloseStatementReq req)')
     print('  CommitTransformJobResp commitTransformJob(CommitTransformJobReq req)')
     print('  QueryTransformJobStatusResp queryTransformJobStatus(QueryTransformJobStatusReq req)')
+    print('  ShowEligibleJobResp showEligibleJob(ShowEligibleJobReq req)')
     print('  Status cancelTransformJob(CancelTransformJobReq req)')
     print('  Status registerTask(RegisterTaskReq req)')
     print('  Status dropTask(DropTaskReq req)')
     print('  GetRegisterTaskInfoResp getRegisterTaskInfo(GetRegisterTaskInfoReq req)')
+    print('  CurveMatchResp curveMatch(CurveMatchReq req)')
     print('')
     sys.exit(0)
 
@@ -289,6 +291,12 @@ elif cmd == 'queryTransformJobStatus':
         sys.exit(1)
     pp.pprint(client.queryTransformJobStatus(eval(args[0]),))
 
+elif cmd == 'showEligibleJob':
+    if len(args) != 1:
+        print('showEligibleJob requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.showEligibleJob(eval(args[0]),))
+
 elif cmd == 'cancelTransformJob':
     if len(args) != 1:
         print('cancelTransformJob requires 1 args')
@@ -312,6 +320,12 @@ elif cmd == 'getRegisterTaskInfo':
         print('getRegisterTaskInfo requires 1 args')
         sys.exit(1)
     pp.pprint(client.getRegisterTaskInfo(eval(args[0]),))
+
+elif cmd == 'curveMatch':
+    if len(args) != 1:
+        print('curveMatch requires 1 args')
+        sys.exit(1)
+    pp.pprint(client.curveMatch(eval(args[0]),))
 
 else:
     print('Unrecognized method %s' % cmd)
