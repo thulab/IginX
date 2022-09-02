@@ -16,6 +16,29 @@ import java.io.InputStreamReader;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+/*
+一、anntation测试逻辑：
+1、正确操作测试，验证单一操作正确性
+2、错误操作测试，验证错误操作，或者无效操作结果
+3、重复性操作测试，测试可重复操作的结果是否正确
+4、操作对象重复，测试操作逻辑中，可重复添加的元素是否符合逻辑
+5、复杂操作，测试多种操作组合结果是否正确
+
+二、anntation测试条目：
+1、查询anntation信息
+2、查询数据以及annotation信息
+3、对每个修改操作单独测试，并通过两种查询分别验证正确性：
+    3.1、测试 add（增加标签操作），通过queryAnno以及queryAll两种方法测试
+    3.2、测试 update（更新标签操作），通过queryAnno以及queryAll两种方法测试
+    3.3、测试 delete（删除标签操作），通过queryAnno以及queryAll两种方法测试
+4、测试重复性操作操作，查看结果正确性
+    4.1、测试添加相同category，通过queryAnno以及queryAll两种方法测试
+    4.2、测试不断更新相同结果的category，通过queryAnno以及queryAll两种方法测试
+    4.3、测试不断删除的category，通过queryAnno以及queryAll两种方法测试
+5、逻辑上重复的操作，如更新结果与原category相同，查看结果正确性
+6、复杂操作，插入，添加，更新，删除，每步操作查看结果正确性
+
+ */
 public class RestAnnotationIT {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetricsResource.class);
 
@@ -207,6 +230,118 @@ public class RestAnnotationIT {
         }
     }
 
+    /*
+    4、测试重复性操作操作，查看结果正确性
+    4.1、测试添加相同category，通过queryAnno以及queryAll两种方法测试
+    4.2、测试不断更新相同结果的category，通过queryAnno以及queryAll两种方法测试
+     */
+
+    @Test
+    public void testDuplicateAppendViaAueryAnno() {
+        try {
+            String clearData = "CLEAR DATA;";
+            session.executeSql(clearData);
+
+            execute("insert2.json", TYPE.INSERT);
+            execute("add2.json", TYPE.APPEND);
+            execute("add2.json", TYPE.APPEND);
+
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"zat3\",\"zat4\"]}, \"values\": [[1359788300001,55.0],[1359788400000,11.0],[1359788400001,44.0],[1359788410001,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,77.0]]}]}";
+            executeAndCompare("testAppend2ViaQueryAll.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void testDuplicateAppendViaQueryAll() {
+        try {
+            execute("add.json", TYPE.APPEND);
+            execute("add.json", TYPE.APPEND);
+
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,11.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"title12\",\"description\": \"dsp12\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,77.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788410000,33.0]]}]}";
+            executeAndCompare("queryAppendViaQueryAll.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void testDuplicateUpdateViaAueryAll() {
+        try {
+            execute("update.json", TYPE.UPDATE);
+            execute("update.json", TYPE.UPDATE);
+
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}, \"values\": [[1359788300000,88.0],[1359788400000,77.0],[1359788410000,99.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
+            executeAndCompare("queryUpdateViaQueryAll.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void testDuplicateUpdateViaQueryAnno() {
+        try {
+            execute("update.json", TYPE.UPDATE);
+            execute("update.json", TYPE.UPDATE);
+
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat6\"]}},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp111bcc\",\"description\": \"dspNewUp111bcc\",\"category\": [\"cat6\"]}}]}";
+            executeAndCompare("queryUpdateViaQueryAnno.json", ans, TYPE.QUERYANNO);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void testDuplicateDeleteViaQueryAll() {
+        try {
+            execute("delete.json", TYPE.DELETE);
+            execute("delete.json", TYPE.DELETE);
+
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
+            executeAndCompare("deleteViaQueryAll.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    /*
+    5、逻辑上重复的操作，如更新结果与原category相同，查看结果正确性
+     */
+
+    @Test
+    public void testSameUpdateViaQueryAll() {
+        try {
+            execute("updateSame.json", TYPE.UPDATE);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"titleNewUp111\",\"description\": \"dspNewUp111\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"title1\",\"description\": \"dsp1\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
+            executeAndCompare("queryData.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    @Test
+    public void testSameAppendViaQueryAll() {
+        try {
+            execute("addSame.json", TYPE.APPEND);
+            String ans = "{\"queries\":[{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC2\"],\"host\" : [\"server2\"]},\"annotation\": {\"title\": \"title12\",\"description\": \"dsp12\",\"category\": [\"cat3\",\"cat4\"]}, \"values\": [[1359788300000,55.0],[1359788400000,44.0],[1359788410000,66.0]]},{\"name\": \"archive_file_tracked.bcc\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUpbcc\",\"description\": \"dspNewUpbcc\",\"category\": [\"cat2\",\"cat3\",\"cat4\"]}, \"values\": [[1359788400000,77.0]]},{\"name\": \"archive_file_tracked.ann\", \"tags\": {\"data_center\" : [\"DC1\"],\"host\" : [\"server1\"]},\"annotation\": {\"title\": \"titleNewUp\",\"description\": \"dspNewUp\",\"category\": [\"cat3\"]}, \"values\": [[1359788300000,22.0],[1359788400000,11.0],[1359788410000,33.0]]}]}";
+            executeAndCompare("queryAppendViaQueryAll.json", ans, TYPE.QUERYALL);
+        } catch (Exception e) {
+            LOGGER.error("Error occurred during execution ", e);
+            fail();
+        }
+    }
+
+    /*
+    6、复杂操作，插入，添加，更新，删除，每步操作查看结果正确性
+     */
+
     @Test
     public void testAppend2ViaQueryAll() {
         try {
@@ -224,4 +359,5 @@ public class RestAnnotationIT {
             fail();
         }
     }
+
 }

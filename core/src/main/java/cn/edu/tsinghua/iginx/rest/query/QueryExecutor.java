@@ -167,7 +167,8 @@ public class QueryExecutor {
         for(QueryMetric metric : query.getQueryMetrics()) {
             ins.add(metric.getPathName());
         }
-        restSession.deleteColumns(ins);
+        if(!ins.isEmpty())
+            restSession.deleteColumns(ins);
         restSession.closeSession();
     }
 }

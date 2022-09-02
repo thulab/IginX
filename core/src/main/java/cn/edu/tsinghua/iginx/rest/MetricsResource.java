@@ -287,7 +287,6 @@ public class MetricsResource {
                 //查找出所有符合tagkv的序列路径
                 Query queryBase = parser.parseAnnotationQueryMetric(jsonStr, false);
                 Query queryAnno = new Query();
-//                queryAnno.setQueryMetrics(queryBase.getQueryMetrics());
 
                 //通过first聚合查询，先查找出所以路径集合
                 queryBase.addFirstAggregator();
@@ -307,7 +306,6 @@ public class MetricsResource {
                 //这里的解析也要确认是否可以解析成功？？LHZ
                 parser.getAnnoCategory(result);
                 String entity = parser.parseAnnoResultToJson(result);
-//                String entity = parser.parseResultToAnnotationJson(resultPath, result, isGrafana);
                 return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
             }
         } catch (Exception e) {
@@ -387,7 +385,7 @@ public class MetricsResource {
             Query querySp = parser.addAnnoTags(queryBase);
             querySp.setStartAbsolute(1L);
             querySp.setEndAbsolute(TOPTIEM);
-            QueryExecutor executorPath = new QueryExecutor(querySp);//LHZ要确认下是否annotation信息在查找时会影响结果
+            QueryExecutor executorPath = new QueryExecutor(querySp);
             QueryResult resultALL = executorPath.execute(false);
 
             //修改路径，并重新查询数据，并插入数据
@@ -437,16 +435,7 @@ public class MetricsResource {
         RestSession restSession = new RestSession();
         restSession.openSession();
         List<String> ins = new ArrayList<>();
-//        for (int i = 1; i < ConfigDescriptor.getInstance().getConfig().getMaxTimeseriesLength(); i++) {
-//            StringBuilder stringBuilder = new StringBuilder();
-//            for (int j = 0; j < i; j++) {
-//                stringBuilder.append("*.");
-//            }
-//            stringBuilder.append(metricName);
-//            ins.add(stringBuilder.toString());
-//        }
         ins.add(metricName);
-//        metaManager.addOrUpdateSchemaMapping(metricName, null);
         restSession.deleteColumns(ins);
         restSession.closeSession();
     }
@@ -454,11 +443,8 @@ public class MetricsResource {
     public void appendAnno(String jsonStr, HttpHeaders httpheaders, AsyncResponse asyncResponse) throws Exception {
         //查找出所有符合tagkv的序列路径
         QueryParser parser = new QueryParser();
+        //包含时间范围的查询
         Query queryBase = parser.parseAnnotationQueryMetric(jsonStr, false);
-        //添加last聚合查询
-//        queryBase.addLastAggregator();
-//        queryBase.setStartAbsolute(1L);//LHZ这里一定要改，因为查找的时间范围是用户端给出的！！！！！！！！！！！！！！！！
-//        queryBase.setEndAbsolute(TOPTIEM);
         QueryExecutor executorPath = new QueryExecutor(queryBase);
         QueryResult result = executorPath.execute(false);
 
@@ -468,8 +454,6 @@ public class MetricsResource {
         queryAll.setEndAbsolute(queryBase.getEndAbsolute());
 
         //执行删除操作,还是要先执行删除，因为之后执行删除，可能会删除已经插入的序列值
-        //LHZ 确保删除是可以正确实现的，同时要确认是否可以通过@路径确切删除
-        //LHZ 还是给出tag，是删除包含，还是完全匹配的tag删除
         QueryExecutor executorData = new QueryExecutor(queryAll);
         executorData.execute(true);
 
@@ -487,10 +471,6 @@ public class MetricsResource {
         querySp.setEndAbsolute(TOPTIEM);
         QueryExecutor executorPath = new QueryExecutor(querySp);
         QueryResult resultALL = executorPath.execute(false);
-
-//        queryAll.setStartAbsolute(1L);
-//        queryAll.setEndAbsolute(TOPTIEM);
-//        QueryResult resultData = executorData.execute(false);
 
         //路径筛选，这里代码的意义是为了之后的拓展
         Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
