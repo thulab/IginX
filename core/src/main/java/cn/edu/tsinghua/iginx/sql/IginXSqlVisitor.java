@@ -152,6 +152,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     public Statement visitDeleteTimeSeriesStatement(DeleteTimeSeriesStatementContext ctx) {
         DeleteTimeSeriesStatement deleteTimeSeriesStatement = new DeleteTimeSeriesStatement();
         ctx.path().forEach(e -> deleteTimeSeriesStatement.addPath(e.getText()));
+
+        if (ctx.withClause() != null) {
+            TagFilter tagFilter = parseWithClause(ctx.withClause());
+            deleteTimeSeriesStatement.setTagFilter(tagFilter);
+        }
         return deleteTimeSeriesStatement;
     }
 
@@ -176,7 +181,8 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         // parse engines
         List<StorageEngineContext> engines = ctx.storageEngineSpec().storageEngine();
         for (StorageEngineContext engine : engines) {
-            String ip = engine.ip().getText();
+            String ipStr = engine.ip.getText();
+            String ip = ipStr.substring(ipStr.indexOf(SQLConstant.QUOTE) + 1, ipStr.lastIndexOf(SQLConstant.QUOTE));
             int port = Integer.parseInt(engine.port.getText());
             String typeStr = engine.engineType.getText().trim();
             String type = typeStr.substring(typeStr.indexOf(SQLConstant.QUOTE) + 1, typeStr.lastIndexOf(SQLConstant.QUOTE));
@@ -195,6 +201,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
         if (ctx.withClause() != null) {
             TagFilter tagFilter = parseWithClause(ctx.withClause());
             showTimeSeriesStatement.setTagFilter(tagFilter);
+        }
+        if (ctx.limitClause() != null) {
+            Pair<Integer, Integer> limitAndOffset = parseLimitClause(ctx.limitClause());
+            showTimeSeriesStatement.setLimit(limitAndOffset.getK());
+            showTimeSeriesStatement.setOffset(limitAndOffset.getV());
         }
         return showTimeSeriesStatement;
     }
@@ -344,7 +355,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
             parseGroupByLevelClause(ctx.groupByLevelClause().INT(), selectStatement);
         }
         if (ctx.limitClause() != null) {
-            parseLimitClause(ctx.limitClause(), selectStatement);
+            Pair<Integer, Integer> limitAndOffset = parseLimitClause(ctx.limitClause());
+            selectStatement.setLimit(limitAndOffset.getK());
+            selectStatement.setOffset(limitAndOffset.getV());
         }
         if (ctx.orderByClause() != null) {
             parseOrderByClause(ctx.orderByClause(), selectStatement);
@@ -385,22 +398,21 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     // like standard SQL, limit N, M means limit M offset N
-    private void parseLimitClause(LimitClauseContext ctx, SelectStatement selectStatement) {
+    private Pair<Integer, Integer> parseLimitClause(LimitClauseContext ctx) {
+        int limit = Integer.MAX_VALUE;
+        int offset = 0;
         if (ctx.INT().size() == 1) {
-            int limit = Integer.parseInt(ctx.INT(0).getText());
-            selectStatement.setLimit(limit);
+            limit = Integer.parseInt(ctx.INT(0).getText());
             if (ctx.offsetClause() != null) {
-                int offset = Integer.parseInt(ctx.offsetClause().INT().getText());
-                selectStatement.setOffset(offset);
+                offset = Integer.parseInt(ctx.offsetClause().INT().getText());
             }
         } else if (ctx.INT().size() == 2) {
-            int offset = Integer.parseInt(ctx.INT(0).getText());
-            int limit = Integer.parseInt(ctx.INT(1).getText());
-            selectStatement.setOffset(offset);
-            selectStatement.setLimit(limit);
+            offset = Integer.parseInt(ctx.INT(0).getText());
+            limit = Integer.parseInt(ctx.INT(1).getText());
         } else {
             throw new SQLParserException("Parse limit clause error. Limit clause should like LIMIT M OFFSET N or LIMIT N, M.");
         }
+        return new Pair<>(limit, offset);
     }
 
     private void parseOrderByClause(OrderByClauseContext ctx, SelectStatement selectStatement) {
@@ -464,7 +476,9 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private TagFilter parseWithClause(WithClauseContext ctx) {
-        if (ctx.orTagExpression() != null) {
+        if (ctx.WITHOUT() != null) {
+            return new WithoutTagFilter();
+        } else if (ctx.orTagExpression() != null) {
             return parseOrTagExpression(ctx.orTagExpression());
         } else {
             return parseOrPreciseExpression(ctx.orPreciseExpression());

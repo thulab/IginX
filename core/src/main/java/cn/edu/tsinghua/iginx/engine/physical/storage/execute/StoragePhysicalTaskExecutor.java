@@ -200,7 +200,7 @@ public class StoragePhysicalTaskExecutor {
                 Set<String> pathRegexSet = operator.getPathRegexSet();
                 TagFilter tagFilter = operator.getTagFilter();
 
-                Set<Timeseries> ret = new TreeSet<>(Comparator.comparing(Timeseries::getPhysicalPath));
+                TreeSet<Timeseries> tsSetAfterFilter = new TreeSet<>(Comparator.comparing(Timeseries::getPhysicalPath));
                 for (Timeseries timeseries : timeseriesSet) {
                     boolean isTarget = true;
                     if (!pathRegexSet.isEmpty()) {
@@ -218,10 +218,29 @@ public class StoragePhysicalTaskExecutor {
                         }
                     }
                     if (isTarget) {
-                        ret.add(timeseries);
+                        tsSetAfterFilter.add(timeseries);
                     }
                 }
-                return new TaskExecuteResult(Timeseries.toRowStream(ret));
+
+                int limit = operator.getLimit();
+                int offset = operator.getOffset();
+                if (limit == Integer.MAX_VALUE && offset == 0) {
+                    return new TaskExecuteResult(Timeseries.toRowStream(tsSetAfterFilter));
+                } else {
+                    // only need part of data.
+                    List<Timeseries> tsList = new ArrayList<>();
+                    int cur = 0, size = tsSetAfterFilter.size();
+                    for(Iterator<Timeseries> iter = tsSetAfterFilter.iterator(); iter.hasNext(); cur++) {
+                        if (cur >= size || cur - offset >= limit) {
+                            break;
+                        }
+                        Timeseries ts = iter.next();
+                        if (cur >= offset) {
+                            tsList.add(ts);
+                        }
+                    }
+                    return new TaskExecuteResult(Timeseries.toRowStream(tsList));
+                }
             default:
                 return new TaskExecuteResult(new UnexpectedOperatorException("unknown op: " + task.getOperator().getType()));
         }

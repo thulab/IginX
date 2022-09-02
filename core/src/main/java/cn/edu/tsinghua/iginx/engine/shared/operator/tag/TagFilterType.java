@@ -30,4 +30,6 @@ public enum TagFilterType {
 
     Precise,
 
+    WithoutTag,
+
 }

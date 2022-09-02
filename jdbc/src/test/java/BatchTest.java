@@ -18,7 +18,7 @@ public class BatchTest {
             "INSERT INTO test.batch (a, b, c) values (3, 3.1, \"three\");",
             "DELETE FROM test.batch.c WHERE c = \"two\"",
             "DELETE FROM test.batch.c WHERE c = \"three\"",
-            "ADD STORAGEENGINE (127.0.0.1, 6667, IOTDB, \"{\"hello\": \"world\"}\");"
+            "ADD STORAGEENGINE (\"127.0.0.1\", 6667, IOTDB, \"{\"hello\": \"world\"}\");"
         ));
 
         IginXStatement statement = new IginXStatement(null, null);

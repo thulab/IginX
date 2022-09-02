@@ -29,13 +29,17 @@ public class ParseTest {
         String insertStr = "INSERT INTO us.d2(TIME, date) VALUES " +
             "(2021-08-26 16:15:27, 1), " +
             "(2021/08/26 16:15:28, 1), " +
+            "(2021.08.26 16:15:29, 1), " +
             "(2021-08-26T16:15:30, 1), " +
             "(2021/08/26T16:15:31, 1), " +
+            "(2021.08.26T16:15:32, 1), " +
 
             "(2021-08-26 16:15:27.001, 1), " +
             "(2021/08/26 16:15:28.001, 1), " +
+            "(2021.08.26 16:15:29.001, 1), " +
             "(2021-08-26T16:15:30.001, 1), " +
-            "(2021/08/26T16:15:31.001, 1);";
+            "(2021/08/26T16:15:31.001, 1), " +
+            "(2021.08.26T16:15:32.001, 1);";
 
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
         statement.getTimes();
@@ -44,10 +48,14 @@ public class ParseTest {
             1629965727001L,
             1629965728000L,
             1629965728001L,
+            1629965729000L,
+            1629965729001L,
             1629965730000L,
             1629965730001L,
             1629965731000L,
-            1629965731001L
+            1629965731001L,
+            1629965732000L,
+            1629965732001L
         );
         assertEquals(expectedTimes, statement.getTimes());
     }
@@ -273,7 +281,7 @@ public class ParseTest {
 
     @Test
     public void testParseAddStorageEngine() {
-        String addStorageEngineStr = "ADD STORAGEENGINE (127.0.0.1, 6667, \"iotdb11\", \"username: root, password: root\"), (127.0.0.1, 6668, \"influxdb\", \"key1: val1, key2: val2\");";
+        String addStorageEngineStr = "ADD STORAGEENGINE (\"127.0.0.1\", 6667, \"iotdb11\", \"username: root, password: root\"), (\"127.0.0.1\", 6668, \"influxdb\", \"key1: val1, key2: val2\");";
         AddStorageEngineStatement statement = (AddStorageEngineStatement) TestUtils.buildStatement(addStorageEngineStr);
 
         assertEquals(2, statement.getEngines().size());
