@@ -10,9 +10,14 @@ public class ShowTimeSeriesStatement extends DataStatement {
     private Set<String> pathRegexSet;
     private TagFilter tagFilter;
 
+    private int limit;
+    private int offset;
+
     public ShowTimeSeriesStatement() {
         this.statementType = StatementType.SHOW_TIME_SERIES;
         this.pathRegexSet = new HashSet<>();
+        this.limit = Integer.MAX_VALUE;
+        this.offset = 0;
     }
 
     public void setPathRegex(String pathRegex) {
@@ -33,5 +38,21 @@ public class ShowTimeSeriesStatement extends DataStatement {
 
     public void setTagFilter(TagFilter tagFilter) {
         this.tagFilter = tagFilter;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
     }
 }

@@ -110,6 +110,48 @@ public class TagIT {
                 + "Total line number = 9\n";
         executeAndCompare(statement, expected);
 
+        statement = "SHOW TIME SERIES limit 6;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|       ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 6\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES limit 3 offset 3;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES limit 3, 3;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+
         statement = "SHOW TIME SERIES ln.wf02.*;";
         expected =
             "Time series:\n"
@@ -123,6 +165,19 @@ public class TagIT {
                 + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
                 + "+----------------------+--------+\n"
                 + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES ln.wf02.* limit 3 offset 2;";
+        expected =
+            "Time series:\n"
+                + "+----------------------+--------+\n"
+                + "|                  Path|DataType|\n"
+                + "+----------------------+--------+\n"
+                + "|             ln.wf02.v|  BINARY|\n"
+                + "|      ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "+----------------------+--------+\n"
+                + "Total line number = 3\n";
         executeAndCompare(statement, expected);
 
         statement = "SHOW TIME SERIES ln.wf02.*, ln.wf03.*;";
@@ -157,6 +212,18 @@ public class TagIT {
                 + "Total line number = 3\n";
         executeAndCompare(statement, expected);
 
+        statement = "SHOW TIME SERIES ln.wf02.* with t1=v1 limit 2 offset 1;";
+        expected =
+            "Time series:\n"
+                + "+----------------------+--------+\n"
+                + "|                  Path|DataType|\n"
+                + "+----------------------+--------+\n"
+                + "|      ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "+----------------------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
         statement = "SHOW TIME SERIES ln.wf02.* with_precise t1=v1;";
         expected =
             "Time series:\n"
@@ -189,6 +256,18 @@ public class TagIT {
                 + "|ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
                 + "+----------------------+--------+\n"
                 + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES WITHOUT TAG;";
+        expected =
+            "Time series:\n"
+                + "+---------+--------+\n"
+                + "|     Path|DataType|\n"
+                + "+---------+--------+\n"
+                + "|ln.wf02.s| BOOLEAN|\n"
+                + "|ln.wf02.v|  BINARY|\n"
+                + "+---------+--------+\n"
+                + "Total line number = 2\n";
         executeAndCompare(statement, expected);
     }
 
@@ -242,6 +321,43 @@ public class TagIT {
             "|3200|     null|            null|                   true|                   null|\n" +
             "+----+---------+----------------+-----------------------+-----------------------+\n" +
             "Total line number = 4\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT s FROM ln.* WITHOUT TAG;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+\n"
+                + "|Time|ln.wf02.s|\n"
+                + "+----+---------+\n"
+                + "| 100|     true|\n"
+                + "+----+---------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT v FROM ln.*;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+----------------------+----------------+----------------+------------------+\n"
+                + "|Time|ln.wf02.v|ln.wf02.v{t1=v1,t2=v2}|ln.wf02.v{t1=v1}|ln.wf03.v{t1=v1}|ln.wf03.v{t1=vv11}|\n"
+                + "+----+---------+----------------------+----------------+----------------+------------------+\n"
+                + "| 100|       v1|                  null|            null|            null|              null|\n"
+                + "| 400|     null|                  null|              v4|            null|              null|\n"
+                + "| 800|     null|                    v8|            null|            null|              null|\n"
+                + "|1600|     null|                  null|            null|            null|                16|\n"
+                + "|3200|     null|                  null|            null|              16|                32|\n"
+                + "+----+---------+----------------------+----------------+----------------+------------------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT v FROM ln.* WITHOUT TAG;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------+\n"
+                + "|Time|ln.wf02.v|\n"
+                + "+----+---------+\n"
+                + "| 100|       v1|\n"
+                + "+----+---------+\n"
+                + "Total line number = 1\n";
         executeAndCompare(statement, expected);
     }
 
@@ -408,6 +524,166 @@ public class TagIT {
                 + "+----+---------+----------------+-----------------------+-----------------------+\n"
                 + "Total line number = 1\n";
         executeAndCompare(statement, expected);
+    }
+
+    @Test
+    public void testDeleteTSWithTag() {
+        String showTimeSeries = "SHOW TIME SERIES;";
+        String expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|       ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|       ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 9\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        String deleteTimeSeries = "DELETE TIME SERIES ln.*.s WITH t1=v1";
+        execute(deleteTimeSeries);
+
+        showTimeSeries = "SHOW TIME SERIES;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|       ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 7\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        String showTimeSeriesData = "SELECT s FROM ln.* WITH t1=v1;";
+        expected = "ResultSets:\n" +
+            "+----+\n" +
+            "|Time|\n" +
+            "+----+\n" +
+            "+----+\n" +
+            "Empty set.\n";
+        executeAndCompare(showTimeSeriesData, expected);
+
+        deleteTimeSeries = "DELETE TIME SERIES ln.*.v WITH_PRECISE t1=v1";
+        execute(deleteTimeSeries);
+
+        showTimeSeries = "SHOW TIME SERIES;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        showTimeSeriesData = "SELECT v FROM ln.* WITH t1=v1;";
+        expected =
+            "ResultSets:\n"
+                + "+----+----------------------+\n"
+                + "|Time|ln.wf02.v{t1=v1,t2=v2}|\n"
+                + "+----+----------------------+\n"
+                + "| 800|                    v8|\n"
+                + "+----+----------------------+\n"
+                + "Total line number = 1\n";
+        executeAndCompare(showTimeSeriesData, expected);
+    }
+
+    @Test
+    public void testDeleteTSWithMultiTags() {
+        String showTimeSeries = "SHOW TIME SERIES;";
+        String expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|       ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "| ln.wf02.v{t1=v1,t2=v2}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|       ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 9\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        String deleteTimeSeries = "DELETE TIME SERIES ln.*.v WITH t1=v1 AND t2=v2;";
+        execute(deleteTimeSeries);
+
+        showTimeSeries = "SHOW TIME SERIES;";
+        expected =
+            "Time series:\n"
+                + "+-----------------------+--------+\n"
+                + "|                   Path|DataType|\n"
+                + "+-----------------------+--------+\n"
+                + "|              ln.wf02.s| BOOLEAN|\n"
+                + "|       ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|              ln.wf02.v|  BINARY|\n"
+                + "|       ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "|ln.wf03.s{t1=v1,t2=vv2}| BOOLEAN|\n"
+                + "|ln.wf03.s{t1=vv1,t2=v2}| BOOLEAN|\n"
+                + "|       ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|     ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+-----------------------+--------+\n"
+                + "Total line number = 8\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        String showTimeSeriesData = "SELECT v FROM ln.* WITH t1=v1 AND t2=v2;";
+        expected = "ResultSets:\n" +
+                "+----+\n" +
+                "|Time|\n" +
+                "+----+\n" +
+                "+----+\n" +
+                "Empty set.\n";;
+        executeAndCompare(showTimeSeriesData, expected);
+
+        deleteTimeSeries = "DELETE TIME SERIES * WITH t1=v1 AND t2=vv2 OR t1=vv1 AND t2=v2;";
+        execute(deleteTimeSeries);
+
+        showTimeSeries = "SHOW TIME SERIES;";
+        expected =
+            "Time series:\n"
+                + "+------------------+--------+\n"
+                + "|              Path|DataType|\n"
+                + "+------------------+--------+\n"
+                + "|         ln.wf02.s| BOOLEAN|\n"
+                + "|  ln.wf02.s{t1=v1}| BOOLEAN|\n"
+                + "|         ln.wf02.v|  BINARY|\n"
+                + "|  ln.wf02.v{t1=v1}|  BINARY|\n"
+                + "|  ln.wf03.v{t1=v1}|    LONG|\n"
+                + "|ln.wf03.v{t1=vv11}|    LONG|\n"
+                + "+------------------+--------+\n"
+                + "Total line number = 6\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        showTimeSeriesData = "SELECT * FROM * WITH t1=v1 AND t2=vv2 OR t1=vv1 AND t2=v2;";
+        expected = "ResultSets:\n" +
+            "+----+\n" +
+            "|Time|\n" +
+            "+----+\n" +
+            "+----+\n" +
+            "Empty set.\n";;
+        executeAndCompare(showTimeSeriesData, expected);
     }
 
     @Test
