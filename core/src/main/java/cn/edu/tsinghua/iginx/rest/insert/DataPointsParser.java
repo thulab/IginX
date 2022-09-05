@@ -91,13 +91,10 @@ public class DataPointsParser {
         ret.setName(node.get("name").asText());
         Iterator<String> fieldNames = node.get("tags").fieldNames();
         Iterator<JsonNode> elements = node.get("tags").elements();
-        //insert语句的tag只能有一个val，是否有问题？
+        //insert语句的tag只能有一个val
         while (elements.hasNext() && fieldNames.hasNext()) {
             ret.addTag(fieldNames.next(), elements.next().textValue());
         }
-
-        // //ANNOEND，扩展，主要是为了后续anntation可以查找到确切路径，加入路径终止符
-        // ret.addTag("zEND","END");
 
         JsonNode tim = node.get("timestamp"), val = node.get("value");
         if (tim != null && val != null) {
@@ -191,7 +188,7 @@ public class DataPointsParser {
                     } else {
                         valStr = String.valueOf(val.toString());
                     }
-                    return new Long(Long.parseLong(valStr));
+                    return Long.parseLong(valStr);
                 }
             }
         } catch (Exception e) {
@@ -343,13 +340,10 @@ public class DataPointsParser {
             ret.put(tagKey,tagVal);
         }
 
-        // //ANNOEND终止符扩展
-        // ret.put("zEND","END");
         return ret;
     }
 
     //LHZ注意了！！给路径中添加path，这个是允许的，但是一定要保证顺序！！
-    //这个函数名修改一下
     private String pathAppendAnno(Metric metric, String path, AnnotationLimit annotationLimit){
         StringBuilder name = new StringBuilder();
         Map<String, String> tags = getTagsFromPaths(path, name);
@@ -358,6 +352,36 @@ public class DataPointsParser {
         }
         metric.setTags(tags);
         return name.toString();
+    }
+
+    private void insertExe(Metric metric) throws Exception {
+        //LHZ以下代码重复了，能否合并到一个函数？？？
+        //执行插入
+        StringBuilder path = new StringBuilder();
+        path.append(metric.getName());
+        List<String> paths = new ArrayList<>();
+        paths.add(path.toString());
+        List<Map<String,String>> taglist = new ArrayList<>();
+        taglist.add(metric.getTags());
+        int size = metric.getTimestamps().size();
+        List<DataType> type = new ArrayList<>();
+        type.add(findType(metric.getValues()));
+        Object[] valuesList = new Object[1];
+        Object[] values = new Object[size];
+        for (int i = 0; i < size; i++) {
+            values[i] = getType(metric.getValues().get(i), type.get(0));
+        }
+        valuesList[0] = values;
+        try {
+            //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
+            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist);
+            if (!metric.getAnno().isEmpty()) {
+                insertAnno(paths,taglist,metric.getAnno());
+            }
+        } catch (ExecutionException e) {
+            LOGGER.error("Error occurred during insert ", e);
+            throw e;
+        }
     }
 
     //修改路径，并插入数据
@@ -390,33 +414,8 @@ public class DataPointsParser {
                         metric.addValue(String.valueOf(queryResultDataset.getValueLists().get(pl).get(tl)));
                     }
 
-                    //LHZ以下代码重复了，能否合并到一个函数？？？
                     //执行插入
-                    StringBuilder path = new StringBuilder();
-                    path.append(metric.getName());
-                    List<String> paths = new ArrayList<>();
-                    paths.add(path.toString());
-                    List<Map<String,String>> taglist = new ArrayList<>();
-                    taglist.add(metric.getTags());
-                    int size = metric.getTimestamps().size();
-                    List<DataType> type = new ArrayList<>();
-                    type.add(findType(metric.getValues()));
-                    Object[] valuesList = new Object[1];
-                    Object[] values = new Object[size];
-                    for (int i = 0; i < size; i++) {
-                        values[i] = getType(metric.getValues().get(i), type.get(0));
-                    }
-                    valuesList[0] = values;
-                    try {
-                        //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
-                        session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist);
-                        if (!metric.getAnno().isEmpty()) {
-                            insertAnno(paths,taglist,metric.getAnno());
-                        }
-                    } catch (ExecutionException e) {
-                        LOGGER.error("Error occurred during insert ", e);
-                        throw e;
-                    }
+                    insertExe(metric);
                 }
             }
         } catch (Exception e) {
@@ -449,7 +448,7 @@ public class DataPointsParser {
     private boolean specificAnnoCategoryPath(Map<String, String> tags, AnnotationLimit annoLimit) {
         int num = 0;
 
-        //数量相同就欧克克
+        //数量相同就ok
         for(Map.Entry<String,String> entry : tags.entrySet()) {
             if(entry.getValue().equals("category")) num++;
         }
@@ -474,9 +473,7 @@ public class DataPointsParser {
                     StringBuilder name = new StringBuilder();
                     //添加包含@的路径
                     Map<String, String> tags = getTagsFromPaths(queryResultDataset.getPaths().get(pl), name);
-                    //这里更新为包含关系2022.8.12.23.24
-                    //如果符合category完全符合，则执行后续操作
-//                    if(!specificAnnoCategoryPath(tags, preQuery.getQueryMetrics().get(pos).getAnnotationLimit())) continue;
+                    /*这里更新为包含关系2022.8.12.23.24，如果之后修改，在此处加入if限制条件*/
                     //更改为新的anno信息，即将路径中的cat信息更新
                     AnnotationLimit newAnnoLimit = preQuery.getQueryMetrics().get(pos).getNewAnnotationLimit();
                     metric = updateAnnoPath(queryResultDataset.getPaths().get(pl), newAnnoLimit);
@@ -491,33 +488,7 @@ public class DataPointsParser {
                         metric.addValue(String.valueOf(queryResultDataset.getValueLists().get(pl).get(tl)));
                     }
 
-                    //LHZ以下代码重复了，能否合并到一个函数？？？
-                    //执行插入
-                    StringBuilder path = new StringBuilder();
-                    path.append(metric.getName());
-                    List<String> paths = new ArrayList<>();
-                    paths.add(path.toString());
-                    List<Map<String,String>> taglist = new ArrayList<>();
-                    taglist.add(metric.getTags());
-                    int size = metric.getTimestamps().size();
-                    List<DataType> type = new ArrayList<>();
-                    type.add(findType(metric.getValues()));
-                    Object[] valuesList = new Object[1];
-                    Object[] values = new Object[size];
-                    for (int i = 0; i < size; i++) {
-                        values[i] = getType(metric.getValues().get(i), type.get(0));
-                    }
-                    valuesList[0] = values;
-                    try {
-                        //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
-                        session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist);
-                        if (!metric.getAnno().isEmpty()) {
-                            insertAnno(paths,taglist,metric.getAnno());
-                        }
-                    } catch (ExecutionException e) {
-                        LOGGER.error("Error occurred during insert ", e);
-                        throw e;
-                    }
+                    insertExe(metric);
                 }
             }
         } catch (Exception e) {
