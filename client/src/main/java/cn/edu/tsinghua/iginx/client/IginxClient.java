@@ -170,7 +170,7 @@ public class IginxClient {
 
             if (execute.equals("")) {
                 echoStarting();
-                displayLogo("0.5.0-SNAPSHOT");
+                displayLogo("0.6.0-SNAPSHOT");
 
                 String command;
                 while (true) {

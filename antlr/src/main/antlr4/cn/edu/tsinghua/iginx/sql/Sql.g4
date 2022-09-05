@@ -9,9 +9,9 @@ statement
     | DELETE FROM path (COMMA path)* whereClause? withClause? #deleteStatement
     | queryClause #selectStatement
     | COUNT POINTS #countPointsStatement
-    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
+    | DELETE TIME SERIES path (COMMA path)* withClause? #deleteTimeSeriesStatement
     | CLEAR DATA #clearDataStatement
-    | SHOW TIME SERIES (path (COMMA path)*)? withClause? #showTimeSeriesStatement
+    | SHOW TIME SERIES (path (COMMA path)*)? withClause? limitClause? #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
@@ -76,6 +76,8 @@ predicatePath
 
 withClause
     : WITH orTagExpression
+    | WITH_PRECISE orPreciseExpression
+    | WITHOUT TAG
     ;
 
 orTagExpression
@@ -89,6 +91,18 @@ andTagExpression
 tagExpression
     : tagKey OPERATOR_EQ tagValue
     | LR_BRACKET orTagExpression RR_BRACKET
+    ;
+
+orPreciseExpression
+    : andPreciseExpression (OPERATOR_OR andPreciseExpression)*
+    ;
+
+andPreciseExpression
+    : preciseTagExpression (OPERATOR_AND preciseTagExpression)*
+    ;
+
+preciseTagExpression
+    : tagKey OPERATOR_EQ tagValue
     ;
 
 tagList
@@ -189,7 +203,7 @@ storageEngineSpec
     ;
 
 storageEngine
-    : LR_BRACKET ip COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
+    : LR_BRACKET ip=stringLiteral COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
     ;
 
 timeValue
@@ -224,13 +238,21 @@ jobStatus
 nodeName
     : ID
     | STAR
-    | DOUBLE_QUOTE_STRING_LITERAL
+    | valueNode
+    | keyWords
+    ;
+
+valueNode
+    : stringLiteral
     | DURATION
     | dateExpression
     | dateFormat
     | MINUS? (EXPONENT | INT)
     | booleanClause
-    | INSERT
+    ;
+
+keyWords
+    : INSERT
     | DELETE
     | SELECT
     | SHOW
@@ -281,12 +303,11 @@ nodeName
     | udfType
     | jobStatus
     | WITH
+    | WITHOUT
+    | TAG
+    | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
-    ;
-
-ip
-    : INT (DOT INT)*
     ;
 
 dateFormat
@@ -554,6 +575,18 @@ WITH
     : W I T H
     ;
 
+WITHOUT
+    : W I T H O U T
+    ;
+
+TAG
+    : T A G
+    ;
+
+WITH_PRECISE
+    : W I T H '_' P R E C I S E
+    ;
+
 TIME_OFFSET
     : T I M E '_' O F F S E T
     ;
@@ -679,7 +712,7 @@ DURATION
     ;
 
 DATETIME
-    : INT ('-'|'/') INT ('-'|'/') INT
+    : INT ('-'|'/'|'.') INT ('-'|'/'|'.') INT
       ((T | WS)
       INT ':' INT ':' INT (DOT INT)?
       (('+' | '-') INT ':' INT)?)?
@@ -709,7 +742,6 @@ NAME_CHAR
     |   'a'..'z'
     |   '0'..'9'
     |   '_'
-    |   '-'
     |   ':'
     |   '/'
     |   '@'

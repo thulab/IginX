@@ -105,7 +105,7 @@ public class IoTDBStorage implements IStorage {
 
     private static final String DELETE_STORAGE_GROUP_CLAUSE = "DELETE STORAGE GROUP " + PREFIX + "%s";
 
-    private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES " + PREFIX + "%s";
+    private static final String DELETE_TIMESERIES_CLAUSE = "DELETE TIMESERIES %s";
 
     private static final String SHOW_TIMESERIES = "SHOW TIMESERIES";
 
@@ -642,7 +642,7 @@ public class IoTDBStorage implements IStorage {
     private TaskExecuteResult executeDeleteTask(String storageUnit, Delete delete) {
         if (delete.getTimeRanges() == null || delete.getTimeRanges().size() == 0) { // 没有传任何 time range
             List<String> paths = delete.getPatterns();
-            if (paths.size() == 1 && paths.get(0).equals("*")) {
+            if (paths.size() == 1 && paths.get(0).equals("*") && delete.getTagFilter() == null) {
                 try {
                     sessionPool.executeNonQueryStatement(String.format(DELETE_STORAGE_GROUP_CLAUSE, storageUnit));
                 } catch (IoTDBConnectionException | StatementExecutionException e) {
@@ -652,9 +652,16 @@ public class IoTDBStorage implements IStorage {
                     }
                 }
             } else {
-                for (String path: paths) {
+                List<String> deletedPaths;
+                try {
+                    deletedPaths = determineDeletePathList(storageUnit, delete);
+                } catch (PhysicalException e) {
+                    logger.warn("encounter error when delete path: " + e.getMessage());
+                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete path task in iotdb11 failure", e));
+                }
+                for (String path: deletedPaths) {
                     try {
-                        sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, storageUnit + "." + path));
+                        sessionPool.executeNonQueryStatement(String.format(DELETE_TIMESERIES_CLAUSE, path));
                     } catch (IoTDBConnectionException | StatementExecutionException e) {
                         logger.warn("encounter error when delete path: " + e.getMessage());
                         if (!e.getMessage().contains(DOES_NOT_EXISTED)) {

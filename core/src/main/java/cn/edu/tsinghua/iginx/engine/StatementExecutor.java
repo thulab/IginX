@@ -292,7 +292,11 @@ public class StatementExecutor {
     }
 
     private void processDeleteTimeSeries(RequestContext ctx) throws ExecutionException, PhysicalException {
-        DeleteStatement deleteStatement = new DeleteStatement(((DeleteTimeSeriesStatement) ctx.getStatement()).getPaths());
+        DeleteTimeSeriesStatement deleteTimeSeriesStatement = (DeleteTimeSeriesStatement) ctx.getStatement();
+        DeleteStatement deleteStatement = new DeleteStatement(
+            deleteTimeSeriesStatement.getPaths(),
+            deleteTimeSeriesStatement.getTagFilter()
+        );
         ctx.setStatement(deleteStatement);
         process(ctx);
     }

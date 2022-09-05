@@ -721,12 +721,7 @@ public class QueryParser {
         int pos = 0;
         for(QueryResultDataset queryResultDataset : result.getQueryResultDatasets()){
             for(String path : queryResultDataset.getPaths()) {
-//                StringBuilder name = new StringBuilder();
-//                Map<String, String> tags = getTagsFromPaths(path, name);
-//                AnnotationLimit annoLimit = result.getQueryMetrics().get(pos).getAnnotationLimit();
-                //如果符合category完全符合，则执行后续操作
-//                if(!specificAnnoCategoryPath(tags, annoLimit)) continue;
-
+                /*如果要获取完全匹配的路径，在这里对每个path路径修改*/
                 QueryMetric metric = parseResultAnnoDataPaths(path);
                 metric.setAnnotationLimit(result.getQueryMetrics().get(pos).getAnnotationLimit());
                 ret.addQueryMetrics(metric);

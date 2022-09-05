@@ -227,6 +227,14 @@ class Iface(object):
         """
         pass
 
+    def showEligibleJob(self, req):
+        """
+        Parameters:
+         - req
+
+        """
+        pass
+
     def cancelTransformJob(self, req):
         """
         Parameters:
@@ -252,6 +260,14 @@ class Iface(object):
         pass
 
     def getRegisterTaskInfo(self, req):
+        """
+        Parameters:
+         - req
+
+        """
+        pass
+
+    def curveMatch(self, req):
         """
         Parameters:
          - req
@@ -1099,6 +1115,38 @@ class Client(Iface):
             return result.success
         raise TApplicationException(TApplicationException.MISSING_RESULT, "queryTransformJobStatus failed: unknown result")
 
+    def showEligibleJob(self, req):
+        """
+        Parameters:
+         - req
+
+        """
+        self.send_showEligibleJob(req)
+        return self.recv_showEligibleJob()
+
+    def send_showEligibleJob(self, req):
+        self._oprot.writeMessageBegin('showEligibleJob', TMessageType.CALL, self._seqid)
+        args = showEligibleJob_args()
+        args.req = req
+        args.write(self._oprot)
+        self._oprot.writeMessageEnd()
+        self._oprot.trans.flush()
+
+    def recv_showEligibleJob(self):
+        iprot = self._iprot
+        (fname, mtype, rseqid) = iprot.readMessageBegin()
+        if mtype == TMessageType.EXCEPTION:
+            x = TApplicationException()
+            x.read(iprot)
+            iprot.readMessageEnd()
+            raise x
+        result = showEligibleJob_result()
+        result.read(iprot)
+        iprot.readMessageEnd()
+        if result.success is not None:
+            return result.success
+        raise TApplicationException(TApplicationException.MISSING_RESULT, "showEligibleJob failed: unknown result")
+
     def cancelTransformJob(self, req):
         """
         Parameters:
@@ -1227,6 +1275,38 @@ class Client(Iface):
             return result.success
         raise TApplicationException(TApplicationException.MISSING_RESULT, "getRegisterTaskInfo failed: unknown result")
 
+    def curveMatch(self, req):
+        """
+        Parameters:
+         - req
+
+        """
+        self.send_curveMatch(req)
+        return self.recv_curveMatch()
+
+    def send_curveMatch(self, req):
+        self._oprot.writeMessageBegin('curveMatch', TMessageType.CALL, self._seqid)
+        args = curveMatch_args()
+        args.req = req
+        args.write(self._oprot)
+        self._oprot.writeMessageEnd()
+        self._oprot.trans.flush()
+
+    def recv_curveMatch(self):
+        iprot = self._iprot
+        (fname, mtype, rseqid) = iprot.readMessageBegin()
+        if mtype == TMessageType.EXCEPTION:
+            x = TApplicationException()
+            x.read(iprot)
+            iprot.readMessageEnd()
+            raise x
+        result = curveMatch_result()
+        result.read(iprot)
+        iprot.readMessageEnd()
+        if result.success is not None:
+            return result.success
+        raise TApplicationException(TApplicationException.MISSING_RESULT, "curveMatch failed: unknown result")
+
 
 class Processor(Iface, TProcessor):
     def __init__(self, handler):
@@ -1258,10 +1338,12 @@ class Processor(Iface, TProcessor):
         self._processMap["closeStatement"] = Processor.process_closeStatement
         self._processMap["commitTransformJob"] = Processor.process_commitTransformJob
         self._processMap["queryTransformJobStatus"] = Processor.process_queryTransformJobStatus
+        self._processMap["showEligibleJob"] = Processor.process_showEligibleJob
         self._processMap["cancelTransformJob"] = Processor.process_cancelTransformJob
         self._processMap["registerTask"] = Processor.process_registerTask
         self._processMap["dropTask"] = Processor.process_dropTask
         self._processMap["getRegisterTaskInfo"] = Processor.process_getRegisterTaskInfo
+        self._processMap["curveMatch"] = Processor.process_curveMatch
         self._on_message_begin = None
 
     def on_message_begin(self, func):
@@ -1882,6 +1964,29 @@ class Processor(Iface, TProcessor):
         oprot.writeMessageEnd()
         oprot.trans.flush()
 
+    def process_showEligibleJob(self, seqid, iprot, oprot):
+        args = showEligibleJob_args()
+        args.read(iprot)
+        iprot.readMessageEnd()
+        result = showEligibleJob_result()
+        try:
+            result.success = self._handler.showEligibleJob(args.req)
+            msg_type = TMessageType.REPLY
+        except TTransport.TTransportException:
+            raise
+        except TApplicationException as ex:
+            logging.exception('TApplication exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = ex
+        except Exception:
+            logging.exception('Unexpected exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+        oprot.writeMessageBegin("showEligibleJob", msg_type, seqid)
+        result.write(oprot)
+        oprot.writeMessageEnd()
+        oprot.trans.flush()
+
     def process_cancelTransformJob(self, seqid, iprot, oprot):
         args = cancelTransformJob_args()
         args.read(iprot)
@@ -1970,6 +2075,29 @@ class Processor(Iface, TProcessor):
             msg_type = TMessageType.EXCEPTION
             result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
         oprot.writeMessageBegin("getRegisterTaskInfo", msg_type, seqid)
+        result.write(oprot)
+        oprot.writeMessageEnd()
+        oprot.trans.flush()
+
+    def process_curveMatch(self, seqid, iprot, oprot):
+        args = curveMatch_args()
+        args.read(iprot)
+        iprot.readMessageEnd()
+        result = curveMatch_result()
+        try:
+            result.success = self._handler.curveMatch(args.req)
+            msg_type = TMessageType.REPLY
+        except TTransport.TTransportException:
+            raise
+        except TApplicationException as ex:
+            logging.exception('TApplication exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = ex
+        except Exception:
+            logging.exception('Unexpected exception in handler')
+            msg_type = TMessageType.EXCEPTION
+            result = TApplicationException(TApplicationException.INTERNAL_ERROR, 'Internal error')
+        oprot.writeMessageBegin("curveMatch", msg_type, seqid)
         result.write(oprot)
         oprot.writeMessageEnd()
         oprot.trans.flush()
@@ -5218,6 +5346,131 @@ queryTransformJobStatus_result.thrift_spec = (
 )
 
 
+class showEligibleJob_args(object):
+    """
+    Attributes:
+     - req
+
+    """
+
+
+    def __init__(self, req=None,):
+        self.req = req
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRUCT:
+                    self.req = ShowEligibleJobReq()
+                    self.req.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('showEligibleJob_args')
+        if self.req is not None:
+            oprot.writeFieldBegin('req', TType.STRUCT, 1)
+            self.req.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(showEligibleJob_args)
+showEligibleJob_args.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'req', [ShowEligibleJobReq, None], None, ),  # 1
+)
+
+
+class showEligibleJob_result(object):
+    """
+    Attributes:
+     - success
+
+    """
+
+
+    def __init__(self, success=None,):
+        self.success = success
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 0:
+                if ftype == TType.STRUCT:
+                    self.success = ShowEligibleJobResp()
+                    self.success.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('showEligibleJob_result')
+        if self.success is not None:
+            oprot.writeFieldBegin('success', TType.STRUCT, 0)
+            self.success.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(showEligibleJob_result)
+showEligibleJob_result.thrift_spec = (
+    (0, TType.STRUCT, 'success', [ShowEligibleJobResp, None], None, ),  # 0
+)
+
+
 class cancelTransformJob_args(object):
     """
     Attributes:
@@ -5715,6 +5968,131 @@ class getRegisterTaskInfo_result(object):
 all_structs.append(getRegisterTaskInfo_result)
 getRegisterTaskInfo_result.thrift_spec = (
     (0, TType.STRUCT, 'success', [GetRegisterTaskInfoResp, None], None, ),  # 0
+)
+
+
+class curveMatch_args(object):
+    """
+    Attributes:
+     - req
+
+    """
+
+
+    def __init__(self, req=None,):
+        self.req = req
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 1:
+                if ftype == TType.STRUCT:
+                    self.req = CurveMatchReq()
+                    self.req.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('curveMatch_args')
+        if self.req is not None:
+            oprot.writeFieldBegin('req', TType.STRUCT, 1)
+            self.req.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(curveMatch_args)
+curveMatch_args.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'req', [CurveMatchReq, None], None, ),  # 1
+)
+
+
+class curveMatch_result(object):
+    """
+    Attributes:
+     - success
+
+    """
+
+
+    def __init__(self, success=None,):
+        self.success = success
+
+    def read(self, iprot):
+        if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
+            iprot._fast_decode(self, iprot, [self.__class__, self.thrift_spec])
+            return
+        iprot.readStructBegin()
+        while True:
+            (fname, ftype, fid) = iprot.readFieldBegin()
+            if ftype == TType.STOP:
+                break
+            if fid == 0:
+                if ftype == TType.STRUCT:
+                    self.success = CurveMatchResp()
+                    self.success.read(iprot)
+                else:
+                    iprot.skip(ftype)
+            else:
+                iprot.skip(ftype)
+            iprot.readFieldEnd()
+        iprot.readStructEnd()
+
+    def write(self, oprot):
+        if oprot._fast_encode is not None and self.thrift_spec is not None:
+            oprot.trans.write(oprot._fast_encode(self, [self.__class__, self.thrift_spec]))
+            return
+        oprot.writeStructBegin('curveMatch_result')
+        if self.success is not None:
+            oprot.writeFieldBegin('success', TType.STRUCT, 0)
+            self.success.write(oprot)
+            oprot.writeFieldEnd()
+        oprot.writeFieldStop()
+        oprot.writeStructEnd()
+
+    def validate(self):
+        return
+
+    def __repr__(self):
+        L = ['%s=%r' % (key, value)
+             for key, value in self.__dict__.items()]
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+    def __eq__(self, other):
+        return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+    def __ne__(self, other):
+        return not (self == other)
+all_structs.append(curveMatch_result)
+curveMatch_result.thrift_spec = (
+    (0, TType.STRUCT, 'success', [CurveMatchResp, None], None, ),  # 0
 )
 fix_spec(all_structs)
 del all_structs

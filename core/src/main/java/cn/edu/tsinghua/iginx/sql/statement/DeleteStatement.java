@@ -35,11 +35,15 @@ public class DeleteStatement extends DataStatement {
     }
 
     public DeleteStatement(List<String> paths) {
+        this(paths, null);
+    }
+
+    public DeleteStatement(List<String> paths, TagFilter tagFilter) {
         this.statementType = StatementType.DELETE;
         this.paths = paths;
         this.timeRanges = new ArrayList<>();
         this.deleteAll = true;
-        this.tagFilter = null;
+        this.tagFilter = tagFilter;
     }
 
     public List<String> getPaths() {

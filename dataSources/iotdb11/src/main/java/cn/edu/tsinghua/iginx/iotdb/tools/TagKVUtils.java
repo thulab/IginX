@@ -19,10 +19,7 @@
 package cn.edu.tsinghua.iginx.iotdb.tools;
 
 import cn.edu.tsinghua.iginx.conf.Config;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.BaseTagFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.OrTagFilter;
-import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.*;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
 import org.slf4j.Logger;
@@ -78,9 +75,6 @@ public class TagKVUtils {
     }
 
     public static boolean match(Map<String, String> tags, TagFilter tagFilter) {
-        if (tags == null || tags.isEmpty()) {
-            return false;
-        }
         switch (tagFilter.getType()) {
             case And:
                 return match(tags, (AndTagFilter) tagFilter);
@@ -88,11 +82,20 @@ public class TagKVUtils {
                 return match(tags, (OrTagFilter) tagFilter);
             case Base:
                 return match(tags, (BaseTagFilter) tagFilter);
+            case Precise:
+                return match(tags, (PreciseTagFilter) tagFilter);
+            case BasePrecise:
+                return match(tags, (BasePreciseTagFilter) tagFilter);
+            case WithoutTag:
+                return match(tags, (WithoutTagFilter) tagFilter);
         }
         return false;
     }
 
     private static boolean match(Map<String, String> tags, AndTagFilter tagFilter) {
+        if (tags == null || tags.isEmpty()) {
+            return false;
+        }
         List<TagFilter> children = tagFilter.getChildren();
         for (TagFilter child: children) {
             if (!match(tags, child)) {
@@ -103,6 +106,9 @@ public class TagKVUtils {
     }
 
     private static boolean match(Map<String, String> tags, OrTagFilter tagFilter) {
+        if (tags == null || tags.isEmpty()) {
+            return false;
+        }
         List<TagFilter> children = tagFilter.getChildren();
         for (TagFilter child: children) {
             if (match(tags, child)) {
@@ -113,6 +119,9 @@ public class TagKVUtils {
     }
 
     private static boolean match(Map<String, String> tags, BaseTagFilter tagFilter) {
+        if (tags == null || tags.isEmpty()) {
+            return false;
+        }
         String tagKey = tagFilter.getTagKey();
         String expectedValue = tagFilter.getTagValue();
         if (!tags.containsKey(tagKey)) {
@@ -126,5 +135,27 @@ public class TagKVUtils {
         }
     }
 
+    private static boolean match(Map<String, String> tags, PreciseTagFilter tagFilter) {
+        if (tags == null || tags.isEmpty()) {
+            return false;
+        }
+        List<BasePreciseTagFilter> children = tagFilter.getChildren();
+        for (TagFilter child: children) {
+            if (match(tags, child)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
+    private static boolean match(Map<String, String> tags, BasePreciseTagFilter tagFilter) {
+        if (tags == null || tags.isEmpty()) {
+            return false;
+        }
+        return tags.equals(tagFilter.getTags());
+    }
+
+    private static boolean match(Map<String, String> tags, WithoutTagFilter tagFilter) {
+        return tags == null || tags.isEmpty();
+    }
 }

@@ -12,7 +12,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <build-plugin.jacoco.version>0.8.6</build-plugin.jacoco.version>
-    <!--revision>0.5.0</revision-->
+    <!--revision>0.5.0-SNAPSHOT</revision-->
   </properties>
 
   <modules>
@@ -22,7 +22,7 @@
     <module>dataSources/iotdb12</module>
     <module>dataSources/influxdb</module>
     <module>dataSources/opentsdb</module>
-    <!--module>dataSources/timescaledb</module   -SNAPSHOT-->
+    <!--module>dataSources/timescaledb</module-->
     <module>dataSources/postgresql</module>
     <module>shared</module>
     <module>client</module>

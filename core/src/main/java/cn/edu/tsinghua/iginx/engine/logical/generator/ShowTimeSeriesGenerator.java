@@ -27,6 +27,8 @@ public class ShowTimeSeriesGenerator extends AbstractGenerator {
         return new ShowTimeSeries(
             new GlobalSource(),
             showTimeSeriesStatement.getPathRegexSet(),
-            showTimeSeriesStatement.getTagFilter());
+            showTimeSeriesStatement.getTagFilter(),
+            showTimeSeriesStatement.getLimit(),
+            showTimeSeriesStatement.getOffset());
     }
 }

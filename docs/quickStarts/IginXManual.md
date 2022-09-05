@@ -503,7 +503,7 @@ $ mvn clean install -DskipTests
 <dependency>
   	<groupId>cn.edu.tsinghua</groupId>
   	<artifactId>iginx-core</artifactId>
-  	<version>0.5.0-SNAPSHOT</version>
+  	<version>0.6.0-SNAPSHOT</version>
 </dependency>
 ```
 

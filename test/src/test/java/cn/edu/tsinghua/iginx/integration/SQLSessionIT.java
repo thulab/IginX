@@ -175,6 +175,43 @@ public abstract class SQLSessionIT {
                 + "Total line number = 4\n";
         executeAndCompare(statement, expected);
 
+        statement = "SHOW TIME SERIES limit 3;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 3\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES limit 2 offset 1;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SHOW TIME SERIES limit 1, 2;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
         statement = "SHOW TIME SERIES us.d1.s1;";
         expected =
             "Time series:\n"
@@ -1338,6 +1375,106 @@ public abstract class SQLSessionIT {
     }
 
     @Test
+    public void testDateFormat() {
+        String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
+        List<String> dateFormats = Arrays.asList(
+            "2021-08-26 16:15:27",
+            "2021/08/26 16:15:28",
+            "2021.08.26 16:15:29",
+            "2021-08-26T16:15:30",
+            "2021/08/26T16:15:31",
+            "2021.08.26T16:15:32",
+
+            "2021-08-26 16:15:27.001",
+            "2021/08/26 16:15:28.001",
+            "2021.08.26 16:15:29.001",
+            "2021-08-26T16:15:30.001",
+            "2021/08/26T16:15:31.001",
+            "2021.08.26T16:15:32.001"
+        );
+
+        for (int i = 0; i < dateFormats.size(); i++) {
+            execute(String.format(insert, dateFormats.get(i), i));
+        }
+
+        String query = "SELECT date FROM us.d2;";
+        String expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965727000|         0|\n"
+                + "|1629965727001|         6|\n"
+                + "|1629965728000|         1|\n"
+                + "|1629965728001|         7|\n"
+                + "|1629965729000|         2|\n"
+                + "|1629965729001|         8|\n"
+                + "|1629965730000|         3|\n"
+                + "|1629965730001|         9|\n"
+                + "|1629965731000|         4|\n"
+                + "|1629965731001|        10|\n"
+                + "|1629965732000|         5|\n"
+                + "|1629965732001|        11|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 12\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT date FROM us.d2 WHERE time >= 2021-08-26 16:15:27 AND time <= 2021.08.26T16:15:32.001;";
+        expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965727000|         0|\n"
+                + "|1629965727001|         6|\n"
+                + "|1629965728000|         1|\n"
+                + "|1629965728001|         7|\n"
+                + "|1629965729000|         2|\n"
+                + "|1629965729001|         8|\n"
+                + "|1629965730000|         3|\n"
+                + "|1629965730001|         9|\n"
+                + "|1629965731000|         4|\n"
+                + "|1629965731001|        10|\n"
+                + "|1629965732000|         5|\n"
+                + "|1629965732001|        11|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 12\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT date FROM us.d2 WHERE time >= 2021.08.26 16:15:29 AND time <= 2021-08-26T16:15:30.001;";
+        expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965729000|         2|\n"
+                + "|1629965729001|         8|\n"
+                + "|1629965730000|         3|\n"
+                + "|1629965730001|         9|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        query = "SELECT date FROM us.d2 WHERE time >= 2021/08/26 16:15:28 AND time <= 2021/08/26T16:15:31.001;";
+        expected =
+            "ResultSets:\n"
+                + "+-------------+----------+\n"
+                + "|         Time|us.d2.date|\n"
+                + "+-------------+----------+\n"
+                + "|1629965728000|         1|\n"
+                + "|1629965728001|         7|\n"
+                + "|1629965729000|         2|\n"
+                + "|1629965729001|         8|\n"
+                + "|1629965730000|         3|\n"
+                + "|1629965730001|         9|\n"
+                + "|1629965731000|         4|\n"
+                + "|1629965731001|        10|\n"
+                + "+-------------+----------+\n"
+                + "Total line number = 8\n";
+        executeAndCompare(query, expected);
+    }
+
+    @Test
     public void testInsertWithSubQuery() {
         String insert = "INSERT INTO us.d2(TIME, s1) VALUES (SELECT s1 FROM us.d1 WHERE s1 >= 1000 AND s1 < 1010);";
         execute(insert);
@@ -1466,17 +1603,66 @@ public abstract class SQLSessionIT {
         if (!isAbleToDelete) {
             return;
         }
-        String deleteTimeSeries = "DELETE TIME SERIES us.*";
+        String showTimeSeries = "SHOW TIME SERIES;";
+        String expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "|us.d1.s4|  DOUBLE|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 4\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        String deleteTimeSeries = "DELETE TIME SERIES us.d1.s4";
         execute(deleteTimeSeries);
 
-        String showTimeSeries = "SELECT * FROM *;";
-        String expected = "ResultSets:\n" +
+        showTimeSeries = "SHOW TIME SERIES;";
+        expected =
+            "Time series:\n"
+                + "+--------+--------+\n"
+                + "|    Path|DataType|\n"
+                + "+--------+--------+\n"
+                + "|us.d1.s1|    LONG|\n"
+                + "|us.d1.s2|    LONG|\n"
+                + "|us.d1.s3|  BINARY|\n"
+                + "+--------+--------+\n"
+                + "Total line number = 3\n";
+        executeAndCompare(showTimeSeries, expected);
+
+        String showTimeSeriesData = "SELECT s4 FROM us.d1;";
+        expected = "ResultSets:\n" +
             "+----+\n" +
             "|Time|\n" +
             "+----+\n" +
             "+----+\n" +
             "Empty set.\n";
+        executeAndCompare(showTimeSeriesData, expected);
+
+        deleteTimeSeries = "DELETE TIME SERIES us.*";
+        execute(deleteTimeSeries);
+
+        showTimeSeries = "SHOW TIME SERIES;";
+        expected =
+            "Time series:\n"
+                + "+----+--------+\n"
+                + "|Path|DataType|\n"
+                + "+----+--------+\n"
+                + "+----+--------+\n"
+                + "Empty set.\n";
         executeAndCompare(showTimeSeries, expected);
+
+        showTimeSeriesData = "SELECT * FROM *;";
+        expected = "ResultSets:\n" +
+            "+----+\n" +
+            "|Time|\n" +
+            "+----+\n" +
+            "+----+\n" +
+            "Empty set.\n";
+        executeAndCompare(showTimeSeriesData, expected);
 
         String countPoints = "COUNT POINTS";
         expected = "Points num: 0\n";

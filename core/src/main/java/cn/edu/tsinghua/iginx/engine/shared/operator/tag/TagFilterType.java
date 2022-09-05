@@ -26,4 +26,10 @@ public enum TagFilterType {
 
     Or,
 
+    BasePrecise,
+
+    Precise,
+
+    WithoutTag,
+
 }
