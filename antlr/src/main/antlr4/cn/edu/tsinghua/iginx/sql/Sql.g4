@@ -9,9 +9,9 @@ statement
     | DELETE FROM path (COMMA path)* whereClause? withClause? #deleteStatement
     | queryClause #selectStatement
     | COUNT POINTS #countPointsStatement
-    | DELETE TIME SERIES path (COMMA path)* #deleteTimeSeriesStatement
+    | DELETE TIME SERIES path (COMMA path)* withClause? #deleteTimeSeriesStatement
     | CLEAR DATA #clearDataStatement
-    | SHOW TIME SERIES (path (COMMA path)*)? withClause? #showTimeSeriesStatement
+    | SHOW TIME SERIES (path (COMMA path)*)? withClause? limitClause? #showTimeSeriesStatement
     | SHOW REPLICA NUMBER #showReplicationStatement
     | ADD STORAGEENGINE storageEngineSpec #addStorageEngineStatement
     | SHOW CLUSTER INFO #showClusterInfoStatement
@@ -77,6 +77,7 @@ predicatePath
 withClause
     : WITH orTagExpression
     | WITH_PRECISE orPreciseExpression
+    | WITHOUT TAG
     ;
 
 orTagExpression
@@ -202,7 +203,7 @@ storageEngineSpec
     ;
 
 storageEngine
-    : LR_BRACKET ip COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
+    : LR_BRACKET ip=stringLiteral COMMA port=INT COMMA engineType=stringLiteral COMMA extra=stringLiteral RR_BRACKET
     ;
 
 timeValue
@@ -242,7 +243,7 @@ nodeName
     ;
 
 valueNode
-    : DOUBLE_QUOTE_STRING_LITERAL
+    : stringLiteral
     | DURATION
     | dateExpression
     | dateFormat
@@ -302,13 +303,11 @@ keyWords
     | udfType
     | jobStatus
     | WITH
+    | WITHOUT
+    | TAG
     | WITH_PRECISE
     | TIME_OFFSET
     | CANCEL
-    ;
-
-ip
-    : INT (DOT INT)*
     ;
 
 dateFormat
@@ -576,6 +575,14 @@ WITH
     : W I T H
     ;
 
+WITHOUT
+    : W I T H O U T
+    ;
+
+TAG
+    : T A G
+    ;
+
 WITH_PRECISE
     : W I T H '_' P R E C I S E
     ;
@@ -705,7 +712,7 @@ DURATION
     ;
 
 DATETIME
-    : INT ('-'|'/') INT ('-'|'/') INT
+    : INT ('-'|'/'|'.') INT ('-'|'/'|'.') INT
       ((T | WS)
       INT ':' INT ':' INT (DOT INT)?
       (('+' | '-') INT ':' INT)?)?
