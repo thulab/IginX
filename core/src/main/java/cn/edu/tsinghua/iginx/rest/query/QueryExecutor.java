@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorNone;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryShowTimeSeries;
 
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -104,7 +105,6 @@ public class QueryExecutor {
 
     //结果通过引用传出
     public void queryAnno(QueryResult anno) throws Exception {
-        QueryResult titleResult = new QueryResult(), descriptionResult = new QueryResult();
         QueryResult title = new QueryResult(), description = new QueryResult();
         Query titleQuery = new Query();
         Query descriptionQuery = new Query();
@@ -117,10 +117,12 @@ public class QueryExecutor {
                 for(int j=0; j<subLen; j++) {
                     List<Long> timeList = data.getTimeLists().get(j);
                     for(int z=timeList.size()-1; z>=0;z--) {
-                        //将double转换为Long
-                        Long annoTime = Math.round((Double)(data.getValueLists().get(j).get(z)));
                         //这里减小了对时间查询的范围
                         if(timeList.get(z) < DESCRIPTIONTIEM) break;
+
+                        //将double转换为Long
+                        Long annoTime = getLongVal(data.getValueLists().get(j).get(z));
+
                         if (timeList.get(z).equals(TITLETIEM)) {
                             hasTitle = true;
                             titleQuery.setStartAbsolute(annoTime);
@@ -170,5 +172,31 @@ public class QueryExecutor {
         if(!ins.isEmpty())
             restSession.deleteColumns(ins);
         restSession.closeSession();
+    }
+
+    public DataType judgeObjectType(Object obj){
+        if (obj instanceof Boolean){
+            return DataType.BOOLEAN;
+        }else if (obj instanceof Byte || obj instanceof String || obj instanceof Character){
+            return DataType.BINARY;
+        }else if (obj instanceof Long || obj instanceof Integer){
+            return DataType.LONG;
+        }else if (obj instanceof Double || obj instanceof Float){
+            return DataType.DOUBLE;
+        }
+        //否则默认字符串类型
+        return DataType.BINARY;
+    }
+
+    //错误返回-1
+    public Long getLongVal(Object val) {
+        switch (judgeObjectType(val)) {
+            case BINARY:
+                return Long.valueOf(new String((byte[]) val));
+            case DOUBLE:
+                return Math.round((Double)(val));
+            default:
+                return new Long(-1);//尽量不要传null
+        }
     }
 }
