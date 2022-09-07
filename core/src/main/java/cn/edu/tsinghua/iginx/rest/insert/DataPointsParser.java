@@ -405,7 +405,7 @@ public class DataPointsParser {
                     metric.setName(name);
 
                     //向metric中插入，anno以及数据点信息
-                    metricGetData(metric,queryBase,queryResultDataset,pl);
+                    metricGetData(metric,queryBase,queryResultDataset,queryBase.getAnnotationLimit(),pl);
 
                     //执行插入
                     insertExe(metric);
@@ -472,7 +472,7 @@ public class DataPointsParser {
                     metric = updateAnnoPath(queryResultDataset.getPaths().get(pl), newAnnoLimit);
 
                     //添加anno的title等信息，以及数据点信息
-                    metricGetData(metric,queryBase,queryResultDataset,pl);
+                    metricGetData(metric,queryBase,queryResultDataset,queryBase.getNewAnnotationLimit(),pl);
 
                     insertExe(metric);
                 }
@@ -532,12 +532,12 @@ public class DataPointsParser {
         return DataType.DOUBLE;
     }
 
-    void metricGetData(Metric metric, QueryMetric queryBase, QueryResultDataset queryResultDataset,int pl) {
+    void metricGetData(Metric metric, QueryMetric queryBase, QueryResultDataset queryResultDataset, AnnotationLimit anno, int pl) {
         //添加anno的title等信息
-        if(!queryBase.getAnnotationLimit().getTitle().equals(".*"))
-            metric.addAnno("title", queryBase.getAnnotationLimit().getTitle());
-        if(!queryBase.getAnnotationLimit().getText().equals(".*"))
-            metric.addAnno("description", queryBase.getAnnotationLimit().getText());
+        if(!anno.getTitle().equals(".*"))
+            metric.addAnno("title", anno.getTitle());
+        if(!anno.getText().equals(".*"))
+            metric.addAnno("description", anno.getText());
         //添加数据点信息
         for(int tl = 0;tl<queryResultDataset.getTimeLists().get(pl).size();tl++) {
             metric.addTimestamp(queryResultDataset.getTimeLists().get(pl).get(tl));
