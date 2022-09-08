@@ -503,6 +503,7 @@ public class DataPointsParser {
         switch (judgeObjectType(val)) {
             case BINARY:
                 return new String((byte[]) val);
+            case LONG:
             case DOUBLE:
                 return String.valueOf(val);
             default:
@@ -516,20 +517,29 @@ public class DataPointsParser {
                 return str.getBytes();
             case DOUBLE:
                 return Double.parseDouble(str);
+            case LONG:
+                return Long.parseLong(str);
             default:
                 return null;
         }
     }
 
     DataType findType(List<String> values) {
+        //默认为 LONG
+        DataType ret = DataType.LONG;
         for (String value : values) {
             try {
-                Double.parseDouble(value);
+                Long.parseLong(value,10);
             } catch (NumberFormatException e) {
-                return DataType.BINARY;
+                try{
+                    Double.parseDouble(value);
+                } catch (NumberFormatException e2) {
+                    return DataType.BINARY;
+                }
+                ret =  DataType.DOUBLE;
             }
         }
-        return DataType.DOUBLE;
+        return ret;
     }
 
     void metricGetData(Metric metric, QueryMetric queryBase, QueryResultDataset queryResultDataset, AnnotationLimit anno, int pl) {

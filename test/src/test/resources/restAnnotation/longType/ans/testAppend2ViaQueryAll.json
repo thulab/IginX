@@ -1,0 +1,34 @@
+{
+  "queries": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "titleNewUp",
+      "description": "dspNewUp",
+      "category": ["zat3", "zat4"]
+    },
+    "values": [
+      [1359788300001, 55],
+      [1359788400000, 11],
+      [1359788400001, 44],
+      [1359788410001, 66]
+    ]
+  }, {
+    "name": "archive_file_tracked.bcc",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "titleNewUpbcc",
+      "description": "dspNewUpbcc",
+      "category": ["cat2", "cat3", "cat4"]
+    },
+    "values": [
+      [1359788400000, 77]
+    ]
+  }]
+}

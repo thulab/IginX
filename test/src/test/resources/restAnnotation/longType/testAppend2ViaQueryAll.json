@@ -1,0 +1,11 @@
+{
+  "metrics": [{
+    "annotation": {
+      "category": ["zat4"]
+    }
+  },{
+    "annotation": {
+      "category": ["cat3"]
+    }
+  }]
+}

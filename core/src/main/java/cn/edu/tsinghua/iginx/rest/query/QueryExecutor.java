@@ -120,7 +120,7 @@ public class QueryExecutor {
                         //这里减小了对时间查询的范围
                         if(timeList.get(z) < DESCRIPTIONTIEM) break;
 
-                        //将double转换为Long
+                        //将多种类型转换为Long
                         Long annoTime = getLongVal(data.getValueLists().get(j).get(z));
 
                         if (timeList.get(z).equals(TITLETIEM)) {
@@ -195,6 +195,8 @@ public class QueryExecutor {
                 return Long.valueOf(new String((byte[]) val));
             case DOUBLE:
                 return Math.round((Double)(val));
+            case LONG:
+                return (Long)val;
             default:
                 return new Long(-1);//尽量不要传null
         }
