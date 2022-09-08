@@ -1,0 +1,49 @@
+[{
+  "name": "archive_file_tracked.ann",
+  "datapoints": [
+    [1359788400000, 11.0],
+    [1359788300000, 22.0],
+    [1359788410000, 33.0]
+  ],
+  "tags": {
+    "host": "server1",
+    "data_center": "DC1"
+  },
+  "annotation": {
+    "category": ["zat3"],
+    "title": "title1",
+    "description": "dsp1"
+  }
+}, {
+  "name": "archive_file_tracked.ann",
+  "datapoints": [
+    [1359788400001, 44.0],
+    [1359788300001, 55.0],
+    [1359788410001, 66.0]
+  ],
+  "tags": {
+    "host": "server1",
+    "data_center": "DC1"
+  },
+  "annotation": {
+    "category": ["zat3","zat4"],
+    "title": "title12",
+    "description": "dsp12"
+  }
+}, {
+  "name": "archive_file_tracked.bcc",
+  "datapoints": [
+    [1359788400000, 77.0],
+    [1359788300000, 88.0],
+    [1359788410000, 99.0]
+  ],
+  "tags": {
+    "host": "server1",
+    "data_center": "DC1"
+  },
+  "annotation": {
+    "category": ["cat2"],
+    "title": "titlebcc",
+    "description": "dspbcc"
+  }
+}]
