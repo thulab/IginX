@@ -1,0 +1,31 @@
+{
+  "metrics": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "host": ["server2"],
+      "data_center": ["DC2"]
+    },
+    "annotation": {
+      "category": ["cat3","cat4"]
+    },
+    "annotation-new": {
+      "category": ["cat3","cat4"],
+      "title" : "titleNewUp111",
+      "description" : "dspNewUp111"
+    }
+  },{
+    "name": "archive_file_tracked.bcc",
+    "tags": {
+      "host": ["server1"],
+      "data_center": ["DC1"]
+    },
+    "annotation": {
+      "category": ["cat2"]
+    },
+    "annotation-new": {
+      "category": ["cat2"],
+      "title" : "titleNewUp111bcc",
+      "description" : "dspNewUp111bcc"
+    }
+  }]
+}

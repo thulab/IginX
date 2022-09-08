@@ -1,0 +1,49 @@
+{
+  "queries": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "data_center": ["DC2"],
+      "host": ["server2"]
+    },
+    "annotation": {
+      "title": "title12",
+      "description": "dsp12",
+      "category": ["cat3", "cat4"]
+    },
+    "values": [
+      [1359788300000, 55],
+      [1359788400000, 44],
+      [1359788410000, 66]
+    ]
+  }, {
+    "name": "archive_file_tracked.bcc",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "titleNewUpbcc",
+      "description": "dspNewUpbcc",
+      "category": ["cat2", "cat3", "cat4"]
+    },
+    "values": [
+      [1359788400000, 77]
+    ]
+  }, {
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "titleNewUp",
+      "description": "dspNewUp",
+      "category": ["cat3"]
+    },
+    "values": [
+      [1359788300000, 22],
+      [1359788400000, 11],
+      [1359788410000, 33]
+    ]
+  }]
+}

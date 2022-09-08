@@ -14,7 +14,7 @@
   {
     "name": "archive_file_search",
     "timestamp": 1359786400000,
-    "value": 321,
+    "value": 321.0,
     "tags": {
       "host": "server2"
     }

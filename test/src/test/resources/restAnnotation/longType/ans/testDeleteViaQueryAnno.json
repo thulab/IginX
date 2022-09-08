@@ -1,0 +1,25 @@
+{
+  "queries": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "title1",
+      "description": "dsp1",
+      "category": ["cat3"]
+    }
+  }, {
+    "name": "archive_file_tracked.bcc",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "titlebcc",
+      "description": "dspbcc",
+      "category": ["cat2"]
+    }
+  }]
+}

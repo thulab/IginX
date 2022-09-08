@@ -1,0 +1,27 @@
+{
+  "start_absolute": 1359788400000,
+  "end_absolute" : 1359788400001,
+  "metrics": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "host": ["server1"],
+      "data_center": ["DC1"]
+    },
+    "annotation": {
+      "category": ["cat3"],
+      "title" : "titleNewUp",
+      "description" : "dspNewUp"
+    }
+  },{
+    "name": "archive_file_tracked.bcc",
+    "tags": {
+      "host": ["server1"],
+      "data_center": ["DC1"]
+    },
+    "annotation": {
+      "category": ["cat3","cat4"],
+      "title" : "titleNewUpbcc",
+      "description" : "dspNewUpbcc"
+    }
+  }]
+}

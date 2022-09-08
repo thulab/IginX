@@ -1,0 +1,19 @@
+{
+  "queries": [{
+    "name": "archive_file_tracked.ann",
+    "tags": {
+      "data_center": ["DC1"],
+      "host": ["server1"]
+    },
+    "annotation": {
+      "title": "title1",
+      "description": "dsp1",
+      "category": ["cat3"]
+    },
+    "values": [
+      [1359788300000, 22],
+      [1359788400000, 11],
+      [1359788410000, 33]
+    ]
+  }]
+}

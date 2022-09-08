@@ -38,7 +38,7 @@ public class RestIT {
             "    {\n" +
             "          \"name\": \"archive_file_search\",\n" +
             "          \"timestamp\": 1359786400000,\n" +
-            "          \"value\": 321,\n" +
+            "          \"value\": 321.0,\n" +
             "          \"tags\": {\n" +
             "              \"host\": \"server2\"\n" +
             "          }\n" +
