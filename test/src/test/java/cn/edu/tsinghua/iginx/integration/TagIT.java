@@ -850,7 +850,7 @@ public class TagIT {
 
     @Test
     public void testMixQueryWithAggregate() {
-        String statement = "select last(*) from ln.wf01;";
+        String statement = "select last(s) from ln.wf01;";
         String expected =
             "ResultSets:\n"
                 + "+----+-----------------------+-----+\n"
@@ -858,13 +858,23 @@ public class TagIT {
                 + "+----+-----------------------+-----+\n"
                 + "|   3|              ln.wf01.s|    4|\n"
                 + "|   3|ln.wf01.s{t1=v1,t2=vv1}|    6|\n"
+                + "+----+-----------------------+-----+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select last(v) from ln.wf01;";
+        expected =
+            "ResultSets:\n"
+                + "+----+-----------------------+-----+\n"
+                + "|Time|                   path|value|\n"
+                + "+----+-----------------------+-----+\n"
                 + "|   3|              ln.wf01.v|    5|\n"
                 + "|   3|ln.wf01.v{t1=v2,t2=vv1}|    7|\n"
                 + "+----+-----------------------+-----+\n"
-                + "Total line number = 4\n";
+                + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
-        statement = "select first(*) from ln.wf01;";
+        statement = "select first(s) from ln.wf01;";
         expected =
             "ResultSets:\n"
                 + "+----+-----------------------+-----+\n"
@@ -872,10 +882,20 @@ public class TagIT {
                 + "+----+-----------------------+-----+\n"
                 + "|   0|              ln.wf01.s|    1|\n"
                 + "|   0|ln.wf01.s{t1=v1,t2=vv1}|    3|\n"
+                + "+----+-----------------------+-----+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "select first(v) from ln.wf01;";
+        expected =
+            "ResultSets:\n"
+                + "+----+-----------------------+-----+\n"
+                + "|Time|                   path|value|\n"
+                + "+----+-----------------------+-----+\n"
                 + "|   0|              ln.wf01.v|    2|\n"
                 + "|   0|ln.wf01.v{t1=v2,t2=vv1}|    4|\n"
                 + "+----+-----------------------+-----+\n"
-                + "Total line number = 4\n";
+                + "Total line number = 2\n";
         executeAndCompare(statement, expected);
 
         statement = "select first_value(*) from ln.wf01;";
