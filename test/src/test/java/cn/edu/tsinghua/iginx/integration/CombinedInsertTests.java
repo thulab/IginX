@@ -36,9 +36,9 @@ public class CombinedInsertTests {
     private static final long NON_ALIGNED_ROW_START_TIMESTAMP = 30001L;
     private static final long NON_ALIGNED_ROW_END_TIMESTAMP = 40000L;
 
-    private static Session session;
+    private static Session session = null;
 
-    private static SessionPool sessionPool;
+    private static SessionPool sessionPool = null;
 
     public CombinedInsertTests(Session passedSession){
         session = passedSession;
