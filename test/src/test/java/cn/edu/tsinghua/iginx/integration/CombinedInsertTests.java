@@ -2,6 +2,7 @@ package cn.edu.tsinghua.iginx.integration;
 
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.exceptions.SessionException;
+import cn.edu.tsinghua.iginx.pool.SessionPool;
 import cn.edu.tsinghua.iginx.rest.MetricsResource;
 import cn.edu.tsinghua.iginx.session.Session;
 import cn.edu.tsinghua.iginx.session.SessionExecuteSqlResult;
@@ -37,8 +38,14 @@ public class CombinedInsertTests {
 
     private static Session session;
 
+    private static SessionPool sessionPool;
+
     public CombinedInsertTests(Session passedSession){
         session = passedSession;
+    }
+
+    public CombinedInsertTests(SessionPool passedSessionPool){
+        sessionPool = passedSessionPool;
     }
 
     public void testInserts() throws SessionException, ExecutionException {
@@ -88,7 +95,10 @@ public class CombinedInsertTests {
         }
 
         System.out.println("insertColumnRecords...");
-        session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        if(session != null)
+            session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        else if(sessionPool != null)
+            sessionPool.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void insertNonAlignedColumnRecords() throws SessionException, ExecutionException {
@@ -131,7 +141,10 @@ public class CombinedInsertTests {
         }
 
         System.out.println("insertNonAlignedColumnRecords...");
-        session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        if(session != null)
+            session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        else if(sessionPool != null)
+            sessionPool.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void insertRowRecords() throws SessionException, ExecutionException {
@@ -169,7 +182,10 @@ public class CombinedInsertTests {
         }
 
         System.out.println("insertRowRecords...");
-        session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        if(session != null)
+            session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        else if(sessionPool != null)
+            sessionPool.insertRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
     private static void insertNonAlignedRowRecords() throws SessionException, ExecutionException {
@@ -210,7 +226,10 @@ public class CombinedInsertTests {
         }
 
         System.out.println("insertNonAlignedRowRecords...");
-        session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        if(session != null)
+            session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        else if(sessionPool != null)
+            sessionPool.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
     }
 
 }
