@@ -141,6 +141,14 @@ public class ConfigDescriptor {
             config.setHistoricalPrefixList(properties.getProperty("historicalPrefixList", ""));
             config.setExpectedStorageUnitNum(Integer.parseInt(properties.getProperty("expectedStorageUnitNum", "0")));
             config.setLocalParquetStorage(Boolean.parseBoolean(properties.getProperty("isLocalParquetStorage", "true")));
+
+            // 容错相关
+            config.setStorageHeartbeatInterval(ConfigUtils.parseTime(properties.getProperty("storage_heartbeat_interval", "10s")));
+            config.setStorageHeartbeatMaxRetryTimes(Integer.parseInt(properties.getProperty("storage_heartbeat_max_retry_times", "5")));
+            config.setStorageHeartbeatTimeout(ConfigUtils.parseTime(properties.getProperty("storage_heartbeat_timeout", "1s")));
+            config.setStorageRetryConnectInterval(ConfigUtils.parseTime(properties.getProperty("storage_retry_connect_interval", "50s")));
+            config.setStorageHeartbeatThresholdPoolSize(Integer.parseInt(properties.getProperty("storage_heartbeat_threshold_pool_size", "10")));
+            config.setStorageRestoreHeartbeatProbability(Double.parseDouble(properties.getProperty("storage_restore_heartbeat_probability", "0.05")));
         } catch (IOException e) {
             logger.error("Fail to load properties: ", e);
         }
@@ -205,6 +213,14 @@ public class ConfigDescriptor {
         config.setHistoricalPrefixList(EnvUtils.loadEnv("historicalPrefixList", config.getHistoricalPrefixList()));
         config.setExpectedStorageUnitNum(EnvUtils.loadEnv("expectedStorageUnitNum", config.getExpectedStorageUnitNum()));
         config.setLocalParquetStorage(EnvUtils.loadEnv("isLocalParquetStorage", config.isLocalParquetStorage()));
+
+        // 容错相关
+        config.setStorageHeartbeatInterval(ConfigUtils.parseTime(EnvUtils.loadEnv("storage_heartbeat_interval", ConfigUtils.toTimeString(config.getStorageHeartbeatInterval()))));
+        config.setStorageHeartbeatMaxRetryTimes(EnvUtils.loadEnv("storage_heartbeat_max_retry_times", config.getStorageHeartbeatMaxRetryTimes()));
+        config.setStorageHeartbeatTimeout(ConfigUtils.parseTime(EnvUtils.loadEnv("storage_heartbeat_timeout", ConfigUtils.toTimeString(config.getStorageHeartbeatTimeout()))));
+        config.setStorageRetryConnectInterval(ConfigUtils.parseTime(EnvUtils.loadEnv("storage_retry_connect_interval", ConfigUtils.toTimeString(config.getStorageRetryConnectInterval()))));
+        config.setStorageHeartbeatThresholdPoolSize(EnvUtils.loadEnv("storageHeartbeatThresholdPoolSize", config.getStorageHeartbeatThresholdPoolSize()));
+        config.setStorageRestoreHeartbeatProbability(EnvUtils.loadEnv("storageRestoreHeartbeatProbability", config.getStorageRestoreHeartbeatProbability()));
     }
 
     private void loadUDFListFromFile() {

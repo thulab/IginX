@@ -36,12 +36,17 @@ import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.KeeperException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import protocol.NetworkException;
+import protocol.Protocol;
+import protocol.zk.ZooKeeperProtocolImpl;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 public class ZooKeeperMetaStorage implements IMetaStorage {
@@ -155,6 +160,10 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     protected TreeCache versionCache;
 
     private TreeCache transformCache;
+
+    private Map<String, Protocol> protocols = new HashMap<>();
+
+    private ReadWriteLock protocolLock = new ReentrantReadWriteLock();
 
     public ZooKeeperMetaStorage() {
         client = CuratorFrameworkFactory.builder()
@@ -1418,9 +1427,30 @@ public class ZooKeeperMetaStorage implements IMetaStorage {
     }
 
     @Override
-    public void registerMaxActiveEndTimeStatisticsChangeHook(
-        MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+    public void initProtocol(String category) throws NetworkException{
+        protocolLock.writeLock().lock();
+        try {
+            if (protocols.containsKey(category)) {
+                return;
+            }
+            Protocol protocol = new ZooKeeperProtocolImpl(category, client, null);
+            protocols.put(category, protocol);
+        } finally {
+            protocolLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
         this.maxActiveEndTimeStatisticsChangeHook = hook;
+    }
+
+    public Protocol getProtocol(String category) {
+        Protocol protocol;
+        protocolLock.readLock().lock();
+        protocol = protocols.get(category);
+        protocolLock.readLock().unlock();
+        return protocol;
     }
 
     public static boolean isNumeric(String str) {

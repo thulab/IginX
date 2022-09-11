@@ -21,6 +21,8 @@ package cn.edu.tsinghua.iginx.metadata.storage;
 import cn.edu.tsinghua.iginx.exceptions.MetaStorageException;
 import cn.edu.tsinghua.iginx.metadata.entity.*;
 import cn.edu.tsinghua.iginx.metadata.hook.*;
+import protocol.NetworkException;
+import protocol.Protocol;
 
 import java.util.List;
 import java.util.Map;
@@ -120,4 +122,9 @@ public interface IMetaStorage {
     void releaseMaxActiveEndTimeStatistics() throws MetaStorageException;
 
     void registerMaxActiveEndTimeStatisticsChangeHook(MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException;
+
+    void initProtocol(String category) throws NetworkException;
+
+    Protocol getProtocol(String category);
+
 }

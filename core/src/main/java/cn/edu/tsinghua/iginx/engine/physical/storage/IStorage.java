@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.engine.physical.storage;
 
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
+import cn.edu.tsinghua.iginx.engine.physical.storage.fault_tolerance.Connector;
 import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
 import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
 import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
@@ -30,6 +31,8 @@ import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
 
 public interface IStorage {
+
+    Connector getConnector();
 
     TaskExecuteResult execute(StoragePhysicalTask task);
 

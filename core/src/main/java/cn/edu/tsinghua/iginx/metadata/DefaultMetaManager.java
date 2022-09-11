@@ -41,6 +41,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import proposal.Proposal;
+import proposal.ProposalListener;
+import proposal.Vote;
+import proposal.VoteListener;
+import protocol.ExecutionException;
+import protocol.NetworkException;
+import protocol.Protocol;
+import protocol.VoteExpiredException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -371,6 +379,11 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<IginxMeta> getIginxList() {
         return new ArrayList<>(cache.getIginxList());
+    }
+
+    @Override
+    public int getIginxClusterSize() {
+        return cache.getIginxList().size();
     }
 
     @Override
@@ -1254,5 +1267,14 @@ public class DefaultMetaManager implements IMetaManager {
         } catch (MetaStorageException e) {
             logger.error("encounter error when submitting max active time: ", e);
         }
+    }
+
+    public void initProtocol(String category) throws NetworkException {
+        storage.initProtocol(category);
+    }
+
+    @Override
+    public Protocol getProtocol(String category) {
+        return storage.getProtocol(category);
     }
 }

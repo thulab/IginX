@@ -214,6 +214,11 @@
             <artifactId>duckdb_jdbc</artifactId>
             <version>0.5.1</version>
         </dependency>
+        <dependency>
+            <groupId>edu.tsinghua</groupId>
+            <artifactId>Protocol</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

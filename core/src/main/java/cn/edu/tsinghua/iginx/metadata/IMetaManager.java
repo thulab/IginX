@@ -26,6 +26,9 @@ import cn.edu.tsinghua.iginx.policy.simple.TimeSeriesCalDO;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
+import proposal.Proposal;
+import protocol.NetworkException;
+import protocol.Protocol;
 
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
@@ -66,6 +69,8 @@ public interface IMetaManager {
      * 获取所有活跃的 iginx 节点的元信息
      */
     List<IginxMeta> getIginxList();
+
+    int getIginxClusterSize();
 
     /**
      * 获取当前 iginx 节点的 ID
@@ -252,4 +257,9 @@ public interface IMetaManager {
     long getMaxActiveEndTime();
 
     void submitMaxActiveEndTime();
+
+    void initProtocol(String category) throws NetworkException;
+
+    Protocol getProtocol(String category);
+
 }

@@ -35,6 +35,13 @@ import io.etcd.jetcd.watch.WatchResponse;
 import io.grpc.stub.StreamObserver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import proposal.Proposal;
+import proposal.ProposalListener;
+import proposal.Vote;
+import proposal.VoteListener;
+import protocol.NetworkException;
+import protocol.Protocol;
+import protocol.VoteExpiredException;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -1070,6 +1077,16 @@ public class ETCDMetaStorage implements IMetaStorage {
 
         this.client.close();
         this.client = null;
+    }
+
+    @Override
+    public void initProtocol(String category) {
+
+    }
+
+    @Override
+    public Protocol getProtocol(String category) {
+        return null;
     }
 
 }
