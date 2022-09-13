@@ -37,7 +37,7 @@ public class BaseSessionPoolIT {
     //params for datatype test
     private static final String ranStr = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final int STRING_LEN = 1000;
-    private static SessionPool session;
+    private static SessionPool sessionPool;
     protected boolean isAbleToDelete;
     protected String storageEngineType;
     protected int defaultPort2;
@@ -97,7 +97,7 @@ public class BaseSessionPoolIT {
     }
 
     private void insertTestsByFourInterfaces()throws SessionException, ExecutionException {
-        CombinedInsertTests test = new CombinedInsertTests(session);
+        CombinedInsertTests test = new CombinedInsertTests(sessionPool);
         test.testInserts();
     }
 
@@ -122,7 +122,7 @@ public class BaseSessionPoolIT {
         for (int i = 0; i < pathLen; i++) {
             dataTypeList.add(DataType.LONG);
         }
-        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        sessionPool.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private void insertFakeNumRecords(List<String> insertPaths, long count) throws SessionException, ExecutionException {
@@ -154,7 +154,7 @@ public class BaseSessionPoolIT {
                 dataTypeList.add(DataType.LONG);
             }
         }
-        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        sessionPool.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     // the length of the insertPaths must be 6
@@ -203,7 +203,7 @@ public class BaseSessionPoolIT {
         for (int i = 0; i < 6; i++) {
             dataTypeList.add(DataType.findByValue(i));
         }
-        session.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
+        sessionPool.insertNonAlignedColumnRecords(insertPaths, timestamps, valuesList, dataTypeList, null);
     }
 
     private double changeResultToDouble(Object rawResult) {
@@ -254,7 +254,7 @@ public class BaseSessionPoolIT {
     @Before
     public void setUp() {
         try {
-            session =
+            sessionPool =
                     new SessionPool.Builder()
                             .host("127.0.0.1")
                             .port(6888)
@@ -271,7 +271,7 @@ public class BaseSessionPoolIT {
     public void tearDown() throws SessionException {
         try {
             clearData();
-            session.close();
+            sessionPool.close();
         } catch (ExecutionException e) {
             logger.error(e.getMessage());
         }
@@ -280,7 +280,7 @@ public class BaseSessionPoolIT {
     private void clearData() throws ExecutionException, SessionException {
         String clearData = "CLEAR DATA;";
 
-        SessionExecuteSqlResult res = session.executeSql(clearData);
+        SessionExecuteSqlResult res = sessionPool.executeSql(clearData);
         if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
             logger.error("Clear date execute fail. Caused by: {}.", res.getParseErrorMsg());
             fail();
@@ -295,7 +295,7 @@ public class BaseSessionPoolIT {
         insertTestsByFourInterfaces();
         insertNumRecords(paths);
         //query
-        SessionQueryDataSet simpleQueryDataSet = session.queryData(paths, START_TIME, END_TIME + 1);
+        SessionQueryDataSet simpleQueryDataSet = sessionPool.queryData(paths, START_TIME, END_TIME + 1);
         int simpleResLen = simpleQueryDataSet.getTimestamps().length;
         List<String> queryResPaths = simpleQueryDataSet.getPaths();
         assertEquals(simpleLen, queryResPaths.size());
@@ -312,7 +312,7 @@ public class BaseSessionPoolIT {
             }
         }
         // aggrMax
-        SessionAggregateQueryDataSet maxDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet maxDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> maxResPaths = maxDataSet.getPaths();
         Object[] maxResult = maxDataSet.getValues();
         assertEquals(simpleLen, maxResPaths.size());
@@ -325,7 +325,7 @@ public class BaseSessionPoolIT {
             assertEquals(END_TIME + pathNum, maxResult[i]);
         }
         // aggrMin
-        SessionAggregateQueryDataSet minDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.MIN);
+        SessionAggregateQueryDataSet minDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.MIN);
         List<String> minResPaths = minDataSet.getPaths();
         Object[] minResult = minDataSet.getValues();
         assertEquals(simpleLen, minResPaths.size());
@@ -338,7 +338,7 @@ public class BaseSessionPoolIT {
             assertEquals(START_TIME + pathNum, minResult[i]);
         }
         //aggrFirst
-        SessionAggregateQueryDataSet firstDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.FIRST_VALUE);
+        SessionAggregateQueryDataSet firstDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.FIRST_VALUE);
         List<String> firstResPaths = firstDataSet.getPaths();
         Object[] firstResult = firstDataSet.getValues();
         assertEquals(simpleLen, firstResPaths.size());
@@ -350,7 +350,7 @@ public class BaseSessionPoolIT {
             assertEquals(START_TIME + pathNum, firstResult[i]);
         }
         //aggrLast
-        SessionAggregateQueryDataSet lastDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.LAST_VALUE);
+        SessionAggregateQueryDataSet lastDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.LAST_VALUE);
         List<String> lastResPaths = lastDataSet.getPaths();
         Object[] lastResult = lastDataSet.getValues();
         assertEquals(simpleLen, lastResPaths.size());
@@ -362,7 +362,7 @@ public class BaseSessionPoolIT {
             assertEquals(END_TIME + pathNum, lastResult[i]);
         }
         //aggrCount
-        SessionAggregateQueryDataSet countDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.COUNT);
+        SessionAggregateQueryDataSet countDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.COUNT);
         assertNull(countDataSet.getTimestamps());
         List<String> countResPaths = countDataSet.getPaths();
         Object[] countResult = countDataSet.getValues();
@@ -372,7 +372,7 @@ public class BaseSessionPoolIT {
             assertEquals(TIME_PERIOD, countResult[i]);
         }
         //aggrSum
-        SessionAggregateQueryDataSet sumDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.SUM);
+        SessionAggregateQueryDataSet sumDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.SUM);
         assertNull(sumDataSet.getTimestamps());
         List<String> sumResPaths = sumDataSet.getPaths();
         Object[] sumResult = sumDataSet.getValues();
@@ -386,7 +386,7 @@ public class BaseSessionPoolIT {
         }
 
         //aggrAvg
-        SessionAggregateQueryDataSet avgDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet avgDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
         assertNull(avgDataSet.getTimestamps());
         List<String> avgResPaths = avgDataSet.getPaths();
         Object[] avgResult = avgDataSet.getValues();
@@ -403,7 +403,7 @@ public class BaseSessionPoolIT {
         // downSample Aggregate
         //TODO the same aggregate return different value in iotdb and influxdb, unlocked this test until fixed
         // downSample max
-        SessionQueryDataSet dsMaxDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.MAX, PRECISION);
+        SessionQueryDataSet dsMaxDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.MAX, PRECISION);
         int dsMaxLen = dsMaxDataSet.getTimestamps().length;
         List<String> dsMaxResPaths = dsMaxDataSet.getPaths();
         assertEquals(simpleLen, dsMaxResPaths.size());
@@ -421,7 +421,7 @@ public class BaseSessionPoolIT {
             }
         }
         //min
-        SessionQueryDataSet dsMinDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.MIN, PRECISION);
+        SessionQueryDataSet dsMinDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.MIN, PRECISION);
         int dsMinLen = dsMinDataSet.getTimestamps().length;
         List<String> dsMinResPaths = dsMinDataSet.getPaths();
         assertEquals(simpleLen, dsMinResPaths.size());
@@ -439,7 +439,7 @@ public class BaseSessionPoolIT {
             }
         }
         //first
-        SessionQueryDataSet dsFirstDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.FIRST, PRECISION);
+        SessionQueryDataSet dsFirstDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.FIRST, PRECISION);
         int dsFirstLen = dsFirstDataSet.getTimestamps().length;
         List<String> dsFirstResPaths = dsFirstDataSet.getPaths();
         assertEquals(simpleLen, dsFirstResPaths.size());
@@ -457,7 +457,7 @@ public class BaseSessionPoolIT {
             }
         }
         //last
-        SessionQueryDataSet dsLastDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.LAST, PRECISION);
+        SessionQueryDataSet dsLastDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.LAST, PRECISION);
         int dsLastLen = dsLastDataSet.getTimestamps().length;
         List<String> dsLastResPaths = dsLastDataSet.getPaths();
         assertEquals(simpleLen, dsLastResPaths.size());
@@ -475,7 +475,7 @@ public class BaseSessionPoolIT {
             }
         }
         //Count
-        SessionQueryDataSet dsCountDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.COUNT, PRECISION);
+        SessionQueryDataSet dsCountDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.COUNT, PRECISION);
         int dsCountLen = dsCountDataSet.getTimestamps().length;
         List<String> dsCountResPaths = dsCountDataSet.getPaths();
         assertEquals(simpleLen, dsCountResPaths.size());
@@ -491,7 +491,7 @@ public class BaseSessionPoolIT {
             }
         }
         //Sum
-        SessionQueryDataSet dsSumDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.SUM, PRECISION);
+        SessionQueryDataSet dsSumDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.SUM, PRECISION);
         int dsSumLen = dsSumDataSet.getTimestamps().length;
         List<String> dsSumResPaths = dsSumDataSet.getPaths();
         assertEquals(simpleLen, dsSumResPaths.size());
@@ -511,7 +511,7 @@ public class BaseSessionPoolIT {
         }
 
         //avg
-        SessionQueryDataSet dsAvgDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
+        SessionQueryDataSet dsAvgDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
         int dsAvgLen = dsAvgDataSet.getTimestamps().length;
         List<String> dsAvgResPaths = dsAvgDataSet.getPaths();
         assertEquals(simpleLen, dsAvgResPaths.size());
@@ -538,9 +538,9 @@ public class BaseSessionPoolIT {
             // ensure after delete there are still points in the timeseries
 
             //delete data
-            session.deleteDataInColumns(delPartPaths, delStartTime, delEndTime);
+            sessionPool.deleteDataInColumns(delPartPaths, delStartTime, delEndTime);
             Thread.sleep(1000);
-            SessionQueryDataSet delPartDataSet = session.queryData(paths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet delPartDataSet = sessionPool.queryData(paths, START_TIME, END_TIME + 1);
 
             int delPartLen = delPartDataSet.getTimestamps().length;
             List<String> delPartResPaths = delPartDataSet.getPaths();
@@ -571,7 +571,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test avg for the delete
-            SessionAggregateQueryDataSet delPartAvgDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet delPartAvgDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> delPartAvgResPaths = delPartAvgDataSet.getPaths();
             Object[] delPartAvgResult = delPartAvgDataSet.getValues();
             assertEquals(simpleLen, delPartAvgResPaths.size());
@@ -587,7 +587,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test count for the delete
-            SessionAggregateQueryDataSet delPartCountDataSet = session.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.COUNT);
+            SessionAggregateQueryDataSet delPartCountDataSet = sessionPool.aggregateQuery(paths, START_TIME, END_TIME + 1, AggregateType.COUNT);
             List<String> delPartCountResPaths = delPartCountDataSet.getPaths();
             Object[] delPartCountResult = delPartCountDataSet.getValues();
             assertEquals(simpleLen, delPartCountResPaths.size());
@@ -604,7 +604,7 @@ public class BaseSessionPoolIT {
 
 
             // Test downSample avg of the delete
-            SessionQueryDataSet delDsAvgDataSet = session.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
+            SessionQueryDataSet delDsAvgDataSet = sessionPool.downsampleQuery(paths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
             int delDsLen = delDsAvgDataSet.getTimestamps().length;
             List<String> delDsResPaths = delDsAvgDataSet.getPaths();
             assertEquals(factSampleLen, delDsLen);
@@ -644,9 +644,9 @@ public class BaseSessionPoolIT {
             //TODO add test to test if the insert is right(Is it necessary?)
             int deleteDataInColumnLen = 2;
             List<String> delAllDataInColumnPaths = getPaths(currPath, deleteDataInColumnLen);
-            session.deleteDataInColumns(delAllDataInColumnPaths, START_TIME, END_TIME + 1);
+            sessionPool.deleteDataInColumns(delAllDataInColumnPaths, START_TIME, END_TIME + 1);
             Thread.sleep(1000);
-            SessionQueryDataSet delDataInColumnDataSet = session.queryData(delDataInColumnPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet delDataInColumnDataSet = sessionPool.queryData(delDataInColumnPaths, START_TIME, END_TIME + 1);
             int delDataInColumnLen = delDataInColumnDataSet.getTimestamps().length;
             List<String> delDataInColumnResPaths = delDataInColumnDataSet.getPaths();
             assertEquals(TIME_PERIOD, delDataInColumnLen);
@@ -670,7 +670,7 @@ public class BaseSessionPoolIT {
             // Test value filter for the delete TODO change the value filter to the right test
             int vfTime = 1123;
             String booleanExpression = COLUMN_D2_S2 + " > " + vfTime;
-            SessionQueryDataSet vfDataSet = session.valueFilterQuery(delDataInColumnPaths, START_TIME, END_TIME, booleanExpression);
+            SessionQueryDataSet vfDataSet = sessionPool.valueFilterQuery(delDataInColumnPaths, START_TIME, END_TIME, booleanExpression);
             int vfLen = vfDataSet.getTimestamps().length;
             List<String> vfResPaths = vfDataSet.getPaths();
             assertEquals(TIME_PERIOD + START_TIME - vfTime - 1, vfDataSet.getTimestamps().length);
@@ -690,7 +690,7 @@ public class BaseSessionPoolIT {
             }*/
 
             // Test aggregate function for the delete
-            SessionAggregateQueryDataSet delDataAvgSet = session.aggregateQuery(delDataInColumnPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet delDataAvgSet = sessionPool.aggregateQuery(delDataInColumnPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> delDataAvgResPaths = delDataAvgSet.getPaths();
             Object[] delDataAvgResult = delDataAvgSet.getValues();
             assertEquals(dataInColumnLen, delDataAvgResPaths.size());
@@ -708,7 +708,7 @@ public class BaseSessionPoolIT {
 
 
             // Test downsample function for the delete
-            SessionQueryDataSet dsDelDataInColSet = session.downsampleQuery(delDataInColumnPaths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
+            SessionQueryDataSet dsDelDataInColSet = sessionPool.downsampleQuery(delDataInColumnPaths, START_TIME, END_TIME + 1, AggregateType.AVG, PRECISION);
             int dsDelDataLen = dsDelDataInColSet.getTimestamps().length;
             List<String> dsDelDataResPaths = dsDelDataInColSet.getPaths();
             assertEquals(factSampleLen, dsDelDataLen);
@@ -736,8 +736,8 @@ public class BaseSessionPoolIT {
             int delAllColumnLen = 3;
             List<String> delAllColumnPaths = getPaths(currPath, delAllColumnLen);
             insertNumRecords(delAllColumnPaths);
-            session.deleteColumns(delAllColumnPaths);
-            SessionQueryDataSet delAllColumnDataSet = session.queryData(delAllColumnPaths, START_TIME, END_TIME + 1);
+            sessionPool.deleteColumns(delAllColumnPaths);
+            SessionQueryDataSet delAllColumnDataSet = sessionPool.queryData(delAllColumnPaths, START_TIME, END_TIME + 1);
             assertEquals(0, delAllColumnDataSet.getPaths().size());
             assertEquals(0, delAllColumnDataSet.getTimestamps().length);
             assertEquals(0, delAllColumnDataSet.getValues().size());
@@ -749,8 +749,8 @@ public class BaseSessionPoolIT {
             insertNumRecords(partColumnPaths);
             int delPartColumnNum = 2;
             List<String> delPartColumnPaths = getPaths(currPath, delPartColumnNum);
-            session.deleteColumns(delPartColumnPaths);
-            SessionQueryDataSet delPartColumnDataSet = session.queryData(partColumnPaths, START_TIME, END_TIME + 1);
+            sessionPool.deleteColumns(delPartColumnPaths);
+            SessionQueryDataSet delPartColumnDataSet = sessionPool.queryData(partColumnPaths, START_TIME, END_TIME + 1);
             int delPartResLen = delPartColumnDataSet.getTimestamps().length;
             List<String> delPartColResPaths = delPartColumnDataSet.getPaths();
             assertEquals(delPartColumnLen - delPartColumnNum, delPartColResPaths.size());
@@ -798,7 +798,7 @@ public class BaseSessionPoolIT {
         insertDataTypeRecords(dataTypePaths, currPath);
 
         //queryData
-        SessionQueryDataSet dtQueryDataSet = session.queryData(dataTypePaths, START_TIME, END_TIME + 1);
+        SessionQueryDataSet dtQueryDataSet = sessionPool.queryData(dataTypePaths, START_TIME, END_TIME + 1);
         int dtQueryLen = dtQueryDataSet.getTimestamps().length;
         List<String> dataTypeResPaths = dtQueryDataSet.getPaths();
         assertEquals(6, dataTypeResPaths.size());
@@ -840,7 +840,7 @@ public class BaseSessionPoolIT {
         //aggregateData max & avg
         List<String> dTAggrPaths = getPaths(currPath + 1, 4);
         //max
-        SessionAggregateQueryDataSet dtMaxDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet dtMaxDataSet = sessionPool.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> dtMaxPaths = dtMaxDataSet.getPaths();
         Object[] dtMaxResult = dtMaxDataSet.getValues();
         assertEquals(4, dtMaxPaths.size());
@@ -868,7 +868,7 @@ public class BaseSessionPoolIT {
         }
 
         //avg
-        SessionAggregateQueryDataSet dtAvgDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet dtAvgDataSet = sessionPool.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> dtAvgPaths = dtAvgDataSet.getPaths();
         Object[] dtAvgResult = dtAvgDataSet.getValues();
         assertEquals(4, dtAvgPaths.size());
@@ -907,9 +907,9 @@ public class BaseSessionPoolIT {
             long dtDelEndTime = START_TIME + TIME_PERIOD / 10 * 9;
             long dtDelTimePeriod = (dtDelEndTime - 1) - dtDelStartTime + 1;
 
-            session.deleteDataInColumns(dtDelPaths, dtDelStartTime, dtDelEndTime);
+            sessionPool.deleteDataInColumns(dtDelPaths, dtDelStartTime, dtDelEndTime);
             Thread.sleep(1000);
-            SessionQueryDataSet dtDelPartDataSet = session.queryData(dataTypePaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet dtDelPartDataSet = sessionPool.queryData(dataTypePaths, START_TIME, END_TIME + 1);
 
             int dtDelPartLen = dtDelPartDataSet.getTimestamps().length;
             List<String> dtDelPartResPaths = dtDelPartDataSet.getPaths();
@@ -961,7 +961,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test aggregate function for the delete
-            SessionAggregateQueryDataSet dtDelPartAvgDataSet = session.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet dtDelPartAvgDataSet = sessionPool.aggregateQuery(dTAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> dtDelPartAvgResPaths = dtDelPartAvgDataSet.getPaths();
             Object[] dtDelPartAvgResult = dtDelPartAvgDataSet.getValues();
             assertEquals(4, dtDelPartAvgResPaths.size());//fixed
@@ -997,9 +997,9 @@ public class BaseSessionPoolIT {
             insertDataTypeRecords(dataTypePaths2, currPath);
             int dtDelColumnNum = 2;
             List<String> dtDelColumnPaths = getPaths(currPath, dtDelColumnNum);
-            session.deleteDataInColumns(dtDelColumnPaths, START_TIME, END_TIME + 1);
+            sessionPool.deleteDataInColumns(dtDelColumnPaths, START_TIME, END_TIME + 1);
             Thread.sleep(1000);
-            SessionQueryDataSet dtDelColDataSet = session.queryData(dataTypePaths2, START_TIME, END_TIME + 1);
+            SessionQueryDataSet dtDelColDataSet = sessionPool.queryData(dataTypePaths2, START_TIME, END_TIME + 1);
             int dtDelColLen = dtDelColDataSet.getTimestamps().length;
             List<String> dtDelColResPaths = dtDelColDataSet.getPaths();
             assertEquals(TIME_PERIOD, dtDelColDataSet.getTimestamps().length);
@@ -1044,7 +1044,7 @@ public class BaseSessionPoolIT {
 
             List<String> dTDeleteAggrPaths = getPaths(currPath + 1, 4);//only the 1-4 columns are numbers
 
-            SessionAggregateQueryDataSet dtDelColAvgDataSet = session.aggregateQuery(dTDeleteAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet dtDelColAvgDataSet = sessionPool.aggregateQuery(dTDeleteAggrPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> dtDelColAvgPaths = dtDelColAvgDataSet.getPaths();
             Object[] dtDelColAvgResult = dtDelColAvgDataSet.getValues();
             assertEquals(4, dtDelColAvgPaths.size());
@@ -1143,7 +1143,7 @@ public class BaseSessionPoolIT {
             fail();
         }
         // Test max function
-        SessionAggregateQueryDataSet mulStMaxDataSet = session.aggregateQuery(mulStPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet mulStMaxDataSet = sessionPool.aggregateQuery(mulStPaths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> mulStMaxResPaths = mulStMaxDataSet.getPaths();
         Object[] mulStMaxResult = mulStMaxDataSet.getValues();
         assertEquals(mulStQueryLen, mulStMaxResPaths.size());
@@ -1152,7 +1152,7 @@ public class BaseSessionPoolIT {
             assertEquals(getPathNum(mulStMaxResPaths.get(i)) + END_TIME, mulStMaxResult[i]);
         }
         // Test avg function
-        SessionAggregateQueryDataSet mulStAvgDataSet = session.aggregateQuery(mulStPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet mulStAvgDataSet = sessionPool.aggregateQuery(mulStPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> mulStAvgResPaths = mulStAvgDataSet.getPaths();
         Object[] mulStAvgResult = mulStAvgDataSet.getValues();
         assertEquals(mulStQueryLen, mulStAvgResPaths.size());
@@ -1180,7 +1180,7 @@ public class BaseSessionPoolIT {
         Thread.sleep(1000);
         //query
         // TODO change the simple query and one of the avg query to multithread
-        SessionQueryDataSet mulTimeQueryDataSet = session.queryData(mulTimePaths, START_TIME, END_TIME + 1);
+        SessionQueryDataSet mulTimeQueryDataSet = sessionPool.queryData(mulTimePaths, START_TIME, END_TIME + 1);
         int mulTimeResLen = mulTimeQueryDataSet.getTimestamps().length;
         List<String> mulTimeQueryResPaths = mulTimeQueryDataSet.getPaths();
         assertEquals(mulTimeQueryLen, mulTimeQueryResPaths.size());
@@ -1196,7 +1196,7 @@ public class BaseSessionPoolIT {
         }
 
         // Test max function
-        SessionAggregateQueryDataSet mulTimeMaxDataSet = session.aggregateQuery(mulTimePaths, START_TIME, END_TIME + 1, AggregateType.MAX);
+        SessionAggregateQueryDataSet mulTimeMaxDataSet = sessionPool.aggregateQuery(mulTimePaths, START_TIME, END_TIME + 1, AggregateType.MAX);
         List<String> mulTimeMaxResPaths = mulTimeMaxDataSet.getPaths();
         Object[] mulTimeMaxResult = mulTimeMaxDataSet.getValues();
         assertEquals(mulTimeQueryLen, mulTimeMaxResPaths.size());
@@ -1205,7 +1205,7 @@ public class BaseSessionPoolIT {
             assertEquals(getPathNum(mulTimeMaxResPaths.get(i)) + END_TIME, mulTimeMaxResult[i]);
         }
         // Test avg function
-        SessionAggregateQueryDataSet mulTimeAvgDataSet = session.aggregateQuery(mulTimePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet mulTimeAvgDataSet = sessionPool.aggregateQuery(mulTimePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         List<String> mulTimeAvgResPaths = mulTimeAvgDataSet.getPaths();
         Object[] mulTimeAvgResult = mulTimeAvgDataSet.getValues();
         assertEquals(mulTimeQueryLen, mulTimeAvgResPaths.size());
@@ -1223,7 +1223,7 @@ public class BaseSessionPoolIT {
             List<String> mulDelPSPaths = getPaths(currPath, mulDelPSLen);
             insertNumRecords(mulDelPSPaths);
             Thread.sleep(1000);
-            SessionQueryDataSet beforePSDataSet = session.queryData(mulDelPSPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet beforePSDataSet = sessionPool.queryData(mulDelPSPaths, START_TIME, END_TIME + 1);
             List<String> bfPSPath = beforePSDataSet.getPaths();
             assertEquals(mulDelPSLen, bfPSPath.size());
             assertEquals(TIME_PERIOD, beforePSDataSet.getValues().size());
@@ -1244,7 +1244,7 @@ public class BaseSessionPoolIT {
             Thread.sleep(1000);
 
             //query
-            SessionQueryDataSet delPSDataSet = session.queryData(mulDelPSPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet delPSDataSet = sessionPool.queryData(mulDelPSPaths, START_TIME, END_TIME + 1);
             int delPSQueryLen = delPSDataSet.getTimestamps().length;
             List<String> delPSResPaths = delPSDataSet.getPaths();
             assertEquals(mulDelPSLen, delPSResPaths.size());
@@ -1268,7 +1268,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test avg function
-            SessionAggregateQueryDataSet delPSAvgDataSet = session.aggregateQuery(mulDelPSPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet delPSAvgDataSet = sessionPool.aggregateQuery(mulDelPSPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> delPSAvgResPaths = delPSAvgDataSet.getPaths();
             Object[] delPSAvgResult = delPSAvgDataSet.getValues();
             assertEquals(mulDelPSLen, delPSAvgResPaths.size());
@@ -1292,7 +1292,7 @@ public class BaseSessionPoolIT {
             List<String> mulDelPTPaths = getPaths(currPath, mulDelPTLen);
             insertNumRecords(mulDelPTPaths);
             Thread.sleep(1000);
-            SessionQueryDataSet beforePTDataSet = session.queryData(mulDelPTPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet beforePTDataSet = sessionPool.queryData(mulDelPTPaths, START_TIME, END_TIME + 1);
             int beforePTLen = beforePTDataSet.getTimestamps().length;
             List<String> beforePTPaths = beforePTDataSet.getPaths();
             assertEquals(mulDelPTLen, beforePTPaths.size());
@@ -1322,7 +1322,7 @@ public class BaseSessionPoolIT {
             Thread.sleep(1000);
 
             //query
-            SessionQueryDataSet delPTDataSet = session.queryData(mulDelPTPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet delPTDataSet = sessionPool.queryData(mulDelPTPaths, START_TIME, END_TIME + 1);
             int delPTQueryLen = delPTDataSet.getTimestamps().length;
             List<String> delPTResPaths = delPTDataSet.getPaths();
             assertEquals(mulDelPTLen, delPTResPaths.size());
@@ -1345,7 +1345,7 @@ public class BaseSessionPoolIT {
                 }
             }
             // Test avg function
-            SessionAggregateQueryDataSet delPTAvgDataSet = session.aggregateQuery(mulDelPTPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet delPTAvgDataSet = sessionPool.aggregateQuery(mulDelPTPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> delPTAvgResPaths = delPTAvgDataSet.getPaths();
             Object[] delPTAvgResult = delPTAvgDataSet.getValues();
             assertEquals(mulDelPTLen, delPTAvgResPaths.size());
@@ -1385,7 +1385,7 @@ public class BaseSessionPoolIT {
             }
             Thread.sleep(1000);
             //query
-            SessionQueryDataSet delASDataSet = session.queryData(mulDelASPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet delASDataSet = sessionPool.queryData(mulDelASPaths, START_TIME, END_TIME + 1);
             int delASLen = delASDataSet.getTimestamps().length;
             List<String> delASResPaths = delASDataSet.getPaths();
             assertEquals(mulDelASLen, delASResPaths.size());
@@ -1406,7 +1406,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test avg function
-            SessionAggregateQueryDataSet delASAvgDataSet = session.aggregateQuery(mulDelASPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet delASAvgDataSet = sessionPool.aggregateQuery(mulDelASPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> delASAvgResPaths = delASAvgDataSet.getPaths();
             Object[] delASAvgResult = delASAvgDataSet.getValues();
             assertEquals(mulDelASLen, delASAvgResPaths.size());
@@ -1449,7 +1449,7 @@ public class BaseSessionPoolIT {
             }
             Thread.sleep(1000);
             //query
-            SessionQueryDataSet delATDataSet = session.queryData(mulDelATPaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet delATDataSet = sessionPool.queryData(mulDelATPaths, START_TIME, END_TIME + 1);
             int delATLen = delATDataSet.getTimestamps().length;
             List<String> delATResPaths = delATDataSet.getPaths();
             assertEquals(mulDelATLen, delATResPaths.size());
@@ -1469,7 +1469,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test avg function
-            SessionAggregateQueryDataSet delATAvgDataSet = session.aggregateQuery(mulDelATPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet delATAvgDataSet = sessionPool.aggregateQuery(mulDelATPaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> delATAvgResPaths = delATAvgDataSet.getPaths();
             Object[] delATAvgResult = delATAvgDataSet.getValues();
             assertEquals(mulDelATLen, delATAvgResPaths.size());
@@ -1489,13 +1489,13 @@ public class BaseSessionPoolIT {
 
 
         //addSameTypeOfStorageEngineTest
-        session.addStorageEngine("127.0.0.1", defaultPort2, storageEngineType, extraParams);
+        sessionPool.addStorageEngine("127.0.0.1", defaultPort2, storageEngineType, extraParams);
 
         int addStorageLen = 5;
         List<String> addStoragePaths = getPaths(currPath, addStorageLen);
         insertNumRecords(addStoragePaths);
         //query Test
-        SessionQueryDataSet addStQueryDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
+        SessionQueryDataSet addStQueryDataSet = sessionPool.queryData(addStoragePaths, START_TIME, END_TIME + 1);
         int addStResLen = addStQueryDataSet.getTimestamps().length;
         List<String> addStResPaths = addStQueryDataSet.getPaths();
         assertEquals(addStorageLen, addStResPaths.size());
@@ -1512,7 +1512,7 @@ public class BaseSessionPoolIT {
             }
         }
         //aggr Count
-        SessionAggregateQueryDataSet addStCountDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
+        SessionAggregateQueryDataSet addStCountDataSet = sessionPool.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
         assertNull(addStCountDataSet.getTimestamps());
         List<String> addStCountResPaths = addStCountDataSet.getPaths();
         Object[] addStCountResult = addStCountDataSet.getValues();
@@ -1522,7 +1522,7 @@ public class BaseSessionPoolIT {
             assertEquals(TIME_PERIOD, addStCountResult[i]);
         }
         //aggr Avg
-        SessionAggregateQueryDataSet addStAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+        SessionAggregateQueryDataSet addStAvgDataSet = sessionPool.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
         assertNull(addStAvgDataSet.getTimestamps());
         List<String> addStAvgResPaths = addStAvgDataSet.getPaths();
         Object[] addStAvgResult = addStAvgDataSet.getValues();
@@ -1541,9 +1541,9 @@ public class BaseSessionPoolIT {
             // ensure after delete there are still points in the timeseries
 
             //delete data
-            session.deleteDataInColumns(stDelPartPaths, delStartTime, delEndTime);
+            sessionPool.deleteDataInColumns(stDelPartPaths, delStartTime, delEndTime);
             Thread.sleep(1000);
-            SessionQueryDataSet stDelPartDataSet = session.queryData(addStoragePaths, START_TIME, END_TIME + 1);
+            SessionQueryDataSet stDelPartDataSet = sessionPool.queryData(addStoragePaths, START_TIME, END_TIME + 1);
             //query
             int stDelPartLen = stDelPartDataSet.getTimestamps().length;
             List<String> stDelPartResPaths = stDelPartDataSet.getPaths();
@@ -1574,7 +1574,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test avg for the delete
-            SessionAggregateQueryDataSet stDelPartAvgDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
+            SessionAggregateQueryDataSet stDelPartAvgDataSet = sessionPool.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.AVG);
             List<String> stDelPartAvgResPaths = stDelPartAvgDataSet.getPaths();
             Object[] stDelPartAvgResult = stDelPartAvgDataSet.getValues();
             assertEquals(addStorageLen, stDelPartAvgResPaths.size());
@@ -1590,7 +1590,7 @@ public class BaseSessionPoolIT {
             }
 
             // Test count for the delete
-            SessionAggregateQueryDataSet stDelPartCountDataSet = session.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
+            SessionAggregateQueryDataSet stDelPartCountDataSet = sessionPool.aggregateQuery(addStoragePaths, START_TIME, END_TIME + 1, AggregateType.COUNT);
             List<String> stDelPartCountResPaths = stDelPartCountDataSet.getPaths();
             Object[] stDelPartCountResult = stDelPartCountDataSet.getValues();
             assertEquals(addStorageLen, stDelPartCountResPaths.size());
@@ -1605,7 +1605,7 @@ public class BaseSessionPoolIT {
                 }
             }
         }
-        logger.info("session test finished");
+        logger.info("sessionPool test finished");
     }
 
     private class MultiThreadTask implements Runnable {
