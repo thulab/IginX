@@ -848,10 +848,10 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB11
+      - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
