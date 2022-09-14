@@ -440,7 +440,7 @@ jobs:
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
-          name: codeco
+          name: codecov
 
   IoTDB11-Tag-Test:
     strategy:
