@@ -1,6 +1,8 @@
 package cn.edu.tsinghua.iginx.transform.data;
 
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,19 +16,30 @@ public class FileAppendWriter extends ExportWriter {
 
     private final String fileName;
 
-    private final List<String> exportNameList;
+    private boolean hasWriteHeader;
 
     private final static Logger logger = LoggerFactory.getLogger(FileAppendWriter.class);
 
-    public FileAppendWriter(String fileName, List<String> exportNameList) {
+    public FileAppendWriter(String fileName) {
         this.fileName = fileName;
-        this.exportNameList = exportNameList;
+        this.hasWriteHeader = false;
         File file = new File(fileName);
         createFileIfNotExist(file);
     }
 
     @Override
     public void write(BatchData batchData) {
+        if (!hasWriteHeader) {
+            Header header = batchData.getHeader();
+
+            List<String> headerList = new ArrayList<>();
+            if (header.hasTimestamp()) {
+                headerList.add("time");
+            }
+            header.getFields().forEach(field -> headerList.add(field.getFullName()));
+            writeFile(fileName, String.join(",", headerList) + "\n");
+            hasWriteHeader = true;
+        }
         for (Row row : batchData.getRowList()) {
             writeFile(fileName, row.toCSVTypeString() + "\n");
         }
@@ -46,9 +59,6 @@ public class FileAppendWriter extends ExportWriter {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-        if (exportNameList != null && !exportNameList.isEmpty()) {
-            writeFile(fileName, String.join(",", exportNameList) + "\n");
         }
     }
 

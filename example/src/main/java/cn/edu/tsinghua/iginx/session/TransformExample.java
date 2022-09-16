@@ -145,7 +145,7 @@ public class TransformExample {
         taskInfoList.add(iginxTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_show_ts.txt", Arrays.asList("path", "type"));
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_show_ts.txt");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -195,7 +195,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file.txt", Arrays.asList("col1", "col2"));
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file.txt");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -224,7 +224,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_combine.txt", Arrays.asList("col1", "col2"));
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_combine.txt");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -257,7 +257,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_sum.txt", Arrays.asList("col1", "col2"));
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.File, OUTPUT_DIR_PREFIX + File.separator + "export_file_sum.txt");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -282,7 +282,7 @@ public class TransformExample {
         taskInfoList.add(pyTask);
 
         // 提交任务
-        long jobId = session.commitTransformJob(taskInfoList, ExportType.IginX, "", Arrays.asList("col1", "col2"));
+        long jobId = session.commitTransformJob(taskInfoList, ExportType.IginX, "");
         System.out.println("job id is " + jobId);
 
         // 轮询查看任务情况
@@ -358,7 +358,7 @@ public class TransformExample {
                         .timeout(TIMEOUT)
                         .pyTaskName("RowSumTransformer")
                         .build())
-                .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt", Arrays.asList("col1", "col2"))
+                .exportToFile(OUTPUT_DIR_PREFIX + File.separator + "export_file_v2.txt")
                 .build()
         );
 

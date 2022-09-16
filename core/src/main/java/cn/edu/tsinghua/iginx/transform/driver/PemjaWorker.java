@@ -2,6 +2,7 @@ package cn.edu.tsinghua.iginx.transform.driver;
 
 import cn.edu.tsinghua.iginx.conf.Config;
 import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.transform.api.Writer;
 import cn.edu.tsinghua.iginx.transform.data.BatchData;
 import cn.edu.tsinghua.iginx.transform.data.PemjaReader;
@@ -35,6 +36,15 @@ public class PemjaWorker {
 
     public void process(BatchData batchData) {
         List<List<Object>> data = new ArrayList<>();
+
+        List<Object> headerRow = new ArrayList<>();
+        Header header = batchData.getHeader();
+        if (header.hasTimestamp()) {
+            headerRow.add("time");
+        }
+        header.getFields().forEach(field -> headerRow.add(field.getFullName()));
+        data.add(headerRow);
+
         batchData.getRowList().forEach(row -> {
             if (row.getHeader().hasTimestamp()) {
                 List<Object> rowData = new ArrayList<>();

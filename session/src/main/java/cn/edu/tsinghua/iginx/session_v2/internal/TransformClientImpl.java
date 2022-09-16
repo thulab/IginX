@@ -37,9 +37,6 @@ public class TransformClientImpl extends AbstractFunctionClient implements Trans
         if (transform.getExportType().equals(ExportType.File)) {
             req.setFileName(transform.getFileName());
         }
-        if (transform.getExportNameList() != null && !transform.getExportNameList().isEmpty()) {
-            req.setExportNameList(transform.getExportNameList());
-        }
 
         CommitTransformJobResp resp;
 

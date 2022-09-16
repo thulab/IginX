@@ -14,4 +14,7 @@ class MyTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        return df.apply(func, axis=0, raw=False, result_type=None, args=(), **kwargs).values.tolist()
+        df = df.apply(func, axis=0, raw=False, result_type=None, args=(), **kwargs)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

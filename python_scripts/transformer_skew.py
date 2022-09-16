@@ -12,5 +12,8 @@ class MyTransformer:
     def transform(self, rows):
         df = pd.DataFrame(rows)
         # finding skewness along the index axis
-        return df.skew(axis=0, skipna=True).values.tolist()  # (axis=NoDefault.no_default, skipna=True, level=None,
+        df = df.skew(axis=0, skipna=True)  # (axis=NoDefault.no_default, skipna=True, level=None,
         # numeric_only=None, **kwargs)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

@@ -10,4 +10,7 @@ class MyTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        return df.loc[1].values.tolist()  # return df.loc[row_ranking, column_ranking]
+        df = df.loc[1]  # return df.loc[row_ranking, column_ranking]
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

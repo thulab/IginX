@@ -12,4 +12,7 @@ class MyTransformer:
     def transform(self, rows):
         # Average of each column using DataFrame.mean()
         df = pd.DataFrame(rows)
-        return df.mean(axis=0).values.tolist()
+        df = df.mean(axis=0)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

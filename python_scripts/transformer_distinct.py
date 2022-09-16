@@ -17,4 +17,7 @@ class MyTransformer:  # a class is an object constructor, or a "blueprint" for c
     def transform(self, rows):
         # dropping all duplicate values
         df = pd.DataFrame(rows)
-        return df.drop_duplicates(subset=df.columns.values[1:]).values.tolist()
+        df = df.drop_duplicates(subset=df.columns.values[1:])
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

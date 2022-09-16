@@ -12,4 +12,7 @@ class MyTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        return df.head(n=5).values.tolist()
+        df = df.head(n=5)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

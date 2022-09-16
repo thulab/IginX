@@ -10,4 +10,7 @@ class MyTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        return df.filter(items=['High', 'Low']).values.tolist()  # (items=None, like=None, regex=None, axis=None)
+        df = df.filter(items=['High', 'Low'])  # (items=None, like=None, regex=None, axis=None)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret
