@@ -895,27 +895,6 @@ public class SessionPool {
         return ret;
     }
 
-    public long commitTransformJob(List<TaskInfo> taskInfoList, ExportType exportType,
-                                   String fileName, List<String> exportNameList) throws SessionException, ExecutionException {
-        long ret = 0;
-        for (int i = 0; i < RETRY; i++) {
-            Session session = getSession();
-            try {
-                ret = session.commitTransformJob(taskInfoList, exportType, fileName, exportNameList);
-                putBack(session);
-                return ret;
-            } catch (SessionException e) {
-                // TException means the connection is broken, remove it and get a new one.
-                logger.warn("commitTransformJob failed", e);
-                cleanSessionAndMayThrowConnectionException(session, i, e);
-            } catch (ExecutionException | RuntimeException e) {
-                putBack(session);
-                throw e;
-            }
-        }
-        return ret;
-    }
-
     public JobState queryTransformJobStatus(long jobId) throws SessionException, ExecutionException {
         JobState ret = null;
         for (int i = 0; i < RETRY; i++) {
