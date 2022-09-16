@@ -36,10 +36,10 @@ public class Job {
         exportType = req.getExportType();
         if (exportType.equals(ExportType.File)) {
             needExport = true;
-            writer = new FileAppendWriter(req.getFileName(), req.getExportNameList());
+            writer = new FileAppendWriter(req.getFileName());
         } else if (exportType.equals(ExportType.IginX)) {
             needExport = true;
-            writer = new IginXWriter(req.getSessionId(), req.getExportNameList());
+            writer = new IginXWriter(req.getSessionId());
         } else {
             needExport = false;
             writer = new LogWriter();
@@ -85,11 +85,11 @@ public class Job {
         if (exportType.equals("file")) {
             this.exportType = ExportType.File;
             this.needExport = true;
-            this.writer = new FileAppendWriter(jobFromYAML.getExportFile(), jobFromYAML.getExportNameList());
+            this.writer = new FileAppendWriter(jobFromYAML.getExportFile());
         } else if (exportType.equals("iginx")) {
             this.exportType = ExportType.IginX;
             this.needExport = true;
-            this.writer = new IginXWriter(sessionId, jobFromYAML.getExportNameList());
+            this.writer = new IginXWriter(sessionId);
         } else {
             this.exportType = ExportType.Log;
             this.needExport = false;

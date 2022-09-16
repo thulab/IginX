@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.transform.data;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
+import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.transform.api.Reader;
 
 import java.util.ArrayList;
@@ -36,13 +37,10 @@ public class PemjaReader implements Reader {
             firstRow = data;
         }
 
-        // we are not sure the name of data series when pemja return a object array
-        // so this header is just a placeholder
         List<Field> fieldList = new ArrayList<>();
-        for (int i = 0; i < firstRow.length; i++) {
-            fieldList.add(new Field());
+        for (Object fieldName : firstRow) {
+            fieldList.add(new Field((String) fieldName, DataType.BINARY));
         }
-
         return new Header(fieldList);
     }
 
@@ -51,11 +49,9 @@ public class PemjaReader implements Reader {
 
         boolean is2DList = isArray(data[0]);
         if (is2DList) {
-            for (Object row : data) {
-                rowList.add(new Row(header, (Object[]) row));
+            for (int i = 1; i < data.length; i++) {
+                rowList.add(new Row(header, (Object[]) data[i]));
             }
-        } else {
-            rowList.add(new Row(header, data));
         }
         return rowList;
     }

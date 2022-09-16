@@ -7,7 +7,7 @@ class RowSumTransformer:
         pass
 
     def transform(self, rows):
-        df = pd.DataFrame(rows)
+        df = pd.DataFrame(rows[1:], columns=rows[0])
         ret = np.zeros((df.shape[0], 2), dtype=np.integer)
         for index, row in df.iterrows():
             row_sum = 0
@@ -15,4 +15,8 @@ class RowSumTransformer:
                 row_sum += num
             ret[index][0] = row[0]
             ret[index][1] = row_sum
-        return pd.DataFrame(ret, columns=['time', 'sum']).values.tolist()
+
+        df = pd.DataFrame(ret, columns=['time', 'sum'])
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

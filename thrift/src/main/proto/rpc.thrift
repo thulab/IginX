@@ -437,7 +437,6 @@ struct CommitTransformJobReq {
     2: required list<TaskInfo> taskList
     3: required ExportType exportType
     4: optional string fileName
-    5: optional list<string> exportNameList
 }
 
 struct CommitTransformJobResp {

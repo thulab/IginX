@@ -10,7 +10,10 @@ class MyTransformer:
 
     def transform(self, rows):
         df = pd.DataFrame(rows)
-        return df.between_time(start_time, end_time, include_start=NoDefault.no_default,
+        df = df.between_time(start_time, end_time, include_start=NoDefault.no_default,
                                include_end=NoDefault.no_default, inclusive=None,
                                axis=None).values.tolist()  # (start_time, end_time, include_start=NoDefault.no_default,
         # include_end=NoDefault.no_default, inclusive=None, axis=None)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

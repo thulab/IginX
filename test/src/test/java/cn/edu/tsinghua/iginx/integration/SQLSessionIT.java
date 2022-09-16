@@ -568,6 +568,42 @@ public abstract class SQLSessionIT {
             "+-----+--------+-------+\n" +
             "Total line number = 2\n";
         executeAndCompare(statement, expected);
+
+        statement = "SELECT FIRST(s4), LAST(s2) FROM us.d1 WHERE time > 1000;";
+        expected =
+            "ResultSets:\n"
+                + "+-----+--------+------+\n"
+                + "| Time|    path| value|\n"
+                + "+-----+--------+------+\n"
+                + "| 1001|us.d1.s4|1001.1|\n"
+                + "|14999|us.d1.s2| 15000|\n"
+                + "+-----+--------+------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT FIRST(s2), LAST(s2) FROM us.d1 WHERE time > 1000;";
+        expected =
+            "ResultSets:\n"
+                + "+-----+--------+-----+\n"
+                + "| Time|    path|value|\n"
+                + "+-----+--------+-----+\n"
+                + "| 1001|us.d1.s2| 1002|\n"
+                + "|14999|us.d1.s2|15000|\n"
+                + "+-----+--------+-----+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
+
+        statement = "SELECT FIRST(s4), LAST(s4) FROM us.d1 WHERE time > 1000;";
+        expected =
+            "ResultSets:\n"
+                + "+-----+--------+-------+\n"
+                + "| Time|    path|  value|\n"
+                + "+-----+--------+-------+\n"
+                + "| 1001|us.d1.s4| 1001.1|\n"
+                + "|14999|us.d1.s4|14999.1|\n"
+                + "+-----+--------+-------+\n"
+                + "Total line number = 2\n";
+        executeAndCompare(statement, expected);
     }
 
     @Test

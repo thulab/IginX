@@ -1097,17 +1097,9 @@ public class Session {
 
     public long commitTransformJob(List<TaskInfo> taskInfoList, ExportType exportType,
                                    String fileName) throws SessionException, ExecutionException {
-        return commitTransformJob(taskInfoList, exportType, fileName, null);
-    }
-
-    public long commitTransformJob(List<TaskInfo> taskInfoList, ExportType exportType,
-                                   String fileName, List<String> exportNameList) throws SessionException, ExecutionException {
         CommitTransformJobReq req = new CommitTransformJobReq(sessionId, taskInfoList, exportType);
         if (fileName != null) {
             req.setFileName(fileName);
-        }
-        if (exportNameList != null && !exportNameList.isEmpty()) {
-            req.setExportNameList(exportNameList);
         }
 
         CommitTransformJobResp resp;
