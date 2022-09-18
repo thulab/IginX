@@ -109,24 +109,28 @@ public class MetricsResource {
 
     @POST
     @Path(ADD_ANNOTATION_URL)
-    public void addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+    public Response addAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
         try {
             String str = inputStreamToString(stream);
             appendAnno(str, httpheaders, asyncResponse);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
+        return setHeaders(Response.status(Status.OK).entity("add annotation OK")).build();
     }
 
     @POST
     @Path(UPDATE_ANNOTATION_URL)
-    public void updateAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
+    public Response updateAnnotation(@Context HttpHeaders httpheaders, final InputStream stream, @Suspended final AsyncResponse asyncResponse) {
         try {
             String str = inputStreamToString(stream);
             updateAnno(str, httpheaders, asyncResponse);
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
+            return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
         }
+        return setHeaders(Response.status(Status.OK).entity("update annotation OK")).build();
     }
 
     @POST
@@ -254,60 +258,68 @@ public class MetricsResource {
         return buffer.toString();
     }
 
+    private QueryResult normalQuery(Query query) throws Exception {
+        QueryExecutor executor = new QueryExecutor(query);
+        return executor.execute(false);
+    }
+
+    private QueryResult annoDataQuery(Query query, QueryParser parser) throws Exception {
+        QueryExecutor executor = new QueryExecutor(null);
+        //调用show time series
+        QueryResult timeSeries = executor.executeShowTimeSeries();
+        //筛选路径信息，正常信息路径，生成单个query
+        Query queryAnnoData = getAnnoDataQueryFromTimeSeries(query, timeSeries);
+        //先查询title信息
+        //查询anno的title以及dsp信息
+        QueryResult resultAnno = getAnno(queryAnnoData,1L,MAXTIEM);
+
+        //添加cat信息
+        parser.getAnnoCategory(resultAnno);
+        //筛选出符合title信息的序列
+        return getAnnoDataQueryFromTitle(query, resultAnno);
+    }
+
+    private QueryResult annoQuery(Query query, QueryParser parser, String jsonStr) throws Exception {
+        //查找出所有符合tagkv的序列路径
+        Query queryBase = parser.parseAnnotationQueryMetric(jsonStr, false);
+        Query queryAnno = new Query();
+
+        //通过first聚合查询，先查找出所以路径集合
+        queryBase.addFirstAggregator();
+        queryBase.setStartAbsolute(1L);
+        queryBase.setEndAbsolute(TOPTIEM);
+        QueryExecutor executorPath = new QueryExecutor(queryBase);
+        QueryResult resultPath = executorPath.execute(false);
+
+        //重新组织路径，将聚合查询符号删除
+        parser.removeAggPath(resultPath);
+        //分离cat路径信息
+        queryAnno = parser.splitAnnoPathToQuery(resultPath);
+
+        //查询anno的title以及dsp信息
+        return getAnno(queryAnno,DESCRIPTIONTIEM,MAXTIEM);
+    }
+
     public Response postQuery(String jsonStr, boolean isAnnotation, boolean isAnnoData, boolean isGrafana) {
         try {
             if (jsonStr == null) {
                 throw new Exception("query json must not be null or empty");
             }
             QueryParser parser = new QueryParser();
+            String entity = new String();
             Query query = isAnnotation ? parser.parseAnnotationQueryMetric(jsonStr, isGrafana) : parser.parseQueryMetric(jsonStr);
             if (!isAnnotation) {
-                QueryExecutor executor = new QueryExecutor(query);
-                QueryResult result = executor.execute(false);
-                String entity = parser.parseResultToJson(result, false);
-                return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
+                QueryResult result = normalQuery(query);
+                entity = parser.parseResultToJson(result, false);
             } else if (isAnnoData) {
-                QueryExecutor executor = new QueryExecutor(null);
-                //调用show time series
-                QueryResult timeSeries = executor.executeShowTimeSeries();
-                //筛选路径信息，正常信息路径，生成单个query
-                Query queryAnnoData = getAnnoDataQueryFromTimeSeries(query, timeSeries);
-                //先查询title信息
-                //查询anno的title以及dsp信息
-                QueryResult resultAnno = getAnno(queryAnnoData,1L,MAXTIEM);
-
-                //添加cat信息
-                parser.getAnnoCategory(resultAnno);
-                //筛选出符合title信息的序列
-                QueryResult result = getAnnoDataQueryFromTitle(query, resultAnno);
-
-                String entity = parser.parseAnnoDataResultToJson(result);
-                return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
+                QueryResult result = annoDataQuery(query, parser);
+                entity = parser.parseAnnoDataResultToJson(result);
             } else {//只查询anno信息
-                //查找出所有符合tagkv的序列路径
-                Query queryBase = parser.parseAnnotationQueryMetric(jsonStr, false);
-                Query queryAnno = new Query();
-
-                //通过first聚合查询，先查找出所以路径集合
-                queryBase.addFirstAggregator();
-                queryBase.setStartAbsolute(1L);
-                queryBase.setEndAbsolute(TOPTIEM);
-                QueryExecutor executorPath = new QueryExecutor(queryBase);
-                QueryResult resultPath = executorPath.execute(false);
-
-                //重新组织路径，将聚合查询符号删除
-                parser.removeAggPath(resultPath);
-                //分离cat路径信息
-                queryAnno = parser.splitAnnoPathToQuery(resultPath);
-
-                //查询anno的title以及dsp信息
-                QueryResult result = getAnno(queryAnno,DESCRIPTIONTIEM,MAXTIEM);
-
-                //这里的解析也要确认是否可以解析成功？？LHZ
+                QueryResult result = annoQuery(query, parser, jsonStr);
                 parser.getAnnoCategory(result);
-                String entity = parser.parseAnnoResultToJson(result);
-                return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
+                entity = parser.parseAnnoResultToJson(result);
             }
+            return setHeaders(Response.status(Status.OK).entity(entity + "\n")).build();
         } catch (Exception e) {
             LOGGER.error("Error occurred during execution ", e);
             return setHeaders(Response.status(Status.BAD_REQUEST).entity("Error occurred during execution\n")).build();
@@ -389,9 +401,9 @@ public class MetricsResource {
             QueryResult resultALL = executorPath.execute(false);
 
             //修改路径，并重新查询数据，并插入数据
-            DataPointsParser parserInsert = new DataPointsParser();
-            querySp.setNullNewAnno();
-            parserInsert.handleAnnotationUpdate(querySp, resultALL);
+//            DataPointsParser parserInsert = new DataPointsParser();
+//            querySp.setNullNewAnno();
+//            parserInsert.handleAnnotationUpdate(querySp, resultALL);
 
             //找到精确路径
             Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
@@ -454,8 +466,8 @@ public class MetricsResource {
         queryAll.setEndAbsolute(queryBase.getEndAbsolute());
 
         //执行删除操作,还是要先执行删除，因为之后执行删除，可能会删除已经插入的序列值
-        QueryExecutor executorData = new QueryExecutor(queryAll);
-        executorData.execute(true);
+//        QueryExecutor executorData = new QueryExecutor(queryAll);
+//        executorData.execute(true);
 
         //修改路径，并重新查询数据，并插入数据
         threadPool.execute(new InsertWorker(asyncResponse, httpheaders, result, queryBase, true));
