@@ -562,7 +562,7 @@ service IService {
 
     FetchResultsResp fetchResults(1: FetchResultsReq req);
 
-    Status closeStatement(1: git CloseStatementReq req);
+    Status closeStatement(1: CloseStatementReq req);
 
     CommitTransformJobResp commitTransformJob(1: CommitTransformJobReq req);
 
