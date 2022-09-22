@@ -50,8 +50,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -113,6 +111,11 @@ jobs:
         run: |
           mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest -DfailIfNoTests=false
           sleep 10
+      - name: Install with Maven Again
+        run: |
+          mv test/pom.xml test/pom.xml.iotdb11
+          mv test/pom.xml.backup test/pom.xml
+          mvn clean package -DskipTests
       - name: Start IginX
         run: |
           sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
@@ -164,8 +167,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -219,8 +220,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -274,8 +273,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -329,8 +326,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -384,8 +379,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -449,6 +442,8 @@ jobs:
           sleep 10
       - name: Install with Maven Again
         run: |
+          mv test/pom.xml test/pom.xml.iotdb12
+          mv test/pom.xml.backup test/pom.xml
           mvn clean package -DskipTests
       - name: Start IginX
         run: |
@@ -501,8 +496,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -556,8 +549,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -611,8 +602,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -666,8 +655,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -872,8 +859,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -927,8 +912,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -982,8 +965,6 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
