@@ -12,6 +12,8 @@ sh -c "cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg"
 
 sh -c "sed -i '' 's/#maxClientCnxns=60/maxClientCnxns=60/' zookeeper/conf/zoo.cfg"
 
+sh -c "/usr/libexec/ApplicationFirewall/socketfilterfw --getglobalstate"
+
 sh -c "cat zookeeper/conf/zoo.cfg"
 
 sh -c "zookeeper/bin/zkServer.sh start"
