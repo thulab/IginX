@@ -12,7 +12,7 @@ sh -c "cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg"
 
 sh -c "sed -i '' 's/#maxClientCnxns=60/maxClientCnxns=60/' zookeeper/conf/zoo.cfg"
 
-sh -c "sudo lsof -i:2181"
+sh -c "top | grep 2181"
 
 sh -c "cat zookeeper/conf/zoo.cfg"
 
