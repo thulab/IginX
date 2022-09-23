@@ -1643,6 +1643,9 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testSpecialPath() {
+        if (!isAbleToDelete) {
+            return;
+        }
         // Chinese path
         String insert = "INSERT INTO 测试.前缀(TIME, 后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
         execute(insert);
