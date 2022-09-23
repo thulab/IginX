@@ -33,8 +33,6 @@ public class IginxInterpreter extends AbstractInterpreter {
     private static final String MULTISPACE = " +";
     private static final String SEMICOLON = ";";
 
-    private static final String SET_TIME_UNIT = "set timeunit in";
-
     private String host = "";
     private int port = 0;
     private String username = "";
@@ -92,46 +90,10 @@ public class IginxInterpreter extends AbstractInterpreter {
 
         InterpreterResult interpreterResult = null;
         for (String cmd : cmdList) {
-            if (cmd.startsWith(SET_TIME_UNIT)) {
-                interpreterResult = setTimeUnit(cmd);
-            } else {
-                interpreterResult = processSql(cmd);
-            }
+            interpreterResult = processSql(cmd);
         }
 
         return interpreterResult;
-    }
-
-    private InterpreterResult setTimeUnit(String statement) {
-        String[] parts = statement.split(" ");
-        if (parts.length == 4) {
-            switch (parts[3].toLowerCase()) {
-                case "second":
-                case "s":
-                    timePrecision = "s";
-                    break;
-                case "millisecond":
-                case "ms":
-                    timePrecision = "ms";
-                    break;
-                case "microsecond":
-                case "us":
-                    timePrecision = "us";
-                    break;
-                case "nanosecond":
-                case "ns":
-                    timePrecision = "ns";
-                    break;
-                default:
-                    return new InterpreterResult(InterpreterResult.Code.ERROR,
-                            String.format("Not support time unit %s.", parts[3]));
-            }
-            return new InterpreterResult(InterpreterResult.Code.SUCCESS,
-                    String.format("Current time unit: %s", timePrecision));
-        } else {
-            return new InterpreterResult(InterpreterResult.Code.SUCCESS,
-                    "Set timeunit error, please input like: set timeunit in s/ms/us/ns");
-        }
     }
 
     private InterpreterResult processSql(String sql) {
