@@ -62,11 +62,11 @@ public class IginXClientImpl implements IginXClient {
         Arguments.checkNotNull(options, "IginXClientOptions");
 
         lock = new ReentrantLock();
-        transport = new TSocket(options.getHost(), options.getPort());
         measurementMapper = new MeasurementMapper();
         resultMapper = new ResultMapper();
 
         try {
+            transport = new TSocket(options.getHost(), options.getPort());
             transport.open();
             client = new IService.Client(new TBinaryProtocol(transport));
         } catch (TTransportException e) {
