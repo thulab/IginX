@@ -311,7 +311,7 @@ class Status(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.message = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.message = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
@@ -394,12 +394,12 @@ class OpenSessionReq(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.username = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.username = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.password = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.password = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -600,7 +600,7 @@ class DeleteColumnsReq(object):
                     self.paths = []
                     (_etype10, _size7) = iprot.readListBegin()
                     for _i11 in range(_size7):
-                        _elem12 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem12 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem12)
                     iprot.readListEnd()
                 else:
@@ -690,7 +690,7 @@ class InsertColumnRecordsReq(object):
                     self.paths = []
                     (_etype17, _size14) = iprot.readListBegin()
                     for _i18 in range(_size14):
-                        _elem19 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem19 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem19)
                     iprot.readListEnd()
                 else:
@@ -738,8 +738,8 @@ class InsertColumnRecordsReq(object):
                         _elem43 = {}
                         (_ktype45, _vtype46, _size44) = iprot.readMapBegin()
                         for _i48 in range(_size44):
-                            _key49 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val50 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key49 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val50 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem43[_key49] = _val50
                         iprot.readMapEnd()
                         self.tagsList.append(_elem43)
@@ -875,7 +875,7 @@ class InsertNonAlignedColumnRecordsReq(object):
                     self.paths = []
                     (_etype61, _size58) = iprot.readListBegin()
                     for _i62 in range(_size58):
-                        _elem63 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem63 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem63)
                     iprot.readListEnd()
                 else:
@@ -923,8 +923,8 @@ class InsertNonAlignedColumnRecordsReq(object):
                         _elem87 = {}
                         (_ktype89, _vtype90, _size88) = iprot.readMapBegin()
                         for _i92 in range(_size88):
-                            _key93 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val94 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key93 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val94 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem87[_key93] = _val94
                         iprot.readMapEnd()
                         self.tagsList.append(_elem87)
@@ -1060,7 +1060,7 @@ class InsertRowRecordsReq(object):
                     self.paths = []
                     (_etype105, _size102) = iprot.readListBegin()
                     for _i106 in range(_size102):
-                        _elem107 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem107 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem107)
                     iprot.readListEnd()
                 else:
@@ -1108,8 +1108,8 @@ class InsertRowRecordsReq(object):
                         _elem131 = {}
                         (_ktype133, _vtype134, _size132) = iprot.readMapBegin()
                         for _i136 in range(_size132):
-                            _key137 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val138 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key137 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val138 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem131[_key137] = _val138
                         iprot.readMapEnd()
                         self.tagsList.append(_elem131)
@@ -1245,7 +1245,7 @@ class InsertNonAlignedRowRecordsReq(object):
                     self.paths = []
                     (_etype149, _size146) = iprot.readListBegin()
                     for _i150 in range(_size146):
-                        _elem151 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem151 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem151)
                     iprot.readListEnd()
                 else:
@@ -1293,8 +1293,8 @@ class InsertNonAlignedRowRecordsReq(object):
                         _elem175 = {}
                         (_ktype177, _vtype178, _size176) = iprot.readMapBegin()
                         for _i180 in range(_size176):
-                            _key181 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val182 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key181 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val182 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem175[_key181] = _val182
                         iprot.readMapEnd()
                         self.tagsList.append(_elem175)
@@ -1426,7 +1426,7 @@ class DeleteDataInColumnsReq(object):
                     self.paths = []
                     (_etype193, _size190) = iprot.readListBegin()
                     for _i194 in range(_size190):
-                        _elem195 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem195 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem195)
                     iprot.readListEnd()
                 else:
@@ -1446,11 +1446,11 @@ class DeleteDataInColumnsReq(object):
                     self.tagsList = {}
                     (_ktype197, _vtype198, _size196) = iprot.readMapBegin()
                     for _i200 in range(_size196):
-                        _key201 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _key201 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         _val202 = []
                         (_etype206, _size203) = iprot.readListBegin()
                         for _i207 in range(_size203):
-                            _elem208 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _elem208 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _val202.append(_elem208)
                         iprot.readListEnd()
                         self.tagsList[_key201] = _val202
@@ -1662,7 +1662,7 @@ class QueryDataReq(object):
                     self.paths = []
                     (_etype230, _size227) = iprot.readListBegin()
                     for _i231 in range(_size227):
-                        _elem232 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem232 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem232)
                     iprot.readListEnd()
                 else:
@@ -1682,11 +1682,11 @@ class QueryDataReq(object):
                     self.tagsList = {}
                     (_ktype234, _vtype235, _size233) = iprot.readMapBegin()
                     for _i237 in range(_size233):
-                        _key238 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _key238 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         _val239 = []
                         (_etype243, _size240) = iprot.readListBegin()
                         for _i244 in range(_size240):
-                            _elem245 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _elem245 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _val239.append(_elem245)
                         iprot.readListEnd()
                         self.tagsList[_key238] = _val239
@@ -1798,7 +1798,7 @@ class QueryDataResp(object):
                     self.paths = []
                     (_etype253, _size250) = iprot.readListBegin()
                     for _i254 in range(_size250):
-                        _elem255 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem255 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem255)
                     iprot.readListEnd()
                 else:
@@ -1811,8 +1811,8 @@ class QueryDataResp(object):
                         _elem261 = {}
                         (_ktype263, _vtype264, _size262) = iprot.readMapBegin()
                         for _i266 in range(_size262):
-                            _key267 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val268 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key267 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val268 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem261[_key267] = _val268
                         iprot.readMapEnd()
                         self.tagsList.append(_elem261)
@@ -2007,7 +2007,7 @@ class StorageEngine(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.ip = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.ip = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
@@ -2017,7 +2017,7 @@ class StorageEngine(object):
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.STRING:
-                    self.type = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.type = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 4:
@@ -2025,8 +2025,8 @@ class StorageEngine(object):
                     self.extraParams = {}
                     (_ktype288, _vtype289, _size287) = iprot.readMapBegin()
                     for _i291 in range(_size287):
-                        _key292 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        _val293 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _key292 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                        _val293 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.extraParams[_key292] = _val293
                     iprot.readMapEnd()
                 else:
@@ -2127,7 +2127,7 @@ class AggregateQueryReq(object):
                     self.paths = []
                     (_etype299, _size296) = iprot.readListBegin()
                     for _i300 in range(_size296):
-                        _elem301 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem301 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem301)
                     iprot.readListEnd()
                 else:
@@ -2152,11 +2152,11 @@ class AggregateQueryReq(object):
                     self.tagsList = {}
                     (_ktype303, _vtype304, _size302) = iprot.readMapBegin()
                     for _i306 in range(_size302):
-                        _key307 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _key307 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         _val308 = []
                         (_etype312, _size309) = iprot.readListBegin()
                         for _i313 in range(_size309):
-                            _elem314 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _elem314 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _val308.append(_elem314)
                         iprot.readListEnd()
                         self.tagsList[_key307] = _val308
@@ -2276,7 +2276,7 @@ class AggregateQueryResp(object):
                     self.paths = []
                     (_etype322, _size319) = iprot.readListBegin()
                     for _i323 in range(_size319):
-                        _elem324 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem324 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem324)
                     iprot.readListEnd()
                 else:
@@ -2289,8 +2289,8 @@ class AggregateQueryResp(object):
                         _elem330 = {}
                         (_ktype332, _vtype333, _size331) = iprot.readMapBegin()
                         for _i335 in range(_size331):
-                            _key336 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val337 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key336 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val337 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem330[_key336] = _val337
                         iprot.readMapEnd()
                         self.tagsList.append(_elem330)
@@ -2420,7 +2420,7 @@ class LastQueryReq(object):
                     self.paths = []
                     (_etype352, _size349) = iprot.readListBegin()
                     for _i353 in range(_size349):
-                        _elem354 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem354 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem354)
                     iprot.readListEnd()
                 else:
@@ -2435,11 +2435,11 @@ class LastQueryReq(object):
                     self.tagsList = {}
                     (_ktype356, _vtype357, _size355) = iprot.readMapBegin()
                     for _i359 in range(_size355):
-                        _key360 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _key360 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         _val361 = []
                         (_etype365, _size362) = iprot.readListBegin()
                         for _i366 in range(_size362):
-                            _elem367 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _elem367 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _val361.append(_elem367)
                         iprot.readListEnd()
                         self.tagsList[_key360] = _val361
@@ -2545,7 +2545,7 @@ class LastQueryResp(object):
                     self.paths = []
                     (_etype375, _size372) = iprot.readListBegin()
                     for _i376 in range(_size372):
-                        _elem377 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem377 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem377)
                     iprot.readListEnd()
                 else:
@@ -2558,8 +2558,8 @@ class LastQueryResp(object):
                         _elem383 = {}
                         (_ktype385, _vtype386, _size384) = iprot.readMapBegin()
                         for _i388 in range(_size384):
-                            _key389 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val390 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key389 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val390 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem383[_key389] = _val390
                         iprot.readMapEnd()
                         self.tagsList.append(_elem383)
@@ -2687,7 +2687,7 @@ class DownsampleQueryReq(object):
                     self.paths = []
                     (_etype405, _size402) = iprot.readListBegin()
                     for _i406 in range(_size402):
-                        _elem407 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem407 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem407)
                     iprot.readListEnd()
                 else:
@@ -2717,11 +2717,11 @@ class DownsampleQueryReq(object):
                     self.tagsList = {}
                     (_ktype409, _vtype410, _size408) = iprot.readMapBegin()
                     for _i412 in range(_size408):
-                        _key413 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _key413 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         _val414 = []
                         (_etype418, _size415) = iprot.readListBegin()
                         for _i419 in range(_size415):
-                            _elem420 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _elem420 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _val414.append(_elem420)
                         iprot.readListEnd()
                         self.tagsList[_key413] = _val414
@@ -2845,7 +2845,7 @@ class DownsampleQueryResp(object):
                     self.paths = []
                     (_etype428, _size425) = iprot.readListBegin()
                     for _i429 in range(_size425):
-                        _elem430 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem430 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem430)
                     iprot.readListEnd()
                 else:
@@ -2858,8 +2858,8 @@ class DownsampleQueryResp(object):
                         _elem436 = {}
                         (_ktype438, _vtype439, _size437) = iprot.readMapBegin()
                         for _i441 in range(_size437):
-                            _key442 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val443 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key442 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val443 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem436[_key442] = _val443
                         iprot.readMapEnd()
                         self.tagsList.append(_elem436)
@@ -3041,7 +3041,7 @@ class ShowColumnsResp(object):
                     self.paths = []
                     (_etype458, _size455) = iprot.readListBegin()
                     for _i459 in range(_size455):
-                        _elem460 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem460 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem460)
                     iprot.readListEnd()
                 else:
@@ -3054,8 +3054,8 @@ class ShowColumnsResp(object):
                         _elem466 = {}
                         (_ktype468, _vtype469, _size467) = iprot.readMapBegin()
                         for _i471 in range(_size467):
-                            _key472 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val473 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key472 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val473 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem466[_key472] = _val473
                         iprot.readMapEnd()
                         self.tagsList.append(_elem466)
@@ -3290,7 +3290,7 @@ class ExecuteSqlReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.statement = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.statement = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -3415,7 +3415,7 @@ class ExecuteSqlResp(object):
                     self.paths = []
                     (_etype488, _size485) = iprot.readListBegin()
                     for _i489 in range(_size485):
-                        _elem490 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem490 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.paths.append(_elem490)
                     iprot.readListEnd()
                 else:
@@ -3428,8 +3428,8 @@ class ExecuteSqlResp(object):
                         _elem496 = {}
                         (_ktype498, _vtype499, _size497) = iprot.readMapBegin()
                         for _i501 in range(_size497):
-                            _key502 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val503 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key502 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val503 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem496[_key502] = _val503
                         iprot.readMapEnd()
                         self.tagsList.append(_elem496)
@@ -3479,7 +3479,7 @@ class ExecuteSqlResp(object):
                     iprot.skip(ftype)
             elif fid == 12:
                 if ftype == TType.STRING:
-                    self.parseErrorMsg = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.parseErrorMsg = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 13:
@@ -3494,7 +3494,7 @@ class ExecuteSqlResp(object):
                     iprot.skip(ftype)
             elif fid == 15:
                 if ftype == TType.STRING:
-                    self.orderByPath = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.orderByPath = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 16:
@@ -3761,12 +3761,12 @@ class UpdateUserReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.username = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.username = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.STRING:
-                    self.password = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.password = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 4:
@@ -3863,12 +3863,12 @@ class AddUserReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.username = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.username = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.STRING:
-                    self.password = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.password = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 4:
@@ -3965,7 +3965,7 @@ class DeleteUserReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.username = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.username = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -4040,7 +4040,7 @@ class GetUserReq(object):
                     self.usernames = []
                     (_etype567, _size564) = iprot.readListBegin()
                     for _i568 in range(_size564):
-                        _elem569 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem569 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.usernames.append(_elem569)
                     iprot.readListEnd()
                 else:
@@ -4123,7 +4123,7 @@ class GetUserResp(object):
                     self.usernames = []
                     (_etype574, _size571) = iprot.readListBegin()
                     for _i575 in range(_size571):
-                        _elem576 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem576 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.usernames.append(_elem576)
                     iprot.readListEnd()
                 else:
@@ -4301,7 +4301,7 @@ class IginxInfo(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.ip = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.ip = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
@@ -4388,7 +4388,7 @@ class StorageEngineInfo(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.ip = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.ip = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
@@ -4398,7 +4398,7 @@ class StorageEngineInfo(object):
                     iprot.skip(ftype)
             elif fid == 4:
                 if ftype == TType.STRING:
-                    self.type = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.type = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -4479,7 +4479,7 @@ class MetaStorageInfo(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.ip = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.ip = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
@@ -4489,7 +4489,7 @@ class MetaStorageInfo(object):
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.STRING:
-                    self.type = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.type = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -4560,7 +4560,7 @@ class LocalMetaStorageInfo(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.path = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.path = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -4762,7 +4762,7 @@ class ExecuteStatementReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.statement = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.statement = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
@@ -4876,7 +4876,7 @@ class ExecuteStatementResp(object):
                     self.columns = []
                     (_etype623, _size620) = iprot.readListBegin()
                     for _i624 in range(_size620):
-                        _elem625 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem625 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.columns.append(_elem625)
                     iprot.readListEnd()
                 else:
@@ -4889,8 +4889,8 @@ class ExecuteStatementResp(object):
                         _elem631 = {}
                         (_ktype633, _vtype634, _size632) = iprot.readMapBegin()
                         for _i636 in range(_size632):
-                            _key637 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                            _val638 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                            _key637 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                            _val638 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                             _elem631[_key637] = _val638
                         iprot.readMapEnd()
                         self.tagsList.append(_elem631)
@@ -5373,14 +5373,14 @@ class TaskInfo(object):
                     self.sqlList = []
                     (_etype667, _size664) = iprot.readListBegin()
                     for _i668 in range(_size664):
-                        _elem669 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                        _elem669 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                         self.sqlList.append(_elem669)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
             elif fid == 5:
                 if ftype == TType.STRING:
-                    self.pyTaskName = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.pyTaskName = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -5445,17 +5445,15 @@ class CommitTransformJobReq(object):
      - taskList
      - exportType
      - fileName
-     - exportNameList
 
     """
 
 
-    def __init__(self, sessionId=None, taskList=None, exportType=None, fileName=None, exportNameList=None,):
+    def __init__(self, sessionId=None, taskList=None, exportType=None, fileName=None,):
         self.sessionId = sessionId
         self.taskList = taskList
         self.exportType = exportType
         self.fileName = fileName
-        self.exportNameList = exportNameList
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -5489,17 +5487,7 @@ class CommitTransformJobReq(object):
                     iprot.skip(ftype)
             elif fid == 4:
                 if ftype == TType.STRING:
-                    self.fileName = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                else:
-                    iprot.skip(ftype)
-            elif fid == 5:
-                if ftype == TType.LIST:
-                    self.exportNameList = []
-                    (_etype680, _size677) = iprot.readListBegin()
-                    for _i681 in range(_size677):
-                        _elem682 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.exportNameList.append(_elem682)
-                    iprot.readListEnd()
+                    self.fileName = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -5519,8 +5507,8 @@ class CommitTransformJobReq(object):
         if self.taskList is not None:
             oprot.writeFieldBegin('taskList', TType.LIST, 2)
             oprot.writeListBegin(TType.STRUCT, len(self.taskList))
-            for iter683 in self.taskList:
-                iter683.write(oprot)
+            for iter677 in self.taskList:
+                iter677.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.exportType is not None:
@@ -5530,13 +5518,6 @@ class CommitTransformJobReq(object):
         if self.fileName is not None:
             oprot.writeFieldBegin('fileName', TType.STRING, 4)
             oprot.writeString(self.fileName.encode('utf-8') if sys.version_info[0] == 2 else self.fileName)
-            oprot.writeFieldEnd()
-        if self.exportNameList is not None:
-            oprot.writeFieldBegin('exportNameList', TType.LIST, 5)
-            oprot.writeListBegin(TType.STRING, len(self.exportNameList))
-            for iter684 in self.exportNameList:
-                oprot.writeString(iter684.encode('utf-8') if sys.version_info[0] == 2 else iter684)
-            oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -5883,10 +5864,10 @@ class ShowEligibleJobResp(object):
             elif fid == 2:
                 if ftype == TType.LIST:
                     self.jobIdList = []
-                    (_etype688, _size685) = iprot.readListBegin()
-                    for _i689 in range(_size685):
-                        _elem690 = iprot.readI64()
-                        self.jobIdList.append(_elem690)
+                    (_etype681, _size678) = iprot.readListBegin()
+                    for _i682 in range(_size678):
+                        _elem683 = iprot.readI64()
+                        self.jobIdList.append(_elem683)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -5907,8 +5888,8 @@ class ShowEligibleJobResp(object):
         if self.jobIdList is not None:
             oprot.writeFieldBegin('jobIdList', TType.LIST, 2)
             oprot.writeListBegin(TType.I64, len(self.jobIdList))
-            for iter691 in self.jobIdList:
-                oprot.writeI64(iter691)
+            for iter684 in self.jobIdList:
+                oprot.writeI64(iter684)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -6040,17 +6021,17 @@ class RegisterTaskReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.name = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.name = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.STRING:
-                    self.filePath = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.filePath = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 4:
                 if ftype == TType.STRING:
-                    self.className = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.className = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 5:
@@ -6145,7 +6126,7 @@ class DropTaskReq(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.name = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.name = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             else:
@@ -6277,22 +6258,22 @@ class RegisterTaskInfo(object):
                 break
             if fid == 1:
                 if ftype == TType.STRING:
-                    self.name = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.name = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.className = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.className = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
                 if ftype == TType.STRING:
-                    self.fileName = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.fileName = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 4:
                 if ftype == TType.STRING:
-                    self.ip = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.ip = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 5:
@@ -6389,11 +6370,11 @@ class GetRegisterTaskInfoResp(object):
             elif fid == 2:
                 if ftype == TType.LIST:
                     self.registerTaskInfoList = []
-                    (_etype695, _size692) = iprot.readListBegin()
-                    for _i696 in range(_size692):
-                        _elem697 = RegisterTaskInfo()
-                        _elem697.read(iprot)
-                        self.registerTaskInfoList.append(_elem697)
+                    (_etype688, _size685) = iprot.readListBegin()
+                    for _i689 in range(_size685):
+                        _elem690 = RegisterTaskInfo()
+                        _elem690.read(iprot)
+                        self.registerTaskInfoList.append(_elem690)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -6414,8 +6395,8 @@ class GetRegisterTaskInfoResp(object):
         if self.registerTaskInfoList is not None:
             oprot.writeFieldBegin('registerTaskInfoList', TType.LIST, 2)
             oprot.writeListBegin(TType.STRUCT, len(self.registerTaskInfoList))
-            for iter698 in self.registerTaskInfoList:
-                iter698.write(oprot)
+            for iter691 in self.registerTaskInfoList:
+                iter691.write(oprot)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -6476,10 +6457,10 @@ class CurveMatchReq(object):
             elif fid == 2:
                 if ftype == TType.LIST:
                     self.paths = []
-                    (_etype702, _size699) = iprot.readListBegin()
-                    for _i703 in range(_size699):
-                        _elem704 = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
-                        self.paths.append(_elem704)
+                    (_etype695, _size692) = iprot.readListBegin()
+                    for _i696 in range(_size692):
+                        _elem697 = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                        self.paths.append(_elem697)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -6496,10 +6477,10 @@ class CurveMatchReq(object):
             elif fid == 5:
                 if ftype == TType.LIST:
                     self.curveQuery = []
-                    (_etype708, _size705) = iprot.readListBegin()
-                    for _i709 in range(_size705):
-                        _elem710 = iprot.readDouble()
-                        self.curveQuery.append(_elem710)
+                    (_etype701, _size698) = iprot.readListBegin()
+                    for _i702 in range(_size698):
+                        _elem703 = iprot.readDouble()
+                        self.curveQuery.append(_elem703)
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
@@ -6525,8 +6506,8 @@ class CurveMatchReq(object):
         if self.paths is not None:
             oprot.writeFieldBegin('paths', TType.LIST, 2)
             oprot.writeListBegin(TType.STRING, len(self.paths))
-            for iter711 in self.paths:
-                oprot.writeString(iter711.encode('utf-8') if sys.version_info[0] == 2 else iter711)
+            for iter704 in self.paths:
+                oprot.writeString(iter704.encode('utf-8') if sys.version_info[0] == 2 else iter704)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.startTime is not None:
@@ -6540,8 +6521,8 @@ class CurveMatchReq(object):
         if self.curveQuery is not None:
             oprot.writeFieldBegin('curveQuery', TType.LIST, 5)
             oprot.writeListBegin(TType.DOUBLE, len(self.curveQuery))
-            for iter712 in self.curveQuery:
-                oprot.writeDouble(iter712)
+            for iter705 in self.curveQuery:
+                oprot.writeDouble(iter705)
             oprot.writeListEnd()
             oprot.writeFieldEnd()
         if self.curveUnit is not None:
@@ -6610,7 +6591,7 @@ class CurveMatchResp(object):
                     iprot.skip(ftype)
             elif fid == 2:
                 if ftype == TType.STRING:
-                    self.matchedPath = iprot.readString().decode('utf-8') if sys.version_info[0] == 2 else iprot.readString()
+                    self.matchedPath = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
                 else:
                     iprot.skip(ftype)
             elif fid == 3:
@@ -7034,7 +7015,6 @@ CommitTransformJobReq.thrift_spec = (
     (2, TType.LIST, 'taskList', (TType.STRUCT, [TaskInfo, None], False), None, ),  # 2
     (3, TType.I32, 'exportType', None, None, ),  # 3
     (4, TType.STRING, 'fileName', 'UTF8', None, ),  # 4
-    (5, TType.LIST, 'exportNameList', (TType.STRING, 'UTF8', False), None, ),  # 5
 )
 all_structs.append(CommitTransformJobResp)
 CommitTransformJobResp.thrift_spec = (

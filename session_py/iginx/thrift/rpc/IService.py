@@ -3625,7 +3625,7 @@ class downsampleQuery_args(object):
             (fname, ftype, fid) = iprot.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            if fid == -1:
+            if fid == 1:
                 if ftype == TType.STRUCT:
                     self.req = DownsampleQueryReq()
                     self.req.read(iprot)
@@ -3642,7 +3642,7 @@ class downsampleQuery_args(object):
             return
         oprot.writeStructBegin('downsampleQuery_args')
         if self.req is not None:
-            oprot.writeFieldBegin('req', TType.STRUCT, -1)
+            oprot.writeFieldBegin('req', TType.STRUCT, 1)
             self.req.write(oprot)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -3662,7 +3662,10 @@ class downsampleQuery_args(object):
     def __ne__(self, other):
         return not (self == other)
 all_structs.append(downsampleQuery_args)
-downsampleQuery_args.thrift_spec = ()
+downsampleQuery_args.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'req', [DownsampleQueryReq, None], None, ),  # 1
+)
 
 
 class downsampleQuery_result(object):
@@ -3747,7 +3750,7 @@ class showColumns_args(object):
             (fname, ftype, fid) = iprot.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            if fid == -1:
+            if fid == 1:
                 if ftype == TType.STRUCT:
                     self.req = ShowColumnsReq()
                     self.req.read(iprot)
@@ -3764,7 +3767,7 @@ class showColumns_args(object):
             return
         oprot.writeStructBegin('showColumns_args')
         if self.req is not None:
-            oprot.writeFieldBegin('req', TType.STRUCT, -1)
+            oprot.writeFieldBegin('req', TType.STRUCT, 1)
             self.req.write(oprot)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -3784,7 +3787,10 @@ class showColumns_args(object):
     def __ne__(self, other):
         return not (self == other)
 all_structs.append(showColumns_args)
-showColumns_args.thrift_spec = ()
+showColumns_args.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'req', [ShowColumnsReq, None], None, ),  # 1
+)
 
 
 class showColumns_result(object):
@@ -3869,7 +3875,7 @@ class getReplicaNum_args(object):
             (fname, ftype, fid) = iprot.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            if fid == -1:
+            if fid == 1:
                 if ftype == TType.STRUCT:
                     self.req = GetReplicaNumReq()
                     self.req.read(iprot)
@@ -3886,7 +3892,7 @@ class getReplicaNum_args(object):
             return
         oprot.writeStructBegin('getReplicaNum_args')
         if self.req is not None:
-            oprot.writeFieldBegin('req', TType.STRUCT, -1)
+            oprot.writeFieldBegin('req', TType.STRUCT, 1)
             self.req.write(oprot)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
@@ -3906,7 +3912,10 @@ class getReplicaNum_args(object):
     def __ne__(self, other):
         return not (self == other)
 all_structs.append(getReplicaNum_args)
-getReplicaNum_args.thrift_spec = ()
+getReplicaNum_args.thrift_spec = (
+    None,  # 0
+    (1, TType.STRUCT, 'req', [GetReplicaNumReq, None], None, ),  # 1
+)
 
 
 class getReplicaNum_result(object):
@@ -6096,4 +6105,3 @@ curveMatch_result.thrift_spec = (
 )
 fix_spec(all_structs)
 del all_structs
-
