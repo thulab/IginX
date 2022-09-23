@@ -99,7 +99,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB11, change default config
+      - name: Run IoTDB11 and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
@@ -163,7 +163,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run IoTDB11
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
@@ -428,7 +428,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12, change default config
+      - name: Run IoTDB12 and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
@@ -492,7 +492,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run IoTDB12
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
@@ -651,7 +651,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run IoTDB12
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
           "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
@@ -698,7 +698,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run InfluxDB, change default config
+      - name: Run InfluxDB and change default config
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
           "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
@@ -749,7 +749,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run InfluxDB
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
@@ -802,7 +802,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+      - name: Run InfluxDB
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
           "${GITHUB_WORKSPACE}/.github/influxdb.sh"
