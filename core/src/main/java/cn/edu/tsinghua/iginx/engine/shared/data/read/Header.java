@@ -18,7 +18,9 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.read;
 
+import cn.edu.tsinghua.iginx.utils.StringUtils;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public final class Header {
 
@@ -29,6 +31,8 @@ public final class Header {
     private final List<Field> fields;
 
     private final Map<String, Integer> indexMap;
+
+    private final Map<String, List<Integer>> patternIndexCache;
 
     public Header(List<Field> fields) {
         this(null, fields);
@@ -41,6 +45,7 @@ public final class Header {
         for (int i = 0; i < fields.size(); i++) {
             this.indexMap.put(fields.get(i).getFullName(), i);
         }
+        this.patternIndexCache = new HashMap<>();
     }
 
     public Field getTime() {
@@ -79,6 +84,21 @@ public final class Header {
 
     public int indexOf(String name) {
         return indexMap.getOrDefault(name, -1);
+    }
+
+    public List<Integer> patternIndexOf(String pattern) {
+        if (patternIndexCache.containsKey(pattern)) {
+            return patternIndexCache.get(pattern);
+        } else {
+            List<Integer> indexList = new ArrayList<>();
+            fields.forEach(field -> {
+                if (Pattern.matches(StringUtils.reformatPath(pattern), field.getFullName())) {
+                    indexList.add(indexOf(field.getFullName()));
+                }
+            });
+            patternIndexCache.put(pattern, indexList);
+            return indexList;
+        }
     }
 
     @Override

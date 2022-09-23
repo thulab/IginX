@@ -7,10 +7,10 @@
   "time_zone": "Asia/Kabul",
   "metrics": [
     {
-      "name": "archive_file_tracked"
+      "name": "archive.file.tracked"
     },
     {
-      "name": "archive_file_search"
+      "name": "archive.file.search"
     }
   ]
 }

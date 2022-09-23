@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.engine.shared.function.Function;
 import cn.edu.tsinghua.iginx.engine.shared.function.system.utils.ValueUtils;
 import cn.edu.tsinghua.iginx.engine.shared.operator.filter.*;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import java.util.List;
 
 public class FilterUtils {
 
@@ -88,38 +89,30 @@ public class FilterUtils {
     }
 
     private static boolean validateValueFilter(ValueFilter valueFilter, Row row) {
-        Value value = row.getAsValue(valueFilter.getPath());
+        String path = valueFilter.getPath();
         Value targetValue = valueFilter.getValue();
-        if (value == null || value.isNull() || targetValue.isNull()) { // 如果任何一个是空值，则认为不可比较
+        if (targetValue.isNull()) { // targetValue是空值，则认为不可比较
             return false;
         }
 
-        if (value.getDataType() != targetValue.getDataType()) {
-            if (ValueUtils.isNumericType(value) && ValueUtils.isNumericType(targetValue)) {
-                value = ValueUtils.transformToDouble(value);
-                targetValue = ValueUtils.transformToDouble(targetValue);
-            } else {  // 数值类型和非数值类型无法比较
+        if (path.contains("*")) {
+            List<Value> valueList = row.getAsValueByPattern(path);
+            for (Value value : valueList) {
+                if (value == null || value.isNull()) { // 任何一个value是空值，则认为不可比较
+                    return false;
+                }
+                if (!validateValueCompare(valueFilter.getOp(), value, targetValue)) { // 任何一个子条件不满足，都直接返回
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            Value value = row.getAsValue(path);
+            if (value == null || value.isNull()) { // value是空值，则认为不可比较
                 return false;
             }
+            return validateValueCompare(valueFilter.getOp(), value, targetValue);
         }
-
-        switch (valueFilter.getOp()) {
-            case E:
-                return ValueUtils.compare(value, targetValue) == 0;
-            case G:
-                return ValueUtils.compare(value, targetValue) > 0;
-            case L:
-                return ValueUtils.compare(value, targetValue) < 0;
-            case GE:
-                return ValueUtils.compare(value, targetValue) >= 0;
-            case LE:
-                return ValueUtils.compare(value, targetValue) <= 0;
-            case NE:
-                return ValueUtils.compare(value, targetValue) != 0;
-            case LIKE:
-                return ValueUtils.regexCompare(value, targetValue);
-        }
-        return false;
     }
 
     private static boolean validatePathFilter(PathFilter pathFilter, Row row) {
@@ -128,7 +121,10 @@ public class FilterUtils {
         if (valueA == null || valueA.isNull() || valueB == null || valueB.isNull()) { // 如果任何一个是空值，则认为不可比较
             return false;
         }
+        return validateValueCompare(pathFilter.getOp(), valueA, valueB);
+    }
 
+    private static boolean validateValueCompare(Op op, Value valueA, Value valueB) {
         if (valueA.getDataType() != valueB.getDataType()) {
             if (ValueUtils.isNumericType(valueA) && ValueUtils.isNumericType(valueB)) {
                 valueA = ValueUtils.transformToDouble(valueA);
@@ -138,7 +134,7 @@ public class FilterUtils {
             }
         }
 
-        switch (pathFilter.getOp()) {
+        switch (op) {
             case E:
                 return ValueUtils.compare(valueA, valueB) == 0;
             case G:
@@ -151,6 +147,8 @@ public class FilterUtils {
                 return ValueUtils.compare(valueA, valueB) <= 0;
             case NE:
                 return ValueUtils.compare(valueA, valueB) != 0;
+            case LIKE:
+                return ValueUtils.regexCompare(valueA, valueB);
         }
         return false;
     }

@@ -68,7 +68,6 @@ public class IginxClient {
     private static final String SCRIPT_HINT = "./start-cli.sh(start-cli.bat if Windows)";
     private static final String QUIT_COMMAND = "quit";
     private static final String EXIT_COMMAND = "exit";
-    private static final String SET_TIME_UNIT = "set timeunit in";
     static String host = "127.0.0.1";
     static String port = "6888";
     static String username = "root";
@@ -222,43 +221,8 @@ public class IginxClient {
             return OperationResult.STOP;
         }
 
-        if (trimedStatement.startsWith(SET_TIME_UNIT)) {
-            setTimeUnit(trimedStatement);
-            return OperationResult.CONTINUE;
-        }
-
         processSql(statement);
         return OperationResult.DO_NOTHING;
-    }
-
-    private static void setTimeUnit(String statement) {
-        String[] parts = statement.split(" ");
-        if (parts.length == 4) {
-            switch (parts[3].toLowerCase()) {
-                case "second":
-                case "s":
-                    timestampPrecision = "s";
-                    break;
-                case "millisecond":
-                case "ms":
-                    timestampPrecision = "ms";
-                    break;
-                case "microsecond":
-                case "us":
-                    timestampPrecision = "us";
-                    break;
-                case "nanosecond":
-                case "ns":
-                    timestampPrecision = "ns";
-                    break;
-                default:
-                    System.out.println(String.format("Not support time unit %s.", parts[3]));
-                    break;
-            }
-            System.out.println(String.format("Current time unit: %s", timestampPrecision));
-        } else {
-            System.out.println("Set timeunit error, please input like: set timeunit in s/ms/us/ns");
-        }
     }
 
     private static void processSql(String sql) {
@@ -334,7 +298,6 @@ public class IginxClient {
             Arrays.asList("delete", "time", "series"),
             Arrays.asList("select"),
             Arrays.asList("add", "storageengine"),
-            Arrays.asList("set", "timeunit", "in"),
             Arrays.asList("register", "python", "task"),
             Arrays.asList("drop", "python", "task"),
             Arrays.asList("commit", "transform", "job"),
