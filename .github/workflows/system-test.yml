@@ -56,8 +56,16 @@ jobs:
           fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
