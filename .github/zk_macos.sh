@@ -10,11 +10,7 @@ sh -c "mv apache-zookeeper-3.6.3-bin zookeeper"
 
 sh -c "cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg"
 
-sh -c "sed -i '' 's/#maxClientCnxns=60/maxClientCnxns=60/' zookeeper/conf/zoo.cfg"
-
-sh -c "top | grep 2181"
-
-sh -c "cat zookeeper/conf/zoo.cfg"
+sh -c "sed -i '' 's/clientPort=2181/clientPort=2182/' zookeeper/conf/zoo.cfg"
 
 sh -c "zookeeper/bin/zkServer.sh start"
 
