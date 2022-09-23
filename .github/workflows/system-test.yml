@@ -18,7 +18,7 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
     runs-on: ${{ matrix.os}}
     env:
       VERSION: 0.6.0-SNAPSHOT
