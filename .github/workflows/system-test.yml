@@ -938,7 +938,7 @@ jobs:
             echo "$RUNNER_OS is not supported"
             exit 1
           fi
-      - name: Run IoTDB
+      - name: Run InfluxDB
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
             chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
