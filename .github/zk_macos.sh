@@ -16,4 +16,6 @@ sh -c "cat zookeeper/conf/zoo.cfg"
 
 sh -c "zookeeper/bin/zkServer.sh start"
 
-sh -c "zookeeper/bin/zkCli.sh -server 127.0.0.1:2182 ls /"
+sh -c "ps -ef | grep zookeeper"
+
+sh -c "zookeeper/bin/zkCli.sh -server 0.0.0.1:2182 ls /"
