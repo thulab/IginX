@@ -25,6 +25,10 @@ public abstract class SQLSessionIT {
 
     protected boolean isAbleToShowTimeSeries;
 
+    private final long startTimestamp = 0L;
+
+    private final long endTimestamp = 15000L;
+
     @BeforeClass
     public static void setUp() {
         session = new Session("127.0.0.1", 6888, "root", "root");
@@ -47,9 +51,6 @@ public abstract class SQLSessionIT {
     @Before
     public void insertData() throws ExecutionException, SessionException {
         String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
-
-        long startTimestamp = 0L;
-        long endTimestamp = 15000L;
 
         StringBuilder builder = new StringBuilder(insertStrPrefix);
 
@@ -92,7 +93,9 @@ public abstract class SQLSessionIT {
     }
 
     private String execute(String statement) {
-        logger.info("Execute Statement: \"{}\"", statement);
+        if (!statement.toLowerCase().startsWith("insert")) {
+            logger.info("Execute Statement: \"{}\"", statement);
+        }
 
         SessionExecuteSqlResult res = null;
         try {
@@ -333,6 +336,34 @@ public abstract class SQLSessionIT {
             "|   9|  asdad|\n" +
             "+----+-------+\n" +
             "Total line number = 4\n";
+        executeAndCompare(query, expected);
+
+        StringBuilder builder = new StringBuilder();
+        builder.append("INSERT INTO us.d2(time, s1) VALUES ");
+        int size = (int) (endTimestamp - startTimestamp);
+        for (int i = 0; i < size; i++) {
+            builder.append(", (");
+            builder.append(startTimestamp + i).append(", ");
+            builder.append(i + 5);
+            builder.append(")");
+        }
+        builder.append(";");
+
+        insert = builder.toString();
+        execute(insert);
+
+        query = "SELECT s1 FROM us.* WHERE s1 > 200 and s1 < 210;";
+        expected =
+            "ResultSets:\n"
+                + "+----+--------+--------+\n"
+                + "|Time|us.d1.s1|us.d2.s1|\n"
+                + "+----+--------+--------+\n"
+                + "| 201|     201|     206|\n"
+                + "| 202|     202|     207|\n"
+                + "| 203|     203|     208|\n"
+                + "| 204|     204|     209|\n"
+                + "+----+--------+--------+\n"
+                + "Total line number = 4\n";
         executeAndCompare(query, expected);
     }
 
@@ -1607,6 +1638,85 @@ public abstract class SQLSessionIT {
             "|   0|   10255|  1074.5|\n" +
             "+----+--------+--------+\n" +
             "Total line number = 1\n";
+        executeAndCompare(query, expected);
+    }
+
+    @Test
+    public void testSpecialPath() {
+        // Chinese path
+        String insert = "INSERT INTO 测试.前缀(TIME, 后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        execute(insert);
+
+        String query = "SELECT 后缀 FROM 测试.前缀;";
+        String expected =
+            "ResultSets:\n"
+                + "+----+--------+\n"
+                + "|Time|测试.前缀.后缀|\n"
+                + "+----+--------+\n"
+                + "|   1|       1|\n"
+                + "|   2|       2|\n"
+                + "|   3|       3|\n"
+                + "|   4|       4|\n"
+                + "|   5|       5|\n"
+                + "+----+--------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        // number path
+        insert = "INSERT INTO 114514(TIME, 1919810) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        execute(insert);
+
+        query = "SELECT 1919810 FROM 114514;";
+        expected =
+            "ResultSets:\n"
+                + "+----+--------------+\n"
+                + "|Time|114514.1919810|\n"
+                + "+----+--------------+\n"
+                + "|   1|             1|\n"
+                + "|   2|             2|\n"
+                + "|   3|             3|\n"
+                + "|   4|             4|\n"
+                + "|   5|             5|\n"
+                + "+----+--------------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        // special symbol path
+        insert = "INSERT INTO _:/@#$%&+(TIME, _:/@#$%&+) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        execute(insert);
+
+        query = "SELECT _:/@#$%&+ FROM _:/@#$%&+;";
+        expected =
+            "ResultSets:\n"
+                + "+----+-------------------+\n"
+                + "|Time|_:/@#$%&+._:/@#$%&+|\n"
+                + "+----+-------------------+\n"
+                + "|   1|                  1|\n"
+                + "|   2|                  2|\n"
+                + "|   3|                  3|\n"
+                + "|   4|                  4|\n"
+                + "|   5|                  5|\n"
+                + "+----+-------------------+\n"
+                + "Total line number = 5\n";
+        executeAndCompare(query, expected);
+
+        // mix path
+        insert = "INSERT INTO 测试.前缀.114514(TIME, 1919810._:/@#$%&+.后缀) VALUES (1, 1), (2, 2), (3, 3), (4, 4), (5, 5);";
+        execute(insert);
+
+        query = "SELECT 1919810._:/@#$%&+.后缀 FROM 测试.前缀.114514;";
+        expected =
+            "ResultSets:\n"
+                + "+----+---------------------------------+\n"
+                + "|Time|测试.前缀.114514.1919810._:/@#$%&+.后缀|\n"
+                + "+----+---------------------------------+\n"
+                + "|   1|                                1|\n"
+                + "|   2|                                2|\n"
+                + "|   3|                                3|\n"
+                + "|   4|                                4|\n"
+                + "|   5|                                5|\n"
+                + "+----+---------------------------------+\n"
+                + "Total line number = 5\n";
         executeAndCompare(query, expected);
     }
 

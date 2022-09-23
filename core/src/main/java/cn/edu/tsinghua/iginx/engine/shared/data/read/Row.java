@@ -21,7 +21,9 @@ package cn.edu.tsinghua.iginx.engine.shared.data.read;
 import cn.edu.tsinghua.iginx.engine.shared.data.Value;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 public class Row {
@@ -96,6 +98,19 @@ public class Row {
             return null;
         }
         return new Value(header.getField(index).getType(), values[index]);
+    }
+
+    public List<Value> getAsValueByPattern(String pattern) {
+        List<Value> retValueList = new ArrayList<>();
+        List<Integer> indexList = header.patternIndexOf(pattern);
+        if (indexList != null && !indexList.isEmpty()) {
+            indexList.forEach(index -> {
+                if (index != -1) {
+                    retValueList.add(new Value(header.getField(index).getType(), values[index]));
+                }
+            });
+        }
+        return retValueList;
     }
 
     public String toCSVTypeString() {

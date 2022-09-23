@@ -110,7 +110,11 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
+        if (!StringUtils.allHasMoreThanOneSubPath(req.getPaths())) {
+            logger.error("Insert paths must have more than one sub paths.");
+            return RpcUtils.FAILURE;
+        }
+        RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
@@ -120,7 +124,11 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
+        if (!StringUtils.allHasMoreThanOneSubPath(req.getPaths())) {
+            logger.error("Insert paths must have more than one sub paths.");
+            return RpcUtils.FAILURE;
+        }
+        RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
@@ -130,7 +138,11 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
+        if (!StringUtils.allHasMoreThanOneSubPath(req.getPaths())) {
+            logger.error("Insert paths must have more than one sub paths.");
+            return RpcUtils.FAILURE;
+        }
+        RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
@@ -140,7 +152,11 @@ public class IginxWorker implements IService.Iface {
         if (!sessionManager.checkSession(req.getSessionId(), AuthType.Write)) {
             return RpcUtils.ACCESS_DENY;
         }
-        RequestContext ctx = contextBuilder.build(req, config.getTimePrecision());
+        if (!StringUtils.allHasMoreThanOneSubPath(req.getPaths())) {
+            logger.error("Insert paths must have more than one sub paths.");
+            return RpcUtils.FAILURE;
+        }
+        RequestContext ctx = contextBuilder.build(req);
         executor.execute(ctx);
         return ctx.getResult().getStatus();
     }
