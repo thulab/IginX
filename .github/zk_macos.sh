@@ -12,6 +12,8 @@ sh -c "cp zookeeper/conf/zoo_sample.cfg zookeeper/conf/zoo.cfg"
 
 sh -c "sed -i '' 's/clientPort=2181/clientPort=2182/' zookeeper/conf/zoo.cfg"
 
+sh -c "cat zookeeper/conf/zoo.cfg"
+
 sh -c "zookeeper/bin/zkServer.sh start"
 
 sh -c "zookeeper/bin/zkCli.sh ls /"
