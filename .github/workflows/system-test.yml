@@ -43,6 +43,7 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
+          echo "OS is $RUNNER_OS"
           if [ "$RUNNER_OS" == "Linux" ]; then
             chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
             "${GITHUB_WORKSPACE}/.github/zk.sh"
