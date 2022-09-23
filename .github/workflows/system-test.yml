@@ -41,13 +41,13 @@ jobs:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
-      - name: Run ZooKeeper Ubuntu
-        if: ${{ matrix.os }} == 'ubuntu-latest'
+      - name: Run ZooKeeper Linux
+        if: runner.os == 'Linux'
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
           "${GITHUB_WORKSPACE}/.github/zk.sh"
       - name: Run ZooKeeper MacOS
-        if: ${{ matrix.os }} == 'macos-latest'
+        if: ${{ matrix.os }} == 'macOS'
         run: |
           chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
           "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
