@@ -43,7 +43,6 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          echo "OS is $RUNNER_OS"
           if [ "$RUNNER_OS" == "Linux" ]; then
             chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
             "${GITHUB_WORKSPACE}/.github/zk.sh"
@@ -111,12 +110,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB11, change default config
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB11 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
@@ -173,12 +188,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -224,12 +255,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -275,12 +322,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -326,12 +389,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -377,12 +456,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -428,12 +523,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12, change default config
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
@@ -490,12 +601,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -541,12 +668,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -592,12 +735,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -643,12 +802,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -688,12 +863,28 @@ jobs:
           java-version: ${{ matrix.java }}
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run InfluxDB, change default config
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run InfluxDB and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
-          "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Write history Data
@@ -737,12 +928,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
-          "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -788,12 +995,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run InfluxDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
-          "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -840,12 +1063,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -892,12 +1131,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
@@ -943,12 +1198,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
