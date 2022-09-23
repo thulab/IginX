@@ -19,7 +19,7 @@ jobs:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, mac-latest, windows-latest ]
-    runs-on: ${{ matrix.os}}
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -31,7 +31,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -71,8 +70,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -84,7 +83,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -135,8 +133,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -148,7 +146,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -188,8 +185,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -201,7 +198,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -241,8 +237,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -254,7 +250,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -294,8 +289,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -307,7 +302,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -347,8 +341,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -360,7 +354,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -400,8 +393,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -413,7 +406,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -464,8 +456,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -477,7 +469,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -517,8 +508,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -530,7 +521,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -570,8 +560,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -583,7 +573,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -623,8 +612,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -636,7 +625,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -676,8 +664,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -689,7 +677,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -721,8 +708,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -734,7 +721,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -774,8 +760,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -787,7 +773,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -827,8 +812,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -880,8 +865,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -893,7 +878,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -933,7 +917,7 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
+        os: [ ubuntu-latest, mac-latest, windows-latest ]
     runs-on: ${{ matrix.os}}
     env:
       VERSION: 0.6.0-SNAPSHOT
@@ -946,7 +930,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
