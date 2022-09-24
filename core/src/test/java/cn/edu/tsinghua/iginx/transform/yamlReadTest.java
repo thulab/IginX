@@ -25,8 +25,9 @@ public class yamlReadTest {
             List<TaskFromYAML> tasks = jobFromYAML.getTaskList();
             System.out.println("exportType: " + jobFromYAML.getExportType());
             System.out.println("exportFile: " + jobFromYAML.getExportFile());
-            for(String job : jobFromYAML.getExportNameList())
-                System.out.println("ExportNameList: " + job);
+            if(jobFromYAML.getExportNameList()!=null)
+                for(String job : jobFromYAML.getExportNameList())
+                    System.out.println("ExportNameList: " + job);
 
             System.out.println("\n");
 
@@ -35,8 +36,9 @@ public class yamlReadTest {
                 System.out.println("dataFlowType: " + task.getDataFlowType());
                 System.out.println("timeout: " + task.getTimeout());
                 System.out.println("pyTaskName: " + task.getPyTaskName());
-                for(String sql : task.getSqlList())
-                    System.out.println("SqlList: " + sql);
+                if(task.getSqlList()!=null)
+                    for(String sql : task.getSqlList())
+                        System.out.println("SqlList: " + sql);
                 System.out.println("--------------------------------------------");
             }
 

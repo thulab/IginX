@@ -12,7 +12,7 @@ public class TaskFromYAML {
     private List<String> sqlList;
 
     public TaskFromYAML() {
-        sqlList = new ArrayList<>();
+        
     }
 
     public String getTaskType() {

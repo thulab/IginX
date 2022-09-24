@@ -11,7 +11,7 @@ public class JobFromYAML {
     private List<String> exportNameList;
 
     public JobFromYAML() {
-        exportNameList = new ArrayList<>();
+
     }
 
     public List<TaskFromYAML> getTaskList() {
