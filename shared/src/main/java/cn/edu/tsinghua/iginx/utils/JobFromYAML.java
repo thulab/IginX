@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class JobFromYAML {
@@ -10,7 +11,7 @@ public class JobFromYAML {
     private List<String> exportNameList;
 
     public JobFromYAML() {
-
+        exportNameList = new ArrayList<>();
     }
 
     public List<TaskFromYAML> getTaskList() {

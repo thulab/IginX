@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.utils;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class TaskFromYAML {
@@ -11,7 +12,7 @@ public class TaskFromYAML {
     private List<String> sqlList;
 
     public TaskFromYAML() {
-
+        sqlList = new ArrayList<>();
     }
 
     public String getTaskType() {

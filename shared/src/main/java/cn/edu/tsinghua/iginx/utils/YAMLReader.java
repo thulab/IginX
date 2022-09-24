@@ -39,6 +39,14 @@ public class YAMLReader {
         conf = conf.replaceAll(pyTaskName, "pyTaskName");
         conf = conf.replaceAll(sqlList, "sqlList");
 
+        String exportType = "(?i)exportType";
+        String exportFile = "(?i)exportFile";
+        String exportNameList = "(?i)exportNameList";
+
+        conf = conf.replaceAll(exportType, "exportType");
+        conf = conf.replaceAll(exportFile, "exportFile");
+        conf = conf.replaceAll(exportNameList, "exportNameList");
+
         return conf;
     }
 
