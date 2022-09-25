@@ -18,7 +18,7 @@
         <dependency>
             <groupId>org.apache.thrift</groupId>
             <artifactId>libthrift</artifactId>
-            <version>0.13.0</version>
+            <version>0.16.0</version>
             <scope>compile</scope>
             <exclusions>
                 <exclusion>
@@ -35,7 +35,7 @@
     </dependencies>
 
     <properties>
-        <thrift.version>0.13.0</thrift.version>
+        <thrift.version>0.16.0</thrift.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -253,9 +253,9 @@
             </activation>
             <properties>
                 <thrift.download-url>
-                    https://github.com/thulab/IginX-benchmarks/raw/main/resources/thrift_0.12.0_0.13.0_linux.exe
+                    https://github.com/thulab/IginX-benchmarks/raw/main/resources/thrift_0.16.0_linux.exe
                 </thrift.download-url>
-                <thrift.executable>thrift_0.12.0_0.13.0_linux.exe</thrift.executable>
+                <thrift.executable>thrift_0.16.0_linux.exe</thrift.executable>
                 <thrift.skip-making-executable>false</thrift.skip-making-executable>
                 <thrift.exec-cmd.executable>chmod</thrift.exec-cmd.executable>
                 <thrift.exec-cmd.args>+x ${project.build.directory}/tools/${thrift.executable}
@@ -271,9 +271,9 @@
             </activation>
             <properties>
                 <thrift.download-url>
-                    https://github.com/thulab/IginX-benchmarks/raw/main/resources/thrift_0.12.0_0.13.0_mac.exe
+                    https://github.com/thulab/IginX-benchmarks/raw/main/resources/thrift_0.16.0_mac.exe
                 </thrift.download-url>
-                <thrift.executable>thrift_0.12.0_0.13.0_mac.exe</thrift.executable>
+                <thrift.executable>thrift_0.16.0_mac.exe</thrift.executable>
                 <thrift.skip-making-executable>false</thrift.skip-making-executable>
                 <thrift.exec-cmd.executable>chmod</thrift.exec-cmd.executable>
                 <thrift.exec-cmd.args>+x ${project.build.directory}/tools/${thrift.executable}

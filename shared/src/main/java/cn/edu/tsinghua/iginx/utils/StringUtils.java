@@ -53,6 +53,19 @@ public class StringUtils {
         return str.substring(0, str.length() - 1) + (char)(str.charAt(str.length() - 1) + 1);
     }
 
+    public static boolean allHasMoreThanOneSubPath(List<String> pathList) {
+        for (String path : pathList) {
+            if (!hasMoreThanOneSubPath(path)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean hasMoreThanOneSubPath(String path) {
+        return path.contains(".");
+    }
+
     public static boolean isPattern(String path) {
         return path.contains("*");
     }

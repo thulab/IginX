@@ -437,7 +437,6 @@ struct CommitTransformJobReq {
     2: required list<TaskInfo> taskList
     3: required ExportType exportType
     4: optional string fileName
-    5: optional list<string> exportNameList
 }
 
 struct CommitTransformJobResp {
@@ -517,35 +516,35 @@ struct CurveMatchResp {
 
 service IService {
 
-    OpenSessionResp openSession(1:OpenSessionReq req);
+    OpenSessionResp openSession(1: OpenSessionReq req);
 
-    Status closeSession(1:CloseSessionReq req);
+    Status closeSession(1: CloseSessionReq req);
 
-    Status deleteColumns(1:DeleteColumnsReq req);
+    Status deleteColumns(1: DeleteColumnsReq req);
 
-    Status insertColumnRecords(1:InsertColumnRecordsReq req);
+    Status insertColumnRecords(1: InsertColumnRecordsReq req);
 
-    Status insertNonAlignedColumnRecords(1:InsertNonAlignedColumnRecordsReq req);
+    Status insertNonAlignedColumnRecords(1: InsertNonAlignedColumnRecordsReq req);
 
-    Status insertRowRecords(1:InsertRowRecordsReq req);
+    Status insertRowRecords(1: InsertRowRecordsReq req);
 
-    Status insertNonAlignedRowRecords(1:InsertNonAlignedRowRecordsReq req);
+    Status insertNonAlignedRowRecords(1: InsertNonAlignedRowRecordsReq req);
 
-    Status deleteDataInColumns(1:DeleteDataInColumnsReq req);
+    Status deleteDataInColumns(1: DeleteDataInColumnsReq req);
 
-    QueryDataResp queryData(1:QueryDataReq req);
+    QueryDataResp queryData(1: QueryDataReq req);
 
     Status addStorageEngines(1: AddStorageEnginesReq req);
 
-    AggregateQueryResp aggregateQuery(1:AggregateQueryReq req);
+    AggregateQueryResp aggregateQuery(1: AggregateQueryReq req);
 
     LastQueryResp lastQuery(1: LastQueryReq req);
 
-    DownsampleQueryResp downsampleQuery(DownsampleQueryReq req);
+    DownsampleQueryResp downsampleQuery(1: DownsampleQueryReq req);
 
-    ShowColumnsResp showColumns(ShowColumnsReq req);
+    ShowColumnsResp showColumns(1: ShowColumnsReq req);
 
-    GetReplicaNumResp getReplicaNum(GetReplicaNumReq req);
+    GetReplicaNumResp getReplicaNum(1: GetReplicaNumReq req);
 
     ExecuteSqlResp executeSql(1: ExecuteSqlReq req);
 
@@ -559,11 +558,11 @@ service IService {
 
     GetClusterInfoResp getClusterInfo(1: GetClusterInfoReq req);
 
-    ExecuteStatementResp executeStatement(1:ExecuteStatementReq req);
+    ExecuteStatementResp executeStatement(1: ExecuteStatementReq req);
 
-    FetchResultsResp fetchResults(1:FetchResultsReq req);
+    FetchResultsResp fetchResults(1: FetchResultsReq req);
 
-    Status closeStatement(1:CloseStatementReq req);
+    Status closeStatement(1: CloseStatementReq req);
 
     CommitTransformJobResp commitTransformJob(1: CommitTransformJobReq req);
 

@@ -21,6 +21,3 @@ taskList:
 exportType: file
 #exportFile: /path/to/your/output/dir
 exportFile: /Users/cauchy-ny/Downloads/export_file_sum_sql.txt
-exportNameList:
-  - col1
-  - col2

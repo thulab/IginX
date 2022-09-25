@@ -7,7 +7,6 @@ public class JobFromYAML {
     private List<TaskFromYAML> taskList;
     private String exportFile;
     private String exportType;
-    private List<String> exportNameList;
 
     public JobFromYAML() {
 
@@ -35,13 +34,5 @@ public class JobFromYAML {
 
     public void setExportType(String exportType) {
         this.exportType = exportType;
-    }
-
-    public List<String> getExportNameList() {
-        return exportNameList;
-    }
-
-    public void setExportNameList(List<String> exportNameList) {
-        this.exportNameList = exportNameList;
     }
 }

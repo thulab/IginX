@@ -15,4 +15,7 @@ class MyTransformer:
     def transform(self, rows, n=1):
         # Return the last n rows from df
         df = pd.DataFrame(rows)
-        return df.tail(n).values.tolist()
+        df = df.tail(n)
+        ret = df.values.tolist()
+        ret.insert(0, df.keys().values.tolist())
+        return ret

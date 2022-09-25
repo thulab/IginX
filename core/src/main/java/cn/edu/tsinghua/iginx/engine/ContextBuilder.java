@@ -42,34 +42,32 @@ public class ContextBuilder {
         return new RequestContext(req.getSessionId(), statement);
     }
 
-    public RequestContext build(InsertColumnRecordsReq req, String timePrecision) {
+    public RequestContext build(InsertColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Column, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
-    public RequestContext build(InsertNonAlignedColumnRecordsReq req, String timePrecision) {
+    public RequestContext build(InsertNonAlignedColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedColumn, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
-    public RequestContext build(InsertRowRecordsReq req, String timePrecision) {
+    public RequestContext build(InsertRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Row, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
-    public RequestContext build(InsertNonAlignedRowRecordsReq req, String timePrecision) {
+    public RequestContext build(InsertNonAlignedRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedRow, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), timePrecision);
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
     }
 
     private RequestContext buildFromInsertReq(long sessionId, RawDataType rawDataType, List<String> paths, List<DataType> types,
                                               byte[] timestamps, List<ByteBuffer> valueList, List<ByteBuffer> bitmapList,
-                                              List<Map<String, String>> tagsList, String timePrecision) {
+                                              List<Map<String, String>> tagsList) {
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(timestamps);
         List<Long> times = new ArrayList<>();
-        for (long time : timeArray) {
-            times.add(TimeUtils.getTimeInMs(time, timePrecision));
-        }
+        Arrays.stream(timeArray).forEach(times::add);
 
         List<Bitmap> bitmaps;
         Object[] values;

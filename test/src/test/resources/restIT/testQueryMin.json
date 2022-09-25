@@ -6,7 +6,7 @@
   },
   "metrics": [
     {
-      "name": "archive_file_tracked",
+      "name": "archive.file.tracked",
       "aggregators": [
         {
           "name": "min",

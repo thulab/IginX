@@ -3,6 +3,7 @@ package cn.edu.tsinghua.iginx.transform.data;
 import cn.edu.tsinghua.iginx.engine.ContextBuilder;
 import cn.edu.tsinghua.iginx.engine.StatementExecutor;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Row;
 import cn.edu.tsinghua.iginx.thrift.ExecuteStatementReq;
 import org.slf4j.Logger;
@@ -14,17 +15,14 @@ public class IginXWriter extends ExportWriter {
 
     private final long sessionId;
 
-    private final List<String> exportNameList;
-
     private final StatementExecutor executor = StatementExecutor.getInstance();
 
     private final ContextBuilder contextBuilder = ContextBuilder.getInstance();
 
     private final static Logger logger = LoggerFactory.getLogger(IginXWriter.class);
 
-    public IginXWriter(long sessionId, List<String> exportNameList) {
+    public IginXWriter(long sessionId) {
         this.sessionId = sessionId;
-        this.exportNameList = exportNameList;
     }
 
     @Override
@@ -46,15 +44,10 @@ public class IginXWriter extends ExportWriter {
 
         // construct paths
         builder.append("INSERT INTO transform(Time, ");
-        if (exportNameList == null || exportNameList.isEmpty()) {
-            for (int i = 0; i < batchData.getHeader().getFields().size(); i++) {
-                builder.append("result.default_column").append(i).append(",");
-            }
-        } else {
-            for (String pathName : exportNameList) {
-                builder.append(pathName).append(",");
-            }
-        }
+        Header header = batchData.getHeader();
+        header.getFields().forEach(field ->
+            builder.append(reformatPath(field.getFullName())).append(",")
+        );
         builder.deleteCharAt(builder.length() - 1);
 
         // construct values
@@ -72,5 +65,13 @@ public class IginXWriter extends ExportWriter {
         }
         builder.deleteCharAt(builder.length() - 1).append(";");
         return builder.toString();
+    }
+
+    private String reformatPath(String path) {
+        if (!path.contains("(") && !path.contains(")"))
+            return path;
+        path = path.replaceAll("[{]", "[");
+        path = path.replaceAll("[}]", "]");
+        return path;
     }
 }
