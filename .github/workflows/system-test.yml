@@ -18,8 +18,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -31,7 +31,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -44,17 +43,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -71,8 +85,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -84,7 +98,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -97,12 +110,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.iotdb11 test/pom.xml
       - name: Install with Maven
@@ -118,7 +147,6 @@ jobs:
           mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -135,8 +163,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -148,7 +176,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -161,17 +188,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB11
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -188,8 +230,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -201,7 +243,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -214,17 +255,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -241,8 +297,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -254,7 +310,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -267,17 +322,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -294,8 +364,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -307,7 +377,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -320,17 +389,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -347,8 +431,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -360,7 +444,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -373,17 +456,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -400,8 +498,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -413,7 +511,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -426,12 +523,28 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
           mv test/pom.xml test/pom.xml.backup
           mv test/pom.xml.iotdb12 test/pom.xml
       - name: Install with Maven
@@ -447,7 +560,6 @@ jobs:
           mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -464,8 +576,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -477,7 +589,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -490,17 +601,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -517,8 +643,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -530,7 +656,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -543,17 +668,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -570,8 +710,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -583,7 +723,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -596,17 +735,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB12 and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -623,8 +777,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -636,7 +790,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -649,17 +802,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
-      - name: Run IoTDB12
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
+      - name: Run IoTDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb12_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -676,8 +844,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -689,19 +857,34 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
           java-version: ${{ matrix.java }}
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run InfluxDB and change default config
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
-          "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_history_data.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_history_data_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Write history Data
@@ -710,10 +893,8 @@ jobs:
           sleep 10
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
-
   InfluxDB-SQL-Test:
     strategy:
       fail-fast: false
@@ -721,8 +902,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -734,7 +915,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -747,17 +927,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run InfluxDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
-          "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -774,8 +969,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -787,7 +982,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -800,17 +994,32 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run InfluxDB
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
-          "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/influxdb_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for SQL
@@ -827,8 +1036,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -853,17 +1062,40 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            sudo sed -i '' 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
@@ -880,8 +1112,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -893,7 +1125,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -906,21 +1137,36 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=RestIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=RestAnnotationIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
@@ -933,8 +1179,8 @@ jobs:
       matrix:
         java: [ 8 ]
         python-version: [ "3.7" ]
-        os: [ ubuntu-latest ]
-    runs-on: ${{ matrix.os}}
+        os: [ ubuntu-latest, macos-latest ]
+    runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
     steps:
@@ -946,7 +1192,6 @@ jobs:
       - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pemja==0.1.5
       - name: Set up JDK ${{ matrix.java }}
         uses: actions/setup-java@v1
         with:
@@ -959,21 +1204,36 @@ jobs:
           restore-keys: ${{ runner.os }}-m2
       - name: Run ZooKeeper
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
-          "${GITHUB_WORKSPACE}/.github/zk.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk.sh"
+            "${GITHUB_WORKSPACE}/.github/zk.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/zk_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Run IoTDB11
         run: |
-          chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
-          "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          if [ "$RUNNER_OS" == "Linux" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11.sh"
+          elif [ "$RUNNER_OS" == "macOS" ]; then
+            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/iotdb11_macos.sh"
+          else
+            echo "$RUNNER_OS is not supported"
+            exit 1
+          fi
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Start IginX
         run: |
-          sudo sed -i 's/needInitBasicUDFFunctions=false/needInitBasicUDFFunctions=true/g' ${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/conf/config.properties
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=RestAnnotationIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=RestIT -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
