@@ -2,7 +2,7 @@
 
 set -e
 
-sh -c "wget -nv https://archive.apache.org/dist/iotdb/0.11.4/apache-iotdb-0.11.4-bin.zip"
+sh -c "wget -nv https://github.com/thulab/IginX-benchmarks/raw/main/resources/apache-iotdb-0.11.4-bin.zip"
 
 sh -c "unzip apache-iotdb-0.11.4-bin.zip"
 
