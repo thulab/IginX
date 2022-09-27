@@ -25,9 +25,6 @@ public class yamlReadTest {
             List<TaskFromYAML> tasks = jobFromYAML.getTaskList();
             System.out.println("exportType: " + jobFromYAML.getExportType());
             System.out.println("exportFile: " + jobFromYAML.getExportFile());
-            if(jobFromYAML.getExportNameList()!=null)
-                for(String job : jobFromYAML.getExportNameList())
-                    System.out.println("ExportNameList: " + job);
 
             System.out.println("\n");
 
