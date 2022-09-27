@@ -44,30 +44,32 @@ public class ContextBuilder {
 
     public RequestContext build(InsertColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Column, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), req.getTimePrecision());
     }
 
     public RequestContext build(InsertNonAlignedColumnRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedColumn, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), req.getTimePrecision());
     }
 
     public RequestContext build(InsertRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.Row, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), req.getTimePrecision());
     }
 
     public RequestContext build(InsertNonAlignedRowRecordsReq req) {
         return buildFromInsertReq(req.getSessionId(), RawDataType.NonAlignedRow, req.getPaths(), req.getDataTypeList(),
-            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList());
+            req.getTimestamps(), req.getValuesList(), req.getBitmapList(), req.getTagsList(), req.getTimePrecision());
     }
 
     private RequestContext buildFromInsertReq(long sessionId, RawDataType rawDataType, List<String> paths, List<DataType> types,
                                               byte[] timestamps, List<ByteBuffer> valueList, List<ByteBuffer> bitmapList,
-                                              List<Map<String, String>> tagsList) {
+                                              List<Map<String, String>> tagsList, String timePrecision) {
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(timestamps);
         List<Long> times = new ArrayList<>();
-        Arrays.stream(timeArray).forEach(times::add);
+        for (long time : timeArray) {
+            times.add(TimeUtils.getTimeInNs(time, timePrecision));
+        }
 
         List<Bitmap> bitmaps;
         Object[] values;
