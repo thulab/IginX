@@ -69,6 +69,8 @@ public class Session {
     private boolean isClosed;
     private int redirectTimes;
 
+    private static final String timeUnit = "ms";
+
     public Session(String host, int port) {
         this(host, port, USERNAME, PASSWORD);
     }
@@ -299,11 +301,16 @@ public class Session {
 
     public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                     List<DataType> dataTypeList) throws SessionException, ExecutionException {
-        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null, timeUnit);
     }
 
     public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                     List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                    List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -378,6 +385,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -397,11 +405,16 @@ public class Session {
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                               List<DataType> dataTypeList) throws SessionException, ExecutionException {
-        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null, timeUnit);
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                               List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -476,6 +489,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -495,6 +509,11 @@ public class Session {
 
     public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -575,6 +594,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -594,11 +614,16 @@ public class Session {
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                            List<DataType> dataTypeList) throws SessionException, ExecutionException {
-        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null, timeUnit);
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                            List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -679,6 +704,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;

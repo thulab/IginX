@@ -423,6 +423,25 @@ public class SessionPool {
         }
     }
 
+    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                    List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
+        for (int i = 0; i < RETRY; i++) {
+            Session session = getSession();
+            try {
+                session.insertColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, precision);
+                putBack(session);
+                return;
+            } catch (SessionException e) {
+                // TException means the connection is broken, remove it and get a new one.
+                logger.warn("insertColumnRecords failed", e);
+                cleanSessionAndMayThrowConnectionException(session, i, e);
+            } catch (ExecutionException | RuntimeException e) {
+                putBack(session);
+                throw e;
+            }
+        }
+    }
+
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                               List<DataType> dataTypeList) throws SessionException, ExecutionException {
         for (int i = 0; i < RETRY; i++) {
@@ -461,12 +480,51 @@ public class SessionPool {
         }
     }
 
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision)
+            throws SessionException, ExecutionException {
+        for (int i = 0; i < RETRY; i++) {
+            Session session = getSession();
+            try {
+                session.insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, precision);
+                putBack(session);
+                return;
+            } catch (SessionException e) {
+                // TException means the connection is broken, remove it and get a new one.
+                logger.warn("insertNonAlignedColumnRecords failed", e);
+                cleanSessionAndMayThrowConnectionException(session, i, e);
+            } catch (ExecutionException | RuntimeException e) {
+                putBack(session);
+                throw e;
+            }
+        }
+    }
+
     public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
         for (int i = 0; i < RETRY; i++) {
             Session session = getSession();
             try {
                 session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList);
+                putBack(session);
+                return;
+            } catch (SessionException e) {
+                // TException means the connection is broken, remove it and get a new one.
+                logger.warn("insertRowRecords failed", e);
+                cleanSessionAndMayThrowConnectionException(session, i, e);
+            } catch (ExecutionException | RuntimeException e) {
+                putBack(session);
+                throw e;
+            }
+        }
+    }
+
+    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precison) throws SessionException, ExecutionException {
+        for (int i = 0; i < RETRY; i++) {
+            Session session = getSession();
+            try {
+                session.insertRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList, precison);
                 putBack(session);
                 return;
             } catch (SessionException e) {
@@ -505,6 +563,26 @@ public class SessionPool {
             Session session = getSession();
             try {
                 session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList);
+                putBack(session);
+                return;
+            } catch (SessionException e) {
+                // TException means the connection is broken, remove it and get a new one.
+                logger.warn("insertNonAlignedRowRecords failed", e);
+                cleanSessionAndMayThrowConnectionException(session, i, e);
+            } catch (ExecutionException | RuntimeException e) {
+                putBack(session);
+                throw e;
+            }
+        }
+    }
+
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision)
+            throws SessionException, ExecutionException {
+        for (int i = 0; i < RETRY; i++) {
+            Session session = getSession();
+            try {
+                session.insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList, precision);
                 putBack(session);
                 return;
             } catch (SessionException e) {

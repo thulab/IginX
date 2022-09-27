@@ -140,6 +140,7 @@ struct InsertColumnRecordsReq {
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> tagsList
+    8: optional string timePrecision
 }
 
 struct InsertNonAlignedColumnRecordsReq {
@@ -150,6 +151,7 @@ struct InsertNonAlignedColumnRecordsReq {
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> tagsList
+    8: optional string timePrecision
 }
 
 struct InsertRowRecordsReq {
@@ -160,6 +162,7 @@ struct InsertRowRecordsReq {
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> tagsList
+    8: optional string timePrecision
 }
 
 struct InsertNonAlignedRowRecordsReq {
@@ -170,6 +173,7 @@ struct InsertNonAlignedRowRecordsReq {
     5: required list<binary> bitmapList
     6: required list<DataType> dataTypeList
     7: optional list<map<string, string>> tagsList
+    8: optional string timePrecision
 }
 
 struct DeleteDataInColumnsReq {
