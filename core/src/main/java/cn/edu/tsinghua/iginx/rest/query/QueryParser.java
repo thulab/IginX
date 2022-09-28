@@ -54,22 +54,26 @@ public class QueryParser {
 
     public static Long transTimeFromString(String str) {
         switch (str) {
-            case "millis":
+            case "nanos":
                 return 1L;
-            case "seconds":
+            case "micros":
                 return 1000L;
+            case "millis":
+                return 1000000L;
+            case "seconds":
+                return 1000000000L;
             case "minutes":
-                return 60000L;
+                return 6000000000L;
             case "hours":
-                return 3600000L;
+                return 360000000000L;
             case "days":
-                return 86400000L;
+                return 8640000000000L;
             case "weeks":
-                return 604800000L;
+                return 60480000000000L;
             case "months":
-                return 2419200000L;
+                return 241920000000000L;
             case "years":
-                return 29030400000L;
+                return 2903040000000000L;
             default:
                 return 0L;
         }

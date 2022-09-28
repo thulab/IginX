@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.engine;
 
+import cn.edu.tsinghua.iginx.conf.Config;
+import cn.edu.tsinghua.iginx.conf.ConfigDescriptor;
 import cn.edu.tsinghua.iginx.engine.shared.RequestContext;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.AndTagFilter;
@@ -23,6 +25,8 @@ public class ContextBuilder {
 
     private static ContextBuilder instance;
 
+    private static final Config config = ConfigDescriptor.getInstance().getConfig();
+
     private ContextBuilder() {
     }
 
@@ -35,6 +39,11 @@ public class ContextBuilder {
             }
         }
         return instance;
+    }
+
+    public long getTimeWithPrecision(long time, String timePrecision) {
+        if(timePrecision==null) timePrecision = config.getTimePrecision();
+        return TimeUtils.getTimeInNs(time, timePrecision);
     }
 
     public RequestContext build(DeleteColumnsReq req) {
@@ -67,6 +76,7 @@ public class ContextBuilder {
                                               List<Map<String, String>> tagsList, String timePrecision) {
         long[] timeArray = ByteUtils.getLongArrayFromByteArray(timestamps);
         List<Long> times = new ArrayList<>();
+        if(timePrecision==null) timePrecision = config.getTimePrecision();
         for (long time : timeArray) {
             times.add(TimeUtils.getTimeInNs(time, timePrecision));
         }
@@ -94,7 +104,10 @@ public class ContextBuilder {
     }
 
     public RequestContext build(DeleteDataInColumnsReq req) {
-        DeleteStatement statement = new DeleteStatement(req.getPaths(), req.getStartTime(), req.getEndTime());
+        DeleteStatement statement = new DeleteStatement(
+                req.getPaths(),
+                getTimeWithPrecision(req.getStartTime(), req.getTimePrecision()),
+                getTimeWithPrecision(req.getEndTime(), req.getTimePrecision()));
 
         if (req.isSetTagsList()) {
             statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
@@ -105,8 +118,8 @@ public class ContextBuilder {
     public RequestContext build(QueryDataReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),
-            req.getStartTime(),
-            req.getEndTime());
+            getTimeWithPrecision(req.getStartTime(), req.getTimePrecision()),
+            getTimeWithPrecision(req.getEndTime(), req.getTimePrecision()));
 
         if (req.isSetTagsList()) {
             statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));
@@ -117,8 +130,8 @@ public class ContextBuilder {
     public RequestContext build(AggregateQueryReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),
-            req.getStartTime(),
-            req.getEndTime(),
+            getTimeWithPrecision(req.getStartTime(), req.getTimePrecision()),
+            getTimeWithPrecision(req.getEndTime(), req.getTimePrecision()),
             req.getAggregateType());
 
         if (req.isSetTagsList()) {
@@ -130,8 +143,8 @@ public class ContextBuilder {
     public RequestContext build(DownsampleQueryReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),
-            req.getStartTime(),
-            req.getEndTime(),
+            getTimeWithPrecision(req.getStartTime(), req.getTimePrecision()),
+            getTimeWithPrecision(req.getEndTime(), req.getTimePrecision()),
             req.getAggregateType(),
             req.getPrecision());
 
@@ -157,7 +170,7 @@ public class ContextBuilder {
     public RequestContext build(LastQueryReq req) {
         SelectStatement statement = new SelectStatement(
             req.getPaths(),
-            req.getStartTime(),
+            getTimeWithPrecision(req.getStartTime(), req.getTimePrecision()),
             Long.MAX_VALUE,
             AggregateType.LAST);
 

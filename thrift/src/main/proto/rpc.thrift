@@ -182,6 +182,7 @@ struct DeleteDataInColumnsReq {
     3: required i64 startTime
     4: required i64 endTime
     5: optional map<string, list<string>> tagsList
+    6: optional string timePrecision
 }
 
 struct QueryDataSet {
@@ -196,6 +197,7 @@ struct QueryDataReq {
     3: required i64 startTime
     4: required i64 endTime
     5: optional map<string, list<string>> tagsList
+    6: optional string timePrecision
 }
 
 struct QueryDataResp {
@@ -225,6 +227,7 @@ struct AggregateQueryReq {
     4: required i64 endTime
     5: required AggregateType aggregateType
     6: optional map<string, list<string>> tagsList
+    7: optional string timePrecision
 }
 
 struct AggregateQueryResp {
@@ -241,6 +244,7 @@ struct LastQueryReq {
     2: required list<string> paths
     3: required i64 startTime
     4: optional map<string, list<string>> tagsList
+    5: optional string timePrecision
 }
 
 struct LastQueryResp {
@@ -259,6 +263,7 @@ struct DownsampleQueryReq {
     5: required AggregateType aggregateType
     6: required i64 precision
     7: optional map<string, list<string>> tagsList
+    8: optional string timePrecision
 }
 
 struct DownsampleQueryResp {

@@ -250,6 +250,10 @@ public class Config {
         this.replicaNum = replicaNum;
     }
 
+    public String getTimePrecision() {
+        return timePrecision;
+    }
+
     public String getDatabaseClassNames() {
         return databaseClassNames;
     }

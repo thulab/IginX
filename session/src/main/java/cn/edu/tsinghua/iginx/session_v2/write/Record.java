@@ -41,6 +41,8 @@ public class Record {
 
     private final List<Object> values;
 
+    private String timePrecision = "ms";
+
     private Record(long timestamp, List<String> measurements, List<Map<String, String>> tagsList, List<DataType> dataTypes, List<Object> values) {
         this.timestamp = timestamp;
         this.measurements = Collections.unmodifiableList(measurements);
