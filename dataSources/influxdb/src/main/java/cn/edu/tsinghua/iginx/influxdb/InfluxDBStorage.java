@@ -69,6 +69,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.influxdb.client.domain.WritePrecision.MS;
+import static com.influxdb.client.domain.WritePrecision.NS;
 
 public class InfluxDBStorage implements IStorage {
 
@@ -76,7 +77,7 @@ public class InfluxDBStorage implements IStorage {
 
     private static final String STORAGE_ENGINE = "influxdb";
 
-    private static final WritePrecision WRITE_PRECISION = MS;
+    private static final WritePrecision WRITE_PRECISION = NS;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 

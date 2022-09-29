@@ -29,16 +29,30 @@ public interface WriteClient {
 
     void writePoint(final Point point) throws IginXException;
 
+    void writePoint(final Point point, final String timePrecision) throws IginXException;
+
     void writePoints(final List<Point> points) throws IginXException;
+
+    void writePoints(final List<Point> points, final String timePrecision) throws IginXException;
 
     void writeRecord(final Record record) throws IginXException;
 
+    void writeRecord(final Record record, final String timePrecision) throws IginXException;
+
     void writeRecords(final List<Record> records) throws IginXException;
+
+    void writeRecords(final List<Record> records, final String timePrecision) throws IginXException;
 
     <M> void writeMeasurement(final M measurement) throws IginXException;
 
+    <M> void writeMeasurement(final M measurement, final String timePrecision) throws IginXException;
+
     <M> void writeMeasurements(final List<M> measurements) throws IginXException;
 
+    <M> void writeMeasurements(final List<M> measurements, final String timePrecision) throws IginXException;
+
     void writeTable(final Table table) throws IginXException;
+
+    void writeTable(final Table table, final String timePrecision) throws IginXException;
 
 }

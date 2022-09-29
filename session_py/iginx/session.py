@@ -156,7 +156,7 @@ class Session(object):
         return resp.replicaNum
 
 
-    def insert_row_records(self, paths, timestamps, values_list, data_type_list, tags_list=None):
+    def insert_row_records(self, paths, timestamps, values_list, data_type_list, tags_list=None, timePrecision=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
@@ -165,6 +165,8 @@ class Session(object):
             raise RuntimeError("the sizes of timestamps and values_list should be equal")
         if tags_list is not None and len(tags_list) != len(paths):
             raise RuntimeError("the sizes of paths, values_list, tags_list and data_type_list should be equal")
+        if timePrecision is not None and len(timePrecision) ==0 :
+            raise RuntimeError("invalid timePrecision")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -209,12 +211,12 @@ class Session(object):
 
 
         req = InsertRowRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps), valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list, timePrecision=timePrecision)
         status = self.__client.insertRowRecords(req)
         Session.verify_status(status)
 
 
-    def insert_non_aligned_row_records(self , paths, timestamps, values_list, data_type_list, tags_list=None):
+    def insert_non_aligned_row_records(self , paths, timestamps, values_list, data_type_list, tags_list=None, timePrecision=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
@@ -223,6 +225,8 @@ class Session(object):
             raise RuntimeError("the sizes of timestamps and values_list should be equal")
         if tags_list is not None and len(tags_list) != len(paths):
             raise RuntimeError("the sizes of paths, values_list, tags_list and data_type_list should be equal")
+        if timePrecision is not None and len(timePrecision) ==0 :
+            raise RuntimeError("invalid timePrecision")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -266,12 +270,12 @@ class Session(object):
             bitmap_buffer_list.append(bitmap_to_bytes(bitmap.get_bytes()))
 
         req = InsertNonAlignedRowRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps), valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list, timePrecision=timePrecision)
         status = self.__client.insertNonAlignedRowRecords(req)
         Session.verify_status(status)
 
 
-    def insert_column_records(self, paths, timestamps, values_list, data_type_list, tags_list=None):
+    def insert_column_records(self, paths, timestamps, values_list, data_type_list, tags_list=None, timePrecision=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
@@ -280,6 +284,8 @@ class Session(object):
             raise RuntimeError("the sizes of paths and values_list should be equal")
         if tags_list is not None and len(paths) != len(tags_list):
             raise RuntimeError("the sizes of paths, valuesList, dataTypeList and tagsList should be equal")
+        if timePrecision is not None and len(timePrecision) ==0 :
+            raise RuntimeError("invalid timePrecision")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -319,12 +325,12 @@ class Session(object):
 
         req = InsertColumnRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps),
                                   valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list, timePrecision=timePrecision)
         status = self.__client.insertColumnRecords(req)
         Session.verify_status(status)
 
 
-    def insert_non_aligned_column_records(self, paths, timestamps, values_list, data_type_list, tags_list=None):
+    def insert_non_aligned_column_records(self, paths, timestamps, values_list, data_type_list, tags_list=None, timePrecision=None):
         if len(paths) == 0 or len(timestamps) == 0 or len(values_list) == 0 or len(data_type_list) == 0:
             raise RuntimeError("invalid insert request")
         if len(paths) != len(data_type_list):
@@ -333,6 +339,8 @@ class Session(object):
             raise RuntimeError("the sizes of paths and values_list should be equal")
         if tags_list is not None and len(paths) != len(tags_list):
             raise RuntimeError("the sizes of paths, valuesList, dataTypeList and tagsList should be equal")
+        if timePrecision is not None and len(timePrecision) ==0 :
+            raise RuntimeError("invalid timePrecision")
 
         # 保证时间戳递增
         index = [x for x in range(len(timestamps))]
@@ -372,14 +380,14 @@ class Session(object):
 
         req = InsertNonAlignedColumnRecordsReq(sessionId=self.__session_id, paths=paths, timestamps=timestamps_to_bytes(timestamps),
                                   valuesList=values_buffer_list,
-                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list)
+                                  bitmapList=bitmap_buffer_list, dataTypeList=sorted_data_type_list, tagsList=sorted_tags_list, timePrecision=timePrecision)
         status = self.__client.insertNonAlignedColumnRecords(req)
         Session.verify_status(status)
 
 
-    def query(self, paths, start_time, end_time):
+    def query(self, paths, start_time, end_time, timePrecision=None):
         req = QueryDataReq(sessionId=self.__session_id, paths=Session.merge_and_sort_paths(paths),
-                           startTime=start_time, endTime=end_time)
+                           startTime=start_time, endTime=end_time, timePrecision=timePrecision)
         resp = self.__client.queryData(req)
         Session.verify_status(resp.status)
         paths = resp.paths
@@ -388,11 +396,11 @@ class Session(object):
         return QueryDataSet(paths, data_types, raw_data_set.timestamps, raw_data_set.valuesList, raw_data_set.bitmapList)
 
 
-    def last_query(self, paths, start_time=0):
+    def last_query(self, paths, start_time=0, timePrecision=None):
         if len(paths) == 0:
             logger.warning("paths shouldn't be empty")
             return None
-        req = LastQueryReq(sessionId=self.__session_id, paths=Session.merge_and_sort_paths(paths), startTime=start_time)
+        req = LastQueryReq(sessionId=self.__session_id, paths=Session.merge_and_sort_paths(paths), startTime=start_time, timePrecision=timePrecision)
         resp = self.__client.lastQuery(req)
         Session.verify_status(resp.status)
         paths = resp.paths
@@ -402,9 +410,9 @@ class Session(object):
                             raw_data_set.bitmapList)
 
 
-    def downsample_query(self, paths, start_time, end_time, type, precision):
+    def downsample_query(self, paths, start_time, end_time, type, precision, timePrecision=None):
         req = DownsampleQueryReq(sessionId=self.__session_id, paths=paths, startTime=start_time, endTime=end_time, aggregateType=type,
-                                 precision=precision)
+                                 precision=precision, timePrecision=timePrecision)
         resp = self.__client.downsampleQuery(req)
         Session.verify_status(resp.status)
         paths = resp.paths
@@ -414,19 +422,19 @@ class Session(object):
                                 raw_data_set.bitmapList)
 
 
-    def aggregate_query(self, paths, start_time, end_time, type):
-        req = AggregateQueryReq(sessionId=self.__session_id, paths=paths, startTime=start_time, endTime=end_time, aggregateType=type)
+    def aggregate_query(self, paths, start_time, end_time, type, timePrecision=None):
+        req = AggregateQueryReq(sessionId=self.__session_id, paths=paths, startTime=start_time, endTime=end_time, aggregateType=type, timePrecision=timePrecision)
         resp = self.__client.aggregateQuery(req)
         Session.verify_status(resp.status)
         return AggregateQueryDataSet(resp=resp, type=type)
 
 
-    def delete_data(self, path, start_time, end_time):
-        self.batch_delete_data([path], start_time, end_time)
+    def delete_data(self, path, start_time, end_time, timePrecision=None):
+        self.batch_delete_data([path], start_time, end_time, timePrecision)
 
 
-    def batch_delete_data(self, paths, start_time, end_time):
-        req = DeleteDataInColumnsReq(sessionId=self.__session_id, paths=paths, startTime=start_time, endTime=end_time)
+    def batch_delete_data(self, paths, start_time, end_time, timePrecision=None):
+        req = DeleteDataInColumnsReq(sessionId=self.__session_id, paths=paths, startTime=start_time, endTime=end_time, timePrecision=timePrecision)
         status = self.__client.deleteDataInColumns(req)
         Session.verify_status(status)
 

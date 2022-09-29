@@ -34,14 +34,25 @@ public interface DeleteClient {
 
     void deleteMeasurementData(final String measurement, long startTime, long endTime) throws IginXException;
 
+    void deleteMeasurementData(final String measurement, long startTime, long endTime, String timePrecisioin) throws IginXException;
+
     void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime) throws IginXException;
+
+    void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime, String timePrecisioin) throws IginXException;
 
     void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime) throws IginXException;
 
+    void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime, String timePrecisioin) throws IginXException;
+
     void deleteMeasurementData(final String measurement, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException;
+
+    void deleteMeasurementData(final String measurement, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecisioin) throws IginXException;
 
     void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException;
 
+    void deleteMeasurementsData(final Collection<String> measurements, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecisioin) throws IginXException;
+
     void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime, Map<String, List<String>> tagsList) throws IginXException;
 
+    void deleteMeasurementData(final Class<?> measurementType, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecisioin) throws IginXException;
 }

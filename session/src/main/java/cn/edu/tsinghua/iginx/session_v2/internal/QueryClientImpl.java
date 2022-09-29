@@ -78,6 +78,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
         if (query.getTagsList() != null) {
             req.setTagsList(query.getTagsList());
         }
+        req.setTimePrecision(req.timePrecision);
 
         QueryDataResp resp;
 
@@ -100,6 +101,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
         if (query.getTagsList() != null) {
             req.setTagsList(query.getTagsList());
         }
+        req.setTimePrecision(req.timePrecision);
 
         AggregateQueryResp resp;
 
@@ -137,6 +139,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
         if (query.getTagsList() != null) {
             req.setTagsList(query.getTagsList());
         }
+        req.setTimePrecision(req.timePrecision);
 
         DownsampleQueryResp resp;
         synchronized (iginXClient) {
@@ -158,6 +161,7 @@ public class QueryClientImpl extends AbstractFunctionClient implements QueryClie
         if (query.getTagsList() != null) {
             req.setTagsList(query.getTagsList());
         }
+        req.setTimePrecision(req.timePrecision);
 
         LastQueryResp resp;
         synchronized (iginXClient) {

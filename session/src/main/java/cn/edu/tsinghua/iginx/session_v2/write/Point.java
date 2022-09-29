@@ -39,8 +39,6 @@ public class Point {
 
     private final String fullName;
 
-    private String timePrecision = "ms";
-
     public Point(long timestamp, Object value, DataType dataType, String measurement, Map<String, String> tags) {
         this.timestamp = timestamp;
         this.value = value;
@@ -48,16 +46,6 @@ public class Point {
         this.measurement = measurement;
         this.tags = tags;
         this.fullName = TagKVUtils.toFullName(measurement, tags);
-    }
-
-    public Point(long timestamp, Object value, DataType dataType, String measurement, Map<String, String> tags, String timePrecision) {
-        this.timestamp = timestamp;
-        this.value = value;
-        this.dataType = dataType;
-        this.measurement = measurement;
-        this.tags = tags;
-        this.fullName = TagKVUtils.toFullName(measurement, tags);
-        this.timePrecision = timePrecision;
     }
 
     private Point(Point.Builder builder) {
@@ -92,10 +80,6 @@ public class Point {
         return tags;
     }
 
-    public String getTimePrecision() {
-        return timePrecision;
-    }
-
     public static class Builder {
 
         private long timestamp = -1;
@@ -105,8 +89,6 @@ public class Point {
         private DataType dataType;
 
         private String measurement;
-
-        private String timePrecision = "ms";
 
         private final Map<String, String> tags = new HashMap<>();
 
@@ -139,12 +121,6 @@ public class Point {
         public Point.Builder measurement(String measurement) {
             Arguments.checkNonEmpty(measurement, "measurement");
             this.measurement = measurement;
-            return this;
-        }
-
-        public Point.Builder timePrecision(String timePrecision) {
-            Arguments.checkNonEmpty(timePrecision, "timePrecision");
-            this.timePrecision = timePrecision;
             return this;
         }
 

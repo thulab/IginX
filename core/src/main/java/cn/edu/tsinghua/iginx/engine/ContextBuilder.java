@@ -146,7 +146,7 @@ public class ContextBuilder {
             getTimeWithPrecision(req.getStartTime(), req.getTimePrecision()),
             getTimeWithPrecision(req.getEndTime(), req.getTimePrecision()),
             req.getAggregateType(),
-            req.getPrecision());
+            getTimeWithPrecision(req.getPrecision(), req.getTimePrecision()));
 
         if (req.isSetTagsList()) {
             statement.setTagFilter(constructTagFilterFromTagList(req.getTagsList()));

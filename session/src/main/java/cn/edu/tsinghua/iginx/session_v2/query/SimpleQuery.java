@@ -28,10 +28,20 @@ public class SimpleQuery extends Query {
 
     private final long endTime;
 
+    private final String timePrecision;
+
     private SimpleQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime) {
         super(Collections.unmodifiableSet(measurements), tagsList);
         this.startTime = startTime;
         this.endTime = endTime;
+        this.timePrecision = null;
+    }
+
+    private SimpleQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime, String timePrecision) {
+        super(Collections.unmodifiableSet(measurements), tagsList);
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.timePrecision = timePrecision;
     }
 
     public static SimpleQuery.Builder builder() {
@@ -46,6 +56,10 @@ public class SimpleQuery extends Query {
         return endTime;
     }
 
+    public String getTimePrecision() {
+        return timePrecision;
+    }
+
     public static class Builder {
 
         private final Set<String> measurements;
@@ -56,11 +70,14 @@ public class SimpleQuery extends Query {
 
         private long endTime;
 
+        private String timePrecision;
+
         private Builder() {
             this.measurements = new HashSet<>();
             this.tagsList = new HashMap<>();
             this.startTime = 0L;
             this.endTime = Long.MAX_VALUE;
+            this.timePrecision = null;
         }
 
         public SimpleQuery.Builder addMeasurement(String measurement) {
@@ -109,11 +126,17 @@ public class SimpleQuery extends Query {
             return this;
         }
 
+        public SimpleQuery.Builder timePrecision(String timePrecision) {
+            Arguments.checkNotNull(timePrecision, "timePrecision");
+            this.timePrecision = timePrecision;
+            return this;
+        }
+
         public SimpleQuery build() {
             if (this.measurements.isEmpty()) {
                 throw new IllegalStateException("simple query at least has one measurement.");
             }
-            return new SimpleQuery(measurements, tagsList, startTime, endTime);
+            return new SimpleQuery(measurements, tagsList, startTime, endTime, timePrecision);
         }
 
     }

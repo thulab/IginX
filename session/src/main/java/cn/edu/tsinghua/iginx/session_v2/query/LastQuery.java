@@ -26,9 +26,18 @@ public class LastQuery extends Query {
 
     private final long startTime;
 
+    private final String timePrecision;
+
     public LastQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime) {
         super(measurements, tagsList);
         this.startTime = startTime;
+        this.timePrecision = null;
+    }
+
+    public LastQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, String timePrecision) {
+        super(measurements, tagsList);
+        this.startTime = startTime;
+        this.timePrecision = timePrecision;
     }
 
     public long getStartTime() {
@@ -39,6 +48,10 @@ public class LastQuery extends Query {
         return new LastQuery.Builder();
     }
 
+    public String getTimePrecision() {
+        return timePrecision;
+    }
+
     public static class Builder {
 
         private final Set<String> measurements;
@@ -47,10 +60,13 @@ public class LastQuery extends Query {
 
         private long startTime;
 
+        private String timePrecision;
+
         private Builder() {
             this.measurements = new HashSet<>();
             this.tagsList = new HashMap<>();
             this.startTime = 0L;
+            this.timePrecision = null;
         }
 
         public LastQuery.Builder addMeasurement(String measurement) {
@@ -85,11 +101,17 @@ public class LastQuery extends Query {
             return this;
         }
 
+        public LastQuery.Builder timePrecision(String timePrecision) {
+            Arguments.checkNotNull(timePrecision, "timePrecision");
+            this.timePrecision = timePrecision;
+            return this;
+        }
+
         public LastQuery build() {
             if (this.measurements.isEmpty()) {
                 throw new IllegalStateException("last query at least has one measurement.");
             }
-            return new LastQuery(measurements, tagsList, startTime);
+            return new LastQuery(measurements, tagsList, startTime, timePrecision);
         }
 
     }

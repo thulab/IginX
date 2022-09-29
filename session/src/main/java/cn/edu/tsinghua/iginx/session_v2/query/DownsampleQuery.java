@@ -33,12 +33,24 @@ public class DownsampleQuery extends Query {
 
     private final long precision;
 
+    private final String timePrecision;
+
     public DownsampleQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime, AggregateType aggregateType, long precision) {
         super(measurements, tagsList);
         this.startTime = startTime;
         this.endTime = endTime;
         this.aggregateType = aggregateType;
         this.precision = precision;
+        this.timePrecision = null;
+    }
+
+    public DownsampleQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime, AggregateType aggregateType, long precision, String timePrecision) {
+        super(measurements, tagsList);
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.aggregateType = aggregateType;
+        this.precision = precision;
+        this.timePrecision = timePrecision;
     }
 
     public static DownsampleQuery.Builder builder() {
@@ -61,6 +73,10 @@ public class DownsampleQuery extends Query {
         return precision;
     }
 
+    public String getTimePrecision() {
+        return timePrecision;
+    }
+
     public static class Builder {
 
         private final Set<String> measurements;
@@ -75,12 +91,15 @@ public class DownsampleQuery extends Query {
 
         private long precision;
 
+        private String timePrecision;
+
         private Builder() {
             this.measurements = new HashSet<>();
             this.tagsList = new HashMap<>();
             this.startTime = 0L;
             this.endTime = Long.MAX_VALUE;
             this.precision = 0L;
+            this.timePrecision = null;
         }
 
         public DownsampleQuery.Builder addMeasurement(String measurement) {
@@ -143,6 +162,12 @@ public class DownsampleQuery extends Query {
             return this;
         }
 
+        public DownsampleQuery.Builder timePrecision(String timePrecision) {
+            Arguments.checkNotNull(timePrecision, "timePrecision");
+            this.timePrecision = timePrecision;
+            return this;
+        }
+
         public DownsampleQuery build() {
             if (this.measurements.isEmpty()) {
                 throw new IllegalStateException("simple query at least has one measurement.");
@@ -153,7 +178,7 @@ public class DownsampleQuery extends Query {
             if (this.precision <= 0L) {
                 throw new IllegalStateException("precision should greater than zero.");
             }
-            return new DownsampleQuery(measurements, tagsList, startTime, endTime, aggregateType, precision);
+            return new DownsampleQuery(measurements, tagsList, startTime, endTime, aggregateType, precision, timePrecision);
         }
 
     }
