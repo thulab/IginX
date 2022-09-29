@@ -658,11 +658,12 @@ class InsertColumnRecordsReq(object):
      - bitmapList
      - dataTypeList
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.timestamps = timestamps
@@ -670,6 +671,7 @@ class InsertColumnRecordsReq(object):
         self.bitmapList = bitmapList
         self.dataTypeList = dataTypeList
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -746,6 +748,11 @@ class InsertColumnRecordsReq(object):
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 8:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -803,6 +810,10 @@ class InsertColumnRecordsReq(object):
                 oprot.writeMapEnd()
             oprot.writeListEnd()
             oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 8)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
+            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -843,11 +854,12 @@ class InsertNonAlignedColumnRecordsReq(object):
      - bitmapList
      - dataTypeList
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.timestamps = timestamps
@@ -855,6 +867,7 @@ class InsertNonAlignedColumnRecordsReq(object):
         self.bitmapList = bitmapList
         self.dataTypeList = dataTypeList
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -931,6 +944,11 @@ class InsertNonAlignedColumnRecordsReq(object):
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 8:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -988,6 +1006,10 @@ class InsertNonAlignedColumnRecordsReq(object):
                 oprot.writeMapEnd()
             oprot.writeListEnd()
             oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 8)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
+            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -1028,11 +1050,12 @@ class InsertRowRecordsReq(object):
      - bitmapList
      - dataTypeList
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.timestamps = timestamps
@@ -1040,6 +1063,7 @@ class InsertRowRecordsReq(object):
         self.bitmapList = bitmapList
         self.dataTypeList = dataTypeList
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -1116,6 +1140,11 @@ class InsertRowRecordsReq(object):
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 8:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -1173,6 +1202,10 @@ class InsertRowRecordsReq(object):
                 oprot.writeMapEnd()
             oprot.writeListEnd()
             oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 8)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
+            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -1213,11 +1246,12 @@ class InsertNonAlignedRowRecordsReq(object):
      - bitmapList
      - dataTypeList
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, timestamps=None, valuesList=None, bitmapList=None, dataTypeList=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.timestamps = timestamps
@@ -1225,6 +1259,7 @@ class InsertNonAlignedRowRecordsReq(object):
         self.bitmapList = bitmapList
         self.dataTypeList = dataTypeList
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -1301,6 +1336,11 @@ class InsertNonAlignedRowRecordsReq(object):
                     iprot.readListEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 8:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -1358,6 +1398,10 @@ class InsertNonAlignedRowRecordsReq(object):
                 oprot.writeMapEnd()
             oprot.writeListEnd()
             oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 8)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
+            oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
 
@@ -1396,16 +1440,18 @@ class DeleteDataInColumnsReq(object):
      - startTime
      - endTime
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.startTime = startTime
         self.endTime = endTime
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -1457,6 +1503,11 @@ class DeleteDataInColumnsReq(object):
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 6:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -1496,6 +1547,10 @@ class DeleteDataInColumnsReq(object):
                     oprot.writeString(iter212.encode('utf-8') if sys.version_info[0] == 2 else iter212)
                 oprot.writeListEnd()
             oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 6)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -1632,16 +1687,18 @@ class QueryDataReq(object):
      - startTime
      - endTime
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.startTime = startTime
         self.endTime = endTime
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -1693,6 +1750,11 @@ class QueryDataReq(object):
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 6:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -1732,6 +1794,10 @@ class QueryDataReq(object):
                     oprot.writeString(iter249.encode('utf-8') if sys.version_info[0] == 2 else iter249)
                 oprot.writeListEnd()
             oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 6)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -2096,17 +2162,19 @@ class AggregateQueryReq(object):
      - endTime
      - aggregateType
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, aggregateType=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, aggregateType=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.startTime = startTime
         self.endTime = endTime
         self.aggregateType = aggregateType
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -2163,6 +2231,11 @@ class AggregateQueryReq(object):
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 7:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -2206,6 +2279,10 @@ class AggregateQueryReq(object):
                     oprot.writeString(iter318.encode('utf-8') if sys.version_info[0] == 2 else iter318)
                 oprot.writeListEnd()
             oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 7)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -2391,15 +2468,17 @@ class LastQueryReq(object):
      - paths
      - startTime
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, startTime=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, startTime=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.startTime = startTime
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -2446,6 +2525,11 @@ class LastQueryReq(object):
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 5:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -2481,6 +2565,10 @@ class LastQueryReq(object):
                     oprot.writeString(iter371.encode('utf-8') if sys.version_info[0] == 2 else iter371)
                 oprot.writeListEnd()
             oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 5)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -2655,11 +2743,12 @@ class DownsampleQueryReq(object):
      - aggregateType
      - precision
      - tagsList
+     - timePrecision
 
     """
 
 
-    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, aggregateType=None, precision=None, tagsList=None,):
+    def __init__(self, sessionId=None, paths=None, startTime=None, endTime=None, aggregateType=None, precision=None, tagsList=None, timePrecision=None,):
         self.sessionId = sessionId
         self.paths = paths
         self.startTime = startTime
@@ -2667,6 +2756,7 @@ class DownsampleQueryReq(object):
         self.aggregateType = aggregateType
         self.precision = precision
         self.tagsList = tagsList
+        self.timePrecision = timePrecision
 
     def read(self, iprot):
         if iprot._fast_decode is not None and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None:
@@ -2728,6 +2818,11 @@ class DownsampleQueryReq(object):
                     iprot.readMapEnd()
                 else:
                     iprot.skip(ftype)
+            elif fid == 8:
+                if ftype == TType.STRING:
+                    self.timePrecision = iprot.readString().decode('utf-8', errors='replace') if sys.version_info[0] == 2 else iprot.readString()
+                else:
+                    iprot.skip(ftype)
             else:
                 iprot.skip(ftype)
             iprot.readFieldEnd()
@@ -2775,6 +2870,10 @@ class DownsampleQueryReq(object):
                     oprot.writeString(iter424.encode('utf-8') if sys.version_info[0] == 2 else iter424)
                 oprot.writeListEnd()
             oprot.writeMapEnd()
+            oprot.writeFieldEnd()
+        if self.timePrecision is not None:
+            oprot.writeFieldBegin('timePrecision', TType.STRING, 8)
+            oprot.writeString(self.timePrecision.encode('utf-8') if sys.version_info[0] == 2 else self.timePrecision)
             oprot.writeFieldEnd()
         oprot.writeFieldStop()
         oprot.writeStructEnd()
@@ -6679,6 +6778,7 @@ InsertColumnRecordsReq.thrift_spec = (
     (5, TType.LIST, 'bitmapList', (TType.STRING, 'BINARY', False), None, ),  # 5
     (6, TType.LIST, 'dataTypeList', (TType.I32, None, False), None, ),  # 6
     (7, TType.LIST, 'tagsList', (TType.MAP, (TType.STRING, 'UTF8', TType.STRING, 'UTF8', False), False), None, ),  # 7
+    (8, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 8
 )
 all_structs.append(InsertNonAlignedColumnRecordsReq)
 InsertNonAlignedColumnRecordsReq.thrift_spec = (
@@ -6690,6 +6790,7 @@ InsertNonAlignedColumnRecordsReq.thrift_spec = (
     (5, TType.LIST, 'bitmapList', (TType.STRING, 'BINARY', False), None, ),  # 5
     (6, TType.LIST, 'dataTypeList', (TType.I32, None, False), None, ),  # 6
     (7, TType.LIST, 'tagsList', (TType.MAP, (TType.STRING, 'UTF8', TType.STRING, 'UTF8', False), False), None, ),  # 7
+    (8, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 8
 )
 all_structs.append(InsertRowRecordsReq)
 InsertRowRecordsReq.thrift_spec = (
@@ -6701,6 +6802,7 @@ InsertRowRecordsReq.thrift_spec = (
     (5, TType.LIST, 'bitmapList', (TType.STRING, 'BINARY', False), None, ),  # 5
     (6, TType.LIST, 'dataTypeList', (TType.I32, None, False), None, ),  # 6
     (7, TType.LIST, 'tagsList', (TType.MAP, (TType.STRING, 'UTF8', TType.STRING, 'UTF8', False), False), None, ),  # 7
+    (8, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 8
 )
 all_structs.append(InsertNonAlignedRowRecordsReq)
 InsertNonAlignedRowRecordsReq.thrift_spec = (
@@ -6712,6 +6814,7 @@ InsertNonAlignedRowRecordsReq.thrift_spec = (
     (5, TType.LIST, 'bitmapList', (TType.STRING, 'BINARY', False), None, ),  # 5
     (6, TType.LIST, 'dataTypeList', (TType.I32, None, False), None, ),  # 6
     (7, TType.LIST, 'tagsList', (TType.MAP, (TType.STRING, 'UTF8', TType.STRING, 'UTF8', False), False), None, ),  # 7
+    (8, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 8
 )
 all_structs.append(DeleteDataInColumnsReq)
 DeleteDataInColumnsReq.thrift_spec = (
@@ -6721,6 +6824,7 @@ DeleteDataInColumnsReq.thrift_spec = (
     (3, TType.I64, 'startTime', None, None, ),  # 3
     (4, TType.I64, 'endTime', None, None, ),  # 4
     (5, TType.MAP, 'tagsList', (TType.STRING, 'UTF8', TType.LIST, (TType.STRING, 'UTF8', False), False), None, ),  # 5
+    (6, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 6
 )
 all_structs.append(QueryDataSet)
 QueryDataSet.thrift_spec = (
@@ -6737,6 +6841,7 @@ QueryDataReq.thrift_spec = (
     (3, TType.I64, 'startTime', None, None, ),  # 3
     (4, TType.I64, 'endTime', None, None, ),  # 4
     (5, TType.MAP, 'tagsList', (TType.STRING, 'UTF8', TType.LIST, (TType.STRING, 'UTF8', False), False), None, ),  # 5
+    (6, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 6
 )
 all_structs.append(QueryDataResp)
 QueryDataResp.thrift_spec = (
@@ -6770,6 +6875,7 @@ AggregateQueryReq.thrift_spec = (
     (4, TType.I64, 'endTime', None, None, ),  # 4
     (5, TType.I32, 'aggregateType', None, None, ),  # 5
     (6, TType.MAP, 'tagsList', (TType.STRING, 'UTF8', TType.LIST, (TType.STRING, 'UTF8', False), False), None, ),  # 6
+    (7, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 7
 )
 all_structs.append(AggregateQueryResp)
 AggregateQueryResp.thrift_spec = (
@@ -6788,6 +6894,7 @@ LastQueryReq.thrift_spec = (
     (2, TType.LIST, 'paths', (TType.STRING, 'UTF8', False), None, ),  # 2
     (3, TType.I64, 'startTime', None, None, ),  # 3
     (4, TType.MAP, 'tagsList', (TType.STRING, 'UTF8', TType.LIST, (TType.STRING, 'UTF8', False), False), None, ),  # 4
+    (5, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 5
 )
 all_structs.append(LastQueryResp)
 LastQueryResp.thrift_spec = (
@@ -6808,6 +6915,7 @@ DownsampleQueryReq.thrift_spec = (
     (5, TType.I32, 'aggregateType', None, None, ),  # 5
     (6, TType.I64, 'precision', None, None, ),  # 6
     (7, TType.MAP, 'tagsList', (TType.STRING, 'UTF8', TType.LIST, (TType.STRING, 'UTF8', False), False), None, ),  # 7
+    (8, TType.STRING, 'timePrecision', 'UTF8', None, ),  # 8
 )
 all_structs.append(DownsampleQueryResp)
 DownsampleQueryResp.thrift_spec = (
