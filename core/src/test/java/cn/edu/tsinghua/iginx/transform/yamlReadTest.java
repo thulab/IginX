@@ -40,7 +40,7 @@ public class yamlReadTest {
             }
 
         }catch (FileNotFoundException e) {
-            logger.error("Fail to close the file, path=%s", filePath);
+            logger.error("Fail to close the file, path={}", filePath);
         }
     }
 

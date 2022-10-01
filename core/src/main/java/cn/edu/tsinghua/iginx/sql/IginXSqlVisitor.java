@@ -345,11 +345,11 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     private void parseSpecialClause(SpecialClauseContext ctx, SelectStatement selectStatement) {
         if (ctx.groupByClause() != null) {
             // groupByClause = groupByTimeClause + groupByLevelClause
-            parseGroupByTimeClause(ctx.groupByClause().timeInterval(), ctx.groupByClause().DURATION(), selectStatement);
+            parseGroupByTimeClause(ctx.groupByClause().timeInterval(), ctx.groupByClause().TIME_WITH_UNIT(), selectStatement);
             parseGroupByLevelClause(ctx.groupByClause().INT(), selectStatement);
         }
         if (ctx.groupByTimeClause() != null) {
-            parseGroupByTimeClause(ctx.groupByTimeClause().timeInterval(), ctx.groupByTimeClause().DURATION(), selectStatement);
+            parseGroupByTimeClause(ctx.groupByTimeClause().timeInterval(), ctx.groupByTimeClause().TIME_WITH_UNIT(), selectStatement);
         }
         if (ctx.groupByLevelClause() != null) {
             parseGroupByLevelClause(ctx.groupByLevelClause().INT(), selectStatement);
@@ -366,7 +366,7 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
 
     private void parseGroupByTimeClause(TimeIntervalContext timeIntervalContext, TerminalNode duration, SelectStatement selectStatement) {
         String durationStr = duration.getText();
-        long precision = TimeUtils.convertDurationStrToLong(0, durationStr);
+        long precision = TimeUtils.convertTimeWithUnitStrToLong(0, durationStr);
         Pair<Long, Long> timeInterval = parseTimeInterval(timeIntervalContext);
         selectStatement.setStartTime(timeInterval.k);
         selectStatement.setEndTime(timeInterval.v);
@@ -746,45 +746,45 @@ public class IginXSqlVisitor extends SqlBaseVisitor<Statement> {
     }
 
     private long parseTime(TimeValueContext time) {
-        long ret;
+        long timeInNs;
         if (time.INT() != null) {
-            ret = Long.parseLong(time.INT().getText());
+            timeInNs = Long.parseLong(time.INT().getText());
         } else if (time.dateExpression() != null) {
-            ret = parseDateExpression(time.dateExpression());
+            timeInNs = parseDateExpression(time.dateExpression());
         } else if (time.dateFormat() != null) {
-            ret = parseTimeFormat(time.dateFormat().getText());
+            timeInNs = parseTimeFormat(time.dateFormat());
         } else if (time.getText().equalsIgnoreCase(SQLConstant.INF)) {
-            ret = Long.MAX_VALUE;
+            timeInNs = Long.MAX_VALUE;
         } else {
-            ret = Long.MIN_VALUE;
+            timeInNs = Long.MIN_VALUE;
         }
-        return ret;
+        return timeInNs;
     }
 
     private long parseDateExpression(DateExpressionContext ctx) {
         long time;
-        time = parseTimeFormat(ctx.getChild(0).getText());
+        time = parseTimeFormat(ctx.dateFormat());
         for (int i = 1; i < ctx.getChildCount(); i = i + 2) {
             if (ctx.getChild(i).getText().equals(SQLConstant.PLUS)) {
-                time += TimeUtils.convertDurationStrToLong(time, ctx.getChild(i + 1).getText());
+                time += TimeUtils.convertTimeWithUnitStrToLong(time, ctx.getChild(i + 1).getText());
             } else {
-                time -= TimeUtils.convertDurationStrToLong(time, ctx.getChild(i + 1).getText());
+                time -= TimeUtils.convertTimeWithUnitStrToLong(time, ctx.getChild(i + 1).getText());
             }
         }
         return time;
     }
 
-    private long parseTimeFormat(String timestampStr) throws SQLParserException {
-        if (timestampStr == null || timestampStr.trim().equals(SQLConstant.EMPTY)) {
-            throw new SQLParserException("input timestamp cannot be empty");
+    private long parseTimeFormat(DateFormatContext ctx) throws SQLParserException {
+        if (ctx.NOW() != null) {
+            return System.nanoTime();
         }
-        if (timestampStr.equalsIgnoreCase(SQLConstant.NOW_FUNC)) {
-            return System.currentTimeMillis();
+        if (ctx.TIME_WITH_UNIT() != null) {
+            return TimeUtils.convertTimeWithUnitStrToLong(0, ctx.getText());
         }
         try {
-            return TimeUtils.convertDatetimeStrToLong(timestampStr);
+            return TimeUtils.convertDatetimeStrToLong(ctx.getText());
         } catch (Exception e) {
-            throw new SQLParserException(String.format("Input time format %s error. ", timestampStr));
+            throw new SQLParserException(String.format("Input time format %s error. ", ctx.getText()));
         }
     }
 

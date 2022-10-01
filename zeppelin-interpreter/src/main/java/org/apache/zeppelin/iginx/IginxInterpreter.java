@@ -25,7 +25,7 @@ public class IginxInterpreter extends AbstractInterpreter {
     private static final String DEFAULT_PORT = "6888";
     private static final String DEFAULT_USERNAME = "root";
     private static final String DEFAULT_PASSWORD = "root";
-    private static final String DEFAULT_TIME_PRECISION = "ms";
+    private static final String DEFAULT_TIME_PRECISION = "ns";
 
     private static final String TAB = "\t";
     private static final String NEWLINE = "\n";

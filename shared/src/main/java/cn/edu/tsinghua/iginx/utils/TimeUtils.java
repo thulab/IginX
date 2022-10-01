@@ -381,19 +381,19 @@ public class TimeUtils {
             .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS)
             .toFormatter();
 
-    public static final String DEFAULT_TIMESTAMP_PRECISION = "ms";
+    public static final String DEFAULT_TIMESTAMP_PRECISION = "ns";
 
     public static long getTimeInMs(long timestamp, String timePrecision) {
         long timeInMs;
         switch (timePrecision) {
             case "s":
-                timeInMs = timestamp * 1000;
+                timeInMs = timestamp * 1_000L;
                 break;
             case "us":
-                timeInMs = timestamp / 1000;
+                timeInMs = timestamp / 1_000L;
                 break;
             case "ns":
-                timeInMs = timestamp / 1000000;
+                timeInMs = timestamp / 1_000_000L;
                 break;
             default:
                 timeInMs = timestamp;
@@ -409,24 +409,24 @@ public class TimeUtils {
 
     public static long convertDatetimeStrToLong(String timestampStr) throws ParseException {
         LocalDateTime localDateTime = LocalDateTime.parse(timestampStr, formatter);
-        return LocalDateTime.from(localDateTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        return LocalDateTime.from(localDateTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() * 1_000_000L;
     }
 
-    public static long convertDurationStrToLong(long currentTime, String duration) {
+    public static long convertTimeWithUnitStrToLong(long currentTime, String timeWithUnit) {
         long total = 0;
         long temp = 0;
-        for (int i = 0; i < duration.length(); i++) {
-            char ch = duration.charAt(i);
+        for (int i = 0; i < timeWithUnit.length(); i++) {
+            char ch = timeWithUnit.charAt(i);
             if (Character.isDigit(ch)) {
                 temp *= 10;
                 temp += (ch - '0');
             } else {
-                String unit = duration.charAt(i) + "";
-                if (i + 1 < duration.length() && !Character.isDigit(duration.charAt(i + 1))) {
+                String unit = timeWithUnit.charAt(i) + "";
+                if (i + 1 < timeWithUnit.length() && !Character.isDigit(timeWithUnit.charAt(i + 1))) {
                     i++;
-                    unit += duration.charAt(i);
+                    unit += timeWithUnit.charAt(i);
                 }
-                total += TimeUtils.convertDurationStrToLong(
+                total += TimeUtils.convertTimeWithUnitStrToLong(
                     currentTime == -1 ? -1 : currentTime + total,
                     temp,
                     unit.toLowerCase(),
@@ -438,17 +438,17 @@ public class TimeUtils {
         return total;
     }
 
-    public static long convertDurationStrToLong(
+    public static long convertTimeWithUnitStrToLong(
             long currentTime, long value, String unit, String timestampPrecision) {
         DurationUnit durationUnit = DurationUnit.valueOf(unit);
         long res = value;
         switch (durationUnit) {
             case y:
-                res *= 365 * 86_400_000L;
+                res *= 365 * 86_400_000_000_000L;
                 break;
             case mo:
                 if (currentTime == -1) {
-                    res *= 30 * 86_400_000L;
+                    res *= 30 * 86_400_000_000_000L;
                 } else {
                     Calendar calendar = Calendar.getInstance();
                     calendar.setTimeInMillis(currentTime);
@@ -457,48 +457,39 @@ public class TimeUtils {
                 }
                 break;
             case w:
-                res *= 7 * 86_400_000L;
+                res *= 7 * 86_400_000_000_000L;
                 break;
             case d:
-                res *= 86_400_000L;
+                res *= 86_400_000_000_000L;
                 break;
             case h:
-                res *= 3_600_000L;
+                res *= 3_600_000_000_000L;
                 break;
             case m:
-                res *= 60_000L;
+                res *= 60_000_000_000L;
                 break;
             case s:
+                res *= 1_000_000_000L;
+                break;
+            case ms:
+                res *= 1_000_000L;
+                break;
+            case us:
                 res *= 1_000L;
                 break;
             default:
                 break;
         }
 
-        if (timestampPrecision.equals("us")) {
-            if (unit.equals(DurationUnit.ns.toString())) {
-                return value / 1000;
-            } else if (unit.equals(DurationUnit.us.toString())) {
-                return value;
-            } else {
-                return res * 1000;
-            }
-        } else if (timestampPrecision.equals("ns")) {
-            if (unit.equals(DurationUnit.ns.toString())) {
-                return value;
-            } else if (unit.equals(DurationUnit.us.toString())) {
-                return value * 1000;
-            } else {
-                return res * 1000_000;
-            }
-        } else {
-            if (unit.equals(DurationUnit.ns.toString())) {
-                return value / 1000_000;
-            } else if (unit.equals(DurationUnit.us.toString())) {
-                return value / 1000;
-            } else {
+        switch (timestampPrecision.toLowerCase()) {
+            case "s":
+                return res / 1_000_000_000L;
+            case "ms":
+                return res / 1_000_000L;
+            case "us":
+                return res / 1_000L;
+            default:  // include "ns"
                 return res;
-            }
         }
     }
 
