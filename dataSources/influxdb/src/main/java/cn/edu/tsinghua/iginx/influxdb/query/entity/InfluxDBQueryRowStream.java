@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import com.influxdb.query.FluxRecord;
 import com.influxdb.query.FluxTable;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -90,7 +91,9 @@ public class InfluxDBQueryRowStream implements RowStream {
                 continue;
             }
             FluxRecord record = records.get(index);
-            timestamp = Math.min(record.getTime().toEpochMilli() * 1_000_000L, timestamp);
+
+            Instant time = record.getTime();
+            timestamp = Math.min(time.toEpochMilli() * 1_000_000L + time.getNano(), timestamp);
         }
         if (timestamp == Long.MAX_VALUE) {
             return null;
