@@ -255,7 +255,8 @@ public class QueryResult {
         StringBuilder ret = new StringBuilder(" \"values\": [");
         int n = queryResultDatasets.get(num).getSize();
         for (int i = 0; i < n; i++) {
-            ret.append(String.format("[%d,", queryResultDatasets.get(num).getTimestamps().get(i)));
+            long timeRes = TimeUtils.getTimeFromNsToSpecPrecision(queryResultDatasets.get(num).getTimestamps().get(i), TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+            ret.append(String.format("[%d,", timeRes));
             if (queryResultDatasets.get(num).getValues().get(i) instanceof byte[]) {
                 ret.append(new String((byte[]) queryResultDatasets.get(num).getValues().get(i)));
             } else {
