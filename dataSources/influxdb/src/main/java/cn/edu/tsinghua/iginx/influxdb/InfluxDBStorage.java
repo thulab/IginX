@@ -68,7 +68,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.influxdb.client.domain.WritePrecision.NS;
+import static com.influxdb.client.domain.WritePrecision.MS;
 
 public class InfluxDBStorage implements IStorage {
 
@@ -76,7 +76,7 @@ public class InfluxDBStorage implements IStorage {
 
     private static final String STORAGE_ENGINE = "influxdb";
 
-    private static final WritePrecision WRITE_PRECISION = NS;
+    private static final WritePrecision WRITE_PRECISION = MS;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
@@ -159,7 +159,7 @@ public class InfluxDBStorage implements IStorage {
                     QUERY_DATA,
                     bucket.getName(),
                     ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.of("UTC")).format(FORMATTER),
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(Long.MAX_VALUE / 1_000_000L), ZoneId.of("UTC")).format(FORMATTER)
+                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(((long) Integer.MAX_VALUE) * 1000), ZoneId.of("UTC")).format(FORMATTER)
             );
             logger.debug("execute statement: " + statement);
             // 查询 first
@@ -281,11 +281,15 @@ public class InfluxDBStorage implements IStorage {
     }
 
     private static String generateQueryStatement(String bucketName, List<String> paths, TagFilter tagFilter, long startTime, long endTime) {
+        if (endTime == Long.MAX_VALUE) {
+            endTime = Integer.MAX_VALUE;
+            endTime *= 1000;
+        }
         String statement = String.format(
                 QUERY_DATA,
                 bucketName,
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime / 1_000_000L), ZoneId.of("UTC")).format(FORMATTER),
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime / 1_000_000L), ZoneId.of("UTC")).format(FORMATTER)
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of("UTC")).format(FORMATTER),
+                ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER)
         );
         if (paths.size() != 1 || !paths.get(0).equals("*")) {
             StringBuilder filterStr = new StringBuilder(" |> filter(fn: (r) => ");
