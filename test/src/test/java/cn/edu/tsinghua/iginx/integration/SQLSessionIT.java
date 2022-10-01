@@ -1443,7 +1443,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testDateFormat() {
-        if (isAbleToDelete) {
+        if (!isAbleToDelete) {
             return;
         }
         String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
