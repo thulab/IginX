@@ -30,6 +30,7 @@ import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import cn.edu.tsinghua.iginx.utils.RpcUtils;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,6 +160,11 @@ public class RestSession {
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                               List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws ExecutionException {
+        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+    }
+
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String timePrecision) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -212,6 +218,7 @@ public class RestSession {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
         req.setTagsList(tagsList);
+        req.setTimePrecision(timePrecision);
 
         Status status;
         do {
@@ -226,7 +233,7 @@ public class RestSession {
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
-                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws ExecutionException {
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, String timePrecision) throws ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -305,6 +312,7 @@ public class RestSession {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedAttributesList);
+        req.setTimePrecision(timePrecision);
 
         Status status;
         do {
@@ -325,9 +333,14 @@ public class RestSession {
     }
 
     public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime) {
+        deleteDataInColumns(paths, tagList, startTime, endTime, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+    }
+
+    public void deleteDataInColumns(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, String timePrecision) {
         DeleteDataInColumnsReq req = new DeleteDataInColumnsReq(sessionId, paths, startTime, endTime);
-        if(!tagList.isEmpty())//LHZ这里要全部将size改为这个empty的判断
+        if (!tagList.isEmpty())//LHZ这里要全部将size改为这个empty的判断
             req.setTagsList(tagList);
+        req.setTimePrecision(timePrecision);
 
         Status status;
         do {
@@ -341,6 +354,10 @@ public class RestSession {
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList) {
+        return queryData(paths, startTime, endTime, tagList);
+    }
+
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, String timePrecision) {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
             return null;
@@ -348,6 +365,7 @@ public class RestSession {
         QueryDataReq req = new QueryDataReq(sessionId, paths, startTime, endTime);
         if(tagList.size()!=0)
             req.setTagsList(tagList);
+        req.setTimePrecision(timePrecision);
 
         QueryDataResp resp;
 
@@ -363,9 +381,10 @@ public class RestSession {
         return new SessionQueryDataSet(resp);
     }
 
-    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, AggregateType aggregateType) {
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagList, AggregateType aggregateType, String timePrecision) {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, paths, startTime, endTime, aggregateType);
         req.setTagsList(tagList);
+        req.setTimePrecision(timePrecision);
         
         AggregateQueryResp resp;
         do {
@@ -380,9 +399,10 @@ public class RestSession {
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
 
-    public SessionQueryDataSet downsampleQuery(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, AggregateType aggregateType, long precision) {
+    public SessionQueryDataSet downsampleQuery(List<String> paths, Map<String, List<String>> tagList, long startTime, long endTime, AggregateType aggregateType, long precision, String timePrecision) {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, paths, startTime, endTime, aggregateType, precision);
         req.setTagsList(tagList);
+        req.setTimePrecision(timePrecision);
 
         DownsampleQueryResp resp;
 

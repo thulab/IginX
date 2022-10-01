@@ -21,6 +21,7 @@ package cn.edu.tsinghua.iginx.rest.query.aggregator;
 import cn.edu.tsinghua.iginx.rest.RestSession;
 import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -97,8 +98,12 @@ public abstract class QueryAggregator {
     }
 
     public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp) {
+        return doAggregate(session, paths, tagList, startTimestamp, endTimestamp, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+    }
+
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp, String timePrecision) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
-        SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList);
+        SessionQueryDataSet sessionQueryDataSet = session.queryData(paths, startTimestamp, endTimestamp, tagList, timePrecision);
         queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
         int n = sessionQueryDataSet.getTimestamps().length;
         int m = sessionQueryDataSet.getPaths().size();
@@ -109,8 +114,10 @@ public abstract class QueryAggregator {
             for (int i = 0; i < n; i++) {
                 if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                     value.add(sessionQueryDataSet.getValues().get(i).get(j));
-                    time.add(sessionQueryDataSet.getTimestamps()[i]);
-                    queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+//                    long timeRes = TimeUtils.getTimeFromNsToSpecPrecision(sessionQueryDataSet.getTimestamps()[i], TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+                    long timeRes = sessionQueryDataSet.getTimestamps()[i];
+                    time.add(timeRes);
+                    queryResultDataset.add(timeRes, sessionQueryDataSet.getValues().get(i).get(j));
                     datapoints += 1;
                 }
             }

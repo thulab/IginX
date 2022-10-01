@@ -29,6 +29,7 @@ public class Query {
     private Long endAbsolute;
     private Long cacheTime;
     private String timeZone;
+    private String timePrecision;
     private List<QueryMetric> queryMetrics = new ArrayList<>();
 
     public void addQueryMetrics(QueryMetric queryMetric) {

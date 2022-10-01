@@ -271,6 +271,7 @@ public class MetricsResource {
         Query queryAnnoData = getAnnoDataQueryFromTimeSeries(query, timeSeries);
         //先查询title信息
         //查询anno的title以及dsp信息
+        queryAnnoData.setTimePrecision("ns");
         QueryResult resultAnno = getAnno(queryAnnoData,1L,MAXTIEM);
 
         //添加cat信息
@@ -288,6 +289,7 @@ public class MetricsResource {
         queryBase.addFirstAggregator();
         queryBase.setStartAbsolute(1L);
         queryBase.setEndAbsolute(TOPTIEM);
+        queryBase.setTimePrecision("ns");
         QueryExecutor executorPath = new QueryExecutor(queryBase);
         QueryResult resultPath = executorPath.execute(false);
 
@@ -297,6 +299,7 @@ public class MetricsResource {
         queryAnno = parser.splitAnnoPathToQuery(resultPath);
 
         //查询anno的title以及dsp信息
+        queryAnno.setTimePrecision("ns");
         return getAnno(queryAnno,DESCRIPTIONTIEM,MAXTIEM);
     }
 
@@ -397,6 +400,7 @@ public class MetricsResource {
             Query querySp = parser.addAnnoTags(queryBase);
             querySp.setStartAbsolute(1L);
             querySp.setEndAbsolute(TOPTIEM);
+            querySp.setTimePrecision("ns");
             QueryExecutor executorPath = new QueryExecutor(querySp);
             QueryResult resultALL = executorPath.execute(false);
 
@@ -409,6 +413,7 @@ public class MetricsResource {
             Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
             queryAll.setStartAbsolute(1L);
             queryAll.setEndAbsolute(TOPTIEM);
+            queryAll.setTimePrecision("ns");
 
             //空查询判断
             if(queryAll.getQueryMetrics().isEmpty())
@@ -481,6 +486,7 @@ public class MetricsResource {
         Query querySp = parser.addAnnoTags(queryBase);
         querySp.setStartAbsolute(1L);
         querySp.setEndAbsolute(TOPTIEM);
+        querySp.setTimePrecision("ns");
         QueryExecutor executorPath = new QueryExecutor(querySp);
         QueryResult resultALL = executorPath.execute(false);
 
@@ -488,6 +494,7 @@ public class MetricsResource {
         Query queryAll = parser.getSpecificQuery(resultALL, queryBase);
         queryAll.setStartAbsolute(1L);
         queryAll.setEndAbsolute(TOPTIEM);
+        queryAll.setTimePrecision("ns");
         QueryExecutor executorData = new QueryExecutor(queryAll);
         //执行删除操作
         executorData.deleteMetric();

@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query;
 
 import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,26 +55,26 @@ public class QueryParser {
 
     public static Long transTimeFromString(String str) {
         switch (str) {
-            case "nanos":
-                return 1L;
-            case "micros":
-                return 1000L;
+//            case "nanos":
+//                return 1L;
+//            case "micros":
+//                return 1000L;
             case "millis":
-                return 1000000L;
+                return 1L;
             case "seconds":
-                return 1000000000L;
+                return 1000L;
             case "minutes":
-                return 6000000000L;
+                return 60000L;
             case "hours":
-                return 360000000000L;
+                return 3600000L;
             case "days":
-                return 8640000000000L;
+                return 86400000L;
             case "weeks":
-                return 60480000000000L;
+                return 604800000L;
             case "months":
-                return 241920000000000L;
+                return 2419200000L;
             case "years":
-                return 2903040000000000L;
+                return 29030400000L;
             default:
                 return 0L;
         }
@@ -611,7 +612,8 @@ public class QueryParser {
                     ret.append(result.getQueryResultDatasets().get(i).getValues().get(j).toString());
                 }
 
-                ret.append(String.format(",%d", result.getQueryResultDatasets().get(i).getTimestamps().get(j)));
+                long timeInPrecision = TimeUtils.getTimeFromNsToSpecPrecision(result.getQueryResultDatasets().get(i).getTimestamps().get(j), TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+                ret.append(String.format(",%d", timeInPrecision));
                 ret.append("],");
             }
             if (ret.charAt(ret.length() - 1) == ',') {

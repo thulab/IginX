@@ -23,6 +23,7 @@ import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregator;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.QueryAggregatorType;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -276,7 +277,8 @@ public class QueryResult {
 
         for(int j=0; j<timeLists.size(); j++) {
             if(timeLists.get(j)>TOPTIEM) continue;
-            ret.append(String.format("[%d,", timeLists.get(j)));
+            long timeInPrecision = TimeUtils.getTimeFromNsToSpecPrecision(timeLists.get(j), TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+            ret.append(String.format("[%d,", timeInPrecision));
             if (valueLists.get(j) instanceof byte[]) {
                 ret.append(new String((byte[]) valueLists.get(j)));
             } else {
