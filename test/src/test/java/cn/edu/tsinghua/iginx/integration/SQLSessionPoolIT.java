@@ -1378,6 +1378,9 @@ public class SQLSessionPoolIT {
 
     @Test
     public void testDateFormat() {
+        if (!isAbleToDelete) {
+            return;
+        }
         String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
         List<String> dateFormats = Arrays.asList(
             "2021-08-26 16:15:27",
