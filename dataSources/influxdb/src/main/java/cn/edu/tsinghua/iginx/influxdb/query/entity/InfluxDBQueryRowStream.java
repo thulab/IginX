@@ -90,7 +90,7 @@ public class InfluxDBQueryRowStream implements RowStream {
                 continue;
             }
             FluxRecord record = records.get(index);
-            timestamp = Math.min(record.getTime().toEpochMilli(), timestamp);
+            timestamp = Math.min(record.getTime().toEpochMilli() * 1_000_000L, timestamp);
         }
         if (timestamp == Long.MAX_VALUE) {
             return null;
