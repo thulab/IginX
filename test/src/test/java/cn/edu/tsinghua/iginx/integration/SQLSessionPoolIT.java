@@ -638,7 +638,7 @@ public class SQLSessionPoolIT {
 
     @Test
     public void testDownSampleQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 GROUP (0, 1000) BY 100ms;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 GROUP (0, 1000) BY 100ns;";
         List<String> funcTypeList = Arrays.asList(
                 "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -765,7 +765,7 @@ public class SQLSessionPoolIT {
 
     @Test
     public void testRangeDownSampleQuery() {
-        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 600 AND s1 <= 900 GROUP (0, 1000) BY 100ms;";
+        String statement = "SELECT %s(s1), %s(s4) FROM us.d1 WHERE time > 600 AND s1 <= 900 GROUP (0, 1000) BY 100ns;";
         List<String> funcTypeList = Arrays.asList(
                 "MAX", "MIN", "FIRST_VALUE", "LAST_VALUE", "SUM", "AVG", "COUNT"
         );
@@ -1156,7 +1156,7 @@ public class SQLSessionPoolIT {
 
     @Test
     public void testAggregateSubQuery() {
-        String statement = "SELECT %s_s1 FROM (SELECT %s(s1) AS %s_s1 FROM us.d1 GROUP [1000, 1600) BY 60ms);";
+        String statement = "SELECT %s_s1 FROM (SELECT %s(s1) AS %s_s1 FROM us.d1 GROUP [1000, 1600) BY 60ns);";
         List<String> funcTypeList = Arrays.asList(
                 "max", "min", "sum", "avg", "count", "first_value", "last_value"
         );
@@ -1303,7 +1303,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 10\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 GROUP [1000, 1600) BY 100ms) WHERE avg_s1 > 1200;";
+        statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 GROUP [1000, 1600) BY 100ns) WHERE avg_s1 > 1200;";
         expected = "ResultSets:\n" +
                 "+----+------+\n" +
                 "|Time|avg_s1|\n" +
@@ -1316,7 +1316,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 4\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 WHERE s1 < 1500 GROUP [1000, 1600) BY 100ms) WHERE avg_s1 > 1200;";
+        statement = "SELECT avg_s1 FROM (SELECT AVG(s1) AS avg_s1 FROM us.d1 WHERE s1 < 1500 GROUP [1000, 1600) BY 100ns) WHERE avg_s1 > 1200;";
         expected = "ResultSets:\n" +
                 "+----+------+\n" +
                 "|Time|avg_s1|\n" +
@@ -1331,7 +1331,7 @@ public class SQLSessionPoolIT {
 
     @Test
     public void testMultiSubQuery() {
-        String statement = "SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms;";
+        String statement = "SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns;";
         String expected = "ResultSets:\n" +
                 "+----+------+------+\n" +
                 "|Time|avg_s1|sum_s2|\n" +
@@ -1350,7 +1350,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 10\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800;";
+        statement = "SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800;";
         expected = "ResultSets:\n" +
                 "+----+------+------+\n" +
                 "|Time|avg_s1|sum_s2|\n" +
@@ -1365,7 +1365,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 6\n";
         executeAndCompare(statement, expected);
 
-        statement = "SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
+        statement = "SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
         expected = "ResultSets:\n" +
                 "+-----------+-----------+\n" +
                 "|max(avg_s1)|min(sum_s2)|\n" +
@@ -1378,21 +1378,24 @@ public class SQLSessionPoolIT {
 
     @Test
     public void testDateFormat() {
+        if (!isAbleToDelete) {
+            return;
+        }
         String insert = "INSERT INTO us.d2(TIME, date) VALUES (%s, %s);";
         List<String> dateFormats = Arrays.asList(
-                "2021-08-26 16:15:27",
-                "2021/08/26 16:15:28",
-                "2021.08.26 16:15:29",
-                "2021-08-26T16:15:30",
-                "2021/08/26T16:15:31",
-                "2021.08.26T16:15:32",
+            "2021-08-26 16:15:27",
+            "2021/08/26 16:15:28",
+            "2021.08.26 16:15:29",
+            "2021-08-26T16:15:30",
+            "2021/08/26T16:15:31",
+            "2021.08.26T16:15:32",
 
-                "2021-08-26 16:15:27.001",
-                "2021/08/26 16:15:28.001",
-                "2021.08.26 16:15:29.001",
-                "2021-08-26T16:15:30.001",
-                "2021/08/26T16:15:31.001",
-                "2021.08.26T16:15:32.001"
+            "2021-08-26 16:15:27.001",
+            "2021/08/26 16:15:28.001",
+            "2021.08.26 16:15:29.001",
+            "2021-08-26T16:15:30.001",
+            "2021/08/26T16:15:31.001",
+            "2021.08.26T16:15:32.001"
         );
 
         for (int i = 0; i < dateFormats.size(); i++) {
@@ -1401,78 +1404,78 @@ public class SQLSessionPoolIT {
 
         String query = "SELECT date FROM us.d2;";
         String expected =
-                "ResultSets:\n"
-                        + "+-------------+----------+\n"
-                        + "|         Time|us.d2.date|\n"
-                        + "+-------------+----------+\n"
-                        + "|1629965727000|         0|\n"
-                        + "|1629965727001|         6|\n"
-                        + "|1629965728000|         1|\n"
-                        + "|1629965728001|         7|\n"
-                        + "|1629965729000|         2|\n"
-                        + "|1629965729001|         8|\n"
-                        + "|1629965730000|         3|\n"
-                        + "|1629965730001|         9|\n"
-                        + "|1629965731000|         4|\n"
-                        + "|1629965731001|        10|\n"
-                        + "|1629965732000|         5|\n"
-                        + "|1629965732001|        11|\n"
-                        + "+-------------+----------+\n"
-                        + "Total line number = 12\n";
+            "ResultSets:\n"
+                + "+-------------------+----------+\n"
+                + "|               Time|us.d2.date|\n"
+                + "+-------------------+----------+\n"
+                + "|1629965727000000000|         0|\n"
+                + "|1629965727001000000|         6|\n"
+                + "|1629965728000000000|         1|\n"
+                + "|1629965728001000000|         7|\n"
+                + "|1629965729000000000|         2|\n"
+                + "|1629965729001000000|         8|\n"
+                + "|1629965730000000000|         3|\n"
+                + "|1629965730001000000|         9|\n"
+                + "|1629965731000000000|         4|\n"
+                + "|1629965731001000000|        10|\n"
+                + "|1629965732000000000|         5|\n"
+                + "|1629965732001000000|        11|\n"
+                + "+-------------------+----------+\n"
+                + "Total line number = 12\n";
         executeAndCompare(query, expected);
 
         query = "SELECT date FROM us.d2 WHERE time >= 2021-08-26 16:15:27 AND time <= 2021.08.26T16:15:32.001;";
         expected =
-                "ResultSets:\n"
-                        + "+-------------+----------+\n"
-                        + "|         Time|us.d2.date|\n"
-                        + "+-------------+----------+\n"
-                        + "|1629965727000|         0|\n"
-                        + "|1629965727001|         6|\n"
-                        + "|1629965728000|         1|\n"
-                        + "|1629965728001|         7|\n"
-                        + "|1629965729000|         2|\n"
-                        + "|1629965729001|         8|\n"
-                        + "|1629965730000|         3|\n"
-                        + "|1629965730001|         9|\n"
-                        + "|1629965731000|         4|\n"
-                        + "|1629965731001|        10|\n"
-                        + "|1629965732000|         5|\n"
-                        + "|1629965732001|        11|\n"
-                        + "+-------------+----------+\n"
-                        + "Total line number = 12\n";
+            "ResultSets:\n"
+                + "+-------------------+----------+\n"
+                + "|               Time|us.d2.date|\n"
+                + "+-------------------+----------+\n"
+                + "|1629965727000000000|         0|\n"
+                + "|1629965727001000000|         6|\n"
+                + "|1629965728000000000|         1|\n"
+                + "|1629965728001000000|         7|\n"
+                + "|1629965729000000000|         2|\n"
+                + "|1629965729001000000|         8|\n"
+                + "|1629965730000000000|         3|\n"
+                + "|1629965730001000000|         9|\n"
+                + "|1629965731000000000|         4|\n"
+                + "|1629965731001000000|        10|\n"
+                + "|1629965732000000000|         5|\n"
+                + "|1629965732001000000|        11|\n"
+                + "+-------------------+----------+\n"
+                + "Total line number = 12\n";
         executeAndCompare(query, expected);
 
         query = "SELECT date FROM us.d2 WHERE time >= 2021.08.26 16:15:29 AND time <= 2021-08-26T16:15:30.001;";
         expected =
-                "ResultSets:\n"
-                        + "+-------------+----------+\n"
-                        + "|         Time|us.d2.date|\n"
-                        + "+-------------+----------+\n"
-                        + "|1629965729000|         2|\n"
-                        + "|1629965729001|         8|\n"
-                        + "|1629965730000|         3|\n"
-                        + "|1629965730001|         9|\n"
-                        + "+-------------+----------+\n"
-                        + "Total line number = 4\n";
+            "ResultSets:\n"
+                + "+-------------------+----------+\n"
+                + "|               Time|us.d2.date|\n"
+                + "+-------------------+----------+\n"
+                + "|1629965729000000000|         2|\n"
+                + "|1629965729001000000|         8|\n"
+                + "|1629965730000000000|         3|\n"
+                + "|1629965730001000000|         9|\n"
+                + "+-------------------+----------+\n"
+                + "Total line number = 4\n";
         executeAndCompare(query, expected);
 
         query = "SELECT date FROM us.d2 WHERE time >= 2021/08/26 16:15:28 AND time <= 2021/08/26T16:15:31.001;";
         expected =
-                "ResultSets:\n"
-                        + "+-------------+----------+\n"
-                        + "|         Time|us.d2.date|\n"
-                        + "+-------------+----------+\n"
-                        + "|1629965728000|         1|\n"
-                        + "|1629965728001|         7|\n"
-                        + "|1629965729000|         2|\n"
-                        + "|1629965729001|         8|\n"
-                        + "|1629965730000|         3|\n"
-                        + "|1629965730001|         9|\n"
-                        + "|1629965731000|         4|\n"
-                        + "|1629965731001|        10|\n"
-                        + "+-------------+----------+\n"
-                        + "Total line number = 8\n";
+            "ResultSets:\n"
+                + "+-------------------+----------+\n"
+                + "|               Time|us.d2.date|\n"
+                + "+-------------------+----------+\n"
+                + "|1629965728000000000|         1|\n"
+                + "|1629965728001000000|         7|\n"
+                + "|1629965729000000000|         2|\n"
+                + "|1629965729001000000|         8|\n"
+                + "|1629965730000000000|         3|\n"
+                + "|1629965730001000000|         9|\n"
+                + "|1629965731000000000|         4|\n"
+                + "|1629965731001000000|        10|\n"
+                + "+-------------------+----------+\n"
+                + "Total line number = 8\n";
         executeAndCompare(query, expected);
     }
 
@@ -1522,7 +1525,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d4(TIME, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms);";
+        insert = "INSERT INTO us.d4(TIME, s1, s2) VALUES (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns);";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d4";
@@ -1544,7 +1547,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 10\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d5(TIME, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
+        insert = "INSERT INTO us.d5(TIME, s1, s2) VALUES (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800);";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d5";
@@ -1562,7 +1565,7 @@ public class SQLSessionPoolIT {
                 "Total line number = 6\n";
         executeAndCompare(query, expected);
 
-        insert = "INSERT INTO us.d6(TIME, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ms) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
+        insert = "INSERT INTO us.d6(TIME, s1, s2) VALUES (SELECT MAX(avg_s1), MIN(sum_s2) FROM (SELECT avg_s1, sum_s2 FROM (SELECT AVG(s1) AS avg_s1, SUM(s2) AS sum_s2 FROM us.d1 GROUP [1000, 1100) BY 10ns) WHERE avg_s1 > 1020 AND sum_s2 < 10800));";
         execute(insert);
 
         query = "SELECT s1, s2 FROM us.d6";
@@ -1587,13 +1590,13 @@ public class SQLSessionPoolIT {
         errClause = "DELETE FROM us.d1.s1 WHERE time != 105;";
         executeAndCompareErrMsg(errClause, "Not support [!=] in delete clause.");
 
-        errClause = "SELECT s1 FROM us.d1 GROUP (0, 1000) BY 100ms;";
+        errClause = "SELECT s1 FROM us.d1 GROUP (0, 1000) BY 100ns;";
         executeAndCompareErrMsg(errClause, "Group by clause cannot be used without aggregate function.");
 
         errClause = "SELECT last(s1), max(s2) FROM us.d1;";
         executeAndCompareErrMsg(errClause, "SetToSet/SetToRow/RowToRow functions can not be mixed in aggregate query.");
 
-        errClause = "SELECT s1 FROM us.d1 GROUP (100, 10) BY 100ms;";
+        errClause = "SELECT s1 FROM us.d1 GROUP (100, 10) BY 100ns;";
         executeAndCompareErrMsg(errClause, "Start time should be smaller than endTime in time interval.");
 
         errClause = "SELECT min(s1), max(s2) FROM us.d1 ORDER BY TIME;";

@@ -44,18 +44,18 @@ public class ParseTest {
         InsertStatement statement = (InsertStatement) TestUtils.buildStatement(insertStr);
         statement.getTimes();
         List<Long> expectedTimes = Arrays.asList(
-            1629965727000L,
-            1629965727001L,
-            1629965728000L,
-            1629965728001L,
-            1629965729000L,
-            1629965729001L,
-            1629965730000L,
-            1629965730001L,
-            1629965731000L,
-            1629965731001L,
-            1629965732000L,
-            1629965732001L
+            1629965727000000000L,
+            1629965727001000000L,
+            1629965728000000000L,
+            1629965728001000000L,
+            1629965729000000000L,
+            1629965729001000000L,
+            1629965730000000000L,
+            1629965730001000000L,
+            1629965731000000000L,
+            1629965731001000000L,
+            1629965732000000000L,
+            1629965732001000000L
         );
         assertEquals(expectedTimes, statement.getTimes());
     }
@@ -101,7 +101,7 @@ public class ParseTest {
 
     @Test
     public void testParseSelect() {
-        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [200, 300) BY 10ms, LEVEL = 2, 3;";
+        String selectStr = "SELECT SUM(c), SUM(d), SUM(e), COUNT(f), COUNT(g) FROM a.b WHERE 100 < time and time < 1000 or d == \"abc\" or \"666\" <= c or (e < 10 and not (f < 10)) GROUP [200, 300) BY 10ns, LEVEL = 2, 3;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
 
         assertTrue(statement.hasFunc());
@@ -125,7 +125,7 @@ public class ParseTest {
 
         assertEquals(200, statement.getStartTime());
         assertEquals(300, statement.getEndTime());
-        assertEquals(10L, statement.getPrecision());
+        assertEquals(10, statement.getPrecision());
 
         assertEquals(Arrays.asList(2, 3), statement.getLayers());
     }
@@ -165,7 +165,7 @@ public class ParseTest {
 
     @Test
     public void testParseGroupBy() {
-        String selectStr = "SELECT MAX(c) FROM a.b GROUP [100, 1000) BY 10ms;";
+        String selectStr = "SELECT MAX(c) FROM a.b GROUP [100, 1000) BY 10ns;";
         SelectStatement statement = (SelectStatement) TestUtils.buildStatement(selectStr);
         assertEquals(100, statement.getStartTime());
         assertEquals(1000, statement.getEndTime());
@@ -196,14 +196,14 @@ public class ParseTest {
         assertEquals(5, statement.getOffset());
         assertEquals(10, statement.getLimit());
 
-        String groupBy = "SELECT max(a) FROM test GROUP (10, 120] BY 5ms";
+        String groupBy = "SELECT max(a) FROM test GROUP (10, 120] BY 5ns";
         statement = (SelectStatement) TestUtils.buildStatement(groupBy);
 
         assertEquals(11, statement.getStartTime());
         assertEquals(121, statement.getEndTime());
         assertEquals(5L, statement.getPrecision());
 
-        String groupByAndLimit = "SELECT max(a) FROM test GROUP (10, 120) BY 10ms LIMIT 5 OFFSET 2;";
+        String groupByAndLimit = "SELECT max(a) FROM test GROUP (10, 120) BY 10ns LIMIT 5 OFFSET 2;";
         statement = (SelectStatement) TestUtils.buildStatement(groupByAndLimit);
         assertEquals(11, statement.getStartTime());
         assertEquals(120, statement.getEndTime());
@@ -298,5 +298,37 @@ public class ParseTest {
 
         assertEquals(engine01, statement.getEngines().get(0));
         assertEquals(engine02, statement.getEngines().get(1));
+    }
+
+    @Test
+    public void testParseTimeWithUnit() {
+        String insertStr = "INSERT INTO a.b (timestamp, c) values "
+            + "(1, 1), "
+            + "(2ns, 2), "
+            + "(3us, 3), "
+            + "(4ms, 4), "
+            + "(5s, 5), "
+            + "(2022-10-01 17:24:36, 6), "
+            + "(2022-10-01 17:24:36.001, 7) "
+            + "(2022-10-01T17:24:36.002, 8) "
+            + "(2022.10.01 17:24:36.003, 9) "
+            + "(2022.10.01T17:24:36.004, 10) "
+            + "(2022/10/01 17:24:36.005, 11) "
+            + "(2022/10/01T17:24:36.006, 12);";
+        InsertStatement insertStatement = (InsertStatement) TestUtils.buildStatement(insertStr);
+
+        List<Long> expectedTimes = Arrays.asList(1L, 2L, 3000L, 4000000L, 5000000000L,
+            1664616276000000000L, 1664616276001000000L, 1664616276002000000L, 1664616276003000000L,
+            1664616276004000000L, 1664616276005000000L, 1664616276006000000L);
+        assertEquals(expectedTimes, insertStatement.getTimes());
+
+        String queryStr = "SELECT AVG(c) FROM a.b WHERE c > 10 AND c < 1ms GROUP [1s, 2s) BY 10ns;";
+        SelectStatement selectStatement = (SelectStatement) TestUtils.buildStatement(queryStr);
+
+        assertEquals("((a.b.c > 10 && a.b.c < 1000000) && time >= 1000000000 && time < 2000000000)", selectStatement.getFilter().toString());
+
+        assertEquals(1000000000L, selectStatement.getStartTime());
+        assertEquals(2000000000L, selectStatement.getEndTime());
+        assertEquals(10L, selectStatement.getPrecision());
     }
 }

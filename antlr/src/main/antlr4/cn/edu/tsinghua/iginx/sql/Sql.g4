@@ -140,11 +140,11 @@ orderByClause
     ;
 
 groupByClause
-    : GROUP timeInterval BY DURATION COMMA LEVEL OPERATOR_EQ INT (COMMA INT)*
+    : GROUP timeInterval BY TIME_WITH_UNIT COMMA LEVEL OPERATOR_EQ INT (COMMA INT)*
     ;
 
 groupByTimeClause
-    : GROUP timeInterval BY DURATION
+    : GROUP timeInterval BY TIME_WITH_UNIT
     ;
 
 groupByLevelClause
@@ -244,7 +244,7 @@ nodeName
 
 valueNode
     : stringLiteral
-    | DURATION
+    | TIME_WITH_UNIT
     | dateExpression
     | dateFormat
     | MINUS? (EXPONENT | INT)
@@ -312,6 +312,7 @@ keyWords
 
 dateFormat
     : DATETIME
+    | TIME_WITH_UNIT
     | NOW LR_BRACKET RR_BRACKET
     ;
 
@@ -331,7 +332,7 @@ booleanClause
     ;
 
 dateExpression
-    : dateFormat ((PLUS | MINUS) DURATION)*
+    : dateFormat ((PLUS | MINUS) TIME_WITH_UNIT)*
     ;
 
 realLiteral
@@ -706,7 +707,7 @@ INT : [0-9]+;
 
 EXPONENT : INT ('e'|'E') ('+'|'-')? INT ;
 
-DURATION
+TIME_WITH_UNIT
     :
     (INT+ (Y|M O|W|D|H|M|S|M S|U S|N S))+
     ;
