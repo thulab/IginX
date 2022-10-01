@@ -129,7 +129,7 @@ public class ExportCsv extends AbstractCsvTool {
         directory = parseArg(DIRECTORY_ARGS, DIRECTORY_NAME, false, "");
         queryStatements = parseArg(QUERY_STATEMENT_ARGS, QUERY_STATEMENT_NAME, false, "");
         sqlFile = parseArg(SQL_FILE_ARGS, SQL_FILE_NAME, false, "");
-        timePrecision = parseArg(TIME_PRECISION_ARGS, TIME_PRECISION_NAME, false, "ms");
+        timePrecision = parseArg(TIME_PRECISION_ARGS, TIME_PRECISION_NAME, false, "ns");
 
         if (!directory.equals("") && !directory.endsWith("/") && !directory.endsWith("\\")) {
             directory += File.separator;
