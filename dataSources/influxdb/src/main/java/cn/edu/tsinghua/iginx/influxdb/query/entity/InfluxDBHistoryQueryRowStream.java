@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.influxdb.query.entity;
 
+import static cn.edu.tsinghua.iginx.influxdb.tools.TimeUtils.instantToNs;
+
 import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
 import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
@@ -91,7 +93,7 @@ public class InfluxDBHistoryQueryRowStream implements RowStream {
                     continue;
                 }
                 FluxRecord record = records.get(index);
-                timestamp = Math.min(record.getTime().toEpochMilli(), timestamp);
+                timestamp = Math.min(instantToNs(record.getTime()), timestamp);
             }
         }
         if (timestamp == Long.MAX_VALUE) {
@@ -110,7 +112,7 @@ public class InfluxDBHistoryQueryRowStream implements RowStream {
                     continue;
                 }
                 FluxRecord record = records.get(index);
-                if (record.getTime().toEpochMilli() == timestamp) {
+                if (instantToNs(record.getTime()) == timestamp) {
                     DataType dataType = header.getField(ptr).getType();
                     Object value = record.getValue();
                     if (dataType == DataType.BINARY) {

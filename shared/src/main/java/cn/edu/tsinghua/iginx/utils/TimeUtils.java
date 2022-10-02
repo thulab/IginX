@@ -19,6 +19,7 @@
 package cn.edu.tsinghua.iginx.utils;
 
 import java.text.ParseException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -409,7 +410,8 @@ public class TimeUtils {
 
     public static long convertDatetimeStrToLong(String timestampStr) throws ParseException {
         LocalDateTime localDateTime = LocalDateTime.parse(timestampStr, formatter);
-        return LocalDateTime.from(localDateTime).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli() * 1_000_000L;
+        Instant time = LocalDateTime.from(localDateTime).atZone(ZoneId.systemDefault()).toInstant();
+        return time.getEpochSecond() * 1_000_000_000L + time.getNano();
     }
 
     public static long convertTimeWithUnitStrToLong(long currentTime, String timeWithUnit) {
