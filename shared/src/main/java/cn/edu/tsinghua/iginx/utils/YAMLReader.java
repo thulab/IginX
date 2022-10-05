@@ -4,10 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.apache.commons.io.IOUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 
 public class YAMLReader {
 
@@ -25,13 +26,53 @@ public class YAMLReader {
         this.file = new File(path);
     }
 
-    public JobFromYAML getJobFromYAML() {
+    public String normalize(String conf) {
+        String taskType = "(?i)taskType";
+        String dataFlowType = "(?i)dataFlowType";
+        String timeout = "(?i)timeout";
+        String pyTaskName = "(?i)pyTaskName";
+        String sqlList = "(?i)sqlList";
+
+        conf = conf.replaceAll(taskType, "taskType");
+        conf = conf.replaceAll(dataFlowType, "dataFlowType");
+        conf = conf.replaceAll(timeout, "timeout");
+        conf = conf.replaceAll(pyTaskName, "pyTaskName");
+        conf = conf.replaceAll(sqlList, "sqlList");
+
+        String exportType = "(?i)exportType";
+        String exportFile = "(?i)exportFile";
+        String exportNameList = "(?i)exportNameList";
+
+        conf = conf.replaceAll(exportType, "exportType");
+        conf = conf.replaceAll(exportFile, "exportFile");
+        conf = conf.replaceAll(exportNameList, "exportNameList");
+
+        return conf;
+    }
+
+    public String convertToString(String filePath) {
+        String conf = null;
+        InputStream in = null;
         try {
-            return yaml.load(new FileInputStream(file));
-        } catch (FileNotFoundException e) {
-            logger.error(String.format("Fail to find file, path=%s", file.getAbsolutePath()));
-            return null;
+            in = new BufferedInputStream(new FileInputStream(filePath));
+            conf = IOUtils.toString(in, String.valueOf(StandardCharsets.UTF_8));
+            conf = normalize(conf);
+        } catch (IOException e) {
+            logger.error(String.format("Fail to find file, path=%s", filePath));
+        } finally {
+            try {
+                in.close();
+            } catch (IOException e) {
+                logger.error("Fail to close the file, path=%s", filePath);
+            }
         }
+        return conf;
+    }
+
+    public JobFromYAML getJobFromYAML() {
+        String yamlFile = convertToString(path);
+        InputStream result = new ByteArrayInputStream(yamlFile.getBytes(StandardCharsets.UTF_8));
+        return yaml.load(result);
     }
 
 }

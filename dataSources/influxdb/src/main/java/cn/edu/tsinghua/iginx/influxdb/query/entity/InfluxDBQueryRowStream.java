@@ -29,10 +29,10 @@ import com.influxdb.query.FluxTable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.influxdb.tools.DataTypeTransformer.fromInfluxDB;
+import static cn.edu.tsinghua.iginx.influxdb.tools.TimeUtils.instantToNs;
 
 public class InfluxDBQueryRowStream implements RowStream {
 
@@ -90,7 +90,7 @@ public class InfluxDBQueryRowStream implements RowStream {
                 continue;
             }
             FluxRecord record = records.get(index);
-            timestamp = Math.min(record.getTime().toEpochMilli(), timestamp);
+            timestamp = Math.min(instantToNs(record.getTime()), timestamp);
         }
         if (timestamp == Long.MAX_VALUE) {
             return null;
@@ -104,7 +104,7 @@ public class InfluxDBQueryRowStream implements RowStream {
                 continue;
             }
             FluxRecord record = records.get(index);
-            if (record.getTime().toEpochMilli() == timestamp) {
+            if (instantToNs(record.getTime()) == timestamp) {
                 DataType dataType = header.getField(i).getType();
                 Object value = record.getValue();
                 if (dataType == DataType.BINARY) {

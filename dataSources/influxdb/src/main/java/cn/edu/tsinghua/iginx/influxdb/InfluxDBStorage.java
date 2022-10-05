@@ -62,13 +62,12 @@ import org.slf4j.LoggerFactory;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.influxdb.client.domain.WritePrecision.MS;
+
+import static cn.edu.tsinghua.iginx.influxdb.tools.TimeUtils.instantToNs;
 import static com.influxdb.client.domain.WritePrecision.NS;
 
 public class InfluxDBStorage implements IStorage {
@@ -79,9 +78,7 @@ public class InfluxDBStorage implements IStorage {
 
     private static final WritePrecision WRITE_PRECISION = NS;
 
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
-
-    private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: %s, stop: %s)";
+    private static final String QUERY_DATA = "from(bucket:\"%s\") |> range(start: time(v: %s), stop: time(v: %s))";
 
     private static final String DELETE_DATA = "_measurement=\"%s\" AND _field=\"%s\"";
 
@@ -159,15 +156,15 @@ public class InfluxDBStorage implements IStorage {
             String statement = String.format(
                     QUERY_DATA,
                     bucket.getName(),
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.of("UTC")).format(FORMATTER),
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(((long) Integer.MAX_VALUE) * 1000), ZoneId.of("UTC")).format(FORMATTER)
+                    0L,
+                    Long.MAX_VALUE
             );
             logger.debug("execute statement: " + statement);
             // 查询 first
             List<FluxTable> tables = client.getQueryApi().query(statement + " |> first()", organization.getId());
             for (FluxTable table: tables) {
                 for (FluxRecord record: table.getRecords()) {
-                    long time = record.getTime().toEpochMilli();
+                    long time = instantToNs(record.getTime());
                     minTime = Math.min(time, minTime);
                     maxTime = Math.max(time, maxTime);
                     logger.debug("record: " + InfluxDBStorage.toString(table, record));
@@ -177,7 +174,7 @@ public class InfluxDBStorage implements IStorage {
             tables = client.getQueryApi().query(statement + " |> last()", organization.getId());
             for (FluxTable table: tables) {
                 for (FluxRecord record: table.getRecords()) {
-                    long time = record.getTime().toEpochMilli();
+                    long time = instantToNs(record.getTime());
                     minTime = Math.min(time, minTime);
                     maxTime = Math.max(time, maxTime);
                     logger.debug("record: " + InfluxDBStorage.toString(table, record));
@@ -234,17 +231,13 @@ public class InfluxDBStorage implements IStorage {
 
         long startTime = timeInterval.getStartTime();
         long endTime = timeInterval.getEndTime();
-        if (endTime == Long.MAX_VALUE) {
-            endTime = Integer.MAX_VALUE;
-            endTime *= 1000;
-        }
 
         Map<String, List<FluxTable>> bucketQueryResults = new HashMap<>();
         for (String bucket: bucketQueries.keySet()) {
-            String statement = String.format("from(bucket:\"%s\") |> range(start: %s, stop: %s)",
+            String statement = String.format("from(bucket:\"%s\") |> range(start: time(v: %s), stop: time(v: %s))",
                     bucket,
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of("UTC")).format(FORMATTER),
-                    ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER)
+                    startTime,
+                    endTime
             );
             if (!bucketQueries.get(bucket).equals("()")) {
                 statement += String.format(" |> filter(fn: (r) => %s)", bucketQueries.get(bucket));
@@ -282,15 +275,11 @@ public class InfluxDBStorage implements IStorage {
     }
 
     private static String generateQueryStatement(String bucketName, List<String> paths, TagFilter tagFilter, long startTime, long endTime) {
-        if (endTime == Long.MAX_VALUE) {
-            endTime = Integer.MAX_VALUE;
-            endTime *= 1000;
-        }
         String statement = String.format(
                 QUERY_DATA,
                 bucketName,
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of("UTC")).format(FORMATTER),
-                ZonedDateTime.ofInstant(Instant.ofEpochMilli(endTime), ZoneId.of("UTC")).format(FORMATTER)
+                startTime,
+                endTime
         );
         if (paths.size() != 1 || !paths.get(0).equals("*")) {
             StringBuilder filterStr = new StringBuilder(" |> filter(fn: (r) => ");
@@ -555,7 +544,7 @@ public class InfluxDBStorage implements IStorage {
     }
 
     public static String toString(FluxTable table, FluxRecord record) {
-        StringBuilder str = new StringBuilder("measurement: " + record.getMeasurement() + ", field: " + record.getField() + ", value: " + record.getValue() + ", time: " + record.getTime().toEpochMilli());
+        StringBuilder str = new StringBuilder("measurement: " + record.getMeasurement() + ", field: " + record.getField() + ", value: " + record.getValue() + ", time: " + instantToNs(record.getTime()));
         for (int i = 8; i < table.getColumns().size(); i++) {
             str.append(", ").append(table.getColumns().get(i).getLabel()).append(" = ").append(record.getValueByIndex(i));
         }

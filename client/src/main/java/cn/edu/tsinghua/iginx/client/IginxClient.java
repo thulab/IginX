@@ -74,7 +74,7 @@ public class IginxClient {
     static String password = "root";
     static String execute = "";
     private static int MAX_GETDATA_NUM = 100;
-    private static String timestampPrecision = "ms";
+    private static String timestampPrecision = "ns";
     private static CommandLine commandLine;
     private static Session session;
 
