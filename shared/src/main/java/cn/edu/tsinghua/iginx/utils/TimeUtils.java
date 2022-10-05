@@ -381,7 +381,7 @@ public class TimeUtils {
             .appendOptional(ISO_DATE_TIME_WITH_DOT_WITH_SPACE_NS)
             .toFormatter();
 
-    public static final String DEFAULT_TIMESTAMP_PRECISION = "ms";
+    public static final String DEFAULT_TIMESTAMP_PRECISION = "ns";
 
     public static long getTimeInMs(long timestamp, String timePrecision) {
         long timeInMs;
