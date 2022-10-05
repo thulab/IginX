@@ -754,11 +754,6 @@ public class Session {
         }
     }
 
-    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, String timePrecision)
-            throws SessionException, ExecutionException {
-        return queryData(paths, startTime, endTime, null, timePrecision);
-    }
-
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
             throws SessionException, ExecutionException {
         return queryData(paths, startTime, endTime, null, timeUnit);
