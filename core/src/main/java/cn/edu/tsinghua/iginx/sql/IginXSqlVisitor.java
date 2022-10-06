@@ -13,7 +13,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.JobState;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 import cn.edu.tsinghua.iginx.thrift.UDFType;
-import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.entity.Pair;
 import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import org.antlr.v4.runtime.tree.TerminalNode;
 

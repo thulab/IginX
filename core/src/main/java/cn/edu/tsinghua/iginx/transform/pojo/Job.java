@@ -3,8 +3,8 @@ package cn.edu.tsinghua.iginx.transform.pojo;
 import cn.edu.tsinghua.iginx.thrift.*;
 import cn.edu.tsinghua.iginx.transform.api.Stage;
 import cn.edu.tsinghua.iginx.transform.data.*;
-import cn.edu.tsinghua.iginx.utils.JobFromYAML;
-import cn.edu.tsinghua.iginx.utils.TaskFromYAML;
+import cn.edu.tsinghua.iginx.entity.JobFromYAML;
+import cn.edu.tsinghua.iginx.entity.TaskFromYAML;
 import lombok.Data;
 
 import java.util.ArrayList;

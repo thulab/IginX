@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.session_v2.internal;
 
+import cn.edu.tsinghua.iginx.entity.Bitmap;
+import cn.edu.tsinghua.iginx.entity.Pair;
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;

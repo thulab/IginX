@@ -3,7 +3,7 @@ package cn.edu.tsinghua.iginx.statistics;
 import cn.edu.tsinghua.iginx.engine.shared.processor.PostPhysicalProcessor;
 import cn.edu.tsinghua.iginx.engine.shared.processor.PrePhysicalProcessor;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
-import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.entity.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,4 +1,4 @@
-package cn.edu.tsinghua.iginx.utils;
+package cn.edu.tsinghua.iginx.entity;
 
 import java.util.ArrayList;
 import java.util.List;

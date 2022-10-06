@@ -1,7 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.shared.data.write;
 
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.entity.Bitmap;
 
 import java.util.List;
 import java.util.Map;

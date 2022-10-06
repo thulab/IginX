@@ -1,6 +1,6 @@
 package cn.edu.tsinghua.iginx.engine.logical.utils;
 
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.entity.TimeSeriesInterval;
 
 public class PathUtils {
 

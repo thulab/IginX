@@ -4,7 +4,7 @@ import cn.edu.tsinghua.iginx.engine.shared.data.write.RawData;
 import cn.edu.tsinghua.iginx.engine.shared.data.write.RawDataType;
 import cn.edu.tsinghua.iginx.sql.SQLConstant;
 import cn.edu.tsinghua.iginx.thrift.DataType;
-import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.entity.Bitmap;
 
 import java.util.*;
 

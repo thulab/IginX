@@ -18,10 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.influxdb.query.entity;
 
-import cn.edu.tsinghua.iginx.utils.Pair;
-
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 public class InfluxDBSchema {

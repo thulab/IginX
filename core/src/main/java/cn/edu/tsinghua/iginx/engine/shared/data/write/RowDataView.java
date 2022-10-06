@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.write;
 
-import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.entity.Bitmap;
 
 public class RowDataView extends DataView {
 

@@ -6,7 +6,7 @@ import cn.edu.tsinghua.iginx.engine.shared.processor.PreExecuteProcessor;
 import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
 import cn.edu.tsinghua.iginx.sql.statement.StatementType;
-import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.entity.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

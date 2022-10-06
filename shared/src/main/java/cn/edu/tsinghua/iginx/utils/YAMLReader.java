@@ -1,5 +1,6 @@
 package cn.edu.tsinghua.iginx.utils;
 
+import cn.edu.tsinghua.iginx.entity.JobFromYAML;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;

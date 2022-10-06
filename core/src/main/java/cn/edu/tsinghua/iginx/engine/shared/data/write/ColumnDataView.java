@@ -18,7 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.engine.shared.data.write;
 
-import cn.edu.tsinghua.iginx.utils.Bitmap;
+import cn.edu.tsinghua.iginx.entity.Bitmap;
 
 public final class ColumnDataView extends DataView {
 

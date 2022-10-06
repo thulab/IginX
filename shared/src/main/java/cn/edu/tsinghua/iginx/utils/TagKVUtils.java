@@ -18,6 +18,8 @@
  */
 package cn.edu.tsinghua.iginx.utils;
 
+import cn.edu.tsinghua.iginx.entity.Pair;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;

@@ -14,16 +14,17 @@ import cn.edu.tsinghua.iginx.engine.shared.operator.*;
 import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
 import cn.edu.tsinghua.iginx.engine.shared.source.FragmentSource;
 import cn.edu.tsinghua.iginx.engine.shared.source.OperatorSource;
+import cn.edu.tsinghua.iginx.entity.TimeInterval;
 import cn.edu.tsinghua.iginx.metadata.DefaultMetaManager;
 import cn.edu.tsinghua.iginx.metadata.IMetaManager;
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
 import cn.edu.tsinghua.iginx.metadata.entity.StorageUnitMeta;
-import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.entity.TimeSeriesInterval;
 import cn.edu.tsinghua.iginx.policy.IPolicy;
 import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.sql.statement.SelectStatement;
 import cn.edu.tsinghua.iginx.sql.statement.Statement;
-import cn.edu.tsinghua.iginx.utils.Pair;
+import cn.edu.tsinghua.iginx.entity.Pair;
 import cn.edu.tsinghua.iginx.utils.SortUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import static cn.edu.tsinghua.iginx.engine.shared.Constants.*;
+import static cn.edu.tsinghua.iginx.metadata.utils.FragmentUtils.keyFromTSIntervalToTimeInterval;
 
 public class QueryGenerator extends AbstractGenerator {
 
@@ -196,21 +198,22 @@ public class QueryGenerator extends AbstractGenerator {
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
 
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(PathUtils.trimTimeSeriesInterval(interval), true);
         if (!metaManager.hasFragment()) {
             //on startup
             Pair<List<FragmentMeta>, List<StorageUnitMeta>> fragmentsAndStorageUnits = policy.generateInitialFragmentsAndStorageUnits(selectStatement);
             metaManager.createInitialFragmentsAndStorageUnits(fragmentsAndStorageUnits.v, fragmentsAndStorageUnits.k);
-            fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+            fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
         }
+        Map<TimeInterval, List<FragmentMeta>> fragments = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
 
-        List<Operator> joinList = new ArrayList<>();
+        List<Operator> unionList = new ArrayList<>();
         fragments.forEach((k, v) -> {
-            List<Operator> unionList = new ArrayList<>();
-            v.forEach(meta -> unionList.add(new Project(new FragmentSource(meta), pathList, tagFilter)));
-            joinList.add(OperatorUtils.unionOperators(unionList));
+            List<Operator> joinList = new ArrayList<>();
+            v.forEach(meta -> joinList.add(new Project(new FragmentSource(meta), pathList, tagFilter)));
+            unionList.add(OperatorUtils.joinOperatorsByTime(joinList));
         });
 
-        return OperatorUtils.joinOperatorsByTime(joinList);
+        return OperatorUtils.unionOperators(unionList);
     }
 }

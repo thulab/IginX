@@ -3,7 +3,7 @@ package cn.edu.tsinghua.iginx.transform.pojo;
 import cn.edu.tsinghua.iginx.thrift.DataFlowType;
 import cn.edu.tsinghua.iginx.thrift.TaskInfo;
 import cn.edu.tsinghua.iginx.thrift.TaskType;
-import cn.edu.tsinghua.iginx.utils.TaskFromYAML;
+import cn.edu.tsinghua.iginx.entity.TaskFromYAML;
 
 public class Task {
 

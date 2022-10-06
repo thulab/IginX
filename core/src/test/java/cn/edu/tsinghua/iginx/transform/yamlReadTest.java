@@ -1,8 +1,7 @@
 package cn.edu.tsinghua.iginx.transform;
 
-import cn.edu.tsinghua.iginx.transform.exception.TransformException;
-import cn.edu.tsinghua.iginx.utils.JobFromYAML;
-import cn.edu.tsinghua.iginx.utils.TaskFromYAML;
+import cn.edu.tsinghua.iginx.entity.JobFromYAML;
+import cn.edu.tsinghua.iginx.entity.TaskFromYAML;
 import cn.edu.tsinghua.iginx.utils.YAMLReader;
 import org.junit.Test;
 import org.slf4j.Logger;
