@@ -93,6 +93,7 @@ public class SQLSessionExample {
         // 增加存储引擎，测试该项前保证本地启动了对应的数据库实例
 //        execute(addStorageEnginesStr);
         // 关闭 Session
+
         session.openSession();
     }
 
