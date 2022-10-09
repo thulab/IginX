@@ -20,6 +20,7 @@ package cn.edu.tsinghua.iginx.rest.query;
 
 import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.aggregator.*;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -54,6 +55,10 @@ public class QueryParser {
 
     public static Long transTimeFromString(String str) {
         switch (str) {
+//            case "nanos":
+//                return 1L;
+//            case "micros":
+//                return 1000L;
             case "millis":
                 return 1L;
             case "seconds":
@@ -607,7 +612,8 @@ public class QueryParser {
                     ret.append(result.getQueryResultDatasets().get(i).getValues().get(j).toString());
                 }
 
-                ret.append(String.format(",%d", result.getQueryResultDatasets().get(i).getTimestamps().get(j)));
+                long timeInPrecision = TimeUtils.getTimeFromNsToSpecPrecision(result.getQueryResultDatasets().get(i).getTimestamps().get(j), TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+                ret.append(String.format(",%d", timeInPrecision));
                 ret.append("],");
             }
             if (ret.charAt(ret.length() - 1) == ',') {

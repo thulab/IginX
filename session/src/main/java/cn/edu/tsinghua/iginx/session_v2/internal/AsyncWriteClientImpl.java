@@ -60,17 +60,32 @@ public class AsyncWriteClientImpl extends AbstractFunctionClient implements Asyn
 
     @Override
     public void writePoint(Point point) {
-        writePoints(Collections.singletonList(point));
+        writePoints(Collections.singletonList(point), null);
+    }
+
+    @Override
+    public void writePoint(Point point, String timePrecision) {
+        writePoints(Collections.singletonList(point), timePrecision);
     }
 
     @Override
     public void writePoints(List<Point> points) {
-        asyncWriteService.execute(newAsyncWritePointsTask(points));
+        asyncWriteService.execute(newAsyncWritePointsTask(points, null));
+    }
+
+    @Override
+    public void writePoints(List<Point> points, String timePrecision) {
+        asyncWriteService.execute(newAsyncWritePointsTask(points, timePrecision));
     }
 
     @Override
     public void writeRecord(Record record) {
-        writeRecords(Collections.singletonList(record));
+        writeRecords(Collections.singletonList(record), null);
+    }
+
+    @Override
+    public void writeRecord(Record record, String timePrecision) {
+        writeRecords(Collections.singletonList(record), timePrecision);
     }
 
     @Override
@@ -79,8 +94,18 @@ public class AsyncWriteClientImpl extends AbstractFunctionClient implements Asyn
     }
 
     @Override
+    public void writeRecords(List<Record> records, String timePrecision) {
+        asyncWriteService.execute(newAsyncWriteRecordsTask(records, timePrecision));
+    }
+
+    @Override
     public <M> void writeMeasurement(M measurement) {
-        writeMeasurements(Collections.singletonList(measurement));
+        writeMeasurements(Collections.singletonList(measurement), null);
+    }
+
+    @Override
+    public <M> void writeMeasurement(M measurement, String timePrecision) {
+        writeMeasurements(Collections.singletonList(measurement), timePrecision);
     }
 
     @Override
@@ -89,8 +114,18 @@ public class AsyncWriteClientImpl extends AbstractFunctionClient implements Asyn
     }
 
     @Override
+    public <M> void writeMeasurements(List<M> measurements, String timePrecision) {
+        asyncWriteService.execute(newAsyncWriteRecordsTask(measurements.stream().map(measurementMapper::toRecord).collect(Collectors.toList()), timePrecision));
+    }
+
+    @Override
     public void writeTable(Table table) {
         asyncWriteService.execute(newAsyncWriteTableTask(table));
+    }
+
+    @Override
+    public void writeTable(Table table, String timePrecision) {
+        asyncWriteService.execute(newAsyncWriteTableTask(table, timePrecision));
     }
 
     @Override
@@ -106,12 +141,24 @@ public class AsyncWriteClientImpl extends AbstractFunctionClient implements Asyn
         return new AsyncWriteTask(points, null, null);
     }
 
+    private AsyncWriteTask newAsyncWritePointsTask(List<Point> points, String timePrecison) {
+        return new AsyncWriteTask(points, null, null, timePrecison);
+    }
+
     private AsyncWriteTask newAsyncWriteRecordsTask(List<Record> records) {
         return new AsyncWriteTask(null, records, null);
     }
 
+    private AsyncWriteTask newAsyncWriteRecordsTask(List<Record> records, String timePrecison) {
+        return new AsyncWriteTask(null, records, null, timePrecison);
+    }
+
     private AsyncWriteTask newAsyncWriteTableTask(Table table) {
         return new AsyncWriteTask(null, null, table);
+    }
+
+    private AsyncWriteTask newAsyncWriteTableTask(Table table, String timePrecison) {
+        return new AsyncWriteTask(null, null, table, timePrecison);
     }
 
     private class AsyncWriteTask implements Runnable {
@@ -122,20 +169,30 @@ public class AsyncWriteClientImpl extends AbstractFunctionClient implements Asyn
 
         final Table table;
 
+        final String timePrecision;
+
         AsyncWriteTask(List<Point> points, List<Record> records, Table table) {
             this.points = points;
             this.records = records;
             this.table = table;
+            this.timePrecision = null;
+        }
+
+        AsyncWriteTask(List<Point> points, List<Record> records, Table table, String timePrecision) {
+            this.points = points;
+            this.records = records;
+            this.table = table;
+            this.timePrecision = timePrecision;
         }
 
         @Override
         public void run() {
             if (points != null) {
-                AsyncWriteClientImpl.this.syncWriteClient.writePoints(points);
+                AsyncWriteClientImpl.this.syncWriteClient.writePoints(points, timePrecision);
             } else if (records != null) {
-                AsyncWriteClientImpl.this.syncWriteClient.writeRecords(records);
+                AsyncWriteClientImpl.this.syncWriteClient.writeRecords(records, timePrecision);
             } else if (table != null) {
-                AsyncWriteClientImpl.this.syncWriteClient.writeTable(table);
+                AsyncWriteClientImpl.this.syncWriteClient.writeTable(table, timePrecision);
             }
         }
     }

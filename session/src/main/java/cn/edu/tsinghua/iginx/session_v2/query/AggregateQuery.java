@@ -31,11 +31,22 @@ public class AggregateQuery extends Query {
 
     private final AggregateType aggregateType;
 
+    private final String timePrecision;
+
     public AggregateQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime, AggregateType aggregateType) {
         super(measurements, tagsList);
         this.startTime = startTime;
         this.endTime = endTime;
         this.aggregateType = aggregateType;
+        this.timePrecision = null;
+    }
+
+    public AggregateQuery(Set<String> measurements, Map<String, List<String>> tagsList, long startTime, long endTime, AggregateType aggregateType, String timePrecision) {
+        super(measurements, tagsList);
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.aggregateType = aggregateType;
+        this.timePrecision = timePrecision;
     }
 
     public static AggregateQuery.Builder builder() {
@@ -54,6 +65,10 @@ public class AggregateQuery extends Query {
         return aggregateType;
     }
 
+    public String getTimePrecision() {
+        return timePrecision;
+    }
+
     public static class Builder {
 
         private final Set<String> measurements;
@@ -66,11 +81,14 @@ public class AggregateQuery extends Query {
 
         private AggregateType aggregateType;
 
+        private String timePrecision;
+
         private Builder() {
             this.measurements = new HashSet<>();
             this.tagsList = new HashMap<>();
             this.startTime = 0L;
             this.endTime = Long.MAX_VALUE;
+            this.timePrecision = null;
         }
 
         public AggregateQuery.Builder addMeasurement(String measurement) {
@@ -125,6 +143,12 @@ public class AggregateQuery extends Query {
             return this;
         }
 
+        public AggregateQuery.Builder timePrecision(String timePrecision) {
+            Arguments.checkNotNull(timePrecision, "timePrecision");
+            this.timePrecision = timePrecision;
+            return this;
+        }
+
         public AggregateQuery build() {
             if (this.measurements.isEmpty()) {
                 throw new IllegalStateException("simple query at least has one measurement.");
@@ -132,7 +156,7 @@ public class AggregateQuery extends Query {
             if (this.aggregateType == null) {
                 throw new IllegalStateException("aggregate type should not be null.");
             }
-            return new AggregateQuery(measurements, tagsList, startTime, endTime, aggregateType);
+            return new AggregateQuery(measurements, tagsList, startTime, endTime, aggregateType, timePrecision);
         }
 
     }

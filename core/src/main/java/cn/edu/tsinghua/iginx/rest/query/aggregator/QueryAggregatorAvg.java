@@ -24,6 +24,7 @@ import cn.edu.tsinghua.iginx.rest.bean.QueryResultDataset;
 import cn.edu.tsinghua.iginx.session.SessionQueryDataSet;
 import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.thrift.AggregateType;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,12 +37,16 @@ public class QueryAggregatorAvg extends QueryAggregator {
         super(QueryAggregatorType.AVG);
     }
 
-
     @Override
     public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp) {
+        return doAggregate(session, paths, tagList, startTimestamp, endTimestamp, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+    }
+
+    @Override
+    public QueryResultDataset doAggregate(RestSession session, List<String> paths, Map<String, List<String>> tagList, long startTimestamp, long endTimestamp, String timePrecision) {
         QueryResultDataset queryResultDataset = new QueryResultDataset();
         try {
-            SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths, tagList, startTimestamp, endTimestamp, AggregateType.AVG, getDur());
+            SessionQueryDataSet sessionQueryDataSet = session.downsampleQuery(paths, tagList, startTimestamp, endTimestamp, AggregateType.AVG, getDur(), timePrecision);
             queryResultDataset.setPaths(getPathsFromSessionQueryDataSet(sessionQueryDataSet));
             DataType type = RestUtils.checkType(sessionQueryDataSet);
             int n = sessionQueryDataSet.getTimestamps().length;
@@ -53,8 +58,10 @@ public class QueryAggregatorAvg extends QueryAggregator {
                 for (int i = 0; i < n; i++) {
                     if (sessionQueryDataSet.getValues().get(i).get(j) != null) {
                         value.add(sessionQueryDataSet.getValues().get(i).get(j));
-                        time.add(sessionQueryDataSet.getTimestamps()[i]);
-                        queryResultDataset.add(sessionQueryDataSet.getTimestamps()[i], sessionQueryDataSet.getValues().get(i).get(j));
+//                        long timeRes = TimeUtils.getTimeFromNsToSpecPrecision(sessionQueryDataSet.getTimestamps()[i], TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+                        long timeRes = sessionQueryDataSet.getTimestamps()[i];
+                        time.add(timeRes);
+                        queryResultDataset.add(timeRes, sessionQueryDataSet.getValues().get(i).get(j));
                         datapoints += 1;
                     }
                 }

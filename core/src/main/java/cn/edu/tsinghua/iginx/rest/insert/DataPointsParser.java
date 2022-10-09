@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.rest.bean.*;
 import cn.edu.tsinghua.iginx.rest.query.QueryExecutor;
 import cn.edu.tsinghua.iginx.rest.query.QueryParser;
 import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.TimeUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -169,6 +170,7 @@ public class DataPointsParser {
             query.addQueryMetrics(metric);
             query.setStartAbsolute(1L);
             query.setEndAbsolute(2L);
+            query.setTimePrecision("ns");
 
             //执行查询
             QueryExecutor executor = new QueryExecutor(query);
@@ -217,7 +219,7 @@ public class DataPointsParser {
         type.add(DataType.BINARY);
         valuesList[0] = value;
         try {
-            session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
+            session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null, "ns");
         } catch (ExecutionException e) {
             LOGGER.error("Error occurred during insert ", e);
             throw e;
@@ -240,7 +242,7 @@ public class DataPointsParser {
         type.add(DataType.BINARY);
         ANNOPATHS.add(ANNOTAIONSEQUENCE);
         try {
-            session.insertNonAlignedColumnRecords(ANNOPATHS, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null);
+            session.insertNonAlignedColumnRecords(ANNOPATHS, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, null, "ns");
         } catch (ExecutionException e) {
             LOGGER.error("Error occurred during insert ", e);
             throw e;
@@ -279,7 +281,7 @@ public class DataPointsParser {
             valuesList[0] = valuesAnno;
             type.add(typeAb);
             try {
-                session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList);
+                session.insertNonAlignedColumnRecords(paths, timestamps.stream().mapToLong(Long::longValue).toArray(), valuesList, type, tagsList, "ns");
             } catch (ExecutionException e) {
                 LOGGER.error("Error occurred during insert ", e);
                 throw e;
@@ -355,6 +357,10 @@ public class DataPointsParser {
     }
 
     private void insertExe(Metric metric) throws Exception {
+        insertExe(metric, TimeUtils.DEFAULT_TIMESTAMP_PRECISION);
+    }
+
+    private void insertExe(Metric metric, String timePrecision) throws Exception {
         //LHZ以下代码重复了，能否合并到一个函数？？？
         //执行插入
         StringBuilder path = new StringBuilder();
@@ -374,7 +380,7 @@ public class DataPointsParser {
         valuesList[0] = values;
         try {
             //LHZ 因为我们默认是可以通过加@的路径访问实现确切的插入，所以无需添加tag
-            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist);
+            session.insertNonAlignedColumnRecords(paths, metric.getTimestamps().stream().mapToLong(Long::longValue).toArray(), valuesList, type, taglist, timePrecision);
             if (!metric.getAnno().isEmpty()) {
                 insertAnno(paths,taglist,metric.getAnno(),type.get(0));
             }
@@ -408,7 +414,7 @@ public class DataPointsParser {
                     metricGetData(metric,queryBase,queryResultDataset,queryBase.getAnnotationLimit(),pl);
 
                     //执行插入
-                    insertExe(metric);
+                    insertExe(metric, "ns");
                 }
             }
         } catch (Exception e) {
@@ -474,7 +480,7 @@ public class DataPointsParser {
                     //添加anno的title等信息，以及数据点信息
                     metricGetData(metric,queryBase,queryResultDataset,queryBase.getNewAnnotationLimit(),pl);
 
-                    insertExe(metric);
+                    insertExe(metric, "ns");
                 }
             }
         } catch (Exception e) {

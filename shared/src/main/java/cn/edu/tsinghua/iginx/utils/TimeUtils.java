@@ -402,6 +402,48 @@ public class TimeUtils {
         return timeInMs;
     }
 
+    public static long getTimeInNs(long timestamp, String timePrecision) {
+        long timeInNs;
+        switch (timePrecision) {
+            case "s":
+                timeInNs = timestamp * 1000000000;
+                break;
+            case "ms":
+                timeInNs = timestamp * 1000000;
+                break;
+            case "us":
+                timeInNs = timestamp * 1000;
+                break;
+            case "ns":
+                timeInNs = timestamp;
+                break;
+            default:
+                timeInNs = timestamp;
+        }
+        return timeInNs;
+    }
+
+    public static long getTimeFromNsToSpecPrecision(long timestamp, String timePrecision) {
+        long time;
+        switch (timePrecision) {
+            case "s":
+                time = timestamp / 1000000000;
+                break;
+            case "ms":
+                time = timestamp / 1000000;
+                break;
+            case "us":
+                time = timestamp / 1000;
+                break;
+            case "ns":
+                time = timestamp;
+                break;
+            default:
+                time = timestamp;
+        }
+        return time;
+    }
+
     public static long getMicrosecond() {
         long currentTime = System.currentTimeMillis() * 1000;
         long nanoTime = System.nanoTime();

@@ -69,6 +69,8 @@ public class Session {
     private boolean isClosed;
     private int redirectTimes;
 
+    private static final String timeUnit = "ns";
+
     public Session(String host, int port) {
         this(host, port, USERNAME, PASSWORD);
     }
@@ -299,11 +301,16 @@ public class Session {
 
     public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                     List<DataType> dataTypeList) throws SessionException, ExecutionException {
-        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, null, timeUnit);
     }
 
     public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                     List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                    List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -378,6 +385,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -397,11 +405,16 @@ public class Session {
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                               List<DataType> dataTypeList) throws SessionException, ExecutionException {
-        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null);
+        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, null, timeUnit);
     }
 
     public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                               List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertNonAlignedColumnRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertNonAlignedColumnRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -476,6 +489,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -495,6 +509,11 @@ public class Session {
 
     public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                  List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -575,6 +594,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -594,11 +614,16 @@ public class Session {
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                            List<DataType> dataTypeList) throws SessionException, ExecutionException {
-        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null);
+        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, null, timeUnit);
     }
 
     public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
                                            List<DataType> dataTypeList, List<Map<String, String>> tagsList) throws SessionException, ExecutionException {
+        insertNonAlignedRowRecords(paths, timestamps, valuesList, dataTypeList, tagsList, timeUnit);
+    }
+
+    public void insertNonAlignedRowRecords(List<String> paths, long[] timestamps, Object[] valuesList,
+                                           List<DataType> dataTypeList, List<Map<String, String>> tagsList, String precision) throws SessionException, ExecutionException {
         if (paths.isEmpty() || timestamps.length == 0 || valuesList.length == 0 || dataTypeList.isEmpty()) {
             logger.error("Invalid insert request!");
             return;
@@ -679,6 +704,7 @@ public class Session {
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(sortedDataTypeList);
         req.setTagsList(sortedTagsList);
+        req.setTimePrecision(precision);
 
         try {
             Status status;
@@ -729,11 +755,16 @@ public class Session {
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime)
-        throws SessionException, ExecutionException {
-        return queryData(paths, startTime, endTime, null);
+            throws SessionException, ExecutionException {
+        return queryData(paths, startTime, endTime, null, timeUnit);
     }
 
     public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagsList)
+            throws SessionException, ExecutionException {
+        return queryData(paths, startTime, endTime, tagsList, timeUnit);
+    }
+
+    public SessionQueryDataSet queryData(List<String> paths, long startTime, long endTime, Map<String, List<String>> tagsList, String timePrecision)
             throws SessionException, ExecutionException {
         if (paths.isEmpty() || startTime > endTime) {
             logger.error("Invalid query request!");
@@ -744,6 +775,7 @@ public class Session {
         if (tagsList != null && !tagsList.isEmpty()) {
             req.setTagsList(tagsList);
         }
+        req.setTimePrecision(timePrecision);
 
         QueryDataResp resp;
 
@@ -765,17 +797,28 @@ public class Session {
     }
 
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType)
-        throws SessionException, ExecutionException {
-        return aggregateQuery(paths, startTime, endTime, aggregateType, null);
+            throws SessionException, ExecutionException {
+        return aggregateQuery(paths, startTime, endTime, aggregateType, null, timeUnit);
+    }
+
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, String timePrecision)
+            throws SessionException, ExecutionException {
+        return aggregateQuery(paths, startTime, endTime, aggregateType, null, timePrecision);
     }
 
     public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, Map<String, List<String>> tagsList)
+            throws SessionException, ExecutionException {
+        return aggregateQuery(paths, startTime, endTime, aggregateType, tagsList, timeUnit);
+    }
+
+    public SessionAggregateQueryDataSet aggregateQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, Map<String, List<String>> tagsList, String timePrecision)
             throws SessionException, ExecutionException {
         AggregateQueryReq req = new AggregateQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime, aggregateType);
 
         if (tagsList != null && !tagsList.isEmpty()) {
             req.setTagsList(tagsList);
         }
+        req.setTimePrecision(timePrecision);
 
         AggregateQueryResp resp;
         try {
@@ -795,19 +838,30 @@ public class Session {
         return new SessionAggregateQueryDataSet(resp, aggregateType);
     }
 
+    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, String timePrecision)
+            throws SessionException, ExecutionException {
+        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, null, timePrecision);
+    }
+
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision)
-        throws SessionException, ExecutionException {
-        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, null);
+            throws SessionException, ExecutionException {
+        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, null, timeUnit);
     }
 
     public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, Map<String, List<String>> tagsList)
-        throws SessionException, ExecutionException {
+            throws SessionException, ExecutionException {
+        return downsampleQuery(paths, startTime, endTime, aggregateType, precision, tagsList, timeUnit);
+    }
+
+    public SessionQueryDataSet downsampleQuery(List<String> paths, long startTime, long endTime, AggregateType aggregateType, long precision, Map<String, List<String>> tagsList, String timePrecision)
+            throws SessionException, ExecutionException {
         DownsampleQueryReq req = new DownsampleQueryReq(sessionId, mergeAndSortPaths(paths), startTime, endTime,
                 aggregateType, precision);
 
         if (tagsList != null && !tagsList.isEmpty()) {
             req.setTagsList(tagsList);
         }
+        req.setTimePrecision(timePrecision);
 
         DownsampleQueryResp resp;
 
@@ -871,12 +925,22 @@ public class Session {
         return new SessionExecuteSqlResult(resp);
     }
 
+    public SessionQueryDataSet queryLast(List<String> paths, long startTime, String timePrecision)
+            throws SessionException, ExecutionException {
+        return queryLast(paths, startTime, null, timePrecision);
+    }
+
     public SessionQueryDataSet queryLast(List<String> paths, long startTime)
-        throws SessionException, ExecutionException {
-        return queryLast(paths, startTime, null);
+            throws SessionException, ExecutionException {
+        return queryLast(paths, startTime, null, timeUnit);
     }
 
     public SessionQueryDataSet queryLast(List<String> paths, long startTime, Map<String, List<String>> tagsList)
+            throws SessionException, ExecutionException {
+        return queryLast(paths, startTime, tagsList, timeUnit);
+    }
+
+    public SessionQueryDataSet queryLast(List<String> paths, long startTime, Map<String, List<String>> tagsList, String timePrecision)
             throws SessionException, ExecutionException {
         if (paths.isEmpty()) {
             logger.error("Invalid query request!");
@@ -887,6 +951,7 @@ public class Session {
         if (tagsList != null && !tagsList.isEmpty()) {
             req.setTagsList(tagsList);
         }
+        req.setTimePrecision(timePrecision);
 
         LastQueryResp resp;
 

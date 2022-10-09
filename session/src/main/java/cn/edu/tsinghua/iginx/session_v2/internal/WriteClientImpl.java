@@ -18,6 +18,7 @@
  */
 package cn.edu.tsinghua.iginx.session_v2.internal;
 
+
 import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
 import cn.edu.tsinghua.iginx.session_v2.WriteClient;
 import cn.edu.tsinghua.iginx.session_v2.exception.IginXException;
@@ -60,11 +61,21 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
 
     @Override
     public void writePoint(Point point) {
-        writePoints(Collections.singletonList(point));
+        writePoints(Collections.singletonList(point), null);
+    }
+
+    @Override
+    public void writePoint(Point point, String timePrecision) {
+        writePoints(Collections.singletonList(point), timePrecision);
     }
 
     @Override
     public void writePoints(List<Point> points) {
+        writePoints(points, null);
+    }
+
+    @Override
+    public void writePoints(List<Point> points, String timePrecision) {
         SortedMap<String, DataType> measurementMap = new TreeMap<>();
         Set<Long> timestampSet = new HashSet<>();
         for (Point point : points) {
@@ -111,16 +122,26 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             measurements.set(i, pair.k);
             tagsList.add(pair.v);
         }
-        writeColumnData(measurements, timestamps, valuesList, dataTypeList, tagsList);
+        writeColumnData(measurements, timestamps, valuesList, dataTypeList, tagsList, timePrecision);
     }
 
     @Override
     public void writeRecord(Record record) {
-        writeRecords(Collections.singletonList(record));
+        writeRecords(Collections.singletonList(record), null);
+    }
+
+    @Override
+    public void writeRecord(Record record, String timePrecision) {
+        writeRecords(Collections.singletonList(record), timePrecision);
     }
 
     @Override
     public void writeRecords(List<Record> records) {
+        writeRecords(records, null);
+    }
+
+    @Override
+    public void writeRecords(List<Record> records, String timePrecision) {
         SortedMap<String, DataType> measurementMap = new TreeMap<>();
         for (Record record : records) {
             for (int index = 0; index < record.getLength(); index++) {
@@ -172,21 +193,36 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
             measurements.set(i, pair.k);
             tagsList.add(pair.v);
         }
-        writeRowData(measurements, timestamps, valuesList, dataTypeList, tagsList);
+        writeRowData(measurements, timestamps, valuesList, dataTypeList, tagsList, timePrecision);
     }
 
     @Override
     public <M> void writeMeasurement(M measurement) {
-        writeMeasurements(Collections.singletonList(measurement));
+        writeMeasurements(Collections.singletonList(measurement), null);
+    }
+
+    @Override
+    public <M> void writeMeasurement(M measurement, String timePrecision) {
+        writeMeasurements(Collections.singletonList(measurement), timePrecision);
     }
 
     @Override
     public <M> void writeMeasurements(List<M> measurements) {
-        writeRecords(measurements.stream().map(measurementMapper::toRecord).collect(Collectors.toList()));
+        writeRecords(measurements.stream().map(measurementMapper::toRecord).collect(Collectors.toList()), null);
+    }
+
+    @Override
+    public <M> void writeMeasurements(List<M> measurements, String timePrecision) {
+        writeRecords(measurements.stream().map(measurementMapper::toRecord).collect(Collectors.toList()), timePrecision);
     }
 
     @Override
     public void writeTable(Table table) {
+        writeTable(table, null);
+    }
+
+    @Override
+    public void writeTable(Table table, String timePrecision) {
         long[] timestamps = new long[table.getLength()];
         Object[][] valuesList = new Object[table.getLength()][];
         for (int i = 0; i < table.getLength(); i++) {
@@ -195,11 +231,11 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         }
         List<String> measurements = table.getMeasurements();
         List<Map<String, String>> tagsList = table.getTagsList();
-        writeRowData(measurements, timestamps, valuesList, table.getDataTypes(), tagsList);
+        writeRowData(measurements, timestamps, valuesList, table.getDataTypes(), tagsList, timePrecision);
     }
 
     private void writeColumnData(List<String> paths, long[] timestamps, Object[][] valuesList,
-                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList) {
+                                 List<DataType> dataTypeList, List<Map<String, String>> tagsList, String timePrecision) {
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (int i = 0; i < valuesList.length; i++) {
@@ -222,6 +258,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
         req.setTagsList(tagsList);
+        req.setTimePrecision(timePrecision);
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();
@@ -236,7 +273,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
     }
 
     private void writeRowData(List<String> paths, long[] timestamps, Object[][] valuesList,
-                              List<DataType> dataTypeList, List<Map<String, String>> tagsList) {
+                              List<DataType> dataTypeList, List<Map<String, String>> tagsList, String timePrecision) {
         List<ByteBuffer> valueBufferList = new ArrayList<>();
         List<ByteBuffer> bitmapBufferList = new ArrayList<>();
         for (Object[] values : valuesList) {
@@ -258,6 +295,7 @@ public class WriteClientImpl extends AbstractFunctionClient implements WriteClie
         req.setBitmapList(bitmapBufferList);
         req.setDataTypeList(dataTypeList);
         req.setTagsList(tagsList);
+        req.setTimePrecision(timePrecision);
 
         synchronized (iginXClient) {
             iginXClient.checkIsClosed();

@@ -73,13 +73,13 @@ public class QueryExecutor {
                 if (isDelete) {
                     RestSession session = new RestSession();
                     session.openSession();
-                    session.deleteDataInColumns(paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute());
+                    session.deleteDataInColumns(paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute(), query.getTimePrecision());
                     session.closeSession();
                 } else if (queryMetric.getAggregators().size() == 0) {
-                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, new QueryAggregatorNone());
+                    ret.addResultSet(new QueryAggregatorNone().doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute(), query.getTimePrecision()), queryMetric, new QueryAggregatorNone());
                 } else {
                     for (QueryAggregator queryAggregator : queryMetric.getAggregators()) {
-                        ret.addResultSet(queryAggregator.doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute()), queryMetric, queryAggregator);
+                        ret.addResultSet(queryAggregator.doAggregate(session, paths, queryMetric.getTags(), query.getStartAbsolute(), query.getEndAbsolute(), query.getTimePrecision()), queryMetric, queryAggregator);
                     }
                 }
             }
@@ -140,6 +140,7 @@ public class QueryExecutor {
                     metrics.add(metric);
                     if(hasTitle) {
                         titleQuery.setQueryMetrics(metrics);
+                        titleQuery.setTimePrecision("ns");
                         this.query = titleQuery;
                         title = execute(false);
                         anno.getQueryResultDatasets().get(i).addTitle(getStringFromObject(title.getQueryResultDatasets().get(0).getValues().get(0)));
@@ -148,6 +149,7 @@ public class QueryExecutor {
                     }
                     if(hasDescription) {
                         descriptionQuery.setQueryMetrics(metrics);
+                        descriptionQuery.setTimePrecision("ns");
                         this.query = descriptionQuery;
                         description = execute(false);
                         anno.getQueryResultDatasets().get(i).addDescription(getStringFromObject(description.getQueryResultDatasets().get(0).getValues().get(0)));
