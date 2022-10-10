@@ -138,7 +138,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriHasDataExpHasData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriHasExpHasData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -216,7 +216,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriHasExpNoData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriHasExpNoData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -294,7 +294,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriNoExpHasData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriNoExpHasData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -372,7 +372,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriNoExpNoData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriNoExpNoData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -785,7 +785,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriHasDataExpHasData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriHasDataExpHasData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -863,7 +863,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriHasDataExpNoData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriHasDataExpNoData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -941,7 +941,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriNoDataExpHasData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriNoDataExpHasData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -1019,7 +1019,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest_OriNoDataExpNoData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriNoDataExpNoData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
