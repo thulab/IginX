@@ -9,8 +9,10 @@ import org.junit.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -1839,4 +1841,63 @@ public abstract class SQLSessionIT {
             "Empty set.\n";
         executeAndCompare(showTimeSeries, expected);
     }
+
+    public void insertSpecificData(long startTimestamp, long endTimestamp, String name) throws ExecutionException, SessionException {
+        String insertStrPrefix = "INSERT INTO us.d1 (timestamp, " + name + ") values ";
+
+        StringBuilder builder = new StringBuilder(insertStrPrefix);
+
+        int size = (int) (endTimestamp - startTimestamp);
+        for (int i = 0; i < size; i++) {
+            builder.append(", ");
+            builder.append("(");
+            builder.append(startTimestamp + i).append(", ");
+            builder.append(startTimestamp + i);
+            builder.append(")");
+        }
+        builder.append(";");
+
+        String insertStatement = builder.toString();
+
+        SessionExecuteSqlResult res = session.executeSql(insertStatement);
+        if (res.getParseErrorMsg() != null && !res.getParseErrorMsg().equals("")) {
+            logger.error("Insert date execute fail. Caused by: {}.", res.getParseErrorMsg());
+            fail();
+        }
+    }
+
+    @Test
+    public void testCriticalTimeAndQuery() throws ExecutionException, SessionException {
+        long startTime = 1000;
+        long endTime = 5000;
+        ArrayList aggregate = new ArrayList<>(Arrays.asList("FIRST","LAST","FIRST_VALUE","LAST_VALUE","MIN","MAX","AVG","COUNT","SUM"));
+        String[] UDTF = new String[]{"cos"};
+
+        Random rdm = new Random(System.currentTimeMillis()/1000L);
+        long rand = rdm.nextInt((int)(endTime-startTime)/2-1);
+        ArrayList start = new ArrayList<>(Arrays.asList(startTime, startTime+rand, startTime-rand));
+        ArrayList end = new ArrayList<>(Arrays.asList(endTime, endTime+rand, endTime-rand));
+
+        String queryFormat = "SELECT %s(s1) as t1, %s(s2) as t2 FROM us.d1 WHERE time > %d AND time < %d;";
+
+        clearData();
+
+        insertSpecificData(startTime,endTime,"s1");
+        insertSpecificData(startTime,endTime,"s2");
+
+        for(int i=0;i<aggregate.size();i++) {
+            for(int j=0;j<aggregate.size();j++) {
+                for(int ii=0;ii<start.size();ii++) {
+                    for(int jj=0;jj<end.size();jj++) {
+                        String.format(queryFormat, aggregate.get(i), aggregate.get(j), start.get(ii), end.get(jj));
+
+                    }
+                }
+
+            }
+        }
+
+
+    }
+
 }
