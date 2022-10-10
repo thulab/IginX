@@ -6,6 +6,5 @@ public class OriHasDataExpHasData  extends IoTDBHistoryDataGenerator {
         super();
         this.oriHasData = true;
         this.expansionHasData = true;
-        this.init();
     }
 }

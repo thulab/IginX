@@ -19,7 +19,9 @@ public class IoTDBHistoryDataGenerator {
             writeHistoryDataToB();
     }
 
+    @Test
     public void writeHistoryDataToA() throws Exception {
+        if(!oriHasData) return;
         Session session = new Session("127.0.0.1", 6667, "root", "root");
         session.open();
 
@@ -32,7 +34,9 @@ public class IoTDBHistoryDataGenerator {
     }
 
 
+    @Test
     public void writeHistoryDataToB() throws Exception {
+        if(!expansionHasData) return;
         Session session = new Session("127.0.0.1", 6668, "root", "root");
         session.open();
 
