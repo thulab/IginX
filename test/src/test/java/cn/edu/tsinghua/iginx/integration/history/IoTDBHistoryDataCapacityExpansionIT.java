@@ -74,7 +74,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
 
     //@Test
     public void testQueryHistoryDataFromInitialNode() throws Exception {
-        String statement = "select * from ln";
+        String statement = "select * from *";
         String expect = "ResultSets:\n" +
                 "+----+-------------------+------------------------+\n" +
                 "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|\n" +
