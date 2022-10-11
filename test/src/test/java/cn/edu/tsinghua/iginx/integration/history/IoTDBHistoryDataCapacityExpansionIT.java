@@ -107,7 +107,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "|Time|\n" +
                 "+----+\n" +
                 "+----+\n" +
-                "Empty set.";
+                "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "count points";
@@ -191,7 +191,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "|Time|\n" +
                 "+----+\n" +
                 "+----+\n" +
-                "Empty set.";
+                "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
@@ -290,7 +290,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "|Time|\n" +
                 "+----+\n" +
                 "+----+\n" +
-                "Empty set.";
+                "Empty set.\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "select * from ln";
