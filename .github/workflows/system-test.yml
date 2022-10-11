@@ -216,7 +216,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=OriHasExpNoData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriHasDataExpNoData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -294,7 +294,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=OriNoExpHasData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriNoDataExpHasData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -372,7 +372,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=OriNoExpNoData -DfailIfNoTests=false
+          mvn test -q -Dtest=OriNoDataExpNoData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -1363,6 +1363,7 @@ jobs:
         run: |
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
+
   InfluxDB-SQL-Test:
     strategy:
       fail-fast: false
