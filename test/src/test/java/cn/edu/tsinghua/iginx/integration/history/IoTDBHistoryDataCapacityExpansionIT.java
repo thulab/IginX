@@ -298,7 +298,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "+----+--------------+---------------+\n" +
                 "|Time|ln.wf02.status|ln.wf02.version|\n" +
                 "+----+--------------+---------------+\n" +
-                "|  77|          true|             v1|\n" +
+                "| 100|          true|             v1|\n" +
                 "| 400|         false|             v4|\n" +
                 "| 800|          null|             v8|\n" +
                 "+----+--------------+---------------+\n" +
@@ -418,7 +418,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "+----+--------------+---------------+\n" +
                 "|Time|ln.wf02.status|ln.wf02.version|\n" +
                 "+----+--------------+---------------+\n" +
-                "|  77|          true|             v1|\n" +
+                "| 100|          true|             v1|\n" +
                 "| 400|         false|             v4|\n" +
                 "| 800|          null|             v8|\n" +
                 "|1600|          null|            v48|\n" +
