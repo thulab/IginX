@@ -4,7 +4,7 @@ public class OriNoDataExpNoData extends IoTDBHistoryDataGenerator {
 
     public OriNoDataExpNoData() throws Exception {
         super();
-        this.oriHasData = true;
-        this.expansionHasData = true;
+        this.oriHasData = false;
+        this.expansionHasData = false;
     }
 }
