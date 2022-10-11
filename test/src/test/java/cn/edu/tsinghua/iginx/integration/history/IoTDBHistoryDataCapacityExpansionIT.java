@@ -183,7 +183,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
 
     //@Test
     public void testCapacityExpansion_oriHasDataExpNoData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -214,7 +214,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     public void testCapacityExpansion_oriHasDataExpHasData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -248,7 +248,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     public void testCapacityExpansion_oriNoDataExpHasData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
@@ -282,7 +282,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
     }
 
     public void testCapacityExpansion_oriNoDataExpNoData() throws Exception {
-        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:true\");");
+        session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + ENGINE_TYPE + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
 
         String statement = "select * from ln.wf03";
         String expect = "ResultSets:\n" +
