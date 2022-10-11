@@ -83,7 +83,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "| 200|              false|                   20.71|\n" +
                 "+----+-------------------+------------------------+\n" +
                 "Total line number = 2\n";
-//        SQLTestTools.executeAndCompare(session, statement, expect);
+        SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "count points";
         expect = "Points num: 3\n";
@@ -302,7 +302,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "| 400|         false|             v4|\n" +
                 "| 800|          null|             v8|\n" +
                 "+----+--------------+---------------+\n" +
-                "Total line number = 3";
+                "Total line number = 3\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "count points";
@@ -360,7 +360,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "| 800|          null|             v8|               null|                    null|\n" +
                 "|1600|          null|            v48|               null|                    null|\n" +
                 "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "Total line number = 6";
+                "Total line number = 6\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "count points";
@@ -383,17 +383,16 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
 
         String statement = "select * from ln";
         String expect = "ResultSets:\n" +
-                "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "|Time|ln.wf02.status|ln.wf02.version|ln.wf03.wt01.status|ln.wf03.wt01.temperature|\n" +
-                "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "|  77|          null|           null|               true|                    null|\n" +
-                "| 100|          true|             v1|               null|                    null|\n" +
-                "| 200|          null|           null|              false|                   77.71|\n" +
-                "| 400|         false|             v4|               null|                    null|\n" +
-                "| 800|          null|             v8|               null|                    null|\n" +
-                "|1600|          null|            v48|               null|                    null|\n" +
-                "+----+--------------+---------------+-------------------+------------------------+\n" +
-                "Total line number = 6\n";
+                "+----+-------------------+------------------------+--------------+---------------+\n" +
+                "|Time|ln.wf01.wt01.status|ln.wf01.wt01.temperature|ln.wf02.status|ln.wf02.version|\n" +
+                "+----+-------------------+------------------------+--------------+---------------+\n" +
+                "| 100|               true|                    null|          true|             v1|\n" +
+                "| 200|              false|                   20.71|          null|           null|\n" +
+                "| 400|               null|                    null|         false|             v4|\n" +
+                "| 800|               null|                    null|          null|             v8|\n" +
+                "|1600|               null|                    null|          null|            v48|\n" +
+                "+----+-------------------+------------------------+--------------+---------------+\n" +
+                "Total line number = 5\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "count points";
@@ -424,7 +423,7 @@ public abstract class IoTDBHistoryDataCapacityExpansionIT {
                 "| 800|          null|             v8|\n" +
                 "|1600|          null|            v48|\n" +
                 "+----+--------------+---------------+\n" +
-                "Total line number = 4";
+                "Total line number = 4\n";
         SQLTestTools.executeAndCompare(session, statement, expect);
 
         statement = "count points";
