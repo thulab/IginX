@@ -1046,7 +1046,8 @@ public class SQLSessionPoolCapExpIT {
         String delete = "DELETE FROM us.d1.s1 WHERE time > 205 AND time < 215 OR time >= 210 AND time <= 230;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
+//        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1";
         String expected = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
@@ -1775,7 +1776,7 @@ public class SQLSessionPoolCapExpIT {
                 "Empty set.\n";
         executeAndCompare(showTimeSeriesData, expected);
 
-        deleteTimeSeries = "DELETE TIME SERIES *.*";
+        deleteTimeSeries = "DELETE TIME SERIES *";
         execute(deleteTimeSeries);
 
         showTimeSeries = "SHOW TIME SERIES;";
