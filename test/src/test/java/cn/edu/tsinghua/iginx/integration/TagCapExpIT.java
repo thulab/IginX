@@ -17,11 +17,16 @@ public class TagCapExpIT {
 
     private static Session session;
 
+    protected static String storageEngineType;
+
     @BeforeClass
-    public static void setUp() {
+    public static void setUp() throws SessionException, ExecutionException {
         session = new Session("127.0.0.1", 6888, "root", "root");
         try {
             session.openSession();
+            if(storageEngineType!=null && storageEngineType.contains("iotdb"))
+                session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+
         } catch (SessionException e) {
             logger.error(e.getMessage());
         }
