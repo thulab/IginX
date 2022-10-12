@@ -985,10 +985,10 @@ public class SQLSessionPoolCapExpIT {
         if (!isAbleToDelete) {
             return;
         }
-        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 OR time >= 120 AND time <= 230;";
+        String delete = "DELETE FROM us.d1.s1 WHERE time > 105 AND time < 115 OR time >= 120 AND time <= 120;";
         execute(delete);
 
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 235;";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 100 AND time < 121;";
         String expected = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
@@ -1003,12 +1003,8 @@ public class SQLSessionPoolCapExpIT {
                 "| 117|     117|\n" +
                 "| 118|     118|\n" +
                 "| 119|     119|\n" +
-                "| 231|     231|\n" +
-                "| 232|     232|\n" +
-                "| 233|     233|\n" +
-                "| 234|     234|\n" +
                 "+----+--------+\n" +
-                "Total line number = 14\n";
+                "Total line number = 10\n";
         executeAndCompare(queryOverDeleteRange, expected);
 
         delete = "DELETE FROM us.d1.s2, us.d1.s4 WHERE time > 1115 AND time <= 1125 OR time >= 1130 AND time < 1230;";
@@ -1046,8 +1042,8 @@ public class SQLSessionPoolCapExpIT {
         String delete = "DELETE FROM us.d1.s1 WHERE time > 205 AND time < 215 OR time >= 210 AND time <= 230;";
         execute(delete);
 
-//        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
-        String queryOverDeleteRange = "SELECT s1 FROM us.d1";
+        String queryOverDeleteRange = "SELECT s1 FROM us.d1 WHERE time > 200 AND time < 235;";
+//        String queryOverDeleteRange = "SELECT s1 FROM us.d1";
         String expected = "ResultSets:\n" +
                 "+----+--------+\n" +
                 "|Time|us.d1.s1|\n" +
