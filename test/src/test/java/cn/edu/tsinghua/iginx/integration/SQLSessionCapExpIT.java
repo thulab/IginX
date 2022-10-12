@@ -25,17 +25,20 @@ public abstract class SQLSessionCapExpIT {
 
     protected boolean isAbleToShowTimeSeries;
 
-    protected String storageEngineType;
+    protected static String storageEngineType;
 
     private final long startTimestamp = 0L;
 
     private final long endTimestamp = 15000L;
 
     @BeforeClass
-    public static void setUp() {
+    public static void setUp() throws SessionException, ExecutionException {
         session = new Session("127.0.0.1", 6888, "root", "root");
         try {
             session.openSession();
+            if(storageEngineType!=null && storageEngineType.contains("iotdb"))
+                session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+
         } catch (SessionException e) {
             logger.error(e.getMessage());
         }
@@ -55,9 +58,6 @@ public abstract class SQLSessionCapExpIT {
 
     @Before
     public void insertData() throws ExecutionException, SessionException {
-
-        if(storageEngineType!=null && storageEngineType.contains("iotdb"))
-            session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
 
         String insertStrPrefix = "INSERT INTO us.d1 (timestamp, s1, s2, s3, s4) values ";
 
