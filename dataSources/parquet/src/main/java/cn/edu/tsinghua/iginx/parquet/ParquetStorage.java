@@ -1,0 +1,777 @@
+package cn.edu.tsinghua.iginx.parquet;
+
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.COLUMN_NAME;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.NAME;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.COLUMN_TIME;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.COLUMN_TYPE;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.DATATYPE_BIGINT;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.DUCKDB_SCHEMA;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.IGINX_SEPARATOR;
+import static cn.edu.tsinghua.iginx.parquet.tools.Constant.PARQUET_SEPARATOR;
+import static cn.edu.tsinghua.iginx.parquet.tools.DataTypeTransformer.fromDuckDBDataType;
+import static cn.edu.tsinghua.iginx.parquet.tools.DataTypeTransformer.fromParquetDataType;
+import static cn.edu.tsinghua.iginx.parquet.tools.DataTypeTransformer.toParquetDataType;
+
+import cn.edu.tsinghua.iginx.engine.physical.exception.NonExecutablePhysicalTaskException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.PhysicalTaskExecuteFailureException;
+import cn.edu.tsinghua.iginx.engine.physical.exception.StorageInitializationException;
+import cn.edu.tsinghua.iginx.engine.physical.storage.IStorage;
+import cn.edu.tsinghua.iginx.engine.physical.storage.domain.Timeseries;
+import cn.edu.tsinghua.iginx.engine.physical.task.StoragePhysicalTask;
+import cn.edu.tsinghua.iginx.engine.physical.task.TaskExecuteResult;
+import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.ClearEmptyRowStreamWrapper;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Field;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.Header;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.BitmapView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.ColumnDataView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.DataView;
+import cn.edu.tsinghua.iginx.engine.shared.data.write.RowDataView;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Delete;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Insert;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Operator;
+import cn.edu.tsinghua.iginx.engine.shared.operator.OperatorType;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Project;
+import cn.edu.tsinghua.iginx.engine.shared.operator.Select;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.AndFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Filter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.Op;
+import cn.edu.tsinghua.iginx.engine.shared.operator.filter.TimeFilter;
+import cn.edu.tsinghua.iginx.engine.shared.operator.tag.TagFilter;
+import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.StorageEngineMeta;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeInterval;
+import cn.edu.tsinghua.iginx.metadata.entity.TimeSeriesInterval;
+import cn.edu.tsinghua.iginx.engine.shared.data.read.MergeTimeRowStreamWrapper;
+import cn.edu.tsinghua.iginx.parquet.entity.DuckDBConnPool;
+import cn.edu.tsinghua.iginx.parquet.entity.ParquetQueryRowStream;
+import cn.edu.tsinghua.iginx.parquet.entity.WritePlan;
+import cn.edu.tsinghua.iginx.parquet.policy.NaiveParquetStoragePolicy;
+import cn.edu.tsinghua.iginx.parquet.policy.ParquetStoragePolicy;
+import cn.edu.tsinghua.iginx.parquet.policy.ParquetStoragePolicy.FlushType;
+import cn.edu.tsinghua.iginx.parquet.tools.FilterTransformer;
+import cn.edu.tsinghua.iginx.parquet.tools.TagKVUtils;
+import cn.edu.tsinghua.iginx.thrift.DataType;
+import cn.edu.tsinghua.iginx.utils.Pair;
+
+import cn.edu.tsinghua.iginx.utils.StringUtils;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
+import java.util.regex.Pattern;
+import org.duckdb.DuckDBConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class ParquetStorage implements IStorage {
+
+    private static final Logger logger = LoggerFactory.getLogger(ParquetStorage.class);
+
+    private final ParquetStoragePolicy policy;
+
+    private static final String DRIVER_NAME = "org.duckdb.DuckDBDriver";
+
+    private static final String CONN_URL = "jdbc:duckdb:";
+
+    // data-startTime-startPath
+    private static final String DATA_FILE_NAME_FORMATTER = "data_%s_%s.parquet";
+
+    private static final String APPENDIX_DATA_FILE_NAME_FORMATTER = "appendix_data_%s_%s.parquet";
+
+    private static final String CREATE_TABLE_STMT = "CREATE TABLE %s (%s)";
+
+    private static final String INSERT_STMT_PREFIX = "INSERT INTO %s(%s) VALUES ";
+
+    private static final String CREATE_TABLE_FROM_PARQUET_STMT = "CREATE TABLE %s AS SELECT * FROM '%s'";
+
+    private static final String ADD_COLUMNS_STMT = "ALTER TABLE %s ADD COLUMN %s %s";
+
+    private static final String DESCRIBE_STMT = "DESCRIBE %s";
+
+    private static final String SAVE_TO_PARQUET_STMT = "COPY %s TO '%s' (FORMAT 'parquet')";
+
+    private static final String DROP_TABLE_STMT = "DROP TABLE %s";
+
+    private static final String SELECT_STMT = "SELECT time, %s FROM '%s' WHERE %s ORDER BY time";
+
+    private static final String SELECT_TIME_STMT = "SELECT time FROM '%s' ORDER BY time";
+
+    private static final String SELECT_FIRST_TIME_STMT = "SELECT time FROM '%s' order by time limit 1";
+
+    private static final String SELECT_LAST_TIME_STMT = "SELECT time FROM '%s' order by time desc limit 1";
+
+    private static final String SELECT_PARQUET_SCHEMA = "SELECT * FROM parquet_schema('%s')";
+
+    private static final String DELETE_DATA_STMT = "UPDATE %s SET %s=NULL WHERE time >= %s AND time <= %s";
+
+    private static final String DROP_COLUMN_STMT = "ALTER TABLE %s DROP %s";
+
+    private final String dataDir;
+
+    private final Connection connection;
+
+//    private final DuckDBConnPool pool;
+
+    public ParquetStorage(StorageEngineMeta meta) throws StorageInitializationException {
+        if (!testConnection()) {
+            throw new StorageInitializationException("cannot connect to " + meta.toString());
+        }
+
+        Map<String, String> extraParams = meta.getExtraParams();
+        this.dataDir = extraParams.get("dir");
+        try {
+            if (Files.notExists(Paths.get(dataDir))) {
+                Files.createDirectories(Paths.get(dataDir));
+            }
+        } catch (IOException e) {
+            throw new StorageInitializationException("encounter error when create data dir");
+        }
+
+        try {
+//            Connection conn = DriverManager.getConnection(CONN_URL);
+//            pool = new DuckDBConnPool((DuckDBConnection) conn);
+            connection = DriverManager.getConnection(CONN_URL);
+        } catch (SQLException e) {
+            throw new StorageInitializationException("cannot connect to " + meta.toString());
+        }
+
+        this.policy = new NaiveParquetStoragePolicy(dataDir, connection);
+    }
+
+    private boolean testConnection() {
+        try {
+            Class.forName(DRIVER_NAME);
+            Connection conn = DriverManager.getConnection(CONN_URL);
+            conn.close();
+            return true;
+        } catch (ClassNotFoundException | SQLException e) {
+            return false;
+        }
+    }
+
+    @Override
+    public TaskExecuteResult execute(StoragePhysicalTask task) {
+        List<Operator> operators = task.getOperators();
+        if (operators.size() != 1) {
+            return new TaskExecuteResult(
+                new NonExecutablePhysicalTaskException("unsupported physical task"));
+        }
+        FragmentMeta fragment = task.getTargetFragment();
+        String storageUnit = task.getStorageUnit();
+        Operator op = operators.get(0);
+
+        try {
+            if (Files.notExists(Paths.get(dataDir, storageUnit))) {
+                Files.createDirectories(Paths.get(dataDir, storageUnit));
+            }
+        } catch (IOException e) {
+            return new TaskExecuteResult(new PhysicalException("fail to create du dir"));
+        }
+
+        if (op.getType() == OperatorType.Project) {
+            Project project = (Project) op;
+            Filter filter;
+            if (operators.size() == 2) {
+                filter = ((Select) operators.get(1)).getFilter();
+            } else {
+                filter = new AndFilter(Arrays
+                    .asList(new TimeFilter(Op.GE, fragment.getTimeInterval().getStartTime()),
+                        new TimeFilter(Op.L, fragment.getTimeInterval().getEndTime())));
+            }
+            return executeProjectTask(project, filter, storageUnit);
+        } else if (op.getType() == OperatorType.Insert) {
+            Insert insert = (Insert) op;
+            return executeInsertTask(insert, storageUnit);
+        } else if (op.getType() == OperatorType.Delete) {
+            Delete delete = (Delete) op;
+            return executeDeleteTask(delete, storageUnit);
+        }
+        return new TaskExecuteResult(new NonExecutablePhysicalTaskException("unsupported physical task"));
+    }
+
+    private TaskExecuteResult executeProjectTask(Project project, Filter filter, String storageUnit) {
+        try {
+//            Connection conn = pool.getConnection();
+            Connection conn = ((DuckDBConnection) connection).duplicate();
+            Statement stmt = conn.createStatement();
+
+            StringBuilder builder = new StringBuilder();
+            List<String> pathList = determinePathList(storageUnit, project.getPatterns());
+            if (pathList.isEmpty()) {
+                RowStream rowStream = new ClearEmptyRowStreamWrapper(
+                    ParquetQueryRowStream.EMPTY_PARQUET_ROW_STREAM
+                );
+                return new TaskExecuteResult(rowStream);
+            }
+            pathList.forEach(path -> builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", "));
+            Path path = Paths.get(dataDir, storageUnit, "*", "*.parquet");
+
+            ResultSet rs = stmt.executeQuery(
+                String.format(SELECT_STMT,
+                    builder.toString(),
+                    path.toString(),
+                    FilterTransformer.toString(filter)));
+            stmt.close();
+//            pool.pushBack(conn);
+            conn.close();
+
+            ResultSetMetaData rsMetaData = rs.getMetaData();
+            List<Field> fields = new ArrayList<>();
+            for (int i = 1; i <= rsMetaData.getColumnCount(); i++) {
+                String pathName = rsMetaData.getColumnName(i).replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR);
+                DataType type = fromParquetDataType(rsMetaData.getColumnTypeName(i));
+                if (!pathName.equals(COLUMN_TIME)) {
+                    fields.add(new Field(pathName, type));
+                }
+            }
+            Header header = new Header(Field.TIME, fields);
+            RowStream rowStream = new ClearEmptyRowStreamWrapper(
+                new MergeTimeRowStreamWrapper(new ParquetQueryRowStream(header, rs)));
+            return new TaskExecuteResult(rowStream);
+        } catch (SQLException | PhysicalException e) {
+            logger.error(e.getMessage());
+            return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute project task in parquet failure", e));
+        }
+    }
+
+    private List<String> determinePathList(String storageUnit, List<String> patterns) throws PhysicalException {
+        Set<String> patternWithoutStarSet = new HashSet<>();
+        List<String> patternWithStarList = new ArrayList<>();
+        patterns.forEach(pattern -> {
+            if (pattern.contains("*")) {
+                patternWithStarList.add(pattern);
+            } else {
+                patternWithoutStarSet.add(pattern);
+            }
+        });
+
+        List<String> pathList = new ArrayList<>();
+        List<Timeseries> timeSeries = getTimeSeriesOfStorageUnit(storageUnit);
+        for (Timeseries ts: timeSeries) {
+            if (patternWithoutStarSet.contains(ts.getPath())) {
+                pathList.add(ts.getPath());
+                continue;
+            }
+            for (String pattern : patternWithStarList) {
+                if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath())) {
+                    pathList.add(ts.getPath());
+                    break;
+                }
+            }
+        }
+        return pathList;
+    }
+
+    private TaskExecuteResult executeInsertTask(Insert insert, String storageUnit) {
+        DataView dataView = insert.getData();
+        List<WritePlan> writePlans = getWritePlans(dataView, storageUnit);
+        for (WritePlan writePlan : writePlans) {
+            try {
+                executeWritePlan(dataView, writePlan);
+            } catch (SQLException e) {
+                logger.error("execute row write plan error", e);
+                return new TaskExecuteResult(null, new PhysicalException("execute insert task in parquet failure", e));
+            }
+        }
+        return new TaskExecuteResult(null, null);
+    }
+
+    private void executeWritePlan(DataView dataView, WritePlan writePlan) throws SQLException {
+//        Connection conn = pool.getConnection();
+        Connection conn = ((DuckDBConnection) connection).duplicate();
+        Statement stmt = conn.createStatement();
+        Path path = writePlan.getFilePath();
+        String filename = writePlan.getFilePath().getFileName().toString();
+        String tableName = filename.substring(0, filename.lastIndexOf(".")).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+
+        // prepare to write data.
+        if (!Files.exists(path)) {
+            String createTableStmt = generateCreateTableStmt(dataView, writePlan, tableName);
+            stmt.execute(createTableStmt);
+        } else {
+            stmt.execute(String.format(CREATE_TABLE_FROM_PARQUET_STMT, tableName, path.toString()));
+            ResultSet rs = stmt.executeQuery(String.format(DESCRIBE_STMT, tableName));
+            Set<String> existsColumns = new HashSet<>();
+            while (rs.next()) {
+                existsColumns.add((String) rs.getObject(COLUMN_NAME));
+            }
+            List<String> addColumnsStmts = generateAddColumnsStmt(dataView, writePlan, tableName, existsColumns);
+            if (!addColumnsStmts.isEmpty()) {
+                for (String addColumnsStmt : addColumnsStmts) {
+                    stmt.execute(addColumnsStmt);
+                }
+            }
+        }
+
+        // write data
+        String insertPrefix = generateInsertStmtPrefix(dataView, writePlan, tableName);
+        String insertBody;
+        switch (dataView.getRawDataType()) {
+            case Column:
+            case NonAlignedColumn:
+                insertBody = generateColInsertStmtBody((ColumnDataView) dataView, writePlan);
+                break;
+            case Row:
+            case NonAlignedRow:
+            default:
+                insertBody = generateRowInsertStmtBody((RowDataView) dataView, writePlan);
+                break;
+        }
+        stmt.execute(insertPrefix + insertBody);
+
+        // save to file
+        stmt.execute(String.format(SAVE_TO_PARQUET_STMT, tableName, path.toString()));
+
+        stmt.execute(String.format(DROP_TABLE_STMT, tableName));
+        stmt.close();
+//        pool.pushBack(conn);
+        conn.close();
+    }
+
+    private String generateRowInsertStmtBody(RowDataView dataView, WritePlan writePlan) {
+        StringBuilder builder = new StringBuilder();
+
+        int startPathIdx = dataView.getPathIndex(writePlan.getPathList().get(0));
+        int endPathIdx = dataView.getPathIndex(writePlan.getPathList().get(writePlan.getPathList().size() - 1));
+        int startTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getStartTime());
+        int endTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getEndTime());
+
+        for (int i = startTimeIdx; i <= endTimeIdx; i++) {
+            BitmapView bitmapView = dataView.getBitmapView(i);
+            builder.append("(").append(dataView.getTimestamp(i)).append(", ");
+
+            int index = 0;
+            for (int j = 0; j < dataView.getPathNum(); j++) {
+                if (bitmapView.get(j)) {
+                    if (startPathIdx <= j && j <= endPathIdx) {
+                        if (dataView.getDataType(j) == DataType.BINARY) {
+                            builder.append("'").append(new String((byte[]) dataView.getValue(i, index))).append("', ");
+                        } else {
+                            builder.append(dataView.getValue(i, index)).append(", ");
+                        }
+                    }
+                    index++;
+                } else {
+                    if (startPathIdx <= j && j <= endPathIdx) {
+                        builder.append("NULL, ");
+                    }
+                }
+            }
+            builder.append("), ");
+        }
+        return builder.toString();
+    }
+
+    private String generateColInsertStmtBody(ColumnDataView dataView, WritePlan writePlan) {
+        int startPathIdx = dataView.getPathIndex(writePlan.getPathList().get(0));
+        int endPathIdx = dataView.getPathIndex(writePlan.getPathList().get(writePlan.getPathList().size() - 1));
+        int startTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getStartTime());
+        int endTimeIdx = dataView.getTimestampIndex(writePlan.getTimeInterval().getEndTime());
+
+        String[] rowValueArray = new String[endTimeIdx - startTimeIdx + 1];
+        for (int i = startTimeIdx; i <= endTimeIdx; i++) {
+            rowValueArray[i] = "(" + dataView.getTimestamp(i) + ", ";
+        }
+        for (int i = startPathIdx; i <= endPathIdx; i++) {
+            BitmapView bitmapView = dataView.getBitmapView(i);
+
+            int index = 0;
+            for (int j = 0; j < dataView.getTimeSize(); j++) {
+                if (bitmapView.get(j)) {
+                    if (startTimeIdx <= j && j <= endTimeIdx) {
+                        if (dataView.getDataType(i) == DataType.BINARY) {
+                            rowValueArray[j - startPathIdx] += "'" + new String((byte[]) dataView.getValue(i, index)) + "', ";
+                        } else {
+                            rowValueArray[j - startPathIdx] += dataView.getValue(i, index) + ", ";
+                        }
+                    }
+                    index++;
+                } else {
+                    if (startTimeIdx <= j && j <= endTimeIdx) {
+                        rowValueArray[j - startPathIdx] += "NULL, ";
+                    }
+                }
+            }
+        }
+        for (int i = startTimeIdx; i <= endTimeIdx; i++) {
+            rowValueArray[i] +=  "), ";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (String row : rowValueArray) {
+            builder.append(row);
+        }
+        return builder.toString();
+    }
+
+    private List<String> generateAddColumnsStmt(DataView dataView, WritePlan writePlan,
+        String tableName, Set<String> existsColumns) {
+        List<String> addColumnStmts = new ArrayList<>();
+
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < dataView.getPathNum(); i++) {
+            String path = dataView.getPath(i).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+            String type = toParquetDataType(dataView.getDataType(i));
+            if (writePlan.getPathList().contains(path.replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR))
+                && !existsColumns.contains(path)) {
+                builder.append("{path: ").append(path).append(", type: ").append(type).append("} ");
+                addColumnStmts.add(String.format(ADD_COLUMNS_STMT, tableName, path, type));
+            }
+        }
+        logger.info("add columns: {}", builder.toString());
+
+        return addColumnStmts;
+    }
+
+    private String generateInsertStmtPrefix(DataView dataView, WritePlan writePlan, String tableName) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("time, ");
+        for (int i = 0; i < dataView.getPathNum(); i++) {
+            String path = dataView.getPath(i);
+            if (writePlan.getPathList().contains(path)) {
+                builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR)).append(", ");
+            }
+        }
+        builder.deleteCharAt(builder.length() - 2);
+        String columns = builder.toString();
+        String insertStmtPrefix = String.format(INSERT_STMT_PREFIX, tableName, columns);
+        logger.info("InsertStmtPrefix: {}", insertStmtPrefix);
+        return insertStmtPrefix;
+    }
+
+    private String generateCreateTableStmt(DataView dataView, WritePlan writePlan, String tableName) {
+        StringBuilder builder = new StringBuilder();
+        builder.append(COLUMN_TIME).append(" ").append(DATATYPE_BIGINT).append(", ");
+        for (int i = 0; i < dataView.getPathNum(); i++) {
+            String path = dataView.getPath(i);
+            if (writePlan.getPathList().contains(path)) {
+                builder.append(path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR))
+                    .append(" ")
+                    .append(toParquetDataType(dataView.getDataType(i)))
+                    .append(", ");
+            }
+        }
+        builder.deleteCharAt(builder.length() - 2);
+        String columns = builder.toString();
+        String createTableStmt = String.format(CREATE_TABLE_STMT, tableName, columns);
+        logger.info("CreateTableStmt: {}", createTableStmt);
+        return createTableStmt;
+    }
+
+    private List<WritePlan> getWritePlans(DataView dataView, String storageUnit) {
+        TimeInterval timeInterval = new TimeInterval(
+            dataView.getTimestamp(0),
+            dataView.getTimestamp(dataView.getTimeSize() - 1)
+        );
+
+        Pair<Long, List<String>> latestPartition = policy.getLatestPartition(storageUnit);
+        List<WritePlan> writePlans = new ArrayList<>();
+
+        if (timeInterval.getStartTime() >= latestPartition.getK()) {
+            // 所有写入数据位于最新的分区
+            List<String> tsPartition = new ArrayList<>(latestPartition.getV());
+            tsPartition.add(null);
+            for (int i = 0; i < tsPartition.size() - 1; i++) {
+                List<String> pathList = new ArrayList<>();
+                String startPath = tsPartition.get(i);
+                String endPath = tsPartition.get(i + 1);
+                for (int j = 0; j < dataView.getPathNum(); j++) {
+                    String path = dataView.getPath(j);
+                    if (StringUtils.compare(path, startPath, true) < 0) {
+                        continue;
+                    }
+                    if (StringUtils.compare(path, endPath, false) >= 0) {
+                        break;
+                    }
+                    pathList.add(path);
+                }
+                if (!pathList.isEmpty()) {
+                    Path path = Paths.get(dataDir, storageUnit,
+                        String.valueOf(latestPartition.getK()),
+                        String.format(DATA_FILE_NAME_FORMATTER, latestPartition.getK(), startPath));
+
+                    long pointNum = pathList.size() * (timeInterval.getEndTime() - timeInterval.getStartTime());
+                    if (policy.getFlushType(path, pointNum).equals(FlushType.APPENDIX)) {
+                        path = Paths.get(dataDir, storageUnit,
+                            String.valueOf(latestPartition.getK()),
+                            String.format(APPENDIX_DATA_FILE_NAME_FORMATTER, latestPartition.getK(),
+                                startPath));
+                    }
+                    writePlans.add(new WritePlan(path, pathList, timeInterval));
+
+                }
+            }
+        } else {
+            // 有老分区数据需要写入
+            TreeMap<Long, List<String>> allPartition = policy.getAllPartition(storageUnit);
+            List<Long> timePartition = new ArrayList<>(allPartition.keySet());
+            timePartition.add(Long.MAX_VALUE);
+            for (int i = 0; i < timePartition.size() - 1; i++) {
+                long startTime = timePartition.get(i);
+                long endTime = timePartition.get(i + 1);
+                TimeInterval partTimeInterval = new TimeInterval(startTime, endTime);
+                if (timeInterval.isIntersect(partTimeInterval)) {
+                    TimeInterval timeIntersect = timeInterval.getIntersectWithLCRO(partTimeInterval);
+                    List<String> tsPartition = new ArrayList<>(allPartition.get(startTime));
+                    tsPartition.add(null);
+                    for (int j = 0; j < tsPartition.size() - 1; j++) {
+                        List<String> pathList = new ArrayList<>();
+                        String startPath = tsPartition.get(j);
+                        String endPath = tsPartition.get(j + 1);
+                        for (int k = 0; k < dataView.getPathNum(); k++) {
+                            String path = dataView.getPath(k);
+                            if (StringUtils.compare(path, startPath, true) < 0) {
+                                continue;
+                            }
+                            if (StringUtils.compare(path, endPath, false) >= 0) {
+                                break;
+                            }
+                            pathList.add(path);
+                        }
+                        if (!pathList.isEmpty()) {
+                            Path path = Paths.get(dataDir, storageUnit,
+                                String.valueOf(partTimeInterval.getStartTime()),
+                                String.format(
+                                    DATA_FILE_NAME_FORMATTER,
+                                    partTimeInterval.getStartTime(),
+                                    startPath));
+
+                            long pointNum = pathList.size() * (timeInterval.getEndTime() - timeInterval.getStartTime());
+                            if (policy.getFlushType(path, pointNum).equals(FlushType.APPENDIX)) {
+                                path = Paths.get(dataDir, storageUnit,
+                                    String.valueOf(latestPartition.getK()),
+                                    String.format(APPENDIX_DATA_FILE_NAME_FORMATTER, latestPartition.getK(),
+                                        startPath));
+                            }
+                            writePlans.add(new WritePlan(path, pathList, timeIntersect));
+                        }
+                    }
+                }
+            }
+        }
+        return writePlans;
+    }
+
+    private TaskExecuteResult executeDeleteTask(Delete delete, String storageUnit) {
+        if (delete.getTimeRanges() == null || delete.getTimeRanges().size() == 0) { // 没有传任何 time range
+            List<String> paths = delete.getPatterns();
+            if (paths.size() == 1 && paths.get(0).equals("*") && delete.getTagFilter() == null) {
+                File duDir = Paths.get(dataDir, storageUnit).toFile();
+                deleteFile(duDir);
+            } else {
+                List<String> deletedPaths;
+                try {
+                    deletedPaths = determineDeletePathList(storageUnit, delete);
+                } catch (PhysicalException e) {
+                    logger.warn("encounter error when delete path: " + e.getMessage());
+                    return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete path task in parquet failure", e));
+                }
+                for (String path : deletedPaths) {
+                    deleteDataInAllFiles(storageUnit, path, null);
+                }
+            }
+        } else {
+            try {
+                List<String> deletedPaths = determineDeletePathList(storageUnit, delete);
+                for (String path : deletedPaths) {
+                    deleteDataInAllFiles(storageUnit, path, delete.getTimeRanges());
+                }
+            } catch (PhysicalException e) {
+                logger.error("encounter error when delete data: " + e.getMessage());
+                return new TaskExecuteResult(new PhysicalTaskExecuteFailureException("execute delete data task in parquet failure", e));
+            }
+        }
+        return new TaskExecuteResult(null, null);
+    }
+
+    private void deleteDataInAllFiles(String storageUnit, String path, List<TimeRange> timeRanges) {
+        Path duDir = Paths.get(dataDir, storageUnit);
+        if (Files.notExists(duDir)) {
+            return;
+        }
+        File[] dirs = duDir.toFile().listFiles();
+        if (dirs != null) {
+            for (File dir : dirs) {
+                File[] files = dir.listFiles();
+                if (files != null) {
+                    for (File file : files) {
+                        deleteDataInFile(file, path, timeRanges);
+                    }
+                }
+            }
+        }
+    }
+
+    private void deleteDataInFile(File file, String path, List<TimeRange> timeRanges) {
+        path = path.replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+        try {
+//            Connection conn = pool.getConnection();
+            Connection conn = ((DuckDBConnection) connection).duplicate();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(String.format(SELECT_PARQUET_SCHEMA, file.getAbsolutePath()));
+            boolean hasPath = false;
+            while (rs.next()) {
+                String pathName = (String) rs.getObject(NAME);
+                if (pathName.equals(path)) {
+                    hasPath = true;
+                    break;
+                }
+            }
+            if (hasPath) {
+                String filename = file.getName();
+                String tableName = filename.substring(0, filename.lastIndexOf(".")).replaceAll(IGINX_SEPARATOR, PARQUET_SEPARATOR);
+                // 1.load 2.drop or delete 3.write back
+                stmt.execute(String.format(CREATE_TABLE_FROM_PARQUET_STMT, tableName, file.getAbsolutePath()));
+                if (timeRanges == null) {
+                    stmt.execute(String.format(DROP_COLUMN_STMT, tableName, path));
+                } else {
+                    for (TimeRange timeRange : timeRanges) {
+                        stmt.execute(String.format(DELETE_DATA_STMT, tableName, path, timeRange.getActualBeginTime(), timeRange.getActualEndTime()));
+                    }
+                }
+                stmt.execute(String.format(SAVE_TO_PARQUET_STMT, tableName, file.getAbsolutePath()));
+                stmt.execute(String.format(DROP_TABLE_STMT, tableName));
+            }
+            stmt.close();
+//            pool.pushBack(conn);
+            conn.close();
+        } catch (SQLException e) {
+            logger.error("delete path failure.", e);
+        }
+    }
+
+    private List<String> determineDeletePathList(String storageUnit, Delete delete) throws PhysicalException {
+        if (delete.getTagFilter() == null) {
+            return determinePathList(storageUnit, delete.getPatterns());
+        }
+
+        List<String> patterns = delete.getPatterns();
+        TagFilter tagFilter = delete.getTagFilter();
+        List<Timeseries> timeSeries = getTimeSeries();
+
+        List<String> pathList = new ArrayList<>();
+        for (Timeseries ts: timeSeries) {
+            for (String pattern : patterns) {
+                if (Pattern.matches(StringUtils.reformatPath(pattern), ts.getPath()) &&
+                    TagKVUtils.match(ts.getTags(), tagFilter)) {
+                    pathList.add(ts.getPhysicalPath());
+                    break;
+                }
+            }
+        }
+        return pathList;
+    }
+
+    private boolean deleteFile(File file) {
+        if (!file.exists()) {
+            return false;
+        }
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    deleteFile(f);
+                }
+            }
+        }
+        return file.delete();
+    }
+
+    @Override
+    public List<Timeseries> getTimeSeries() throws PhysicalException {
+        return getTimeSeriesOfStorageUnit("*");
+    }
+
+    private List<Timeseries> getTimeSeriesOfStorageUnit(String storageUnit) throws PhysicalTaskExecuteFailureException {
+        Set<Timeseries> timeseries = new TreeSet<>(Comparator.comparing(Timeseries::getPath));
+        Path path = Paths.get(dataDir, storageUnit, /*timePartition*/"*", /*pathPartition*/"*.parquet");
+        try {
+//            Connection conn = pool.getConnection();
+            Connection conn = ((DuckDBConnection) connection).duplicate();
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery(String.format(SELECT_PARQUET_SCHEMA, path.toString()));
+            while (rs.next()) {
+                String pathName = ((String) rs.getObject(NAME)).replaceAll(PARQUET_SEPARATOR, IGINX_SEPARATOR);
+                Pair<String, Map<String, String>> pair = TagKVUtils.splitFullName(pathName);
+                DataType type = fromDuckDBDataType((String) rs.getObject(COLUMN_TYPE));
+                if (!pathName.equals(DUCKDB_SCHEMA) && !pathName.equals(COLUMN_TIME)) {
+                    timeseries.add(new Timeseries(pair.k, type, pair.v));
+                }
+            }
+            stmt.close();
+//            pool.pushBack(conn);
+            conn.close();
+        } catch (SQLException e) {
+            if (e.getMessage().contains("No files found that match the pattern")) {
+                return new ArrayList<>(timeseries);
+            }
+            throw new PhysicalTaskExecuteFailureException("get time series failure", e);
+        }
+        return new ArrayList<>(timeseries);
+    }
+
+    @Override
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorage() throws PhysicalException {
+        List<Timeseries> timeseries = getTimeSeries();
+        TimeSeriesInterval timeSeriesInterval = new TimeSeriesInterval(
+            timeseries.get(0).getPath(),
+            timeseries.get(timeseries.size() - 1).getPath());
+
+        Path path = Paths.get(dataDir, /*du*/"*", /*timePartition*/"*", /*pathPartition*/"*.parquet");
+        long startTime = 0, endTime = Long.MAX_VALUE;
+        try {
+//            Connection conn = pool.getConnection();
+            Connection conn = ((DuckDBConnection) connection).duplicate();
+            Statement stmt = conn.createStatement();
+
+            ResultSet firstTimeRS = stmt.executeQuery(String.format(SELECT_FIRST_TIME_STMT, path.toString()));
+            while (firstTimeRS.next()) {
+                startTime = firstTimeRS.getLong(COLUMN_TIME);
+            }
+            firstTimeRS.close();
+
+            ResultSet lastTimeRS = stmt.executeQuery(String.format(SELECT_LAST_TIME_STMT, path.toString()));
+            while (lastTimeRS.next()) {
+                endTime = lastTimeRS.getLong(COLUMN_TIME);
+            }
+            lastTimeRS.close();
+
+            stmt.close();
+//            pool.pushBack(conn);
+            conn.close();
+        } catch (SQLException e) {
+            throw new PhysicalTaskExecuteFailureException("get boundary of storage failure: ", e);
+        }
+
+        return new Pair<>(timeSeriesInterval, new TimeInterval(startTime, endTime));
+    }
+
+    @Override
+    public void release() throws PhysicalException {
+        try {
+//            pool.close();
+            connection.close();
+        } catch (SQLException e) {
+            throw new PhysicalException(e);
+        }
+    }
+}
