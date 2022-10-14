@@ -24,6 +24,7 @@
     <module>dataSources/opentsdb</module>
     <!--module>dataSources/timescaledb</module-->
     <module>dataSources/postgresql</module>
+    <module>dataSources/parquet</module>
     <module>shared</module>
     <module>client</module>
     <module>antlr</module>

@@ -26,6 +26,7 @@ import cn.edu.tsinghua.iginx.sql.statement.InsertStatement;
 import cn.edu.tsinghua.iginx.thrift.AuthType;
 import cn.edu.tsinghua.iginx.thrift.StorageEngine;
 
+import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,6 +70,11 @@ public interface IMetaManager {
      * 获取当前 iginx 节点的 ID
      */
     long getIginxId();
+
+    /**
+     * 获取某个du的时空范围
+     * */
+    Pair<TimeSeriesInterval,TimeInterval> getBoundaryOfStorageUnit(String storageUnitId);
 
     /**
      * 获取某个时间序列区间的所有分片，不会返回虚拟堆叠分片

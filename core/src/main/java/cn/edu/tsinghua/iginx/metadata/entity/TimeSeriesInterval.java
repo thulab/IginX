@@ -113,6 +113,21 @@ public final class TimeSeriesInterval implements Comparable<TimeSeriesInterval> 
             && (tsInterval.endTimeSeries == null || startTimeSeries == null || StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) >= 0);
     }
 
+    public TimeSeriesInterval getIntersect(TimeSeriesInterval tsInterval) {
+        if (!isIntersect(tsInterval)) {
+            return null;
+        }
+        String start = startTimeSeries == null ? tsInterval.startTimeSeries :
+            tsInterval.startTimeSeries == null ? startTimeSeries :
+                StringUtils.compare(tsInterval.startTimeSeries, startTimeSeries, true) < 0 ? startTimeSeries :
+                    tsInterval.startTimeSeries;
+        String end = endTimeSeries == null ? tsInterval.endTimeSeries :
+            tsInterval.endTimeSeries == null ? endTimeSeries :
+                StringUtils.compare(tsInterval.endTimeSeries, endTimeSeries, false) < 0 ? tsInterval.endTimeSeries :
+                    endTimeSeries;
+        return new TimeSeriesInterval(start, end);
+    }
+
     public boolean isCompletelyAfter(TimeSeriesInterval tsInterval) {
         return tsInterval.endTimeSeries != null && startTimeSeries != null && StringUtils.compare(tsInterval.endTimeSeries, startTimeSeries, true) < 0;
     }

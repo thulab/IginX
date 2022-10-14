@@ -55,6 +55,8 @@ public interface IMetaCache {
 
     List<FragmentMeta> getFragmentListByTimeSeriesNameAndTimeInterval(String tsName, TimeInterval timeInterval);
 
+    List<FragmentMeta> getFragmentListByStorageUnitId(String storageUnitId);
+
     boolean hasFragment();
 
     long getFragmentMinTimestamp();

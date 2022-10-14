@@ -82,4 +82,9 @@ public final class TimeInterval {
         return startTime > timeInterval.endTime;
     }
 
+    public TimeInterval getIntersectWithLCRO(TimeInterval timeInterval) {
+        long start = Math.max(timeInterval.startTime, startTime);
+        long end = Math.min(timeInterval.endTime, endTime);
+        return new TimeInterval(start, end);
+    }
 }
