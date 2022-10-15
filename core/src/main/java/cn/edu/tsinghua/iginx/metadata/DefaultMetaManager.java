@@ -551,6 +551,157 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public FragmentMeta splitFragmentAndStorageUnit(StorageUnitMeta toAddStorageUnit,
+        FragmentMeta toAddFragment, FragmentMeta fragment) {
+        try {
+            storage.lockFragment();
+            storage.lockStorageUnit();
+
+            // 更新du
+            logger.info("update du");
+            toAddStorageUnit.setCreatedBy(id);
+            String actualName = storage.addStorageUnit();
+            StorageUnitMeta actualMasterStorageUnit = toAddStorageUnit
+                .renameStorageUnitMeta(actualName, actualName);
+            cache.updateStorageUnit(actualMasterStorageUnit);
+            for (StorageUnitHook hook : storageUnitHooks) {
+                hook.onChange(null, actualMasterStorageUnit);
+            }
+            storage.updateStorageUnit(actualMasterStorageUnit);
+            for (StorageUnitMeta slaveStorageUnit : toAddStorageUnit.getReplicas()) {
+                slaveStorageUnit.setCreatedBy(id);
+                String slaveActualName = storage.addStorageUnit();
+                StorageUnitMeta actualSlaveStorageUnit = slaveStorageUnit
+                    .renameStorageUnitMeta(slaveActualName, actualName);
+                actualMasterStorageUnit.addReplica(actualSlaveStorageUnit);
+                for (StorageUnitHook hook : storageUnitHooks) {
+                    hook.onChange(null, actualSlaveStorageUnit);
+                }
+                cache.updateStorageUnit(actualSlaveStorageUnit);
+                storage.updateStorageUnit(actualSlaveStorageUnit);
+            }
+
+            // 结束旧分片
+            cache.deleteFragmentByTsInterval(fragment.getTsInterval(), fragment);
+            fragment = fragment
+                .endFragmentMeta(toAddFragment.getTimeInterval().getStartTime());
+            cache.addFragment(fragment);
+            fragment.setUpdatedBy(id);
+            storage.updateFragment(fragment);
+
+            // 更新新分片
+            toAddFragment.setCreatedBy(id);
+            toAddFragment.setInitialFragment(false);
+            if (toAddStorageUnit.isMaster()) {
+                toAddFragment.setMasterStorageUnit(actualMasterStorageUnit);
+            } else {
+                toAddFragment.setMasterStorageUnit(getStorageUnit(actualMasterStorageUnit.getMasterId()));
+            }
+            cache.addFragment(toAddFragment);
+            storage.addFragment(toAddFragment);
+        } catch (MetaStorageException e) {
+            logger.error("create fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+                storage.releaseStorageUnit();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+
+        return fragment;
+    }
+
+    @Override
+    public void addFragment(FragmentMeta fragmentMeta) {
+        try {
+            storage.lockFragment();
+            cache.addFragment(fragmentMeta);
+            storage.addFragment(fragmentMeta);
+        } catch (MetaStorageException e) {
+            logger.error("add fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void endFragmentByTimeSeriesInterval(FragmentMeta fragmentMeta, String endTimeSeries) {
+        try {
+            storage.lockFragment();
+            TimeSeriesInterval sourceTsInterval = new TimeSeriesInterval(
+                fragmentMeta.getTsInterval().getStartTimeSeries(),
+                fragmentMeta.getTsInterval().getEndTimeSeries());
+            cache.deleteFragmentByTsInterval(fragmentMeta.getTsInterval(), fragmentMeta);
+            fragmentMeta.getTsInterval().setEndTimeSeries(endTimeSeries);
+            cache.addFragment(fragmentMeta);
+            storage.updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
+        } catch (MetaStorageException e) {
+            logger.error("end fragment by time series interval error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) {
+        try {
+            storage.lockFragment();
+            cache.updateFragmentByTsInterval(tsInterval, fragmentMeta);
+            storage.updateFragmentByTsInterval(tsInterval, fragmentMeta);
+        } catch (Exception e) {
+            logger.error("update fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
+        try {
+            storage.lockFragment();
+            storage.deleteFragmentPoints(tsInterval, timeInterval);
+        } catch (Exception e) {
+            logger.error("delete fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
+    public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) {
+        try {
+            storage.lockFragment();
+            storage.updateFragmentPoints(fragmentMeta, points);
+        } catch (Exception e) {
+            logger.error("update fragment error: ", e);
+        } finally {
+            try {
+                storage.releaseFragment();
+            } catch (MetaStorageException e) {
+                logger.error("release fragment lock error: ", e);
+            }
+        }
+    }
+
+    @Override
     public boolean hasFragment() {
         return cache.hasFragment();
     }

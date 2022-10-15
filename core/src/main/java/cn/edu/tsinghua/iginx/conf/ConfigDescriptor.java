@@ -71,6 +71,9 @@ public class ConfigDescriptor {
             //,opentsdb=cn.edu.tsinghua.iginx.opentsdb.OpenTSDBStorage,timescaledb=cn.edu.tsinghua.iginx.timescaledb.TimescaleDBStorage,postgresql=cn.edu.tsinghua.iginx.postgresql.PostgreSQLStorage
 
             config.setPolicyClassName(properties.getProperty("policyClassName", "cn.edu.tsinghua.iginx.policy.naive.NativePolicy"));
+            config.setMigrationBatchSize(Integer.parseInt(properties.getProperty("migrationBatchSize", "100")));
+            config.setMaxReshardFragmentsNum(Integer.parseInt(properties.getProperty("maxReshardFragmentsNum", "3")));
+            config.setMaxTimeseriesLoadBalanceThreshold(Double.parseDouble(properties.getProperty("maxTimeseriesLoadBalanceThreshold", "2")));
             config.setEnableEnvParameter(Boolean.parseBoolean(properties.getProperty("enableEnvParameter", "false")));
 
             config.setStatisticsCollectorClassName(properties.getProperty("statisticsCollectorClassName", ""));
