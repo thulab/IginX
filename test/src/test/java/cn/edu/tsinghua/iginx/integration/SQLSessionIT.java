@@ -23,6 +23,8 @@ public abstract class SQLSessionIT {
 
     protected boolean isAbleToDelete;
 
+    protected boolean isSupportSpecialPath;
+
     protected boolean isAbleToShowTimeSeries;
 
     private final long startTimestamp = 0L;
@@ -1646,7 +1648,7 @@ public abstract class SQLSessionIT {
 
     @Test
     public void testSpecialPath() {
-        if (!isAbleToDelete) {
+        if (!isSupportSpecialPath) {
             return;
         }
         // Chinese path

@@ -78,6 +78,10 @@ public abstract class DataView {
         return data.isColumnData();
     }
 
+    public int getPathIndex(String path) {
+        return data.getPaths().contains(path) ? data.getPaths().indexOf(path) - startPathIndex : -1;
+    }
+
     public String getPath(int index) {
         checkPathIndexRange(index);
         return data.getPaths().get(startPathIndex + index);
@@ -86,6 +90,10 @@ public abstract class DataView {
     public DataType getDataType(int index) {
         checkTypeIndexRange(index);
         return data.getDataTypeList().get(startPathIndex + index);
+    }
+
+    public int getTimestampIndex(long timestamp) {
+        return data.getTimestamps().contains(timestamp) ? data.getTimestamps().indexOf(timestamp) - startTimeIndex : -1;
     }
 
     public Long getTimestamp(int index) {

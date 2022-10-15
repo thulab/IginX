@@ -363,6 +363,37 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
+    public Pair<TimeSeriesInterval, TimeInterval> getBoundaryOfStorageUnit(String storageUnitId) {
+        List<FragmentMeta> fragmentMetaList = cache.getFragmentListByStorageUnitId(storageUnitId);
+
+        String startPath = fragmentMetaList.get(0).getTsInterval().getStartTimeSeries();
+        String endPath = fragmentMetaList.get(0).getTsInterval().getEndTimeSeries();
+        long startTime = fragmentMetaList.get(0).getTimeInterval().getStartTime();
+        long endTime = fragmentMetaList.get(0).getTimeInterval().getEndTime();
+
+        for (int i = 1; i < fragmentMetaList.size(); i++) {
+            FragmentMeta meta = fragmentMetaList.get(i);
+            if (meta.getTimeInterval().getStartTime() < startTime) {
+                startTime = meta.getTimeInterval().getStartTime();
+            }
+            if (meta.getTimeInterval().getEndTime() > endTime) {
+                endTime = meta.getTimeInterval().getEndTime();
+            }
+            if (startPath != null) {
+                if (StringUtils.compare(startPath, meta.getTsInterval().getStartTimeSeries(), true) > 0) {
+                    startPath = meta.getTsInterval().getStartTimeSeries();
+                }
+            }
+            if (endPath != null) {
+                if (StringUtils.compare(endPath, meta.getTsInterval().getEndTimeSeries(), false) < 0) {
+                    endPath = meta.getTsInterval().getEndTimeSeries();
+                }
+            }
+        }
+        return new Pair<>(new TimeSeriesInterval(startPath, endPath), new TimeInterval(startTime, endTime));
+    }
+
+    @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         return getFragmentMapByTimeSeriesInterval(tsInterval, false);
     }
@@ -878,7 +909,10 @@ public class DefaultMetaManager implements IMetaManager {
             }
             String[] storageEngineParts = storageEngineStrings[i].split("#");
             String ip = storageEngineParts[0];
-            int port = Integer.parseInt(storageEngineParts[1]);
+            int port = -1;
+            if (!storageEngineParts[1].equals("")) {
+                port = Integer.parseInt(storageEngineParts[1]);
+            }
             String storageEngine = storageEngineParts[2];
             Map<String, String> extraParams = new HashMap<>();
             String[] KAndV;

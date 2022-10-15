@@ -214,6 +214,11 @@
             <artifactId>pemja</artifactId>
             <version>0.1.4</version>
         </dependency>
+        <dependency>
+            <groupId>org.duckdb</groupId>
+            <artifactId>duckdb_jdbc</artifactId>
+            <version>0.5.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

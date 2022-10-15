@@ -1,10 +1,10 @@
 package cn.edu.tsinghua.iginx.integration;
 
-public class IoTDBSQLSessionIT extends SQLSessionIT {
-    public IoTDBSQLSessionIT() {
+public class ParquetSQLSessionIT extends SQLSessionIT {
+    public ParquetSQLSessionIT() {
         super();
         this.isAbleToDelete = true;
-        this.isSupportSpecialPath = true;
+        this.isSupportSpecialPath = false;
         this.isAbleToShowTimeSeries = true;
     }
 }
