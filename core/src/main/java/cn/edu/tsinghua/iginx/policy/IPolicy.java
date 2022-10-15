@@ -21,6 +21,10 @@ public interface IPolicy {
 
     Pair<List<FragmentMeta>, List<StorageUnitMeta>> generateFragmentsAndStorageUnits(DataStatement statement);
 
+    Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(
+        String startPath, String endPath, long startTime, long endTime,
+        List<Long> storageEngineList);
+
     boolean isNeedReAllocate();
 
     void setNeedReAllocate(boolean needReAllocate);

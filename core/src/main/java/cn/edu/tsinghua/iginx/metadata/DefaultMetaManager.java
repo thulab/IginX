@@ -38,6 +38,8 @@ import cn.edu.tsinghua.iginx.thrift.UserType;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import cn.edu.tsinghua.iginx.utils.SnowFlakeUtils;
 import cn.edu.tsinghua.iginx.utils.StringUtils;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,6 +56,10 @@ public class DefaultMetaManager implements IMetaManager {
     private final List<StorageEngineChangeHook> storageEngineChangeHooks;
     private final List<StorageUnitHook> storageUnitHooks;
     private long id;
+
+    // 当前活跃的最大的结束时间
+    private AtomicLong maxActiveEndTime = new AtomicLong(-1L);
+    private AtomicInteger maxActiveEndTimeStatisticsCounter = new AtomicInteger(0);
 
     private DefaultMetaManager() {
         cache = DefaultMetaCache.getInstance();
@@ -95,6 +101,7 @@ public class DefaultMetaManager implements IMetaManager {
             initPolicy();
             initUser();
             initTransform();
+            initMaxActiveEndTimeStatistics();
         } catch (MetaStorageException e) {
             logger.error("init meta manager error: ", e);
             System.exit(-1);
@@ -110,6 +117,18 @@ public class DefaultMetaManager implements IMetaManager {
             }
         }
         return INSTANCE;
+    }
+
+    private void initMaxActiveEndTimeStatistics() throws MetaStorageException {
+        storage.registerMaxActiveEndTimeStatisticsChangeHook((endTime) -> {
+            if (endTime <= 0L) {
+                return;
+            }
+            updateMaxActiveEndTime(endTime);
+            int updatedCounter = maxActiveEndTimeStatisticsCounter.incrementAndGet();
+            logger.info("iginx node {} increment max active end time statistics counter {}", this.id,
+                updatedCounter);
+        });
     }
 
     private void initIginx() throws MetaStorageException {
@@ -262,6 +281,8 @@ public class DefaultMetaManager implements IMetaManager {
         int num = 0;
         try {
             storage.registerPolicy(getIginxId(), num);
+            // 从元数据管理器取写入的最大时间戳
+            maxActiveEndTime.set(storage.getMaxActiveEndTimeStatistics());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -701,38 +722,6 @@ public class DefaultMetaManager implements IMetaManager {
     }
 
     @Override
-    public void deleteFragmentPoints(TimeSeriesInterval tsInterval, TimeInterval timeInterval) {
-        try {
-            storage.lockFragment();
-            storage.deleteFragmentPoints(tsInterval, timeInterval);
-        } catch (Exception e) {
-            logger.error("delete fragment error: ", e);
-        } finally {
-            try {
-                storage.releaseFragment();
-            } catch (MetaStorageException e) {
-                logger.error("release fragment lock error: ", e);
-            }
-        }
-    }
-
-    @Override
-    public void updateFragmentPoints(FragmentMeta fragmentMeta, long points) {
-        try {
-            storage.lockFragment();
-            storage.updateFragmentPoints(fragmentMeta, points);
-        } catch (Exception e) {
-            logger.error("update fragment error: ", e);
-        } finally {
-            try {
-                storage.releaseFragment();
-            } catch (MetaStorageException e) {
-                logger.error("release fragment lock error: ", e);
-            }
-        }
-    }
-
-    @Override
     public boolean hasFragment() {
         return cache.hasFragment();
     }
@@ -828,6 +817,22 @@ public class DefaultMetaManager implements IMetaManager {
             }
         }
         return false;
+    }
+
+    @Override
+    public StorageUnitMeta generateNewStorageUnitMetaByFragment(FragmentMeta fragmentMeta,
+        long targetStorageId) throws MetaStorageException {
+        String actualName = storage.addStorageUnit();
+        StorageUnitMeta storageUnitMeta = new StorageUnitMeta(actualName, targetStorageId, actualName,
+            true, false);
+        storageUnitMeta.setCreatedBy(getIginxId());
+
+        cache.updateStorageUnit(storageUnitMeta);
+        for (StorageUnitHook hook : storageUnitHooks) {
+            hook.onChange(null, storageUnitMeta);
+        }
+        storage.updateStorageUnit(storageUnitMeta);
+        return storageUnitMeta;
     }
 
     @Override
@@ -1124,5 +1129,27 @@ public class DefaultMetaManager implements IMetaManager {
     @Override
     public List<TransformTaskMeta> getTransformTasks() {
         return cache.getTransformTasks();
+    }
+
+    @Override
+    public void updateMaxActiveEndTime(long endTime) {
+        maxActiveEndTime.getAndUpdate(e -> Math.max(e, endTime
+            + ConfigDescriptor.getInstance().getConfig().getReshardFragmentTimeMargin() * 1000));
+    }
+
+    @Override
+    public long getMaxActiveEndTime() {
+        return maxActiveEndTime.get();
+    }
+
+    @Override
+    public void submitMaxActiveEndTime() {
+        try {
+            storage.lockMaxActiveEndTimeStatistics();
+            storage.addOrUpdateMaxActiveEndTimeStatistics(maxActiveEndTime.get());
+            storage.releaseMaxActiveEndTimeStatistics();
+        } catch (MetaStorageException e) {
+            logger.error("encounter error when submitting max active time: ", e);
+        }
     }
 }

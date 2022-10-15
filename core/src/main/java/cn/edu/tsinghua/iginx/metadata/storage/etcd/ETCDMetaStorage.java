@@ -760,6 +760,12 @@ public class ETCDMetaStorage implements IMetaStorage {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta)
+        throws MetaStorageException {
+
+    }
+
+    @Override
     public void addFragment(FragmentMeta fragmentMeta) throws MetaStorageException {
         updateFragment(fragmentMeta);
     }
@@ -916,6 +922,11 @@ public class ETCDMetaStorage implements IMetaStorage {
         return 0;
     }
 
+    @Override
+    public void updateTimeseriesLoad(Map<String, Long> timeseriesLoadMap) throws Exception {
+
+    }
+
     private void lockTransform() throws MetaStorageException {
         try {
             transformLeaseLock.lock();
@@ -1010,6 +1021,32 @@ public class ETCDMetaStorage implements IMetaStorage {
         if (transformChangeHook != null) {
             transformChangeHook.onChange(name, null);
         }
+    }
+
+    @Override
+    public void lockMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void addOrUpdateMaxActiveEndTimeStatistics(long endTime) throws MetaStorageException {
+
+    }
+
+    @Override
+    public long getMaxActiveEndTimeStatistics() throws MetaStorageException {
+        return 0;
+    }
+
+    @Override
+    public void releaseMaxActiveEndTimeStatistics() throws MetaStorageException {
+
+    }
+
+    @Override
+    public void registerMaxActiveEndTimeStatisticsChangeHook(
+        MaxActiveEndTimeStatisticsChangeHook hook) throws MetaStorageException {
+
     }
 
     public void close() throws MetaStorageException {

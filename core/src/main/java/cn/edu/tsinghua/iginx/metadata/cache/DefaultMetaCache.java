@@ -298,6 +298,51 @@ public class DefaultMetaCache implements IMetaCache {
     }
 
     @Override
+    public void updateFragmentByTsInterval(TimeSeriesInterval tsInterval,
+        FragmentMeta fragmentMeta) {
+        fragmentLock.writeLock().lock();
+        try {
+            // 更新 fragmentMetaListMap
+            List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
+            fragmentMetaList.set(fragmentMetaList.size() - 1, fragmentMeta);
+            fragmentMetaListMap.put(fragmentMeta.getTsInterval(), fragmentMetaList);
+            fragmentMetaListMap.remove(tsInterval);
+
+            for (Pair<TimeSeriesInterval, List<FragmentMeta>> timeSeriesIntervalListPair : sortedFragmentMetaLists) {
+                if (timeSeriesIntervalListPair.getK().equals(tsInterval)) {
+                    timeSeriesIntervalListPair.k = fragmentMeta.getTsInterval();
+                }
+            }
+        } finally {
+            fragmentLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public void deleteFragmentByTsInterval(TimeSeriesInterval tsInterval, FragmentMeta fragmentMeta) {
+        fragmentLock.writeLock().lock();
+        try {
+            // 更新 fragmentMetaListMap
+            List<FragmentMeta> fragmentMetaList = fragmentMetaListMap.get(tsInterval);
+            fragmentMetaList.remove(fragmentMeta);
+            if (fragmentMetaList.size() == 0) {
+                fragmentMetaListMap.remove(tsInterval);
+            }
+            for (int index = 0; index < sortedFragmentMetaLists.size(); index++) {
+                if (sortedFragmentMetaLists.get(index).getK().equals(tsInterval)) {
+                    sortedFragmentMetaLists.get(index).getV().remove(fragmentMeta);
+                    if (sortedFragmentMetaLists.get(index).getV().isEmpty()) {
+                        sortedFragmentMetaLists.remove(index);
+                    }
+                    break;
+                }
+            }
+        } finally {
+            fragmentLock.writeLock().unlock();
+        }
+    }
+
+    @Override
     public Map<TimeSeriesInterval, List<FragmentMeta>> getFragmentMapByTimeSeriesInterval(TimeSeriesInterval tsInterval) {
         Map<TimeSeriesInterval, List<FragmentMeta>> resultMap = new HashMap<>();
         fragmentLock.readLock().lock();

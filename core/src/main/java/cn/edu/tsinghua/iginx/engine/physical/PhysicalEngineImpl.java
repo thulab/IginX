@@ -51,6 +51,7 @@ import cn.edu.tsinghua.iginx.thrift.DataType;
 import cn.edu.tsinghua.iginx.utils.Bitmap;
 import cn.edu.tsinghua.iginx.utils.ByteUtils;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -184,7 +185,7 @@ public class PhysicalEngineImpl implements PhysicalEngine {
         List<String> selectResultPaths, List<DataType> selectResultTypes, String storageUnitId)
         throws PhysicalException {
         // 按行批量插入数据
-        RawData rowData = new RawData(selectResultPaths, timestampList,
+        RawData rowData = new RawData(selectResultPaths, Collections.emptyList(), timestampList,
             ByteUtils.getRowValuesByDataType(valuesList, selectResultTypes, bitmapBufferList),
             selectResultTypes, bitmapList, RawDataType.NonAlignedRow);
         RowDataView rowDataView = new RowDataView(rowData, 0, selectResultPaths.size(), 0,

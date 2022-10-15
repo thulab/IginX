@@ -1,7 +1,6 @@
 package cn.edu.tsinghua.iginx.migration;
 
 import cn.edu.tsinghua.iginx.metadata.entity.FragmentMeta;
-import cn.edu.tsinghua.iginx.policy.dynamic.MigrationTask;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

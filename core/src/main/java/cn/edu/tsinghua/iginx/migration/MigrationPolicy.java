@@ -27,6 +27,7 @@ import cn.edu.tsinghua.iginx.policy.PolicyManager;
 import cn.edu.tsinghua.iginx.utils.Pair;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -188,11 +189,6 @@ public abstract class MigrationPolicy {
               targetFragmentMeta.getTsInterval().getEndTimeSeries());
           DefaultMetaManager.getInstance()
               .updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
-          DefaultMetaManager.getInstance()
-              .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
-          DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta,
-              (long) (points * (fakedFragmentMetaLoads.get(i) * 1.0
-                  / totalLoad)));//暂且认为每个分区的点数和load成正比
         } else {
           FragmentMeta newFragment = new FragmentMeta(
               targetFragmentMeta.getTsInterval().getStartTimeSeries(),
@@ -200,9 +196,6 @@ public abstract class MigrationPolicy {
               fragmentMeta.getTimeInterval().getStartTime(),
               fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
           DefaultMetaManager.getInstance().addFragment(newFragment);
-          DefaultMetaManager.getInstance().updateFragmentPoints(newFragment,
-              (long) (points * (fakedFragmentMetaLoads.get(i) * 1.0
-                  / totalLoad)));//暂且认为每个分区的点数和load成正比
         }
         // 开始拷贝副本，有一个先决条件，时间分区必须为闭区间，即只有查询请求，在之后不会被再写入数据，也不会被拆分读写
         if (fakedFragmentMetaLoads.get(i) >= currAverageLoad * (1
@@ -244,9 +237,10 @@ public abstract class MigrationPolicy {
           new MigrationExecuteTask(fragmentMeta, fragmentMeta.getMasterStorageUnitId(), 0L, 0L,
               MigrationExecuteType.RESHARD_TIME_SERIES));
 
-      logger.info("start to show timeseries");
+      Set<String> pathRegexSet = new HashSet<>();
+      pathRegexSet.add(fragmentMeta.getMasterStorageUnitId());
       ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
-          fragmentMeta.getMasterStorageUnitId(),Integer.MAX_VALUE, 0);
+          pathRegexSet, null, Integer.MAX_VALUE, 0);
       RowStream rowStream = physicalEngine.execute(showTimeSeries);
       SortedSet<String> pathSet = new TreeSet<>();
       while (rowStream.hasNext()) {
@@ -269,12 +263,8 @@ public abstract class MigrationPolicy {
       logger.info("timeseries split new fragment=" + newFragment.toString());
       DefaultMetaManager.getInstance().addFragment(newFragment);
       logger.info("start to add old fragment");
-      DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, points / 2);
       DefaultMetaManager.getInstance()
           .endFragmentByTimeSeriesInterval(fragmentMeta, middleTimeseries);
-      DefaultMetaManager.getInstance()
-          .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
-      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, points / 2);
     } finally {
       migrationLogger.logMigrationExecuteTaskEnd();
     }
@@ -311,13 +301,9 @@ public abstract class MigrationPolicy {
           fragmentMeta.getTimeInterval().getStartTime(),
           fragmentMeta.getTimeInterval().getEndTime(), fragmentMeta.getMasterStorageUnit());
       DefaultMetaManager.getInstance().addFragment(newFragment);
-      DefaultMetaManager.getInstance().updateFragmentPoints(newFragment, totalLoad - currLoad);
       DefaultMetaManager.getInstance()
           .endFragmentByTimeSeriesInterval(fragmentMeta, middleTimeseries);
       DefaultMetaManager.getInstance().updateFragmentByTsInterval(sourceTsInterval, fragmentMeta);
-      DefaultMetaManager.getInstance()
-          .deleteFragmentPoints(sourceTsInterval, fragmentMeta.getTimeInterval());
-      DefaultMetaManager.getInstance().updateFragmentPoints(fragmentMeta, currLoad);
     } finally {
       migrationLogger.logMigrationExecuteTaskEnd();
     }
@@ -434,8 +420,10 @@ public abstract class MigrationPolicy {
               targetStorageId,
               MigrationExecuteType.MIGRATION));
 
-      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(),
-          fragmentMeta.getMasterStorageUnitId());
+      Set<String> pathRegexSet = new HashSet<>();
+      pathRegexSet.add(fragmentMeta.getMasterStorageUnitId());
+      ShowTimeSeries showTimeSeries = new ShowTimeSeries(new GlobalSource(), pathRegexSet, null,
+          Integer.MAX_VALUE, 0);
       RowStream rowStream = physicalEngine.execute(showTimeSeries);
       SortedSet<String> pathSet = new TreeSet<>();
       rowStream.getHeader().getFields().forEach(field -> {

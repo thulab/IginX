@@ -263,7 +263,7 @@ public class NaivePolicy implements IPolicy {
         return storageEngineIdList;
     }
 
-    private Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
+    public Pair<FragmentMeta, StorageUnitMeta> generateFragmentAndStorageUnitByTimeSeriesIntervalAndTimeInterval(String startPath, String endPath, long startTime, long endTime, List<Long> storageEngineList) {
         String masterId = RandomStringUtils.randomAlphanumeric(16);
         StorageUnitMeta storageUnit = new StorageUnitMeta(masterId, storageEngineList.get(0), masterId, true);
         FragmentMeta fragment = new FragmentMeta(startPath, endPath, startTime, endTime, masterId);
@@ -282,4 +282,5 @@ public class NaivePolicy implements IPolicy {
     public void setNeedReAllocate(boolean needReAllocate) {
         this.needReAllocate.set(needReAllocate);
     }
+
 }
