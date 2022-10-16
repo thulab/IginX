@@ -26,6 +26,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           java: ${{ matrix.java }}
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
       - name: Cache Maven packages
         uses: actions/cache@v2.1.5
         with:
