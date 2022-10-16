@@ -99,11 +99,11 @@ public class TagIT {
     }
 
     @Test
-    public void IoTDB11() {
+    public void iotdb11_IT() {
     }
 
     @Test
-    public void IoTDB12() {
+    public void iotdb12_IT() {
     }
 
     @Test

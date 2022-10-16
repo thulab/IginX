@@ -10,7 +10,7 @@ public class TagCapExpIT extends TagIT{
     }
 
     @Override
-    public void IoTDB11() {
+    public void iotdb11_IT() {
         TagIT.ifClearData = false;
         this.storageEngineType = "iotdb11";
         try {
@@ -22,7 +22,7 @@ public class TagCapExpIT extends TagIT{
     }
 
     @Override
-    public void IoTDB12() {
+    public void iotdb12_IT() {
         TagIT.ifClearData = false;
         this.storageEngineType = "iotdb12";
         try {

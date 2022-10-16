@@ -19,7 +19,7 @@ public abstract class SQLSessionIT {
 
     protected static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
-    private static Session session;
+    protected static Session session;
 
     protected boolean isAbleToDelete;
 
@@ -134,11 +134,11 @@ public abstract class SQLSessionIT {
     }
 
     @Test
-    public void IoTDB11() {
+    public void iotdb11_IT() {
     }
 
     @Test
-    public void IoTDB12() {
+    public void iotdb12_IT() {
     }
 
     @Test
