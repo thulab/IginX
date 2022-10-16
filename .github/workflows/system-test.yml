@@ -140,7 +140,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGenerator#${{matrix.Teat-Way}} -DfailIfNoTests=false
+          mvn test -q -Dtest=IoTDBHistoryDataGenerator#OriNoDataExpHasData -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
