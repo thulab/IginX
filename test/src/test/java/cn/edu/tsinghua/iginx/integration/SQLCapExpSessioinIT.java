@@ -1,0 +1,34 @@
+package cn.edu.tsinghua.iginx.integration;
+
+import cn.edu.tsinghua.iginx.exceptions.ExecutionException;
+import cn.edu.tsinghua.iginx.exceptions.SessionException;
+
+public class SQLCapExpSessioinIT extends SQLSessionIT{
+    public SQLCapExpSessioinIT() {
+        super();
+    }
+
+    @Override
+    public void IoTDB11() {
+        TagIT.ifClearData = false;
+        this.storageEngineType = "iotdb11";
+        try {
+            TagIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        } catch (ExecutionException | SessionException e) {
+            logger.error(e.getMessage());
+        }
+
+    }
+
+    @Override
+    public void IoTDB12() {
+        TagIT.ifClearData = false;
+        this.storageEngineType = "iotdb12";
+        try {
+            TagIT.session.executeSql("ADD STORAGEENGINE (\"127.0.0.1\", 6668, \"" + storageEngineType + "\", \"username:root, password:root, sessionPoolSize:20, has_data:true, is_read_only:false\");");
+        } catch (ExecutionException | SessionException e) {
+            logger.error(e.getMessage());
+        }
+    }
+
+}

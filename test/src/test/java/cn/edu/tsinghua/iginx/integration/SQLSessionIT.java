@@ -17,7 +17,7 @@ import static org.junit.Assert.fail;
 
 public abstract class SQLSessionIT {
 
-    private static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
+    protected static final Logger logger = LoggerFactory.getLogger(SQLSessionIT.class);
 
     private static Session session;
 
@@ -30,6 +30,10 @@ public abstract class SQLSessionIT {
     private final long startTimestamp = 0L;
 
     private final long endTimestamp = 15000L;
+
+    protected boolean ifClearData = true;
+
+    protected String storageEngineType;
 
     @BeforeClass
     public static void setUp() {
@@ -80,6 +84,8 @@ public abstract class SQLSessionIT {
 
     @After
     public void clearData() throws ExecutionException, SessionException {
+        if(!ifClearData) return;
+
         String clearData = "CLEAR DATA;";
 
         SessionExecuteSqlResult res = session.executeSql(clearData);
@@ -125,6 +131,63 @@ public abstract class SQLSessionIT {
             logger.info("Statement: \"{}\" execute fail. Because: {}", statement, e.getMessage());
             assertEquals(expectedErrMsg, e.getMessage());
         }
+    }
+
+    @Test
+    public void IoTDB11() {
+    }
+
+    @Test
+    public void IoTDB12() {
+    }
+
+    @Test
+    public void capacityExpansion() {
+        if (ifClearData) return;
+
+        testCountPath();
+
+        testShowReplicaNum();
+
+        testTimeRangeQuery();
+
+        testValueFilter();
+
+        testPathFilter();
+
+        testOrderByQuery();
+
+        testFirstLastQuery();
+
+        testAggregateQuery();
+
+        testDownSampleQuery();
+
+        testRangeDownSampleQuery();
+
+        testDelete();
+
+        testMultiRangeDelete();
+
+        testCrossRangeDelete();
+
+        testFromMultiPath();
+
+        testAlias();
+
+        testAggregateSubQuery();
+
+        testValueFilterSubQuery();
+
+        testMultiSubQuery();
+
+        testDateFormat();
+
+        testSpecialPath();
+
+        testErrorClause();
+
+        testClearData();
     }
 
     @Test

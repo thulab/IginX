@@ -86,6 +86,8 @@ jobs:
         java: [ 8 ]
         python-version: [ "3.7" ]
         os: [ ubuntu-latest, macos-latest ]
+        DB-name: [ "iotdb11", "iotdb12" ]
+        Test-Way: [OriHasDataExpHasData, OriHasDataExpNoData, OriNoDataExpHasData, OriNoDataExpNoData]
     runs-on: ${{ matrix.os }}
     env:
       VERSION: 0.6.0-SNAPSHOT
@@ -123,26 +125,26 @@ jobs:
       - name: Run IoTDB11 and change default config
         run: |
           if [ "$RUNNER_OS" == "Linux" ]; then
-            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
-            "${GITHUB_WORKSPACE}/.github/iotdb11_history_data.sh"
+            chmod +x "${GITHUB_WORKSPACE}/.github/${{matrix.DB-name}}_history_data.sh"
+            "${GITHUB_WORKSPACE}/.github/${{matrix.DB-name}}_history_data.sh"
           elif [ "$RUNNER_OS" == "macOS" ]; then
-            chmod +x "${GITHUB_WORKSPACE}/.github/iotdb11_history_data_macos.sh"
-            "${GITHUB_WORKSPACE}/.github/iotdb11_history_data_macos.sh"
+            chmod +x "${GITHUB_WORKSPACE}/.github/${{matrix.DB-name}}_history_data_macos.sh"
+            "${GITHUB_WORKSPACE}/.github/${{matrix.DB-name}}_history_data_macos.sh"
           else
             echo "$RUNNER_OS is not supported"
             exit 1
           fi
           mv test/pom.xml test/pom.xml.backup
-          mv test/pom.xml.iotdb11 test/pom.xml
+          mv test/pom.xml.${{matrix.DB-name}} test/pom.xml
       - name: Install with Maven
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGeneratorTest -DfailIfNoTests=false
+          mvn test -q -Dtest=IoTDBHistoryDataGenerator#${{matrix.Teat-Way}} test -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
-          mv test/pom.xml test/pom.xml.iotdb11
+          mv test/pom.xml test/pom.xml.${{matrix.DB-name}}
           mv test/pom.xml.backup test/pom.xml
           mvn clean package -DskipTests
       - name: Start IginX
@@ -150,7 +152,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDB11HistoryDataCapacityExpansionIT -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBHistoryDataCapacityExpansionIT#${{matrix.DB-name}}_IT ${{matrix.Teat-Way}} test -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
