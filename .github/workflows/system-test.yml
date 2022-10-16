@@ -140,7 +140,7 @@ jobs:
         run: mvn clean package -DskipTests
       - name: Write history Data
         run: |
-          mvn test -q -Dtest=IoTDBHistoryDataGenerator#OriNoDataExpHasData -DfailIfNoTests=false
+          mvn test -q -Dtest=IoTDBHistoryDataGenerator#${{matrix.Test-Way}} -DfailIfNoTests=false
           sleep 10
       - name: Install with Maven Again
         run: |
@@ -152,7 +152,7 @@ jobs:
           chmod +x "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh"
           nohup "${GITHUB_WORKSPACE}/core/target/iginx-core-${VERSION}/sbin/start_iginx.sh" &
       - name: A Lame Integration Test with Maven for IoTDB
-        run: mvn test -q -Dtest=IoTDBHistoryDataCapacityExpansionIT#${{matrix.DB-name}}_IT+${{matrix.Teat-Way}} -DfailIfNoTests=false
+        run: mvn test -q -Dtest=IoTDBHistoryDataCapacityExpansionIT#${{matrix.DB-name}}_IT+${{matrix.Test-Way}} -DfailIfNoTests=false
       - uses: codecov/codecov-action@v1
         with:
           file: ./**/target/site/jacoco/jacoco.xml
