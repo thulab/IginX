@@ -29,7 +29,9 @@ import cn.edu.tsinghua.iginx.engine.shared.data.read.RowStream;
 import cn.edu.tsinghua.iginx.engine.shared.operator.Join;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JoinLazyStream extends BinaryLazyStream {
 
@@ -40,6 +42,10 @@ public class JoinLazyStream extends BinaryLazyStream {
     private boolean joinByOrdinal = false;
 
     private boolean hasInitialized = false;
+
+    private boolean hasIntersect = false;
+
+    private Map<Field, Integer> fieldIndices;
 
     private Header header;
 
@@ -67,33 +73,42 @@ public class JoinLazyStream extends BinaryLazyStream {
         }
         Header headerA = streamA.getHeader();
         Header headerB = streamB.getHeader();
+        for (Field field : headerA.getFields()) {
+            if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+                hasIntersect = true;
+            }
+        }
+        List<Field> newFields = new ArrayList<>();
+        if (hasIntersect) {
+            fieldIndices = new HashMap<>();
+            for (Field field: headerA.getFields()) {
+                if (fieldIndices.containsKey(field)) {
+                    continue;
+                }
+                fieldIndices.put(field, newFields.size());
+                newFields.add(field);
+            }
+            for (Field field: headerB.getFields()) {
+                if (fieldIndices.containsKey(field)) {
+                    continue;
+                }
+                fieldIndices.put(field, newFields.size());
+                newFields.add(field);
+            }
+        } else {
+            newFields.addAll(headerA.getFields());
+            newFields.addAll(headerB.getFields());
+        }
+
         if (joinByTime) {
             if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
             }
-            // 检查 field
-            for (Field field : headerA.getFields()) {
-                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
-                }
-            }
-            List<Field> newFields = new ArrayList<>();
-            newFields.addAll(headerA.getFields());
-            newFields.addAll(headerB.getFields());
             header = new Header(Field.TIME, newFields);
-        }
-        if (joinByOrdinal) {
+        } else {
             if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
             }
-            for (Field field : headerA.getFields()) {
-                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
-                }
-            }
-            List<Field> newFields = new ArrayList<>();
-            newFields.addAll(headerA.getFields());
-            newFields.addAll(headerB.getFields());
             header = new Header(newFields);
         }
         hasInitialized = true;
@@ -166,14 +181,14 @@ public class JoinLazyStream extends BinaryLazyStream {
             long timestamp;
             Object[] values = new Object[header.getFieldSize()];
             if (rowA != null && rowB != null) {
-                System.arraycopy(rowA.getValues(), 0, values, 0, rowA.getHeader().getFieldSize());
-                System.arraycopy(rowB.getValues(), 0, values, rowA.getHeader().getFieldSize(), rowB.getHeader().getFieldSize());
+                writeToNewRow(values, rowA);
+                writeToNewRow(values, rowB);
                 timestamp = rowA.getTimestamp();
             } else if (rowA != null) {
-                System.arraycopy(rowA.getValues(), 0, values, 0, rowA.getHeader().getFieldSize());
+                writeToNewRow(values, rowA);
                 timestamp = rowA.getTimestamp();
             } else {
-                System.arraycopy(rowB.getValues(), 0, values, header.getFieldSize() - rowB.getHeader().getFieldSize(), rowB.getHeader().getFieldSize());
+                writeToNewRow(values, rowB);
                 timestamp = rowB.getTimestamp();
             }
             return new Row(header, timestamp, values);
@@ -181,15 +196,24 @@ public class JoinLazyStream extends BinaryLazyStream {
         if (joinByOrdinal) {
             Object[] values = new Object[header.getFieldSize()];
             if (rowA != null && rowB != null) {
-                System.arraycopy(rowA.getValues(), 0, values, 0, rowA.getHeader().getFieldSize());
-                System.arraycopy(rowB.getValues(), 0, values, rowA.getHeader().getFieldSize(), rowB.getHeader().getFieldSize());
+                writeToNewRow(values, rowA);
+                writeToNewRow(values, rowB);
             } else if (rowA != null) {
-                System.arraycopy(rowA.getValues(), 0, values, 0, rowA.getHeader().getFieldSize());
+                writeToNewRow(values, rowA);
             } else {
-                System.arraycopy(rowB.getValues(), 0, values, header.getFieldSize() - rowB.getHeader().getFieldSize(), rowB.getHeader().getFieldSize());
+                writeToNewRow(values, rowB);
             }
             return new Row(header, values);
         }
         return null;
+    }
+    private void writeToNewRow(Object[] values, Row row) {
+        List<Field> fields = row.getHeader().getFields();
+        for (int i = 0; i < fields.size(); i++) {
+            if (row.getValue(i) == null) {
+                continue;
+            }
+            values[fieldIndices.get(fields.get(i))] = row.getValue(i);
+        }
     }
 }

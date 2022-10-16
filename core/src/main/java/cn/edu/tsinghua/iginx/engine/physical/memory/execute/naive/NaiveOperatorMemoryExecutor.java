@@ -415,27 +415,28 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     private RowStream executeIntersectJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
         Header headerA = tableA.getHeader();
         Header headerB = tableB.getHeader();
+        List<Field> newFields = new ArrayList<>();
+        Map<Field, Integer> fieldIndices = new HashMap<>();
+        for (Field field: headerA.getFields()) {
+            if (fieldIndices.containsKey(field)) {
+                continue;
+            }
+            fieldIndices.put(field, newFields.size());
+            newFields.add(field);
+        }
+        for (Field field: headerB.getFields()) {
+            if (fieldIndices.containsKey(field)) {
+                continue;
+            }
+            fieldIndices.put(field, newFields.size());
+            newFields.add(field);
+        }
+
         // 目前只支持使用时间戳和顺序
         if (join.getJoinBy().equals(Constants.TIMESTAMP)) {
             // 检查时间戳
             if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
-            }
-            List<Field> newFields = new ArrayList<>();
-            Map<Field, Integer> fieldIndices = new HashMap<>();
-            for (Field field: headerA.getFields()) {
-                if (fieldIndices.containsKey(field)) {
-                    continue;
-                }
-                fieldIndices.put(field, newFields.size());
-                newFields.add(field);
-            }
-            for (Field field: headerB.getFields()) {
-                if (fieldIndices.containsKey(field)) {
-                    continue;
-                }
-                fieldIndices.put(field, newFields.size());
-                newFields.add(field);
             }
             Header newHeader = new Header(Field.TIME, newFields);
             List<Row> newRows = new ArrayList<>();
@@ -480,22 +481,6 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
         } else if (join.getJoinBy().equals(Constants.ORDINAL)) {
             if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
-            }
-            List<Field> newFields = new ArrayList<>();
-            Map<Field, Integer> fieldIndices = new HashMap<>();
-            for (Field field: headerA.getFields()) {
-                if (fieldIndices.containsKey(field)) {
-                    continue;
-                }
-                fieldIndices.put(field, newFields.size());
-                newFields.add(field);
-            }
-            for (Field field: headerB.getFields()) {
-                if (fieldIndices.containsKey(field)) {
-                    continue;
-                }
-                fieldIndices.put(field, newFields.size());
-                newFields.add(field);
             }
             Header newHeader = new Header(newFields);
             List<Row> newRows = new ArrayList<>();
