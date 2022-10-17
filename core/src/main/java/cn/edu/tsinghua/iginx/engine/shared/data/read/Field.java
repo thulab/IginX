@@ -92,9 +92,10 @@ public final class Field {
     @Override
     public String toString() {
         return "Field{" +
-            "name='" + name + '\'' +
-            ", type=" + type +
-            '}';
+                "name='" + name + '\'' +
+                ", fullName='" + fullName + '\'' +
+                ", type=" + type +
+                '}';
     }
 
     @Override
@@ -102,12 +103,12 @@ public final class Field {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Field field = (Field) o;
-        return Objects.equals(name, field.name) && type == field.type;
+        return Objects.equals(name, field.name) && Objects.equals(fullName, field.fullName) && type == field.type;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, type);
+        return Objects.hash(name, fullName, type);
     }
 
     public static String toFullName(String name, Map<String, String> tags) {

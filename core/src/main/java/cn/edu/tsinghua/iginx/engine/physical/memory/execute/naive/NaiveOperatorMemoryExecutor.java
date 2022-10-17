@@ -301,19 +301,24 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
     }
 
     private RowStream executeJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
+        boolean hasIntersect = false;
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        // 检查 field，暂时不需要
+        for (Field field : headerA.getFields()) {
+            if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
+                hasIntersect = true;
+                break;
+            }
+        }
+        if (hasIntersect) {
+            return executeIntersectJoin(join, tableA, tableB);
+        }
         // 目前只支持使用时间戳和顺序
         if (join.getJoinBy().equals(Constants.TIMESTAMP)) {
             // 检查时间戳
-            Header headerA = tableA.getHeader();
-            Header headerB = tableB.getHeader();
             if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
-            }
-            // 检查 field
-            for (Field field : headerA.getFields()) {
-                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
-                }
             }
             List<Field> newFields = new ArrayList<>();
             newFields.addAll(headerA.getFields());
@@ -359,15 +364,8 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
             }
             return new Table(newHeader, newRows);
         } else if (join.getJoinBy().equals(Constants.ORDINAL)) {
-            Header headerA = tableA.getHeader();
-            Header headerB = tableB.getHeader();
             if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
                 throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
-            }
-            for (Field field : headerA.getFields()) {
-                if (headerB.indexOf(field) != -1) { // 二者的 field 存在交集
-                    throw new PhysicalTaskExecuteFailureException("two source has shared field");
-                }
             }
             List<Field> newFields = new ArrayList<>();
             newFields.addAll(headerA.getFields());
@@ -396,6 +394,118 @@ public class NaiveOperatorMemoryExecutor implements OperatorMemoryExecutor {
                 Row rowB = tableB.getRow(index2);
                 Object[] values = new Object[newHeader.getFieldSize()];
                 System.arraycopy(rowB.getValues(), 0, values, headerA.getFieldSize(), headerB.getFieldSize());
+                newRows.add(new Row(newHeader, values));
+            }
+            return new Table(newHeader, newRows);
+        } else {
+            throw new InvalidOperatorParameterException("join operator is not support for field " + join.getJoinBy() + " except for " + Constants.TIMESTAMP + " and " + Constants.ORDINAL);
+        }
+    }
+
+    private static void writeToNewRow(Object[] values, Row row, Map<Field, Integer> fieldIndices) {
+        List<Field> fields = row.getHeader().getFields();
+        for (int i = 0; i < fields.size(); i++) {
+            if (row.getValue(i) == null) {
+                continue;
+            }
+            values[fieldIndices.get(fields.get(i))] = row.getValue(i);
+        }
+    }
+
+    private RowStream executeIntersectJoin(Join join, Table tableA, Table tableB) throws PhysicalException {
+        Header headerA = tableA.getHeader();
+        Header headerB = tableB.getHeader();
+        List<Field> newFields = new ArrayList<>();
+        Map<Field, Integer> fieldIndices = new HashMap<>();
+        for (Field field: headerA.getFields()) {
+            if (fieldIndices.containsKey(field)) {
+                continue;
+            }
+            fieldIndices.put(field, newFields.size());
+            newFields.add(field);
+        }
+        for (Field field: headerB.getFields()) {
+            if (fieldIndices.containsKey(field)) {
+                continue;
+            }
+            fieldIndices.put(field, newFields.size());
+            newFields.add(field);
+        }
+
+        // 目前只支持使用时间戳和顺序
+        if (join.getJoinBy().equals(Constants.TIMESTAMP)) {
+            // 检查时间戳
+            if (!headerA.hasTimestamp() || !headerB.hasTimestamp()) {
+                throw new InvalidOperatorParameterException("row streams for join operator by time should have timestamp.");
+            }
+            Header newHeader = new Header(Field.TIME, newFields);
+            List<Row> newRows = new ArrayList<>();
+
+            int index1 = 0, index2 = 0;
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+                Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                long timestamp;
+                if (rowA.getTimestamp() == rowB.getTimestamp()) {
+                    timestamp = rowA.getTimestamp();
+                    writeToNewRow(values, rowA, fieldIndices);
+                    writeToNewRow(values, rowB, fieldIndices);
+                    index1++;
+                    index2++;
+                } else if (rowA.getTimestamp() < rowB.getTimestamp()) {
+                    timestamp = rowA.getTimestamp();
+                    writeToNewRow(values, rowA, fieldIndices);
+                    index1++;
+                } else {
+                    timestamp = rowB.getTimestamp();
+                    writeToNewRow(values, rowB, fieldIndices);
+                    index2++;
+                }
+                newRows.add(new Row(newHeader, timestamp, values));
+            }
+
+            for (; index1 < tableA.getRowSize(); index1++) {
+                Row rowA = tableA.getRow(index1);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                writeToNewRow(values, rowA, fieldIndices);
+                newRows.add(new Row(newHeader, rowA.getTimestamp(), values));
+            }
+
+            for (; index2 < tableB.getRowSize(); index2++) {
+                Row rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                writeToNewRow(values, rowB, fieldIndices);
+                newRows.add(new Row(newHeader, rowB.getTimestamp(), values));
+            }
+            return new Table(newHeader, newRows);
+        } else if (join.getJoinBy().equals(Constants.ORDINAL)) {
+            if (headerA.hasTimestamp() || headerB.hasTimestamp()) {
+                throw new InvalidOperatorParameterException("row streams for join operator by ordinal shouldn't have timestamp.");
+            }
+            Header newHeader = new Header(newFields);
+            List<Row> newRows = new ArrayList<>();
+
+            int index1 = 0, index2 = 0;
+            while (index1 < tableA.getRowSize() && index2 < tableB.getRowSize()) {
+                Row rowA = tableA.getRow(index1), rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                writeToNewRow(values, rowA, fieldIndices);
+                writeToNewRow(values, rowB, fieldIndices);
+                index1++;
+                index2++;
+                newRows.add(new Row(newHeader, values));
+            }
+            for (; index1 < tableA.getRowSize(); index1++) {
+                Row rowA = tableA.getRow(index1);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                writeToNewRow(values, rowA, fieldIndices);
+                newRows.add(new Row(newHeader, values));
+            }
+
+            for (; index2 < tableB.getRowSize(); index2++) {
+                Row rowB = tableB.getRow(index2);
+                Object[] values = new Object[newHeader.getFieldSize()];
+                writeToNewRow(values, rowB, fieldIndices);
                 newRows.add(new Row(newHeader, values));
             }
             return new Table(newHeader, newRows);
