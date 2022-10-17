@@ -739,7 +739,7 @@ public class TagIT {
 
     @Test
     public void testDeleteTSWithMultiTags() {
-        String showTimeSeries = "SHOW TIME SERIES;";
+        String showTimeSeries = "SHOW TIME SERIES ah.*;";
         String expected =
                 "Time series:\n"
                         + "+-----------------------+--------+\n"
@@ -765,7 +765,7 @@ public class TagIT {
         String deleteTimeSeries = "DELETE TIME SERIES ah.*.v WITH t1=v1 AND t2=v2;";
         execute(deleteTimeSeries);
 
-        showTimeSeries = "SHOW TIME SERIES;";
+        showTimeSeries = "SHOW TIME SERIES ah.*;";
         expected =
                 "Time series:\n"
                         + "+-----------------------+--------+\n"
@@ -799,7 +799,7 @@ public class TagIT {
         deleteTimeSeries = "DELETE TIME SERIES * WITH t1=v1 AND t2=vv2 OR t1=vv1 AND t2=v2;";
         execute(deleteTimeSeries);
 
-        showTimeSeries = "SHOW TIME SERIES;";
+        showTimeSeries = "SHOW TIME SERIES ah.*;";
         expected =
                 "Time series:\n"
                         + "+-----------------------+--------+\n"
