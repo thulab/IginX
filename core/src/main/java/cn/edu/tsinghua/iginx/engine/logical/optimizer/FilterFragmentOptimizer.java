@@ -1,5 +1,7 @@
 package cn.edu.tsinghua.iginx.engine.logical.optimizer;
 
+import static cn.edu.tsinghua.iginx.metadata.utils.FragmentUtils.keyFromTSIntervalToTimeInterval;
+
 import cn.edu.tsinghua.iginx.engine.logical.utils.ExprUtils;
 import cn.edu.tsinghua.iginx.engine.logical.utils.OperatorUtils;
 import cn.edu.tsinghua.iginx.engine.shared.TimeRange;
@@ -74,26 +76,27 @@ public class FilterFragmentOptimizer implements Optimizer {
         }
 
         TimeSeriesInterval interval = new TimeSeriesInterval(pathList.get(0), pathList.get(pathList.size() - 1));
-        Map<TimeSeriesInterval, List<FragmentMeta>> fragments = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        Map<TimeSeriesInterval, List<FragmentMeta>> fragmentsByTSInterval = metaManager.getFragmentMapByTimeSeriesInterval(interval, true);
+        Map<TimeInterval, List<FragmentMeta>> fragments = keyFromTSIntervalToTimeInterval(fragmentsByTSInterval);
 
         Filter filter = selectOperator.getFilter();
         List<TimeRange> timeRanges = ExprUtils.getTimeRangesFromFilter(filter);
 
-        List<Operator> joinList = new ArrayList<>();
+        List<Operator> unionList = new ArrayList<>();
         fragments.forEach((k, v) -> {
-            List<Operator> unionList = new ArrayList<>();
+            List<Operator> joinList = new ArrayList<>();
             v.forEach(meta -> {
                 if (hasTimeRangeOverlap(meta, timeRanges)) {
-                    unionList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
+                    joinList.add(new Project(new FragmentSource(meta), pathList, selectOperator.getTagFilter()));
                 }
             });
-            Operator operator = OperatorUtils.unionOperators(unionList);
+            Operator operator = OperatorUtils.joinOperatorsByTime(joinList);
             if (operator != null) {
-                joinList.add(operator);
+                unionList.add(operator);
             }
         });
 
-        Operator root = OperatorUtils.joinOperatorsByTime(joinList);
+        Operator root = OperatorUtils.unionOperators(unionList);
         if (root != null) {
             selectOperator.setSource(new OperatorSource(root));
         }
